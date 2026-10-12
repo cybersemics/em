@@ -6,7 +6,6 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
-import ThoughtspaceView from '../@types/ThoughtspaceView'
 import UiState from '../@types/UiState'
 import * as commands from '../actions'
 import { CACHED_SETTINGS, EM_TOKEN } from '../constants'
@@ -42,40 +41,17 @@ const cacheSettings = (state: State) => {
   }
 }
 
-/** Captures changed sibling positions while the previous reader is valid; only plain log values escape the scope. */
-const collectThoughtMoves = (
-  before: Omit<ThoughtspaceView, 'getLexeme' | 'revision'>,
-  after: Omit<ThoughtspaceView, 'getLexeme' | 'revision'>,
-  actionType: string,
-  changes?: ReturnType<ThoughtspaceTransaction['getChanges']>,
-) => {
+/** Formats diagnostic facts without letting logging failures reject a command. */
+const collectThoughtMoves = (getMoves: ThoughtspaceTransaction['getMoves'], actionType: string) => {
   try {
-    const ids = changes ? new Set(changes.thoughtIds) : new Set(Array.from(after.values(), thought => thought.id))
-    changes?.childrenChangedIds.forEach(id => {
-      before.getChildren(id).forEach(child => ids.add(child))
-      after.getChildren(id).forEach(child => ids.add(child))
-    })
-    return Array.from(ids).flatMap(id => {
-      const thought = after.getThought(id)
-      const old = before.getThought(id)
-      if (!thought || !old) return []
-      const oldRank = before.getPosition(id)
-      const newRank = after.getPosition(id)
-      return oldRank !== newRank || old.parentId !== thought.parentId
-        ? [
-            {
-              actionType,
-              id,
-              value: thought.value.length > 100 ? `${thought.value.slice(0, 100)}…` : thought.value,
-              oldRank,
-              newRank,
-              ...(old.parentId !== thought.parentId
-                ? { oldParentId: old.parentId, newParentId: thought.parentId }
-                : { parentId: thought.parentId }),
-            },
-          ]
-        : []
-    })
+    return getMoves().map(({ id, value, oldRank, newRank, oldParentId, newParentId }) => ({
+      actionType,
+      id,
+      value: value.length > 100 ? `${value.slice(0, 100)}…` : value,
+      oldRank,
+      newRank,
+      ...(oldParentId !== newParentId ? { oldParentId, newParentId } : { parentId: newParentId }),
+    }))
   } catch {
     // Logging must never reject a command.
     return []
@@ -161,11 +137,10 @@ const commandExecutionEnhancer: StoreEnhancer<any> =
         }
         if (needsDocument && thoughtspaceRuntime.ready) {
           db.transact(transaction => {
-            const previous = debugLog.isEnabled() ? transaction.capturePrevious() : undefined
             prepared = history.prepare(state, action, transaction)
             const next = prepared.state
             operationCount = transaction.operationIds.length
-            if (previous) moves = collectThoughtMoves(previous, next.thoughts, action.type, transaction.getChanges())
+            if (debugLog.isEnabled()) moves = collectThoughtMoves(transaction.getMoves, action.type)
             return next
           }, publish)
         } else {
@@ -174,9 +149,8 @@ const commandExecutionEnhancer: StoreEnhancer<any> =
             action.type === 'replaceThoughts' ? { ...action, previousCursorPath: publishedCursorPath } : action,
           )
           const next = prepared.state
-          const previous = (action as UnknownAction).previousThoughts as
-            Omit<ThoughtspaceView, 'getLexeme' | 'revision'> | undefined
-          if (debugLog.isEnabled() && previous) moves = collectThoughtMoves(previous, next.thoughts, action.type)
+          const getMoves = (action as UnknownAction).getMoves as ThoughtspaceTransaction['getMoves'] | undefined
+          if (debugLog.isEnabled() && getMoves) moves = collectThoughtMoves(getMoves, action.type)
           publish(next)
         }
         return action

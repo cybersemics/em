@@ -29,7 +29,7 @@ const logUndoRedo = (stateBefore: State, stateAfter: State, actionType: string):
   debugLog.log(actionType, { steps: popped.length, actions })
 }
 
-/** Logs dispatched actions, structured thought updates, and undo/redo attribution. Document moves are captured inside the command transaction, before its previous-value reader expires. */
+/** Logs dispatched actions, structured thought updates, and undo/redo attribution. The command coordinator captures move diagnostics. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const loggerMiddleware: Middleware<any, State, Dispatch> = store => {
   return next => action => {

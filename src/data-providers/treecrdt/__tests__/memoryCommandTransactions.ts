@@ -131,32 +131,35 @@ it('records authored text changes within a transaction, not their final net effe
   }
 })
 
-it.each([false, true])('indexes diagnostic rows only when a subscriber reads them (%s)', async readPrevious => {
+it.each([false, true])('reads shifted siblings only when a subscriber requests move facts (%s)', async readMoves => {
   const memory = await createMemoryClient()
   const runtime = createMemoryThoughtspace(undefined, async () => memory)
-  let previous: ReturnType<ThoughtspaceTransaction['capturePrevious']>
+  let getMoves: ThoughtspaceTransaction['getMoves']
   try {
     await runtime.init({ storage: 'memory' })
-    await runtime.transact(transaction => transaction.insert(first, null)).persisted
-    const subscriber = vi.fn(before => {
-      previous = before
-      return readPrevious ? [before.getThought(first.id), before.getThought(first.id)] : undefined
+    await runtime.transact(transaction => {
+      transaction.insert(first, null)
+      transaction.insert(second, first.id)
+    }).persisted
+    const subscriber = vi.fn(read => {
+      getMoves = read
+      return readMoves ? [read(), read()] : undefined
     })
     runtime.subscribe(subscriber)
-    const transactions = vi.spyOn(memory, 'transact')
-    // Native batches are frozen. Observe only map calls on the exact committed change array.
-    const maps = vi.spyOn(Array.prototype, 'map')
-    let indexed: number
-    try {
-      runtime.transact(transaction => transaction.payload(first.id, { value: 'edited' }))
-      const changes = transactions.mock.results.at(-1)!.value.changes.changes
-      indexed = maps.mock.contexts.filter(array => array === changes).length
-    } finally {
-      maps.mockRestore()
-    }
-    expect(indexed).toBe(readPrevious ? 1 : 0)
-    expect(subscriber).toHaveReturnedWith(readPrevious ? [first, first] : undefined)
-    expect(() => previous.getThought(first.id)).toThrow('expired')
+    const reads = vi.spyOn(memory, 'getContent')
+    const scans = vi.spyOn(memory, 'nodeIds')
+    const moved = runtime.transact(transaction => transaction.move(second.id, { parentId: HOME_TOKEN, afterId: null }))
+    const expected = [
+      { id: first.id, value: 'shared', oldRank: 0, newRank: 1, oldParentId: HOME_TOKEN, newParentId: HOME_TOKEN },
+      { id: second.id, value: 'shared', oldRank: 1, newRank: 0, oldParentId: HOME_TOKEN, newParentId: HOME_TOKEN },
+    ]
+    expect(reads.mock.calls.filter(([id]) => id === first.id)).toHaveLength(readMoves ? 1 : 0)
+    expect(scans).not.toHaveBeenCalled()
+    expect(subscriber).toHaveReturnedWith(
+      readMoves ? [expect.arrayContaining(expected), expect.arrayContaining(expected)] : undefined,
+    )
+    expect(() => getMoves()).toThrow('expired')
+    await moved.persisted
   } finally {
     await runtime.drop()
   }
@@ -171,15 +174,23 @@ it('preserves persistence order and latest reads when a subscriber authors anoth
   let nested: { value: readonly OperationId[]; persisted: Promise<void> }
   try {
     await runtime.init({ storage: 'memory' })
+    await runtime.transact(transaction => transaction.insert({ ...second, value: 'neighbor' }, null)).persisted
     const before = (await persistent.ops.all()).length
-    const unsubscribeWriter = runtime.subscribe(previous => {
+    const unsubscribeWriter = runtime.subscribe(getMoves => {
       unsubscribeWriter()
       expect(runtime.project().getLexeme('shared')).toEqual([first.id])
-      expect(previous.getChildren(HOME_TOKEN)).toEqual([])
+      const moves = getMoves()
+      expect(getMoves()).toBe(moves)
       phases.push('listener: shared')
       nested = runtime.transact(
         transaction => {
-          transaction.update({ thoughtIndexUpdates: { [first.id]: { ...first, value: 'reentrant edit' } } })
+          transaction.update({
+            thoughtIndexUpdates: {
+              [first.id]: { ...first, value: 'reentrant edit' },
+              [second.id]: { ...second, value: 'renamed neighbor' },
+            },
+          })
+          expect(getMoves).toThrow('expired')
           return transaction.operationIds
         },
         () => {
@@ -188,10 +199,12 @@ it('preserves persistence order and latest reads when a subscriber authors anoth
           phases.push('commit: reentrant edit')
         },
       )
-      // Reentrant commits expire both already-cached child lists and untouched previous values.
-      expect(() => previous.getChildren(HOME_TOKEN)).toThrow('expired')
-      expect(() => previous.getThought(first.id)).toThrow('expired')
-      phases.push('previous reader expired')
+      // The scoped getter expires, while its already-computed facts keep the original text and positions.
+      expect(getMoves).toThrow('expired')
+      expect(moves).toEqual([
+        { id: second.id, value: 'neighbor', oldRank: 0, newRank: 1, oldParentId: HOME_TOKEN, newParentId: HOME_TOKEN },
+      ])
+      phases.push('move getter expired')
     })
     const unsubscribeObserver = runtime.subscribe(() => observed.push(runtime.project()))
     const initial = runtime.transact(
@@ -209,7 +222,7 @@ it('preserves persistence order and latest reads when a subscriber authors anoth
     expect(observed.map(view => view.getThought(first.id)!.value)).toEqual(['reentrant edit', 'reentrant edit'])
     expect(observed.map(view => view.getLexeme('reentrant edit'))).toEqual([[first.id], [first.id]])
     expect(captured!.value).toBe('shared')
-    expect(phases).toEqual(['commit: shared', 'listener: shared', 'commit: reentrant edit', 'previous reader expired'])
+    expect(phases).toEqual(['commit: shared', 'listener: shared', 'commit: reentrant edit', 'move getter expired'])
     expect(runtime.project()).toBe(observed[1])
     await Promise.all([initial.persisted, nested!.persisted])
     await runtime.waitForIdle()
@@ -305,12 +318,10 @@ it('publishes and persists committed changes when their commit callback throws',
 it('exposes canonical memberships and thought metadata to later commands in the same transaction', async () => {
   const persistent = await createTreecrdtClient({ docId: tsid })
   const runtime = createMemoryThoughtspace(async () => persistent)
-  let previous: ReturnType<ThoughtspaceTransaction['capturePrevious']>
   try {
     await runtime.init({ storage: 'memory' })
     const before = (await persistent.ops.all()).length
     const result = runtime.transact(transaction => {
-      const empty = transaction.capturePrevious()
       const created = transaction.update({
         thoughtIndexUpdates: { [first.id]: first, [second.id]: second },
         movePlacements: { [first.id]: null, [second.id]: first.id },
@@ -320,9 +331,7 @@ it('exposes canonical memberships and thought metadata to later commands in the 
       expect(created.getThought(first.id)).toEqual(first)
       expect(created.getThought(second.id)).toEqual(second)
       expect(created.getLexeme(HOME_TOKEN)).toBeUndefined()
-      previous = transaction.capturePrevious()
-      const previousChildren = previous.getChildren(HOME_TOKEN)
-      expect(previous.getPosition(second.id)).toBe(1)
+      expect(created.getPosition(second.id)).toBe(1)
 
       const renamed = transaction.update({
         thoughtIndexUpdates: {
@@ -336,19 +345,10 @@ it('exposes canonical memberships and thought metadata to later commands in the 
       const deleted = transaction.update({ thoughtIndexUpdates: { [second.id]: null } })
       expect(deleted.getLexeme('shared')).toBeUndefined()
       expect(deleted.getChildren(HOME_TOKEN)).toEqual([first.id])
-      expect(empty.getThought(first.id)).toBeUndefined()
-      expect(previous.getThought(first.id)?.value).toBe('shared')
-      expect(previous.getThought(second.id)?.value).toBe('shared')
-      expect(previous.getChildren(HOME_TOKEN)).toBe(previousChildren)
-      expect(previousChildren).toEqual([first.id, second.id])
-      expect(previous.getPosition(second.id)).toBe(1)
       expect(createdIds).toHaveLength(2)
       return { thoughts: transaction.project(), operationIds: transaction.operationIds }
     })
     expect(runtime.project()).toBe(result.value.thoughts)
-    expect(() => previous.getThought(first.id)).toThrow('expired')
-    expect(() => previous.getChildren(HOME_TOKEN)).toThrow('expired')
-    expect(() => previous.getPosition(second.id)).toThrow('expired')
     await result.persisted
     expect((await persistent.ops.all()).slice(before).map(operation => operation.meta.id)).toEqual(
       result.value.operationIds,
@@ -366,12 +366,10 @@ it('exposes canonical memberships and thought metadata to later commands in the 
       expect(changed.getLexeme('shared')).toEqual([first.id])
       expect(runtime.project().getLexeme('renamed')).toBeUndefined()
       expect(runtime.project()).toBe(changed)
-      const intermediate = transaction.capturePrevious()
       const restored = transaction.update({ thoughtIndexUpdates: { [first.id]: original } })
       expect(restored.getLexeme('renamed')).toBe(originalLexeme)
       expect(restored.getLexeme('shared')).toBeUndefined()
-      expect(intermediate.getThought(first.id)?.value).toBe('shared')
-      expect(transaction.getChanges().thoughtIds).toContain(first.id)
+      expect(transaction.getMoves()).toEqual([])
     }).persisted
     expect(runtime.project().getLexeme('renamed')).toBe(originalLexeme)
   } finally {

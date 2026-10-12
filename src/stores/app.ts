@@ -71,11 +71,10 @@ const store = {
   uiStore: { ...editorStore.uiStore, dispatch: editorStore.dispatch },
 }
 
-db.subscribe(previousThoughts => {
+db.subscribe(getMoves => {
   const thoughts = db.project()
   if (thoughts !== store.getState().thoughts) {
-    // The previous reader is scoped to this callback and used only by diagnostic move logging.
-    store.dispatch({ type: 'replaceThoughts', thoughts, previousThoughts, repairCursor: true })
+    store.dispatch({ type: 'replaceThoughts', thoughts, getMoves, repairCursor: true })
   }
 })
 

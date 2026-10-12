@@ -1,4 +1,5 @@
 import type ThoughtId from '../@types/ThoughtId'
+import type ThoughtMove from '../@types/ThoughtMove'
 import type ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import type ThoughtspaceView from '../@types/ThoughtspaceView'
 
@@ -23,10 +24,10 @@ interface DataProvider {
     ) => void,
   ) => void
   /**
-   * Invalidates reads after completed local and incoming changes. The previous reader is valid only during the
-   * synchronous callback, before any reentrant commit; current values come from project().
+   * Invalidates reads after completed local and incoming changes; current values come from project().
+   * Optional diagnostics are collected during the callback, before reentrant edits. Returned facts are owned.
    */
-  subscribe: (listener: (previous: Omit<ThoughtspaceView, 'getLexeme' | 'revision'>) => void) => () => void
+  subscribe: (listener: (getMoves: () => readonly ThoughtMove[]) => void) => () => void
   /**
    * Runs an atomic command synchronously; persisted resolves after storage acknowledges its operations.
    * The optional commit callback runs after persistence is queued and before subscribers, including for no-op

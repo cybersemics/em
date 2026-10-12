@@ -10,7 +10,6 @@ import {
   type MemoryContent,
   type MemoryProjection,
   type MemoryReader,
-  type MemoryRow,
   type MemoryTransaction,
   createMemoryClient,
 } from '@treecrdt/wasm/memory'
@@ -19,6 +18,7 @@ import _ from 'lodash'
 import type Lexeme from '../../@types/Lexeme'
 import type Thought from '../../@types/Thought'
 import type ThoughtId from '../../@types/ThoughtId'
+import type ThoughtMove from '../../@types/ThoughtMove'
 import type ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import type ThoughtspaceView from '../../@types/ThoughtspaceView'
 import { GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID } from '../../constants'
@@ -241,62 +241,61 @@ const createMemoryThoughtspace = (
     return currentView
   }
 
-  /** Supplies old rows only for changed nodes, while unchanged rows are read from the current tree. */
-  const previousView = (before: () => ReadonlyMap<string, MemoryRow | null>, check: () => void) => {
-    let positions: Map<string, Map<string, number>> | undefined
-    /** Reads captured content for changed nodes and current content for unchanged nodes. */
-    const getContent = (id: string) => {
-      check()
-      const rows = before()
-      return rows.has(id) ? (rows.get(id) ?? undefined) : id ? memory?.getContent(id) : undefined
-    }
-    return memoryReader(
-      {
-        getContent,
-        getChildren: id => {
-          check()
-          const rows = before()
-          return rows.has(id) ? (rows.get(id)?.children ?? []) : (memory?.getChildren(id) ?? [])
+  /** Derives plain move facts from changed rows and sibling orders, without exposing a previous tree. */
+  const collectMoves = (batch: MemoryChanges): readonly ThoughtMove[] => {
+    if (batch.reset) return []
+    const rows = new Map(batch.changes.map(change => [change.id, change]))
+    const ids = new Set(rows.keys())
+    const oldPositions = new Map<string, Map<string, number>>()
+    batch.changes.forEach(({ id, before, after }) => {
+      if (_.isEqual(before?.children, after?.children)) return
+      oldPositions.set(id, new Map(before?.children.map((child, index) => [child, index])))
+      before?.children.forEach(child => ids.add(child))
+      after?.children.forEach(child => ids.add(child))
+    })
+    return Array.from(ids).flatMap(id => {
+      const change = rows.get(id)
+      const after = change ? change.after : memory!.getContent(id)
+      const before = change ? change.before : after
+      if (!before?.payload || !after?.payload) return []
+      const parent = before.parentId
+      const oldRank = parent
+        ? oldPositions.has(parent)
+          ? oldPositions.get(parent)!.get(id)
+          : memory!.getPosition(id)
+        : undefined
+      const newRank = memory!.getPosition(id)
+      if (oldRank === newRank && before.parentId === after.parentId) return []
+      const thought = readThought(after)!
+      return [
+        {
+          id: thought.id,
+          value: thought.value,
+          oldRank,
+          newRank,
+          oldParentId: (before.parentId ?? ROOT_PARENT_ID) as ThoughtId,
+          newParentId: thought.parentId,
         },
-        getPosition: id => {
-          const parent = getContent(id)?.parentId
-          if (!parent) return undefined
-          const rows = before()
-          if (!rows.has(parent)) return memory?.getPosition(id)
-          // Diagnostic move logging asks for every sibling's old position; index captured orders once.
-          positions ??= new Map()
-          if (!positions.has(parent))
-            positions.set(parent, new Map(rows.get(parent)?.children.map((child, index) => [child, index])))
-          return positions.get(parent)!.get(id)
-        },
-      },
-      () => {
-        check()
-        const ids = new Set(memory?.nodeIds())
-        before().forEach((row, id) => (row ? ids.add(id) : ids.delete(id)))
-        return ids
-      },
-      check,
-    )
+      ]
+    })
   }
 
-  /** Shares a lazy, scoped previous reader; subscribers otherwise read the latest document. */
+  /** Shares lazy move diagnostics; subscribers otherwise read the latest document. */
   const notify = (batch: MemoryChanges) => {
     if (!listeners.size) return
     const client = memory
     let active = true
-    let before: Map<string, MemoryRow | null> | undefined
-    const previous = previousView(
-      // Index this committed batch on demand, never a later tree state.
-      () => (before ??= new Map(batch.changes.map(change => [change.id, change.before]))),
-      () => {
-        if (!active || client?.revision !== batch.revision) throw new Error('The previous document read has expired')
-      },
-    )
+    let moves: readonly ThoughtMove[] | undefined
+    /** Collects facts before reentrant writes can change the unchanged siblings read from memory. */
+    const getMoves = () => {
+      if (!active || currentTransaction || client?.revision !== batch.revision)
+        throw new Error('Move diagnostics have expired')
+      return (moves ??= collectMoves(batch))
+    }
     try {
       Array.from(listeners).forEach(listener => {
         try {
-          listener(previous)
+          listener(getMoves)
         } catch (error) {
           // A subscriber cannot roll back a committed document or prevent its other consumers from updating.
           console.error('Memory TreeCRDT subscriber failed', error)
@@ -338,24 +337,10 @@ const createMemoryThoughtspace = (
     const previous = currentView
     let active = true
     let prepared: MemoryChanges
-    /** Shares one native transaction across composed commands and scoped diagnostic reads. */
+    /** Shares one native transaction across composed commands. */
     const run = (engine: MemoryTransaction) => {
       currentTransaction = engine
-      const thoughtIds = new Set<ThoughtId>()
-      const childrenChangedIds = new Set<ThoughtId>()
-      let reset = false
       let textChange: ThoughtspaceTransaction['textChange']
-      /** Unions observed boundaries, including a later return to the transaction's initial rows. */
-      const collectChanges = () => {
-        const batch = engine.getChanges()
-        reset ||= batch.reset
-        batch.changes.forEach(change => {
-          thoughtIds.add(change.id as ThoughtId)
-          if (!_.isEqual(change.before?.children, change.after?.children))
-            childrenChangedIds.add(change.id as ThoughtId)
-        })
-        return batch
-      }
       /** Rejects invalid anchors before authoring an insert or move. */
       const checkPlacement = (id: string, parentId: string, afterId: string | null) => {
         if (!active) throw new Error('The document transaction has finished')
@@ -383,26 +368,6 @@ const createMemoryThoughtspace = (
           if (!active) throw new Error('The document transaction has finished')
           return operationOffset + operationIds.length
         },
-        capturePrevious: () => {
-          if (!active) throw new Error('The document transaction has finished')
-          project()
-          const boundary = new Map(collectChanges().changes.map(change => [change.id, change.after]))
-          let batch: MemoryChanges | undefined
-          let before = boundary
-          return previousView(
-            () => {
-              const changes = engine.getChanges()
-              if (batch !== changes) {
-                batch = changes
-                before = new Map([...batch.changes.map(change => [change.id, change.before] as const), ...boundary])
-              }
-              return before
-            },
-            () => {
-              if (!active) throw new Error('The previous document read has expired')
-            },
-          )
-        },
         get operationIds() {
           if (!active) throw new Error('The document transaction has finished')
           return operationIds.slice()
@@ -411,14 +376,9 @@ const createMemoryThoughtspace = (
           if (!active) throw new Error('The document transaction has finished')
           return textChange
         },
-        getChanges: () => {
+        getMoves: () => {
           if (!active) throw new Error('The document transaction has finished')
-          collectChanges()
-          return {
-            thoughtIds: [...thoughtIds],
-            childrenChangedIds: [...childrenChangedIds],
-            reset,
-          }
+          return collectMoves(engine.getChanges())
         },
         revert: ids => {
           if (!active) throw new Error('The document transaction has finished')

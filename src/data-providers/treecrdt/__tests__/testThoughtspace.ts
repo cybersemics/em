@@ -86,7 +86,7 @@ it('finds the first duplicate attribute in canonical order without changing node
   expect(state.thoughts.getChildren(PARENT_ID)).toEqual([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID])
 })
 
-it('reads previous parents and positions inside a transaction and current values afterward', async () => {
+it('captures cross-parent moves and shifted sibling positions as plain facts', async () => {
   await initTestThoughtspace()
   await persistThoughts(
     [
@@ -105,22 +105,28 @@ it('reads previous parents and positions inside a transaction and current values
     },
   )
   const moved = treecrdt.transact(transaction => {
-    const before = transaction.capturePrevious()
     const projected = transaction.update({
       thoughtIndexUpdates: { [THOUGHT_A_ID]: thought(THOUGHT_A_ID, OTHER_PARENT_ID, 'a') },
       movePlacements: { [THOUGHT_A_ID]: THOUGHT_X_ID },
     })
-    expect(before.getChildren(PARENT_ID)).toEqual([THOUGHT_A_ID, THOUGHT_B_ID])
-    expect(before.getPosition(THOUGHT_B_ID)).toBe(1)
-    return projected
+    return { projected, moves: transaction.getMoves(), getMoves: transaction.getMoves }
   })
-  const projected = moved.value
+  const { projected, moves, getMoves } = moved.value
   expect(projected.getChildren(PARENT_ID)).toEqual([THOUGHT_B_ID])
   expect(projected.getChildren(OTHER_PARENT_ID)).toEqual([THOUGHT_X_ID, THOUGHT_A_ID])
   expect(projected.getPosition(THOUGHT_B_ID)).toBe(0)
   expect(projected.getPosition(THOUGHT_A_ID)).toBe(1)
   expect(projected.getThought(THOUGHT_A_ID)).toMatchObject({ parentId: OTHER_PARENT_ID })
   await moved.persisted
+  await treecrdt.transact(transaction => transaction.payload(THOUGHT_A_ID, { value: 'renamed' })).persisted
+  expect(moves).toHaveLength(2)
+  expect(moves).toEqual(
+    expect.arrayContaining([
+      { id: THOUGHT_A_ID, value: 'a', oldRank: 0, newRank: 1, oldParentId: PARENT_ID, newParentId: OTHER_PARENT_ID },
+      { id: THOUGHT_B_ID, value: 'b', oldRank: 1, newRank: 0, oldParentId: PARENT_ID, newParentId: PARENT_ID },
+    ]),
+  )
+  expect(getMoves).toThrow('finished')
 })
 
 it('keeps separately created thoughtspace instances isolated', async () => {

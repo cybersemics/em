@@ -2,6 +2,7 @@ import type { OperationId } from '@treecrdt/interface'
 import Index from './IndexType'
 import Thought from './Thought'
 import ThoughtId from './ThoughtId'
+import ThoughtMove from './ThoughtMove'
 import ThoughtspaceView from './ThoughtspaceView'
 
 /** Synchronous document commands scoped to one atomic editor action. */
@@ -12,13 +13,8 @@ interface ThoughtspaceTransaction {
   readonly operationIds: readonly OperationId[]
   /** Authored text changes for undo policy. Insert/delete count as content; moves and metadata are neutral. */
   readonly textChange?: 'formatting' | 'content'
-  /** Reads invalidations across captured/observed boundaries; reset requires comparing the complete document. */
-  getChanges: () => {
-    thoughtIds: readonly ThoughtId[]
-    /** Parents whose raw child order changed, including payload-less children. */
-    childrenChangedIds: readonly ThoughtId[]
-    reset: boolean
-  }
+  /** Computes diagnostic move facts from the transaction's start to its current state. */
+  getMoves: () => readonly ThoughtMove[]
   /** Authors compensating operations and returns their IDs for redo. */
   revert: (operationIds: readonly OperationId[]) => readonly OperationId[]
   /** Inserts a thought after the named sibling, or first when null. */
@@ -39,8 +35,6 @@ interface ThoughtspaceTransaction {
   }) => ThoughtspaceView
   /** Reads the current canonical document and its derived lexemes. */
   project: () => ThoughtspaceView
-  /** Reads this boundary's previous values until the synchronous transaction callback returns. */
-  capturePrevious: () => Omit<ThoughtspaceView, 'getLexeme' | 'revision'>
   /** Runs only after this whole transaction has been durably persisted. */
   afterPersist: (callback: () => void) => void
 }

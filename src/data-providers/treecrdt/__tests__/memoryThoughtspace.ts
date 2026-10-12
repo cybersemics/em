@@ -2,6 +2,7 @@ import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import { createMemoryClient } from '@treecrdt/wasm/memory'
 import type Thought from '../../../@types/Thought'
 import type ThoughtId from '../../../@types/ThoughtId'
+import type ThoughtMove from '../../../@types/ThoughtMove'
 import type ThoughtspaceView from '../../../@types/ThoughtspaceView'
 import type Timestamp from '../../../@types/Timestamp'
 import { HOME_TOKEN } from '../../../constants'
@@ -216,8 +217,10 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
   const persistent = await createTreecrdtClient({ docId: tsid })
   const runtime = createMemoryThoughtspace(async () => persistent)
   let view: ThoughtspaceView = runtime.project()
-  const unsubscribe = runtime.subscribe(() => {
+  let moves: readonly ThoughtMove[] = []
+  const unsubscribe = runtime.subscribe(getMoves => {
     view = runtime.project()
+    moves = getMoves()
   })
   const payload = { value: 'a', created: 1 as Timestamp, lastUpdated: 1 as Timestamp, updatedBy: 'test' }
   const a: Thought = { ...payload, id: '1'.repeat(32) as ThoughtId, parentId: HOME_TOKEN }
@@ -245,6 +248,13 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
     expect(view.getPosition(a.id)).toBe(1)
     expect(view.getPosition(b.id)).toBe(0)
     expect(view.getLexeme("O'Reilly ?1 $&")).toEqual([a.id])
+    expect(moves).toHaveLength(2)
+    expect(moves).toEqual(
+      expect.arrayContaining([
+        { id: a.id, value: "O'Reilly ?1 $&", oldRank: 0, newRank: 1, oldParentId: HOME_TOKEN, newParentId: HOME_TOKEN },
+        { id: b.id, value: 'b', oldRank: 1, newRank: 0, oldParentId: HOME_TOKEN, newParentId: HOME_TOKEN },
+      ]),
+    )
     runtime.project()
 
     const append = persistent.ops.appendMany.bind(persistent.ops)
@@ -453,7 +463,12 @@ it('projects payload-bearing descendants and their canonical ranks under a paylo
   const parent = '8'.repeat(32) as ThoughtId
   const empty = '9'.repeat(32) as ThoughtId
   const child = 'a'.repeat(32) as ThoughtId
+  const incoming = 'b'.repeat(32) as ThoughtId
   const payload = { value: 'visible child', created: 1 as Timestamp, lastUpdated: 1 as Timestamp, updatedBy: 'remote' }
+  let moves: readonly ThoughtMove[] = []
+  const unsubscribe = runtime.subscribe(getMoves => {
+    moves = getMoves()
+  })
   try {
     await initializeMemoryStorage(persistent, replica)
     await persistent.local.insert(replica, HOME_TOKEN, parent, { type: 'last' }, null)
@@ -493,7 +508,22 @@ it('projects payload-bearing descendants and their canonical ranks under a paylo
     expect(runtime.project().getThought(child)!).toMatchObject({ value: 'visible child', parentId: parent })
     expect(runtime.project().getChildren(parent)).toEqual([child])
     expect(runtime.project().getPosition(child)).toBe(1)
+    expect(moves).toEqual([])
+
+    await persistent.local.delete(replica, empty)
+    await runtime.waitForIdle()
+    expect(moves).toEqual([
+      { id: child, value: 'visible child', oldRank: 1, newRank: 0, oldParentId: parent, newParentId: parent },
+    ])
+
+    await persistent.local.insert(replica, parent, incoming, { type: 'first' }, null)
+    await runtime.waitForIdle()
+    expect(runtime.project().getChildren(parent)).toEqual([child])
+    expect(moves).toEqual([
+      { id: child, value: 'visible child', oldRank: 0, newRank: 1, oldParentId: parent, newParentId: parent },
+    ])
   } finally {
+    unsubscribe()
     await runtime.drop()
   }
 })
