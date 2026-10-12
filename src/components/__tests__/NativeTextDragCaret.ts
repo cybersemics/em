@@ -5,13 +5,12 @@ import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import { getChildrenRanked } from '../../selectors/getChildren'
 import store from '../../stores/app'
-import nativeTextDragCaretStore from '../../stores/nativeTextDragCaretStore'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import selectRange from '../../test-helpers/selectRange'
 
-// Android is tested in its own file because the platform is read from the user agent when the browser module loads,
-// so it must be set before any import. The native text drag handlers are gated on isAndroid, which is true for both
-// Android browsers and the Android app, so an Android Chrome user agent covers both.
+// The platform is read from the user agent when the browser module loads, so it must be set before any import. The
+// native text drag handlers in useNativeTextDrag are gated on isAndroid, which is true for both Android browsers and
+// the Android app, so an Android Chrome user agent covers both.
 vi.hoisted(() => {
   Object.defineProperty(navigator, 'userAgent', {
     configurable: true,
@@ -38,6 +37,12 @@ const getEditable = (text: string) => {
   )
   if (!editable) throw new Error(`No editable with the text "${text}"`)
   return editable
+}
+
+/** Returns the position of the rendered drop caret, or null if none is rendered. */
+const getDropCaret = () => {
+  const caret = document.querySelector<HTMLElement>('[data-testid="native-text-drag-caret"]')
+  return caret && { x: caret.style.left, y: caret.style.top, height: caret.style.height }
 }
 
 /** Selects the given word in the editable, as a double tap does. */
@@ -165,7 +170,7 @@ it('moves dragged text to a single drop caret above the finger', async () => {
 
   // canceling dragover clears the browser's own drop caret under the finger
   expect(dragOver.defaultPrevented).toBe(true)
-  expect(nativeTextDragCaretStore.getState()).toEqual({ x: 30, y: 50, height: 20 })
+  expect(getDropCaret()).toEqual({ x: '30px', y: '50px', height: '20px' })
 
   const drop = await dropBelowCaret(editable)
 
@@ -173,7 +178,7 @@ it('moves dragged text to a single drop caret above the finger', async () => {
   expect(drop.defaultPrevented).toBe(true)
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - Sed et  fringillalacus`)
-  expect(nativeTextDragCaretStore.getState()).toBeNull()
+  expect(getDropCaret()).toBeNull()
   expect(document.body.dataset.nativeTextDrag).toBeUndefined()
 
   // a move within a thought is a single undo step
@@ -226,7 +231,7 @@ it('does not drop dragged text into a read-only thought', async () => {
   act(() => {
     target.dispatchEvent(new MouseEvent('dragover', { bubbles: true, cancelable: true, clientX: 30, clientY: 100 }))
   })
-  expect(nativeTextDragCaretStore.getState()).toBeNull()
+  expect(getDropCaret()).toBeNull()
 
   await dropBelowCaret(target)
 
