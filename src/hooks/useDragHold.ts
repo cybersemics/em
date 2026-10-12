@@ -53,10 +53,10 @@ const useDragHold = ({
         const state = getState()
 
         // Log how the press ended so that a false multiselect, e.g. an OS app switcher swipe misread as a long press, can be diagnosed from the debug log. eventType distinguishes a deliberate release (touchend) from a system-claimed touch (touchcancel).
-        debugLog.log('longPressEnd', () => ({
+        debugLog.log('longPressEnd', {
           eventType: e?.type ?? null,
           dragHold: state.longPress === LongPressState.DragHold,
-        }))
+        })
 
         if (state.longPress === LongPressState.DragHold) {
           if (!hasMulticursor(state)) dispatch(alert(null))

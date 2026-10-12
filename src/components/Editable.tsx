@@ -402,7 +402,7 @@ const Editable = ({
     }
 
     // Log the value transition at the point the edit is committed to Redux. Correlates with the 'change' branch that queued it.
-    debugLog.log('edit', () => ({ oldValue, newValue, rank }))
+    debugLog.log('edit', { oldValue, newValue, rank })
 
     dispatch(
       editThought({
@@ -539,7 +539,7 @@ const Editable = ({
         // Log each retarget step around the native focus/selection calls so a freeze can be pinned to the exact call
         // that stopped returning (the last 'retarget' entry before the log goes silent is the culprit). `deferred`
         // distinguishes these entries from pre-#4607-fix logs, where the retarget ran synchronously in the input event.
-        debugLog.log('retarget', () => ({ step: 'asyncFocus', savedOffset: savedCharOffset, deferred: true }))
+        debugLog.log('retarget', { step: 'asyncFocus', savedOffset: savedCharOffset, deferred: true })
         // asyncFocus dispatches blur synchronously, and focus returns to the editable a few lines below, so the user
         // is still typing. Suppress the blur handlers that resync the editable to the value in Redux, which by now
         // has been trimmed by onChangeHandler: they would swallow the space that committed the autocomplete (#4828).
@@ -549,11 +549,11 @@ const Editable = ({
         asyncFocus({ force: true, preventScroll: true })
         editableSyncStore.update({ suppressBlurSync: false })
 
-        debugLog.log('retarget', () => ({ step: 'preventAutoscroll', savedOffset: savedCharOffset }))
+        debugLog.log('retarget', { step: 'preventAutoscroll', savedOffset: savedCharOffset })
         preventAutoscroll(editable)
         editable.focus({ preventScroll: true })
         // Restore the selection offset captured when insertText(' ') arrived.
-        debugLog.log('retarget', () => ({ step: 'selection.set', savedOffset: savedCharOffset }))
+        debugLog.log('retarget', { step: 'selection.set', savedOffset: savedCharOffset })
         selection.set(editable, { offset: savedCharOffset })
         preventAutoscrollEnd(editable)
       })
@@ -566,19 +566,18 @@ const Editable = ({
     // which React's synthetic onChange does not fully expose (e.g. beforeinput, composition, and focus retargeting).
 
     /** Logs the key sequence leading into an autocomplete freeze. */
-    const onEditableKeyDown = (e: KeyboardEvent) =>
-      debugLog.log('keydown', () => ({ key: e.key, isComposing: e.isComposing }))
+    const onEditableKeyDown = (e: KeyboardEvent) => debugLog.log('keydown', { key: e.key, isComposing: e.isComposing })
 
     /** Logs beforeinput, which precedes each mutation and reveals intent (e.g. insertReplacementText) even if input never fires. */
     const onEditableBeforeInput = (e: Event) =>
       e instanceof InputEvent &&
-      debugLog.log('beforeinput', () => ({ inputType: e.inputType, data: e.data, isComposing: e.isComposing }))
+      debugLog.log('beforeinput', { inputType: e.inputType, data: e.data, isComposing: e.isComposing })
 
     /** Logs IME composition boundaries; iOS autocorrect runs inside a composition and a hang may straddle these. */
-    const onEditableCompositionStart = () => debugLog.log('composition', () => ({ phase: 'start' }))
+    const onEditableCompositionStart = () => debugLog.log('composition', { phase: 'start' })
     /** Logs the end of an IME composition, including the committed data. */
     const onEditableCompositionEnd = (e: CompositionEvent) =>
-      debugLog.log('composition', () => ({ phase: 'end', data: e.data }))
+      debugLog.log('composition', { phase: 'end', data: e.data })
 
     /** Describes an element so focus retargeting during autocomplete can be traced. An editable's aria-label carries its thought id. Reads attributes only: isContentEditable would force a style recalculation. */
     const describeElement = (el: Element | null) => ({
@@ -742,13 +741,13 @@ const Editable = ({
           // The newValue === oldValue short-circuit is the primary defense against the re-entrant change loop (#4467).
           // Logging it reveals whether the guard is firing because this short-circuit is being defeated (values differ
           // every cycle) or bypassed entirely.
-          debugLog.log('change', () => ({
+          debugLog.log('change', {
             branch: 'noop',
             isClipboardInsert,
             oldValue,
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
-          }))
+          })
 
           // if we cancel the edit, we have to cancel pending its
           // this can occur for example by editing a value away from and back to its
@@ -764,35 +763,35 @@ const Editable = ({
         }
 
         if (readonly) {
-          debugLog.log('change', () => ({
+          debugLog.log('change', {
             branch: 'readonly',
             isClipboardInsert,
             oldValue,
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
-          }))
+          })
           dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
           throttledChangeRef.current.cancel() // see above
           return
         } else if (uneditable) {
-          debugLog.log('change', () => ({
+          debugLog.log('change', {
             branch: 'uneditable',
             isClipboardInsert,
             oldValue,
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
-          }))
+          })
           dispatch(error({ value: `"${ellipsize(oldValueClean)}" is uneditable.` }))
           throttledChangeRef.current.cancel() // see above
           return
         } else if (options && !options.includes(newValue.toLowerCase())) {
-          debugLog.log('change', () => ({
+          debugLog.log('change', {
             branch: 'invalid',
             isClipboardInsert,
             oldValue,
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
-          }))
+          })
           invalidStateError(newValue)
           throttledChangeRef.current.cancel() // see above
           return
@@ -856,13 +855,13 @@ const Editable = ({
           isDivider(newValue)
         ) {
           // update new supercript value and url boolean
-          debugLog.log('change', () => ({
+          debugLog.log('change', {
             branch: 'immediate',
             isClipboardInsert,
             oldValue,
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
-          }))
+          })
           throttledChangeRef.current.flush()
           // if a style needs to be re-applied with cursorClearedWrapper, the editable needs to re-render immediately to prevent
           // a flash of unstyled content
@@ -873,13 +872,13 @@ const Editable = ({
             cursorOffset: cursorOffsetWithEmojiSpace,
           })
         } else {
-          debugLog.log('change', () => ({
+          debugLog.log('change', {
             branch: 'throttled',
             isClipboardInsert,
             oldValue,
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
-          }))
+          })
           throttledChangeRef.current(newValue, { rank, simplePath })
         }
       })
@@ -1004,7 +1003,7 @@ const Editable = ({
           // state.isKeyboardOpen before useEditMode focuses the editable.
           const isSpuriousTapFocus = touchStore.getState().suppressCursorAfterTouch && !state.isKeyboardOpen
           if (isSpuriousTapFocus) {
-            debugLog.log('guard', () => ({ step: 'suppressCursorAfterTouch' }))
+            debugLog.log('guard', { step: 'suppressCursorAfterTouch' })
           }
           // The drag (#4683) and spurious tap dismissals stay iOS-only. They exist because iOS reopens the
           // keyboard on top of the drag-and-drop hint after it was dismissed at drag start, which has not been

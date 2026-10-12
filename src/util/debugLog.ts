@@ -247,15 +247,17 @@ const formatEntry = ({ seq, t, dt, type, ...fields }: DebugLogEntry): string => 
  * Appends an entry to the rolling buffer and persists its chunk synchronously. No-op when logging is disabled. Never
  * throws, so instrumentation can never worsen a freeze or break editing.
  *
- * The fields are passed as a function rather than an object, so that nothing is computed for them while logging is
- * off, which it is in production unless the user turns it on. The function is called synchronously, so it reads the
- * same values an object would have captured, and inside the try, so a field that throws costs only its entry.
+ * Fields whose values are static (variables, property reads, literals) are passed as an object. Fields that call a
+ * function or read layout are passed as a function returning the object instead, so that nothing is computed for them
+ * while logging is off, which it is in production unless the user turns it on. The function is called synchronously,
+ * so it reads the same values an object would have captured, and inside the try, so a field that throws costs only its
+ * entry. The em/no-precomputed-debug-log-fields lint rule enforces the split.
  */
-const log = (type: string, fields?: () => Record<string, unknown>): void => {
+const log = (type: string, fields?: Record<string, unknown> | (() => Record<string, unknown>)): void => {
   if (!enabled) return
   try {
     // computed before anything else, so a field that throws leaves seq and dt as if the entry had never been attempted
-    const capped = capFields(fields?.())
+    const capped = capFields(typeof fields === 'function' ? fields() : fields)
     const now = performance.now()
     const dt = lastTime === 0 ? 0 : Math.round(now - lastTime)
     lastTime = now
