@@ -591,7 +591,7 @@ export const split = (el: HTMLElement): SplitResult | null => {
  * the caret is not in a thought. The editable's rect is returned rather than the element so that callers needing it
  * do not measure it again.
  */
-const caretRectViewport = (): { editableRect: DOMRect; x: number; y: number; height: number } | null => {
+export const caretRectViewport = (): { editableRect: DOMRect; x: number; y: number; height: number } | null => {
   const editable = document.activeElement
   if (!isHTMLElement(editable) || !isContentEditable(editable)) return null
 
