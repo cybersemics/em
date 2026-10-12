@@ -8,6 +8,9 @@ import emojiRegex from './emojiRegex'
 
 export const TOOLBAR_HEIGHT = 50
 
+// Placeholder for an empty thought. Shown in the outline once an empty thought has gone untouched for a few seconds, and in place of the text of an empty thought, or of an empty ancestor in its breadcrumbs, listed in Favorites, Recently Edited, or Recently Deleted.
+export const EMPTY_THOUGHT_PLACEHOLDER = 'This is an empty thought'
+
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
@@ -679,3 +682,12 @@ export const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
   commandCenter: 'showCommandCenter',
   undoSlider: 'showUndoSlider',
 }
+
+/** Practice repetitions needed to learn a command. Captured into a command's progress record when it is first pinned, so changing this does not change existing records. Provisional value pending a product decision (see #5485). */
+export const LEARNING_TARGET_REPS = 5
+
+/** Width and height of the pinned command ring's box in CSS px, from the Figma export. */
+export const PINNED_COMMAND_RING_SIZE = 73
+
+/** Horizontal space, in the nav bar's own (font-scaled) px, that the bottom chrome leaves free on the right while a command is pinned so that its text and buttons do not run under the ring or its extended tap target. */
+export const PINNED_COMMAND_RESERVED_WIDTH = 62
