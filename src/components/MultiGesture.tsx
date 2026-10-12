@@ -3,6 +3,7 @@ import { GestureResponderEvent, PanResponder, PanResponderInstance, View, ViewSt
 import Direction from '../@types/Direction'
 import Gesture from '../@types/Gesture'
 import { noop } from '../constants'
+import { caretRectViewport } from '../device/selection'
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import testFlags from '../e2e/testFlags'
 import { clearGesture, updateGesture } from '../stores/gestureStore'
@@ -112,6 +113,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   scrolling = false
   sequence: Gesture = ''
   touchTarget: Element | null = null
+  // the number of touchmove events since the first finger landed, logged on touchend
+  touchMoves = 0
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -137,6 +140,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             disableScroll: this.disableScroll,
           })
         }
+        this.touchMoves++
         if (this.disableScroll) {
           e.preventDefault()
         }
@@ -153,6 +157,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // toolbar, and the next gesture would be abandoned. See #5850.
       if (e.touches.length === 1) {
         this.multitouch = false
+        this.touchMoves = 0
         this.reset()
       }
 
@@ -194,6 +199,26 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
         debugLog.log('touchstart', () => ({ x: Math.round(x), y: Math.round(y) }))
+        // Record where the caret and the thought being edited were when the touch began, so that a touch iOS swallows
+        // near the caret can be placed relative to it (#4222). The read is deferred to the next frame because a
+        // keystroke just before the touch leaves layout pending, and reading geometry here would force it in the
+        // middle of the handler. Animation frame callbacks run before the frame's own layout, so the read performs
+        // that layout early instead of adding one. The caret does not move until the finger lifts.
+        if (debugLog.isEnabled()) {
+          requestAnimationFrame(() => {
+            const caret = caretRectViewport()
+            if (!caret) return
+            debugLog.log('touchCaret', () => ({
+              x: Math.round(caret.x),
+              y: Math.round(caret.y),
+              height: Math.round(caret.height),
+              editableLeft: Math.round(caret.editableRect.left),
+              editableTop: Math.round(caret.editableRect.top),
+              editableRight: Math.round(caret.editableRect.right),
+              editableBottom: Math.round(caret.editableRect.bottom),
+            }))
+          })
+        }
         this.clientStart = { x, y }
         // Remember the element the browser pinned this touch to, so a release can still be detected
         // if that element unmounts mid-gesture. See the pointerup listener below.
@@ -214,8 +239,14 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       if (testFlags.logMultigesture) {
         console.info('touchend')
       }
-      const touch = e.changedTouches[0]
-      debugLog.log('touchend', () => (touch ? { x: Math.round(touch.clientX), y: Math.round(touch.clientY) } : {}))
+      // A touch that iOS swallows gets no touchmove however far the finger travels, so it ends with moves: 0 (#4222).
+      debugLog.log('touchend', () => {
+        const touch = e.changedTouches[0]
+        return {
+          ...(touch ? { x: Math.round(touch.clientX), y: Math.round(touch.clientY) } : {}),
+          moves: this.touchMoves,
+        }
+      })
       // Only clear the multitouch latch once every finger is up. Fingers leave one at a time, so clearing it on the
       // first touchend would let the last finger still down be tracked as a new single-finger gesture.
       if (e.touches.length === 0) {
