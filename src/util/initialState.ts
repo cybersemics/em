@@ -107,7 +107,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     authenticated: false,
     autologin: storage.getItem('autologin') === 'true',
     commandUniverseNavigation: {
-      entries: [{ entryId: 'root', page: { pageId: 'grid', props: {} } }],
+      entries: [{ entryId: 'root', page: { pageId: 'grid', props: {} }, arrival: null }],
       index: 0,
     },
     contextViews: {},
@@ -132,6 +132,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     jumpHistory: storageModel.get('jumpHistory'),
     jumpIndex: 0,
     latestCommands: [],
+    learning: storageModel.get('learning'),
     longPress: LongPressState.Inactive,
     manualSortMap: {},
     modals: {},

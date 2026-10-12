@@ -1,3 +1,4 @@
+import debugLog from '../../util/debugLog'
 import scheduleScrollCursorIntoView from '../scheduleScrollCursorIntoView'
 import scrollTo from '../scrollTo'
 
@@ -42,4 +43,29 @@ it('supersedes a scroll the cursor had queued', () => {
 
   expect(windowScrollTo).toHaveBeenCalledTimes(1)
   expect(windowScrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 0 }))
+})
+
+it('records an explicit scroll in the debug log', () => {
+  vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+  debugLog.setEnabled(true)
+  debugLog.clear()
+
+  scrollTo('top', 'smooth')
+
+  expect(debugLog.read()).toEqual([
+    expect.objectContaining({ type: 'scroll', source: 'scrollTo', target: 'top', top: 0, behavior: 'smooth' }),
+  ])
+})
+
+it('records the inputs to a cursor scroll in the debug log', () => {
+  vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+  debugLog.setEnabled(true)
+  debugLog.clear()
+
+  scheduleScrollCursorIntoView(cursorSize)
+  vi.advanceTimersByTime(1000)
+
+  expect(debugLog.read()).toEqual([
+    expect.objectContaining({ type: 'scroll', source: 'cursor', y: 5000, height: 20, direction: 'down' }),
+  ])
 })

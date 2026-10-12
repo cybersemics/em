@@ -38,8 +38,8 @@ const historyMethod = isTouch ? 'replaceState' : 'pushState'
 // Nothing subscribes to them, so a write costs one comparison, and the Path is held inside an object because the
 // factory merges object updates with a spread, which would flatten an array into keys.
 
-/** The last path that is passed to updateUrlHistoryThrottled. Used to short circuit updateUrlHistory when the cursor hasn't changed without having to call decodeThoughtsUrl which is relatively slow. */
-const pathPrevStore = ministore<{ path: Path | null }>({ path: null })
+/** The last path that is passed to updateUrlHistoryThrottled, and the url it left in the address bar. Used to short circuit updateUrlHistory when the cursor hasn't changed without having to call decodeThoughtsUrl which is relatively slow. The url is needed because browser back/forward changes the address bar without going through updateUrlHistory, so returning to the previous path within the throttle window would otherwise never be written. */
+const pathPrevStore = ministore<{ path: Path | null; url: string | null }>({ path: null, url: null })
 
 /** The last cursor, the value of its thought, and the last multicursors. Updated immediately on every action. The multicursors are compared by identity, since the reducers that write state.multicursors only replace it when the selection changes. */
 const cursorPrevStore = ministore<{ cursor: Path | null; value: string | null; multicursors: Index<Path> | null }>({
@@ -109,8 +109,9 @@ const updateUrlHistory = (state: State, path: Path) => {
   }
 
   // nothing to update if the cursor has not changed
-  if (state.isLoading || equalPath(pathPrevStore.getState().path, path)) return
-  pathPrevStore.update({ path })
+  const pathPrev = pathPrevStore.getState()
+  if (state.isLoading || (equalPath(pathPrev.path, path) && pathPrev.url === window.location.href)) return
+  pathPrevStore.update({ path, url: window.location.href })
 
   const decoded = decodeThoughtsUrl(state)
   const encoded = head(path || HOME_PATH)
@@ -119,7 +120,9 @@ const updateUrlHistory = (state: State, path: Path) => {
   const decodedPath = decoded.path || [HOME_TOKEN]
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
-  if (equalArrays(path, decodedPath) && decoded.contextViews[encoded] === state.contextViews[encoded]) return
+  // a null cursor is compared as the home path, otherwise navigating back to the home page would push a duplicate entry and discard the forward history (#5747)
+  if (equalArrays(path || HOME_PATH, decodedPath) && decoded.contextViews[encoded] === state.contextViews[encoded])
+    return
 
   const stateWithNewContextViews = {
     ...state,
@@ -137,6 +140,7 @@ const updateUrlHistory = (state: State, path: Path) => {
         '',
         pathToUrl(stateWithNewContextViews, path || [HOME_TOKEN]),
       )
+      pathPrevStore.update({ url: window.location.href })
     } catch (e) {
       // TODO: Fix SecurityError on mobile when ['', ''] gets encoded into '//'
       console.error(e)

@@ -17,7 +17,12 @@ import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 import { usePersistentTreecrdtStorage } from '../setup'
 
+// Keep the upper bound above 450px at the default font size so long pulls exercise the full resistance curve.
 const OVERSCROLL_DOCUMENT = `
+      - preceding 1
+      - preceding 2
+      - preceding 3
+      - preceding 4
       - a
       - b
       - c

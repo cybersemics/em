@@ -104,16 +104,25 @@ export const hashCommand = (keyboard: string | Key): string => {
   )
 }
 
+/**
+ * The letter or digit of the physical key an Option chord was struck on, e.g. 'KeyN' -> 'N'. Option + N, E, I, U, and `
+ * compose as dead keys on macOS, which mangles e.key ('Dead' in Chrome, '~' in Safari) and e.keyCode (192, the tilde
+ * key) alike, leaving e.code as the only faithful source. Restricted to Option so that unmodified typing — including
+ * IME composition, where keyCode is the 229 sentinel and e.code is still the physical key — resolves as it otherwise
+ * would.
+ */
+const optionChordKey = (e: KeyboardEvent): string | undefined =>
+  e.altKey ? /^(?:Key|Digit)(.)$/.exec(e.code)?.[1] : undefined
+
 /** Hash all the properties of a keydown event into a string that can be compared with the result of hashCommand. */
 export const hashKeyDown = (e: KeyboardEvent): string =>
   (e.metaKey || e.ctrlKey ? 'META_' : '') +
   (e.altKey ? 'ALT_' : '') +
   (isMac && e.ctrlKey ? 'CONTROL_' : '') +
   (e.shiftKey ? 'SHIFT_' : '') +
-  // for some reason, e.key returns 'Dead' in some cases, perhaps because of alternate keyboard settings
-  // e.g. alt + meta + n
-  // use e.keyCode if available instead
-  (letters[e.keyCode] || digits[e.keyCode] || e.key || '').toUpperCase()
+  // keyCode is tried before e.code so that a layout which reports a letter's keyCode faithfully keeps resolving through
+  // it, e.g. AZERTY reports keyCode 65 for the physical KeyQ.
+  (letters[e.keyCode] || digits[e.keyCode] || optionChordKey(e) || e.key || '').toUpperCase()
 
 /* A map of typed modifier tokens to the corresponding Key modifier property.
  * Command and Ctrl are the same modifier on their respective platforms, so they both map to meta. Literal Control is
@@ -762,6 +771,13 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     }
   }
 
+  // In training mode, show the command's label as a gesture hint.
+  // Dispatch it before the command executes so that an alert raised by the command itself (e.g. an error explaining why it cannot be executed) replaces the label rather than being replaced by it.
+  const showLabel = !getUserSetting(state, Settings.experienceMode) && !!command && !command.hideAlert
+  if (command && showLabel) {
+    store.dispatch(alert(command.label, { alertType: AlertType.GestureHint }))
+  }
+
   // execute command
   // do not execute when modal is displayed or a drag is in progress
   if (
@@ -803,7 +819,6 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
   // clear gesture hint
   clearGestureMenuTimer()
 
-  // In training mode, show alert for any valid command (except forward/back)
   // In experience mode, clear any existing gesture hint
   setTimeout(() => {
     store.dispatch((dispatch, getState) => {
@@ -815,21 +830,16 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
         dispatch(gestureMenu())
       }
 
-      // Show alert for valid commands in training mode
-      if (!experienceMode && command && !command.hideAlert) {
-        dispatch(
-          alert(command.label, {
-            alertType: AlertType.GestureHint,
-          }),
-        )
-      } else if (
+      // Do not clear the label shown above, nor the alert that the command raised in its place
+      if (
+        !showLabel &&
         // Clear alert if gesture is cancelled (no command)
-        !command ||
-        // Clear alert if back/forward
-        command?.id === 'cursorForward' ||
-        command?.id === 'cursorBack' ||
-        // In experience mode, clear any existing gesture hint
-        (experienceMode && alertType === AlertType.GestureHint)
+        (!command ||
+          // Clear alert if back/forward
+          command?.id === 'cursorForward' ||
+          command?.id === 'cursorBack' ||
+          // In experience mode, clear any existing gesture hint
+          (experienceMode && alertType === AlertType.GestureHint))
       ) {
         dispatch(alert(null))
       }

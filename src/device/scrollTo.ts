@@ -1,3 +1,4 @@
+import debugLog from '../util/debugLog'
 import scheduleScrollCursorIntoView from './scheduleScrollCursorIntoView'
 
 /** Scrolls the content to the top, the bottom, or a given scrollTop. Always scrolls instantly in integration tests, ignoring the passed behavior. */
@@ -15,6 +16,10 @@ const scrollTo = (target: 'top' | 'bottom' | number, behavior?: ScrollBehavior) 
   scheduleScrollCursorIntoView.cancel()
   // Let an active elastic return yield before moving the viewport, so it cannot undo this navigation.
   window.dispatchEvent(new Event('em-scroll'))
+
+  // Record the explicit scroll without reading any geometry; the viewport scrollStart and scrollEnd entries that
+  // follow carry the scroll position before and after, and the command or action entry before it names the caller.
+  debugLog.log('scroll', { source: 'scrollTo', target, top, behavior })
 
   window.scrollTo({
     top,

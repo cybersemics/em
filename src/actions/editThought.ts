@@ -154,7 +154,7 @@ const editThought = (
 
   const thoughtNew: Thought = {
     ...editedThoughtWithoutPendingFormat,
-    ...(editedThought.generating ? { generating: false } : null),
+    ...(editedThought.generating ? { generating: false, generatingPlaceholder: undefined } : null),
     // Editing a value does not change the thought's created timestamp, so under a Created sort its rank already
     // reflects its sort key and must be preserved. Re-ranking it would move it past siblings created in the same
     // millisecond, which sort by rank (#4085).
@@ -183,7 +183,7 @@ const editThought = (
     noteParentThought && getSortPreference(state, noteParentThought.parentId).type === 'Note'
       ? {
           ...noteParentThought,
-          rank: getSortedRank(state, noteParentThought.parentId, newValue),
+          rank: getSortedRank(state, noteParentThought.parentId, newValue, { staleId: noteParentThought.id }),
           lastUpdated: timestamp(),
           updatedBy: clientId,
         }

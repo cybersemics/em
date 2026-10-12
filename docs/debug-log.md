@@ -2,24 +2,26 @@
 
 A rolling record of what **em** did, kept on the device so that a bug nobody can reproduce still leaves evidence behind. It exists for the failures that defeat ordinary debugging: a freeze that takes the console with it, a gesture that misfires once a week, a thought that lands under the wrong parent on someone else's phone and nowhere else.
 
-Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of its content comes from [`loggerMiddleware`](../src/redux-middleware/loggerMiddleware.ts), which captures every dispatched action; the rest comes from the editor ([`Editable`](../src/components/Editable.tsx)), gestures ([`MultiGesture`](../src/components/MultiGesture.tsx)), app switching and viewport resizes ([`initEvents`](../src/util/initEvents.ts)), and persistence ([`pushQueue`](../src/redux-enhancers/pushQueue.ts)).
+Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of its content comes from [`loggerMiddleware`](../src/redux-middleware/loggerMiddleware.ts), which captures every dispatched action; the rest comes from the editor ([`Editable`](../src/components/Editable.tsx)), gestures ([`MultiGesture`](../src/components/MultiGesture.tsx)), the iOS app's keyboard events ([`iOSCapacitorHandler`](../src/device/virtual-keyboard/handlers/iOSCapacitorHandler.ts)), programmatic scrolls ([`scrollCursorIntoView`](../src/device/scrollCursorIntoView.ts), [`scrollTo`](../src/device/scrollTo.ts)), app switching, viewport resizes and uncaught errors ([`initEvents`](../src/util/initEvents.ts)), render errors ([`ErrorBoundaryContainer`](../src/components/ErrorBoundaryContainer.tsx)), and persistence ([`pushQueue`](../src/redux-enhancers/pushQueue.ts)).
 
 ## What it is
 
 A bounded buffer of 5000 entries, sharded across ten rotating `localStorage` keys so appending one entry rewrites 500 entries rather than all of them. Writes are **synchronous**, which is the whole point: an entry survives the freeze that happens on the next line. Nothing is ever transmitted — the log leaves the device only when a person exports it.
 
-Every entry shares an envelope and adds its own fields:
+Every entry shares an envelope and adds its own fields. As `format()` exports it:
 
 ```
-[2026-09-12T13:03:39.239Z] +2ms #24 action {"actionType":"indent","payload":"{}"}
- └ wall clock          └ ms since  └ seq  └ type  └ event-specific fields
-                         the last
-                         entry
+--- date: 2026-10-11
+09:12:10.849 +6ms #34 action editThought {"oldValue":"","newValue":"S","path":["53484e1cb3"],"cursorOffset":1}
 ```
+
+Left to right: the UTC time of day, `dt` (milliseconds since the previous entry), `seq`, the type, the actionType (on `action` entries only), and the event-specific fields.
 
 `seq` is monotonic, so a gap means entries were dropped and a counter climbing while `dt` collapses toward zero means a runaway loop.
 
-A `format()` dump wraps the entries in three things. Above them, a `--- device` / `--- userAgent` / `--- version` / `--- commit` header, rendered at format time so it survives however much the rolling buffer has evicted. Below them, `--- lastFrameAt`, the last animation frame the page painted, and `--- state.thoughts`, every thought by id, value, rank and parent. The frame marker is what separates a freeze *in* the app from one below it — if the marker keeps advancing past the last entry, the page was still painting and the hang is at the native layer.
+The export is read only by agents, so it is shaped for tokens rather than for a person. Each entry carries the UTC time of day, under a `--- date` line written before the first entry and wherever the date changes. Thought ids are cut to their first 10 characters everywhere in the export, the `--- state` line and `--- state.thoughts` dump included — at that length two of the roughly 2000 ids a full buffer holds share a prefix about once in a million logs — while reserved ids such as `HOME_TOKEN` stay whole. An action's payload is parsed back out of the string it was logged as and spread into the fields. Fields that carry nothing are dropped: `isComposing: false`, a `value` that only repeats a reserved id, and the `label` and `source` of `commandMetadata`, which repeat its `commandId`. All of it happens on export: the stored buffer keeps payloads stringified so the 2000-character field cap bounds them in `localStorage`, and a payload that cap has cut stays a `payload` string.
+
+A `format()` dump wraps the entries in three things. Above them, a `--- device` / `--- userAgent` / `--- version` / `--- commit` / `--- display` / `--- url` header, rendered at format time so it survives however much the rolling buffer has evicted. `--- display` names whether em is an installed PWA or a browser tab, the orientation, device pixel ratio, pinch-zoom scale and bottom safe-area inset. `--- url` is the page the log was copied from, which tells production, a preview deployment and localhost apart. When entries before the first retained one are gone — the buffer wrapped, or a storage quota error dropped older chunks — a `--- evicted: N earlier entries` line follows, since `seq` counts from the last `clear()`. Below them, `--- lastFrameAt`, the last animation frame the page painted; `--- state`, the view the log ended on — the cursor path, caret offset, whether the keyboard was open and the note focused, and how many paths were expanded, how many multicursors were set and how deep the undo and redo stacks were; and `--- state.thoughts`, every thought by id, value, rank and parent. The view is there because the entries can only reconstruct it from `setCursor` and its kin, which a long session evicts first. The frame marker is what separates a freeze *in* the app from one below it — if the marker keeps advancing past the last entry, the page was still painting and the hang is at the native layer.
 
 Logging is **off** in production unless the user turns on **Debug Logging** in Settings. It auto-enables on localhost and `*.vercel.app`, excluding test environments (Vitest via `MODE`, Puppeteer via `navigator.webdriver`) and the native Capacitor and Tauri shells, which serve production builds from localhost-like origins. On an auto-enabled host the Settings checkbox switches a device-local opt-out instead of the synced setting, so a preview build can be aligned with production for performance testing without disabling logging on the user's other devices.
 
@@ -31,17 +33,21 @@ Logging is **off** in production unless the user turns on **Debug Logging** in S
 | A script or agent | `window.em.debugLog` — `format(state)`, `read()`, `clear()`, `setEnabled()`, `setConsole()`. |
 | An agent reproducing a bug | [`scripts/debug-log-capture.ts`](../scripts/debug-log-capture.ts), which attaches through the e2e bridges and writes to a file. |
 
-A reporter attaches the downloaded file to an issue under a `## Debug Log` heading — see [`write-issue`](../.github/skills/write-issue/SKILL.md).
+A reporter attaches the downloaded file to an issue under a `## Debug Log` heading — see [`create-issue`](../.github/skills/create-issue/SKILL.md).
+
+The log carries thought text verbatim, in value fields, typed keystrokes, action payloads and the `state.thoughts` dump. An agent quoting a reporter's log into an issue replaces the personal parts of that text with placeholders first, keeping Lexemes intact; [`create-issue`](../.github/skills/create-issue/SKILL.md#anonymizing-user-data) lists every place it appears.
 
 ### Streaming to the console
 
-`debugLog.setConsole(true)` mirrors every entry to `console.info` as it is appended, behind a `debugLog` prefix, in the same line format `format()` writes. The choice is recorded in `localStorage`, so it survives the page reloads a reproduction performs — though not `localStorage.clear()`, which takes it along with everything else.
+`debugLog.setConsole(true)` mirrors every entry to `console.info` as it is appended, behind a `debugLog` prefix, in the same line format `format()` writes, `--- date` lines included. The choice is recorded in `localStorage`, so it survives the page reloads a reproduction performs — though not `localStorage.clear()`, which takes it along with everything else.
 
 It is **off by default on every host**, including the ones where logging itself auto-enables. The log captures every `selectionchange` and every input event, so mirroring it buries the console for anyone not specifically reading it.
 
 Use it to watch a single interaction live, through a browser MCP's console listing. Do not use it to capture a whole reproduction: four steps of editing produce about 6 KB, and a full buffer approaches a megabyte. Dump the buffer to a file instead.
 
 ## In tests
+
+In Puppeteer, a test under investigation for a flake is wrapped in [`withDebugLog`](../src/e2e/puppeteer/helpers/withDebugLog.ts), which records the log and appends it to the error if the test fails.
 
 Logging is off in Vitest and Puppeteer, so a test that wants entries calls `debugLog.setEnabled(true)` and usually `debugLog.clear()` right after, to drop the session marker. It cleans up nothing afterwards: the module's in-memory state is restored at every test boundary by `resetStores` (see [Isolation and cleanup](testing.md#isolation-and-cleanup)), which runs the `reset` that `debugLog.ts` registers.
 
@@ -57,11 +63,11 @@ The reason to capture a log while reproducing a bug is to hold it against the re
 `diff` cannot do this. Two runs of the *same* steps share almost no bytes, because every entry carries a fresh sequence number, timestamp and delta, and every thought carries a random 128-bit id:
 
 ```
-#16 action {"actionType":"newThought","payload":"{\"at\":null,\"value\":\"\"}"}
-#20 action {"actionType":"editThought","payload":"{…\"path\":[\"97e810f0…\"]…}"}
+#16 action newThought {"at":null,"value":""}
+#20 action editThought {…"path":["97e810f0c6"]…}
 
-#56 action {"actionType":"newThought","payload":"{\"at\":null,\"value\":\"\"}"}
-#60 action {"actionType":"editThought","payload":"{…\"path\":[\"94701f3d…\"]…}"}
+#56 action newThought {"at":null,"value":""}
+#60 action editThought {…"path":["94701f3dbf"]…}
 ```
 
 Those are the same two keystrokes. Measured on two live captures of one four-step interaction: `diff` reports **79 of 84 lines changed**.
@@ -71,8 +77,8 @@ Those are the same two keystrokes. Measured on two live captures of one four-ste
 - `seq`, `t` and `dt` are dropped.
 - Thought ids are numbered by **first appearance within their own log**, so the nth distinct thought either log creates gets the same placeholder in both. That is what makes two runs of the same steps compare equal.
 - Reserved ids ([`HOME_TOKEN`](../src/constants.ts) and the rest, all carrying 24+ leading zeros) are left alone. They mean the same thing on every device, so canonicalizing them would discard the only ids that are directly comparable.
-- Per-device nonces and wall-clock stamps — `clientId`, `updatedBy`, `lastUpdated` — are masked, in the plain form and in the escaped form they take inside a stringified payload.
-- The environment is reported side by side rather than compared, since it differs between any two devices by construction. It is read from the `---` header, falling back to the `session` entry for logs written before that header existed — the header is preferred because the session entry is an ordinary entry, which the rolling buffer evicts in exactly the long sessions whose logs are most worth comparing.
+- Per-device nonces and wall-clock stamps — `clientId`, `updatedBy`, `lastUpdated` — are masked, in the plain form and in the escaped form they take inside a payload the field cap cut, which stays a string.
+- The environment is reported side by side rather than compared, since it differs between any two devices by construction. It is read from the `---` header, falling back to the `session` entry for an excerpt read off the console mirror, which has no header — the header is preferred because the session entry is an ordinary entry, which the rolling buffer evicts in exactly the long sessions whose logs are most worth comparing.
 - `frameGap` entries are dropped by default: they measure how loaded the device was, so a reporter's phone produces many and a headless browser almost none. `--include frameGap` keeps them, which is what a freeze or jank report wants.
 
 Those same two captures compare as **identical**. The report is bounded, so neither log's size reaches the reader.
@@ -83,9 +89,18 @@ The procedure an agent follows — download, arm, drive, capture, compare, and h
 
 Some shapes worth recognizing:
 
+- **`viewport` entries from an iPhone** are read against the two viewports Safari keeps while the keyboard is open; [iOS Safari Viewport](ios-safari-viewport.md) explains which field fixed elements follow and what a stale or uncovered fixed element looks like in them.
+
+- **An `error` entry** is an uncaught error, with its name, message and stack (cut at the 2000-character field cap). Its `source` says where it was caught: `window` for an uncaught exception, which also shows the error banner; `unhandledrejection` for a rejected promise nothing handled, which is logged and nothing more; `render` for a component that threw while rendering, which replaces the app with the error screen and carries a `componentStack` locating it in the tree.
 - **A `push` with no matching `pushSynced`** is a write that never completed. See [Persistence](persistence.md).
 - **An `integrity` entry** reports siblings sharing an exact rank, which makes their order ambiguous and is the signature of a data-integrity fault.
 - **`move` entries** are diffed out of the thought index rather than logged by any one reducer, so they catch a reorder from every source — drag and drop, sort, undo, remote sync — without special-casing any of them.
 - **The log stopping while `lastFrameAt` keeps advancing** means the page was still painting: the hang is below the app.
+- **A `touchend` logged within a few milliseconds before the next `touchstart`** is one that iOS 27 withheld until that touch began ([#5660](https://github.com/cybersemics/em/issues/5660)); a `touchend` that arrived on time precedes the next `touchstart` by the gap between the taps. A `longPressEnd` with `eventType: "mouseup"` is a press that the lift's `mouseup` ended, since iOS still fires `mouseup` when a withheld touch lifts.
 - **`dt` collapsing toward zero across many entries** is a tight loop.
-- **`viewport` entries** record the window, layout viewport (`clientHeight`) and visual viewport sizes, the scroll position and whether the keyboard is open. One is written on every resize that changes them, one when the app becomes active (`resume`), and one a second later (`settled`), since iOS can finish resizing after the page is active without firing a resize event. A `clientHeight` or `visualViewportHeight` well below `innerHeight` while `isKeyboardOpen` is false means the page is still laid out for a keyboard that is gone: fixed and sticky elements such as the nav bar are then pinned mid-screen.
+- **An `undoPatchError` entry** precedes the "Error applying patch" error. It names the action that failed to merge into the last undo step (which is otherwise missing from the log, since the throw unwinds the dispatch before it is logged) and lists that step's op paths, the one that no longer resolves among them.
+- **`scroll` entries** are programmatic scrolls, named by `source`: `cursor` when the cursor was scrolled into view, with the inputs to that decision (the cursor's `y` and `height` in the layout tree, `layoutTreeTop`, `scrollY`, the cursor's `yViewport`, the `toolbarBottom` and `bottomBoundary` it had to fit between, whether the keyboard was open, the `visualViewportHeight` and `effectiveViewportHeight` that set the bottom boundary, the document's `scrollHeight`, and the resulting `top` and `behavior`); `scrollTo` for an explicit scroll to the top, the bottom or a position. Scrolls that leave the cursor in view log nothing. The resulting movement shows in the `viewport` `scrollStart` and `scrollEnd` entries that follow.
+- **`focus` and `blur` entries** (touch WebKit only: iOS Safari and the iOS app) describe the active element by tag, `data-testid`, `aria-label` — an editable's carries its thought id — and `contenteditable` attribute. At `blur` the active element is almost always `BODY`, so the informative field is `relatedTarget`, the element focus is moving to. A `tap` entry carries `isKeyboardOpen`, `noteFocus` and `cursorOffset` as Redux has them, beside the `activeElement`, so a false edit mode or caret can be traced to the tap where the two first disagree.
+- **A `caret` entry** is a programmatic caret placement — on Enter, a gesture, undo, or a tap — naming the thought, the `offset`, whether focus was routed through `asyncFocus`, and whether the editable was `hidden` (in which case the selection is cleared instead). Programmatic focus is what makes iOS scroll an editable into view.
+- **`keyboard` entries** (iOS app only) are the keyboard as iOS reports it: `willShow` with the `rawHeight`, and `willHide`. A `willShow` marked `ignored` arrived during a drag and changed nothing. Compare them with the `keyboardOpen` actions that set `isKeyboardOpen` to see which side moved first when edit mode disagrees with the screen.
+- **`viewport` entries** record the window, layout viewport (`clientHeight`) and visual viewport sizes, the scroll position, and whether the keyboard is open. One is written on every resize that changes them, one when the app becomes active (`resume`), one a second later (`settled`), since iOS can finish resizing after the page is active without firing a resize event, and one at the start and end of every scroll (`scrollStart`, `scrollEnd`) — not on each scroll event, which would flood the buffer. A `clientHeight` or `visualViewportHeight` well below `innerHeight` while `isKeyboardOpen` is false means the page is still laid out for a keyboard that is gone: fixed and sticky elements such as the nav bar are then pinned mid-screen.

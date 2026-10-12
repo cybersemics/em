@@ -1,8 +1,11 @@
 import DOMPurify from 'dompurify'
 import _ from 'lodash'
+import { marked } from 'marked'
 import { parse } from 'text-block-parser'
 import Block from '../@types/Block'
 import { ALLOWED_ATTR, ALLOWED_TAGS, REGEX_NONFORMATTING_HTML, REGEX_PLAINTEXT_BULLET } from '../constants'
+import isMarkdown from './isMarkdown'
+import markdownToText from './markdownToText'
 
 // regex that checks if the value starts with closed html tag
 // Note: This regex cannot check properly for a tag nested within itself. However for general cases it works properly.
@@ -268,9 +271,15 @@ const blocksToHtml = (parsedBlocks: Block[]): string =>
     })
     .join('\n')
 
-/** Parses plaintext, indented text, or HTML and converts it into HTML that himalaya can parse. */
+/** Parses plaintext, indented text, markdown, RTF, or HTML and converts it into HTML that himalaya can parse. */
 const textToHtml = (input: string) => {
-  const normalizedInput = REGEX_RTF.test(input) ? rtfToTaggedText(input) : input
+  // marked discards block-level HTML up to the next blank line, so only markdown without any is converted here.
+  // Markdown wrapped in HTML is left for parse-then-route (#5175) to unwrap after sanitizing, and convert as pure markdown.
+  const normalizedInput = REGEX_RTF.test(input)
+    ? rtfToTaggedText(input)
+    : isMarkdown(input) && !marked.lexer(input.trim()).some(token => token.type === 'html')
+      ? markdownToText(input)
+      : input
 
   // if the input text starts with a closed html tag
   const isHtml =
