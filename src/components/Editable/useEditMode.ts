@@ -367,7 +367,7 @@ const useEditMode = ({
     const onFocus = () => {
       queueMicrotask(() => preventAutoscrollEnd(editable))
 
-      // #5660: iOS 27 can withhold a tap's touchend until the next touch, so the tap's mousedown arrives while the
+      // #5761: iOS 27 can withhold a tap's touchend until the next touch, so the tap's mousedown arrives while the
       // touch still looks like a press in progress, and onMouseDown leaves the caret to the browser. The focus that
       // follows would then set the cursor without an offset, which puts the caret at the start of the thought.
       // Place it where the touch landed instead, before Editable's onFocus runs. A focus on iOS 26 and earlier

@@ -66,7 +66,7 @@ describe('Double tap', () => {
     expect(await isKeyboardShown()).toBe(true)
   })
 
-  // https://github.com/cybersemics/em/issues/5660
+  // https://github.com/cybersemics/em/issues/5761
   it('a tap on another thought after a double tap places the caret where it lands', async () => {
     await newThought('hello')
     await newThought('world')
