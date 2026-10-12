@@ -136,3 +136,20 @@ it('Disable the export button and hide Copy to clipboard when there is nothing t
   expect(screen.getByRole('button', { name: 'Download' })).toBeDisabled()
   expect(screen.queryByLabelText('copy-clipboard-btn')).not.toBeInTheDocument()
 })
+
+it('renders the thought in the export phrase as visible text', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - &lt;b&gt;a&lt;/b&gt; <b>b</b>
+      `,
+    }),
+  ])
+
+  await dispatch(showModal({ id: 'export' }))
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const exportPhraseElement = (await screen.findAllByText('Download'))[0]
+  expect(exportPhraseElement.textContent).toEqual('Download "<b>a</b> b" as Plain Text')
+})

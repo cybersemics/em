@@ -591,7 +591,7 @@ export const split = (el: HTMLElement): SplitResult | null => {
  * the caret is not in a thought. The editable's rect is returned rather than the element so that callers needing it
  * do not measure it again.
  */
-const caretRectViewport = (): { editableRect: DOMRect; x: number; y: number; height: number } | null => {
+export const caretRectViewport = (): { editableRect: DOMRect; x: number; y: number; height: number } | null => {
   const editable = document.activeElement
   if (!isHTMLElement(editable) || !isContentEditable(editable)) return null
 
@@ -733,6 +733,13 @@ export const isNear = (
   if (!rect) return false
 
   return isNearBounds(x, y, rect, distance)
+}
+
+/** Returns true if the point is inside the editable that holds the collapsed caret, at most distance px right of it. */
+export const isRightOfCaret = (x: number, y: number, distance: number): boolean => {
+  if (!isActive() || !isCollapsed()) return false
+  const caret = caretRectViewport()
+  return !!caret && isNearBounds(x, y, caret.editableRect, 0) && x <= caret.x + distance
 }
 
 /**

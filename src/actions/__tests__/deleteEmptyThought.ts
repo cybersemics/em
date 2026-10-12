@@ -250,6 +250,28 @@ describe('context view', () => {
     // cursor should be on the next context
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
   })
+
+  // https://github.com/cybersemics/em/issues/5858
+  it('archive the hidden children of an empty thought whose context view is open', () => {
+    const steps = [
+      importText({
+        text: `
+        -
+          - =favorite`,
+      }),
+      setCursor(['']),
+      toggleContextView,
+      deleteEmptyThought,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - =archive
+    - =favorite`)
+    expect(stateNew.alert?.value).toBe('Deleted =favorite')
+  })
 })
 
 it('merge thought should respect space if any (whitespace at end of left splitted value)', () => {
