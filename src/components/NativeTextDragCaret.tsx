@@ -10,7 +10,7 @@ const NativeTextDragCaret = () => {
       className={css({
         position: 'fixed',
         width: '2px',
-        backgroundColor: 'blue',
+        backgroundColor: 'caret',
         pointerEvents: 'none',
         zIndex: 'popup',
       })}
