@@ -100,6 +100,27 @@ it('a selection change after a long press begins does not end it', async () => {
   expect(screen.queryByText(AlertText.DragAndDrop)).not.toBeNull()
 })
 
+// https://github.com/cybersemics/em/issues/5895
+it.skip('a long press ends when iOS takes over a touch whose touchend it withholds', async () => {
+  await dispatch(importText({ text: '- One' }))
+  await act(vi.runOnlyPendingTimersAsync)
+  const bullet = getBulletByContext(['One'])
+
+  await touchStart(bullet)
+  await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
+  expect(screen.queryByText(AlertText.DragAndDrop)).not.toBeNull()
+
+  // iOS scrolls the page natively, which cancels the pointer, and sends neither touchcancel nor touchend
+  await act(async () => {
+    bullet.dispatchEvent(Object.assign(new Event('pointercancel', { bubbles: true }), { pointerType: 'touch' }))
+  })
+  await act(() => vi.advanceTimersByTimeAsync(100))
+
+  expect(screen.queryByText(AlertText.DragAndDrop)).toBeNull()
+  // a press that the system took over is not a deliberate release, so it does not select the thought
+  expect(hasMulticursor(store.getState())).toBe(false)
+})
+
 it('a mouseup does not end a touch press before WebKit 27', async () => {
   osVersionStore.update(26)
   await dispatch(importText({ text: '- One' }))
