@@ -502,6 +502,8 @@ Run Appium in addition to `yarn start`, then run `yarn test:ios:local`. The loca
 
 WebdriverIO tests provide automated test coverage of actual iOS and Android devices in the cloud with BrowserStack. This allows us to cover some of the trickiest platform-specific behaviors, such as browser selection and autoscroll. The same blackbox rules apply as for puppeteer tests.
 
+Shared BrowserStack devices have Auto-Correction turned off, so no WebdriverIO test sees iOS autocorrect or its suggestions. [`undo.ts`](../src/e2e/iOS/__tests__/undo.ts) stands in for a correction by typing the replacement over a selection, which WebKit records as the same single native undo step. Behavior that depends on the suggestion itself, such as the gesture dead zone near the caret ([#4222](https://github.com/cybersemics/em/issues/4222)), needs a physical device.
+
 `wdio` executes test suites with native `WebDriver` support via `@wdio/mocha-framework` and `@wdio/browserstack-service`, which is responsible for session and credential management. `wdio` also provides lifecycle hooks that are helpful for initiating a session efficiently.
 
 The configuration files live in [src/e2e/iOS/config](../src/e2e/iOS/config). [wdio.base.conf.ts](../src/e2e/iOS/config/wdio.base.conf.ts) contains common iOS Safari settings and lifecycle hooks. [wdio.browserstack.conf.ts](../src/e2e/iOS/config/wdio.browserstack.conf.ts) loads credentials and configures `@wdio/browserstack-service` for iOS Safari. The dev-server probe, the BrowserStack slot wait, and the Cloudflare tunnel claim live in [browserStackLauncherHooks.ts](../src/e2e/iOS/config/browserStackLauncherHooks.ts), an `onPrepare`/`onComplete` pair that both BrowserStack configs spread. [wdio.local.conf.ts](../src/e2e/iOS/config/wdio.local.conf.ts) configures local Appium and the iOS Simulator.
@@ -1276,6 +1278,8 @@ await vi.runAllTimersAsync()
 https://github.com/cybersemics/em/pull/2741
 
 In a rendered JSDOM test, wrap timer advancement that causes React updates in `act`.
+
+Work deferred to the next animation frame needs only `requestAnimationFrame` faked: `vi.useFakeTimers({ toFake: ['requestAnimationFrame'] })`, then `vi.advanceTimersToNextFrame()` between asserting that the work has not happened yet and asserting that it has, as the `touchCaret` tests in [`MultiGesture.ts`](../src/components/__tests__/MultiGesture.ts) do.
 
 The same flush settles an asynchronous command. `generateThought`, `generateEmoji`, `defineTerm`, and `organizeThought` each await a network request and, under multicursor, hold an undo bracket open across the selection. With `fetch` mocked, that whole run is timer- and microtask-bound, so one `vi.runAllTimersAsync()` after `executeCommandWithMulticursor` brings the store to its settled state, undo bracket closed included:
 
