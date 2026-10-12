@@ -6,7 +6,6 @@ import gestures from '../../../test-helpers/gestures'
 import gesture from '../helpers/gesture'
 import getElementRectByScreen from '../helpers/getElementRectByScreen'
 import getSelection from '../helpers/getSelection'
-import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import isKeyboardShown from '../helpers/isKeyboardShown'
 import newThought from '../helpers/newThought'
 import setSelection from '../helpers/setSelection'
@@ -112,10 +111,13 @@ describe('Gesture over a thought (diagnostic)', () => {
   it('after a double tap on the caret of another thought', async () => {
     await newThought('One')
     await newThought('Two')
-    await hideKeyboardByTappingDone()
     const one = await waitForEditable('One')
+    // the keyboard is still open from typing Two, so the tap moves edit mode to One
     await tap(one, { pointerType: 'touch' })
     await waitUntil(isKeyboardShown)
+    await waitUntil(async () =>
+      browser.execute(() => document.querySelector('[data-editing=true] [data-editable]')?.textContent === 'One'),
+    )
 
     await tap(one, { offset: 'One'.length, pointerType: 'touch', count: 2 })
     await waitUntil(async () => (await getSelection().toString()) === 'One')
@@ -135,10 +137,13 @@ describe('Gesture over a thought (diagnostic)', () => {
   it('while another thought is being edited', async () => {
     await newThought('One')
     await newThought('Two')
-    await hideKeyboardByTappingDone()
     const one = await waitForEditable('One')
+    // the keyboard is still open from typing Two, so the tap moves edit mode to One
     await tap(one, { pointerType: 'touch' })
     await waitUntil(isKeyboardShown)
+    await waitUntil(async () =>
+      browser.execute(() => document.querySelector('[data-editing=true] [data-editable]')?.textContent === 'One'),
+    )
 
     const two = await waitForEditable('Two')
     const rect = await getElementRectByScreen(two)
