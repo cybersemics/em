@@ -451,7 +451,7 @@ export const executeCommand = (
   // A repeated command takes the keyboardIndex that was recorded with it, since the repeat keypress matches none of its own keyboard shortcuts. Otherwise it is derived from the event.
   const keyboardIndex = keyboardIndexArg ?? resolved.keyboardIndex
   const commandMetadata = createCommandMetadata(command, { type: inputMethod, event, keyboardIndex })
-  debugLog.log('command', () => ({ id: command.id, commandType }))
+  debugLog.log('command', { id: command.id, commandType })
 
   return commandStore.dispatch(
     commandTransaction(commandMetadata, (dispatch, metadata) => {

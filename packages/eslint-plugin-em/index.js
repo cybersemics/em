@@ -112,16 +112,18 @@ const plugin = {
         type: 'suggestion',
         docs: {
           description:
-            'Disallow a variable that is computed only to be logged by debugLog.log, outside the fields function and unguarded by debugLog.isEnabled().',
+            'Require debug log fields that do work to be computed inside the fields function passed to debugLog.log: no call or layout read in a fields object, and no variable computed only for the log outside it.',
         },
         schema: [],
         messages: {
           precomputed:
             "'{{names}}' is computed only for debugLog.log, so it is computed even while logging is off. Compute it inside the fields function, or guard it with debugLog.isEnabled().",
+          nonStatic:
+            'This field value {{reason}}, which is done even while logging is off. Pass the fields as a function instead: debugLog.log(type, () => ({ ... })).',
         },
       },
       /**
-       * Reports a variable declaration whose variables are read only inside debugLog.log calls, unless it is guarded by debugLog.isEnabled(). The fields function passed to debugLog.log defers only what is written inside it, so a value computed above the call is computed for every user, with logging on or off. See docs/debug-log.md.
+       * Reports two ways of computing debug log fields while logging is off. A fields object passed to debugLog.log must be static: a call, a construction, or a read of a property that forces layout or serializes the DOM belongs in a fields function, which is called only while logging is on. And a variable read only inside debugLog.log calls must not be computed above them unless it is guarded by debugLog.isEnabled(), since the fields function defers only what is written inside it. See docs/debug-log.md.
        *
        * @param context
        */
@@ -130,6 +132,66 @@ const plugin = {
         if (filename.includes('/__tests__/')) return {}
 
         const { sourceCode } = context
+
+        // Properties that do work when read, without parentheses to show it: layout reads, and DOM serialization.
+        const expensiveProperties = new Set([
+          'clientHeight',
+          'clientLeft',
+          'clientTop',
+          'clientWidth',
+          'innerHeight',
+          'innerHTML',
+          'innerText',
+          'innerWidth',
+          'offsetHeight',
+          'offsetLeft',
+          'offsetParent',
+          'offsetTop',
+          'offsetWidth',
+          'outerHTML',
+          'outerText',
+          'pageXOffset',
+          'pageYOffset',
+          'scrollHeight',
+          'scrollLeft',
+          'scrollTop',
+          'scrollWidth',
+          'scrollX',
+          'scrollY',
+          'textContent',
+        ])
+
+        /**
+         * Returns the first node in an expression that does work when evaluated, with the reason, or null if the expression only reads variables, properties and literals.
+         *
+         * @param node
+         */
+        const findWork = node => {
+          if (!node || typeof node.type !== 'string') return null
+          if (node.type === 'CallExpression') return { node, reason: 'calls a function' }
+          if (node.type === 'NewExpression') return { node, reason: 'constructs an object' }
+          if (node.type === 'TaggedTemplateExpression') return { node, reason: 'calls a template tag' }
+          if (node.type === 'AwaitExpression') return { node, reason: 'awaits a promise' }
+          if (
+            node.type === 'MemberExpression' &&
+            !node.computed &&
+            node.property.type === 'Identifier' &&
+            expensiveProperties.has(node.property.name)
+          ) {
+            return { node, reason: `reads ${node.property.name}, which forces layout or serializes the DOM` }
+          }
+          // a function defined in a field is not called by defining it
+          if (node.type === 'ArrowFunctionExpression' || node.type === 'FunctionExpression') return null
+          for (const key of sourceCode.visitorKeys[node.type] ?? []) {
+            const child = node[key]
+            const children = Array.isArray(child) ? child : [child]
+            for (const grandchild of children) {
+              const work = findWork(grandchild)
+              if (work) return work
+            }
+          }
+          return null
+        }
 
         /**
          * Whether a node is a call to debugLog.<method>.
@@ -236,6 +298,13 @@ const plugin = {
         }
 
         return {
+          CallExpression(node) {
+            if (!isDebugLogCall(node, 'log')) return
+            const fields = node.arguments[1]
+            if (!fields || fields.type === 'ArrowFunctionExpression' || fields.type === 'FunctionExpression') return
+            const work = findWork(fields)
+            if (work) context.report({ node: work.node, messageId: 'nonStatic', data: { reason: work.reason } })
+          },
           VariableDeclarator(node) {
             if (!node.init) return
             // defining a function computes nothing until it is called

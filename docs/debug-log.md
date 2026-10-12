@@ -27,7 +27,9 @@ Logging is **off** in production unless the user turns on **Debug Logging** in S
 
 ## Adding an entry
 
-An entry's fields are passed as a function, `debugLog.log('touchstart', () => ({ x, y }))`, never as an object. Logging is off for almost every production user, and an object would be built on every call only to be thrown away; the function is called only while logging is on. TypeScript enforces the form. `log` calls the function synchronously, so it reads the same values an object would have, and inside its own `try`, so a field that throws (reading a node that has since been removed, say) drops that one entry rather than escaping into the code that logged it. An entry with no fields, `debugLog.log('x')`, needs no function.
+An entry's fields take one of two forms. Fields whose values are static — variables, property reads, literals — are passed as an object: `debugLog.log('swipe', { dir, sequence: this.sequence })`. Fields that call anything, `Math.round` included, or read a property that forces layout or serializes the DOM (`scrollY`, `scrollHeight`, `offsetTop`, `textContent` and the like, which do work without parentheses) are passed as a function returning the object: `debugLog.log('touchstart', () => ({ x: Math.round(x), y: Math.round(y) }))`. Logging is off for almost every production user, and the function is called only while it is on, so that work is never done to be thrown away. An object of static values costs only its own allocation. The `em/no-precomputed-debug-log-fields` lint rule reports a call, a construction or one of those property reads in a fields object, and says to pass a function instead.
+
+`log` calls the function synchronously, so it reads the same values an object would have, and inside its own `try`, so a field that throws (reading a node that has since been removed, say) drops that one entry rather than escaping into the code that logged it. An entry with no fields, `debugLog.log('x')`, needs neither.
 
 The function only defers what is written inside it. Three kinds of work still need an explicit `debugLog.isEnabled()` check around them:
 

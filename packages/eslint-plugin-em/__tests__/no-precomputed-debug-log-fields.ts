@@ -12,6 +12,27 @@ const filename = '/repo/src/components/Thing.ts'
 
 ruleTester.run('no-precomputed-debug-log-fields', plugin.rules['no-precomputed-debug-log-fields'], {
   valid: [
+    // static fields: variables, property reads and literals
+    {
+      code: "const f = (e, dir) => { debugLog.log('x', { dir, key: e.key, sequence: this.sequence, n: 1, label: `${dir}!`, nested: { a: [dir] } }) }",
+      filename,
+    },
+    {
+      code: "const f = move => { debugLog.log('move', move) }",
+      filename,
+    },
+    {
+      code: "const f = () => { debugLog.log('x', () => ({ y: Math.round(window.scrollY) })) }",
+      filename,
+    },
+    {
+      code: "const f = () => { debugLog.log('x') }",
+      filename,
+    },
+    {
+      code: "debugLog.log('x', { y: Math.round(y) })",
+      filename: '/repo/src/util/__tests__/thing.ts',
+    },
     {
       code: "const f = () => { debugLog.log('x', () => ({ rect: el.getBoundingClientRect() })) }",
       filename,
@@ -58,6 +79,34 @@ ruleTester.run('no-precomputed-debug-log-fields', plugin.rules['no-precomputed-d
     },
   ],
   invalid: [
+    {
+      code: "const f = () => { debugLog.log('x', { y: Math.round(y) }) }",
+      filename,
+      errors: [{ messageId: 'nonStatic', data: { reason: 'calls a function' } }],
+    },
+    {
+      code: "const f = () => { debugLog.log('x', { ...describe(el) }) }",
+      filename,
+      errors: [{ messageId: 'nonStatic', data: { reason: 'calls a function' } }],
+    },
+    {
+      code: "const f = () => { debugLog.log('x', { at: new Date() }) }",
+      filename,
+      errors: [{ messageId: 'nonStatic', data: { reason: 'constructs an object' } }],
+    },
+    // no parentheses, but a layout read
+    {
+      code: "const f = () => { debugLog.log('x', { y: window.scrollY }) }",
+      filename,
+      errors: [
+        { messageId: 'nonStatic', data: { reason: 'reads scrollY, which forces layout or serializes the DOM' } },
+      ],
+    },
+    {
+      code: "const f = touch => { debugLog.log('x', touch ? { x: touch.clientX, text: el.textContent } : {}) }",
+      filename,
+      errors: [{ messageId: 'nonStatic' }],
+    },
     {
       code: "const f = () => { const rect = el.getBoundingClientRect(); debugLog.log('x', () => ({ rect })) }",
       filename,

@@ -58,7 +58,7 @@ const warnDuplicateRanks = (state: State, parentId: ThoughtId): void => {
     const duplicates = children
       .filter(sibling => sibling.rank === child.rank)
       .map(sibling => ({ id: sibling.id, value: truncateValue(sibling.value) }))
-    debugLog.log('integrity', () => ({ issue: 'duplicateRank', parentId, rank: child.rank, thoughts: duplicates }))
+    debugLog.log('integrity', { issue: 'duplicateRank', parentId, rank: child.rank, thoughts: duplicates })
     console.warn(`Duplicate sibling rank ${child.rank} under thought ${parentId}`, duplicates)
   })
 }
@@ -88,7 +88,7 @@ const logThoughtMoves = (stateBefore: State, stateAfter: State, actionType: stri
   })
 
   if (moves.length <= MAX_MOVES) {
-    moves.forEach(move => debugLog.log('move', () => move))
+    moves.forEach(move => debugLog.log('move', move))
   } else {
     debugLog.log('moveBatch', () => ({ actionType, count: moves.length, sample: moves.slice(0, MAX_MOVES) }))
   }
@@ -143,7 +143,7 @@ const loggerMiddleware: Middleware<any, State, Dispatch> = store => {
         } catch {
           payloadStr = String(payload)
         }
-        debugLog.log('action', () => ({ actionType: type ?? 'unknown', payload: payloadStr }))
+        debugLog.log('action', { actionType: type ?? 'unknown', payload: payloadStr })
       }
 
       // getState() after next(action) reflects the fully reduced state, including enhancer reducers (undo patches
