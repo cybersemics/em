@@ -89,7 +89,7 @@ The first argument is always **theirs**, the second **yours**. In the report, `-
 
 Read the report in this order — the cheap sections often answer the question before the diff does.
 
-1. **Environment.** Device (platform, shell, screen, pointer), user agent, em version, build commit. A divergence explained by "they are three versions behind" needs no further analysis.
+1. **Environment.** Device (platform, shell, screen, pointer), user agent, em version, build commit, URL. A divergence explained by "they are three versions behind" needs no further analysis.
 2. **Entry types in only one log.** Frequently the whole answer. `composition` entries in theirs and none in yours means an IME was involved. `move` in theirs and none in yours means a reorder your run never performed.
 3. **First divergence.** The entry where the two streams stop agreeing, with matching context above it.
 4. **The alignment that follows it.** Later divergences, in case the first is incidental.
@@ -108,7 +108,7 @@ When the head of the report is noise, narrow the window and look again rather th
 | `--tail <n>` | Compare only the last n entries. The fastest way to focus on the moment of failure. |
 | `--anchor <type>` | Start at the last entry of a type. Defaults to `session`, so a reporter's log covering several app launches is compared from the last one. |
 | `--no-anchor` | Compare from the top, when the bug predates the last launch in their log. |
-| `--ignore <types>` | Drop noisy entry types, e.g. `--ignore frameGap,selectionchange,lifecycle`. |
+| `--ignore <types>` | Drop noisy entry types, e.g. `--ignore frameGap,selectionchange,lifecycle`. `scroll` and `viewport` entries carry device geometry, so they differ between any two devices; add them when the bug is not about scrolling. |
 | `--include frameGap` | Keep the frame-gap entries that are dropped by default — they are the signal for a freeze or jank report. |
 | `--mask <fields>` | Mask another field that differs by construction between devices. |
 | `--context`, `--max-lines` | Widen or tighten how much of the alignment is printed. |

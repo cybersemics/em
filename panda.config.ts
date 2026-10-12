@@ -531,6 +531,7 @@ export default defineConfig({
             'toolbarOverlay',
             'toolbarArrow',
             'toolbar',
+            'pinnedCommand',
             'navbar',
             'backgroundGlowFalloff',
             'latestCommands',
