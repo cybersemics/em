@@ -9,15 +9,21 @@ import getThoughtById from '../../selectors/getThoughtById'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('delete', () => {
   const state = reducerFlow([newThought('a'), newThought('b')])(initialState())
   const rootChildrenBefore = getAllChildrenByContext(state, [HOME_TOKEN])
   const [thoughtA] = childIdsToThoughts(state, rootChildrenBefore)
 
-  const stateNew = deleteThoughtAtFirstMatch(['b'])(state)
+  const stateNew = runDocumentCommand(deleteThoughtAtFirstMatch(['b']), state)
 
   const rootChildrenAfter = getAllChildrenByContext(stateNew, [HOME_TOKEN])
   expect(rootChildrenAfter).toEqual([thoughtA.id])
@@ -27,22 +33,23 @@ it('delete', () => {
 })
 
 it('delete descendants', () => {
-  const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), deleteThoughtAtFirstMatch(['a'])]
-
-  const stateNew = reducerFlow(steps)(initialState())
+  const state = reducerFlow([newThought('a'), newSubthought('b'), newSubthought('c'), newThought('d')])(initialState())
+  const deletedIds = [['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'd']].map(context =>
+    contextToThoughtId(state, context)!,
+  )
+  const stateNew = runDocumentCommand(deleteThoughtAtFirstMatch(['a']), state)
 
   // thoughtIndex
   expect(getThoughtById(stateNew, HOME_TOKEN)).toBeTruthy()
-  expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a'])!)).toBeUndefined()
-  expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a', 'b'])!)).toBeUndefined()
-  expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a', 'b', 'c'])!)).toBeUndefined()
+  expect(deletedIds.map(id => getThoughtById(stateNew, id))).toEqual([undefined, undefined, undefined, undefined])
 
-  expect(stateNew.thoughts.thoughtIndex[HOME_TOKEN].childrenMap).toBeEmpty()
+  expect(stateNew.thoughts.getChildren(HOME_TOKEN)).toEqual([])
 
   // lexemeIndex
   expect(getLexeme(stateNew, 'a')).toBeUndefined()
   expect(getLexeme(stateNew, 'b')).toBeUndefined()
   expect(getLexeme(stateNew, 'c')).toBeUndefined()
+  expect(getLexeme(stateNew, 'd')).toBeUndefined()
 })
 
 it('delete thought with duplicate child', () => {
@@ -54,7 +61,7 @@ it('delete thought with duplicate child', () => {
   expect(getThoughtById(stateNew, HOME_TOKEN)).toBeTruthy()
   expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a'])!)).toBeUndefined()
 
-  expect(stateNew.thoughts.thoughtIndex[HOME_TOKEN].childrenMap).toBeEmpty()
+  expect(stateNew.thoughts.getChildren(HOME_TOKEN)).toEqual([])
 
   // lexemeIndex
   expect(getLexeme(stateNew, 'a')).toBeUndefined()

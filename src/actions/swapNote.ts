@@ -1,16 +1,17 @@
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, findAnyChild } from '../selectors/getChildren'
-import getRankAfter from '../selectors/getRankAfter'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -25,7 +26,7 @@ import setCursor from './setCursor'
 import uncategorize from './uncategorize'
 
 /** Swaps a thought with a literal note, preserving path-based note definitions. */
-const swapNote = (state: State): State => {
+const swapNote = (state: State, _payload: undefined = undefined, transaction?: ThoughtspaceTransaction): State => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -83,12 +84,11 @@ const swapNote = (state: State): State => {
             const noteChildId = anyChild(state, noteId)!.id
             const oldPath = appendToPath(cursor, noteId, noteChildId)
             const newPath = appendToPath(cursor, noteChildId)
-            const newRank = getRankAfter(state, appendToPath(simplePath, noteId))
             const note = pathToThought(state, oldPath)
 
             return note
               ? reducerFlow([
-                  moveThought({ oldPath, newPath, newRank }),
+                  moveThought({ oldPath, newPath, afterId: noteId }),
                   // delete =note
                   deleteThought({
                     pathParent: cursor,
@@ -107,13 +107,17 @@ const swapNote = (state: State): State => {
                           child => normalizeThought(child.value) === normalizeThought(note.value),
                         )
                     return resultChild
-                      ? setCursor(state, {
-                          offset: resultChild.value.length,
-                          path: appendToPath(cursor, resultChild.id),
-                        })
+                      ? setCursor(
+                          state,
+                          {
+                            offset: resultChild.value.length,
+                            path: appendToPath(cursor, resultChild.id),
+                          },
+                          transaction,
+                        )
                       : state
                   },
-                ])(state)
+                ])(state, transaction)
               : null
           },
         ]
@@ -132,15 +136,19 @@ const swapNote = (state: State): State => {
           // move the existing =note child into the parent if it exists
           state => {
             return parentNoteChildId
-              ? moveThought(state, {
-                  oldPath: appendToPath(
-                    parentOf(cursor),
-                    findDescendant(state, head(parentOf(cursor)), '=note')!,
-                    parentNoteChildId,
-                  ),
-                  newPath: appendToPath(parentOf(cursor), parentNoteChildId),
-                  newRank: getRankAfter(state, simplePath),
-                })
+              ? moveThought(
+                  state,
+                  {
+                    oldPath: appendToPath(
+                      parentOf(cursor),
+                      findDescendant(state, head(parentOf(cursor)), '=note')!,
+                      parentNoteChildId,
+                    ),
+                    newPath: appendToPath(parentOf(cursor), parentNoteChildId),
+                    afterId: head(simplePath),
+                  },
+                  transaction,
+                )
               : null
           },
           // use uncategorize to move the cursor's children to the parent
@@ -151,27 +159,35 @@ const swapNote = (state: State): State => {
           state => {
             const noteId = findDescendant(state, head(parentOf(cursor)), '=note')!
             return getThoughtById(state, thoughtId)
-              ? moveThought(state, {
-                  oldPath: cursor,
-                  newPath: appendToPath(parentOf(cursor), noteId, thoughtId),
-                  newRank: 0,
-                })
-              : newThought(state, {
-                  at: appendToPath(parentOf(cursor), noteId),
-                  insertNewSubthought: true,
-                  preventSetCursor: true,
-                  value: value,
-                })
+              ? moveThought(
+                  state,
+                  {
+                    oldPath: cursor,
+                    newPath: appendToPath(parentOf(cursor), noteId, thoughtId),
+                    afterId: null,
+                  },
+                  transaction,
+                )
+              : newThought(
+                  state,
+                  {
+                    at: appendToPath(parentOf(cursor), noteId),
+                    insertNewSubthought: true,
+                    preventSetCursor: true,
+                    value: value,
+                  },
+                  transaction,
+                )
           },
           setCursor({ path: parentNoteChildId ? appendToPath(parentOf(cursor), parentNoteChildId) : parentOf(cursor) }),
         ],
-  )(state)
+  )(state, transaction)
 }
 
 /** Action-creator for swapNote. */
 export const swapNoteActionCreator = (): Thunk => dispatch => dispatch({ type: 'swapNote' })
 
-export default swapNote
+export default command(swapNote)
 
 // Register this action's metadata
 registerActionMetadata('swapNote', {

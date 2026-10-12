@@ -1,5 +1,4 @@
 import React from 'react'
-import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { dropHoverRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
@@ -8,6 +7,7 @@ import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import { LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
+import useEditorSelector from '../hooks/useEditorSelector'
 import usePinDropHover from '../hooks/usePinDropHover'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
@@ -26,20 +26,20 @@ import parentOf from '../util/parentOf'
 
 /** Renders a drop-hover element unconditionally. */
 const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
-  const dropHoverColorValue = useSelector(state => dropHoverColor(state, simplePath.length))
+  const dropHoverColorValue = useEditorSelector(state => dropHoverColor(state, simplePath.length))
 
-  const isTableCol1 = useSelector(state =>
+  const isTableCol1 = useEditorSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
 
-  const animateHover = useSelector(state => {
+  const animateHover = useEditorSelector(state => {
     const parent = parentOf(simplePath)
     const autofocus = calculateAutofocus(state, simplePath)
     const autofocusParent = calculateAutofocus(state, parent)
     return autofocus === 'dim' && autofocusParent === 'hide'
   })
   const thoughtId = head(simplePath)
-  const insideDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
+  const insideDivider = useEditorSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
 
   return (
     <span
@@ -75,7 +75,7 @@ const DropHoverIfVisible = ({
   simplePath: SimplePath
 }) => {
   // true if a thought is being dragged over this drop hover
-  const showDropHover = useSelector(state => {
+  const showDropHover = useEditorSelector(state => {
     /** Returns true if hovering over current thought. */
     const isThoughtHovering = () =>
       state.hoveringPath &&

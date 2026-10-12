@@ -5,7 +5,7 @@ Metaprogramming is **em**'s mechanism for changing app behavior from inside a th
 Three things make this work:
 
 1. Any thought value beginning with `=` is treated as a **meta-attribute** — hidden by default in normal view, and skipped during ordinary navigation.
-2. The data structure stores meta-attribute children under their *value* in `childrenMap` (e.g. `childrenMap['=pin']`), giving the lookup a constant-time fast path. See [data-model.md](data-model.md).
+2. `findDescendant` resolves meta-attribute children by *value* from current document reads. See [data-model.md](data-model.md).
 3. The `attribute()` / `attributeEquals()` / `findDescendant()` selectors hide the lookup behind a small API.
 
 Generally, an attribute affects *only its parent thought*. Three special attributes broadcast settings to descendants: `=children` and `=grandchildren` apply attributes one and two levels down, and `=descendants` applies recursively to the entire subtree (currently only `=pin`).
@@ -14,25 +14,15 @@ Meta-attribute children are hidden in normal view. Toggle the **Show Hidden Thou
 
 ## How attributes are stored and read
 
-`childrenMap` keys meta-attribute children by *value* rather than by `ThoughtId`. So a parent with three children `b`, `c`, and `=pin` looks like:
+Attributes are ordinary TreeCRDT children. `state.thoughts.getChildren(id)` reads their canonical order from the current tree; `findDescendant` scans current children for each value step. Duplicate attributes remain in traversal, but lookup selects the first in sibling order. There is no retained attribute cache, so child renames are visible immediately.
 
-```ts
-{
-  childrenMap: {
-    '<id of b>': '<id of b>',
-    '<id of c>': '<id of c>',
-    '=pin':       '<id of pin>',
-  }
-}
-```
-
-This shape lets attribute lookups skip the linear scan that regular value-based lookups need.
+`childrenMap` is only materialized for JSON export, not stored on live `Thought` records.
 
 The four selectors most code uses:
 
 - [`attribute(state, id, name)`](../src/selectors/attribute.ts) — returns the *value of the first visible child* of the named attribute, or `null`. So `attribute(state, parent.id, '=pin')` returns `'true'` (when set to `=pin/true`), `'false'`, or `null`. Use this when an attribute carries a string payload.
-- [`attributeEquals(state, id, attr, value)`](../src/selectors/attributeEquals.ts) — `O(1)` boolean check. Use over `attribute` when you only need a yes/no, since this avoids reading the full child.
-- [`findDescendant(state, id, values)`](../src/selectors/findDescendant.ts) — walks down a chain of values (e.g. `['=children', '=pin', 'true']`) and returns the deepest matching `ThoughtId`, or `null`. Uses the `childrenMap` shortcut at every meta-prefixed step. Use this for deeper checks, especially through `=children` / `=grandchildren` propagation.
+- [`attributeEquals(state, id, attr, value)`](../src/selectors/attributeEquals.ts) — boolean check for a child with the given value under the named attribute. Uses `findDescendant` to scan children at each step.
+- [`findDescendant(state, id, values)`](../src/selectors/findDescendant.ts) — walks down a chain of values (e.g. `['=children', '=pin', 'true']`) and returns the deepest matching `ThoughtId`, or `null`. Use this for deeper checks, especially through `=children` / `=grandchildren` propagation.
 - `findAnyChild(state, id, predicate)` — generic find on regular children. Used by some bespoke attribute lookups.
 
 ## Inheritance: `=children`, `=grandchildren`, and `=descendants`
@@ -69,7 +59,7 @@ Not every attribute is propagable. Currently the `=children`/`=grandchildren` in
 ### Display & layout
 
 - **`=view`** — controls how the thought's subthoughts are laid out. Options: `List` (default), `Table`, `Prose`. Table view triggers the column-1/column-2 logic in [`linearizeTree`](../src/selectors/linearizeTree.ts) and [`usePositionedThoughts`](../src/hooks/usePositionedThoughts.ts).
-- **`=sort`** — sort the subthoughts of a context. Options: `Alphabetical`, `Created`, `Updated`, `Note`, each with a sub-`Asc`/`Desc` direction. When unset, manual rank order is used. Read by [`getSortPreference`](../src/selectors/getSortPreference.ts).
+- **`=sort`** — sort the subthoughts of a context. Options: `Alphabetical`, `Created`, `Updated`, `Note`, each with a sub-`Asc`/`Desc` direction. When unset, manual sibling order is used. Read by [`getSortPreference`](../src/selectors/getSortPreference.ts).
 - **`=style`** — CSS styles applied to the thought's text. The child of `=style` is the property name, and its child is the value: e.g. `=style/color/tomato`. Also accepts `=children/=style` and `=grandchildren/=style` for descendant propagation.
 - **`=styleAnnotation`** — same shape as `=style`, but applied only to the thought's annotation (the dim superscript / count badge).
 - **`=styleContainer`** — same shape as `=style`, but applied to the thought's outer container element rather than its text.
@@ -91,7 +81,7 @@ Not every attribute is propagable. Currently the `=children`/`=grandchildren` in
 
 - **`=archive`** — marks the thought (and, semantically, its descendants) as archived. Archived thoughts are hidden from normal views but kept for recovery; the user surfaces them via the **Recently Deleted** UI. The `=archive` attribute is special-cased in many filters (e.g. it survives `isAttribute`-based hiding so the recently-deleted view can find it). See [`archiveThought`](../src/actions/archiveThought.ts) and [`isThoughtArchived`](../src/util/isThoughtArchived.ts).
 - **`=done`** — marks a thought as completed. The thought is rendered grayed out and struck through. Consumed by [`Bullet`](../src/components/Bullet.tsx), [`Editable`](../src/components/Editable.tsx), and the **Mark as done** command.
-- **`=favorite`** — marks the thought for inclusion in the Favorites panel. The Favorites Lexeme (`=favorite`) tracks every context that has this attribute.
+- **`=favorite`** — marks the thought for inclusion in the Favorites panel. The Favorites Lexeme (`=favorite`) tracks every context that has this attribute. The `Favorites Order` setting stores marker ids as JSON for panel ordering; it does not alter lexeme membership. See [Favorites drag and drop](drag-and-drop.md#favorites).
 
 ### Linking & cross-references
 
@@ -108,7 +98,7 @@ Not every attribute is propagable. Currently the `=children`/`=grandchildren` in
 
 ### Drag-and-drop
 
-- **`=drop`** — controls drag-and-drop behavior on the thought. Options: `top` (a thought dropped on this collapsed parent is inserted at the *top* of its children rather than the default bottom). Consumed by [`useDragAndDropSubThought`](../src/hooks/useDragAndDropSubThought.ts).
+- **`=drop`** — controls drag-and-drop behavior on the thought. Options: `top` (a thought dropped on this collapsed parent is inserted at the *top* of its children rather than the default bottom). Consumed by [`useDragAndDropSubThought`](../src/hooks/useDragAndDropSubThought.tsx).
 
 ### Constraints & validation
 
@@ -146,6 +136,6 @@ enum Settings {
 
 (See the in-app **Settings** modal for human-readable descriptions of each.)
 
-A separate set of *cached* settings — `CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']` — is also persisted to `localStorage` by the [`pushQueue`](../src/redux-enhancers/pushQueue.ts) enhancer so they're available before the thoughtspace hydrates on first paint. See [persistence.md](persistence.md) for the caching mechanics.
+A separate set of *cached* settings — `CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']` — is also persisted to `localStorage` by [`commandExecutionEnhancer`](../src/redux-enhancers/commandExecutionEnhancer.ts) so they're available before the thoughtspace hydrates on first paint. See [persistence.md](persistence.md) for the caching mechanics.
 
 Reads go through [`getSetting`](../src/selectors/getSetting.ts), which first consults the in-memory thought (e.g. `[EM, 'Settings', 'Tutorial']`) and falls back to the localStorage cache when needed.

@@ -7,6 +7,7 @@ import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
+import useEditorSelector from '../hooks/useEditorSelector'
 import dropHoverColor from '../selectors/dropHoverColor'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -29,8 +30,8 @@ interface DropChildProps {
 }
 /** A drop target that allows dropping as a child of a thought. It is only shown when a thought has no children or is collapsed. Only renders if there is a valid dropTarget and a drag is in progress. */
 const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildProps) => {
-  const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
-  const dropHoverColorValue = useSelector(state => dropHoverColor(state, depth || 0))
+  const value = useEditorSelector(state => getThoughtById(state, head(simplePath))?.value || '')
+  const dropHoverColorValue = useEditorSelector(state => dropHoverColor(state, depth || 0))
   const fontSize = useSelector(state => state.fontSize)
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path, simplePath })
@@ -104,7 +105,9 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
 }
 /** Render the DropChild component if the thought is collapsed, and does not match the dragging thought. This component is an optimization to avoid calculating DropChild hooks when unnecessary. */
 const DropChildIfCollapsed = ({ depth, last, path, simplePath, cliff, isLastVisible }: DropChildProps) => {
-  const isExpanded = useSelector(state => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(path)])
+  const isExpanded = useEditorSelector(
+    state => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(path)],
+  )
 
   // Check if this thought is any of the dragging thoughts (single or multiple)
   const isDraggingThisThought = useSelector(state => {

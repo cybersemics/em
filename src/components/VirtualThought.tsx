@@ -9,6 +9,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { getAutoscrollPadding } from '../device/preventAutoscroll'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useFreshCallback from '../hooks/useFreshCallback'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../hooks/useSelectorEffect'
@@ -108,11 +109,11 @@ const VirtualThought = ({
   const id = head(simplePath)
   const isEditing = useSelector(state => equalPath(state.cursor, simplePath))
   const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
-  const isContextViewActive = useSelector(selectShowContexts(simplePath))
-  const cursorLeaf = useSelector(state => !!state.cursor && !hasChildren(state, head(state.cursor)))
+  const isContextViewActive = useEditorSelector(selectShowContexts(simplePath))
+  const cursorLeaf = useEditorSelector(state => !!state.cursor && !hasChildren(state, head(state.cursor)))
   const cursorDepth = useSelector(state => (state.cursor ? state.cursor.length : 0))
   const fontSize = useSelector(state => state.fontSize)
-  const note = useSelector(state => noteValue(state, simplePath))
+  const note = useEditorSelector(state => noteValue(state, simplePath))
   const ref = useRef<HTMLDivElement>(null)
 
   /***************************
@@ -209,7 +210,7 @@ const VirtualThought = ({
   // Recalculate height after thought value changes.
   // Otherwise, the hight is not recalculated after splitThought.
   // TODO: useLayoutEffect does not work for some reason, causing the thought to briefly render at the incorrect height.
-  const value = useSelector(state => {
+  const value = useEditorSelector(state => {
     const thoughtId = head(simplePath)
     return thoughtId ? getThoughtById(state, thoughtId)?.value : null
   })

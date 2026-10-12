@@ -1,5 +1,6 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import deleteThought from '../actions/deleteThought'
 import { ABSOLUTE_TOKEN } from '../constants'
@@ -9,6 +10,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -25,7 +27,11 @@ const getContext = (state: State, path: Path) => {
 }
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. Works in normal view and context view. */
-const deleteThoughtWithCursor = (state: State): State => {
+const deleteThoughtWithCursor = (
+  state: State,
+  _payload: undefined = undefined,
+  transaction?: ThoughtspaceTransaction,
+): State => {
   if (!state.cursor) return state
 
   const cursor = state.cursor
@@ -53,6 +59,7 @@ const deleteThoughtWithCursor = (state: State): State => {
   // This is a problem specifically for tangential contexts, which have a different parent from the cursor.
   // i.e. The id of b/m is not contained within the cursor a/m~/b because they are different m instances.
   const contextId = (showContexts && getContext(state, cursor)) || null
+  const repairCursor = updateCursorAfterDelete(state)
 
   return reducerFlow([
     // delete thought
@@ -71,7 +78,7 @@ const deleteThoughtWithCursor = (state: State): State => {
     ),
 
     // move cursor
-    stateNew => updateCursorAfterDelete(stateNew, state),
+    repairCursor,
 
     /* If the second-to-last context is deleted, and it is a tangential context, we need to manually close the context view.
        Other cases are handled by deleteThought.
@@ -92,14 +99,14 @@ const deleteThoughtWithCursor = (state: State): State => {
           }
         }
       : null,
-  ])(state)
+  ])(state, transaction)
 }
 
 /** Action-creator for deleteThoughtWithCursor. */
 export const deleteThoughtWithCursorActionCreator = (): Thunk => dispatch =>
   dispatch({ type: 'deleteThoughtWithCursor' })
 
-export default deleteThoughtWithCursor
+export default command(deleteThoughtWithCursor)
 
 // Register this action's metadata
 registerActionMetadata('deleteThoughtWithCursor', {

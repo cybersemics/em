@@ -1,13 +1,14 @@
 import { FC } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { settingsActionCreator as setting } from '../actions/settings'
+import useEditorSelector from '../hooks/useEditorSelector'
 import theme from '../selectors/theme'
 import Checkbox from './Checkbox'
 
 /** A ThemeSwitch Component with a title and description. */
 const ThemeSwitch: FC = () => {
   const dispatch = useDispatch()
-  const light = useSelector(state => theme(state) === 'Light')
+  const light = useEditorSelector(state => theme(state) === 'Light')
 
   return (
     <Checkbox

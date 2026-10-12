@@ -22,7 +22,7 @@ it('shows a detail visit with no transition settled and focused without waiting 
 
   render(
     createElement(Provider, {
-      store,
+      store: store.uiStore,
       children: createElement(CommandUniversePageTransitions, {
         children: entries.map(entry =>
           createElement(

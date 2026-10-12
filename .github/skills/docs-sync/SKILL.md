@@ -50,7 +50,7 @@ Noisy, and worth skimming rather than trusting wholesale — but it finds every 
 | --- | --- | --- |
 | [`folder-structure.md`](../../docs/folder-structure.md) | The layout of `src/` and what kind of code belongs in each module | You add, remove, or rename a directory under `src/`, or put a kind of code somewhere the doc does not account for |
 | [`data-model.md`](../../docs/data-model.md) | `src/selectors/**`, thought manipulation in `src/util/**`, `src/@types/**` | The shape or meaning of thoughts, contexts, paths, lexemes, or views changes, or a documented selector's contract changes |
-| [`persistence.md`](../../docs/persistence.md) | `src/data-providers/**`, `src/redux-enhancers/pushQueue.ts`, `src/redux-middleware/pullQueue.ts` | Storage, sync, replication, or the push/pull queues change |
+| [`persistence.md`](../../docs/persistence.md) | `src/data-providers/**`, `src/redux-enhancers/undoRedoEnhancer.ts`, `src/actions/replaceThoughts.ts` | Storage, sync, replication, or document commit/publication changes |
 | [`cursor-and-caret.md`](../../docs/cursor-and-caret.md) | `src/device/selection.ts`, `src/components/Editable.tsx`, cursor actions and stores | The relationship between the cursor and the browser selection changes, or how selection is accessed |
 | [`layout-rendering.md`](../../docs/layout-rendering.md) | `src/components/LayoutTree.tsx`, `src/hooks/usePositionedThoughts.ts`, the autocrop mechanism | Thought positioning, virtualization, or autocrop behaviour changes |
 | [`drag-and-drop.md`](../../docs/drag-and-drop.md) | `src/hooks/useDrag*`, `src/hooks/useDrop*`, the drag-and-drop components | Drop targets, react-dnd wiring, or drag behaviour changes |

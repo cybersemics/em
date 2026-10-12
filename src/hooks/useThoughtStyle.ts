@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
@@ -7,6 +6,7 @@ import { GLOBAL_STYLE_ENV } from '../constants'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import safeRefMerge from '../util/safeRefMerge'
+import useEditorSelector from './useEditorSelector'
 
 const EMPTY_OBJECT = {}
 
@@ -25,7 +25,7 @@ const useThoughtStyle = ({
   styleProp: React.CSSProperties | undefined
   thoughtId: ThoughtId
 }) => {
-  const style = useSelector(state => {
+  const style = useEditorSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     if (!thought) return undefined
 

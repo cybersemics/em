@@ -48,7 +48,7 @@ const usePositionedThoughts = (
     }
   }, [dragInProgress])
 
-  const { isHoveringSorted, newRank } = useSortedContext()
+  const { isHoveringSorted, placementRank } = useSortedContext()
 
   /** The value of scrollTop. Only enabled when there is a drag in progress for performance reasons. */
   const scrollTopIfDragging = scrollTopStore.useSelector(scrollTop => (dragInProgress ? scrollTop : null))
@@ -290,11 +290,11 @@ const usePositionedThoughts = (
       }
     })
 
-    // Determine hoverArrowVisibility based on newRank and the visible thoughts
+    // Determine hoverArrowVisibility based on the projected insertion gap and the visible thoughts.
     if (isHoveringSorted) {
-      if (newRank > lastVisibleThoughtRank && lastVisibleThoughtRank !== lastThoughtRank) {
+      if (placementRank > lastVisibleThoughtRank && lastVisibleThoughtRank !== lastThoughtRank) {
         hoverArrowVisibility = 'below'
-      } else if (newRank < firstVisibleThoughtRank && firstVisibleThoughtRank !== firstThoughtRank) {
+      } else if (placementRank < firstVisibleThoughtRank && firstVisibleThoughtRank !== firstThoughtRank) {
         hoverArrowVisibility = 'above'
       } else {
         hoverArrowVisibility = null
@@ -308,7 +308,7 @@ const usePositionedThoughts = (
     innerWidth,
     isHoveringSorted,
     maxVisibleY,
-    newRank,
+    placementRank,
     scrollTopIfDragging,
     singleLineHeight,
     sizes,

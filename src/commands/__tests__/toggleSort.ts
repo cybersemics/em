@@ -707,8 +707,8 @@ describe('store', () => {
       const c = contextToThought(state, ['c'])!
 
       // check that c, a, and b are in the original order
-      expect(c.rank).toBeLessThan(a.rank)
-      expect(a.rank).toBeLessThan(b.rank)
+      expect(state.thoughts.getPosition(c.id)).toBeLessThan(state.thoughts.getPosition(a.id)!)
+      expect(state.thoughts.getPosition(a.id)).toBeLessThan(state.thoughts.getPosition(b.id)!)
     })
 
     it('restore sort order after some thoughts are removed', () => {

@@ -7,7 +7,7 @@ import store from '../stores/app'
 import storage from '../util/storage'
 import timestamp from '../util/timestamp'
 import { permissionsStore, persistPermissions } from './permissionsStore'
-import db from './thoughtspace'
+import { thoughtspaceRuntime } from './thoughtspace'
 import { accessTokenLocal } from './thoughtspaceSession'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,7 +41,7 @@ const permissionsModel: { [key in keyof Routes['share']]: any } = {
       store.dispatch([clearActionCreator(), alert(`Removed this device from the thoughtspace`)])
     } else {
       storage.clear()
-      await db.clear()
+      await thoughtspaceRuntime.drop()
       store.dispatch(clearActionCreator())
 
       // TODO: Do a full reset without refreshing the page.

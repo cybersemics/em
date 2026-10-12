@@ -5,6 +5,7 @@ import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import isContextViewActive from '../selectors/isContextViewActive'
 import scrollTopStore from '../stores/scrollTopStore'
@@ -90,7 +91,7 @@ const TreeNode = ({
   })
 
   // /** The transition animation for descendants of the context view after toggleContextView. Returns null otherwise. */
-  const contextAnimation: 'disappearingLowerLeft' | 'disappearingUpperRight' | null = useSelector(state => {
+  const contextAnimation: 'disappearingLowerLeft' | 'disappearingUpperRight' | null = useEditorSelector(state => {
     const lastPatch = state.undoPatches[state.undoPatches.length - 1]
     const isLastActionContextView = lastPatch?.metadata.actionTypes.includes('toggleContextView')
     if (!isLastActionContextView) return null

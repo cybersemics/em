@@ -3,18 +3,16 @@ import { NativeTypes } from 'react-dnd-html5-backend'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
-import Lexeme from '../@types/Lexeme'
 import SimplePath from '../@types/SimplePath'
 import { alertActionCreator as alert } from '../actions/alert'
 import { longPressActionCreator as longPress } from '../actions/longPress'
-import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
+import { settingsActionCreator as settings } from '../actions/settings'
 import { AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
-import { getLexeme } from '../selectors/getLexeme'
+import getFavoriteIds from '../selectors/getFavoriteIds'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
 import haptics from '../util/haptics'
-import hashThought from '../util/hashThought'
 import head from '../util/head'
 import splice from '../util/splice'
 
@@ -74,60 +72,23 @@ const drop = (
     console.error('TODO: Add support for other thought drag sources', monitor.getItem())
     return
   }
-  const thoughtsTo = simplePath
+  store.dispatch((dispatch, getState) => {
+    const state = getState()
+    const favorites = getFavoriteIds(state)
+    const indexFrom = favorites.findIndex(id => getThoughtById(state, id)?.parentId === head(thoughtsFrom))
+    const indexTo = simplePath
+      ? favorites.findIndex(id => getThoughtById(state, id)?.parentId === head(simplePath))
+      : favorites.length
 
-  const state = store.getState()
+    // A favorite may have been removed during the drag. Adjacent drops already have the requested order.
+    if (indexFrom < 0 || indexTo < 0 || indexFrom === indexTo || indexFrom === indexTo - 1) return
 
-  const lexemeFavorites = getLexeme(state, '=favorite')
-  if (!lexemeFavorites) {
-    throw new Error('=favorite lexeme missing')
-  }
-  // the index of thoughtsFrom id within the =favorite lexeme contexts
-  const indexFrom = lexemeFavorites.contexts.findIndex(cxid => {
-    const thought = getThoughtById(state, cxid)
-    return thought?.parentId === head(thoughtsFrom)
+    const remaining = splice(favorites, indexFrom, 1)
+    const reordered = splice(remaining, indexTo - (indexTo > indexFrom ? 1 : 0), 0, favorites[indexFrom])
+
+    haptics.medium()
+    dispatch(settings({ key: 'Favorites Order', value: JSON.stringify(reordered) }))
   })
-  const fromId = lexemeFavorites.contexts[indexFrom]
-
-  // the index of the thoughtsTo id within the =favorite lexeme contexts
-  // -1 indicates end of the list
-  const indexTo = thoughtsTo
-    ? lexemeFavorites.contexts.findIndex(cxid => {
-        const thought = getThoughtById(state, cxid)
-        return thought?.parentId === head(thoughtsTo)
-      })
-    : lexemeFavorites.contexts.length
-
-  // do nothing if dropping in the same position (above or below the dropped thought)
-  if (indexFrom === indexTo || indexFrom === indexTo - 1) return
-
-  // first, remove the thought from the contexts array
-  const contextsTemp = splice(lexemeFavorites.contexts, indexFrom, 1)
-
-  // then insert the thought at the drop point
-  const contextsNew = splice(
-    contextsTemp,
-    // if dropping after indexFrom, we need to decrement the index by 1 to account for the adjusted indexes in contextsTemp after splicing the contexts
-    indexTo - (indexTo > indexFrom ? 1 : 0),
-    0,
-    fromId,
-  )
-
-  const lexemeNew: Lexeme = {
-    ...lexemeFavorites,
-    contexts: contextsNew,
-  }
-
-  haptics.medium()
-
-  store.dispatch(
-    updateThoughts({
-      thoughtIndexUpdates: {},
-      lexemeIndexUpdates: {
-        [hashThought('=favorite')]: lexemeNew,
-      },
-    }),
-  )
 }
 
 /** Collects props from the DragSource. */

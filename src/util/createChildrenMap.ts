@@ -1,21 +1,17 @@
 import Index from '../@types/IndexType'
 import State from '../@types/State'
-import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import isAttribute from '../util/isAttribute'
-import keyValueBy from '../util/keyValueBy'
 
-/** Creates a childrenMapKey based on the value of meta thoughts and the id for non-meta thoughts. Always use the id as key if there is a duplicate meta value. */
-export const childrenMapKey = (thoughtIndex: Index<ThoughtId>, child: Pick<Thought, 'id' | 'value'>) =>
-  child && isAttribute(child.value) && !thoughtIndex[child.value] ? child.value : child.id
-
-/** Generates an object for O(1) lookup of a thought's children. Meta attributes are keyed by value and normal are keyed by id. Missing thoughts are excluded. */
-const createChildrenMap = (state: State, childrenIds: ThoughtId[]): Index<ThoughtId> => {
-  const children = childIdsToThoughts(state, childrenIds)
-  return keyValueBy(children, (child, i, accum) => ({
-    [childrenMapKey(accum, child)]: child.id,
-  }))
-}
+/** Serializes children by attribute value or id. Duplicate attributes use their ids, and missing thoughts are excluded. */
+const createChildrenMap = (state: State, childrenIds: readonly ThoughtId[]): Index<ThoughtId> =>
+  childrenIds.reduce<Index<ThoughtId>>((children, id) => {
+    const child = state.thoughts.getThought(id)
+    if (child) {
+      const key = isAttribute(child.value) && !children[child.value] ? child.value : child.id
+      children[key] = child.id
+    }
+    return children
+  }, {})
 
 export default createChildrenMap

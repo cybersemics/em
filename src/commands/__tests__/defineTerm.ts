@@ -1,7 +1,10 @@
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { replaceThoughtsActionCreator as replaceThoughts } from '../../actions/replaceThoughts'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
+import db from '../../data-providers/thoughtspace'
 import exportContext from '../../selectors/exportContext'
 import { getChildrenRanked } from '../../selectors/getChildren'
 import getThoughtById from '../../selectors/getThoughtById'
@@ -16,6 +19,7 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import { acceptAiDisclosure, acknowledgeAiDisclosure, clearAiDisclosureAcknowledgement } from '../../util/aiDisclosure'
 import head from '../../util/head'
 import defineTerm from '../defineTerm'
+import generateThought from '../generateThought'
 
 const appleDefinition = 'A round, edible fruit with crisp flesh that grows on trees.'
 const chickenDefinition = 'A domesticated bird raised worldwide for eggs, meat, feathers, and companionship.'
@@ -184,6 +188,87 @@ it('does not overwrite an edit made while inference is pending', async () => {
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - apples`)
+})
+
+it('releases its pending overlay when an incoming edit invalidates the definition', async () => {
+  acknowledgeAiDisclosure()
+  /** Resolves the definition request after the incoming edit. */
+  let resolveAiRequest!: (response: { json: () => Promise<{ definitions: string[] }> }) => void
+  mockFetch.mockImplementationOnce(
+    () =>
+      new Promise(resolve => {
+        resolveAiRequest = resolve
+      }),
+  )
+  await dispatch([importText({ text: '- apple' }), setCursor(['apple'])])
+  const thought = getThoughtById(store.getState(), head(store.getState().cursor!))!
+
+  await act(async () => {
+    executeCommand(defineTerm)
+  })
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+  expect(getThoughtById(store.getState(), thought.id)?.generating).toBe(true)
+
+  const incoming = db.transact(transaction =>
+    transaction.update({ thoughtIndexUpdates: { [thought.id]: { ...thought, value: 'apples' } } }),
+  ).value
+  await dispatch(replaceThoughts({ thoughts: incoming, repairCursor: true }))
+  await act(async () => {
+    resolveAiRequest({ json: () => Promise.resolve({ definitions: [appleDefinition] }) })
+  })
+
+  expect(getThoughtById(store.getState(), thought.id)?.generating).toBe(false)
+  expect(defineTerm.canExecute!(store.getState())).toBe(true)
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - apples`)
+})
+
+it('leaves a newer thought generation pending when a superseded definition completes', async () => {
+  acknowledgeAiDisclosure()
+  /** Resolves the superseded definition request. */
+  let resolveDefinition!: (response: { json: () => Promise<{ definitions: string[] }> }) => void
+  /** Resolves the generation started after editing the thought. */
+  let resolveGeneration!: (response: { json: () => Promise<{ thoughts: string[] }> }) => void
+  mockFetch
+    .mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveDefinition = resolve
+        }),
+    )
+    .mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveGeneration = resolve
+        }),
+    )
+  await dispatch([importText({ text: '- apple' }), setCursor(['apple'])])
+  const thoughtId = head(store.getState().cursor!)
+
+  await act(async () => {
+    executeCommand(defineTerm)
+  })
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+  await dispatch(editThoughtByContext(['apple'], 'apples'))
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+  expect(mockFetch).toHaveBeenCalledTimes(2)
+
+  await act(async () => {
+    resolveDefinition({ json: () => Promise.resolve({ definitions: [appleDefinition] }) })
+  })
+  expect(getThoughtById(store.getState(), thoughtId)).toMatchObject({
+    value: 'apples',
+    generating: true,
+    generatingPlaceholder: 'Generating Thought',
+  })
+  expect(getChildrenRanked(store.getState(), thoughtId)).toEqual([])
+
+  await act(async () => {
+    resolveGeneration({ json: () => Promise.resolve({ thoughts: ['orchard'] }) })
+  })
+  expect(getThoughtById(store.getState(), thoughtId)).toMatchObject({ value: 'orchard', generating: false })
 })
 
 it('is disabled without a selection or on an empty thought', async () => {

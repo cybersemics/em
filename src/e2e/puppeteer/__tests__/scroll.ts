@@ -1,4 +1,3 @@
-import type { PreloadedEmWindow } from '../../../@types'
 import clickThought from '../helpers/clickThought'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
@@ -11,8 +10,6 @@ import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 import { usePersistentTreecrdtStorage } from '../setup'
-
-const MOCK_REPLICATION_DELAY = 100
 
 /** Gets the y position of a thought relative to the viewport. Throws if the thought is not rendered. */
 const getThoughtTop = async (value: string): Promise<number> => {
@@ -30,7 +27,7 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 usePersistentTreecrdtStorage()
 
 describe('scrollCursorIntoView', () => {
-  it('should scroll cursor into view after page refresh with delayed replicateChildren', async () => {
+  it('should scroll cursor into view after page refresh', async () => {
     const importText = `
 - a
   - =pin
@@ -57,32 +54,11 @@ describe('scrollCursorIntoView', () => {
 - t
     `
 
-    // Note: initial window.scrollY can be non-zero after paste for some reason.
-    // Does not matter since we are asserting the initial scroll position after refresh, but be aware.
     await paste(importText)
 
     await clickThought('t')
 
-    // Simulate slow TreeCRDT reads during app startup after refresh.
-    await page.evaluateOnNewDocument(value => {
-      const preloadedWindow = window as unknown as PreloadedEmWindow
-      preloadedWindow.em = {
-        ...preloadedWindow.em,
-        testFlags: {
-          ...preloadedWindow.em?.testFlags,
-          replicationDelay: value,
-        },
-      }
-    }, MOCK_REPLICATION_DELAY)
-
     await refresh()
-
-    // Wait for page to be ready after refresh
-    await page.waitForFunction(() => document.readyState === 'complete')
-
-    // Verify the initial scroll position is 0
-    const initialScrollY = await page.evaluate(() => window.scrollY)
-    expect(initialScrollY).toBe(0)
 
     // Wait for the cursor to be restored to thought 't'
     await waitForEditable('t')

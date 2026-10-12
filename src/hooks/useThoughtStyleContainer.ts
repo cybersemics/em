@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import Thought from '../@types/Thought'
@@ -10,6 +9,7 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isDescendantPath from '../util/isDescendantPath'
 import safeRefMerge from '../util/safeRefMerge'
+import useEditorSelector from './useEditorSelector'
 
 const EMPTY_OBJECT = {}
 
@@ -27,7 +27,7 @@ const useStyleContainer = ({
   thoughtId: ThoughtId
   path: Path
 }) => {
-  const styleContainer = useSelector(state => {
+  const styleContainer = useEditorSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     if (!thought) return
 

@@ -1,9 +1,14 @@
 import clearMulticursors from '../../actions/clearMulticursors'
 import newThought from '../../actions/newThought'
 import addMulticursorAtFirstMatch from '../../test-helpers/addMulticursorAtFirstMatch'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 describe('clearMulticursors', () => {
   it('clears all multicursors', () => {

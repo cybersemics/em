@@ -79,6 +79,8 @@ export default defineConfig({
   optimizeDeps: {
     // Avoid crawling stale local checkout directories left behind after removing the TreeCRDT submodule.
     entries: ['index.html'],
+    // Preserve the memory client's relative WASM asset URL during development.
+    exclude: ['@treecrdt/wasm'],
   },
   define: {
     __COMMIT_HASH__: JSON.stringify(commitHash),
@@ -131,6 +133,10 @@ export default defineConfig({
     tunnelTokenGate(),
   ],
   server: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
     // Allow bs-local.com for BrowserStack local testing, and the Cloudflare tunnel pool's
     // hostnames (leading dot matches all subdomains) for BrowserStack iOS Safari.
     allowedHosts: ['bs-local.com', TUNNEL_HOST_SUFFIX],
@@ -153,6 +159,10 @@ export default defineConfig({
       : {}),
   },
   preview: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
     // `yarn servebuild` (vite preview) is what ios.yml/tdd.yml actually run behind the tunnel —
     // preview.allowedHosts doesn't inherit server.allowedHosts, so it needs its own entry too.
     allowedHosts: [TUNNEL_HOST_SUFFIX],

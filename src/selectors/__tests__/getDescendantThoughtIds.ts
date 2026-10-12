@@ -2,13 +2,19 @@ import SimplePath from '../../@types/SimplePath'
 import importText from '../../actions/importText'
 import newThought from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import childIdsToThoughts from '../childIdsToThoughts'
 import contextToPath from '../contextToPath'
 import getDescendantThoughtIds from '../getDescendantThoughtIds'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 /** Tests thought values without asserting order. */
 const expectThoughtsUnordered = (thoughts: { value: string }[], values: string[]) => {
@@ -26,7 +32,7 @@ it('get descendants', () => {
     - e
       - f
   `
-  const state = importText({ text })(initialState())
+  const state = runDocumentCommand(importText({ text }), initialState())
   const descendantThoughtIds = getDescendantThoughtIds(state, HOME_TOKEN)
   const descendantsAllThoughts = childIdsToThoughts(state, descendantThoughtIds)
 
@@ -38,7 +44,7 @@ it('get descendants', () => {
   expectThoughtsUnordered(descendantsAThoughts, ['b', 'c', 'd'])
 })
 
-it('get descendants ordered by rank', () => {
+it('gets descendants in canonical sibling order after inserting between siblings', () => {
   const text = `
     - a
     - b
@@ -49,13 +55,7 @@ it('get descendants ordered by rank', () => {
 
   const state = reducerFlow(steps)(initialState())
 
-  // unordered
-  const descendantsUnordered = childIdsToThoughts(state, getDescendantThoughtIds(state, HOME_TOKEN))
-
-  expectThoughtsUnordered(descendantsUnordered, ['a', 'b', 'c', 'x'])
-
-  // ordered
-  const descendantsOrdered = childIdsToThoughts(state, getDescendantThoughtIds(state, HOME_TOKEN, { ordered: true }))
+  const descendantsOrdered = childIdsToThoughts(state, getDescendantThoughtIds(state, HOME_TOKEN))
 
   expect(descendantsOrdered.map(thought => thought.value)).toEqual(['a', 'b', 'x', 'c'])
 })
@@ -72,7 +72,7 @@ it('filter descendants', () => {
         - protected
           - f
   `
-  const state = importText({ text })(initialState())
+  const state = runDocumentCommand(importText({ text }), initialState())
   let touched = 0
 
   const descendantsAll = childIdsToThoughts(
@@ -105,7 +105,7 @@ it('filter and continue traversing', () => {
         - protected
           - f
   `
-  const state = importText({ text })(initialState())
+  const state = runDocumentCommand(importText({ text }), initialState())
 
   const descendantsAll = childIdsToThoughts(
     state,

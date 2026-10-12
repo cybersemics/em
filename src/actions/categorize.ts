@@ -1,18 +1,20 @@
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import { getChildren } from '../selectors/getChildren'
-import getRankBefore from '../selectors/getRankBefore'
+import getPreviousSiblingId from '../selectors/getPreviousSiblingId'
 import getSortPreference from '../selectors/getSortPreference'
-import getSortedRank from '../selectors/getSortedRank'
+import getSortedPlacement from '../selectors/getSortedPlacement'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import createId from '../util/createId'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -35,7 +37,11 @@ export interface categorizePayload {
 }
 
 /** Inserts a new thought and adds the given thought as a subthought. */
-const categorize = (state: State, { value = '' }: categorizePayload = {}): State => {
+const categorize = (
+  state: State,
+  { value = '' }: categorizePayload = {},
+  transaction?: ThoughtspaceTransaction,
+): State => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -84,20 +90,15 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
   const parentId = head(rootedParentOf(state, simplePath))
   const sortPreference = getSortPreference(state, parentId)
 
-  // A rank just before the categorized thought among its siblings. It places the new category at the categorized
-  // thought's position in an unsorted context, and is given to the categorized thought as it moves into the new
-  // category, where it is the only child.
-  const newRank = getRankBefore(state, simplePath)
-
-  // A thought created in a sorted context is ranked by the sort condition rather than by its position on screen, as in
+  // A thought created in a sorted context is placed by the sort condition rather than by its position on screen, as in
   // newThought. Under Created the new category is the newest thought in the context, so leaving it where the
-  // categorized thought was inverts the ranks against the sort condition — invisibly at first, since an empty thought
+  // categorized thought was inverts the sibling order against the sort condition — invisibly at first, since an empty thought
   // is exempt from it, then visibly as soon as the user types into the category (#4101). An empty category has no
   // alphabetical sort key, so under Alphabetical it stays at its point of creation.
-  const categoryRank =
+  const afterId =
     sortPreference.type === 'Created' || (!isEmptyOrEmojiOnly(value) && sortPreference.type === 'Alphabetical')
-      ? getSortedRank(state, parentId, value, { created: timestamp() })
-      : newRank
+      ? getSortedPlacement(state, parentId, value, { created: timestamp() })
+      : getPreviousSiblingId(state, head(simplePath))
 
   const newThoughtId = createId()
   const isInContextView = isContextViewActive(state, parentOf(cursor))
@@ -119,42 +120,34 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
       })
     : []
 
+  // Preserve the original sibling order before the first move changes the document.
+  const pathsToMove = [
+    ...(multicursorPaths.length ? multicursorPaths : [simplePath]),
+    ...movedAttributes.map(attribute => appendToPath(parentOf(simplePath), attribute.id)),
+  ]
+    .filter(path => getThoughtById(state, head(path)))
+    .sort((a, b) => (state.thoughts.getPosition(head(a)) ?? 0) - (state.thoughts.getPosition(head(b)) ?? 0))
+  const destinationPath = appendToPath(isInContextView ? rootedParentOf(state, simplePath) : cursorParent, newThoughtId)
+
   return reducerFlow([
     createThought({
       path: rootedParentOf(state, simplePath),
       value,
-      rank: categoryRank,
+      afterId,
       id: newThoughtId,
     }),
-    ...(multicursorPaths.length === 0
-      ? [
-          moveThought({
-            oldPath: simplePath,
-            newPath: appendToPath(
-              isInContextView ? rootedParentOf(state, simplePath) : cursorParent,
-              newThoughtId,
-              head(simplePath),
-            ),
-            newRank,
-          }),
-        ]
-      : multicursorPaths
-          .reverse()
-          // we ignore thoughts at cursor that are somehow missing, see getThoughtById
-          .filter(path => getThoughtById(state, head(path)))
-          .map(path =>
-            moveThought({
-              oldPath: path,
-              newPath: appendToPath(parentOf(simplePath), newThoughtId, head(path)),
-              newRank: getThoughtById(state, head(path))!.rank,
-            }),
-          )),
-    ...movedAttributes.map(attribute =>
-      moveThought({
-        oldPath: appendToPath(parentOf(simplePath), attribute.id),
-        newPath: appendToPath(parentOf(simplePath), newThoughtId, attribute.id),
-        newRank: attribute.rank,
-      }),
+    ...pathsToMove.map(
+      path => (state: State) =>
+        moveThought(
+          state,
+          {
+            oldPath: path,
+            newPath: appendToPath(destinationPath, head(path)),
+            // A preceding move may have merged away the original sibling.
+            afterId: state.thoughts.getChildren(newThoughtId).at(-1) ?? null,
+          },
+          transaction,
+        ),
     ),
     setCursor({
       path: appendToPath(cursorParent, newThoughtId),
@@ -163,7 +156,7 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
       offset: value.length,
       isKeyboardOpen: true,
     }),
-  ])(state)
+  ])(state, transaction)
 }
 
 /** A Thunk that dispatches a 'categorize` action. */
@@ -172,7 +165,7 @@ export const categorizeActionCreator =
   dispatch =>
     dispatch({ type: 'categorize', ...payload })
 
-export default categorize
+export default command(categorize)
 
 // Register this action's metadata
 registerActionMetadata('categorize', {

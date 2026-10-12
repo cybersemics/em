@@ -74,7 +74,8 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
   ])
 
   const cursorAfterFirstRedo = childIdsToThoughts(store.getState(), store.getState().cursor!)
-  expect(cursorAfterFirstRedo).toMatchObject([{ value: 'arizona', rank: 0 }])
+  expect(cursorAfterFirstRedo).toMatchObject([{ value: 'arizona' }])
+  expect(store.getState().thoughts.getPosition(cursorAfterFirstRedo[0].id)).toBe(0)
 
   store.dispatch(redo())
   const state = store.getState()

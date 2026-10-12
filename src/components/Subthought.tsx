@@ -8,6 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import useCachedThoughtHtml from '../hooks/useCachedThoughtHtml'
 import useChangeRef from '../hooks/useChangeRef'
+import useEditorSelector from '../hooks/useEditorSelector'
 import attributeEquals from '../selectors/attributeEquals'
 import findFirstEnvContextWithZoom from '../selectors/findFirstEnvContextWithZoom'
 import { findAnyChild } from '../selectors/getChildren'
@@ -58,24 +59,24 @@ const Subthought = ({
 }) => {
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
-  const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
+  const thought = useEditorSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
   // Cache the thought HTML before it is deleted so that we can animate on unmount
   const cachedThoughtHtmlRef = useCachedThoughtHtml({ thought, elementRef: ref })
-  const noOtherContexts = useSelector(
+  const noOtherContexts = useEditorSelector(
     state => thought && isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
   )
   const grandparentId = simplePath[simplePath.length - 3]
   const isVisible = autofocus === 'show' || autofocus === 'dim'
   const autofocusChanged = useChangeRef(autofocus)
 
-  const childrenAttributeId = useSelector(
+  const childrenAttributeId = useEditorSelector(
     state =>
       (thought &&
         thought.value !== '=children' &&
         findAnyChild(state, thought.parentId, child => child.value === '=children')?.id) ||
       null,
   )
-  const grandchildrenAttributeId = useSelector(
+  const grandchildrenAttributeId = useEditorSelector(
     state =>
       (thought &&
         thought.value !== '=style' &&
@@ -85,7 +86,7 @@ const Subthought = ({
   const isSplitThought = useSelector(
     state => state.lastUndoableActionType === 'splitThought' && state.cursor && head(state.cursor) === head(simplePath),
   )
-  const hideBullet = useSelector(state => {
+  const hideBullet = useEditorSelector(state => {
     // A context view entry is rendered in place of its context, so the =children/=bullet of its real parent must not hide its bullet.
     if (isContextViewActive(state, parentOf(path))) return false
     const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')
@@ -157,7 +158,6 @@ const Subthought = ({
           depth={depth + 1}
           env={env}
           hideBullet={hideBullet}
-          isContextPending={thought.value === '__PENDING__'}
           leaf={leaf}
           // isHeader={isHeader}
           isHeader={false}
@@ -166,7 +166,6 @@ const Subthought = ({
           updateSize={updateSize}
           path={path}
           prevChildId={prevChildId}
-          rank={thought.rank}
           showContexts={showContexts}
           simplePath={simplePath}
           style={styleSelf}

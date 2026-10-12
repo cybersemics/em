@@ -5,6 +5,7 @@ import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import { commandById } from '../commands'
 import { BASE_FONT_SIZE, PINNED_COMMAND_RESERVED_WIDTH } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import isTutorial from '../selectors/isTutorial'
 import backgroundGlowStore from '../stores/backgroundGlowStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
@@ -43,7 +44,7 @@ const CursorBreadcrumbs = ({ position }: { position: string }) => {
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
 const NavBar = ({ position }: { position: string }) => {
-  const isTutorialOn = useSelector(isTutorial)
+  const isTutorialOn = useEditorSelector(isTutorial)
   const authenticated = useSelector(state => state.authenticated)
   const editing = useSelector(state => state.isKeyboardOpen)
   const distractionFreeTyping = distractionFreeTypingStore.useState()

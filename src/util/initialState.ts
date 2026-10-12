@@ -2,7 +2,7 @@ import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import ThoughtIndices from '../@types/ThoughtIndices'
+import ThoughtspaceView from '../@types/ThoughtspaceView'
 import Timestamp from '../@types/Timestamp'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, LongPressState, ROOT_PARENT_ID } from '../constants'
 import { clientId, tsidShared } from '../data-providers/thoughtspaceSession'
@@ -26,8 +26,8 @@ import storage from './storage'
 //       window.location.hostname.startsWith('127.168.1.'),
 //   )
 
-/** Generates an initial ThoughtIndices with the root, em, and absolute contexts. Note that clientId will be undefined until clientIdReady resolves and initThoughts is dispatched. */
-const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
+/** Generates placeholder system roots until initialization publishes the complete document. */
+const initialThoughts = (created: Timestamp = timestamp()): ThoughtspaceView => {
   const HOME_TOKEN_HASH = HOME_TOKEN
   const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
   const EM_TOKEN_HASH = EM_TOKEN
@@ -36,68 +36,43 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       id: HOME_TOKEN,
       value: HOME_TOKEN,
       parentId: ROOT_PARENT_ID,
-      childrenMap: {},
       created: created,
-      // start pending to trigger pull
-      pending: true,
       lastUpdated: never(),
-      rank: 0,
       updatedBy: clientId,
     },
     [ABSOLUTE_TOKEN_HASH]: {
       id: ABSOLUTE_TOKEN,
       value: ABSOLUTE_TOKEN,
       parentId: ROOT_PARENT_ID,
-      childrenMap: {},
       created: created,
-      // start pending to trigger pull
-      pending: true,
       lastUpdated: never(),
-      rank: 0,
       updatedBy: clientId,
     },
     [EM_TOKEN_HASH]: {
       id: EM_TOKEN,
       value: EM_TOKEN,
       parentId: ROOT_PARENT_ID,
-      childrenMap: {},
       created: created,
-      // start pending to trigger pull
-      pending: true,
       lastUpdated: never(),
-      rank: 0,
       updatedBy: clientId,
     },
   }
 
   const lexemeIndex: Index<Lexeme> = {
-    [hashThought(HOME_TOKEN)]: {
-      contexts: [],
-      // set to beginning of epoch to ensure that server lexemeIndex is always considered newer from init lexemeIndex
-      created,
-      lastUpdated: never(),
-      updatedBy: clientId,
-    },
-    [hashThought(ABSOLUTE_TOKEN)]: {
-      contexts: [],
-      // set to beginning of epoch to ensure that server lexemeIndex is always considered newer from init lexemeIndex
-      created,
-      lastUpdated: never(),
-      updatedBy: clientId,
-    },
-    // this will get populated by importText in initThoughts
-    // unfortunately that's the best way currently to create nested thoughts and ensure that lexemeIndex and thoughtIndex are correct
-    [hashThought(EM_TOKEN)]: {
-      contexts: [],
-      created,
-      lastUpdated: never(),
-      updatedBy: clientId,
-    },
+    [hashThought(HOME_TOKEN)]: [],
+    [hashThought(ABSOLUTE_TOKEN)]: [],
+    [hashThought(EM_TOKEN)]: [],
   }
 
   return {
-    thoughtIndex,
-    lexemeIndex,
+    revision: 0,
+    getThought: id => thoughtIndex[id],
+    getChildren: () => [],
+    getPosition: id => (thoughtIndex[id] ? 0 : undefined),
+    values: function* () {
+      yield* Object.values(thoughtIndex)
+    },
+    getLexeme: value => lexemeIndex[hashThought(value)],
   }
 }
 
@@ -125,7 +100,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     error: null,
     expanded: {},
     fontSize: storageModel.get('fontSize'),
-    importThoughtPath: null,
     invalidState: false,
     isLoading: true,
     isMulticursorExecuting: false,
@@ -162,8 +136,8 @@ const initialState = (created: Timestamp = timestamp()) => {
     showSidebar: false,
     status: 'disconnected',
     tip: null,
-    pushQueue: [],
     thoughts: initialThoughts(created),
+    thoughtUi: {},
     undoPatches: [],
     showCommandCenter: false,
   }

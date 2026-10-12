@@ -1,5 +1,5 @@
 import React, { FC, ReactElement, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { useDispatch, useSelector, useStore } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -11,6 +11,7 @@ import { hashCommand, hashKeyDown } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
 import openDesktopCommandUniverseCommand from '../commands/openDesktopCommandUniverse'
 import * as selection from '../device/selection'
+import useEditorStore from '../hooks/useEditorStore'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import storageModel from '../stores/storageModel'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
@@ -121,7 +122,7 @@ const DesktopCommandUniverse: FC<{
   search: string
   setSearch: (search: string) => void
 }> = ({ commands, recentCommands, setRecentCommands, search, setSearch }) => {
-  const store = useStore()
+  const store = useEditorStore()
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)

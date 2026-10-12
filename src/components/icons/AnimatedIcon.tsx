@@ -1,11 +1,11 @@
 import { PropsWithChildren } from 'react'
-import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 import LottieData from '../../@types/lottie/LottieData'
 import { ICON_SCALING_FACTOR } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import themeColors from '../../selectors/themeColors'
 import rgbToHex from '../../util/rgbToHex'
 import LottieAnimation from './LottieAnimation'
@@ -26,7 +26,7 @@ const AnimatedIcon = ({
   children,
   animationComplete,
 }: AnimatedIconType) => {
-  const colors = useSelector(themeColors)
+  const colors = useEditorSelector(themeColors)
   const newSize = size * ICON_SCALING_FACTOR
   const color = style.fill || fill || token('colors.fg')
   const dynamicColor = rgbToHex(colors.fg)

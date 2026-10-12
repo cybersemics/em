@@ -6,6 +6,7 @@ import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
 import Tabs from '../Tabs'
@@ -24,7 +25,7 @@ enum Section {
 /** Tutorials section. */
 const Tutorials = () => {
   const dispatch = useDispatch()
-  const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
+  const tutorialStep = useEditorSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
 
   return (
     <section className={css({ marginBottom: '50px', paddingTop: '1em' })} id='tutorials'>

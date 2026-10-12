@@ -10,6 +10,7 @@ import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
@@ -135,7 +136,7 @@ const ThoughtAnnotation = React.memo(
       isEditing ? (editingValue ?? value) : null,
     )
 
-    const isTableCol1 = useSelector((state: State) =>
+    const isTableCol1 = useEditorSelector((state: State) =>
       attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
     )
 
@@ -148,7 +149,7 @@ const ThoughtAnnotation = React.memo(
      * Changed as part of fix for issue 1419 (https://github.com/cybersemics/em/issues/1419).
      */
 
-    const textMarkup = useSelector(state => {
+    const textMarkup = useEditorSelector(state => {
       const labelId = findDescendant(state, head(simplePath), '=label')
       const labelChild = anyChild(state, labelId || undefined)
       return isEditing ? (liveValueIfEditing ?? value) : labelChild ? labelChild.value : value
@@ -217,7 +218,7 @@ const ThoughtAnnotationContainer = React.memo(
     // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
     const [calculateContexts, setCalculateContexts] = useState(false)
 
-    const value: string | undefined = useSelector(state => {
+    const value: string | undefined = useEditorSelector(state => {
       const thought = getThoughtById(state, head(path))
       return thought?.value || ''
     })
@@ -232,11 +233,11 @@ const ThoughtAnnotationContainer = React.memo(
     // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
     editingValueStore.useSelector((editingValue: string | null) => value === editingValue)
 
-    const hideSuperscriptsSetting = useSelector(getUserSetting(Settings.hideSuperscripts))
+    const hideSuperscriptsSetting = useEditorSelector(getUserSetting(Settings.hideSuperscripts))
 
     const isExpanded = useSelector(state => !!state.expanded[hashPath(simplePath)])
 
-    const numContexts = useSelector(
+    const numContexts = useEditorSelector(
       moize(
         (state: State): number => {
           if (!calculateContexts || hideSuperscriptsSetting) return 0
@@ -265,7 +266,7 @@ const ThoughtAnnotationContainer = React.memo(
       !hideSuperscriptsSetting &&
       (REGEX_PUNCTUATIONS.test(value.replace(REGEX_TAGS, '')) ? false : minContexts === 0 || numContexts > 1)
 
-    const url = useSelector(state => {
+    const url = useEditorSelector(state => {
       const childrenUrls = filterAllChildren(state, head(simplePath), child => containsURL(child.value))
       return (
         // link the thought if it contains a url, e.g. "Deep work https://calnewport.com/deep-work is a great book"
