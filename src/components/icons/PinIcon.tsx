@@ -3,7 +3,15 @@ import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/07-pin_3.json'
 
 /** Pin Icon with Conditional Lottie Animation. */
-const PinIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const PinIcon = ({
+  fill,
+  size = 18,
+  style = {},
+  cssRaw,
+  animated,
+  animationComplete,
+  active,
+}: IconType & { active?: boolean }) => {
   return (
     <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
       <svg
@@ -24,7 +32,7 @@ const PinIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationCompl
                 stroke='currentColor'
                 strokeLinecap='round'
                 strokeLinejoin='round'
-                fill='none'
+                fill={!animated && active ? style.fill : 'none'}
                 cx='17.66'
                 cy='6.04'
                 rx='2.33'
@@ -35,7 +43,7 @@ const PinIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationCompl
                 stroke='currentColor'
                 strokeLinecap='round'
                 strokeLinejoin='round'
-                fill='none'
+                fill={!animated && active ? style.fill : 'none'}
                 d='M14,14a6.58,6.58,0,0,1-1.65,6.57h0A21.55,21.55,0,0,1,3,11.21H3A6.59,6.59,0,0,1,9.66,9.6'
               />
               <line
