@@ -21,6 +21,7 @@ import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import stripTags from '../util/stripTags'
+import usePlaceholder from './Editable/usePlaceholder'
 import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
 import Link from './Link'
@@ -102,52 +103,64 @@ const BreadCrumb = React.memo(
       label?: string
       onClickEllipsis: () => void
       path: Path
+      placeholder?: string
       showDivider?: boolean
       staticText?: boolean
       linkCssRaw?: SystemStyleObject
     }
-  >(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText, linkCssRaw }, ref) => {
-    const simplePath = useEditorSelector(state => simplifyPath(state, path), shallowEqual)
-    const value = useEditorSelector(state => getThoughtById(state, head(simplePath))?.value)
-    const showContexts = useEditorSelector(state => isContextViewActive(state, parentOf(path)))
-    const delimiterStyle: React.CSSProperties = {
-      fontSize: '0.8em',
-      lineHeight: '16px',
-      margin: '0 3px',
-      verticalAlign: 1,
-      userSelect: 'none',
-    }
-    return !isOverflow ? (
-      <span ref={ref} className={css({ fontSize: staticText ? '0.8em' : undefined })}>
-        {/* possible delimiter symbols: ⇢ */}
-        {showDivider ? <span style={delimiterStyle}> {showContexts ? '⇢' : '•'} </span> : null}
-        {!isDeleting &&
-          (staticText ? (
-            ellipsize(decodeCharacterEntities(value))
-          ) : label === HOME_TOKEN ? (
-            <HomeLink color={token('colors.gray50')} size={16} className={css({ position: 'static' })} />
-          ) : (
-            <Link
-              cssRaw={css.raw(linkCssRaw)}
-              className={extendTapRecipe({ size: 'small' })}
+  >(
+    (
+      { isOverflow, label, isDeleting, path, placeholder, showDivider, onClickEllipsis, staticText, linkCssRaw },
+      ref,
+    ) => {
+      const simplePath = useEditorSelector(state => simplifyPath(state, path), shallowEqual)
+      const value = useEditorSelector(state => getThoughtById(state, head(simplePath))?.value)
+      const thoughtPlaceholder = usePlaceholder({ isEditing: false, path, simplePath })
+      const showContexts = useEditorSelector(state => isContextViewActive(state, parentOf(path)))
+      const delimiterStyle: React.CSSProperties = {
+        fontSize: '0.8em',
+        lineHeight: '16px',
+        margin: '0 3px',
+        verticalAlign: 1,
+        userSelect: 'none',
+      }
+      return !isOverflow ? (
+        <span ref={ref} className={css({ fontSize: staticText ? '0.8em' : undefined })}>
+          {/* possible delimiter symbols: ⇢ */}
+          {showDivider ? <span style={delimiterStyle}> {showContexts ? '⇢' : '•'} </span> : null}
+          {!isDeleting &&
+            (staticText ? (
+              ellipsize(decodeCharacterEntities(value))
+            ) : label === HOME_TOKEN ? (
+              <HomeLink color={token('colors.gray50')} size={16} className={css({ position: 'static' })} />
+            ) : (
+              <Link
+                cssRaw={css.raw(linkCssRaw)}
+                className={extendTapRecipe({ size: 'small' })}
+                simplePath={simplePath}
+                label={label}
+                // usePlaceholder returns the value of a non-empty thought, so only an empty thought gets the placeholder
+                placeholder={value ? undefined : (placeholder ?? thoughtPlaceholder)}
+              />
+            ))}
+          {!isDeleting && (
+            <Superscript
               simplePath={simplePath}
-              label={label}
+              cssRaw={css.raw({ position: 'relative', left: '-2px', top: '-3px' })}
             />
-          ))}
-        {!isDeleting && (
-          <Superscript simplePath={simplePath} cssRaw={css.raw({ position: 'relative', left: '-2px', top: '-3px' })} />
-        )}
-      </span>
-    ) : (
-      <span ref={ref}>
-        <span style={delimiterStyle}> • </span>
-        <span {...fastClick(onClickEllipsis)} className={css({ cursor: 'pointer' })}>
-          {' '}
-          ...{' '}
+          )}
         </span>
-      </span>
-    )
-  }),
+      ) : (
+        <span ref={ref}>
+          <span style={delimiterStyle}> • </span>
+          <span {...fastClick(onClickEllipsis)} className={css({ cursor: 'pointer' })}>
+            {' '}
+            ...{' '}
+          </span>
+        </span>
+      )
+    },
+  ),
 )
 
 BreadCrumb.displayName = 'BreadCrumb'
@@ -158,6 +171,7 @@ const ContextBreadcrumbs = ({
   hideArchive,
   hidden,
   path,
+  placeholder,
   staticText,
   thoughtsLimit,
   linkCssRaw,
@@ -173,6 +187,8 @@ const ContextBreadcrumbs = ({
    */
   hidden?: boolean
   path: Path
+  /** Text shown in place of an empty ancestor. Defaults to the empty-thought placeholder if omitted. */
+  placeholder?: string
   /** Disables click on breadcrumb fragments. */
   staticText?: boolean
   thoughtsLimit?: number
@@ -258,6 +274,7 @@ const ContextBreadcrumbs = ({
                   label={label}
                   onClickEllipsis={() => setDisabled(true)}
                   path={ancestors[i]}
+                  placeholder={placeholder}
                   showDivider={i > 0}
                   staticText={staticText}
                   linkCssRaw={css.raw(

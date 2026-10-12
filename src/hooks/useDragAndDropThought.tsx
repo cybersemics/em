@@ -232,13 +232,13 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   // Attribute the upcoming moveThought/createThought actions to a drag-and-drop drop, since drops have no `command`
   // entry in the debug log (commands.ts only logs keyboard/gesture/toolbar commands).
-  debugLog.log('drop', {
+  debugLog.log('drop', () => ({
     zone: 'thought',
     targetId: head(props.simplePath),
     targetValue: pathToThought(state, props.simplePath)?.value,
     items: draggedItems.length,
     showContexts: !!props.showContexts,
-  })
+  }))
 
   store.dispatch((dispatch, getState) => {
     // set multicursor executing to true if there are multiple thoughts being dragged

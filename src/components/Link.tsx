@@ -20,6 +20,8 @@ import strip from '../util/strip'
 interface LinkProps {
   charLimit?: number
   label?: string
+  /** Text shown in place of the label when the thought is empty, styled like the placeholder of an empty thought in the outline. */
+  placeholder?: string
   simplePath: SimplePath
   style?: React.CSSProperties
   cssRaw?: SystemStyleObject
@@ -27,7 +29,7 @@ interface LinkProps {
 }
 
 /** Renders a link to a thought. */
-const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, className }: LinkProps) => {
+const Link = React.memo(({ simplePath, label, placeholder, charLimit = 32, style, cssRaw, className }: LinkProps) => {
   const isEM = simplePath.length === 1 && head(simplePath) === EM_TOKEN
   const value = useEditorSelector(state => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
   const dispatch = useDispatch()
@@ -69,7 +71,12 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, cla
       }}
       dangerouslySetInnerHTML={isEM ? { __html: '<b>em</b>' } : undefined}
     >
-      {!isEM ? ellipsize(decodeCharacterEntities(value), charLimit) : null}
+      {isEM ? null : value || !placeholder ? (
+        ellipsize(decodeCharacterEntities(value), charLimit)
+      ) : (
+        // render the placeholder inside the link so that an empty thought still has something to read and tap
+        <span className={css({ fontStyle: 'italic', color: 'dim' })}>{placeholder}</span>
+      )}
     </a>
   )
 })

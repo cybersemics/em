@@ -3,6 +3,7 @@ import { isTauri } from '@tauri-apps/api/core'
 import pkg from '../../package.json'
 import State from '../@types/State'
 import { isTouch } from '../browser'
+import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import { registerReset } from '../stores/ministore'
 import hashThought from './hashThought'
 import storage from './storage'
@@ -112,6 +113,8 @@ let chunk: DebugLogEntry[] = entries.filter(
 )
 // performance.now() of the previous entry, used to compute dt
 let lastTime = 0
+// UTC date of the last entry mirrored to the console, so the mirror writes a `--- date` line only when it changes
+let lastMirroredDate = ''
 // requestAnimationFrame handle for the frame heartbeat
 let frameId: number | null = null
 // performance.now() of the previous rAF callback, used to measure the inter-frame gap
@@ -165,20 +168,101 @@ const persist = (): void => {
   }
 }
 
-/** Renders one entry as a single line: the `seq`, `t`, `dt`, and `type` envelope followed by the event-specific fields as JSON. Shared by format() and the console mirror so that a log read off the console parses identically to one dumped from the buffer. */
-const formatEntry = ({ seq, t, dt, type, ...fields }: DebugLogEntry): string => {
-  const fieldStr = Object.keys(fields).length > 0 ? ` ${JSON.stringify(fields)}` : ''
-  return `[${new Date(t).toISOString()}] +${dt}ms #${seq} ${type}${fieldStr}`
+/** Number of leading characters a thought id is cut to in format()'s output. At 10 hex characters, two of the ~2000 distinct ids a full buffer carries share a prefix with a probability of about one in a million. */
+const SHORT_ID_LENGTH = 10
+
+/** Matches a full thought id: 32 lowercase hex characters (see src/util/createId.ts). */
+const ID_REGEX = /\b[0-9a-f]{32}\b/g
+
+/** Matches a reserved thought id — HOME_TOKEN, EM_TOKEN and the rest (src/constants.ts), all of which carry at least 24 leading zeros. These are kept whole: they are short in tokens and mean the same thing on every device. */
+const RESERVED_ID_REGEX = /^0{24}/
+
+/** Shortens every non-reserved thought id in the text to its first SHORT_ID_LENGTH characters. */
+const shortenIds = (text: string): string =>
+  text.replace(ID_REGEX, id => (RESERVED_ID_REGEX.test(id) ? id : id.slice(0, SHORT_ID_LENGTH)))
+
+/** Drops the fields that carry nothing an agent needs, recursively: `isComposing: false`, the default; `value` when it only repeats a reserved id; and the `label` and `source` of commandMetadata, which repeat its commandId. */
+const prune = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(prune)
+  if (!value || typeof value !== 'object') return value
+  const obj = value as Record<string, unknown>
+  return Object.fromEntries(
+    Object.entries(obj)
+      .filter(
+        ([key, child]) =>
+          !(key === 'isComposing' && child === false) &&
+          !(key === 'value' && child === obj.id && typeof child === 'string' && RESERVED_ID_REGEX.test(child)),
+      )
+      .map(([key, child]) => {
+        if (key !== 'commandMetadata' || !child || typeof child !== 'object') return [key, prune(child)]
+        const { label: _label, source: _source, ...rest } = child as Record<string, unknown>
+        return [key, prune(rest)]
+      }),
+  )
 }
 
-/** Appends an entry to the rolling buffer and persists its chunk synchronously. No-op when logging is disabled. Never throws, so instrumentation can never worsen a freeze or break editing. */
-const log = (type: string, fields?: Record<string, unknown>): void => {
+/**
+ * Compacts the fields of one entry. An `action` entry's actionType is returned as a label for the envelope, and its
+ * payload — stringified when it was logged, so that the field cap bounds it in storage — is parsed back and spread
+ * into the fields, which removes a level of escaping from every key. A payload that does not parse (one cut by the
+ * field cap) or is not an object stays a `payload` string.
+ */
+const compactFields = (type: string, fields: Record<string, unknown>): { label: string | null; fields: object } => {
+  if (type !== 'action' || typeof fields.actionType !== 'string')
+    return { label: null, fields: prune(fields) as object }
+  const { actionType, payload, ...rest } = fields
+  const parsed = ((): unknown => {
+    if (typeof payload !== 'string') return undefined
+    try {
+      return JSON.parse(payload)
+    } catch {
+      return undefined
+    }
+  })()
+  const spread =
+    parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : payload !== undefined
+        ? { payload }
+        : {}
+  return { label: actionType, fields: prune({ ...rest, ...spread }) as object }
+}
+
+/** Returns the UTC date of a timestamp as YYYY-MM-DD, which format() and the console mirror write as a `--- date` line whenever it changes, so that each entry carries only the time of day. */
+const utcDate = (t: number): string => new Date(t).toISOString().slice(0, 10)
+
+/**
+ * Renders one entry as a single line: the UTC time of day, `dt`, `seq` and `type` envelope — followed, for an `action`,
+ * by its actionType — and then the event-specific fields as JSON, compacted (see compactFields) and with thought ids
+ * shortened. Shared by format() and the console mirror so that a log read off the console parses identically to
+ * one dumped from the buffer. The log is read only by agents, so the line is shaped for tokens rather than for a person.
+ */
+const formatEntry = ({ seq, t, dt, type, ...fields }: DebugLogEntry): string => {
+  const compacted = compactFields(type, fields)
+  const fieldStr = Object.keys(compacted.fields).length > 0 ? ` ${JSON.stringify(compacted.fields)}` : ''
+  const line = `${new Date(t).toISOString().slice(11, 23)} +${dt}ms #${seq} ${type}${compacted.label ? ` ${compacted.label}` : ''}${fieldStr}`
+  return shortenIds(line)
+}
+
+/**
+ * Appends an entry to the rolling buffer and persists its chunk synchronously. No-op when logging is disabled. Never
+ * throws, so instrumentation can never worsen a freeze or break editing.
+ *
+ * Fields whose values are static (variables, property reads, literals) are passed as an object. Fields that call a
+ * function or read layout are passed as a function returning the object instead, so that nothing is computed for them
+ * while logging is off, which it is in production unless the user turns it on. The function is called synchronously,
+ * so it reads the same values an object would have captured, and inside the try, so a field that throws costs only its
+ * entry. The em/no-precomputed-debug-log-fields lint rule enforces the split.
+ */
+const log = (type: string, fields?: Record<string, unknown> | (() => Record<string, unknown>)): void => {
   if (!enabled) return
   try {
+    // computed before anything else, so a field that throws leaves seq and dt as if the entry had never been attempted
+    const capped = capFields(typeof fields === 'function' ? fields() : fields)
     const now = performance.now()
     const dt = lastTime === 0 ? 0 : Math.round(now - lastTime)
     lastTime = now
-    const entry: DebugLogEntry = { seq: seq++, t: Date.now(), dt, type, ...capFields(fields) }
+    const entry: DebugLogEntry = { seq: seq++, t: Date.now(), dt, type, ...capped }
     entries.push(entry)
     if (entries.length > DEBUG_LOG_CAPACITY) {
       entries.splice(0, entries.length - DEBUG_LOG_CAPACITY)
@@ -192,6 +276,11 @@ const log = (type: string, fields?: Record<string, unknown>): void => {
     // Mirror to the console last, so a console that throws or is monkey-patched cannot cost the entry its
     // place in the persisted buffer — which is the copy that survives a freeze or a device restart.
     if (consoleEnabled) {
+      const date = utcDate(entry.t)
+      if (date !== lastMirroredDate) {
+        lastMirroredDate = date
+        console.info(`${CONSOLE_PREFIX} --- date: ${date}`)
+      }
       console.info(`${CONSOLE_PREFIX} ${formatEntry(entry)}`)
     }
   } catch {
@@ -204,7 +293,7 @@ const frameLoop = (): void => {
   if (!enabled) return
   const now = performance.now()
   if (lastFrameTime !== 0 && now - lastFrameTime >= FRAME_GAP_THRESHOLD_MS) {
-    log('frameGap', { gap: Math.round(now - lastFrameTime) })
+    log('frameGap', () => ({ gap: Math.round(now - lastFrameTime) }))
   }
   lastFrameTime = now
   if (now - lastMarkerWritten >= FRAME_MARKER_THROTTLE_MS) {
@@ -241,10 +330,10 @@ const read = (): DebugLogEntry[] => [...entries]
 const formatThought = (thought: { id: string; value: string; parentId: string }, position: number): string => {
   const value =
     thought.value.length > DUMP_VALUE_MAX_LENGTH ? `${thought.value.slice(0, DUMP_VALUE_MAX_LENGTH)}…` : thought.value
-  return `${thought.id} ${JSON.stringify(value)} rank:${position} parent:${thought.parentId}`
+  return shortenIds(`${thought.id} ${JSON.stringify(value)} rank:${position} parent:${thought.parentId}`)
 }
 
-/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, and build commit. Appends the last-frame marker and, when state is provided, the current editor view summary and a compact document dump grouped by parent and sibling position so entry ids can be resolved to values and current sibling order is visible. */
+/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, build commit, display and the URL the log was formatted on, and how many earlier entries the rolling buffer has evicted. Appends the last-frame marker and, when state is provided, the current editor view summary and a compact document dump grouped by parent and sibling position so entry ids can be resolved to values and current sibling order is visible. */
 const format = (state?: State): string => {
   // The device: the navigator platform, the shell em is served through (web, ios, android, or tauri), the screen
   // dimensions, and the pointer type. The shell is worth naming separately because it is not recoverable from the user
@@ -258,18 +347,44 @@ const format = (state?: State): string => {
     isTouch ? 'touch' : 'mouse',
   ].join(', ')
 
+  // The display: whether em runs as an installed PWA or in a browser tab, the screen orientation, the device pixel ratio,
+  // the pinch-zoom scale of the visual viewport, and the bottom safe-area inset. Several iOS scroll and layout bugs
+  // depend on these. Read at format time, when a forced style recalculation costs nothing that matters.
+  const display =
+    typeof window !== 'undefined'
+      ? [
+          navigator.standalone || window.matchMedia?.('(display-mode: standalone)').matches ? 'standalone' : 'browser',
+          window.screen?.orientation?.type ?? 'unknown orientation',
+          `dpr ${window.devicePixelRatio}`,
+          `scale ${window.visualViewport?.scale ?? 1}`,
+          `safe-area-bottom ${getSafeAreaBottom()}`,
+        ].join(', ')
+      : 'unknown'
+
   // The header is rendered here rather than read back from the session marker, which the rolling buffer evicts once
   // capacity is exceeded — i.e. in exactly the long sessions whose logs are most worth reading. It describes the device
   // and build the log was formatted on, so a hydrated log spanning an app update may still carry a session marker from
-  // the version that wrote the older entries.
+  // the version that wrote the older entries. The URL is what tells production, a preview deployment and localhost apart.
   const header = [
     `--- device: ${device}`,
     `--- userAgent: ${typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'}`,
     `--- version: ${pkg.version}`,
     `--- commit: ${__COMMIT_HASH__}`,
+    `--- display: ${display}`,
+    `--- url: ${typeof window !== 'undefined' ? window.location.href : 'unknown'}`,
+    // seq counts every entry since the last clear(), so the first retained seq is the number the rolling buffer has
+    // evicted. Spelled out so a reader can tell a log that wrapped from one that holds the whole session.
+    ...((entries[0]?.seq ?? 0) > 0 ? [`--- evicted: ${entries[0].seq} earlier entries`] : []),
   ].join('\n')
 
-  const entryLines = entries.map(formatEntry).join('\n')
+  // a `--- date` line before the first entry and wherever the date changes, since each entry carries only the time
+  const entryLines = entries
+    .flatMap((entry, i) =>
+      i === 0 || utcDate(entry.t) !== utcDate(entries[i - 1].t)
+        ? [`--- date: ${utcDate(entry.t)}`, formatEntry(entry)]
+        : [formatEntry(entry)],
+    )
+    .join('\n')
 
   let markerLine = ''
   try {
@@ -289,16 +404,18 @@ const format = (state?: State): string => {
   // The view the log ended on, which the entries can only reconstruct from setCursor and similar actions — the first
   // to be evicted in a long session. Thought ids resolve against the state.thoughts dump that follows.
   const view = state
-    ? `\n--- state: ${JSON.stringify({
-        cursor: state.cursor,
-        cursorOffset: state.cursorOffset,
-        isKeyboardOpen: state.isKeyboardOpen,
-        noteFocus: state.noteFocus,
-        expanded: Object.keys(state.expanded).length,
-        multicursors: Object.keys(state.multicursors).length,
-        undo: state.undoPatches.length,
-        redo: state.redoPatches.length,
-      })}`
+    ? `\n--- state: ${shortenIds(
+        JSON.stringify({
+          cursor: state.cursor,
+          cursorOffset: state.cursorOffset,
+          isKeyboardOpen: state.isKeyboardOpen,
+          noteFocus: state.noteFocus,
+          expanded: Object.keys(state.expanded).length,
+          multicursors: Object.keys(state.multicursors).length,
+          undo: state.undoPatches.length,
+          redo: state.redoPatches.length,
+        }),
+      )}`
     : ''
 
   const dump = state
@@ -360,6 +477,7 @@ const reset = (): void => {
   chunk = []
   seq = 0
   lastTime = 0
+  lastMirroredDate = ''
   lastFrameTime = 0
   lastMarkerWritten = 0
 }
@@ -374,13 +492,13 @@ const setEnabled = (value: boolean): void => {
   if (value === enabled) return
   enabled = value
   if (enabled) {
-    log('session', {
+    log('session', () => ({
       ua: typeof navigator !== 'undefined' ? navigator.userAgent : '',
       screen: typeof window !== 'undefined' && window.screen ? `${window.screen.width}x${window.screen.height}` : '',
       mode: import.meta.env.MODE,
       appVersion: pkg.version,
       commitHash: __COMMIT_HASH__,
-    })
+    }))
     startFrameHeartbeat()
   } else {
     stopFrameHeartbeat()
@@ -406,6 +524,8 @@ const isConsole = (): boolean => consoleEnabled
  */
 const setConsole = (value: boolean): void => {
   consoleEnabled = value
+  // a mirror turned back on starts a new excerpt, which needs its own date line
+  lastMirroredDate = ''
   try {
     if (value) {
       storage.setItem(CONSOLE_KEY, 'true')
@@ -421,15 +541,16 @@ const setConsole = (value: boolean): void => {
 const logError = (source: string, error: unknown, fields?: Record<string, unknown>): void => {
   if (!enabled) return
   try {
-    log(
-      'error',
+    // Built here rather than in the fields callback, where a throw would be swallowed by log and skip the fallback
+    // below. Logging is known to be enabled at this point, so nothing is computed in vain.
+    const errorFields =
       error instanceof Error
         ? { source, name: error.name, message: error.message, stack: error.stack, ...fields }
-        : { source, message: typeof error === 'string' ? error : (JSON.stringify(error) ?? String(error)), ...fields },
-    )
+        : { source, message: typeof error === 'string' ? error : (JSON.stringify(error) ?? String(error)), ...fields }
+    log('error', () => errorFields)
   } catch {
     // The thrown value could not be stringified (e.g. a circular object), which must not cost the entry.
-    log('error', { source, message: '[unserializable]', ...fields })
+    log('error', () => ({ source, message: '[unserializable]', ...fields }))
   }
 }
 

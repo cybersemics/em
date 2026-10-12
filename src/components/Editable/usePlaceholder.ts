@@ -1,7 +1,7 @@
 import { unescape as unescapeHtml } from 'html-escaper'
 import Path from '../../@types/Path'
 import SimplePath from '../../@types/SimplePath'
-import { Settings } from '../../constants'
+import { EMPTY_THOUGHT_PLACEHOLDER, Settings } from '../../constants'
 import useEditorSelector from '../../hooks/useEditorSelector'
 import attributeEquals from '../../selectors/attributeEquals'
 import getThoughtById from '../../selectors/getThoughtById'
@@ -41,7 +41,7 @@ const usePlaceholder = ({ isEditing, path, simplePath }: { isEditing: boolean; p
         ? ''
         : // only check the time if value is non-empty, otherwise the result will change for non-empty thoughts and cause the ContentEditable to re-render even when the placeholder is not displayed.
           Date.now() - thought.lastUpdated > EMPTY_THOUGHT_TIMEOUT
-          ? 'This is an empty thought'
+          ? EMPTY_THOUGHT_PLACEHOLDER
           : 'Add a thought'
 
     return emptyValue

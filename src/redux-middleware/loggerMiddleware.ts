@@ -25,8 +25,10 @@ const logUndoRedo = (stateBefore: State, stateAfter: State, actionType: string):
   const stackAfter = actionType === 'undo' ? stateAfter.undoPatches : stateAfter.redoPatches
   const popped = stackBefore.slice(stackAfter.length)
   if (popped.length === 0) return
-  const actions = [...new Set(popped.flatMap(patch => patch.metadata.actionTypes))]
-  debugLog.log(actionType, { steps: popped.length, actions })
+  debugLog.log(actionType, () => ({
+    steps: popped.length,
+    actions: [...new Set(popped.flatMap(patch => patch.metadata.actionTypes))],
+  }))
 }
 
 /** Logs dispatched actions, structured thought updates, and undo/redo attribution. The command coordinator captures move diagnostics. */
@@ -49,7 +51,7 @@ const loggerMiddleware: Middleware<any, State, Dispatch> = store => {
     // debugLog's field cap) so large actions cannot blow the buffer; updateThoughts gets a structured summary instead.
     if (debugLog.isEnabled() && action && typeof action === 'object') {
       if (type === 'updateThoughts') {
-        debugLog.log('action', summarizeUpdateThoughts(action as UnknownAction))
+        debugLog.log('action', () => summarizeUpdateThoughts(action as UnknownAction))
       } else {
         const { type: _type, ...payload } = action as UnknownAction
         let payloadStr: string

@@ -23,17 +23,25 @@ const getSortedPlacement = (
     // Updated sorting compares attribute timestamps too, so a newly updated thought precedes every sibling in Desc.
     return descending ? null : (children.at(-1)?.id ?? null)
   }
-  const compare = descending ? compareReasonableDescending : compareReasonable
+  // Note sorting reverses the comparator exactly; unlike Alphabetical, formatted notes do not stay first in Desc.
+  const compare = descending
+    ? type === 'Note'
+      ? (a: string, b: string) => compareReasonable(b, a)
+      : compareReasonableDescending
+    : compareReasonable
   const candidates = type === 'Note' ? children.filter(isVisible(state)) : children
-  const index = candidates.findIndex(child =>
-    type === 'Created' && created !== undefined
+  const index = candidates.findIndex(child => {
+    if (type === 'Note') {
+      const note = noteValue(state, thoughtToPath(state, child.id))
+      // Notes sort before absent or empty notes in either direction.
+      return !note || (!!value && compare(note, value) !== -1)
+    }
+    return type === 'Created' && created !== undefined
       ? descending
         ? child.created <= created
         : child.created > created
-      : type === 'Note'
-        ? compare(noteValue(state, thoughtToPath(state, child.id)) ?? '', value) !== -1
-        : compare(child.value, value) !== -1,
-  )
+      : compare(child.value, value) !== -1
+  })
   // Ascending creation ties append after existing siblings, preserving sequential splits in the same millisecond.
   return index === -1
     ? (candidates.at(-1)?.id ?? null)

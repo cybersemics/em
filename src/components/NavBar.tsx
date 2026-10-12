@@ -72,6 +72,20 @@ const NavBar = ({ position }: { position: string }) => {
               /* spacing.safeAreaBottom applies for rounded screens */
               bottom: 'calc(max(11px, token(spacing.safeAreaBottom)))',
               marginBottom: '10px',
+              // The blackout's box shadow fades out before it reaches the bottom of the screen, which lets thoughts show through below the nav bar on devices with a large bottom safe area. Fill the gap between the nav bar and the bottom of the screen with a solid background.
+              _after:
+                isCursor && !glowImage
+                  ? {
+                      content: '""',
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      // 1px extra covers subpixel rounding at the screen edge.
+                      height: 'calc(max(11px, token(spacing.safeAreaBottom)) + 1px)',
+                      backgroundColor: 'bg',
+                    }
+                  : undefined,
             }
           : undefined),
       })}

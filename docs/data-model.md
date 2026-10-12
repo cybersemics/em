@@ -273,7 +273,7 @@ The predicate is [`childrenFilterPredicate`](../src/selectors/getChildren.ts). I
 - `Alphabetical` (Asc/Desc).
 - `Created` (Asc/Desc).
 - `Updated` (Asc/Desc).
-- `Note` (sort by the `=note` value of each child).
+- `Note` (sort by the `=note` value of each child). Children with a note come first in either direction, ordered by their notes, followed by the children without one. An empty note, such as the one the Note command creates before anything is typed into it, counts as no note, so the thought stays where it is until the note has a value.
 
 There is no global or default sort preference: a context without `=sort` is sorted manually. Dragging supplies an explicit placement; the next view reads the resulting sibling order.
 

@@ -140,12 +140,12 @@ const diffState = (
       if (!(error instanceof Error)) throw error
       console.error(error.message, { state: value, mergeWith })
       // The throw unwinds dispatch before loggerMiddleware can record the action that triggered it.
-      debugLog.log('undoPatchError', {
+      debugLog.log('undoPatchError', () => ({
         actionType,
         message: error.message,
         patchActionTypes: mergeWith?.metadata.actionTypes,
         opPaths: mergeOps.map(op => `${op.op} ${op.path}`),
-      })
+      }))
       throw new Error('Error applying patch')
     }
   }

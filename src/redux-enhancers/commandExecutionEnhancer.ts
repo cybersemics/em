@@ -113,14 +113,19 @@ const commandExecutionEnhancer: StoreEnhancer<any> =
             console.warn('Unable to cache first-paint settings', error)
           }
           if (moves.length <= 10) moves.forEach(move => debugLog.log('move', move))
-          else debugLog.log('moveBatch', { actionType: action.type, count: moves.length, sample: moves.slice(0, 10) })
+          else
+            debugLog.log('moveBatch', () => ({
+              actionType: action.type,
+              count: moves.length,
+              sample: moves.slice(0, 10),
+            }))
           if (persisted && next.thoughts !== state.thoughts) {
             if (debugLog.isEnabled()) debugLog.log('push', { operationCount })
             void persisted
               .then(() => debugLog.log('pushSynced'))
               .catch(error => {
                 console.error('Thoughtspace persistence failed', error)
-                debugLog.log('pushError', { error: String(error) })
+                debugLog.log('pushError', () => ({ error: String(error) }))
               })
           }
           const { thoughts, ...ui } = next

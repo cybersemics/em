@@ -48,6 +48,7 @@ The main directory structure is organized as follows. Tests are located in a sub
 | Layout positioning math | [`hooks/usePositionedThoughts.ts`](../src/hooks/usePositionedThoughts.ts) |
 | Visible-thoughts traversal | [`selectors/linearizeTree.ts`](../src/selectors/linearizeTree.ts) |
 | Pure helper (no React, no Redux) | [`util/`](../src/util) |
+| Project-specific lint rule (`em/…`) | [`packages/eslint-plugin-em/index.js`](../packages/eslint-plugin-em/index.js), registered in [`eslint.config.js`](../eslint.config.js), with RuleTester cases in `packages/eslint-plugin-em/__tests__/` |
 
 ## Conventions
 

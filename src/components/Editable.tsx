@@ -396,8 +396,11 @@ const Editable = ({
     // Log the value transition at the point the edit is committed to Redux. Correlates with the 'change' branch that queued it.
     if (debugLog.isEnabled())
       dispatch((dispatch, getState) => {
-        const rank = getState().thoughts.getPosition(head(simplePath)) ?? 0
-        debugLog.log('edit', { oldValue, newValue, rank })
+        debugLog.log('edit', () => ({
+          oldValue,
+          newValue,
+          rank: getState().thoughts.getPosition(head(simplePath)) ?? 0,
+        }))
       })
 
     dispatch(
@@ -471,7 +474,7 @@ const Editable = ({
     /** Snapshots the input event and editable state for the rolling log. `branch` names the code path that handled the event,
      * so the log distinguishes an ignored keystroke from the retarget path that runs after iOS autocomplete. */
     const logInput = (e: InputEvent, branch: string) =>
-      debugLog.log('input', {
+      debugLog.log('input', () => ({
         branch,
         inputType: e.inputType,
         data: e.data,
@@ -479,7 +482,7 @@ const Editable = ({
         value: editable.textContent,
         sel: selection.offsetThought() ?? selection.offset(),
         pending: pendingAutocompleteAt,
-      })
+      }))
 
     /** After iOS autocomplete (insertReplacementText) accepts a word, no touch events reach the DOM
      * in a "dead zone" beneath the word until focus is retargeted. Moving focus to the asyncFocus dummy input
@@ -575,25 +578,31 @@ const Editable = ({
     const onEditableCompositionEnd = (e: CompositionEvent) =>
       debugLog.log('composition', { phase: 'end', data: e.data })
 
-    /** Describes the currently focused element (tag + data-testid) so focus retargeting during autocomplete can be traced. */
-    const describeActiveElement = () => {
-      const el = document.activeElement
-      return { tag: el?.tagName ?? null, testid: el?.getAttribute?.('data-testid') ?? null }
-    }
+    /** Describes an element so focus retargeting during autocomplete can be traced. An editable's aria-label carries its thought id. Reads attributes only: isContentEditable would force a style recalculation. */
+    const describeElement = (el: Element | null) => ({
+      tag: el?.tagName ?? null,
+      testid: el?.getAttribute?.('data-testid') ?? null,
+      label: el?.getAttribute?.('aria-label') ?? null,
+      contenteditable: el?.getAttribute?.('contenteditable') ?? null,
+    })
     /** Logs when the editable gains focus, recording which element is now active. */
-    const onEditableFocus = () => debugLog.log('focus', describeActiveElement())
-    /** Logs when the editable loses focus, recording which element is now active (reveals the asyncFocus retarget target). */
-    const onEditableBlur = () => debugLog.log('blur', describeActiveElement())
+    const onEditableFocus = () => debugLog.log('focus', () => describeElement(document.activeElement))
+    /** Logs when the editable loses focus, recording which element is now active and which element focus is moving to (reveals the asyncFocus retarget target). */
+    const onEditableBlur = (e: FocusEvent) =>
+      debugLog.log('blur', () => ({
+        ...describeElement(document.activeElement),
+        relatedTarget: describeElement(e.relatedTarget instanceof Element ? e.relatedTarget : null),
+      }))
 
     /** Logs caret movement ONLY during the ~250ms autocomplete window (pendingAutocompleteAt != null) to trace the caret
      * entering the touch dead zone without flooding the log with every ordinary selection change. */
     const onSelectionChange = () => {
       if (pendingAutocompleteAt == null) return
-      debugLog.log('selectionchange', {
+      debugLog.log('selectionchange', () => ({
         anchor: selection.anchorOffset(),
         focus: selection.offset(),
         collapsed: selection.isCollapsed(),
-      })
+      }))
     }
 
     editable.addEventListener('input', onAutocompleteInput)
@@ -647,13 +656,13 @@ const Editable = ({
         // TODO: What happens when actual HTML is inserted from the clipboard app? It needs to be differentiated from plain text with divs.
         // TODO: Consider handling this in importData or textToHtml, as onChangeHandler should not contain import logic. Just need to make sure it does not introduce regressions.
         const text = incomingValue.slice(oldValue.length).replace(/<div>/g, '\n')
-        debugLog.log('change', {
+        debugLog.log('change', () => ({
           branch: 'clipboard',
           isClipboardInsert,
           oldValue,
           newValue: incomingValue,
           cursorOffset: selection.offsetThought(),
-        })
+        }))
         dispatch(
           importData({
             path: simplePath,
@@ -1091,7 +1100,7 @@ const Editable = ({
 
         // Record the tap inputs that determine which branch runs. `cancelable: false` on a touchend means the
         // preventDefault below is a silent no-op and iOS Safari will still synthesize focus/mouse events for the tap.
-        debugLog.log('tap', {
+        debugLog.log('tap', () => ({
           eventType: e.type,
           cancelable: e.cancelable,
           touching: touchStore.getState().touching,
@@ -1099,7 +1108,13 @@ const Editable = ({
           isVisible,
           longPress: state.longPress,
           touchMoved: tapTouchMovedRef.current,
-        })
+          // Edit mode and caret as Redux has them, beside the element the browser has focused, so a false edit mode
+          // or caret can be traced to the tap where Redux and the DOM first disagree.
+          isKeyboardOpen: state.isKeyboardOpen,
+          noteFocus: state.noteFocus,
+          cursorOffset: state.cursorOffset,
+          activeElement: document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName ?? null,
+        }))
 
         // If long press is in progress, don't allow the editable to receive focus or iOS Safari will scroll it.
         if (state.longPress !== LongPressState.Inactive) {
