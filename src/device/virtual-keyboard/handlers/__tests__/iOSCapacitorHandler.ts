@@ -1,4 +1,3 @@
-import { registerPlugin } from '@capacitor/core'
 import { importTextActionCreator as importText } from '../../../../actions/importText'
 import { keyboardOpenActionCreator as keyboardOpen } from '../../../../actions/keyboardOpen'
 import { LongPressState } from '../../../../constants'
@@ -9,7 +8,12 @@ import initStore from '../../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../../test-helpers/setCursorFirstMatch'
 import iOSCapacitorHandler from '../iOSCapacitorHandler'
 
-const { listeners, remove, registration, availability } = vi.hoisted(() => ({
+const { listeners, remove, registration, availability, native } = vi.hoisted(() => ({
+  native: {
+    addListener: vi.fn(async () => ({ remove: async () => {} })),
+    getState: vi.fn(async () => ({ height: 0 })),
+    measure: vi.fn(),
+  },
   listeners: {} as Record<string, (info?: { keyboardHeight: number }) => void>,
   remove: vi.fn(async () => {}),
   availability: { measurement: false },
@@ -23,10 +27,7 @@ vi.mock('@capacitor/core', () => ({
     isPluginAvailable: (name: string) =>
       name === 'Keyboard' || (availability.measurement && name === 'IOSKeyboardPlugin'),
   },
-  registerPlugin: vi.fn(() => ({
-    addListener: async () => ({ remove }),
-    getState: async () => ({ height: 0 }),
-  })),
+  registerPlugin: () => native,
 }))
 vi.mock('@capacitor/keyboard', () => ({
   Keyboard: {
@@ -42,6 +43,9 @@ vi.mock('@capacitor/keyboard', () => ({
 
 beforeEach(() => {
   remove.mockClear()
+  native.addListener.mockClear()
+  native.getState.mockClear()
+  native.measure.mockClear()
   availability.measurement = false
   registration.defer = false
   registration.resolve = []
@@ -98,13 +102,15 @@ it('uses TypeScript timing even when the native measurement plugin is available'
   availability.measurement = true
   document.documentElement.style.setProperty('--safe-area-inset-bottom', '20px')
   iOSCapacitorHandler.init()
-  expect(registerPlugin).not.toHaveBeenCalled()
+  expect(native.addListener).not.toHaveBeenCalled()
+  expect(native.getState).not.toHaveBeenCalled()
   listeners.keyboardWillShow({ keyboardHeight: 320 })
   await vi.runAllTimersAsync()
   expect(virtualKeyboardStore.getState()).toMatchObject({ open: true, height: 300 })
   listeners.keyboardWillHide()
   await vi.runAllTimersAsync()
   expect(virtualKeyboardStore.getState()).toMatchObject({ open: false, height: 0 })
+  expect(native.measure).not.toHaveBeenCalled()
 })
 
 it('ignores keyboard focus caused by a long-press drag', async () => {
