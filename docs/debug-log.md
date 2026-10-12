@@ -101,6 +101,7 @@ The procedure an agent follows — download, arm, drive, capture, compare, and h
 
 Some shapes worth recognizing:
 
+- **The `--- commit` header names the build the log came from.** Before treating a report as a regression of a fix, check that the fix is in that build: `git merge-base --is-ancestor <fix commit> <logged commit>` after fetching `main`.
 - **`viewport` entries from an iPhone** are read against the two viewports Safari keeps while the keyboard is open; [iOS Safari Viewport](ios-safari-viewport.md) explains which field fixed elements follow and what a stale or uncovered fixed element looks like in them.
 
 - **An `error` entry** is an uncaught error, with its name, message and stack (cut at the 2000-character field cap). Its `source` says where it was caught: `window` for an uncaught exception, which also shows the error banner; `unhandledrejection` for a rejected promise nothing handled, which is logged and nothing more; `render` for a component that threw while rendering, which replaces the app with the error screen and carries a `componentStack` locating it in the tree.
