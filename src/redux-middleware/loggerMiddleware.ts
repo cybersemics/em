@@ -58,7 +58,7 @@ const warnDuplicateRanks = (state: State, parentId: ThoughtId): void => {
     const duplicates = children
       .filter(sibling => sibling.rank === child.rank)
       .map(sibling => ({ id: sibling.id, value: truncateValue(sibling.value) }))
-    debugLog.log('integrity', () => ({ issue: 'duplicateRank', parentId, rank: child.rank, thoughts: duplicates }))
+    debugLog.log('integrity', { issue: 'duplicateRank', parentId, rank: child.rank, thoughts: duplicates })
     console.warn(`Duplicate sibling rank ${child.rank} under thought ${parentId}`, duplicates)
   })
 }
@@ -88,7 +88,7 @@ const logThoughtMoves = (stateBefore: State, stateAfter: State, actionType: stri
   })
 
   if (moves.length <= MAX_MOVES) {
-    moves.forEach(move => debugLog.log('move', () => move))
+    moves.forEach(move => debugLog.log('move', move))
   } else {
     debugLog.log('moveBatch', () => ({ actionType, count: moves.length, sample: moves.slice(0, MAX_MOVES) }))
   }
@@ -109,7 +109,7 @@ const logUndoRedo = (stateBefore: State, stateAfter: State, actionType: string):
   const popped = stackBefore.slice(stackAfter.length)
   if (popped.length === 0) return
   const actions = [...new Set(popped.flatMap(patch => patch.metadata.actionTypes))]
-  debugLog.log(actionType, () => ({ steps: popped.length, actions }))
+  debugLog.log(actionType, { steps: popped.length, actions })
 }
 
 /** Redux Middleware for logging all actions. Logs to the console when testFlags.logActions is set (useful for e2e/remote debugging when Redux Developer Tools are not available), and captures every action into the persistent debugLog when it is enabled (via the Debug Logging setting, or automatically on development and preview hosts) — along with derived forensics: structured updateThoughts summaries, a `move` entry for every rank or parent change, duplicate-sibling-rank integrity warnings, and undo/redo attribution. */
@@ -141,7 +141,7 @@ const loggerMiddleware: Middleware<any, State, Dispatch> = store => {
         } catch {
           payloadStr = String(payload)
         }
-        debugLog.log('action', () => ({ actionType: type ?? 'unknown', payload: payloadStr }))
+        debugLog.log('action', { actionType: type ?? 'unknown', payload: payloadStr })
       }
 
       // getState() after next(action) reflects the fully reduced state, including enhancer reducers (undo patches

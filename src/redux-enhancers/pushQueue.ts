@@ -126,7 +126,7 @@ const pushQueue: StoreEnhancer<any> =
         void applyDbQueue()
           .then(() => {
             dbQueue?.forEach(batch => batch.idbSynced?.())
-            debugLog.log('pushSynced', () => ({ thoughtCount: thoughtUpdates.length }))
+            debugLog.log('pushSynced', { thoughtCount: thoughtUpdates.length })
           })
           .catch(err => {
             console.error('Thoughtspace persistence failed', err)
