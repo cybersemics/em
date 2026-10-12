@@ -115,7 +115,7 @@ A tap that is part of a multi-touch gesture is ignored altogether, so that the c
 
 The same reasoning applies outside `Editable`, to anything the user taps that is rendered over the thoughtspace. A toolbar dropdown ([`LetterCasePicker`](../src/components/LetterCasePicker.tsx), [`SortPicker`](../src/components/SortPicker.tsx), [`BulletPicker`](../src/components/BulletPicker.tsx), [`ColorPicker`](../src/components/ColorPicker.tsx)) opens on top of the thoughts, so a tap on one of its options that the option does not consume is completed by the browser, and the mouse events it synthesizes at the tapped point reach the editor underneath and move the cursor to the thought behind the option ([issue #5608](https://github.com/cybersemics/em/issues/5608)). Each option therefore applies on `touchend` and calls `preventDefault()` there. `touchstart` is not an alternative: React registers it passively, so `preventDefault()` in an `onTouchStart` is a no-op and the browser completes the tap regardless.
 
-### Caret color
+### Caret and selection color
 
 On mobile, em's dark theme draws the caret and selection handles in `selectionHandle` (royal blue, `#4169e1`). In the light theme the web caret keeps the platform's native color. Each platform needs its own mechanism, because the handles are drawn natively:
 
@@ -124,6 +124,8 @@ On mobile, em's dark theme draws the caret and selection handles in `selectionHa
 - **Mobile Chrome.** Chrome draws the handles in its own color, which no CSS reaches; `caret-color` colors only the caret.
 
 The `caret-color` is set by a global style on `body[data-device=mobile][data-color-mode=dark]` in [`panda.config.ts`](../panda.config.ts), so it follows em's Theme setting. It is set on the body rather than on the editable so that the editables inherit it: the `hideCaret` animations that hide the real caret behind the [faux caret](../src/components/FauxCaret.tsx) on iOS Safari animate `caret-color` on the `LayoutTree`, and a value set on the editable itself would override the inherited, animated one. Puppeteer tests make the caret transparent everywhere to keep screenshots stable.
+
+The selection highlight in Chromium — Desktop Chrome, Mobile Chrome, and the Android app's WebView — is `selectionHighlight`: `selectionHandle` at 0.2 alpha, the same tint WebKit derives from `caret-color` for the iOS highlight. It is set by a `::selection` rule on `body[data-browser=chrome]` in [`panda.config.ts`](../panda.config.ts), in both themes, and sets only the background, so selected text keeps its own color and formatting. Safari and Firefox keep their native highlight.
 
 ### Rapid taps between thoughts
 
