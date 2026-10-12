@@ -5,13 +5,9 @@
 import gestures from '../../../test-helpers/gestures'
 import gesture from '../helpers/gesture'
 import getElementRectByScreen from '../helpers/getElementRectByScreen'
-import getSelection from '../helpers/getSelection'
-import isKeyboardShown from '../helpers/isKeyboardShown'
+import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import newThought from '../helpers/newThought'
-import setSelection from '../helpers/setSelection'
-import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
-import waitUntil from '../helpers/waitUntil'
 
 /** Installs listeners that record every input event that reaches the window. */
 const startRecording = () =>
@@ -107,51 +103,49 @@ const report = async (label: string) => {
   return parsed
 }
 
+/** Draws the New Thought gesture starting 20px into the given rect, records it, and reports. */
+const drawOverRect = async (label: string, rect: { x: number; y: number; height: number }) => {
+  await startRecording()
+  await gesture(gestures.newThought, { xStart: rect.x + 20, yStart: rect.y + rect.height / 2 })
+  await browser.pause(1500)
+  return report(label)
+}
+
 describe('Gesture over a thought (diagnostic)', () => {
-  it('after a double tap on the caret of another thought', async () => {
+  it('1 over a thought that is not being edited, keyboard open', async () => {
     await newThought('One')
     await newThought('Two')
     const one = await waitForEditable('One')
-    // the keyboard is still open from typing Two, so the tap moves edit mode to One
-    await tap(one, { pointerType: 'touch' })
-    await waitUntil(isKeyboardShown)
-    await waitUntil(async () =>
-      browser.execute(() => document.querySelector('[data-editing=true] [data-editable]')?.textContent === 'One'),
-    )
-
-    await tap(one, { offset: 'One'.length, pointerType: 'touch', count: 2 })
-    await waitUntil(async () => (await getSelection().toString()) === 'One')
-    await setSelection('One'.length, 'One'.length)
-
-    const two = await waitForEditable('Two')
-    const rect = await getElementRectByScreen(two)
-    await startRecording()
-    await gesture(gestures.newThought, { xStart: rect.x + 20, yStart: rect.y + rect.height / 2 })
-    await browser.pause(1500)
-    const result = await report('double tap')
-
+    const result = await drawOverRect('1 other thought, editing', await getElementRectByScreen(one))
     expect(result.alert).toBe(null)
     expect(result.thoughts.length).toBe(3)
   })
 
-  it('while another thought is being edited', async () => {
+  it('2 over the thought being edited', async () => {
     await newThought('One')
     await newThought('Two')
-    const one = await waitForEditable('One')
-    // the keyboard is still open from typing Two, so the tap moves edit mode to One
-    await tap(one, { pointerType: 'touch' })
-    await waitUntil(isKeyboardShown)
-    await waitUntil(async () =>
-      browser.execute(() => document.querySelector('[data-editing=true] [data-editable]')?.textContent === 'One'),
-    )
+    const two = await waitForEditable('Two')
+    const result = await drawOverRect('2 thought being edited', await getElementRectByScreen(two))
+    expect(result.alert).toBe(null)
+    expect(result.thoughts.length).toBe(3)
+  })
 
+  it('3 over a thought, keyboard closed', async () => {
+    await newThought('One')
+    await newThought('Two')
+    await hideKeyboardByTappingDone()
+    const one = await waitForEditable('One')
+    const result = await drawOverRect('3 keyboard closed', await getElementRectByScreen(one))
+    expect(result.alert).toBe(null)
+    expect(result.thoughts.length).toBe(3)
+  })
+
+  it('4 over empty space, keyboard open', async () => {
+    await newThought('One')
+    await newThought('Two')
     const two = await waitForEditable('Two')
     const rect = await getElementRectByScreen(two)
-    await startRecording()
-    await gesture(gestures.newThought, { xStart: rect.x + 20, yStart: rect.y + rect.height / 2 })
-    await browser.pause(1500)
-    const result = await report('editing')
-
+    const result = await drawOverRect('4 empty space', { ...rect, y: rect.y + 150 })
     expect(result.alert).toBe(null)
     expect(result.thoughts.length).toBe(3)
   })
