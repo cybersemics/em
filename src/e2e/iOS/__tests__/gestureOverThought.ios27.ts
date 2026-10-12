@@ -5,8 +5,8 @@
 import gestures from '../../../test-helpers/gestures'
 import gesture from '../helpers/gesture'
 import getElementRectByScreen from '../helpers/getElementRectByScreen'
-import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import newThought from '../helpers/newThought'
+import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
 
 /** Installs listeners that record every input event that reaches the window. */
@@ -112,40 +112,44 @@ const drawOverRect = async (label: string, rect: { x: number; y: number; height:
 }
 
 describe('Gesture over a thought (diagnostic)', () => {
-  it('1 over a thought that is not being edited, keyboard open', async () => {
+  it('A after a tap that moves edit mode', async () => {
     await newThought('One')
     await newThought('Two')
-    const one = await waitForEditable('One')
-    const result = await drawOverRect('1 other thought, editing', await getElementRectByScreen(one))
+    await tap(await waitForEditable('One'), { pointerType: 'touch' })
+    await browser.pause(1000)
+    const result = await drawOverRect(
+      'A tap moved edit mode',
+      await getElementRectByScreen(await waitForEditable('Two')),
+    )
     expect(result.alert).toBe(null)
     expect(result.thoughts.length).toBe(3)
   })
 
-  it('2 over the thought being edited', async () => {
+  it('B after a tap that moves edit mode, over a thought that is not contenteditable', async () => {
     await newThought('One')
     await newThought('Two')
+    await tap(await waitForEditable('One'), { pointerType: 'touch' })
+    await browser.pause(1000)
     const two = await waitForEditable('Two')
-    const result = await drawOverRect('2 thought being edited', await getElementRectByScreen(two))
+    // EXPERIMENT ONLY: is the withholding limited to touches that start on editable content?
+    await browser.execute(() => {
+      const el = Array.from(document.querySelectorAll('[data-editable]')).find(e => e.textContent === 'Two')
+      el?.setAttribute('contenteditable', 'false')
+    })
+    const result = await drawOverRect('B not contenteditable', await getElementRectByScreen(two))
     expect(result.alert).toBe(null)
     expect(result.thoughts.length).toBe(3)
   })
 
-  it('3 over a thought, keyboard closed', async () => {
+  it('E after a tap inside the thought being edited', async () => {
     await newThought('One')
-    await newThought('Two')
-    await hideKeyboardByTappingDone()
-    const one = await waitForEditable('One')
-    const result = await drawOverRect('3 keyboard closed', await getElementRectByScreen(one))
-    expect(result.alert).toBe(null)
-    expect(result.thoughts.length).toBe(3)
-  })
-
-  it('4 over empty space, keyboard open', async () => {
-    await newThought('One')
-    await newThought('Two')
-    const two = await waitForEditable('Two')
-    const rect = await getElementRectByScreen(two)
-    const result = await drawOverRect('4 empty space', { ...rect, y: rect.y + 150 })
+    await newThought('Two three four')
+    await tap(await waitForEditable('Two three four'), { offset: 2, pointerType: 'touch' })
+    await browser.pause(1000)
+    const result = await drawOverRect(
+      'E tap in editing thought',
+      await getElementRectByScreen(await waitForEditable('One')),
+    )
     expect(result.alert).toBe(null)
     expect(result.thoughts.length).toBe(3)
   })
