@@ -23,6 +23,7 @@ import type ThoughtspaceView from '../../@types/ThoughtspaceView'
 import { GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID } from '../../constants'
 import createId from '../../util/createId'
 import hashThought from '../../util/hashThought'
+import stripTags from '../../util/stripTags'
 import type DataProvider from '../DataProvider'
 import { initPermissionsStore } from '../permissionsStore'
 import type { ThoughtspaceRuntime, ThoughtspaceRuntimeInitOptions } from '../thoughtspace'
@@ -127,7 +128,7 @@ const memoryReader = (
   nodeIds: () => Iterable<string>,
   check: () => void,
 ): Omit<ThoughtspaceView, 'getLexeme' | 'revision'> => {
-  const children = new Map<string, readonly ThoughtId[]>()
+  let children: Map<string, readonly ThoughtId[]> | undefined
   /** Decodes content through the lifetime-checked reader. */
   const getThought = (id: ThoughtId) => readThought(reader.getContent(id))
   return {
@@ -135,6 +136,7 @@ const memoryReader = (
     getChildren: id => {
       // Scoped readers must expire even when EM's filtered child list is already cached.
       check()
+      children ??= new Map()
       if (!children.has(id))
         children.set(
           id,
@@ -216,18 +218,6 @@ const createMemoryThoughtspace = (
     }
   }
 
-  /** Invalidates subscribers, which always read the latest document even when an earlier listener commits again. */
-  const notify = (previous: ReturnType<ThoughtspaceTransaction['capturePrevious']>) => {
-    Array.from(listeners).forEach(listener => {
-      try {
-        listener(previous)
-      } catch (error) {
-        // A subscriber cannot roll back a committed document or prevent its other consumers from updating.
-        console.error('Memory TreeCRDT subscriber failed', error)
-      }
-    })
-  }
-
   /** Settles accepted writes and their loopback notifications before releasing resources. */
   const drainWork = async () => {
     let tails: Promise<void>[]
@@ -258,7 +248,7 @@ const createMemoryThoughtspace = (
 
   /** Supplies old rows only for changed nodes, while unchanged rows are read from the current tree. */
   const previousView = (before: () => ReadonlyMap<string, MemoryRow | null>, check: () => void) => {
-    const positions = new Map<string, Map<string, number>>()
+    let positions: Map<string, Map<string, number>> | undefined
     /** Reads captured content for changed nodes and current content for unchanged nodes. */
     const getContent = (id: string) => {
       check()
@@ -279,6 +269,7 @@ const createMemoryThoughtspace = (
           const rows = before()
           if (!rows.has(parent)) return memory?.getPosition(id)
           // Diagnostic move logging asks for every sibling's old position; index captured orders once.
+          positions ??= new Map()
           if (!positions.has(parent))
             positions.set(parent, new Map(rows.get(parent)?.children.map((child, index) => [child, index])))
           return positions.get(parent)!.get(id)
@@ -294,29 +285,46 @@ const createMemoryThoughtspace = (
     )
   }
 
+  /** Shares a lazy, scoped previous reader; subscribers otherwise read the latest document. */
+  const notify = (batch: MemoryChanges) => {
+    if (!listeners.size) return
+    const client = memory
+    let active = true
+    let before: Map<string, MemoryRow | null> | undefined
+    const previous = previousView(
+      // Index this committed batch on demand, never a later tree state.
+      () => (before ??= new Map(batch.changes.map(change => [change.id, change.before]))),
+      () => {
+        if (!active || client?.revision !== batch.revision) throw new Error('The previous document read has expired')
+      },
+    )
+    try {
+      Array.from(listeners).forEach(listener => {
+        try {
+          listener(previous)
+        } catch (error) {
+          // A subscriber cannot roll back a committed document or prevent its other consumers from updating.
+          console.error('Memory TreeCRDT subscriber failed', error)
+        }
+      })
+    } finally {
+      active = false
+    }
+  }
+
   /** Publishes incoming memory changes; local transactions notify only after their persistence is queued. */
   const publish = (batch: MemoryChanges) => {
     // Reentrant commands are already projected when their queued native notifications arrive.
     if (publishedRevision !== undefined && batch.revision <= publishedRevision) return
     if (!ready || currentTransaction) return
-    let active = true
-    const before = new Map(batch.changes.map(change => [change.id, change.before]))
-    const previous = previousView(
-      () => before,
-      () => {
-        if (!active || memory?.revision !== batch.revision) throw new Error('The previous document read has expired')
-      },
-    )
     try {
       lexemes!.commit(batch)
       publishedRevision = batch.revision
       const old = currentView
       const next = project()
-      if (next !== old) notify(previous)
+      if (next !== old) notify(batch)
     } catch (error) {
       reportFailure(error)
-    } finally {
-      active = false
     }
   }
 
@@ -335,13 +343,14 @@ const createMemoryThoughtspace = (
     const previous = currentView
     let active = true
     let prepared: MemoryChanges
-    /** Shares one native transaction across composed commands and scoped history reads. */
+    /** Shares one native transaction across composed commands and scoped diagnostic reads. */
     const run = (engine: MemoryTransaction) => {
       currentTransaction = engine
       const thoughtIds = new Set<ThoughtId>()
       const childrenChangedIds = new Set<ThoughtId>()
       let reset = false
-      /** Unions observed history boundaries, including a later return to the transaction's initial rows. */
+      let textChange: ThoughtspaceTransaction['textChange']
+      /** Unions observed boundaries, including a later return to the transaction's initial rows. */
       const collectChanges = () => {
         const batch = engine.getChanges()
         reset ||= batch.reset
@@ -362,8 +371,17 @@ const createMemoryThoughtspace = (
       /** Shares full-payload writes between field edits and imported/restored rows. */
       const writePayload = (id: string, thought: Thought) => {
         const payload = thoughtPayload(thought)
-        if (!_.isEqual(engine.getContent(id)?.payload, payload))
-          operationIds.push(engine.local.payload(id, payload).meta.id)
+        const current = engine.getContent(id)
+        if (_.isEqual(current?.payload, payload)) return
+        const oldValue =
+          textChange !== 'content' && current?.payload ? decodeThoughtPayload(current.payload).value : undefined
+        operationIds.push(engine.local.payload(id, payload).meta.id)
+        // Record successful edits, not a later net diff. Content dominates even if a subsequent edit cancels it.
+        if (textChange !== 'content' && oldValue !== thought.value)
+          textChange =
+            oldValue !== undefined && stripTags(oldValue).toLowerCase() === stripTags(thought.value).toLowerCase()
+              ? 'formatting'
+              : 'content'
       }
       const transaction: ThoughtspaceTransaction = {
         get operationOffset() {
@@ -394,6 +412,10 @@ const createMemoryThoughtspace = (
           if (!active) throw new Error('The document transaction has finished')
           return operationIds.slice()
         },
+        get textChange() {
+          if (!active) throw new Error('The document transaction has finished')
+          return textChange
+        },
         getChanges: () => {
           if (!active) throw new Error('The document transaction has finished')
           collectChanges()
@@ -422,6 +444,7 @@ const createMemoryThoughtspace = (
           checkPlacement(thought.id, thought.parentId, afterId)
           if (engine.getContent(thought.id)) throw new Error('Cannot insert an existing thought')
           operationIds.push(engine.local.insert(thought.parentId, thought.id, afterId, thoughtPayload(thought)).meta.id)
+          textChange = 'content'
         },
         payload: (id, fields) => {
           if (!active) throw new Error('The document transaction has finished')
@@ -437,7 +460,10 @@ const createMemoryThoughtspace = (
         },
         delete: id => {
           if (!active) throw new Error('The document transaction has finished')
-          if (engine.getContent(id)) operationIds.push(engine.local.delete(id).meta.id)
+          if (engine.getContent(id)) {
+            operationIds.push(engine.local.delete(id).meta.id)
+            textChange = 'content'
+          }
         },
         update: ({ thoughtIndexUpdates, movePlacements }) => {
           if (!active) throw new Error('The document transaction has finished')
@@ -497,24 +523,11 @@ const createMemoryThoughtspace = (
     void commitTail.catch(reportFailure)
     const persisted = callbacks.length ? commitTail.then(() => callbacks.forEach(callback => callback())) : commitTail
     const changed = result.changes.reset || result.changes.changes.length > 0
-    let notifying = true
-    const beforeRows = new Map(result.changes.changes.map(change => [change.id, change.before]))
-    const before = previousView(
-      () => beforeRows,
-      () => {
-        if (!notifying || client.revision !== result.changes.revision)
-          throw new Error('The previous document read has expired')
-      },
-    )
     // Queue persistence first: a subscriber may author another command, whose operations must follow this one.
     try {
       onCommit?.(result.value, persisted)
     } finally {
-      try {
-        if (changed) notify(before)
-      } finally {
-        notifying = false
-      }
+      if (changed) notify(result.changes)
     }
     return { value: result.value, persisted }
   }

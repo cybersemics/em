@@ -11,6 +11,8 @@ import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/m
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { redoActionCreator as redo } from '../../actions/redo'
 import { replaceThoughtsActionCreator as replaceThoughts } from '../../actions/replaceThoughts'
+import { setCursorActionCreator as setCursorPath } from '../../actions/setCursor'
+import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../../actions/setIsMulticursorExecuting'
 import { setNoteFocusActionCreator as setNoteFocus } from '../../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
@@ -969,20 +971,86 @@ describe('grouping', () => {
     expect(exportedAfterSecondUndo).not.toContain('<i>')
   })
 
-  it('keeps formatting separate from thought creation after an incoming text change', () => {
-    const readHistory = vi.spyOn(db, 'readHistory')
-    store.dispatch([newThought({ value: 'hello' }), editThought(['hello'], '<b>hello</b>')])
-    const thought = contextToThought(store.getState(), ['<b>hello</b>'])!
-    db.transact(transaction =>
-      transaction.update({ thoughtIndexUpdates: { [thought.id]: { ...thought, value: 'incoming text' } } }),
-    )
+  it.each(['hello', 'incoming text'])(
+    'keeps formatting separate from creation after incoming text %j and a UI-only merge',
+    incomingValue => {
+      const readHistory = vi.spyOn(db, 'readHistory')
+      store.dispatch(newThought({ value: 'hello' }))
+      const path = contextToPath(store.getState(), ['hello'])!
+      store.dispatch([
+        setIsMulticursorExecuting({ value: true }),
+        editThoughtRaw({ path, oldValue: 'hello', newValue: '<b>hello</b>', cursorOffset: 4 }),
+      ])
+      const thought = contextToThought(store.getState(), ['<b>hello</b>'])!
+      const incoming = db.transact(transaction =>
+        transaction.update({ thoughtIndexUpdates: { [thought.id]: { ...thought, value: incomingValue } } }),
+      )
+      // A UI-only continuation must not reclassify the authored formatting, even when incoming text cancels it.
+      store.dispatch([
+        replaceThoughts({ thoughts: incoming.value, repairCursor: true }),
+        setCursorPath({ path, offset: 3 }),
+        setIsMulticursorExecuting({ value: false }),
+      ])
+
+      store.dispatch(undo())
+
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - hello`)
+      expect(store.getState().cursorOffset).toBe(3)
+
+      store.dispatch(redo())
+
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - ${incomingValue}`)
+      expect(store.getState().cursorOffset).toBe(3)
+
+      // The fresh inverse receipts still belong to the original formatting command.
+      store.dispatch(undo())
+
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - hello`)
+      expect(store.getState().cursorOffset).toBe(3)
+      expect(readHistory).not.toHaveBeenCalled()
+      readHistory.mockRestore()
+    },
+  )
+
+  it.each([
+    { order: 'formatting then content', first: ['hello', '<b>hello</b>'], second: ['name', 'renamed'] },
+    { order: 'content then formatting', first: ['name', 'renamed'], second: ['hello', '<b>hello</b>'] },
+  ])('restores the caret when $order edits are grouped in one command', ({ first, second }) => {
+    store.dispatch([importText({ text: '- hello\n- name' }), setCursor(['hello'])])
+    const path = contextToPath(store.getState(), ['hello'])!
+    store.dispatch(setCursorPath({ path, offset: 1 }))
+
+    store.dispatch([
+      setIsMulticursorExecuting({ value: true }),
+      editThought([first[0]], first[1]),
+      editThought([second[0]], second[1]),
+      setCursorPath({ path, offset: 4 }),
+      setIsMulticursorExecuting({ value: false }),
+    ])
+
+    expect(getAllChildrenAsThoughtsByContext(store.getState(), [HOME_TOKEN]).map(thought => thought.value)).toEqual([
+      '<b>hello</b>',
+      'renamed',
+    ])
+    expect(store.getState().cursorOffset).toBe(4)
 
     store.dispatch(undo())
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - hello`)
-    expect(readHistory).not.toHaveBeenCalled()
-    readHistory.mockRestore()
+  - hello
+  - name`)
+    expect(store.getState().cursorOffset).toBe(1)
+
+    store.dispatch(redo())
+
+    expect(getAllChildrenAsThoughtsByContext(store.getState(), [HOME_TOKEN]).map(thought => thought.value)).toEqual([
+      '<b>hello</b>',
+      'renamed',
+    ])
+    expect(store.getState().cursorOffset).toBe(4)
   })
 
   it('undoing a formatting edit should preserve trailing space in thought value', () => {

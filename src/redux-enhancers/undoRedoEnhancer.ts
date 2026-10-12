@@ -6,9 +6,7 @@ import ActionType from '../@types/ActionType'
 import Patch, { CommandAttributedAction } from '../@types/Patch'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
-import ThoughtspaceView from '../@types/ThoughtspaceView'
 import { editThoughtPayload } from '../actions/editThought'
 import editableRender from '../actions/editableRender'
 import db from '../data-providers/thoughtspace'
@@ -120,40 +118,19 @@ const pathProperties: Record<PathProperty, true> = {
   multicursorAnchor: true,
 }
 
-/** Records UI restoration and value-only formatting baselines, never diagnostic document patches. */
+/** Records UI restoration, never document values or diagnostic patches. */
 const diffState = (
   newValue: State,
-  value: Omit<State, 'thoughts'> & { thoughts: Omit<ThoughtspaceView, 'getLexeme' | 'revision'> },
+  value: State,
   {
-    transaction,
     mergeWith,
     actionType,
   }: {
-    transaction?: ThoughtspaceTransaction
     mergeWith?: Patch
     actionType?: string
   } = {},
-): { ops: Operation[]; isFormatting: boolean; formattingBefore: Patch['formattingBefore'] } => {
+): Operation[] => {
   const mergeOps = mergeWith?.ops ?? []
-  const changes = transaction?.getChanges()
-  const priorValues = mergeWith?.formattingBefore ?? {}
-  const ids = new Set([
-    ...Object.keys(priorValues),
-    ...(changes?.reset
-      ? [...value.thoughts.values(), ...newValue.thoughts.values()].map(thought => thought.id)
-      : (changes?.thoughtIds ?? [])),
-  ])
-  const formattingBefore: Patch['formattingBefore'] = {}
-  let isFormatting = false
-  ids.forEach(key => {
-    const id = key as ThoughtId
-    const before = Object.hasOwn(priorValues, id) ? priorValues[id] : (value.thoughts.getThought(id)?.value ?? null)
-    const after = newValue.thoughts.getThought(id)?.value ?? null
-    if (before === after) return
-    formattingBefore[id] = before
-    isFormatting ||=
-      before !== null && after !== null && stripTags(before).toLowerCase() === stripTags(after).toLowerCase()
-  })
   let previous = value
   if (mergeOps.length) {
     // Normalize UI restoration against this group's earlier state, including UI-only merge steps.
@@ -182,22 +159,18 @@ const diffState = (
       .filter(segments => segments.length > 2 && segments[1] in pathProperties)
       .map(segments => segments[1] as PathProperty),
   )
-  return {
-    isFormatting,
-    formattingBefore,
-    ops: [
-      ...ops.filter(op => !pathKeys.has(op.path.split('/')[1] as PathProperty)),
-      ...[...pathKeys].map(key => ({ op: 'replace' as const, path: `/${key}`, value: _.cloneDeep(previous[key]) })),
-      // A remote deletion may have pruned an entry since history was recorded. Restore each entry atomically.
-      ...Object.keys({ ...newValue.thoughtUi, ...previous.thoughtUi }).flatMap<Operation>(id =>
-        _.isEqual(newValue.thoughtUi[id], previous.thoughtUi[id])
-          ? []
-          : previous.thoughtUi[id]
-            ? [{ op: 'add', path: `/thoughtUi/${id}`, value: previous.thoughtUi[id] }]
-            : [{ op: 'remove', path: `/thoughtUi/${id}` }],
-      ),
-    ],
-  }
+  return [
+    ...ops.filter(op => !pathKeys.has(op.path.split('/')[1] as PathProperty)),
+    ...[...pathKeys].map(key => ({ op: 'replace' as const, path: `/${key}`, value: _.cloneDeep(previous[key]) })),
+    // A remote deletion may have pruned an entry since history was recorded. Restore each entry atomically.
+    ...Object.keys({ ...newValue.thoughtUi, ...previous.thoughtUi }).flatMap<Operation>(id =>
+      _.isEqual(newValue.thoughtUi[id], previous.thoughtUi[id])
+        ? []
+        : previous.thoughtUi[id]
+          ? [{ op: 'add', path: `/thoughtUi/${id}`, value: previous.thoughtUi[id] }]
+          : [{ op: 'remove', path: `/thoughtUi/${id}` }],
+    ),
+  ]
 }
 
 /** Actions that mutate state.multicursors. They are not undoable on their own, but belong to an executing multicursor command's history. */
@@ -223,26 +196,19 @@ const undoRedoEnhancer = <A extends Action<any>>(
     if (patch.documentOperationIds.length && !transaction) {
       throw new Error('Restoring document history requires a thoughtspace transaction')
     }
-    const previousThoughts = transaction?.capturePrevious() ?? state.thoughts
     const from = transaction?.operationOffset ?? db.operationOffset
     const documentOperationIds = patch.documentOperationIds.length
       ? transaction!.revert(patch.documentOperationIds)
       : []
     const uiState = produce(state, draft => applyPatch(draft, patch.ops).newDocument)
     const newState = project(uiState, transaction)
-    const { ops, isFormatting, formattingBefore } = diffState(
-      newState,
-      { ...state, thoughts: previousThoughts },
-      { transaction },
-    )
     const to = transaction?.operationOffset ?? db.operationOffset
     return {
       state: newState,
       patch: {
-        ops,
-        formattingBefore,
+        ops: diffState(newState, state),
         documentHistory: from === to ? [] : [{ from, to }],
-        metadata: { ...patch.metadata, isFormatting },
+        metadata: patch.metadata,
         documentOperationIds,
       },
     }
@@ -286,7 +252,7 @@ const undoRedoEnhancer = <A extends Action<any>>(
     const penultimateUndoPatch = undoPatches.at(-2)
     if (!undoPatches.length) return state
 
-    const lastPatchIsFormatting = !!lastUndoPatch?.metadata.isFormatting
+    const lastPatchIsFormatting = lastUndoPatch?.metadata.textChange === 'formatting'
 
     const undoCount =
       count ?? getUndoStepCount(lastUndoPatch, penultimateUndoPatch, { isFormatting: lastPatchIsFormatting })
@@ -377,11 +343,11 @@ const undoRedoEnhancer = <A extends Action<any>>(
     }
 
     // otherwise run the normal reducer for the action
-    const previousThoughts = transaction?.capturePrevious() ?? state.thoughts
     const from = transaction?.operationOffset ?? db.operationOffset
     const newState = project(reducer(state, action, transaction), transaction)
     const to = transaction?.operationOffset ?? db.operationOffset
     const documentOperationIds = transaction?.operationIds ?? []
+    const textChange = transaction?.textChange
 
     if (
       // bail if state has not changed
@@ -434,19 +400,7 @@ const undoRedoEnhancer = <A extends Action<any>>(
 
     if (shouldMerge) {
       grouping.lastAction = action
-      const {
-        ops: combinedUndoPatch,
-        isFormatting,
-        formattingBefore,
-      } = diffState(
-        newState,
-        { ...state, thoughts: previousThoughts },
-        {
-          transaction,
-          mergeWith: lastUndoPatch,
-          actionType,
-        },
-      )
+      const combinedUndoPatch = diffState(newState, state, { mergeWith: lastUndoPatch, actionType })
       const combinedOperationIds = [...(lastUndoPatch?.documentOperationIds ?? []), ...documentOperationIds]
 
       const actionTypes: [ActionType, ...ActionType[]] = lastUndoPatch
@@ -465,7 +419,6 @@ const undoRedoEnhancer = <A extends Action<any>>(
             ? [
                 {
                   ops: combinedUndoPatch,
-                  formattingBefore,
                   documentHistory: [
                     ...(lastUndoPatch?.documentHistory ?? []),
                     ...(from !== to || lastUndoPatch?.documentHistory.length ? [{ from, to }] : []),
@@ -474,7 +427,10 @@ const undoRedoEnhancer = <A extends Action<any>>(
                   metadata: {
                     ...(commandMetadata ?? lastUndoPatch?.metadata ?? { source: 'action' as const }),
                     actionTypes,
-                    isFormatting,
+                    textChange:
+                      textChange === 'content' || lastUndoPatch?.metadata.textChange === 'content'
+                        ? ('content' as const)
+                        : (textChange ?? lastUndoPatch?.metadata.textChange),
                     isNavigation: lastUndoPatch
                       ? lastUndoPatch.metadata.isNavigation && isNavigation(actionType)
                       : isNavigation(actionType),
@@ -493,12 +449,8 @@ const undoRedoEnhancer = <A extends Action<any>>(
     // Note focus intentionally does not dispatch on every caret movement. For the first note edit after focus,
     // infer the pre-edit caret so the inverse patch can restore it instead of leaving the caret at the end.
     const noteOffsetBeforeEdit = getNoteOffsetBeforeEdit(action)
-    const stateBeforeAction = {
-      ...state,
-      thoughts: previousThoughts,
-      ...(noteOffsetBeforeEdit == null ? {} : { noteOffset: noteOffsetBeforeEdit }),
-    }
-    const { ops: undoPatch, isFormatting, formattingBefore } = diffState(newState, stateBeforeAction, { transaction })
+    const stateBeforeAction = noteOffsetBeforeEdit == null ? state : { ...state, noteOffset: noteOffsetBeforeEdit }
+    const undoPatch = diffState(newState, stateBeforeAction)
     return undoPatch.length || documentOperationIds.length
       ? {
           ...newState,
@@ -508,7 +460,6 @@ const undoRedoEnhancer = <A extends Action<any>>(
             ...newState.undoPatches,
             {
               ops: undoPatch,
-              formattingBefore,
               documentHistory: from === to ? [] : [{ from, to }],
               metadata: {
                 ...(commandMetadata ?? {
@@ -519,7 +470,7 @@ const undoRedoEnhancer = <A extends Action<any>>(
                     : null),
                 }),
                 actionTypes: [actionType],
-                isFormatting,
+                textChange,
                 isNavigation: isNavigation(actionType),
               },
               documentOperationIds,

@@ -323,14 +323,12 @@ it('retains later incoming text when a UI-only merge already canceled the earlie
   store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
   const a = contextToThought(store.getState(), ['a'])!
   store.dispatch([setIsMulticursorExecuting({ value: true }), editThought(['a'], 'A')])
-  expect(store.getState().undoPatches.at(-1)!.metadata.isFormatting).toBe(true)
   const incoming = db.transact(transaction => transaction.update({ thoughtIndexUpdates: { [a.id]: a } }))
   store.dispatch([
     replaceThoughts({ thoughts: incoming.value, repairCursor: true }),
     setCursor(null),
     setIsMulticursorExecuting({ value: false }),
   ])
-  expect(store.getState().undoPatches.at(-1)!.metadata.isFormatting).toBe(false)
   const later = db.transact(transaction =>
     transaction.update({ thoughtIndexUpdates: { [a.id]: { ...a, value: 'latest incoming' } } }),
   )

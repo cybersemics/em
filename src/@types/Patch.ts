@@ -3,7 +3,6 @@ import { Operation } from 'fast-json-patch'
 import ActionType from './ActionType'
 import CommandId from './CommandId'
 import CommandType from './CommandType'
-import Index from './IndexType'
 
 /** Metadata for a patch created by a user command. */
 export interface CommandPatchMetadata {
@@ -36,8 +35,8 @@ export type PatchMetadata = PatchMetadataInput & {
   actionTypes: [ActionType, ...ActionType[]]
   /** True when every recorded action only navigates state. */
   isNavigation: boolean
-  /** A recorded value change preserves plain text (ignoring case); used for undo grouping and caret placement. */
-  isFormatting: boolean
+  /** Authored text changes determine undo grouping/caret policy; content dominates formatting within a group. */
+  textChange?: 'formatting' | 'content'
 }
 
 /** Editor history with UI restoration, report boundaries, and engine-owned receipts. */
@@ -47,8 +46,6 @@ interface Patch {
   metadata: PatchMetadata
   /** Ordered local operation ranges, including UI-only merge boundaries that normalize earlier changes. */
   documentHistory: { from: number; to: number }[]
-  /** Earlier values still different from this group's final values; null records an absent thought. */
-  formattingBefore: Index<string | null>
   /** Exact operations to revert; the opposite entry receives the fresh inversion receipt. */
   documentOperationIds: readonly OperationId[]
 }

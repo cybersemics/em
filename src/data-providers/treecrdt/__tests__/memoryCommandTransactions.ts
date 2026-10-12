@@ -95,6 +95,73 @@ it('notifies subscribers once per completed local change and stops notifying an 
   }
 })
 
+it('records authored text changes within a transaction, not their final net effect', async () => {
+  const runtime = createMemoryThoughtspace()
+  try {
+    await runtime.init({ storage: 'memory' })
+    await runtime.transact(transaction => {
+      transaction.insert(first, null)
+      transaction.insert(second, first.id)
+    }).persisted
+    await runtime.transact(transaction => {
+      transaction.move(first.id, { parentId: HOME_TOKEN, afterId: second.id })
+      transaction.payload(first.id, { lastUpdated: 40 as Timestamp })
+      expect(transaction.textChange).toBeUndefined()
+
+      transaction.payload(first.id, { value: '<b>shared</b>' })
+      transaction.payload(first.id, { updatedBy: 'another-device' })
+      expect(transaction.textChange).toBe('formatting')
+
+      transaction.update({ thoughtIndexUpdates: { [first.id]: { ...first, value: 'renamed' } } })
+      expect(transaction.textChange).toBe('content')
+
+      // Cancel the content edit, then format again. Neither step erases the authored content policy.
+      transaction.payload(first.id, { value: first.value })
+      transaction.payload(first.id, { value: '<i>shared</i>' })
+      expect(transaction.textChange).toBe('content')
+    }).persisted
+
+    // The next transaction starts fresh, even though the previous group contained a content edit.
+    await runtime.transact(transaction => {
+      transaction.payload(first.id, { value: first.value })
+      expect(transaction.textChange).toBe('formatting')
+    }).persisted
+  } finally {
+    await runtime.drop()
+  }
+})
+
+it.each([false, true])('indexes diagnostic rows only when a subscriber reads them (%s)', async readPrevious => {
+  const memory = await createMemoryClient()
+  const runtime = createMemoryThoughtspace(undefined, async () => memory)
+  let previous: ReturnType<ThoughtspaceTransaction['capturePrevious']>
+  try {
+    await runtime.init({ storage: 'memory' })
+    await runtime.transact(transaction => transaction.insert(first, null)).persisted
+    const subscriber = vi.fn(before => {
+      previous = before
+      return readPrevious ? [before.getThought(first.id), before.getThought(first.id)] : undefined
+    })
+    runtime.subscribe(subscriber)
+    const transactions = vi.spyOn(memory, 'transact')
+    // Native batches are frozen. Observe only map calls on the exact committed change array.
+    const maps = vi.spyOn(Array.prototype, 'map')
+    let indexed: number
+    try {
+      runtime.transact(transaction => transaction.payload(first.id, { value: 'edited' }))
+      const changes = transactions.mock.results.at(-1)!.value.changes.changes
+      indexed = maps.mock.contexts.filter(array => array === changes).length
+    } finally {
+      maps.mockRestore()
+    }
+    expect(indexed).toBe(readPrevious ? 1 : 0)
+    expect(subscriber).toHaveReturnedWith(readPrevious ? [first, first] : undefined)
+    expect(() => previous.getThought(first.id)).toThrow('expired')
+  } finally {
+    await runtime.drop()
+  }
+})
+
 it('preserves persistence order and latest reads when a subscriber authors another transaction', async () => {
   const persistent = await createTreecrdtClient({ docId: tsid })
   const runtime = createMemoryThoughtspace(async () => persistent)
@@ -105,9 +172,10 @@ it('preserves persistence order and latest reads when a subscriber authors anoth
   try {
     await runtime.init({ storage: 'memory' })
     const before = (await persistent.ops.all()).length
-    const unsubscribeWriter = runtime.subscribe(() => {
+    const unsubscribeWriter = runtime.subscribe(previous => {
       unsubscribeWriter()
       expect(runtime.project().getLexeme('shared')).toEqual([first.id])
+      expect(previous.getChildren(HOME_TOKEN)).toEqual([])
       phases.push('listener: shared')
       nested = runtime.transact(
         transaction => {
@@ -120,6 +188,10 @@ it('preserves persistence order and latest reads when a subscriber authors anoth
           phases.push('commit: reentrant edit')
         },
       )
+      // Reentrant commits expire both already-cached child lists and untouched previous values.
+      expect(() => previous.getChildren(HOME_TOKEN)).toThrow('expired')
+      expect(() => previous.getThought(first.id)).toThrow('expired')
+      phases.push('previous reader expired')
     })
     const unsubscribeObserver = runtime.subscribe(() => observed.push(runtime.project()))
     const initial = runtime.transact(
@@ -137,7 +209,7 @@ it('preserves persistence order and latest reads when a subscriber authors anoth
     expect(observed.map(view => view.getThought(first.id)!.value)).toEqual(['reentrant edit', 'reentrant edit'])
     expect(observed.map(view => view.getLexeme('reentrant edit'))).toEqual([[first.id], [first.id]])
     expect(captured!.value).toBe('shared')
-    expect(phases).toEqual(['commit: shared', 'listener: shared', 'commit: reentrant edit'])
+    expect(phases).toEqual(['commit: shared', 'listener: shared', 'commit: reentrant edit', 'previous reader expired'])
     expect(runtime.project()).toBe(observed[1])
     await Promise.all([initial.persisted, nested!.persisted])
     await runtime.waitForIdle()

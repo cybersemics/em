@@ -10,6 +10,8 @@ interface ThoughtspaceTransaction {
   readonly operationOffset: number
   /** Identifies document operations authored so far in this transaction. */
   readonly operationIds: readonly OperationId[]
+  /** Authored text changes for undo policy. Insert/delete count as content; moves and metadata are neutral. */
+  readonly textChange?: 'formatting' | 'content'
   /** Reads invalidations across captured/observed boundaries; reset requires comparing the complete document. */
   getChanges: () => {
     thoughtIds: readonly ThoughtId[]
