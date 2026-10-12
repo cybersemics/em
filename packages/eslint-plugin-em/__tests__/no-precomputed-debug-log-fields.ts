@@ -112,6 +112,12 @@ ruleTester.run('no-precomputed-debug-log-fields', plugin.rules['no-precomputed-d
       filename,
       errors: [{ messageId: 'precomputed', data: { names: 'rect' } }],
     },
+    // a static fields object does not make a value computed above it static
+    {
+      code: "const f = () => { const rect = el.getBoundingClientRect(); debugLog.log('x', { rect }) }",
+      filename,
+      errors: [{ messageId: 'precomputed', data: { names: 'rect' } }],
+    },
     // read by two log calls and nothing else
     {
       code: "const f = () => { const n = items.length; debugLog.log('a', () => ({ n })); debugLog.log('b', () => ({ n })) }",
