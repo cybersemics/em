@@ -1,8 +1,9 @@
 import { KnownDevices } from 'puppeteer'
 import type { PreloadedEmWindow } from '../../../@types'
+import cursorBackCommand from '../../../commands/cursorBack'
 import clickThought from '../helpers/clickThought'
 import deviceEmulation from '../helpers/deviceEmulation'
-import { startGesture } from '../helpers/gesture'
+import gesture, { startGesture } from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getThoughtTop from '../helpers/getThoughtTop'
 import getVisibleThoughtBounds from '../helpers/getVisibleThoughtBounds'
@@ -217,12 +218,12 @@ describe('scroll clamp', () => {
     await activeGesture.move('d', { segmentLength: 200 })
     await waitForBrowserSettled()
     const scrollTopWhileTouching = await page.evaluate(() => window.scrollY)
-    expect(scrollTopWhileTouching).toBeLessThan(minScrollY - 1)
+    expect(Math.abs(scrollTopWhileTouching - minScrollY)).toBeLessThan(1)
     const topWhileTouching = await getThoughtTop('1')
-    const rawScrollDelta = Math.abs(scrollYBeforeOverscroll - scrollTopWhileTouching)
     const visualDelta = Math.abs(topWhileTouching - topBeforeOverscroll)
     expect(visualDelta).toBeGreaterThan(0.5)
-    expect(visualDelta).toBeLessThan(rawScrollDelta)
+    expect(visualDelta).toBeLessThan(200)
+    expect(Math.abs(scrollTopWhileTouching - scrollYBeforeOverscroll)).toBeLessThan(1)
 
     await page.evaluate(() => {
       const runtimeWindow = window as unknown as { __releaseSamples: Promise<{ scrollY: number; top: number }[]> }
@@ -270,8 +271,8 @@ describe('scroll clamp', () => {
     const lastSample = releaseSamples[releaseSamples.length - 1]
     expect(Math.abs(releaseSamples[1].top - firstSample.top)).toBeLessThanOrEqual(1)
     expect(Math.abs(lastSample.top - firstSample.top)).toBeGreaterThan(2)
-    // Hold the native anchor while the visible spring moves; normalize only after the return finishes.
-    expect(firstSample.scrollY).toBeLessThan(minScrollY - 1)
+    // Native scrolling stays at the visible boundary throughout the drag and return.
+    expect(Math.abs(firstSample.scrollY - minScrollY)).toBeLessThanOrEqual(1)
     expect(Math.abs(lastSample.scrollY - firstSample.scrollY)).toBeLessThanOrEqual(1)
 
     const scrollTopClamped = await page.evaluate(() => window.scrollY)
@@ -304,6 +305,64 @@ describe('scroll clamp', () => {
 })
 
 describe('iOS overscroll', () => {
+  // https://github.com/cybersemics/em/pull/5400#issuecomment-5935316452
+  it('keeps native scrolling at the visible boundary while a deep thought elastically overscrolls', async () => {
+    await paste(`
+      - A
+      - B
+      - C
+      - D
+      - E
+      - F
+      - G
+      - H
+      - I
+      - J
+      - K
+      - L
+      - M
+      - N
+      - O
+      - Q
+      - R
+      - S
+      - T
+        - U
+          - V
+            - W
+              - X
+    `)
+    await clickThought('T')
+    await clickThought('U')
+    await clickThought('V')
+    await clickThought('W')
+    await clickThought('X')
+    await waitForBrowserSettled()
+    const { minScrollY } = await getVisibleThoughtBounds()
+    expect(minScrollY).toBeGreaterThan(50)
+    await scrollTo(minScrollY)
+    await waitForBrowserSettled()
+    const restingTop = await getThoughtTop('V')
+
+    const gesture = await startGesture({ xStart: 350, yStart: 100 })
+    await gesture.move('d', { segmentLength: 180 })
+    await waitForBrowserSettled()
+    expect(await getThoughtTop('V')).toBeGreaterThan(restingTop + 10)
+    expect(Math.abs((await page.evaluate(() => window.scrollY)) - minScrollY)).toBeLessThan(1)
+    await gesture.end()
+    await page.waitForFunction(
+      top => {
+        const thought = Array.from(document.querySelectorAll('[data-editable]')).find(
+          element => element.innerHTML === 'V',
+        )
+        return !!thought && Math.abs(thought.getBoundingClientRect().top - top) < 1
+      },
+      {},
+      restingTop,
+    )
+    expect(Math.abs((await page.evaluate(() => window.scrollY)) - minScrollY)).toBeLessThan(1)
+  })
+
   it('keeps yielding with increasing resistance beyond the old overscroll cap', async () => {
     await paste(OVERSCROLL_DOCUMENT)
 
@@ -396,6 +455,27 @@ describe('iOS overscroll', () => {
 })
 
 describe('iOS scroll continuity', () => {
+  it('leaves command gestures in charge when the thoughtspace has interior scroll bounds', async () => {
+    await paste(OVERSCROLL_DOCUMENT)
+    await clickThought('m')
+    await scrollTo(200)
+    await clickThought('z')
+    await press('ArrowDown')
+    await waitForCursor('1')
+    await waitForBrowserSettled()
+    await press('ArrowDown')
+    await waitForCursor('2')
+    await waitForBrowserSettled()
+    await press('ArrowDown')
+    await waitForCursor('3')
+    await waitForBrowserSettled()
+    const { minScrollY } = await getVisibleThoughtBounds()
+    expect(minScrollY).toBeGreaterThan(450)
+
+    await gesture(cursorBackCommand, { xStart: 150, yStart: 300 })
+    await waitForCursor('2')
+  })
+
   it('keeps autoscrolling while a long-pressed thought is dragged at the screen edge', async () => {
     await paste(Array.from({ length: 40 }, (_, index) => `- thought ${index + 1}`).join('\n'))
     await press('Escape')

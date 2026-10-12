@@ -52,7 +52,6 @@ const useClampScrollToVisibleThoughts = ({
   const touchStartScrollY = useRef(window.scrollY)
   const animationControls = useRef<AnimationPlaybackControls | null>(null)
   const animationScrollY = useRef(window.scrollY)
-  const springBoundary = useRef<number | null>(null)
   const elasticOffset = useRef(0)
   const dragCarry = useRef(0)
   const momentumInProgress = useRef(false)
@@ -63,6 +62,7 @@ const useClampScrollToVisibleThoughts = ({
     panOffset: null as number | null,
     suspended: false,
     pin: false,
+    controlled: false,
   })
   const scrollSample = useRef({ y: window.scrollY, time: performance.now(), velocity: 0 })
   const visibleTop = visibleThoughtExtrema?.top
@@ -80,6 +80,7 @@ const useClampScrollToVisibleThoughts = ({
   useEffect(() => {
     /** Applies a vertical offset without rerendering the thought list. */
     const setElasticOffset = (value: number) => {
+      if (elasticOffset.current === value) return
       elasticOffset.current = value
       ref.current?.style.setProperty(LAYOUT_TREE_ELASTIC_OFFSET, `${value}px`)
     }
@@ -88,7 +89,6 @@ const useClampScrollToVisibleThoughts = ({
     const stopAnimation = () => {
       const controls = animationControls.current
       animationControls.current = null
-      springBoundary.current = null
       controls?.stop()
     }
 
@@ -133,54 +133,32 @@ const useClampScrollToVisibleThoughts = ({
       const clampedScrollY = Math.min(maxScrollY, Math.max(minScrollY, y))
       // The real page edges already use UIScrollView's bounce. Avoid applying resistance twice there.
       const nativeOverscroll =
-        dragCarry.current === 0 && ((minScrollY === 0 && y < 0) || (maxScrollY === nativeMax && y > nativeMax))
+        !drag.current.controlled &&
+        dragCarry.current === 0 &&
+        ((minScrollY === 0 && y < 0) || (maxScrollY === nativeMax && y > nativeMax))
       return { y, clampedScrollY, minScrollY, maxScrollY, nativeMax, nativeOverscroll }
     }
 
-    /** Returns the visible stretch before rebasing native scrolling to the boundary. */
-    const springBack = ({
-      offset,
-      velocity,
-      boundary,
-      nativeMax,
-    }: {
-      offset: number
-      velocity: number
-      boundary: number
-      nativeMax: number
-    }) => {
+    /** Returns elastic displacement to a visible boundary with a fixed native scroll position. */
+    const springBack = ({ offset, velocity, boundary }: { offset: number; velocity: number; boundary: number }) => {
       stopAnimation()
       momentumInProgress.current = false
-      // Keep the native anchor during the return. Rebasing it and the transform at the start can
-      // reach iOS's scrolling compositor in different frames, with a larger mismatch at deeper boundaries.
-      const anchor = Math.min(nativeMax, Math.max(0, window.scrollY))
-      const restingOffset = anchor - boundary
-      animationScrollY.current = anchor
-      springBoundary.current = boundary
-      setElasticOffset(restingOffset + offset)
-      const controls = animate(offset, 0, {
+      setElasticOffset(offset)
+      animationScrollY.current = boundary
+      animationControls.current = animate(offset, 0, {
         type: 'spring',
         stiffness: SPRING_STIFFNESS,
         damping: SPRING_DAMPING,
         velocity,
         restDelta: 0.1,
         restSpeed: 1,
-        onUpdate: value => {
-          if (animationControls.current !== controls) return
-          setElasticOffset(restingOffset + value)
-        },
+        onUpdate: setElasticOffset,
         onComplete: () => {
-          if (animationControls.current !== controls) return
           animationControls.current = null
-          springBoundary.current = null
-          window.scrollTo({ left: window.scrollX, top: boundary, behavior: 'instant' })
           setElasticOffset(0)
-          scrollSample.current = { y: boundary, time: performance.now(), velocity: 0 }
         },
       })
-      animationControls.current = controls
-      // A native bounce outside the physical range cannot be held by scrollTo; normalize only that overshoot.
-      if (window.scrollY !== anchor) window.scrollTo({ left: window.scrollX, top: anchor, behavior: 'instant' })
+      window.scrollTo({ left: window.scrollX, top: boundary, behavior: 'instant' })
     }
 
     /** Clamps desktop/Android immediately, and hands iOS native momentum to the boundary spring. */
@@ -193,7 +171,7 @@ const useClampScrollToVisibleThoughts = ({
         return
       }
       if (animationControls.current && !touchInProgress.current) {
-        // Native momentum can continue after the handoff. Keep it from moving the animation's anchor.
+        // A queued native momentum frame can arrive after scrollTo. Keep it from moving the spring's anchor.
         if (Math.abs(window.scrollY - animationScrollY.current) >= 0.5) {
           window.scrollTo({ left: window.scrollX, top: animationScrollY.current, behavior: 'instant' })
         }
@@ -221,14 +199,23 @@ const useClampScrollToVisibleThoughts = ({
 
       if (hasElasticOverscroll && touchInProgress.current) {
         const resisted = Math.sign(rawOffset) * rubberBand(Math.abs(rawOffset))
-        setElasticOffset(rawOffset === 0 && dragCarry.current === 0 ? 0 : window.scrollY - clampedScrollY + resisted)
+        if (drag.current.controlled) {
+          // The native pan was prevented from its first move, so there is no UIKit bounce to compensate for.
+          // Keep native scrolling inside the band and let only the transform stretch beyond the boundary.
+          if (window.scrollY !== clampedScrollY) {
+            window.scrollTo({ left: window.scrollX, top: clampedScrollY, behavior: 'instant' })
+          }
+          setElasticOffset(resisted)
+        } else {
+          setElasticOffset(rawOffset === 0 && dragCarry.current === 0 ? 0 : window.scrollY - clampedScrollY + resisted)
+        }
         return
       }
 
       if (Math.abs(rawOffset) >= 0.5) {
         if (hasElasticOverscroll && momentumInProgress.current) {
           // Momentum hits the edge at its current speed; applying the drag curve here would abruptly slow it down.
-          springBack({ offset: rawOffset, velocity: -velocity, boundary: clampedScrollY, nativeMax: bounds.nativeMax })
+          springBack({ offset: rawOffset, velocity: -velocity, boundary: clampedScrollY })
         } else {
           window.scrollTo({ left: window.scrollX, top: clampedScrollY, behavior: 'instant' })
           setElasticOffset(0)
@@ -248,8 +235,18 @@ const useClampScrollToVisibleThoughts = ({
         return
       }
       const interrupted = animationControls.current !== null || momentumInProgress.current
-      const boundary = springBoundary.current ?? window.scrollY
-      const stretch = elasticOffset.current - window.scrollY + boundary
+      const bounds = getBounds()
+      const target = event.target instanceof Element ? event.target : null
+      // A custom boundary needs one owner for the entire swipe. Letting UIKit pan first and taking over
+      // only at the edge leaves its bounce running underneath our spring (scrollTo does not stop it on iOS 27).
+      // Native editing controls and nested scrollers retain their own touch handling.
+      const controlled = !!(
+        event.touches.length === 1 &&
+        bounds &&
+        (bounds.minScrollY > 0 || bounds.maxScrollY < bounds.nativeMax) &&
+        target?.closest('#content-wrapper, [aria-label="footer"]') &&
+        !target.closest('input, textarea, select, button, a, [contenteditable], [data-scroll-at-edge]')
+      )
       stopAnimation()
       touchInProgress.current = true
       touchMoved.current = false
@@ -259,29 +256,29 @@ const useClampScrollToVisibleThoughts = ({
         startY: window.scrollY,
         startClientY: event.touches[0].clientY,
         clientY: event.touches[0].clientY,
-        panOffset: null,
+        panOffset: controlled ? 0 : null,
         suspended: event.touches.length !== 1,
         pin: interrupted,
+        controlled,
       }
       const { viewportHeight } = geometry.current
-      const distance = Math.abs(stretch)
-      // Invert only the stretch, then carry the boundary-to-anchor distance separately. The resting
-      // transform is coordinate compensation, not elastic displacement, and can exceed the viewport height.
+      const distance = Math.abs(elasticOffset.current)
+      // Invert the drag curve so subsequent native scroll deltas continue from this exact visible position.
       dragCarry.current =
-        boundary -
-        window.scrollY -
-        (Math.sign(stretch) * distance * viewportHeight) /
-          (RUBBER_BAND_COEFFICIENT * Math.max(1, viewportHeight - distance))
+        (-Math.sign(elasticOffset.current) * distance * viewportHeight) /
+        (RUBBER_BAND_COEFFICIENT * Math.max(1, viewportHeight - distance))
       scrollSample.current = { y: window.scrollY + dragCarry.current, time: performance.now(), velocity: 0 }
     }
 
-    /** Distinguishes finger movement from a queued native momentum frame after interruption. */
+    /** Handles finger movement, claiming bounded content swipes before native panning starts. */
     const onTouchMove = (event: TouchEvent) => {
       if (!drag.current.suspended && (event.defaultPrevented || event.touches.length !== 1)) {
         drag.current.suspended = true
         touchStartScrollY.current = window.scrollY
       }
       if (drag.current.suspended) return
+      // This must run on the first move, before native scrolling starts; stopping it at the boundary is too late.
+      if (drag.current.controlled) event.preventDefault()
       touchMoved.current = true
       drag.current.clientY = event.touches[0].clientY
       // Wait for native pan recognition so touches consumed by editor gestures never become scrolling.
@@ -292,6 +289,7 @@ const useClampScrollToVisibleThoughts = ({
     const onIntentionalScroll = () => {
       stopAnimation()
       touchInProgress.current = false
+      drag.current.controlled = false
       momentumInProgress.current = false
       dragCarry.current = 0
       setElasticOffset(0)
@@ -303,16 +301,19 @@ const useClampScrollToVisibleThoughts = ({
       const bounds = getBounds()
       if (!bounds) {
         touchInProgress.current = false
+        drag.current.controlled = false
         return
       }
       const { y, clampedScrollY, nativeOverscroll } = bounds
       const rawOffset = clampedScrollY - y
       const carried = dragCarry.current !== 0
+      const controlled = drag.current.controlled && touchMoved.current
       const velocity =
         event.type !== 'touchcancel' && !drag.current.suspended && performance.now() - scrollSample.current.time < 80
           ? scrollSample.current.velocity
           : 0
       touchInProgress.current = false
+      drag.current.controlled = false
       dragCarry.current = 0
       momentumInProgress.current = event.type !== 'touchcancel' && Math.abs(velocity) > 1
 
@@ -323,9 +324,9 @@ const useClampScrollToVisibleThoughts = ({
         const resistance =
           RUBBER_BAND_COEFFICIENT /
           (1 + (Math.abs(rawOffset) * RUBBER_BAND_COEFFICIENT) / geometry.current.viewportHeight) ** 2
-        springBack({ offset, velocity: -velocity * resistance, boundary: clampedScrollY, nativeMax: bounds.nativeMax })
-      } else if (carried) {
-        // Continue the interrupted drag with the normal UIScrollView decay.
+        springBack({ offset, velocity: -velocity * resistance, boundary: clampedScrollY })
+      } else if (carried || controlled) {
+        // Continue a controlled or interrupted drag with the normal UIScrollView decay.
         setElasticOffset(0)
         window.scrollTo({ left: window.scrollX, top: clampedScrollY, behavior: 'instant' })
         animationScrollY.current = clampedScrollY
@@ -349,7 +350,6 @@ const useClampScrollToVisibleThoughts = ({
                 offset: bounded - value,
                 velocity: -((target - value) * 1000) / DECELERATION_TIME_CONSTANT,
                 boundary: bounded,
-                nativeMax: bounds.nativeMax,
               })
               return
             }
@@ -372,15 +372,12 @@ const useClampScrollToVisibleThoughts = ({
 
     updateBounds.current = () => {
       const bounds = getBounds()
-      const destination = springBoundary.current ?? animationScrollY.current
-      // Inertia checks fresh bounds each frame. A spring needs a reachable anchor and an in-range destination.
+      // Inertia checks fresh bounds each frame. A return spring can also survive measurements while its anchor is valid.
       if (
         animationControls.current &&
         bounds &&
         (momentumInProgress.current ||
-          (animationScrollY.current <= bounds.nativeMax &&
-            destination >= bounds.minScrollY &&
-            destination <= bounds.maxScrollY))
+          (animationScrollY.current >= bounds.minScrollY && animationScrollY.current <= bounds.maxScrollY))
       )
         return
       // Measurements must not discard native coasting before it reaches a visible boundary.
@@ -392,7 +389,7 @@ const useClampScrollToVisibleThoughts = ({
     clampScroll()
     if (hasElasticOverscroll) {
       window.addEventListener('touchstart', onTouchStart, { passive: true })
-      window.addEventListener('touchmove', onTouchMove, { passive: true })
+      window.addEventListener('touchmove', onTouchMove, { passive: false })
       window.addEventListener('em-scroll', onIntentionalScroll)
       window.addEventListener('wheel', onIntentionalScroll, { passive: true })
       window.addEventListener('keydown', onIntentionalScroll)
@@ -412,6 +409,7 @@ const useClampScrollToVisibleThoughts = ({
       updateBounds.current = null
       stopAnimation()
       touchInProgress.current = false
+      drag.current.controlled = false
       dragCarry.current = 0
       momentumInProgress.current = false
       setElasticOffset(0)

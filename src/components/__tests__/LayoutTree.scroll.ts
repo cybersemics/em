@@ -30,6 +30,49 @@ afterEach(async () => {
   vi.restoreAllMocks()
 })
 
+// https://github.com/cybersemics/em/pull/5400#issuecomment-5935316452
+it('cancels native panning on the first move of a bounded content swipe', async () => {
+  const originalScrollY = window.scrollY
+  const originalHeight = window.innerHeight
+  Object.assign(window, { innerHeight: 800, scrollY: 960 })
+  viewportStore.update({ innerHeight: 800 })
+  vi.spyOn(document.documentElement, 'scrollHeight', 'get').mockReturnValue(5000)
+  vi.spyOn(window, 'scrollTo').mockImplementation((options: ScrollToOptions | number, y?: number) => {
+    Object.assign(window, { scrollY: typeof options === 'object' ? options.top : y })
+  })
+  vi.mocked(usePositionedThoughts).mockReturnValue({
+    treeThoughtsPositioned: [
+      { key: 'visible', y: 1600, x: 0, height: 1000, autofocus: 'show' } as TreeThoughtPositioned,
+    ],
+    indentCursorAncestorTables: 0,
+    hoverArrowVisibility: null,
+  })
+  const content = document.createElement('div')
+  content.id = 'content-wrapper'
+  document.body.append(content)
+  const { container, unmount } = render(createElement(Provider, { store, children: createElement(LayoutTree) }), {
+    container: content,
+  })
+  const tree = container.firstElementChild as HTMLElement
+
+  try {
+    fireEvent.touchStart(tree, { touches: [{ clientY: 100 }] })
+    vi.advanceTimersByTime(16)
+    expect(fireEvent.touchMove(tree, { touches: [{ clientY: 140 }] })).toBe(false)
+    expect(window.scrollY).toBe(960)
+    expect(parseFloat(tree.style.getPropertyValue('--layout-tree-elastic-offset'))).toBeGreaterThan(10)
+
+    fireEvent.touchEnd(tree, { touches: [] })
+    await act(() => vi.advanceTimersByTimeAsync(2000))
+    expect(window.scrollY).toBe(960)
+    expect(tree.style.getPropertyValue('--layout-tree-elastic-offset')).toBe('0px')
+  } finally {
+    unmount()
+    content.remove()
+    Object.assign(window, { innerHeight: originalHeight, scrollY: originalScrollY })
+  }
+})
+
 it('keeps native momentum through a measurement update before reaching the opposite boundary', () => {
   const originalScrollY = window.scrollY
   const originalHeight = window.innerHeight
