@@ -7,9 +7,6 @@ export default class WebviewBackgroundWeb extends WebPlugin implements WebviewBa
 
   async changeBackgroundColor(_options: { color: string }): Promise<void>{}
 
-  /** Leaves scrolling to the browser, which has no native UIScrollView to cancel. */
-  async stopScrollMomentum(): Promise<void>{}
-
   async setHistoryAvailability(_options: { canUndo: boolean; canRedo: boolean }): Promise<void>{}
   
 }

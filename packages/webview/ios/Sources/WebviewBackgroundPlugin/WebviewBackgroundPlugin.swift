@@ -11,7 +11,6 @@ public class WebviewBackgroundPlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "WebviewBackground"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "changeBackgroundColor", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "stopScrollMomentum", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setHistoryAvailability", returnType: CAPPluginReturnPromise)
     ]
 
@@ -31,28 +30,6 @@ public class WebviewBackgroundPlugin: CAPPlugin, CAPBridgedPlugin {
         DispatchQueue.main.async {
             self.webView?.backgroundColor = UIColor(named: color)
             self.webView?.scrollView.backgroundColor = UIColor(named: color)
-        }
-    }
-
-    /// Stops native deceleration when a web animation takes over. A delayed bridge call must leave
-    /// a new touch, zoom, or programmatic scroll alone.
-    @objc func stopScrollMomentum(_ call: CAPPluginCall) {
-        DispatchQueue.main.async {
-            guard let scrollView = self.webView?.scrollView else {
-                call.reject("Web view is unavailable")
-                return
-            }
-
-            if scrollView.isDecelerating && !scrollView.isTracking && !scrollView.isDragging && !scrollView.isZooming && !scrollView.isZoomBouncing {
-                if #available(iOS 17.4, *) {
-                    if !scrollView.isZoomAnimating {
-                        scrollView.stopScrollingAndZooming()
-                    }
-                } else {
-                    scrollView.setContentOffset(scrollView.contentOffset, animated: false)
-                }
-            }
-            call.resolve()
         }
     }
 

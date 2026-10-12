@@ -270,7 +270,9 @@ describe('scroll clamp', () => {
     const lastSample = releaseSamples[releaseSamples.length - 1]
     expect(Math.abs(releaseSamples[1].top - firstSample.top)).toBeLessThanOrEqual(1)
     expect(Math.abs(lastSample.top - firstSample.top)).toBeGreaterThan(2)
-    expect(Math.abs(lastSample.scrollY - minScrollY)).toBeLessThanOrEqual(1)
+    // Hold the native anchor while the visible spring moves; normalize only after the return finishes.
+    expect(firstSample.scrollY).toBeLessThan(minScrollY - 1)
+    expect(Math.abs(lastSample.scrollY - firstSample.scrollY)).toBeLessThanOrEqual(1)
 
     const scrollTopClamped = await page.evaluate(() => window.scrollY)
     expect(scrollTopClamped).toBeGreaterThanOrEqual(minScrollY - 1)
@@ -671,6 +673,9 @@ describe('iOS momentum', () => {
       {},
       topAtBoundary,
     )
+    // Visible proximity precedes spring completion. Wait for normalization, then verify it preserves the resting view.
+    await page.waitForFunction(min => Math.abs(window.scrollY - min) < 1, {}, minScrollY)
+    expect(Math.abs((await getThoughtTop('1')) - topAtBoundary)).toBeLessThan(1)
     expect(Math.abs((await page.evaluate(() => window.scrollY)) - minScrollY)).toBeLessThan(1)
   })
 })

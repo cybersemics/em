@@ -14,7 +14,6 @@ npx cap sync
 <docgen-index>
 
 * [`changeBackgroundColor(...)`](#changebackgroundcolor)
-* [`stopScrollMomentum()`](#stopscrollmomentum)
 * [`setHistoryAvailability(...)`](#sethistoryavailability)
 * [`addListener('nativeHistory', ...)`](#addlistenernativehistory-)
 * [`removeAllListeners()`](#removealllisteners)
@@ -34,18 +33,6 @@ changeBackgroundColor(options: { color: string; }) => Promise<void>
 | Param         | Type                            |
 | ------------- | ------------------------------- |
 | **`options`** | <code>{ color: string; }</code> |
-
---------------------
-
-
-### stopScrollMomentum()
-
-```typescript
-stopScrollMomentum() => Promise<void>
-```
-
-Stops native iOS scroll momentum when a web animation takes over. Leaves an active touch or zoom alone.
-No-op on the web.
 
 --------------------
 

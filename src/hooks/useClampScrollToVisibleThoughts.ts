@@ -1,6 +1,5 @@
 import { AnimationPlaybackControls, animate } from 'motion/react'
 import { RefObject, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { WebviewBackground } from 'webview-background'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import { isIOS, isMac } from '../browser'
 
@@ -53,6 +52,7 @@ const useClampScrollToVisibleThoughts = ({
   const touchStartScrollY = useRef(window.scrollY)
   const animationControls = useRef<AnimationPlaybackControls | null>(null)
   const animationScrollY = useRef(window.scrollY)
+  const springBoundary = useRef<number | null>(null)
   const elasticOffset = useRef(0)
   const dragCarry = useRef(0)
   const momentumInProgress = useRef(false)
@@ -88,6 +88,7 @@ const useClampScrollToVisibleThoughts = ({
     const stopAnimation = () => {
       const controls = animationControls.current
       animationControls.current = null
+      springBoundary.current = null
       controls?.stop()
     }
 
@@ -133,31 +134,53 @@ const useClampScrollToVisibleThoughts = ({
       // The real page edges already use UIScrollView's bounce. Avoid applying resistance twice there.
       const nativeOverscroll =
         dragCarry.current === 0 && ((minScrollY === 0 && y < 0) || (maxScrollY === nativeMax && y > nativeMax))
-      return { y, clampedScrollY, minScrollY, maxScrollY, nativeOverscroll }
+      return { y, clampedScrollY, minScrollY, maxScrollY, nativeMax, nativeOverscroll }
     }
 
-    /** Transfers position and velocity to a spring while cancelling native out-of-range scrolling. */
-    const springBack = ({ offset, velocity, boundary }: { offset: number; velocity: number; boundary: number }) => {
+    /** Returns the visible stretch before rebasing native scrolling to the boundary. */
+    const springBack = ({
+      offset,
+      velocity,
+      boundary,
+      nativeMax,
+    }: {
+      offset: number
+      velocity: number
+      boundary: number
+      nativeMax: number
+    }) => {
       stopAnimation()
-      // Request native cancellation at the handoff; iOS 27 preserves momentum across scrollTo.
-      if (isIOS) WebviewBackground.stopScrollMomentum().catch(console.error)
       momentumInProgress.current = false
-      setElasticOffset(offset)
-      animationScrollY.current = boundary
-      animationControls.current = animate(offset, 0, {
+      // Keep the native anchor during the return. Rebasing it and the transform at the start can
+      // reach iOS's scrolling compositor in different frames, with a larger mismatch at deeper boundaries.
+      const anchor = Math.min(nativeMax, Math.max(0, window.scrollY))
+      const restingOffset = anchor - boundary
+      animationScrollY.current = anchor
+      springBoundary.current = boundary
+      setElasticOffset(restingOffset + offset)
+      const controls = animate(offset, 0, {
         type: 'spring',
         stiffness: SPRING_STIFFNESS,
         damping: SPRING_DAMPING,
         velocity,
         restDelta: 0.1,
         restSpeed: 1,
-        onUpdate: setElasticOffset,
+        onUpdate: value => {
+          if (animationControls.current !== controls) return
+          setElasticOffset(restingOffset + value)
+        },
         onComplete: () => {
+          if (animationControls.current !== controls) return
           animationControls.current = null
+          springBoundary.current = null
+          window.scrollTo({ left: window.scrollX, top: boundary, behavior: 'instant' })
           setElasticOffset(0)
+          scrollSample.current = { y: boundary, time: performance.now(), velocity: 0 }
         },
       })
-      window.scrollTo({ left: window.scrollX, top: boundary, behavior: 'instant' })
+      animationControls.current = controls
+      // A native bounce outside the physical range cannot be held by scrollTo; normalize only that overshoot.
+      if (window.scrollY !== anchor) window.scrollTo({ left: window.scrollX, top: anchor, behavior: 'instant' })
     }
 
     /** Clamps desktop/Android immediately, and hands iOS native momentum to the boundary spring. */
@@ -170,7 +193,7 @@ const useClampScrollToVisibleThoughts = ({
         return
       }
       if (animationControls.current && !touchInProgress.current) {
-        // A queued native momentum frame can arrive after scrollTo. Keep it from moving the spring's anchor.
+        // Native momentum can continue after the handoff. Keep it from moving the animation's anchor.
         if (Math.abs(window.scrollY - animationScrollY.current) >= 0.5) {
           window.scrollTo({ left: window.scrollX, top: animationScrollY.current, behavior: 'instant' })
         }
@@ -205,7 +228,7 @@ const useClampScrollToVisibleThoughts = ({
       if (Math.abs(rawOffset) >= 0.5) {
         if (hasElasticOverscroll && momentumInProgress.current) {
           // Momentum hits the edge at its current speed; applying the drag curve here would abruptly slow it down.
-          springBack({ offset: rawOffset, velocity: -velocity, boundary: clampedScrollY })
+          springBack({ offset: rawOffset, velocity: -velocity, boundary: clampedScrollY, nativeMax: bounds.nativeMax })
         } else {
           window.scrollTo({ left: window.scrollX, top: clampedScrollY, behavior: 'instant' })
           setElasticOffset(0)
@@ -225,6 +248,8 @@ const useClampScrollToVisibleThoughts = ({
         return
       }
       const interrupted = animationControls.current !== null || momentumInProgress.current
+      const boundary = springBoundary.current ?? window.scrollY
+      const stretch = elasticOffset.current - window.scrollY + boundary
       stopAnimation()
       touchInProgress.current = true
       touchMoved.current = false
@@ -239,11 +264,14 @@ const useClampScrollToVisibleThoughts = ({
         pin: interrupted,
       }
       const { viewportHeight } = geometry.current
-      const distance = Math.abs(elasticOffset.current)
-      // Invert the drag curve so subsequent native scroll deltas continue from this exact visible position.
+      const distance = Math.abs(stretch)
+      // Invert only the stretch, then carry the boundary-to-anchor distance separately. The resting
+      // transform is coordinate compensation, not elastic displacement, and can exceed the viewport height.
       dragCarry.current =
-        (-Math.sign(elasticOffset.current) * distance * viewportHeight) /
-        (RUBBER_BAND_COEFFICIENT * Math.max(1, viewportHeight - distance))
+        boundary -
+        window.scrollY -
+        (Math.sign(stretch) * distance * viewportHeight) /
+          (RUBBER_BAND_COEFFICIENT * Math.max(1, viewportHeight - distance))
       scrollSample.current = { y: window.scrollY + dragCarry.current, time: performance.now(), velocity: 0 }
     }
 
@@ -295,10 +323,8 @@ const useClampScrollToVisibleThoughts = ({
         const resistance =
           RUBBER_BAND_COEFFICIENT /
           (1 + (Math.abs(rawOffset) * RUBBER_BAND_COEFFICIENT) / geometry.current.viewportHeight) ** 2
-        springBack({ offset, velocity: -velocity * resistance, boundary: clampedScrollY })
+        springBack({ offset, velocity: -velocity * resistance, boundary: clampedScrollY, nativeMax: bounds.nativeMax })
       } else if (carried) {
-        // Take over native inertia explicitly; scrollTo alone no longer cancels it on iOS 27.
-        if (isIOS) WebviewBackground.stopScrollMomentum().catch(console.error)
         // Continue the interrupted drag with the normal UIScrollView decay.
         setElasticOffset(0)
         window.scrollTo({ left: window.scrollX, top: clampedScrollY, behavior: 'instant' })
@@ -323,6 +349,7 @@ const useClampScrollToVisibleThoughts = ({
                 offset: bounded - value,
                 velocity: -((target - value) * 1000) / DECELERATION_TIME_CONSTANT,
                 boundary: bounded,
+                nativeMax: bounds.nativeMax,
               })
               return
             }
@@ -345,12 +372,15 @@ const useClampScrollToVisibleThoughts = ({
 
     updateBounds.current = () => {
       const bounds = getBounds()
-      // Inertia checks fresh bounds each frame. A return spring can also survive measurements while its anchor is valid.
+      const destination = springBoundary.current ?? animationScrollY.current
+      // Inertia checks fresh bounds each frame. A spring needs a reachable anchor and an in-range destination.
       if (
         animationControls.current &&
         bounds &&
         (momentumInProgress.current ||
-          (animationScrollY.current >= bounds.minScrollY && animationScrollY.current <= bounds.maxScrollY))
+          (animationScrollY.current <= bounds.nativeMax &&
+            destination >= bounds.minScrollY &&
+            destination <= bounds.maxScrollY))
       )
         return
       // Measurements must not discard native coasting before it reaches a visible boundary.
