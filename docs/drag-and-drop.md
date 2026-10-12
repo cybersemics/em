@@ -45,6 +45,7 @@ Transitions happen in:
 - [`useDragHold`](../src/hooks/useDragHold.ts) → `Inactive` → `DragHold` on long-press start, back to `Inactive` on long-press end.
 - The `beginDrag` handler in each drag source → `DragHold` → `DragInProgress`.
 - The `endDrag` / drop / abort handlers → back to `Inactive`.
+- [`EndDragOnRelease`](../src/components/DragAndDropContext.tsx) → any state back to `Inactive` once no finger is on the screen, when none of the above did. See [Drag never outlives the touch](#drag-never-outlives-the-touch).
 
 Three companion fields ride alongside it:
 
@@ -53,6 +54,14 @@ Three companion fields ride alongside it:
 - `state.hoverZone: DropThoughtZone` — `ThoughtDrop` (insert before this thought) or `SubthoughtsDrop` (drop as a child).
 
 These are what `DropHover` and other UI components subscribe to.
+
+### Drag never outlives the touch
+
+Drag and drop is never active while no finger is on the screen ([#5895](https://github.com/cybersemics/em/issues/5895)). Each state has its own release signal — the pressed thought's `touchend` for `DragHold`, the touch backend's `touchend` and `pointerup` for `DragInProgress` — and a signal can miss its handler: the thought the touch landed on can be removed from the DOM mid-press, which dispatches its `touchend` into the detached tree, and a long press can end before the drag that grew from it has a source to end.
+
+Rather than patching each path, [`EndDragOnRelease`](../src/components/DragAndDropContext.tsx), mounted inside `DndProvider`, enforces the invariant directly. It listens in the capture phase on `window` for the last finger lifting (`touchend` or `touchcancel` with no touches left, or the last touch `pointerup` or `pointercancel`, which still reaches the window when the touched element is gone) and for a new single-finger `touchstart`, which proves every earlier finger lifted even if its release never arrived. `RELEASE_GRACE` (100 ms) later, by which time every ending the app performs has run, any state other than `Inactive` belongs to a touch that is over. It ends the react-dnd drag if one is live, restores scrolling, clears the drag hint and returns `state.longPress` to `Inactive`. The grace stays below `TIMEOUT_LONG_PRESS_THOUGHT`, so a press begun by the touch that triggered the check cannot have entered `DragHold` by then.
+
+It cancels rather than completes: no drop, and no multicursor toggle. The release that would have decided either was not seen, which is why the state outlived the touch. Each recovery writes a `dragOutlivedTouch` entry to the [debug log](debug-log.md), naming the state it ended.
 
 ### Drag sources
 
@@ -135,6 +144,8 @@ On start it bails out entirely while the multitouch latch is set. That is a seco
 A touch that lands on the caret never becomes a long press at all: the capture-phase touchstart listener in [`initEvents`](../src/util/initEvents.ts) latches [`pressOnCaret`](../src/stores/touchStore.ts), and `start` reads it and simply does not mark the press, so the `dragStart` event finds nothing pressed and none of the downstream effects — haptics, the scroll lock, `DragHold` — run. That press belongs to native caret repositioning — on iOS Safari the text magnifier, for any caret; elsewhere the context menu, and only on an empty thought, since a long press on a thought with text selects a word and reaches the menu that way ([issue #3763](https://github.com/cybersemics/em/issues/3763)). The check requires the point to fall *inside* the editable, so a press on the bullet still starts a drag even when the caret sits at the start of the text, and a press elsewhere on the thought's text is far enough from the caret to drag as usual. See [Cursor and Caret](cursor-and-caret.md#selectionrangestore).
 
 `useLongPress` also calls `preventDefault` on the `contextmenu` event when it carries a `pointerType` of `touch`, so a long press starts a drag instead of opening the native menu. A press on the caret of an *empty* thought is exempt, reading the same `pressOnCaret` latch, because there the menu is the only way to reach paste: every other route to it goes through selecting a word — a long press highlights one, and a double tap selects one and thereby sets `hasSelectionRange`, which makes [`Thought`](../src/components/Thought.tsx) withhold `longPressProps` entirely — and an empty thought has no word to select. A caret press on a thought with text (which only latches on iOS Safari) keeps the menu suppressed but skips the cleanup that follows `preventDefault` — `selection.clear` and closing the keyboard — since that cleanup exists to close the keyboard on the way into a drag, and a caret press never becomes one; running it would blur the editable and destroy the caret the press was aimed at.
+
+A press also ends, with no event, when the long press it began returns to `Inactive` without it — the drag ended, or `EndDragOnRelease` ended it (see [Drag never outlives the touch](#drag-never-outlives-the-touch)). Otherwise the hook would stay marked as pressed, and the backend's next `dragStart`, which every mounted `useLongPress` hears, would begin a long press on that element rather than on the one being pressed.
 
 When the press ends, `useLongPress` defers `onLongPressEnd` by 10 ms so that the browser's click event fires first. This lets click handlers short circuit while `state.longPress` is still `DragHold` — [`BulletPositioner`](../src/components/BulletPositioner.tsx) uses this to avoid collapsing a thought that was only being held. The ending event is forwarded to `onLongPressEnd`, so handlers can also inspect the modifier keys that were held and the event type. `useDragHold` uses it for the reverse case: with `toggleMulticursorOnLongPress` (set by [`Thought`](../src/components/Thought.tsx)) a long press ending in `DragHold` toggles the multicursor, except in two cases: when Shift or Cmd (Ctrl on non-Mac) was held, since `Thought`'s click handler has already updated the multiselect and a second toggle would deselect the thought; and when the press ended in `touchcancel` rather than `touchend`, since a cancelled touch means the system claimed the gesture — e.g. the iOS bottom-edge app switcher swipe, which delivers a `touchstart` with no `touchmove` and would otherwise falsely activate multiselect (and with it the Command Center) right before the app suspends.
 

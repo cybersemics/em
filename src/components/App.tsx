@@ -9,15 +9,15 @@ import TouchMonitor from './TouchMonitor'
  * App.
  */
 const App = () => (
-  <DragAndDropContext>
-    <Provider store={store}>
+  <Provider store={store}>
+    <DragAndDropContext>
       <ErrorBoundaryContainer>
         <TouchMonitor>
           <AppComponent />
         </TouchMonitor>
       </ErrorBoundaryContainer>
-    </Provider>
-  </DragAndDropContext>
+    </DragAndDropContext>
+  </Provider>
 )
 
 export default App
