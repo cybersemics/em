@@ -43,22 +43,29 @@ const equalColor = (a: string, b: string) => {
   }
 }
 
-/** Returns the active command color if it is not one of the default editor colors. */
+/** Returns true if a color is fully transparent. Since rgbToHex drops the alpha channel, equalColor alone would mistake a transparent color for the opaque one it is made from, such as rgba(0, 0, 0, 0) for black. */
+const isTransparent = (color: string) =>
+  color.trim().toLowerCase() === 'transparent' || /^rgba\(.*,\s*0?\.?0*\s*\)$/i.test(color.trim())
+
+/** Returns the active command color if it is neither transparent nor one of the given default editor colors. */
 const getCustomCommandColor = (command: 'foreColor' | 'backColor', defaults: string[]) => {
   if (typeof document === 'undefined' || typeof document.queryCommandValue !== 'function') return undefined
 
   const color = document.queryCommandValue(command)
-  return color && !defaults.some(defaultColor => equalColor(color, defaultColor)) ? color : undefined
+  return color && !isTransparent(color) && !defaults.some(defaultColor => equalColor(color, defaultColor))
+    ? color
+    : undefined
 }
 
 /** Gets active foreground/background colors from the browser command state for an empty thought selection. */
 const getActiveEmptySelectionColors = (state: State): Partial<CommandState> => {
   const colors = themeColors(state)
-  const defaultColors = [colors.bg, colors.fg, colors.fgNote]
 
   return {
-    [FormattingCommand.foreColor]: getCustomCommandColor('foreColor', defaultColors),
-    [FormattingCommand.backColor]: getCustomCommandColor('backColor', defaultColors),
+    [FormattingCommand.foreColor]: getCustomCommandColor('foreColor', [colors.bg, colors.fg, colors.fgNote]),
+    // The browser reports the page background for text with no background of its own. The text color is a real
+    // background color, i.e. the inverse swatch, and must not be mistaken for none.
+    [FormattingCommand.backColor]: getCustomCommandColor('backColor', [colors.bg]),
   }
 }
 
