@@ -53,3 +53,5 @@ The main directory structure is organized as follows. Tests are located in a sub
 - **One concern per directory.** A file that both reads state and dispatches probably belongs in `actions/`, not `selectors/`. A util that imports React belongs in `hooks/` or `components/`, not `util/`.
 - **Tests next to source.** Tests live in `__tests__/` subdirectories, not in a separate `tests/` tree.
 - **Browser API access is gated.** `window.getSelection`, `localStorage`, viewport reads — all go through `device/` or `stores/` wrappers, not direct calls in feature code.
+
+`components/Notifications/` owns the shared `NotificationSurface` and Tip wrapper. `components/Tips/` contains each tip’s content; swipe dismissal lives in `hooks/useSwipeToClear.ts`.
