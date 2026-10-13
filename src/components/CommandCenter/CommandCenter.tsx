@@ -12,7 +12,7 @@ import {
 } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Sheet, SheetRef, useScrollPosition } from 'react-modal-sheet'
+import { Sheet, SheetRef, SheetTweenConfig, useScrollPosition } from 'react-modal-sheet'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -58,8 +58,7 @@ const STAGE_OFFSET_REM = 2.78
  **************************************************************/
 
 /**
- * How far above the expanded stage every expand reaches before settling back onto it. One ceiling for
- * every route in, so a tap and a swipe arrive the same way.
+ * How far above the expanded stage a drag expand reaches before settling back onto it.
  *
  * Proportional to the font size like every other measure here, and inside the gap budget: the expanded
  * stage's command list already extends CHEVRON_SECTION_HEIGHT_REM + STAGE_OFFSET_REM below the viewport,
@@ -67,14 +66,8 @@ const STAGE_OFFSET_REM = 2.78
  */
 const MAX_EXPAND_REM = 1.71
 
-/** Makes the bounce last longer than the Sheet expansion so it can settle after the Sheet stops. */
-const EXPAND_BOUNCE_DURATION_RATIO = 1.4
-
 /** Minimum bounce rise threshold, in pixels. */
 const MIN_BOUNCE_THRESHOLD = 1
-
-/** Eases into the highest point, then back to the expanded stage. */
-const bounceAnimation = ['easeOut', 'easeInOut'] as const
 
 /** Slows extra upward drag so the drawer approaches, but never reaches, its maximum bounce. */
 const rubberBand = (raw: number, max: number) => max * (1 - 1 / (raw / max + 1))
@@ -256,12 +249,15 @@ const useExpandBounce = ({
   scrollerRef,
   sheetRef,
   stageOffset,
+  tweenConfig,
 }: {
   bounceY: MotionValue<number>
   fontSize: number
   scrollerRef: React.RefObject<HTMLDivElement | null>
   sheetRef: React.RefObject<SheetRef | null>
   stageOffset: number
+  /** The Sheet's own settle animation. The bounce runs on it rather than on a duration of its own, so the drawer comes to rest on the same frame the Sheet does. */
+  tweenConfig: SheetTweenConfig
 }) => {
   const prefersReducedMotion = useReducedMotion()
 
@@ -274,14 +270,16 @@ const useExpandBounce = ({
   /** Ignores Sheet drag events caused by scrolling the expanded command list. */
   const isListScrollRef = useRef(false)
 
+  /** Skips the bounce after the expand chevron's programmatic Sheet snap. */
+  const skipNextExpandedBounceRef = useRef(false)
+
   /** Maximum upward bounce in pixels. */
   const ceiling = Math.round(fontSize * MAX_EXPAND_REM)
 
   /**
-   * Runs the upward bounce and return as one animation.
+   * Runs the upward bounce and return with the Sheet's duration and landing curve.
    *
-   * `travel` is the Sheet's remaining distance to the expanded stage. More remaining travel produces a
-   * higher bounce, so both movements finish together.
+   * `travel` is the Sheet's remaining distance to the expanded stage and determines the bounce height.
    */
   const expand = useCallback(
     (travel: number) => {
@@ -289,7 +287,7 @@ const useExpandBounce = ({
       if (isLiftingRef.current) return
       // if already at the expanded stage with no bounce to settle, exit early.
       if (!bounceY.get() && travel <= MIN_BOUNCE_THRESHOLD) return
-      const settleDuration = durations.get('commandCenter') / 1000
+      const { duration: settleDuration, ease: settleEase } = tweenConfig
       // Durations are zero in e2e, so we skip the animation to avoid flakiness.
       if (!settleDuration || prefersReducedMotion) {
         bounceY.set(0)
@@ -300,20 +298,24 @@ const useExpandBounce = ({
         isLiftingRef.current = false
       }
       isLiftingRef.current = true
+      // Continue from the current lift if a bounce is already in progress.
       const from = bounceY.get()
+      // Scale the maximum lift by the Sheet's remaining travel.
       const peak = ceiling * Math.min(Math.max(travel / stageOffset, 0), 1)
       if (peak - Math.abs(from) <= MIN_BOUNCE_THRESHOLD) {
-        animate(bounceY, 0, { duration: settleDuration, ease: bounceAnimation[1], onComplete })
+        animate(bounceY, 0, { duration: settleDuration, ease: settleEase, onComplete })
         return
       }
       animate(bounceY, [from, -peak, 0], {
-        duration: settleDuration * EXPAND_BOUNCE_DURATION_RATIO,
-        ease: [...bounceAnimation],
+        duration: settleDuration,
+        // Rise quickly to the peak, then use the Sheet's normal settling motion.
+        ease: ['easeOut', settleEase],
         onComplete,
-        times: [0, 0.7, 1],
+        // Start, reach the peak 55% through, then finish at rest.
+        times: [0, 0.55, 1],
       })
     },
-    [bounceY, ceiling, prefersReducedMotion, stageOffset],
+    [bounceY, ceiling, prefersReducedMotion, stageOffset, tweenConfig],
   )
 
   /** Records whether this gesture starts in the command list. */
@@ -349,6 +351,10 @@ const useExpandBounce = ({
   const onSnap = useCallback(
     (snapIndex: number) => {
       if (snapIndex === SNAP_EXPANDED) {
+        if (skipNextExpandedBounceRef.current) {
+          skipNextExpandedBounceRef.current = false
+          return
+        }
         // Bounce based on the drawer's remaining distance.
         expand(sheetRef.current?.y.get() ?? 0)
         return
@@ -361,15 +367,21 @@ const useExpandBounce = ({
     [bounceY, expand, sheetRef],
   )
 
+  /** Marks the next expanded snap as the chevron's programmatic Sheet animation. */
+  const skipNextExpandedBounce = useCallback(() => {
+    skipNextExpandedBounceRef.current = true
+  }, [])
+
   /** Clears the lift so that a reopen starts flat. */
   const reset = useCallback(() => {
     bounceY.stop()
     bounceY.set(0)
     isLiftingRef.current = false
     rawRef.current = 0
+    skipNextExpandedBounceRef.current = false
   }, [bounceY])
 
-  return { onDrag, onDragStart, onSnap, reset }
+  return { onDrag, onDragStart, onSnap, reset, skipNextExpandedBounce }
 }
 
 /**
@@ -379,6 +391,7 @@ const CommandCenter = () => {
   const dispatch = useDispatch()
   const showCommandCenter = useSelector(state => state.showCommandCenter)
   const showSidebar = useSelector(state => state.showSidebar)
+  const isOpen = showCommandCenter && !showSidebar
   const isTutorialOn = useSelector(isTutorial)
   const fontSize = useSelector(state => state.fontSize)
   const sheetRef = useRef<SheetRef>(null)
@@ -428,12 +441,19 @@ const CommandCenter = () => {
     [scrollRef],
   )
 
+  /** The Sheet's settle animation, shared with the expand bounce so the two cannot drift apart. */
+  const tweenConfig: SheetTweenConfig = useMemo(
+    () => ({ duration: durations.get('commandCenter') / 1000, ease: isOpen ? easeOpen : easeClose }),
+    [isOpen],
+  )
+
   const {
     onDrag: onBounceDrag,
     onDragStart: onBounceDragStart,
     onSnap: onBounceSnap,
     reset: resetBounce,
-  } = useExpandBounce({ bounceY, fontSize, scrollerRef, sheetRef, stageOffset })
+    skipNextExpandedBounce,
+  } = useExpandBounce({ bounceY, fontSize, scrollerRef, sheetRef, stageOffset, tweenConfig })
 
   // Disabling drag-to-collapse when the CommandTable's scroll position is not at the top.
   // This ensures that the drag-to-collapse gesture does not conflict with scrolling the list.
@@ -518,8 +538,6 @@ const CommandCenter = () => {
     if (isTouch && showCommandCenter && showSidebar) onClose()
   }, [onClose, showCommandCenter, showSidebar])
 
-  const isOpen = showCommandCenter && !showSidebar
-
   // The Standard and Expanded stage animations are controlled independently by
   // `standardViewOpacity` and `expandedViewOpacity`, but both are derived from
   // the same `stageProgress` value to ensure smooth transitions between stages.
@@ -576,10 +594,7 @@ const CommandCenter = () => {
           disableDismiss={stage === 'expanded'}
           /** The expanded stage's search field would otherwise auto-snap the sheet and disable dragging while the keyboard is open. Em manages the virtual keyboard itself. */
           avoidKeyboard={false}
-          tweenConfig={{
-            duration: durations.get('commandCenter') / 1000,
-            ease: isOpen ? easeOpen : easeClose,
-          }}
+          tweenConfig={tweenConfig}
           style={{
             /** Override default Sheet zIndex. */
             zIndex: token('zIndex.commandCenter'),
@@ -854,7 +869,10 @@ const CommandCenter = () => {
                     style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
                   >
                     <button
-                      {...fastClick(() => sheetRef.current?.snapTo(SNAP_EXPANDED))}
+                      {...fastClick(() => {
+                        skipNextExpandedBounce()
+                        sheetRef.current?.snapTo(SNAP_EXPANDED)
+                      })}
                       data-testid='command-center-expand'
                       aria-label='Expand Command Center'
                       className={css({
