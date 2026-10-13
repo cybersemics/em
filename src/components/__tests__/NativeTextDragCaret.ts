@@ -71,6 +71,28 @@ const layOutCaretBefore = (editable: HTMLElement, word: string) => {
   })
 }
 
+/**
+ * Lays out the editable for document.caretRangeFromPoint, which JSDOM does not implement, with the caret at the end of
+ * its text on the line at y 50–70.
+ */
+const layOutCaretAtEnd = (editable: HTMLElement) => {
+  Object.defineProperty(document, 'caretRangeFromPoint', {
+    configurable: true,
+    value: (x: number, y: number) => {
+      if (y < 50 || y > 70) return null
+      const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+      let text = walker.nextNode()!
+      for (let next = walker.nextNode(); next; next = walker.nextNode()) text = next
+      const range = document.createRange()
+      range.setStart(text, text.textContent!.length)
+      return Object.assign(range, { getBoundingClientRect: () => new DOMRect(x, 50, 0, 20) })
+    },
+  })
+  onTestFinished(() => {
+    delete (document as { caretRangeFromPoint?: unknown }).caretRangeFromPoint
+  })
+}
+
 /** Long presses the selected text in the editable until a native drag starts. Returns the dragstart event. */
 const startDrag = async (editable: HTMLElement) => {
   const dragStart = new Event('dragstart', { bubbles: true, cancelable: true })
@@ -213,6 +235,21 @@ it('moves dragged text with its formatting into another thought', async () => {
   expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
     'foo <b>bar</b> baz',
     'one two',
+  ])
+})
+
+// https://github.com/cybersemics/em/issues/5952
+it.skip('keeps the formatting that encloses dragged text and leaves a single space where it was', async () => {
+  await importOutline('- <b>foo bar baz</b> qux')
+  const editable = getEditable('foo bar baz qux')
+  layOutCaretAtEnd(editable)
+  selectWord(editable, 'bar')
+  await startDrag(editable)
+
+  await dropBelowCaret(editable)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<b>foo baz</b> qux<b>bar</b>',
   ])
 })
 
