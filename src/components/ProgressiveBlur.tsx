@@ -1,6 +1,6 @@
 import { MotionValue, motion } from 'motion/react'
 import React from 'react'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 
 interface ProgressiveBlurProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Direction of the blur progression. */
@@ -19,10 +19,12 @@ interface ProgressiveBlurProps extends React.HTMLAttributes<HTMLDivElement> {
   minBlur?: number
   /** Number of discrete blur layers. */
   layers?: number
+  /** CSS classes applied directly to each backdrop-filter layer. */
+  layerClassName?: string
   /** Width override. */
   width?: string | number
-  /** Optional MotionValue to animate the opacity of the progressive blur effect. Avoids the Safari bug where animating opacity on a parent of backdrop-filter elements breaks the blur. */
-  opacity?: MotionValue<number>
+  /** CSS opacity or a MotionValue applied to each blur layer. Avoids the Safari bug where animating opacity on a parent of backdrop-filter elements breaks the blur. */
+  opacity?: MotionValue<number> | React.CSSProperties['opacity']
   /** Additional CSS mask-image to intersect with each layer's slice mask. Applied per-layer so it works with backdrop-filter (unlike masking a parent). */
   mask?: string
   /** Cache blur layers on the compositor; opt in because each promoted layer uses GPU memory. */
@@ -40,6 +42,7 @@ const ProgressiveBlur = ({
   mask,
   promoteLayers,
   className,
+  layerClassName,
   ...props
 }: ProgressiveBlurProps) => {
   const blurLayers = Array.from({ length: layers }).map((_, i) => {
@@ -78,10 +81,7 @@ const ProgressiveBlur = ({
         return (
           <motion.div
             key={i}
-            className={css({
-              position: 'absolute',
-              inset: 0,
-            })}
+            className={cx(css({ position: 'absolute', inset: 0 }), layerClassName)}
             style={{
               opacity,
               backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,

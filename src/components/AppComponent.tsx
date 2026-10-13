@@ -28,6 +28,7 @@ import DesktopCommandUniverse from './DesktopCommandUniverse'
 import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
+import FormattingBar from './FormattingBar'
 import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import PinnedCommand from './Learning/PinnedCommand'
@@ -224,6 +225,7 @@ const AppComponent: FC = () => {
         <>
           <Toolbar />
           <UndoSlider />
+          {isTouch && <FormattingBar />}
         </>
       )}
       <DropGutter />

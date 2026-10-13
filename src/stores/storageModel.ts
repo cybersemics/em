@@ -76,6 +76,11 @@ const storageModel = storage.model({
   recentCommands: {
     default: [] as CommandId[],
   },
+  // whether the formatting bar is open (showing commands) or closed (showing overflow button)
+  formattingBarOpen: {
+    default: false,
+    decode: (s: string | null) => s === 'true',
+  },
 })
 
 export default storageModel

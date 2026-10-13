@@ -154,6 +154,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     showSortPicker: false,
     showUndoSlider: false,
     showDesktopCommandUniverse: false,
+    showFormattingBar: storageModel.get('formattingBarOpen'),
     showGestureMenu: false,
     remoteSearch: false,
     searchContexts: null,
