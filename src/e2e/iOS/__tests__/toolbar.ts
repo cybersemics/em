@@ -14,7 +14,7 @@ const getToolbarScrollLeft = (): Promise<number> =>
 
 describe('Toolbar', () => {
   // https://github.com/cybersemics/em/issues/3462
-  it.skip('Can be scrolled while the Text Color picker is open', async () => {
+  it('Can be scrolled while the Text Color picker is open', async () => {
     await paste('- a')
     await clickThought('a')
 
