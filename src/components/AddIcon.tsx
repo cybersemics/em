@@ -1,7 +1,8 @@
 import { FC } from 'react'
+import { cx } from '../../styled-system/css'
+import { iconRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import Index from '../@types/IndexType'
-import iconClassName from '../util/iconClassName'
 
 interface SearchIconProps {
   fill?: string
@@ -18,7 +19,7 @@ const AddIcon: FC<SearchIconProps> = ({ className, fill, size = 20, style }) => 
       x='0px'
       y='0px'
       viewBox='1 2 97 96'
-      className={iconClassName(className)}
+      className={cx(iconRecipe(), className)}
       width={size}
       height={size}
       fill={fill || token('colors.fg')}

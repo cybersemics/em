@@ -1,7 +1,8 @@
 import { FC } from 'react'
+import { cx } from '../../../styled-system/css'
+import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
-import iconClassName from '../../util/iconClassName'
 
 /** Sort icon, used in the search input. */
 const SortIcon: FC<IconType> = ({ size = 48, fill, className }) => {
@@ -14,7 +15,7 @@ const SortIcon: FC<IconType> = ({ size = 48, fill, className }) => {
       width={size}
       height={size}
       fill={fillColor}
-      className={iconClassName(className)}
+      className={cx(iconRecipe(), className)}
     >
       <path
         xmlns='http://www.w3.org/2000/svg'

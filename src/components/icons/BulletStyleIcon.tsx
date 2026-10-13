@@ -1,7 +1,8 @@
 import { FC } from 'react'
+import { cx } from '../../../styled-system/css'
+import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
-import iconClassName from '../../util/iconClassName'
 
 /** A bulleted-list icon — shown by the Bullet Picker toolbar button. Three rows, each with a filled bullet and a line of text. */
 const BulletStyleIcon: FC<IconType> = ({ size = 18, fill, style = {}, className }) => {
@@ -15,7 +16,7 @@ const BulletStyleIcon: FC<IconType> = ({ size = 18, fill, style = {}, className 
       viewBox='0 0 24 24'
       fill='none'
       style={style}
-      className={iconClassName(className)}
+      className={cx(iconRecipe(), className)}
     >
       <rect width='24' height='24' fill='none' />
       <circle cx='4.5' cy='6' r='1.5' fill={color} />

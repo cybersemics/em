@@ -1,7 +1,8 @@
+import { cx } from '../../../styled-system/css'
+import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 import { ICON_SCALING_FACTOR } from '../../constants'
-import iconClassName from '../../util/iconClassName'
 
 /** Sentence-Case icon. */
 const SentenceCaseIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
@@ -10,7 +11,7 @@ const SentenceCaseIcon = ({ fill, size = 20, style = {}, className }: IconType) 
 
   return (
     <svg
-      className={iconClassName(className)} // Combine class names
+      className={cx(iconRecipe(), className)} // Combine class names
       xmlns='http://www.w3.org/2000/svg'
       viewBox='0 0 24 24' // Keep the original viewBox
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }} // Inline styles

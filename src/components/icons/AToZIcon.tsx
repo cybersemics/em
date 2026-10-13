@@ -1,7 +1,8 @@
 import { FC } from 'react'
+import { cx } from '../../../styled-system/css'
+import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
-import iconClassName from '../../util/iconClassName'
 
 interface AToZIconProps extends IconType {
   /** Stroke thickness applied around the filled glyphs (matches CommandsListIcon's API). */
@@ -19,7 +20,7 @@ const AToZIcon: FC<AToZIconProps> = ({ size = 24, fill, className, strokeWidth =
       height={size}
       viewBox='0 0 24 24'
       fill='none'
-      className={iconClassName(className)}
+      className={cx(iconRecipe(), className)}
     >
       <g clipPath='url(#a-to-z-clip)'>
         <path
