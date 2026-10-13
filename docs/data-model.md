@@ -128,6 +128,17 @@ A `Path` always starts at the ROOT thought. The ROOT thought itself is *not* par
 
 The most important `Path` in the app is `state.cursor` — the path of the thought being viewed/edited. Clicking a thought sets `state.cursor` to its path; pressing `ArrowDown` extends the path with the child's id; etc.
 
+#### Stored Paths and moves
+
+A stored `Path` names a chain of parents, so it goes stale as soon as a thought on it moves. The `Path` still names the old parents, which no longer contain the thought, and nothing below the first of them renders. [`moveThought`](../src/actions/moveThought.ts) knows both where a moved thought was and where it is now. It therefore rebases the selection, every `Path` in the cursor and multiselect state that runs through the moved thought, from `oldPath` onto `newPath`:
+
+- `state.cursor`
+- `state.multicursors`
+- `state.multicursorRange`
+- `state.multicursorAnchor`
+
+A new piece of selection state that stores a `Path` must be rebased there too. Do not fix a stale `Path` by resolving it again from the thought's id in the code that later finds it. That gives up which instance of a thought the `Path` named and how it reached it, as through a [context view](#views). Fix it at the source instead: the move that did not rebase it.
+
 #### Circular Paths
 
 `Path`s **are allowed to contain cycles**. This is possible because of the Context View, which lets the cursor jump between contexts that share a value (and back). The fact that the cursor can be at `a/m~/b/m/a` even though `a` already appears earlier is not a bug — it's how the Context View works. See [Views](#views).
