@@ -9,7 +9,8 @@ import * as selection from '../device/selection'
  * Used when the virtual keyboard is dismissed without a preceding blur event. On Android the keyboard can
  * be hidden (e.g. via the Down Arrow virtual button or the native Capacitor keyboardDidHide event) without
  * blurring the editable, so no blur event fires to clear the caret. Clearing the browser selection blurs
- * the active editable and removes the caret.
+ * the active editable and removes the caret. Since iOS 27, Safari likewise keeps a selected range alive across the blur
+ * that closes the keyboard, so the iOS Safari keyboard handler dispatches this too.
  *
  * See: https://github.com/cybersemics/em/issues/3958.
  */

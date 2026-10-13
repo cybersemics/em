@@ -109,9 +109,11 @@ A gesture is a string of swipe directions, where each character is one of `'l'`,
 
 A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/util/isInGestureZone.ts), enforced by [`MultiGesture`](../src/components/MultiGesture.tsx)): the screen minus the scroll zone (a strip on the right, or on the left for left-handed users), the toolbar at the top, and — on devices with a home indicator (nonzero `safe-area-inset-bottom`) — a strip at the bottom where the OS recognizes system gestures. Without the bottom exclusion, the upward app switcher swipe is committed as the Open Command Center gesture right before the app suspends. Single-finger touches that start outside the zone scroll the page as usual; multi-finger touches are inert everywhere (see [Multi-touch rejection](#multi-touch-rejection)).
 
-`shouldCancelGesture` in [`AppComponent`](../src/components/AppComponent.tsx) abandons a gesture that starts on the toolbar, on a selected text range, on the caret (see [Cursor and Caret](cursor-and-caret.md#selectionrangestore)), or while a press, modal, or sidebar is active. It is evaluated with the touch point at touchstart and again without one during the gesture, so only the point-dependent checks are limited to the first call.
+`shouldCancelGesture` in [`AppComponent`](../src/components/AppComponent.tsx) abandons a gesture that starts on the toolbar, on a selected text range, on the caret (see [Cursor and Caret](cursor-and-caret.md#selectionrangestore)), or while a press, modal, or sidebar is active. It is evaluated with the touch point at touchstart and again without one during the gesture, so only the point-dependent checks are limited to the first call. The abandoned state is per touch: `MultiGesture` clears it when the first finger of the next touch lands, rather than relying only on its window `touchend` listener, because a control that stops the propagation of its `touchend` — such as a toolbar dropdown option — keeps that listener from running, and the next gesture would otherwise be abandoned too ([issue #5850](https://github.com/cybersemics/em/issues/5850)).
 
 A gesture is also always a **single finger**. `MultiGesture` latches as soon as a second touch is down and ignores movement until every finger is up again, because iOS reports its own multi-finger system gestures to the page as ordinary touch events: tracking the first finger of a three-finger undo swipe would commit it as `cursorForward`, and the redo swipe as `cursorBack`. Both are undoable, so each would clear the redo stack and leave the redo half of the gesture with nothing to restore ([issue #5575](https://github.com/cybersemics/em/issues/5575)).
+
+`MultiGesture`'s `reset()` runs when a gesture is released, which can come before the `window` `touchend` listener runs. State that `touchend` reads, such as the Debug Log's `moves` count, is therefore reset on the first finger's `touchstart` rather than in `reset()`.
 
 `handleGestureSegment` is called incrementally as the user swipes; it triggers a haptic for each new segment and, after `COMMAND_PALETTE_TIMEOUT`, opens the gesture menu so the user can see all commands reachable from the current sequence.
 
@@ -120,7 +122,7 @@ A gesture is also always a **single finger**. `MultiGesture` latches as soon as 
 - **Mobile Command Universe.** If the sequence ends with the `openMobileCommandUniverse` gesture, that command runs.
 - **Chained commands.** If the sequence *starts* with a gesture for an `isChainable` command and continues with another command's gesture, the two are chained and executed together. The canonical example: `selectAll` is chainable, so `<selectAll-gesture><archive-gesture>` archives all selected thoughts in one motion. `chainCommand(c1, c2)` synthesizes a `Command` whose gesture and label combine both. Both commands execute inside one command transaction whose metadata identifies the combined command, so they produce one undo patch.
 
-After execution, an alert briefly confirms the command's `label` (in training mode), unless the command has `hideAlert: true`.
+In training mode, an alert briefly confirms the command's `label`, unless the command has `hideAlert: true`. The label is shown just before the command executes, so an alert the command raises itself — such as an error explaining why it cannot be executed — replaces the label rather than being hidden by it.
 
 ### Multi-touch rejection
 
@@ -158,7 +160,7 @@ The Command Universe has Redux-owned session navigation with separate routing an
 - [`CommandUniversePageRouter`](../src/components/CommandUniverse/CommandUniversePageRouter.tsx) selects the active entry from Redux, resolves its registered component, and forwards its props. It does not own history, read command data, or size the dialog. The modal composition sizes the outer non-scrolling viewport. Each page uses [`DialogContent`](../src/components/dialog/DialogContent.tsx) for its independent scroller, padding, and custom scrollbar.
 - [`CommandUniversePageTransitions`](../src/components/CommandUniverse/CommandUniversePageTransitions.tsx) gives each retained surface a declarative target and lets Motion move it there, with `useReducedMotion` skipping the zoom when requested. Because the target is declarative, navigating while a zoom is running simply re-targets: Motion continues from wherever the surface got to rather than restarting. The running transition is local presentation state, derived from the change of active entry: Back reverses the arrival of the entry being left, and Forward and new visits replay the destination's own arrival. Completion comes from Motion rather than a parallel timer, and clears the transition only if it is still the one that animation started, so a late completion from an abandoned animation is ignored. Inactive and transitioning pages are inert, but the header stays outside the page surfaces and so remains usable throughout. On arrival the view restores the destination's last focused element or focuses its designated heading without changing scroll position, committing the navigation first so the destination is no longer inert.
 
-Each history entry records the zoom direction and source rectangle, in viewport coordinates, of the navigation that created it. Back reverses that entry's zoom and Forward replays it, so a new entry can zoom either inward or outward. Navigation is never blocked by a running animation: Back and Forward stay enabled throughout, so a mistaken tap can be undone without waiting the zoom out. Reachable history entries remain mounted with their independent scroll positions. Starting a new branch discards its abandoned redo pages. Closing unmounts the page surfaces after the dialog fade, and reopening starts a fresh session even during an unfinished close fade. This history is independent of browser history and the editor's undo/redo.
+Each history entry records the zoom direction, optional animation type, and source point relative to the page of the navigation that created it. The point is measured before the destination mounts, avoiding another layout-measurement render. Back reverses that entry's zoom and Forward replays it, so a new entry can zoom either inward or outward. Navigation is never blocked by a running animation: Back and Forward stay enabled throughout, so a mistaken tap can be undone without waiting the zoom out. Reachable history entries remain mounted with their independent scroll positions. Starting a new branch discards its abandoned redo pages. Closing unmounts the page surfaces after the dialog fade, and reopening starts a fresh session even during an unfinished close fade. This history is independent of browser history and the editor's undo/redo.
 
 Motion defaults live in [`commandUniverseMotion`](../src/components/CommandUniverse/commandUniverseMotion.ts), using the shared duration utility. The transition view reads them directly, and an enclosing Motion `MotionConfig` overrides them where one is present, which is how tests run the animation at zero duration.
 
@@ -487,7 +489,9 @@ https://github.com/user-attachments/assets/4255766e-8c9d-4cdf-a140-573ab82399ae
 
 ### Uncategorize
 
-Deletes the current thought and moves all its subthoughts up a level.
+Deletes the current thought and moves all its subthoughts up a level. If the thought is a favorite, its `=favorite` attribute is deleted with it rather than moved up, so the parent does not become a favorite. A thought with no subthoughts other than meta attributes is left unchanged, and the alert "Unable to uncategorize thought with no children" is shown instead.
+
+In the Context View, Uncategorize applies to the selected context, with the same rules applied to its own children: the thought moves up into the context's parent, which replaces the context in the Context View. The Context View stays open with the cursor on that parent, which is the home context when the uncategorized context was top-level. The home context itself is left unchanged.
 
 <kbd>Command + Option + c</kbd>
 
@@ -731,6 +735,8 @@ Display subthoughts of the current thought as indented paragraphs.
 
 Display the current list as a table, with subthoughts rendered in the second column.
 
+Run it with the cursor on one of the list's children, not on the list thought itself: it sets `=view/Table` on the cursor's parent.
+
 <kbd>Option + Shift + T</kbd>
 
 https://github.com/user-attachments/assets/accb2319-5926-4fe3-856b-cb4da3c218ab
@@ -884,3 +890,7 @@ Add or remove devices that can access and edit this thoughtspace.
 ### Cancel
 
 Cancel the current gesture.
+
+The Command Universe grid mounts gesture diagrams within 180px of its inner scroll viewport using Motion’s `useInView` with `once: false`. Diagram boxes retain their size, and diagrams already rendered stay mounted while the page is hidden or transitioning so Back can animate the retained grid.
+
+Navigation accepts `transition: 'zoom' | 'none'`, defaulting to zoom. A visit without animation retains Back/Forward history and settles before focus moves into the destination. Zoom origins are measured relative to the page before navigation mounts the destination, avoiding a second layout-measurement render. Complete `transform: scale(...)` targets allow Motion to use native Web Animations. Opening the dialog can preserve an editor selection snapshot already captured by its caller.

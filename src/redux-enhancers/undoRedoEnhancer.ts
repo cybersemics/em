@@ -97,6 +97,7 @@ const statePropertiesToOmit: (keyof State)[] = [
   'cursorCleared',
   'editableNonce',
   'isKeyboardOpen',
+  'learning',
   'pushQueue',
   'selectionOffsets',
 ]
@@ -501,6 +502,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions within an explicit command transaction are merged under that command's metadata.
       // - Direct action batches guarded by isMulticursorExecuting are merged into one action patch.
+      // - An action flagged mergeNext is merged with the action that follows it, e.g. the two edits of a text drag between thoughts.
       const lastUndoPatch = nthLast(state.undoPatches, 1)
       // A resumed invocation may extend its latest patch, but never reach back across another edit or undo/redo.
       // Its identity survives await; only contiguous history is eligible for merging.
@@ -534,12 +536,12 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
             console.error(e.message, { state, lastUndoPatch })
             // The throw unwinds the dispatch before loggerMiddleware records the action, so the Debug Log would
             // otherwise show the error with no trace of what triggered it.
-            debugLog.log('undoPatchError', {
+            debugLog.log('undoPatchError', () => ({
               actionType,
               message: e.message,
               patchActionTypes: lastUndoPatch.metadata.actionTypes,
               opPaths: lastUndoPatch.ops.map(op => `${op.op} ${op.path}`),
-            })
+            }))
             throw new Error('Error applying patch')
           }
         }

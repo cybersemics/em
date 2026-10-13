@@ -1,4 +1,5 @@
 import viewportStore from '../../stores/viewportStore'
+import debugLog from '../../util/debugLog'
 import MultiGesture from '../MultiGesture'
 
 /**
@@ -19,6 +20,16 @@ const dispatchTouch = (type: 'touchstart' | 'touchmove', touches: { clientX: num
   return event
 }
 
+/** Dispatches a synthetic touchend on window with every finger up. */
+const dispatchTouchEnd = () => {
+  const touchend = new Event('touchend')
+  // jsdom does not construct TouchEvent.changedTouches or touches, which the touchend listener reads. An empty
+  // touches list means every finger is up.
+  Object.defineProperty(touchend, 'changedTouches', { value: [] })
+  Object.defineProperty(touchend, 'touches', { value: [] })
+  window.dispatchEvent(touchend)
+}
+
 /**
  * MultiGesture registers its touch listeners on document.body in the constructor, so instantiating it is
  * enough to activate them. Returning it from a function avoids the no-new lint rule.
@@ -35,12 +46,7 @@ describe('MultiGesture', () => {
 
   beforeEach(() => {
     // touchend resets disableScroll/abandon between scenarios (window 'touchend' → reset()).
-    const touchend = new Event('touchend')
-    // jsdom does not construct TouchEvent.changedTouches or touches, which the touchend listener reads. An empty
-    // touches list means every finger is up.
-    Object.defineProperty(touchend, 'changedTouches', { value: [] })
-    Object.defineProperty(touchend, 'touches', { value: [] })
-    window.dispatchEvent(touchend)
+    dispatchTouchEnd()
   })
 
   it('disables scroll for a single-finger touch in the gesture zone', () => {
@@ -56,5 +62,54 @@ describe('MultiGesture', () => {
     const move = dispatchTouch('touchmove', [gestureZonePoint, secondFingerPoint])
     // With two fingers the gesture is abandoned, so scroll is not disabled and no trace/menu/command is triggered.
     expect(move.defaultPrevented).toBe(false)
+  })
+
+  describe('debug log', () => {
+    beforeEach(() => {
+      debugLog.setEnabled(true)
+      debugLog.clear()
+    })
+
+    afterEach(() => {
+      document.body.replaceChildren()
+      vi.useRealTimers()
+    })
+
+    // A touch that iOS swallows gets no touchmove at all (#4222).
+    it('records how many touchmoves a touch received', () => {
+      dispatchTouch('touchstart', [gestureZonePoint])
+      dispatchTouch('touchmove', [gestureZonePoint])
+      dispatchTouch('touchmove', [secondFingerPoint])
+      dispatchTouchEnd()
+      dispatchTouch('touchstart', [gestureZonePoint])
+      dispatchTouchEnd()
+
+      expect(debugLog.read().filter(entry => entry.type === 'touchend')).toMatchObject([{ moves: 2 }, { moves: 0 }])
+    })
+
+    it('records the caret and the thought being edited on the frame after a touch begins', () => {
+      vi.useFakeTimers({ toFake: ['requestAnimationFrame'] })
+      const editable = document.createElement('div')
+      editable.setAttribute('data-editable', 'true')
+      editable.setAttribute('contenteditable', 'true')
+      document.body.appendChild(editable)
+      editable.focus()
+
+      dispatchTouch('touchstart', [gestureZonePoint])
+      expect(debugLog.read().some(entry => entry.type === 'touchCaret')).toBe(false)
+
+      vi.advanceTimersToNextFrame()
+      // jsdom has no layout, so the geometry is all zeros; the entry's presence and shape is what is under test.
+      expect(debugLog.read().filter(entry => entry.type === 'touchCaret')).toMatchObject([
+        { x: 0, y: 0, editableLeft: 0, editableTop: 0, editableRight: 0, editableBottom: 0 },
+      ])
+    })
+
+    it('records no caret when no thought is being edited', () => {
+      vi.useFakeTimers({ toFake: ['requestAnimationFrame'] })
+      dispatchTouch('touchstart', [gestureZonePoint])
+      vi.advanceTimersToNextFrame()
+      expect(debugLog.read().some(entry => entry.type === 'touchCaret')).toBe(false)
+    })
   })
 })

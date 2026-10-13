@@ -4,8 +4,8 @@ import { page } from '../session'
 // Constants for the style element
 const ANTIALIASING_DISABLER_ID = 'screenshot-antialiasing-disable'
 
-/** Generate CSS for disabling antialiasing.*/
-const getAntialiasingCSS = () => `
+/** Generates screenshot styles, optionally retaining filters for tests that cover blur and shadows. */
+const getAntialiasingCSS = (preserveFilters: boolean) => `
    *, *::before, *::after {
         -webkit-font-smoothing: none !important;
         -moz-osx-font-smoothing: unset !important;
@@ -19,9 +19,8 @@ const getAntialiasingCSS = () => `
 
 
         
-        /* Disable any potential blur effects */
-        filter: none !important;
-        -webkit-filter: none !important;
+        /* Disable blur effects unless the test explicitly covers them. */
+        ${preserveFilters ? '' : 'filter: none !important; -webkit-filter: none !important;'}
         /* Ensure consistent text rendering */
         font-feature-settings: "liga" 0, "kern" 0 !important;
         font-variant-ligatures: none !important;
@@ -36,8 +35,14 @@ const getAntialiasingCSS = () => `
       }
 `
 
-/** Takes a screenshot with antialiasing disabled.*/
-const screenshot = async (options: ScreenshotOptions = {}): Promise<Buffer> => {
+/** Takes a screenshot with antialiasing disabled. Filters are disabled unless explicitly preserved. */
+const screenshot = async ({
+  preserveFilters = false,
+  ...options
+}: ScreenshotOptions & {
+  /** Retain production filters when blur and shadows are part of the visual contract. */
+  preserveFilters?: boolean
+} = {}): Promise<Buffer> => {
   // Ensure antialiasing is disabled
   await page.evaluate(
     ({ id, css }) => {
@@ -52,7 +57,7 @@ const screenshot = async (options: ScreenshotOptions = {}): Promise<Buffer> => {
     },
     {
       id: ANTIALIASING_DISABLER_ID,
-      css: getAntialiasingCSS(),
+      css: getAntialiasingCSS(preserveFilters),
     },
   )
 
