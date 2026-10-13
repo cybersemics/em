@@ -198,7 +198,7 @@ describe('gestures', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5966
-  it.skip('ignores a second finger that touches down during a gesture in progress', async () => {
+  it('ignores a second finger that touches down during a gesture in progress', async () => {
     const firstFinger = await startGesture()
     await firstFinger.move('r')
     await waitForSelector('[data-testid=gesture-menu-content]')
