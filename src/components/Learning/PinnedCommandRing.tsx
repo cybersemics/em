@@ -1,7 +1,8 @@
-import { MotionValue } from 'motion/react'
-import { PropsWithChildren, useId } from 'react'
+import { MotionValue, animate, motion, useReducedMotion } from 'motion/react'
+import { PropsWithChildren, useEffect, useId, useRef, useState } from 'react'
 import { css } from '../../../styled-system/css'
 import { PINNED_COMMAND_RING_SIZE } from '../../constants'
+import durations from '../../util/durations'
 
 /**
  * These values are derived directly from the original design in Figma, in a 73×73 box.
@@ -150,21 +151,39 @@ const BlurredProgressArc = ({ progress, stops }: { progress: number; stops: Stop
   )
 }
 
-/** Renders supplied progress and color without prescribing how either changes. */
+/** Animates changes in supplied progress while keeping color a presentation input. */
 const RingProgress = ({ progress, activeOpacity }: RingProgressProps) => {
+  const prefersReducedMotion = useReducedMotion()
+  const [renderedProgress, setRenderedProgress] = useState(progress)
+  const currentProgress = useRef(progress)
+  const visibleProgress = prefersReducedMotion ? progress : renderedProgress
   const colorOpacity = activeOpacity?.get() ?? 0
-  const visibleProgress = progress
+  useEffect(() => {
+    if (prefersReducedMotion || currentProgress.current === progress) {
+      currentProgress.current = progress
+      setRenderedProgress(progress)
+      return
+    }
+    const animation = animate(currentProgress.current, progress, {
+      duration: durations.get('medium') / 1000,
+      onUpdate: value => {
+        currentProgress.current = value
+        setRenderedProgress(value)
+      },
+    })
+    return () => animation.stop()
+  }, [progress, prefersReducedMotion])
   return progress > 0 ? (
-    <div className={css({ position: 'absolute', inset: 0 })}>
-      <div className={css({ position: 'absolute', inset: 0 })} style={{ opacity: 1 - colorOpacity }}>
+    <motion.div className={css({ position: 'absolute', inset: 0 })}>
+      <motion.div className={css({ position: 'absolute', inset: 0 })} style={{ opacity: 1 - colorOpacity }}>
         <BlurredProgressArc progress={visibleProgress} stops={STOPS_MONO} />
-      </div>
+      </motion.div>
       {colorOpacity > 0 && (
-        <div className={css({ position: 'absolute', inset: 0 })} style={{ opacity: colorOpacity }}>
+        <motion.div className={css({ position: 'absolute', inset: 0 })} style={{ opacity: colorOpacity }}>
           <BlurredProgressArc progress={visibleProgress} stops={STOPS_COLORFUL} />
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   ) : null
 }
 
