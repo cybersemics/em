@@ -23,11 +23,12 @@ class DevServerViewController: CAPBridgeViewController {
         return NativeHistoryWebView(frame: frame, configuration: configuration)
     }
 
-    #if DEBUG
     override func capacitorDidLoad() {
+        bridge?.registerPluginInstance(IOSKeyboardPlugin())
+        #if DEBUG
         bridge?.registerPluginInstance(DevServerCertPlugin())
+        #endif
     }
-    #endif
 }
 
 #if DEBUG
