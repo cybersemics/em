@@ -18,7 +18,7 @@ const textColor = {
     dispatch(toggleDropdown({ dropDownType: 'colorPicker' }))
   },
   isActive: state => !!state.cursor || hasMulticursor(state),
-  isDropdownOpen: state => !!state.showColorPicker,
+  isDropdownOpen: state => !!(state.activeDropdown?.picker === 'colorPicker'),
 } satisfies Command
 
 export default textColor

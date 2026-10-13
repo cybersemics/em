@@ -6,7 +6,9 @@ import TextColorIcon from './TextColor'
 
 /** Text Color Icon with popup Picker. */
 const TextColorWithColorPicker = ({ size = 18, style, fill, cssRaw }: IconType) => {
-  const showColorPicker = useSelector(state => state.showColorPicker)
+  const showColorPicker = useSelector(
+    state => state.activeDropdown?.surface === 'toolbar' && state.activeDropdown.picker === 'colorPicker',
+  )
 
   return (
     <div>

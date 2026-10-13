@@ -13,7 +13,7 @@ const toggleUndoSlider = {
   exec: dispatch => {
     dispatch(toggleDropdown({ dropDownType: 'undoSlider' }))
   },
-  isDropdownOpen: state => !!state.showUndoSlider,
+  isDropdownOpen: state => !!(state.activeDropdown?.picker === 'undoSlider'),
 } satisfies Command
 
 export default toggleUndoSlider

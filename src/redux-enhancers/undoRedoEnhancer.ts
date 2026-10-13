@@ -93,6 +93,8 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
  * the focus, so restoring the one that happened to be current when an action was undone would resurrect a selection
  * the user has long since moved on from. */
 const statePropertiesToOmit: (keyof State)[] = [
+  // Dropdown presentation must not be restored or patched by document undo/redo.
+  'activeDropdown',
   'alert',
   'cursorCleared',
   'editableNonce',

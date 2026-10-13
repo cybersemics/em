@@ -16,7 +16,7 @@ const letterCase = {
     dispatch(toggleDropdown({ dropDownType: 'letterCase' }))
   },
   isActive: state => !!state.cursor || hasMulticursor(state),
-  isDropdownOpen: state => !!state.showLetterCase,
+  isDropdownOpen: state => !!(state.activeDropdown?.picker === 'letterCase'),
 } satisfies Command
 
 export default letterCase

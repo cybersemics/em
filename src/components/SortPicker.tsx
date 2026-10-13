@@ -71,7 +71,9 @@ const SortOption: FC<SortOptionProps> = ({ type, supportsDirection, label, sortP
 /** Sort Picker component. */
 const SortPicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
-  const showSortPicker = useSelector(state => state.showSortPicker)
+  const showSortPicker = useSelector(
+    state => state.activeDropdown?.surface === 'toolbar' && state.activeDropdown.picker === 'sortPicker',
+  )
 
   const sortPreference = useSelector(state => {
     if (!state.cursor || isRoot(state.cursor)) return { type: 'None', direction: null }
