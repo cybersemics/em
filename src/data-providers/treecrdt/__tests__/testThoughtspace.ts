@@ -1,4 +1,5 @@
 import type ThoughtId from '../../../@types/ThoughtId'
+import type ThoughtMove from '../../../@types/ThoughtMove'
 import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import findDescendant from '../../../selectors/findDescendant'
@@ -104,14 +105,21 @@ it('captures cross-parent moves and shifted sibling positions as plain facts', a
       [THOUGHT_X_ID]: null,
     },
   )
-  const moved = treecrdt.transact(transaction => {
-    const projected = transaction.update({
-      thoughtIndexUpdates: { [THOUGHT_A_ID]: thought(THOUGHT_A_ID, OTHER_PARENT_ID, 'a') },
-      movePlacements: { [THOUGHT_A_ID]: THOUGHT_X_ID },
-    })
-    return { projected, moves: transaction.getMoves(), getMoves: transaction.getMoves }
-  })
-  const { projected, moves, getMoves } = moved.value
+  let moves: readonly ThoughtMove[] = []
+  let getMoves!: () => readonly ThoughtMove[]
+  const moved = treecrdt.transact(
+    transaction =>
+      transaction.update({
+        thoughtIndexUpdates: { [THOUGHT_A_ID]: thought(THOUGHT_A_ID, OTHER_PARENT_ID, 'a') },
+        movePlacements: { [THOUGHT_A_ID]: THOUGHT_X_ID },
+      }),
+    (_value, _persisted, readMoves) => {
+      moves = readMoves()
+      getMoves = readMoves
+    },
+  )
+  const projected = moved.value
+  expect(getMoves).toThrow('expired')
   expect(projected.getChildren(PARENT_ID)).toEqual([THOUGHT_B_ID])
   expect(projected.getChildren(OTHER_PARENT_ID)).toEqual([THOUGHT_X_ID, THOUGHT_A_ID])
   expect(projected.getPosition(THOUGHT_B_ID)).toBe(0)
@@ -126,7 +134,6 @@ it('captures cross-parent moves and shifted sibling positions as plain facts', a
       { id: THOUGHT_B_ID, value: 'b', oldRank: 1, newRank: 0, oldParentId: PARENT_ID, newParentId: PARENT_ID },
     ]),
   )
-  expect(getMoves).toThrow('finished')
 })
 
 it('keeps separately created thoughtspace instances isolated', async () => {

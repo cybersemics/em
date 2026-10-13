@@ -5,6 +5,7 @@ import Index from '../@types/IndexType'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import ThoughtMove from '../@types/ThoughtMove'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import UiState from '../@types/UiState'
 import * as commands from '../actions'
@@ -42,7 +43,7 @@ const cacheSettings = (state: State) => {
 }
 
 /** Formats diagnostic facts without letting logging failures reject a command. */
-const collectThoughtMoves = (getMoves: ThoughtspaceTransaction['getMoves'], actionType: string) => {
+const collectThoughtMoves = (getMoves: () => readonly ThoughtMove[], actionType: string) => {
   try {
     return getMoves().map(({ id, value, oldRank, newRank, oldParentId, newParentId }) => ({
       actionType,
@@ -101,10 +102,10 @@ const commandExecutionEnhancer: StoreEnhancer<any> =
         const handler = (commands as Index<{ requiresDocument?: boolean }>)[action.type]
         const needsDocument = handler?.requiresDocument || action.type === 'undo' || action.type === 'redo'
         let prepared: ReturnType<typeof history.prepare>
-        let moves: ReturnType<typeof collectThoughtMoves> = []
         let operationCount = 0
         /** Publishes committed document and UI state before provider observers can start another command. */
-        const publish = (next: State, persisted?: Promise<void>) => {
+        const publish = (next: State, persisted?: Promise<void>, getMoves?: () => readonly ThoughtMove[]) => {
+          const moves = debugLog.isEnabled() && getMoves ? collectThoughtMoves(getMoves, action.type) : []
           prepared.commit()
           // The document is already committed. A best-effort first-paint cache must never prevent publication.
           try {
@@ -145,7 +146,6 @@ const commandExecutionEnhancer: StoreEnhancer<any> =
             prepared = history.prepare(state, action, transaction)
             const next = prepared.state
             operationCount = transaction.operationIds.length
-            if (debugLog.isEnabled()) moves = collectThoughtMoves(transaction.getMoves, action.type)
             return next
           }, publish)
         } else {
@@ -154,9 +154,8 @@ const commandExecutionEnhancer: StoreEnhancer<any> =
             action.type === 'replaceThoughts' ? { ...action, previousCursorPath: publishedCursorPath } : action,
           )
           const next = prepared.state
-          const getMoves = (action as UnknownAction).getMoves as ThoughtspaceTransaction['getMoves'] | undefined
-          if (debugLog.isEnabled() && getMoves) moves = collectThoughtMoves(getMoves, action.type)
-          publish(next)
+          const getMoves = (action as UnknownAction).getMoves as (() => readonly ThoughtMove[]) | undefined
+          publish(next, undefined, getMoves)
         }
         return action
       },

@@ -3,7 +3,7 @@ import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import { createMemoryClient } from '@treecrdt/wasm/memory'
 import Thought from '../../../@types/Thought'
 import ThoughtId from '../../../@types/ThoughtId'
-import ThoughtspaceTransaction from '../../../@types/ThoughtspaceTransaction'
+import ThoughtMove from '../../../@types/ThoughtMove'
 import ThoughtspaceView from '../../../@types/ThoughtspaceView'
 import Timestamp from '../../../@types/Timestamp'
 import { HOME_TOKEN } from '../../../constants'
@@ -55,7 +55,7 @@ it('notifies subscribers once per completed local change and stops notifying an 
   try {
     await runtime.init({ storage: 'memory' })
     const unchanged = runtime.transact(transaction => transaction.project(), onCommit)
-    expect(onCommit).toHaveBeenCalledExactlyOnceWith(unchanged.value, unchanged.persisted)
+    expect(onCommit).toHaveBeenCalledExactlyOnceWith(unchanged.value, unchanged.persisted, expect.any(Function))
     expect(subscribed).not.toHaveBeenCalled()
     expect(otherSubscriber).not.toHaveBeenCalled()
 
@@ -134,7 +134,7 @@ it('records authored text changes within a transaction, not their final net effe
 it.each([false, true])('reads shifted siblings only when a subscriber requests move facts (%s)', async readMoves => {
   const memory = await createMemoryClient()
   const runtime = createMemoryThoughtspace(undefined, async () => memory)
-  let getMoves: ThoughtspaceTransaction['getMoves']
+  let getMoves: () => readonly ThoughtMove[]
   try {
     await runtime.init({ storage: 'memory' })
     await runtime.transact(transaction => {
@@ -244,7 +244,7 @@ it('stages reentrant commit callbacks synchronously before invalidating latest d
     runtime.transact(
       transaction =>
         transaction.update({ thoughtIndexUpdates: { [first.id]: first }, movePlacements: { [first.id]: null } }),
-      value => {
+      (value, _persisted, getMoves) => {
         expect(value.getLexeme('shared')).toEqual([first.id])
         phases.push(`commit: ${value.getThought(first.id)!.value}`)
         runtime.transact(
@@ -256,6 +256,7 @@ it('stages reentrant commit callbacks synchronously before invalidating latest d
             phases.push(`commit: ${nested.getThought(first.id)!.value}`)
           },
         )
+        expect(getMoves).toThrow('expired')
         phases.push('outer callback completed')
       },
     )
@@ -369,7 +370,6 @@ it('exposes canonical memberships and thought metadata to later commands in the 
       const restored = transaction.update({ thoughtIndexUpdates: { [first.id]: original } })
       expect(restored.getLexeme('renamed')).toBe(originalLexeme)
       expect(restored.getLexeme('shared')).toBeUndefined()
-      expect(transaction.getMoves()).toEqual([])
     }).persisted
     expect(runtime.project().getLexeme('renamed')).toBe(originalLexeme)
   } finally {
@@ -409,6 +409,7 @@ it('reverts unpersisted document receipts synchronously and persists only commit
     })
     const after = runtime.project()
     const editedContents = contents(after)
+    const editedMembership = after.getLexeme('edited')
     const acknowledged = vi.fn()
     expect(() =>
       runtime.transact(transaction => {
@@ -419,6 +420,8 @@ it('reverts unpersisted document receipts synchronously and persists only commit
       }),
     ).toThrow('Cancel undo')
     expect(runtime.project()).toBe(after)
+    expect(contents(runtime.project())).toEqual(editedContents)
+    expect(runtime.project().getLexeme('edited')).toBe(editedMembership)
 
     const undone = runtime.transact(transaction => {
       const ids = transaction.revert(edited.value)
@@ -617,6 +620,35 @@ it('reads and commits accepted memberships after a caught partial update error',
     })
     await committed.persisted
     expect(runtime.project().getLexeme('shared')).toEqual([first.id])
+  } finally {
+    await runtime.drop()
+  }
+})
+
+it('restores memberships when a caught malformed payload aborts the transaction', async () => {
+  const runtime = createMemoryThoughtspace()
+  const subscribed = vi.fn()
+  try {
+    await runtime.init({ storage: 'memory' })
+    await runtime.transact(transaction => transaction.insert(first, null)).persisted
+    const original = runtime.project().getLexeme('shared')
+    const offset = runtime.operationOffset
+    runtime.subscribe(subscribed)
+
+    expect(() =>
+      runtime.transact(transaction => {
+        transaction.payload(first.id, { value: 'renamed' })
+        expect(transaction.project().getLexeme('renamed')).toEqual([first.id])
+        transaction.payload(first.id, { value: null as unknown as string })
+        expect(() => transaction.project()).toThrow('A thought payload requires a text value')
+      }),
+    ).toThrow('The memory transaction has failed')
+
+    expect(runtime.project().getThought(first.id)).toEqual(first)
+    expect(runtime.project().getLexeme('shared')).toBe(original)
+    expect(runtime.project().getLexeme('renamed')).toBeUndefined()
+    expect(runtime.operationOffset).toBe(offset)
+    expect(subscribed).not.toHaveBeenCalled()
   } finally {
     await runtime.drop()
   }

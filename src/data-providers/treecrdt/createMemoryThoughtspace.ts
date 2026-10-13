@@ -7,6 +7,7 @@ import { createTreecrdtSyncBackendFromClient } from '@treecrdt/sync-sqlite'
 import { type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import {
   type MemoryChanges,
+  type MemoryClient,
   type MemoryContent,
   type MemoryProjection,
   type MemoryReader,
@@ -48,79 +49,63 @@ const readThought = (row: MemoryContent | undefined): Thought | undefined => {
   }) as Thought
 }
 
-/** Keeps committed memberships; transaction queries overlay native changes without mutating that index. */
-const createLexemeLookup = (reader: Pick<MemoryReader, 'getContent' | 'nodeIds'>) => {
-  const committed = new Map<string, Lexeme>()
-  const keys = new WeakMap<MemoryContent, string | undefined>()
-  type Prepared = {
-    deltas: Map<string, { added: Set<ThoughtId>; removed: Set<ThoughtId> }>
-    results: Map<string, Lexeme | undefined>
-  }
-  let memo = new WeakMap<MemoryChanges, Prepared>()
-  /** Reuses keys of unchanged before/after rows across cumulative transaction reads. */
+/** Maintains memberships from materialized changes, restoring touched buckets if a transaction aborts. */
+const createLexemeLookup = (client: MemoryClient) => {
+  const memberships = new Map<string, Lexeme>()
+  /** Derives keys from accepted content, excluding system roots and payload-less nodes. */
   const keyOf = (row: MemoryContent | null | undefined) => {
-    if (!row || ROOT_IDS.has(row.id)) return undefined
-    if (!keys.has(row)) {
-      const thought = readThought(row)
-      keys.set(row, thought ? hashThought(thought.value) : undefined)
-    }
-    return keys.get(row)
+    const thought = row && !ROOT_IDS.has(row.id) ? readThought(row) : undefined
+    return thought ? hashThought(thought.value) : undefined
   }
-  /** Decodes a batch once; failed preparation leaves committed memberships and previous queries intact. */
-  const prepare = (batch: MemoryChanges): Prepared => {
-    const cached = memo.get(batch)
-    if (cached) return cached
-    const deltas: Prepared['deltas'] = new Map()
-    /** Collects additions and removals only for affected values. */
-    const bucket = (key: string) => {
-      if (!deltas.has(key)) deltas.set(key, { added: new Set(), removed: new Set() })
-      return deltas.get(key)!
+  const { flush } = client.observeMaterialization(() => {
+    const originals = new Map<string, Lexeme | undefined>()
+    return {
+      apply: ({ reset, changes }) => {
+        const updates = new Map<string, Set<ThoughtId>>()
+        /** Collects each affected membership once per incremental batch. */
+        const bucket = (key: string) => {
+          if (!updates.has(key)) updates.set(key, new Set(reset ? undefined : memberships.get(key)))
+          return updates.get(key)!
+        }
+        if (reset) {
+          memberships.forEach((_, key) => bucket(key))
+          client.nodeIds().forEach(id => {
+            const key = keyOf(client.getContent(id))
+            if (key !== undefined) bucket(key).add(id as ThoughtId)
+          })
+        } else {
+          changes.forEach(({ id, before, after }) => {
+            if (before && after && _.isEqual(before.payload, after.payload)) return
+            const oldKey = keyOf(before)
+            const newKey = keyOf(after)
+            if (oldKey === newKey) return
+            if (oldKey !== undefined) bucket(oldKey).delete(id as ThoughtId)
+            if (newKey !== undefined) bucket(newKey).add(id as ThoughtId)
+          })
+        }
+        updates.forEach((ids, key) => {
+          const previous = memberships.get(key)
+          const next = ids.size ? Object.freeze([...ids].sort()) : undefined
+          if (_.isEqual(previous, next)) return
+          if (!originals.has(key)) originals.set(key, previous)
+          const original = originals.get(key)
+          // Canceling edits recover the original reference even before the transaction finishes.
+          const value = _.isEqual(original, next) ? original : next
+          if (value) memberships.set(key, value)
+          else memberships.delete(key)
+        })
+      },
+      rollback: () => {
+        originals.forEach((value, key) => (value ? memberships.set(key, value) : memberships.delete(key)))
+      },
     }
-    if (batch.reset) {
-      committed.forEach((_, key) => bucket(key))
-      reader.nodeIds().forEach(id => {
-        const key = keyOf(reader.getContent(id))
-        if (key !== undefined) bucket(key).added.add(id as ThoughtId)
-      })
-    } else {
-      batch.changes.forEach(({ id, before, after }) => {
-        if (before && after && _.isEqual(before.payload, after.payload)) return
-        const oldKey = keyOf(before)
-        const newKey = keyOf(after)
-        if (oldKey === newKey) return
-        if (oldKey !== undefined) bucket(oldKey).removed.add(id as ThoughtId)
-        if (newKey !== undefined) bucket(newKey).added.add(id as ThoughtId)
-      })
-    }
-    const prepared: Prepared = { deltas, results: new Map() }
-    memo.set(batch, prepared)
-    return prepared
+  })
+  return {
+    get: (key: string) => {
+      flush()
+      return memberships.get(key)
+    },
   }
-  /** Reads one immutable membership list, optionally including the active transaction. */
-  const get = (key: string, batch?: MemoryChanges): Lexeme | undefined => {
-    const previous = committed.get(key)
-    if (!batch) return previous
-    const { deltas, results } = prepare(batch)
-    const delta = deltas.get(key)
-    if (!delta) return previous
-    if (!results.has(key)) {
-      const ids = new Set(batch.reset ? undefined : previous)
-      delta.removed.forEach(id => ids.delete(id))
-      delta.added.forEach(id => ids.add(id))
-      const next = [...ids].sort()
-      results.set(key, _.isEqual(previous, next) ? previous : next.length ? Object.freeze(next) : undefined)
-    }
-    return results.get(key)
-  }
-  /** Installs complete prepared results before any editor callback can read the new document. */
-  const commit = (batch: MemoryChanges) => {
-    const { deltas, results } = prepare(batch)
-    deltas.forEach((_, key) => get(key, batch))
-    results.forEach((ids, key) => (ids ? committed.set(key, ids) : committed.delete(key)))
-    memo = new WeakMap()
-  }
-  commit({ revision: 0, reset: true, changes: [] })
-  return { get, prepare, commit }
 }
 
 /** Adapts callback-scoped rows without copying the tree or deriving lexemes. */
@@ -183,7 +168,7 @@ const createMemoryThoughtspace = (
   let unsubscribe: (() => void) | undefined
   let unsubscribeMemory: (() => void) | undefined
   let lexemes: ReturnType<typeof createLexemeLookup> | undefined
-  let currentTransaction: MemoryTransaction | undefined
+  let transacting = false
   const reader: Omit<ThoughtspaceView, 'getLexeme' | 'revision'> = {
     getThought: id => (id ? projection?.get(id) : undefined),
     getChildren: id => (projection?.getChildren(id) ?? []) as readonly ThoughtId[],
@@ -200,7 +185,7 @@ const createMemoryThoughtspace = (
   /** Creates a publication identity, not a historical copy of the tree. */
   const view = (): ThoughtspaceView => ({
     ...reader,
-    getLexeme: value => lexemes?.get(hashThought(value), currentTransaction?.getChanges()),
+    getLexeme: value => lexemes?.get(hashThought(value)),
     get revision() {
       return viewRevision
     },
@@ -281,26 +266,31 @@ const createMemoryThoughtspace = (
   }
 
   /** Shares lazy move diagnostics; subscribers otherwise read the latest document. */
-  const notify = (batch: MemoryChanges) => {
-    if (!listeners.size) return
+  const notify = (batch: MemoryChanges, onCommit?: (getMoves: () => readonly ThoughtMove[]) => void) => {
+    if (!listeners.size && !onCommit) return
     const client = memory
     let active = true
     let moves: readonly ThoughtMove[] | undefined
     /** Collects facts before reentrant writes can change the unchanged siblings read from memory. */
     const getMoves = () => {
-      if (!active || currentTransaction || client?.revision !== batch.revision)
+      if (!active || transacting || client?.revision !== batch.revision)
         throw new Error('Move diagnostics have expired')
       return (moves ??= collectMoves(batch))
     }
     try {
-      Array.from(listeners).forEach(listener => {
-        try {
-          listener(getMoves)
-        } catch (error) {
-          // A subscriber cannot roll back a committed document or prevent its other consumers from updating.
-          console.error('Memory TreeCRDT subscriber failed', error)
-        }
-      })
+      try {
+        onCommit?.(getMoves)
+      } finally {
+        if (batch.reset || batch.changes.length)
+          Array.from(listeners).forEach(listener => {
+            try {
+              listener(getMoves)
+            } catch (error) {
+              // A subscriber cannot roll back a committed document or prevent its other consumers from updating.
+              console.error('Memory TreeCRDT subscriber failed', error)
+            }
+          })
+      }
     } finally {
       active = false
     }
@@ -310,9 +300,8 @@ const createMemoryThoughtspace = (
   const publish = (batch: MemoryChanges) => {
     // Reentrant commands are already projected when their queued native notifications arrive.
     if (publishedRevision !== undefined && batch.revision <= publishedRevision) return
-    if (!ready || currentTransaction) return
+    if (!ready || transacting) return
     try {
-      lexemes!.commit(batch)
       publishedRevision = batch.revision
       const old = currentView
       const next = project()
@@ -325,21 +314,20 @@ const createMemoryThoughtspace = (
   /** Runs a complete editor command atomically, with synchronous read-your-writes and asynchronous durability. */
   const transact = <T>(
     work: (transaction: ThoughtspaceTransaction) => T,
-    onCommit?: (value: T, persisted: Promise<void>) => void,
+    onCommit?: (value: T, persisted: Promise<void>, getMoves: () => readonly ThoughtMove[]) => void,
   ): { value: T; persisted: Promise<void> } => {
     if (failure) throw failure
     if (!ready || !memory || !persistent || dropping) throw new Error('Memory TreeCRDT is not ready for editing')
-    if (currentTransaction) throw new Error('Use the current document transaction to compose commands')
+    if (transacting) throw new Error('Use the current document transaction to compose commands')
     const callbacks: (() => void)[] = []
     const operationIds: OperationId[] = []
     const client = memory
     const operationOffset = client.operationCount()
     const previous = currentView
     let active = true
-    let prepared: MemoryChanges
     /** Shares one native transaction across composed commands. */
     const run = (engine: MemoryTransaction) => {
-      currentTransaction = engine
+      transacting = true
       let textChange: ThoughtspaceTransaction['textChange']
       /** Rejects invalid anchors before authoring an insert or move. */
       const checkPlacement = (id: string, parentId: string, afterId: string | null) => {
@@ -375,10 +363,6 @@ const createMemoryThoughtspace = (
         get textChange() {
           if (!active) throw new Error('The document transaction has finished')
           return textChange
-        },
-        getMoves: () => {
-          if (!active) throw new Error('The document transaction has finished')
-          return collectMoves(engine.getChanges())
         },
         revert: ids => {
           if (!active) throw new Error('The document transaction has finished')
@@ -450,14 +434,11 @@ const createMemoryThoughtspace = (
       const value = work(transaction)
       // A caught update error can leave earlier writes unprojected; refresh before committing them.
       project()
-      prepared = engine.getChanges()
-      lexemes!.prepare(prepared)
       return value
     }
     let result: { value: T; operations: Operation[]; changes: MemoryChanges }
     try {
       result = client.transact(run)
-      lexemes!.commit(prepared!)
       // Net-no-change commands do not notify subscribers, but their final batch still supersedes intermediate reads.
       publishedRevision = result.changes.revision
     } catch (error) {
@@ -467,18 +448,13 @@ const createMemoryThoughtspace = (
       throw error
     } finally {
       active = false
-      currentTransaction = undefined
+      transacting = false
     }
     const written = outbound.push(result.operations)
     void written.catch(reportFailure)
     const persisted = callbacks.length ? written.then(() => callbacks.forEach(callback => callback())) : written
-    const changed = result.changes.reset || result.changes.changes.length > 0
     // Queue persistence first: a subscriber may author another command, whose operations must follow this one.
-    try {
-      onCommit?.(result.value, persisted)
-    } finally {
-      if (changed) notify(result.changes)
-    }
+    notify(result.changes, onCommit && (getMoves => onCommit(result.value, persisted, getMoves)))
     return { value: result.value, persisted }
   }
 

@@ -2,7 +2,6 @@ import type { OperationId } from '@treecrdt/interface'
 import Index from './IndexType'
 import Thought from './Thought'
 import ThoughtId from './ThoughtId'
-import ThoughtMove from './ThoughtMove'
 import ThoughtspaceView from './ThoughtspaceView'
 
 /** Synchronous document commands scoped to one atomic editor action. */
@@ -13,8 +12,6 @@ interface ThoughtspaceTransaction {
   readonly operationIds: readonly OperationId[]
   /** Authored text changes for undo policy. Insert/delete count as content; moves and metadata are neutral. */
   readonly textChange?: 'formatting' | 'content'
-  /** Computes diagnostic move facts from the transaction's start to its current state. */
-  getMoves: () => readonly ThoughtMove[]
   /** Authors compensating operations and returns their IDs for redo. */
   revert: (operationIds: readonly OperationId[]) => readonly OperationId[]
   /** Inserts a thought after the named sibling, or first when null. */

@@ -32,10 +32,11 @@ interface DataProvider {
    * Runs an atomic command synchronously; persisted resolves after storage acknowledges its operations.
    * The optional commit callback runs after persistence is queued and before subscribers, including for no-op
    * commands. Its errors propagate without rolling back the committed document or suppressing notification.
+   * Move diagnostics are collected synchronously in the callback, before any reentrant edits.
    */
   transact: <T>(
     work: (transaction: ThoughtspaceTransaction) => T,
-    onCommit?: (value: T, persisted: Promise<void>) => void,
+    onCommit?: (value: T, persisted: Promise<void>, getMoves: () => readonly ThoughtMove[]) => void,
   ) => { value: T; persisted: Promise<void> }
 }
 
