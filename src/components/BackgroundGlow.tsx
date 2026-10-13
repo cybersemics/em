@@ -35,29 +35,30 @@ const BackgroundGlow = () => {
     }
 
     /** Logs the falloff, nav bar and breadcrumbs geometry. */
-    const logGeometry = () => {
-      // measure env(safe-area-inset-bottom) as CSS resolves it, rather than the JS-side variable
-      const probe = document.createElement('div')
-      probe.style.cssText =
-        'position:fixed;left:0;bottom:0;width:1px;height:env(safe-area-inset-bottom);pointer-events:none;visibility:hidden'
-      document.body.appendChild(probe)
-      const envSafeAreaBottom = probe.getBoundingClientRect().height
-      probe.remove()
-      const nav = document.querySelector('[aria-label="nav"]')
-      const falloffStyle = falloffRef.current ? getComputedStyle(falloffRef.current) : null
-      debugLog.log('glowFalloff', {
-        glow: !!image,
-        falloff: edges(falloffRef.current),
-        nav: edges(nav),
-        navChild: edges(nav?.firstElementChild),
-        breadcrumbs: edges(document.querySelector('[aria-label="context-breadcrumbs"]')),
-        envSafeAreaBottom,
-        clientHeight: document.documentElement.clientHeight,
-        innerHeight: window.innerHeight,
-        scrollY: Math.round(window.scrollY),
-        mask: falloffStyle ? falloffStyle.maskImage || falloffStyle.webkitMaskImage : null,
+    const logGeometry = () =>
+      debugLog.log('glowFalloff', () => {
+        // measure env(safe-area-inset-bottom) as CSS resolves it, rather than the JS-side variable
+        const probe = document.createElement('div')
+        probe.style.cssText =
+          'position:fixed;left:0;bottom:0;width:1px;height:env(safe-area-inset-bottom);pointer-events:none;visibility:hidden'
+        document.body.appendChild(probe)
+        const envSafeAreaBottom = probe.getBoundingClientRect().height
+        probe.remove()
+        const nav = document.querySelector('[aria-label="nav"]')
+        const falloffStyle = falloffRef.current ? getComputedStyle(falloffRef.current) : null
+        return {
+          glow: !!image,
+          falloff: edges(falloffRef.current),
+          nav: edges(nav),
+          navChild: edges(nav?.firstElementChild),
+          breadcrumbs: edges(document.querySelector('[aria-label="context-breadcrumbs"]')),
+          envSafeAreaBottom,
+          clientHeight: document.documentElement.clientHeight,
+          innerHeight: window.innerHeight,
+          scrollY: Math.round(window.scrollY),
+          mask: falloffStyle ? falloffStyle.maskImage || falloffStyle.webkitMaskImage : null,
+        }
       })
-    }
 
     // only reschedule a timer on scroll; the layout reads happen once the scroll has settled
     let timer: ReturnType<typeof setTimeout> | undefined
