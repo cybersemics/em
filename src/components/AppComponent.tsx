@@ -32,6 +32,7 @@ import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import PinnedCommand from './Learning/PinnedCommand'
 import MultiGesture from './MultiGesture'
+import NativeTextDragCaret from './NativeTextDragCaret'
 import NavBar from './NavBar'
 import Sidebar from './Sidebar/Sidebar'
 import Tips from './Tips/Tips'
@@ -226,6 +227,7 @@ const AppComponent: FC = () => {
         </>
       )}
       <DropGutter />
+      <NativeTextDragCaret />
 
       <MultiGestureIfTouch>
         {showModal ? (
