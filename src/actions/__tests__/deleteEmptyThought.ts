@@ -97,6 +97,45 @@ describe('normal view', () => {
     - b`)
   })
 
+  // https://github.com/cybersemics/em/issues/3491
+  it.skip('do not alert when archiving the meta attributes of an empty thought', () => {
+    const steps = [
+      importText({
+        text: `
+        - b
+        -
+          - =favorite
+          - =pin
+            - true`,
+      }),
+      setCursor(['']),
+      deleteEmptyThought,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.alert).toBeUndefined()
+  })
+
+  // https://github.com/cybersemics/em/issues/5883
+  it.skip('do not alert when archiving the note of an empty thought', () => {
+    const steps = [
+      importText({
+        text: `
+        - b
+        -
+          - =note
+            - hello`,
+      }),
+      setCursor(['']),
+      deleteEmptyThought,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.alert).toBeUndefined()
+  })
+
   it('do nothing if there is no cursor', () => {
     const steps = [newThought('a'), newThought('b'), setCursor(null), deleteEmptyThought]
 
