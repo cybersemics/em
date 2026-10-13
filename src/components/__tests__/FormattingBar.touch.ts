@@ -7,6 +7,7 @@ import { toggleFormattingBarActionCreator as toggleFormattingBar } from '../../a
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import formattingBarPopoverInfoStore from '../../stores/formattingBarPopoverInfoStore'
 import virtualKeyboardStore from '../../stores/virtualKeyboardStore'
 import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import dispatch from '../../test-helpers/dispatch'
@@ -28,6 +29,8 @@ beforeEach(async () => {
   await initStore()
   // The bar is shown above the virtual keyboard, which jsdom does not have.
   virtualKeyboardStore.update({ open: true, height: 300 })
+  // The info button's state is shared by every picker and outlives a test.
+  formattingBarPopoverInfoStore.update(false)
 })
 
 afterEach(() => {

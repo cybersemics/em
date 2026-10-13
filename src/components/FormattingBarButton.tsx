@@ -1,4 +1,5 @@
 import { ComponentType, RefObject, useRef, useState } from 'react'
+import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import CommandId from '../@types/CommandId'
@@ -34,7 +35,10 @@ const FormattingBarButton = ({
   buttonRef?: RefObject<HTMLButtonElement | null>
 }) => {
   const { command, formattingActive, active, executable, error } = useCommandState(commandId)
-  const selected = formattingActive ?? active
+  const pickerOpen = useSelector(
+    state => !!command.isDropdownOpen?.(state) && state.activeDropdown?.surface === 'formattingBar',
+  )
+  const selected = formattingActive ?? (command.isDropdownOpen ? pickerOpen : active)
   const Icon = icon ?? command.svg
   const [animated, setAnimated] = useState(false)
   const pressing = useRef(false)
