@@ -243,14 +243,25 @@ const formatEntry = ({ seq, t, dt, type, ...fields }: DebugLogEntry): string => 
   return shortenIds(line)
 }
 
-/** Appends an entry to the rolling buffer and persists its chunk synchronously. No-op when logging is disabled. Never throws, so instrumentation can never worsen a freeze or break editing. */
-const log = (type: string, fields?: Record<string, unknown>): void => {
+/**
+ * Appends an entry to the rolling buffer and persists its chunk synchronously. No-op when logging is disabled. Never
+ * throws, so instrumentation can never worsen a freeze or break editing.
+ *
+ * Fields whose values are static (variables, property reads, literals) are passed as an object. Fields that call a
+ * function or read layout are passed as a function returning the object instead, so that nothing is computed for them
+ * while logging is off, which it is in production unless the user turns it on. The function is called synchronously,
+ * so it reads the same values an object would have captured, and inside the try, so a field that throws costs only its
+ * entry. The em/no-precomputed-debug-log-fields lint rule enforces the split.
+ */
+const log = (type: string, fields?: Record<string, unknown> | (() => Record<string, unknown>)): void => {
   if (!enabled) return
   try {
+    // computed before anything else, so a field that throws leaves seq and dt as if the entry had never been attempted
+    const capped = capFields(typeof fields === 'function' ? fields() : fields)
     const now = performance.now()
     const dt = lastTime === 0 ? 0 : Math.round(now - lastTime)
     lastTime = now
-    const entry: DebugLogEntry = { seq: seq++, t: Date.now(), dt, type, ...capFields(fields) }
+    const entry: DebugLogEntry = { seq: seq++, t: Date.now(), dt, type, ...capped }
     entries.push(entry)
     if (entries.length > DEBUG_LOG_CAPACITY) {
       entries.splice(0, entries.length - DEBUG_LOG_CAPACITY)
@@ -281,7 +292,7 @@ const frameLoop = (): void => {
   if (!enabled) return
   const now = performance.now()
   if (lastFrameTime !== 0 && now - lastFrameTime >= FRAME_GAP_THRESHOLD_MS) {
-    log('frameGap', { gap: Math.round(now - lastFrameTime) })
+    log('frameGap', () => ({ gap: Math.round(now - lastFrameTime) }))
   }
   lastFrameTime = now
   if (now - lastMarkerWritten >= FRAME_MARKER_THROTTLE_MS) {
@@ -475,13 +486,13 @@ const setEnabled = (value: boolean): void => {
   if (value === enabled) return
   enabled = value
   if (enabled) {
-    log('session', {
+    log('session', () => ({
       ua: typeof navigator !== 'undefined' ? navigator.userAgent : '',
       screen: typeof window !== 'undefined' && window.screen ? `${window.screen.width}x${window.screen.height}` : '',
       mode: import.meta.env.MODE,
       appVersion: pkg.version,
       commitHash: __COMMIT_HASH__,
-    })
+    }))
     startFrameHeartbeat()
   } else {
     stopFrameHeartbeat()
@@ -524,15 +535,16 @@ const setConsole = (value: boolean): void => {
 const logError = (source: string, error: unknown, fields?: Record<string, unknown>): void => {
   if (!enabled) return
   try {
-    log(
-      'error',
+    // Built here rather than in the fields callback, where a throw would be swallowed by log and skip the fallback
+    // below. Logging is known to be enabled at this point, so nothing is computed in vain.
+    const errorFields =
       error instanceof Error
         ? { source, name: error.name, message: error.message, stack: error.stack, ...fields }
-        : { source, message: typeof error === 'string' ? error : (JSON.stringify(error) ?? String(error)), ...fields },
-    )
+        : { source, message: typeof error === 'string' ? error : (JSON.stringify(error) ?? String(error)), ...fields }
+    log('error', () => errorFields)
   } catch {
     // The thrown value could not be stringified (e.g. a circular object), which must not cost the entry.
-    log('error', { source, message: '[unserializable]', ...fields })
+    log('error', () => ({ source, message: '[unserializable]', ...fields }))
   }
 }
 

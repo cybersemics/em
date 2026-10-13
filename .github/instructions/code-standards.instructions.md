@@ -1,7 +1,8 @@
 ### Architecture
 
 - Before writing new code, search the codebase for related mechanisms and existing architecture.
-- Prefer extending or reusing existing infrastructure over creating new solutions.
+- Prefer extending or reusing existing infrastructure over creating new solutions. Reuse a helper only where it sits at the layer that owns the problem, not merely where it fits the shape of the fix.
+- Update dependent state at the source of the change, in the action that makes it, while both the old and the new value are known. Do not reconstruct it afterwards from the result: what changed is no longer known, so recomputing is guesswork. For example, [`moveThought`](../../src/actions/moveThought.ts) rebases the selection Paths from `oldPath` to `newPath`; see [Stored Paths and moves](../../docs/data-model.md#stored-paths-and-moves). `recomputePath` in `executeCommandWithMulticursor` ([`commands.ts`](../../src/commands.ts)) resolves Paths again with `thoughtToPath` after a command runs. It restores the Paths that the command itself captured beforehand, and it is not a pattern for fixing stale state elsewhere. A last-resort safety net is fine, but it does not replace the fix at the source.
 - Do not access the app `store` directly. To read fresh state, dispatch a thunk and use `getState()` — this avoids importing the app `store` or adding it to a hook's dependency list:
   ```ts
   dispatch((dispatch, getState) => {
@@ -84,6 +85,7 @@ em is highly performance sensitive. It renders large thought trees on phones, an
 - Prefer changes that only the compositor has to handle. Changing `transform` or `opacity` on an element that already has its own layer moves or fades it without layout or repaint. Switching between two transform values stays on the compositor, but going from no transform to one can force a layout, so an element you will animate this way should keep a do-nothing transform at all times.
 - Do not repair a rendering glitch by remounting a component, such as by bumping its `key`. A remount discards the subtree and lays it out again. Look for a change that only the compositor has to handle first.
 - Keep debug instrumentation off hot paths. A `debugLog` entry that reads geometry belongs on a discrete event, not on every scroll or keystroke, and only while it is answering an open question.
+- Pass a `debugLog` entry's fields as an object only when every value is static (a variable, a property read that does not force layout, a literal). When any value calls a function or reads layout, pass a function that returns the fields instead, and compute them inside it, never above the call, so nothing is computed while logging is off. Guard scheduled work and anything else that only exists for the log with `debugLog.isEnabled()`. The `em/no-precomputed-debug-log-fields` lint rule enforces both. See [Debug Log](../../docs/debug-log.md#adding-an-entry).
 - Do not call a change cheap unless you measured it. Either measure it (Safari Web Inspector's Timelines, Chrome DevTools' Performance panel) or say it is unmeasured, and name the operations it triggers (style recalculation, layout, paint, composite) and how often it runs.
 
 ### Code Quality
