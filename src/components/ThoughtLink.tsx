@@ -3,10 +3,8 @@ import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import { EMPTY_THOUGHT_PLACEHOLDER } from '../constants'
-import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
-import head from '../util/head'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Link from './Link'
 import Superscript from './Superscript'
@@ -32,10 +30,6 @@ const ThoughtLink = ({
 }) => {
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
   const parentPath = useSelector(state => rootedParentOf(state, path), shallowEqual)
-  const value = useSelector(state => {
-    const thought = getThoughtById(state, head(simplePath))
-    return thought?.value
-  })
 
   return (
     <div>
@@ -57,7 +51,6 @@ const ThoughtLink = ({
       <Link
         cssRaw={css.raw({ fontWeight: 'inherit', color: 'fg' })}
         simplePath={simplePath}
-        label={value}
         placeholder={EMPTY_THOUGHT_PLACEHOLDER}
         style={styleLink}
       />

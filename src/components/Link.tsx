@@ -1,4 +1,3 @@
-import { unescape as decodeCharacterEntities } from 'lodash'
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
@@ -14,7 +13,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import ellipsize from '../util/ellipsize'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
-import strip from '../util/strip'
 
 interface LinkProps {
   charLimit?: number
@@ -30,7 +28,7 @@ interface LinkProps {
 /** Renders a link to a thought. */
 const Link = React.memo(({ simplePath, label, placeholder, charLimit = 32, style, cssRaw, className }: LinkProps) => {
   const isEM = simplePath.length === 1 && head(simplePath) === EM_TOKEN
-  const value = useSelector(state => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
+  const text = useSelector(state => label ?? ellipsize(getThoughtById(state, head(simplePath))?.value, charLimit))
   const dispatch = useDispatch()
 
   return (
@@ -70,8 +68,8 @@ const Link = React.memo(({ simplePath, label, placeholder, charLimit = 32, style
       }}
       dangerouslySetInnerHTML={isEM ? { __html: '<b>em</b>' } : undefined}
     >
-      {isEM ? null : value || !placeholder ? (
-        ellipsize(decodeCharacterEntities(value), charLimit)
+      {isEM ? null : text || !placeholder ? (
+        text
       ) : (
         // render the placeholder inside the link so that an empty thought still has something to read and tap
         <span className={css({ fontStyle: 'italic', color: 'dim' })}>{placeholder}</span>
