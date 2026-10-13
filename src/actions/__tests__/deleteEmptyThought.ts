@@ -98,7 +98,7 @@ describe('normal view', () => {
   })
 
   // https://github.com/cybersemics/em/issues/3491
-  it.skip('do not alert when archiving the meta attributes of an empty thought', () => {
+  it('do not alert when archiving the meta attributes of an empty thought', () => {
     const steps = [
       importText({
         text: `
@@ -118,7 +118,7 @@ describe('normal view', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5883
-  it.skip('do not alert when archiving the note of an empty thought', () => {
+  it('do not alert when archiving the note of an empty thought', () => {
     const steps = [
       importText({
         text: `
@@ -309,7 +309,7 @@ describe('context view', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - =archive
     - =favorite`)
-    expect(stateNew.alert?.value).toBe('Deleted =favorite')
+    expect(stateNew.alert).toBeUndefined()
   })
 })
 
