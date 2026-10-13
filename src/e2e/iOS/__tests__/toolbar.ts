@@ -5,7 +5,7 @@ import newThought from '../helpers/newThought'
 
 describe('Toolbar', () => {
   // https://github.com/cybersemics/em/issues/3461
-  it.skip('scrolls when swiped after a long press', async () => {
+  it('scrolls when swiped after a long press', async () => {
     await newThought('a')
 
     const toolbar = await $('[data-testid="toolbar"]').getElement()
