@@ -1,17 +1,20 @@
 import { createEvent, fireEvent, render } from '@testing-library/react'
-import { act, createElement } from 'react'
+import { Children, act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import { clearActionCreator as clear } from '../../actions/clear'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleFormattingBarActionCreator as toggleFormattingBar } from '../../actions/toggleFormattingBar'
+import { HOME_TOKEN } from '../../constants'
+import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import virtualKeyboardStore from '../../stores/virtualKeyboardStore'
+import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import dispatch from '../../test-helpers/dispatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import durations from '../../util/durations'
 import initialState from '../../util/initialState'
-import DragAndDropContext from '../DragAndDropContext'
+import Editable from '../Editable'
 import FormattingBar from '../FormattingBar'
 
 // The Formatting Bar is only rendered on a touch device. The whole app cannot be mounted with isTouch true, since
@@ -32,9 +35,9 @@ afterEach(() => {
   durations.setInTest(false)
 })
 
-/** Renders the given elements with the store and the drag-and-drop context that the Formatting Bar's buttons, being toolbar buttons, require. */
+/** Renders the bar and optional picker with the application store. */
 const renderWithStore = (...children: React.ReactElement[]) =>
-  render(createElement(Provider, { store, children: createElement(DragAndDropContext, { children }) }))
+  render(createElement(Provider, { store, children: Children.toArray(children) }))
 
 /** Taps an element within act blocks, simulating touchstart and touchend separately. Returns the touchend event, whose defaultPrevented says whether the tap was consumed, i.e. whether the browser would go on to move the focus out of the editable and close the virtual keyboard. */
 const tap = async (selector: string): Promise<Event> => {
@@ -79,4 +82,59 @@ it('starts closed and persists opening and closing without releasing editor focu
   expect(close.defaultPrevented).toBe(true)
   expect(bar?.hasAttribute('inert')).toBe(true)
   expect(initialState().showFormattingBar).toBe(false)
+})
+
+it('apply a format once on touch release and consume the following click', async () => {
+  await dispatch([importText({ text: '- hello' }), setCursor(['hello']), toggleFormattingBar({ value: true })])
+  const path = contextToPathOrThrow(store.getState(), ['hello'], 'formatting button fixture')
+  const view = renderWithStore(
+    createElement(Editable, { path, simplePath: path, isEditing: true, isVisible: true }),
+    createElement(FormattingBar),
+  )
+  const bold = view.getByRole('button', { name: 'Bold' })
+
+  const release = await tap('[aria-label="Bold"]')
+  await act(async () => {
+    fireEvent.click(bold)
+    await vi.runAllTimersAsync()
+  })
+
+  expect(release.defaultPrevented).toBe(true)
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - **hello**`)
+})
+
+it('cancel a formatting press when the finger moves or the browser cancels the touch', async () => {
+  await dispatch([importText({ text: '- hello' }), setCursor(['hello']), toggleFormattingBar({ value: true })])
+  const path = contextToPathOrThrow(store.getState(), ['hello'], 'formatting button fixture')
+  const view = renderWithStore(
+    createElement(Editable, { path, simplePath: path, isEditing: true, isVisible: true }),
+    createElement(FormattingBar),
+  )
+  const bold = view.getByRole('button', { name: 'Bold' })
+
+  await act(async () => {
+    fireEvent.touchStart(bold, { touches: [{ clientX: 50, clientY: 50 }] })
+    fireEvent.touchMove(bold, { touches: [{ clientX: 80, clientY: 50 }] })
+    fireEvent.touchEnd(bold)
+    fireEvent.touchStart(bold, { touches: [{ clientX: 50, clientY: 50 }] })
+    fireEvent.touchCancel(bold)
+    fireEvent.touchEnd(bold)
+    await vi.runAllTimersAsync()
+  })
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - hello`)
+})
+
+it('consume a disabled formatting button tap without executing it', async () => {
+  const view = renderWithStore(createElement(FormattingBar))
+  const bold = view.getByRole('button', { name: 'Bold' })
+  expect(bold.getAttribute('aria-disabled')).toBe('true')
+
+  const release = await tap('[aria-label="Bold"]')
+  await act(vi.runAllTimersAsync)
+
+  expect(release.defaultPrevented).toBe(true)
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}`)
 })
