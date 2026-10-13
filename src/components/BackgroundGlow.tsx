@@ -20,6 +20,8 @@ const BackgroundGlow = () => {
   const showModal = useSelector(state => !!state.showModal)
   // On touch devices the nav bar drops out of position: sticky while the keyboard is open (see NavBar), so there is no nav bar at the bottom of the viewport to fade into.
   const navBarInFlow = useSelector(state => isTouch && state.isKeyboardOpen)
+  // With no thought selected there are no breadcrumbs, so there is no nav bar for the content to fade into.
+  const isCursor = useSelector(state => !!state.cursor)
   const falloffRef = useRef<HTMLDivElement>(null)
 
   // Temporary diagnostic: on the device the falloff hides content from higher than its gradient stops predict. Logs the geometry of the nav bar, the breadcrumbs and the falloff, the safe area inset as CSS resolves it, and the computed mask, with the glow on and off, once on toggle and after each scroll settles.
@@ -72,7 +74,7 @@ const BackgroundGlow = () => {
       clearTimeout(timer)
       window.removeEventListener('scroll', onScroll)
     }
-  }, [image, showModal, navBarInFlow])
+  }, [image, showModal, navBarInFlow, isCursor])
 
   return (
     <>
@@ -98,7 +100,7 @@ const BackgroundGlow = () => {
         />
       )}
       {/* The one mask that hides content scrolling under the nav bar, with or without a glow. Repaints the page background (bg, plus the glow at the same opacity when one is selected, pixel-aligned with the layer above since both are fixed and anchored to the full viewport) masked in by a vertical gradient, so the content fades into whatever the background is rather than into a band painted by the nav bar. Rendered above the content but below the nav bar and footer. */}
-      {!showModal && !navBarInFlow && (
+      {!showModal && !navBarInFlow && isCursor && (
         <div
           ref={falloffRef}
           className={css({
