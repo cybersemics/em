@@ -20,6 +20,7 @@ import multi from '../redux-middleware/multi'
 import multicursorAlertMiddleware from '../redux-middleware/multicursorAlertMiddleware'
 import multiselectCursorMiddleware from '../redux-middleware/multiselectCursorMiddleware'
 import pullQueue from '../redux-middleware/pullQueue'
+import recoverInvalidCursor from '../redux-middleware/recoverInvalidCursor'
 import updateEditingValue from '../redux-middleware/updateEditingValue'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
 import validateActionRegistrations from '../util/actionMetadata.registry'
@@ -46,6 +47,7 @@ const middlewareEnhancer = applyMiddleware(
   loggerMiddleware,
   multicursorAlertMiddleware,
   multiselectCursorMiddleware,
+  recoverInvalidCursor,
   closeDropdownsWhenCursorNull,
 )
 
