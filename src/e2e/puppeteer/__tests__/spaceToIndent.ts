@@ -1,7 +1,9 @@
 import exportThoughts from '../helpers/exportThoughts'
+import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
 import press from '../helpers/press'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForNoteFocus from '../helpers/waitForNoteFocus'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
@@ -34,6 +36,25 @@ describe('space-to-indent', () => {
     expect(exported).toBe(`
 - A
   - 
+`)
+  })
+
+  // https://github.com/cybersemics/em/issues/5969
+  it.skip('inserts a space typed in the note of an empty thought instead of indenting the thought', async () => {
+    await newThought('a')
+    await press('Enter')
+    await waitForEditable('')
+
+    await press('n', { meta: true, alt: true })
+    await waitForNoteFocus()
+    await keyboard.type('The only')
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- a
+- 
+  - =note
+    - The only
 `)
   })
 })
