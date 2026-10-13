@@ -297,6 +297,20 @@ const globalCss = defineGlobalStyles({
   },
   /* Disables pull-to-refresh but allows overscroll glow effects. */
   body: { overscrollBehaviorY: 'contain', color: 'fg', backgroundColor: 'bg' },
+  // In the dark theme, matches the caret to the Android app's native selection handles, which the Android theme tints with selectionHandle (android/app/src/main/res/values/styles.xml). On iOS, caret-color also tints the selection handles and selection highlight.
+  // Set on the body rather than on the editable so that the hideCaret animation on the LayoutTree can still hide the caret through inheritance.
+  'body[data-device=mobile][data-color-mode=dark]': { caretColor: 'selectionHandle' },
+  // Matches mobile Chromium's selection to the iOS highlight, a 0.2 alpha tint that iOS draws over the text, so the text shows through tinted. iOS ignores ::selection, and Desktop Chrome, Safari and Firefox keep their native highlight.
+  'body[data-device=mobile][data-browser=chrome] ::selection': { backgroundColor: 'selectionHighlight' },
+  'body[data-device=mobile][data-browser=chrome] [data-editable]::selection, body[data-device=mobile][data-browser=chrome] [data-editable] ::selection':
+    {
+      color: 'selectionHighlightText',
+    },
+  'body[data-device=mobile][data-browser=chrome] [aria-label=note-editable]::selection, body[data-device=mobile][data-browser=chrome] [aria-label=note-editable] ::selection':
+    { color: 'selectionHighlightDimText' },
+  // Colored text keeps its own color, since currentColor in a highlight resolves to the parent highlight's color and cannot be blended with the tint per element.
+  'body[data-device=mobile][data-browser=chrome] :is(font[color], [data-editable][style*=color], [data-editable] [style*=color], [aria-label=note-editable] [style*=color])::selection, body[data-device=mobile][data-browser=chrome] :is(font[color], [data-editable][style*=color], [data-editable] [style*=color], [aria-label=note-editable] [style*=color]) ::selection':
+    { color: 'currentColor' },
   button: { fontSize: '1.2em' },
   a: {
     cursor: 'pointer',

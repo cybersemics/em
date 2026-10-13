@@ -34,6 +34,7 @@ import PinnedCommand from './Learning/PinnedCommand'
 import MultiGesture from './MultiGesture'
 import NativeTextDragCaret from './NativeTextDragCaret'
 import NavBar from './NavBar'
+import SelectionStems from './SelectionStems'
 import Sidebar from './Sidebar/Sidebar'
 import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
@@ -227,6 +228,7 @@ const AppComponent: FC = () => {
         </>
       )}
       <DropGutter />
+      {isAndroid && <SelectionStems />}
       <NativeTextDragCaret />
 
       <MultiGestureIfTouch>
