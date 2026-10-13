@@ -7,13 +7,13 @@ import CommandId from '../@types/CommandId'
 import DragCommandZone from '../@types/DragCommandZone'
 import State from '../@types/State'
 import { isTouch } from '../browser'
-import { commandById, formatKeyboardShortcut } from '../commands'
+import { formatKeyboardShortcut } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
 import { TOOLBAR_BUTTON_PADDING, TOOLBAR_SWIPE_THRESHOLD } from '../constants'
+import useCommandState from '../hooks/useCommandState'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useLongPress from '../hooks/useLongPress'
 import store from '../stores/app'
-import commandStateStore from '../stores/commandStateStore'
 import dndRef from '../util/dndRef'
 import getCursorSortDirection from '../util/getCursorSortDirection'
 import haptics from '../util/haptics'
@@ -60,26 +60,25 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   /** Tracks whether the finger has moved horizontally past the swipe threshold during the current touch. Set during touchmove so that a swipe is detected directly from finger travel, independent of whether the toolbar was actually able to scroll. This catches a swipe at a scroll boundary (e.g. scrollLeft === 0 on swipe right), where scrollLeft cannot change. */
   const touchMovedRef = useRef(false)
 
-  const command = commandById(commandId)
-  if (!command) {
-    console.error('Missing command: ' + commandId)
-  }
-  const { svg: SVG, isActive, canExecute } = command
+  const {
+    command,
+    formattingActive: commandState,
+    active: isCommandActive,
+    executable,
+    error,
+  } = useCommandState(commandId)
+  const { svg: SVG, isActive } = command
 
   // Determine if the button should be shown in an active state. Precedence is as follows:
   // 1. If customize toolbar, use selected state.
   // 2. If a formatting command, use the command state (i.e. bold, italic, underline, strikethrough).
   // 3. Otherwise, use the command's isActive method.
-  const commandState = commandStateStore.useSelector(
-    state => state[commandId as keyof typeof state] as boolean | undefined,
-  )
-  const isCommandActive = useSelector(state => !isActive || isActive(state))
   const isButtonActive = customize ? selected : commandState !== undefined ? commandState : isCommandActive
 
   const dragCommandZone = useSelector(state => state.dragCommandZone)
   const isDraggingAny = useSelector(state => !!state.dragCommand)
-  const buttonError = useSelector(state => (!customize && command.error ? command.error(state) : null))
-  const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(state))
+  const buttonError = customize ? null : error
+  const isButtonExecutable = customize || executable
 
   const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({
     commandId,

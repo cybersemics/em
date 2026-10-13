@@ -77,6 +77,8 @@ const describeCommandInvocation = (patch: Patch): string => {
       return `Swipe \`${gestureString(command)}\`.`
     case 'toolbar':
       return `Tap the ${command.label} button.`
+    case 'formattingBar':
+      return `Tap the ${command.label} button in the Formatting Bar.`
     case 'commandCenter':
       return `Tap ${command.label} in the Command Center.`
     case 'desktopCommandUniverse':
