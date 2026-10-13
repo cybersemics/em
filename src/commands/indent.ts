@@ -34,7 +34,8 @@ const indentCommand = {
   exec: (dispatch, getState, e, { type }) => {
     // Allow space-to-indent on empty thought.
     // Otherwise bail and allow default browser behavior (inserting a space).
-    if (type === 'keyboard' && editingValueStore.getState() !== '') return
+    // editingValueStore holds the cursor thought's value even when the caret is in its note, so a space typed in the note must also bail (#5969).
+    if (type === 'keyboard' && (editingValueStore.getState() !== '' || getState().noteFocus)) return
 
     // Default browser behavior allows for autocapitalization on mobile, so cannot be prevented.
     // Instead, beforeinput is prevented in the keyDown handler in commands.ts to prevent the space character from being inserted.

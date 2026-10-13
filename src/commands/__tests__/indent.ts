@@ -1,6 +1,7 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
-import { executeCommandWithMulticursor } from '../../commands'
+import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
+import { beforeInput, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
@@ -63,6 +64,57 @@ describe('space-to-indent', () => {
     - c
       - `
 
+    expect(exported).toEqual(expectedOutput)
+  })
+
+  // https://github.com/cybersemics/em/issues/5969
+  it('do nothing on an empty thought when the caret is in its note', () => {
+    store.dispatch(
+      importText({
+        text: `
+          - a
+        `,
+      }),
+    )
+    store.dispatch([setCursor(['a']), newThought({ value: '' }), toggleNote()])
+
+    executeCommandWithMulticursor(indentCommand, { store, type: 'keyboard' })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    const expectedOutput = `- ${HOME_TOKEN}
+  - a
+  - 
+    - =note
+      - `
+
+    expect(exported).toEqual(expectedOutput)
+  })
+
+  // https://github.com/cybersemics/em/issues/5969
+  it('inserts a space delivered as a beforeinput insertText into the note of an empty thought', () => {
+    store.dispatch(
+      importText({
+        text: `
+          - a
+        `,
+      }),
+    )
+    store.dispatch([setCursor(['a']), newThought({ value: '' }), toggleNote()])
+
+    // Android soft keyboards deliver the space only as a beforeinput insertText
+    const event = new InputEvent('beforeinput', { inputType: 'insertText', data: ' ', cancelable: true })
+    beforeInput(event)
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    const expectedOutput = `- ${HOME_TOKEN}
+  - a
+  - 
+    - =note
+      - `
+
+    expect(event.defaultPrevented).toBe(false)
     expect(exported).toEqual(expectedOutput)
   })
 
