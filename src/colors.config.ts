@@ -45,6 +45,9 @@ const colors = {
     selectionHighlight: 'rgba(65, 105, 225, 0.2)', // selectionHandle at the 0.2 alpha WebKit uses for the iOS selection highlight
     selectionHighlightText: 'rgba(217, 225, 249, 1)', // fg seen through selectionHighlight, which iOS draws over the text
     selectionHighlightDimText: 'rgba(217, 225, 249, 0.5)', // dim seen through selectionHighlight
+    desktopSelectionHighlight: 'rgba(204, 228, 255, 1)', // the light theme's selectionHighlight as it renders over bg, so that desktop Chrome shows the light theme's selection in the dark theme
+    desktopSelectionHighlightText: 'rgba(0, 24, 51, 1)', // the light theme's selectionHighlightText
+    desktopSelectionHighlightDimText: 'rgba(6, 30, 57, 0.5)', // the light theme's selectionHighlightDimText
     vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
     white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
@@ -166,6 +169,9 @@ const colors = {
     selectionHighlight: 'rgba(0, 122, 255, 0.2)', // iOS system blue (#007aff) at the 0.2 alpha of the iOS selection highlight, since the light theme leaves caret-color auto
     selectionHighlightText: 'rgba(0, 24, 51, 1)', // fg seen through selectionHighlight, which iOS draws over the text
     selectionHighlightDimText: 'rgba(6, 30, 57, 0.5)', // dim seen through selectionHighlight
+    desktopSelectionHighlight: 'rgba(0, 122, 255, 0.2)', // same as selectionHighlight
+    desktopSelectionHighlightText: 'rgba(0, 24, 51, 1)', // same as selectionHighlightText
+    desktopSelectionHighlightDimText: 'rgba(6, 30, 57, 0.5)', // same as selectionHighlightDimText
     vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
     white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014

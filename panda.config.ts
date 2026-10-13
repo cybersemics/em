@@ -302,6 +302,13 @@ const globalCss = defineGlobalStyles({
   },
   'body[data-browser=chrome] [aria-label=note-editable]::selection, body[data-browser=chrome] [aria-label=note-editable] ::selection':
     { color: 'selectionHighlightDimText' },
+  // Desktop Chrome shows the light theme's selection in both themes, dark text on a light blue highlight, since desktop draws no selection handles or stems to strengthen the dark theme's translucent tint. This applies to all selected text, not only thoughts, so that text outside a thought stays legible on the light highlight.
+  'body[data-device=desktop][data-browser=chrome] ::selection': {
+    backgroundColor: 'desktopSelectionHighlight',
+    color: 'desktopSelectionHighlightText',
+  },
+  'body[data-device=desktop][data-browser=chrome] [aria-label=note-editable]::selection, body[data-device=desktop][data-browser=chrome] [aria-label=note-editable] ::selection':
+    { color: 'desktopSelectionHighlightDimText' },
   // Colored text keeps its own color, since currentColor in a highlight resolves to the parent highlight's color and cannot be blended with the tint per element.
   'body[data-browser=chrome] :is(font[color], [data-editable][style*=color], [data-editable] [style*=color], [aria-label=note-editable] [style*=color])::selection, body[data-browser=chrome] :is(font[color], [data-editable][style*=color], [data-editable] [style*=color], [aria-label=note-editable] [style*=color]) ::selection':
     { color: 'currentColor' },
