@@ -196,10 +196,10 @@ it('moves dragged text to a single drop caret above the finger', async () => {
 
   const drop = await dropBelowCaret(editable)
 
-  // like the native drop, the dragged text is moved as is, without adjusting the spaces around it
+  // the dragged text is inserted as is, and a single space is left where it was
   expect(drop.defaultPrevented).toBe(true)
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - Sed et  fringillalacus`)
+  - Sed et fringillalacus`)
   expect(getDropCaret()).toBeNull()
   expect(document.body.dataset.nativeTextDrag).toBeUndefined()
 
@@ -225,7 +225,7 @@ it('moves dragged text with its formatting into another thought', async () => {
   await dropBelowCaret(target)
 
   expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
-    'foo  baz',
+    'foo baz',
     'one <b>bar</b>two',
   ])
   act(() => {
@@ -239,7 +239,7 @@ it('moves dragged text with its formatting into another thought', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/5952
-it.skip('keeps the formatting that encloses dragged text and leaves a single space where it was', async () => {
+it('keeps the formatting that encloses dragged text and leaves a single space where it was', async () => {
   await importOutline('- <b>foo bar baz</b> qux')
   const editable = getEditable('foo bar baz qux')
   layOutCaretAtEnd(editable)

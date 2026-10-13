@@ -10,6 +10,7 @@ import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import thoughtToPath from '../selectors/thoughtToPath'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
+import wrapInFormattingAncestors from '../util/wrapInFormattingAncestors'
 
 /** How far above the finger, in px, to draw the drop caret of a native text drag on Android, so that it is not hidden under the finger. See onAndroidDragOver. */
 const NATIVE_TEXT_DRAG_CARET_OFFSET = 40
@@ -188,8 +189,7 @@ const useNativeTextDrag = () => {
         const targetThought = getThoughtById(state, target.id)
         if (!sourceThought || !targetThought) return
 
-        // Edit detached copies of the values. The partially selected formatting elements are split by extractContents,
-        // so the dragged text keeps its formatting, as with a native drop.
+        // Edit detached copies of the values.
         const sourceCopy = document.createElement('div')
         sourceCopy.innerHTML = sourceThought.value
         const targetCopy = isSameThought ? sourceCopy : document.createElement('div')
@@ -199,11 +199,28 @@ const useNativeTextDrag = () => {
         const endRange = selection.collapsedRangeAtOffset(sourceCopy, source.end)
         if (!startRange || !endRange) return
         startRange.setEnd(endRange.startContainer, endRange.startOffset)
-        const dragged = startRange.extractContents()
 
-        // the text after the dragged text shifts back by its length once it is cut out
+        // The partially selected formatting elements are split by extractContents, but the formatting elements that
+        // wholly contain the dragged text are left behind, so they are re-applied to keep the dragged text's formatting.
+        const ancestor = startRange.commonAncestorContainer
+        const dragged = startRange.extractContents()
+        wrapInFormattingAncestors(dragged, ancestor instanceof Element ? ancestor : ancestor.parentElement)
+
+        // Cutting out a word between two spaces leaves both spaces behind, so remove one of them.
+        const text = sourceCopy.textContent ?? ''
+        const spaceRemoved = /\s/.test(text.charAt(source.start - 1)) && /\s/.test(text.charAt(source.start))
+        if (spaceRemoved) {
+          const spaceRange = selection.collapsedRangeAtOffset(sourceCopy, source.start)!
+          const spaceEnd = selection.collapsedRangeAtOffset(sourceCopy, source.start + 1)!
+          spaceRange.setEnd(spaceEnd.startContainer, spaceEnd.startOffset)
+          spaceRange.deleteContents()
+        }
+
+        // the text after the dragged text shifts back by its length, and the removed space, once it is cut out
         const offset =
-          isSameThought && target.offset > source.end ? target.offset - (source.end - source.start) : target.offset
+          isSameThought && target.offset > source.end
+            ? target.offset - (source.end - source.start) - (spaceRemoved ? 1 : 0)
+            : target.offset
         const insertRange = selection.collapsedRangeAtOffset(targetCopy, offset)
         if (!insertRange) return
         insertRange.insertNode(dragged)
