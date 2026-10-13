@@ -3,7 +3,7 @@ import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import { isAndroid } from '../../browser'
 import fastClick from '../../util/fastClick'
-import ChevronImg from '../ChevronImg'
+import ChevronIcon from '../icons/ChevronIcon'
 import { MEDIUM_DURATION, cssEaseOut } from './constants'
 import { SidebarSection, SidebarSectionId } from './sidebarSections'
 
@@ -119,7 +119,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
           }}
           className={css({ display: 'inline-flex', paddingTop: '0.375rem' })}
         >
-          <ChevronImg
+          <ChevronIcon
             onClickHandle={() => setIsOpen(!isOpen)}
             additonalStyle={{
               opacity: 0.4,
