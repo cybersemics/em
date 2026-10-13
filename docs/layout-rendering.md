@@ -209,6 +209,10 @@ When `b` is positioned, `yaccum` is *not* incremented; `b1` is placed at `(x = f
 
 A small effect that writes the LayoutTree's top y (offset + autocrop) into `viewportStore.layoutTreeTop`. Used by `scrollCursorIntoView` to figure out where thoughts actually start on the page (vs. the toolbar above).
 
+## Masking content under the nav bar
+
+Content that scrolls under the bottom nav bar is hidden by a single falloff in [`BackgroundGlow`](../src/components/BackgroundGlow.tsx), whether or not a background glow is selected (a debug option behind the sparkle button in the footer). The falloff is a fixed, full-viewport copy of the page background — the background color, plus the glow at the same opacity when one is selected — masked in by a gradient that is opaque from the nav bar's top edge down. Because it repaints whatever the background is, the content fades into the glow rather than into a dark band, and turning the glow on or off cannot move where content disappears. The nav bar paints no background of its own; a second mask drawn by the nav bar (it used to be a box shadow) would drift from this one, since browsers render shadows differently. The gradient measures from the same base the nav bar sits on, `max(11px, safe-area-inset-bottom)`. The falloff is not rendered while no thought is selected, since there are no breadcrumbs to fade into, nor while the keyboard is open on a touch device, where the nav bar leaves `position: sticky` for normal flow.
+
 ## Scrolling the cursor into view
 
 [`scrollCursorIntoView`](../src/device/scrollCursorIntoView.ts) scrolls the minimum amount needed to clear the toolbar above and the navbar (or virtual keyboard) below. [`useScrollCursorIntoView`](../src/hooks/useScrollCursorIntoView.ts) calls it two ways: directly when the cursor's `y` or `height` changes, and through [`scheduleScrollCursorIntoView`](../src/device/scheduleScrollCursorIntoView.ts) when the editing value changes — the cursor's rank can move as it is edited, e.g. toggling bold in a long, sorted context.

@@ -57,6 +57,10 @@ It is **off by default on every host**, including the ones where logging itself 
 
 Use it to watch a single interaction live, through a browser MCP's console listing. Do not use it to capture a whole reproduction: four steps of editing produce about 6 KB, and a full buffer approaches a megabyte. Dump the buffer to a file instead.
 
+## Measuring on a device
+
+When a bug depends on something a headless browser cannot emulate — `env(safe-area-inset-bottom)` is 0 there and `display-mode: standalone` never matches — the reporter's device is the only place to observe it. Add a temporary `debugLog.log` entry that records the geometry in question (`getBoundingClientRect` of the elements involved, `getSafeAreaBottom()`, `innerHeight`, `clientHeight`, the visual viewport, `scrollY`, whether the app is standalone), taken once when the feature turns on and again after scrolling settles rather than on every scroll event. Check locally that the entry appears in `window.em.debugLog.read()`, push it to the pull request, and ask the reporter to open the preview, add it to the Home Screen when the bug is in the installed app (Safari's own tab lays the page out differently), reproduce, and copy the log. Logging auto-enables on the preview host. Remove the entry in the commit that fixes the bug.
+
 ## In tests
 
 In Puppeteer, a test under investigation for a flake is wrapped in [`withDebugLog`](../src/e2e/puppeteer/helpers/withDebugLog.ts), which records the log and appends it to the error if the test fails.
