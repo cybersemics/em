@@ -205,7 +205,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
         ) : (
           <div className={css({ marginTop: '1em', maxWidth: 450 })}>
             To add a thought to your favorites list, set the cursor on a thought and tap{' '}
-            <FavoritesIcon cssRaw={css.raw({ verticalAlign: 'text-bottom' })} /> in the toolbar.
+            <FavoritesIcon className={css({ verticalAlign: 'text-bottom' })} /> in the toolbar.
           </div>
         )}
         <DropEnd disableDragAndDrop={disableDragAndDrop} />

@@ -74,7 +74,7 @@ const Alert: FC = () => {
       transitionKey={transitionKey}
       onClose={alert?.clearDelay != null ? onClose : undefined}
       value={alert ? value : null}
-      icon={Icon ? <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null}
+      icon={Icon ? <Icon className={css({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null}
       // Pause the auto-dismiss timer while the user is engaging with the alert. Touch has to be tracked
       // separately: a touch browser synthesizes mouseover from a tap but no mouseout until the user taps
       // elsewhere, so the mouse handlers alone would strand the alert on screen indefinitely.

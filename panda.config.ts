@@ -1,5 +1,6 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
+import breakpointsConfig from './src/breakpoints.config'
 import durationsConfig from './src/durations.config'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
@@ -476,14 +477,7 @@ export default defineConfig({
   theme: {
     extend: {
       keyframes,
-      breakpoints: {
-        sm: '320px', // approx size of iPhone SE
-        md: '400px', // approx size of iPhone 12 Pro
-        lg: '600px', // landscape mobile devices and larger
-        xl: '800px', // approx size of a laptop
-        '2xl': '1000px', // approx size of a desktop
-        '3xl': '1200px', // approx size of a large desktop
-      },
+      breakpoints: breakpointsConfig,
       tokens: {
         colors: colorTokens,
         easings: {
