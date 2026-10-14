@@ -513,7 +513,7 @@ Extract selected part of a thought as its new parent. Where Extract Subthought d
 
 ### Define Term
 
-Adds a 10–20 word AI-generated dictionary entry as the first subthought of each selected thought. The selected thought's own value is not changed. The command is disabled when any selected thought is empty or has another AI request in progress.
+Adds a 10–20 word AI-generated dictionary entry as the first subthoughts of each selected thought. The entry is split on semicolons and periods into sibling subthoughts in reading order, each capitalized and stripped of trailing punctuation and whitespace. The selected thought's own value is not changed. The command is disabled when any selected thought is empty or has another AI request in progress.
 
 While the request is in flight, each selected thought is marked `generating` without changing its stored value. The thought keeps its text and gets the same shimmer highlight as Generate Thought until the request settles. The shimmer masks existing paint so colors, backgrounds and native emoji stay visible. Notes shimmer along with their owning thought, preserving their text and formatting.
 
