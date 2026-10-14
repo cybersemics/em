@@ -122,7 +122,7 @@ State the goal, not the shape of the fix. What the fix looks like is the assigne
 
 #### In this case / In general
 
-Where a bug's correct behaviour is a rule and the steps are one instance of it, split Expected Behavior into two `###` subheadings:
+Where the correct behaviour is a rule and the steps are one instance of it, split Expected Behavior into two `###` subheadings:
 
 ```markdown
 ## Expected Behavior
@@ -154,7 +154,7 @@ Gesture diagram arrows should stay centered at every app font size, wherever a d
 
 The first is checkable by following the steps; the second is what keeps the fix from being a special case at 32.
 
-Where **In general**, or a feature's Expected Behavior, runs to a list of requirements, group them the way the requirement does. Bullets that are cases of one requirement, or conditions under which it applies, nest under a bullet that names that requirement, rather than sitting beside it in one flat list. A flat list hides which rules belong together, and the reader has to rebuild the structure the writer already saw. [#5886](https://github.com/cybersemics/em/issues/5886) nests everything that adds a command to the learned set under **Added**, and everything that removes one under **Removed**, both under **Learned set**:
+Where **In general** runs to a list of requirements, group them the way the requirement does. Bullets that are cases of one requirement, or conditions under which it applies, nest under a bullet that names that requirement, rather than sitting beside it in one flat list. A flat list hides which rules belong together, and the reader has to rebuild the structure the writer already saw. [#5886](https://github.com/cybersemics/em/issues/5886) nests everything that adds a command to the learned set under **Added**, and everything that removes one under **Removed**, both under **Learned set**:
 
 ```markdown
 - **Learned set.**
@@ -170,9 +170,7 @@ Where **In general**, or a feature's Expected Behavior, runs to a list of requir
 
 Before posting, read each top-level bullet and ask whether it is a case of another one. A bullet about the same subject as its neighbour (the Pinned Command beside the learned set it adds to) usually is.
 
-A feature never takes the split. Its requirements are the rule itself, written directly under `## Expected Behavior`, and a feature's steps are one way of using it rather than an instance of a failure to assert against.
-
-For a bug, skip the split where it does not earn its place — where the case *is* the rule and the second heading would restate the first in the abstract, or where the correct behaviour is a single fixed state (a value, a label, a position) with no input to generalise over. One paragraph under the plain heading is right for those.
+Skip the split where it does not earn its place — where the case *is* the rule and the second heading would restate the first in the abstract, or where the correct behaviour is a single fixed state (a value, a label, a position) with no input to generalise over. One paragraph under the plain heading is right for those.
 
 This call is yours, every time. You have the steps, you have the rule, and you can see whether the two say different things — which is the whole test. Write both halves out and read them: if the second is the first with the specifics lifted out, delete it. Do not put the split to the reporter, and do not put it to them as a recommendation with the alternative attached. They answer what the app should do; you decide how many headings it takes to say so.
 
@@ -351,8 +349,7 @@ New issues often originate in a comment thread on another issue or PR.
 - A theory about the cause in place of the symptom.
 - An Expected Behavior that specifies the fix rather than naming the goal.
 - Requirements in one flat list, where several bullets are cases or conditions of the same requirement and belong nested under it.
-- An Expected Behavior on a feature split into **In this case** and **In general**.
-- A bug's Expected Behavior stated only as a rule, leaving the reader to work out what the steps above should have produced — or only as the one case, leaving the assignee to guess how far it generalises.
+- An Expected Behavior stated only as a rule, leaving the reader to work out what the steps above should have produced — or only as the one case, leaving the assignee to guess how far it generalises.
 - A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
 - A personal thought (a name, a place, a feeling) quoted from a reporter's Debug Log or thoughtspace instead of a placeholder, including one spelled out a keystroke at a time across `input` or `keydown` entries.
