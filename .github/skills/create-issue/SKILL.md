@@ -72,6 +72,8 @@ Exactly these headings, at `##`, in this order:
 
 ```
 
+A brand new feature omits `## Current Behavior`. Nothing exists yet to observe, and a line saying so ("Settings has no such link") restates the title. Keep Steps to Reproduce and Expected Behavior: the steps are how the feature will be used, and Expected Behavior is what it should do.
+
 ### Steps to Reproduce
 
 Numbered, imperative, one action per line. Name settings by their exact label in the UI and give the exact value — "Increase the app font size to 32", not "make the font bigger". A step that leaves the reader a choice will be followed differently than it was meant.
@@ -341,6 +343,7 @@ New issues often originate in a comment thread on another issue or PR.
 - A first step telling the reader to open a fresh app, which every reproduction already assumes.
 - A gesture written as letters — `ldr` where `←↓→` is what the reader swipes.
 - A keyboard shortcut written as plain text — `(Shift + Alt + S)` where `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>` is what renders as keys.
+- A Current Behavior on a brand new feature, describing that the feature does not exist yet.
 - A Current Behavior carrying a qualifier about the reproduction — "No drag is needed" — where the condition belongs in the steps.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
