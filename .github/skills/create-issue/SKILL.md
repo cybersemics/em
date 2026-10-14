@@ -1,12 +1,12 @@
 ---
 name: create-issue
 description: >-
-  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another. Also covers a pull request description that carries Steps to Reproduce, Current Behavior or Expected Behavior. Triggers on "create issue", "write issue", "file an issue", "open an issue", "make an issue", "report a bug", and any request to draft or edit issue text.
+  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another. Also covers the description of a pull request with no linked issue, which carries Steps to Reproduce, Current Behavior and Expected Behavior itself. Triggers on "create issue", "write issue", "file an issue", "open an issue", "make an issue", "report a bug", and any request to draft or edit issue text.
 allowed-tools:
   - bash
 ---
 
-Issues reporting broken behaviour in this repo follow a fixed format. A pull request description that reports the behaviour it fixes uses the same three sections, and everything below about them applies there too.
+Issues reporting broken behaviour in this repo follow a fixed format. A pull request with no linked issue reports the behaviour it fixes in its own description, using the same three sections, and everything below about them applies there too. A pull request that links an issue leaves them to the issue.
 
 ## Ask before posting
 
