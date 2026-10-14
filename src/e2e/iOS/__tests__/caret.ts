@@ -18,6 +18,7 @@ import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import scrubSpaceBar from '../helpers/scrubSpaceBar'
 import setFontSize from '../helpers/setFontSize'
+import setSelection from '../helpers/setSelection'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForElement from '../helpers/waitForElement'
@@ -403,5 +404,23 @@ describe('Caret', () => {
 
     // A non-cursor thought must not open the virtual keyboard.
     expect(keyboard).toBe(false)
+  })
+
+  // https://github.com/cybersemics/em/issues/4220
+  it.skip('a tap on the word before the caret moves the caret to it', async () => {
+    const value = 'Hello beautiful people in the world'
+    await newThought(value)
+    const editable = await waitForEditable(value)
+    await waitUntil(isKeyboardShown)
+
+    await setSelection('Hello beautiful people in the '.length, 'Hello beautiful people in the '.length)
+    await browser.pause(700)
+
+    // the "h" of "the"
+    await tap(editable, { offset: 'Hello beautiful people in t'.length, x: 3, pointerType: 'touch' })
+    // iOS moves the caret back within about 100ms of the touchend
+    await browser.pause(1000)
+
+    expect(await getSelection().focusOffset).toBeLessThanOrEqual('Hello beautiful people in the'.length)
   })
 })
