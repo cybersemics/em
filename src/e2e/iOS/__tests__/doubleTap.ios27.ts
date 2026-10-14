@@ -66,7 +66,7 @@ describe('Double tap', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5981
-  it.skip('a tap within the thought being edited after a double tap leaves the caret in the tapped word', async () => {
+  it('a tap within the thought being edited after a double tap leaves the caret in the tapped word', async () => {
     await newThought('Existentialism eternally')
     await hideKeyboardByTappingDone()
     const editable = await waitForEditable('Existentialism eternally')

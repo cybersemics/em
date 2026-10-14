@@ -1,7 +1,12 @@
 import { useEffect, useRef } from 'react'
 import { isSafari, isTouch } from '../../browser'
+import getCaretOffset from '../../device/getCaretOffset'
 import * as selection from '../../device/selection'
+import osVersionStore from '../../stores/osVersionStore'
 import lastTouch from './lastTouch'
+
+/** How long after a touch begins a return of the caret to where it was is taken for iOS reverting a withheld tap. The reverts seen took up to about 280ms, and the loupe only starts after a long press. */
+const REVERT_WINDOW = 500
 
 /**
  * Keeps the caret inside the editable the user is editing while the keyboard is open. The iOS keyboard trackpad
@@ -24,20 +29,38 @@ const useCaretRestore = ({
 }) => {
   const pressingRef = useRef(false)
   const scrubbingRef = useRef(false)
+  // The touch in progress, where it landed, and the caret before it, while iOS may still revert the tap.
+  const revertWatchRef = useRef<{
+    clientX: number
+    clientY: number
+    before: number
+    startedAt: number
+    moved: boolean
+  } | null>(null)
 
   useEffect(() => {
     const editable = editableRef.current
     if (!editable || !enabled || !isTouch || !isSafari()) return
 
     /** Marks the beginning of a touch so that a finger-driven selection drag can be told from the trackpad. */
-    const onTouchStart = () => {
+    const onTouchStart = (e: TouchEvent) => {
       pressingRef.current = true
       // A finger back on the page ends the trackpad session, so any range from here is the user's own.
       scrubbingRef.current = false
+
+      const touch = e.touches[0]
+      const before = selection.isCollapsed() ? selection.offsetFromNode(editable) : null
+      revertWatchRef.current =
+        touch && before !== null && (osVersionStore.getState() ?? 0) >= 27
+          ? { clientX: touch.clientX, clientY: touch.clientY, before, startedAt: performance.now(), moved: false }
+          : null
     }
 
     /** Marks the end of a touch. */
-    const onTouchEnd = () => (pressingRef.current = false)
+    const onTouchEnd = () => {
+      pressingRef.current = false
+      revertWatchRef.current = null
+    }
 
     /** Puts the caret back and remembers that a trackpad drag is underway. */
     const restore = () => {
@@ -47,9 +70,34 @@ const useCaretRestore = ({
       scrubbingRef.current = true
     }
 
+    /** On WebKit 27, iOS can move the caret for a tap whose touchend it withholds (#5660), then move it back to where it was before the touch (#5981). Puts it where the tap landed instead. */
+    const correctRevert = () => {
+      const watch = revertWatchRef.current
+      if (!watch) return
+      if (performance.now() - watch.startedAt > REVERT_WINDOW) {
+        revertWatchRef.current = null
+        return
+      }
+      if (!selection.isCollapsed()) return
+      const offset = selection.offsetFromNode(editable)
+      if (offset === null) return
+      if (offset !== watch.before) {
+        watch.moved = true
+        return
+      }
+      if (!watch.moved) return
+
+      revertWatchRef.current = null
+      const tapped = getCaretOffset(editable, watch).offset
+      if (tapped === null || tapped === watch.before) return
+      // iOS is still handling the tap when it fires this selectionchange.
+      requestAnimationFrame(() => selection.set(editable, { offset: tapped }))
+    }
+
     /** Pulls the selection back into the editable when the trackpad has dragged it out. */
     const onSelectionChange = () => {
       if (document.activeElement !== editable) return
+      if (pressingRef.current) correctRevert()
       // The trackpad moves the selection without generating a single touch event in the page, so anything the
       // user did with a finger is not this. A press still in progress is a long press dragging a selection
       // within this editable; a recently ended one is a tap, which may deliberately have moved the selection to
@@ -70,6 +118,7 @@ const useCaretRestore = ({
 
     return () => {
       scrubbingRef.current = false
+      revertWatchRef.current = null
       editable.removeEventListener('touchstart', onTouchStart)
       editable.removeEventListener('touchend', onTouchEnd)
       editable.removeEventListener('touchcancel', onTouchEnd)

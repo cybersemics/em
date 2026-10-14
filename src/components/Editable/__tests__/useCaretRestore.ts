@@ -5,6 +5,7 @@ import { importTextActionCreator as importText } from '../../../actions/importTe
 import { keyboardOpenActionCreator as keyboardOpen } from '../../../actions/keyboardOpen'
 import * as selection from '../../../device/selection'
 import store from '../../../stores/app'
+import osVersionStore from '../../../stores/osVersionStore'
 import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
 import head from '../../../util/head'
@@ -21,6 +22,10 @@ vi.mock('../../../browser', async importOriginal => {
     isSafari: () => true,
   }
 })
+
+// jsdom has no layout to hit-test a tap against
+const getCaretOffset = vi.hoisted(() => vi.fn(() => ({ offset: null as number | null })))
+vi.mock('../../../device/getCaretOffset', () => ({ default: getCaretOffset }))
 
 beforeEach(initStore)
 
@@ -228,4 +233,62 @@ it('stops collapsing ranges once a finger returns to the page', async () => {
   await selectAllOf(editable)
 
   expect(selection.isCollapsed()).toBe(false)
+})
+
+/** Starts a touch on an editable at the given point, as a finger landing on it does. */
+const touchStartAt = (editable: HTMLElement, clientX: number, clientY: number) => {
+  const e = new TouchEvent('touchstart', { bubbles: true })
+  Object.defineProperty(e, 'touches', { value: [{ clientX, clientY }] })
+  act(() => {
+    editable.dispatchEvent(e)
+  })
+}
+
+/** Moves the caret within an editable and fires the selectionchange the browser would fire. */
+const moveCaret = (editable: HTMLElement, offset: number) =>
+  act(() => {
+    selection.set(editable, { offset })
+    document.dispatchEvent(new Event('selectionchange'))
+  })
+
+// https://github.com/cybersemics/em/issues/5981
+it('puts the caret where a withheld tap landed when iOS moves it there and back', async () => {
+  osVersionStore.update(27)
+  store.dispatch([importText({ text: '- ab cd\n- e' }), setCursor(['ab cd']), keyboardOpen({ value: true })])
+
+  const editable = createEditable(head(store.getState().cursor!), 'ab cd')
+  mountEditMode(editable)
+  act(() => editable.focus())
+  moveCaret(editable, 2)
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  getCaretOffset.mockReturnValue({ offset: 3 })
+  // iOS withholds the touchend, places the caret, then moves it back to where it was
+  touchStartAt(editable, 40, 10)
+  moveCaret(editable, 5)
+  moveCaret(editable, 2)
+  await act(vi.runAllTimersAsync)
+
+  expect(getCaretOffset).toHaveBeenCalledWith(editable, expect.objectContaining({ clientX: 40, clientY: 10 }))
+  expect(selection.offsetFromNode(editable)).toBe(3)
+})
+
+it('leaves the caret where it was when a withheld tap lands on it', async () => {
+  osVersionStore.update(27)
+  store.dispatch([importText({ text: '- ab cd\n- e' }), setCursor(['ab cd']), keyboardOpen({ value: true })])
+
+  const editable = createEditable(head(store.getState().cursor!), 'ab cd')
+  mountEditMode(editable)
+  act(() => editable.focus())
+  moveCaret(editable, 2)
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  // a tap on the caret computes the caret's own offset
+  getCaretOffset.mockReturnValue({ offset: 2 })
+  touchStartAt(editable, 20, 10)
+  moveCaret(editable, 1)
+  moveCaret(editable, 2)
+  await act(vi.runAllTimersAsync)
+
+  expect(selection.offsetFromNode(editable)).toBe(2)
 })
