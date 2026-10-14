@@ -238,7 +238,7 @@ Drag-and-drop runs hot — `canDrop` and `hover` fire many times per second duri
 
 ## react-dnd patches
 
-Five patches live under [`.yarn/patches/`](../.yarn/patches), four for the touch backend and one for the HTML5 backend. Patches stack: each patch is applied on top of the previous one's output. To create a new touch-backend patch, you must specify the correct candidate package (because there are already several layered patches):
+Six patches live under [`.yarn/patches/`](../.yarn/patches), five for the touch backend and one for the HTML5 backend. Patches stack: each patch is applied on top of the previous one's output. To create a new touch-backend patch, you must specify the correct candidate package (because there are already several layered patches):
 
 ```
 $ yarn patch -u react-dnd-touch-backend
@@ -288,6 +288,13 @@ The fourth layered touch-backend patch registers capture-phase `pointerup` and `
 The fifth layered touch-backend patch coordinates the `pointerup` fallback with the canonical `touchend` handler. `pointerup` prevents its default action immediately but defers drag completion to the next task. If `touchend` arrives normally, it cancels the fallback and ends the drag while the app's drag protections are still active; if `touchend` is missing, the fallback ends the drag on the next task. `pointercancel` continues to end immediately. The pending fallback is also canceled during backend teardown.
 
 When a touch drag ends, application cleanup returns `state.longPress` to `Inactive` immediately so scrolling, gestures, alerts, and multicursor cleanup are restored without a timer. Before that transition, `useDragAndDropThought` sets `suppressCursorAfterTouch` in the [`touchStore`](../src/stores/touchStore.ts) store. `Editable` ignores cursor-producing compatibility events while the flag is set, and the next capture-phase `touchstart` clears it. This ties suppression to the completed touch gesture rather than assuming that the browser will dispatch its trailing click or focus before a zero-delay timer.
+
+### `react-dnd-touch-backend-patch-12405e04e1.patch`
+
+The sixth layered touch-backend patch makes the long-press delay honour the `DragHold` definition (held past the threshold without moving more than `TOUCH_SLOP` px), so a swipe that starts on a thought is not mistaken for a long press ([#5973](https://github.com/cybersemics/em/issues/5973)):
+
+1. **Slop is measured from where the press began.** `handleTopMoveStartDelay` sets `_mouseClientOffset` from the `touchstart`. Otherwise the first delivered `touchmove` became the origin. The browser suppresses moves within its own slop, so that first move is already well away from the press point.
+2. **The long press commits on the next animation frame.** When the delay expires, the timer schedules `handleTopMoveStart` with `requestAnimationFrame`, and it bails if `this.timeout` no longer holds its id. Touch moves are dispatched at the start of a frame, so a move the browser received before the deadline is handled before the commit and can still cancel it, as can a scroll or a `touchend`. A long press therefore starts up to one frame after `delayTouchStart`.
 
 ### `react-dnd-html5-backend-npm-16.0.1-754940d855.patch`
 

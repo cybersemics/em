@@ -13,7 +13,6 @@ import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
-import withDebugLog from '../helpers/withDebugLog'
 import waitForAlert from '../helpers/waitForAlert'
 import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
 import waitForCursor from '../helpers/waitForCursor'
@@ -550,7 +549,6 @@ describe('mobile only', () => {
 
   // https://github.com/cybersemics/em/issues/5269
   it('does not add the thought a gesture is drawn on to the multiselect', async () => {
-   await withDebugLog(async () => {
     await paste(`
         - a
         - b
@@ -566,27 +564,10 @@ describe('mobile only', () => {
     const boundingBox = await c.asElement()?.boundingBox()
     if (!boundingBox) throw new Error('Bounding box of "c" not found.')
 
-    await page.evaluate(() => {
-      const w = window as any
-      w.__t = []
-      const t0 = performance.now()
-      const rec = (name: string) => (e: Event) => w.__t.push(`${name} ${Math.round(performance.now() - t0)} ts=${Math.round(e.timeStamp - t0)}${(e as TouchEvent).touches?.[0] ? ' x=' + Math.round((e as TouchEvent).touches[0].clientX) : ''}`)
-      window.addEventListener('touchstart', rec('touchstart'), true)
-      window.addEventListener('touchmove', rec('touchmove'), true)
-      window.addEventListener('touchend', rec('touchend'), true)
-      window.addEventListener('dragStart', rec('dragStart'), true)
-      document.addEventListener('dragStart', rec('dragStartDoc'), true)
-      new PerformanceObserver(list => list.getEntries().forEach(en => w.__t.push(`longtask start=${Math.round(en.startTime - t0)} dur=${Math.round(en.duration)}`))).observe({ type: 'longtask' })
-    })
-    const nodeT0 = Date.now()
-    try {
     await gesture(clearThoughtCommand, {
       xStart: boundingBox.x + boundingBox.width / 2,
       yStart: boundingBox.y + boundingBox.height / 2,
     })
-    } finally {
-      console.log('NODE gesture took', Date.now() - nodeT0, 'PAGE', JSON.stringify(await page.evaluate(() => (window as any).__t), null, 1))
-    }
     await waitForAlert(clearThoughtCommand.label)
 
     // Clear Thought empties the text of the selected thoughts, so the thought the gesture was drawn on is identified by
@@ -599,7 +580,6 @@ describe('mobile only', () => {
     }, c)
 
     expect(isGestureThoughtSelected).toBe(false)
-   })
   })
 
   // https://github.com/cybersemics/em/issues/3557
