@@ -107,10 +107,8 @@ const linearizeTree = (
 
   // 0-based ordinal of each visible non-attribute child, used to number =bullet/Ordered lists without re-sorting siblings in each Bullet.
   // Attributes (e.g. =children when showHiddenThoughts is enabled) occupy a slot in filteredChildren but are skipped in the numbering (-1).
-  const childIndexNonAttribute = filteredChildren.reduce<number[]>(
-    (accum, child) => [...accum, isAttribute(child.value) ? -1 : accum.filter(index => index >= 0).length],
-    [],
-  )
+  let ordinal = 0
+  const childIndexNonAttribute = filteredChildren.map(child => (isAttribute(child.value) ? -1 : ordinal++))
 
   const thoughts = filteredChildren.reduce<TreeThought[]>((accum, filteredChild, i) => {
     // If the context view is active, render the context's parent instead of the context itself.
