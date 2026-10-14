@@ -50,6 +50,15 @@ index c033003905791f5339535f7ce33b7914109c1d91..8f20dafab6b2c8a4e0e305a6e316f592
          onCloseEnd == null ? void 0 : onCloseEnd();
        }
      });
+@@ -1447,7 +1463,7 @@ var SheetContent = React.forwardRef(
+       ...applyStyles(styles.content, isUnstyled),
+       ...styleProp
+     };
+-    const scrollStyle = applyStyles(styles.scroller, isUnstyled);
++    const scrollStyle = { ...applyStyles(styles.scroller, isUnstyled) };
+     if (sheetContext.avoidKeyboard) {
+       scrollStyle.paddingBottom = isHTTPS() ? "env(keyboard-inset-height, var(--keyboard-inset-height, 0px))" : "var(--keyboard-inset-height, 0px)";
+     }
 diff --git a/dist/index.mjs b/dist/index.mjs
 index cc8c3ebd67e6cdf1d8e0313a0bd036dfd82f172a..0486a0a919ed4abc4e5ca317797a35859662d77b 100644
 --- a/dist/index.mjs
@@ -102,3 +111,12 @@ index cc8c3ebd67e6cdf1d8e0313a0bd036dfd82f172a..0486a0a919ed4abc4e5ca317797a3585
          onCloseEnd == null ? void 0 : onCloseEnd();
        }
      });
+@@ -1440,7 +1456,7 @@ var SheetContent = forwardRef(
+       ...applyStyles(styles.content, isUnstyled),
+       ...styleProp
+     };
+-    const scrollStyle = applyStyles(styles.scroller, isUnstyled);
++    const scrollStyle = { ...applyStyles(styles.scroller, isUnstyled) };
+     if (sheetContext.avoidKeyboard) {
+       scrollStyle.paddingBottom = isHTTPS() ? "env(keyboard-inset-height, var(--keyboard-inset-height, 0px))" : "var(--keyboard-inset-height, 0px)";
+     }

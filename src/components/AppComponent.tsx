@@ -30,8 +30,11 @@ import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
+import PinnedCommand from './Learning/PinnedCommand'
 import MultiGesture from './MultiGesture'
+import NativeTextDragCaret from './NativeTextDragCaret'
 import NavBar from './NavBar'
+import SelectionStems from './SelectionStems'
 import Sidebar from './Sidebar/Sidebar'
 import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
@@ -236,6 +239,8 @@ const AppComponent: FC = () => {
         </>
       )}
       <DropGutter />
+      {isAndroid && <SelectionStems />}
+      <NativeTextDragCaret />
 
       <MultiGestureIfTouch>
         {showModal ? (
@@ -257,6 +262,7 @@ const AppComponent: FC = () => {
         <>
           {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
           <NavBar position='bottom' />
+          <PinnedCommand />
 
           <CommandCenter />
           <div style={{ fontSize }}>

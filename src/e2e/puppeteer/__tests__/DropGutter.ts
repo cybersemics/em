@@ -79,8 +79,8 @@ const dragToDropGutter = async (nodeHandle: ElementHandle<Element> | JSHandle<un
     await page.touchscreen.touchMove(coordinate.x + deltaX * i, coordinate.y + deltaY * i)
   }
 
-  // Wait for the "Drop to remove" alert
-  await waitForAlert('Drop to remove')
+  // Wait for the "Drop to delete" alert
+  await waitForAlert('Drop to delete')
 
   await page.touchscreen.touchEnd()
 }

@@ -189,12 +189,12 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
 
   // Attribute the upcoming moveThought actions to a drag-and-drop drop, since drops have no `command` entry in the
   // debug log (commands.ts only logs keyboard/gesture/toolbar commands).
-  debugLog.log('drop', {
+  debugLog.log('drop', () => ({
     zone: 'subthought',
     targetId: head(props.path),
     targetValue: getThoughtById(state, head(props.path))?.value,
     items: draggedItems.length,
-  })
+  }))
 
   store.dispatch((dispatch, getState) => {
     /** Returns true if the thought should be dropped at the top of a collapsed parent. */
