@@ -164,19 +164,18 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       }
 
       if (e.touches.length > 1) {
-        // A second finger that lands once the first finger has begun a gesture is ignored for the rest of the touch:
+        // Any finger that lands once the first finger has begun a gesture is ignored for the rest of the touch:
         // onPanResponderMove follows only the first finger, and the gesture still executes when the first finger lifts.
         // The gesture has begun once its first swipe is recognized rather than at the first touchmove, since the first
         // finger of a two-finger trace or of the iOS three-finger undo swipe can move slightly before the others land.
         // See #5966.
-        if (this.sequence.length > 0 && e.touches.length === 2) return
+        if (this.sequence.length > 0) return
 
         // Otherwise the touch is multi-touch, which is never a gesture. That covers two-finger tracing and pinching
-        // (#4233), and three or more fingers whenever they land, since those belong to the OS — notably the iOS
-        // three-finger swipe that undoes and redoes, which must not also execute an em gesture (#5575). Abandoning
-        // makes onPanResponderMove and onPanResponderRelease bail out, so there is no trace, no gesture menu, and no
-        // command. A gesture that has already begun is cancelled so that its gesture menu does not stay on screen
-        // (#3887). The latch stays set until every finger is up.
+        // (#4233), and the iOS three-finger swipe that undoes and redoes, which must not also execute an em gesture
+        // (#5575). Abandoning makes onPanResponderMove and onPanResponderRelease bail out, so there is no trace, no
+        // gesture menu, and no command. A gesture that has already begun is cancelled so that its gesture menu does
+        // not stay on screen (#3887). The latch stays set until every finger is up.
         if (this.currentStart) {
           this.props.onCancel?.({ clientStart: this.clientStart, e })
         }

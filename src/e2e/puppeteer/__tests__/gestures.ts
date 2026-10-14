@@ -226,6 +226,28 @@ describe('gestures', () => {
 - ${''}
 `)
   })
+
+  // https://github.com/cybersemics/em/issues/5966
+  it('ignores a two-finger tap during a gesture in progress', async () => {
+    const firstFinger = await startGesture()
+    await firstFinger.move('r')
+    await waitForSelector('[data-testid=gesture-menu-content]')
+
+    // Tap with two more fingers at once while the first finger is held, so that three fingers are down.
+    const secondFinger = await startGesture({ xStart: 300, yStart: 250 })
+    const thirdFinger = await startGesture({ xStart: 300, yStart: 450 })
+    await secondFinger.end()
+    await thirdFinger.end()
+
+    await firstFinger.move('d')
+    await firstFinger.end()
+
+    // New Thought creates an empty thought and puts the cursor on it.
+    await waitForCursor('')
+    expect(await exportThoughts()).toBe(`
+- ${''}
+`)
+  })
 })
 
 describe('chaining commands', () => {
