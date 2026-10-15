@@ -61,6 +61,9 @@ const dialogRecipe = defineSlotRecipe({
     },
     /** Wrapper around the glass sheet that lets unclipped highlight/rainbow layers bleed past the glass edges. */
     wrapper: {
+      // Lets the browser scale the panel as an already-rendered layer during the open and close animation (see
+      // ScaleFadeTransition), instead of re-rendering it at every intermediate scale, which makes its text jitter.
+      willChange: 'transform',
       position: 'relative',
       maxWidth: '500px',
       width: '87.5%',
