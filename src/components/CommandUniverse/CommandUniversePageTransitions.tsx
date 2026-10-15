@@ -1,6 +1,5 @@
 import { MotionConfigContext, motion, useReducedMotion } from 'motion/react'
 import { ReactElement, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
 import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import CommandUniverseNavigation from '../../@types/CommandUniverseNavigation'
@@ -88,11 +87,12 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
     target.focus({ preventScroll: true })
   }
 
+  // Settle explicit skips and zero-duration motion before paint, without waiting for an animation callback.
   useLayoutEffect(() => {
-    if (!isOpen || transition?.type !== 'none') return
+    if (!isOpen || !transition || (transition.type !== 'none' && duration !== 0)) return
     pendingFocus.current = transition.toEntryId
     setTransition(current => (current === transition ? null : current))
-  }, [isOpen, transition])
+  }, [duration, isOpen, transition])
 
   useLayoutEffect(() => {
     if (!isOpen || transition || !pendingFocus.current) return
@@ -100,6 +100,13 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
     pendingFocus.current = null
     if (entryId === activeEntryId) restoreFocus(entryId)
   }, [activeEntryId, isOpen, transition])
+
+  // The destination is interactive from the moment a zoom starts (see `inert` below), so its focus is restored then
+  // rather than when the zoom finishes, which could pull focus away from something used mid-zoom.
+  useEffect(() => {
+    if (!isOpen || !transition || transition.type === 'none') return
+    restoreFocus(transition.toEntryId)
+  }, [isOpen, transition])
 
   return (
     <div
@@ -112,7 +119,7 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
         const active = entryId === activeEntryId
         const entering = !!transition && transition.toEntryId === entryId
         const exiting = !!transition && transition.fromEntryId === entryId
-        const moving = isOpen && transition?.type !== 'none' && (entering || exiting)
+        const moving = isOpen && duration !== 0 && transition?.type !== 'none' && (entering || exiting)
         // Keep a retained surface at the endpoint of its nearest history edge. Back and Forward then animate
         // it from the same pose where the previous transition left it, even after that transition clears.
         const parkedTarget =
@@ -128,7 +135,11 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
             data-entry-id={entryId}
             // A surface only ever mounts as the destination of a new history entry, so it starts where that zoom
             // comes from.
-            initial={entering && transition.type !== 'none' ? away(transition.zoom === 'in' ? 'out' : 'in') : target}
+            initial={
+              entering && transition.type !== 'none' && duration !== 0
+                ? away(transition.zoom === 'in' ? 'out' : 'in')
+                : target
+            }
             animate={target}
             transition={
               moving
@@ -146,15 +157,14 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
               entering && transition.type !== 'none'
                 ? () => {
                     if (!isOpen) return
-                    // Commit the navigation before focusing: until the transition clears, every page is inert and
-                    // a focus call inside one is ignored.
-                    flushSync(() => setTransition(current => (current === transition ? null : current)))
-                    restoreFocus(entryId)
+                    setTransition(current => (current === transition ? null : current))
                   }
                 : undefined
             }
             tabIndex={-1}
-            inert={!isOpen || !active || !!transition}
+            // Only the page being left is inert. The destination is usable as soon as navigation starts, so the zoom's
+            // long easing tail never holds up the user.
+            inert={!isOpen || !active}
             aria-hidden={!active}
             onFocusCapture={event => focusTargets.current.set(entryId, event.target)}
             // Opacity rather than visibility, which descendants can override.
