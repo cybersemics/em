@@ -1,11 +1,12 @@
+import { MotionValue, motion } from 'motion/react'
 import { PropsWithChildren } from 'react'
 import { dialogRecipe } from '../../../styled-system/recipes'
 
 /** Presents the clipped glass surface separately from decorations that extend outside it. */
-const DialogGlass = ({ children }: PropsWithChildren) => {
+const DialogGlass = ({ children, opacity }: PropsWithChildren<{ opacity?: MotionValue<number> }>) => {
   const dialog = dialogRecipe()
   return (
-    <div className={dialog.glassSheet} data-cu-glass-sheet='true'>
+    <motion.div className={dialog.glassSheet} data-cu-glass-sheet='true' style={{ opacity }}>
       {/* Muted-purple radial fill concentrated near the top of the glass. */}
       <div className={dialog.containerBackground} />
       {/* Rounded clip region containing the highlights "trapped" inside the glass. */}
@@ -22,7 +23,7 @@ const DialogGlass = ({ children }: PropsWithChildren) => {
       </div>
       {/* Dialog content (title + body). */}
       <div className={dialog.contentLayer}>{children}</div>
-    </div>
+    </motion.div>
   )
 }
 
