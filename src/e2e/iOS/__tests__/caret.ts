@@ -197,7 +197,7 @@ describe('Caret', () => {
   })
 
   // https://github.com/cybersemics/em/issues/3828
-  it.skip('a caret pasted into the middle of a note stays after the pasted text', async () => {
+  it('a caret pasted into the middle of a note stays after the pasted text', async () => {
     await disableTransitions()
     await paste(`
     - Lorem Ipsum Dolor Sit Amet

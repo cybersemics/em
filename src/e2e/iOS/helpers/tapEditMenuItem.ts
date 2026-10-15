@@ -14,7 +14,9 @@ const tapEditMenuItem = async (name: string): Promise<void> => {
     } catch {
       const shown = (
         await Promise.all(
-          MENU_ITEMS.map(async name => ((await browser.$$(`//*[@name="${name}"]`).length) > 0 ? name : null)),
+          MENU_ITEMS.map(async menuItem =>
+            (await browser.$$(`//*[@name="${menuItem}"]`).length) > 0 ? menuItem : null,
+          ),
         )
       ).filter(Boolean)
       throw new Error(

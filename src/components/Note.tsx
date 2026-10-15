@@ -358,10 +358,24 @@ const Note = React.memo(
           // Text copied from a note and pasted on a thought should not bring along the note's default color and italicization. (#3779)
           onCopy={onCopy}
           onCut={onCut}
-          onPaste={() => {
-            // set justPasted so onChange can strip HTML from the new value
-            // the default onPaste behavior is maintained for easier caret and selection management
-            setJustPasted(true)
+          onPaste={(e: React.ClipboardEvent) => {
+            // mobile Safari copies URLs as 'text/uri-list' when the share button is used
+            const text = e.clipboardData.getData('text/plain') || e.clipboardData.getData('text/uri-list')
+
+            // Pasting from mobile copy (e.g. Choose "Share" in Twitter and select "Copy") can result in a blank clipboard
+            // that the browser still pastes, so fall back to the default paste and strip the HTML it inserts in onChange.
+            // See: https://github.com/cybersemics/em/issues/286
+            if (!text) {
+              setJustPasted(true)
+              return
+            }
+
+            // Insert the plain text rather than letting the browser paste HTML. WebKit wraps pasted text in a span with
+            // inline styles and a trailing newline, and stripping them in onChange leaves a value that no longer matches
+            // the DOM, so the note re-renders and the caret jumps to the end on iOS and is dropped on Android (#3828).
+            // insertText leaves the caret after the pasted text and the DOM in sync with the value.
+            e.preventDefault()
+            document.execCommand('insertText', false, text)
           }}
           onBlur={onBlur}
           onFocus={onFocus}
