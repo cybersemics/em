@@ -214,6 +214,8 @@ describe('Caret', () => {
 
     // The first tap places the caret between "Sed " and "tortor", the second raises the edit menu on it.
     const note = await waitForElement('[aria-label="note-editable"]')
+    // Disabling transitions does not stop the smooth scroll that brings the cursor into view.
+    await waitForElementAtRest(note)
     await tap(note, { pointerType: 'touch', offset: 'Sed '.length })
     await waitUntil(isKeyboardShown)
     await tap(note, { pointerType: 'touch', offset: 'Sed '.length })
