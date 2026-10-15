@@ -5,11 +5,8 @@ import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
-import Key from '../@types/Key'
 import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../actions/desktopCommandUniverse'
-import { hashCommand, hashKeyDown } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
-import openDesktopCommandUniverseCommand from '../commands/openDesktopCommandUniverse'
 import useCommandUniverseSelection from '../hooks/useCommandUniverseSelection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import storageModel from '../stores/storageModel'
@@ -43,11 +40,7 @@ const DesktopCommandUniverseSearch: FC<{
   /** Handle desktop command universe commands. */
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (
-        e.key === 'Escape' ||
-        // manually check if the desktopCommandUniverse command is entered since global commands are disabled while the desktop command universe is open
-        hashCommand(openDesktopCommandUniverseCommand.keyboard as Key) === hashKeyDown(e)
-      ) {
+      if (e.key === 'Escape') {
         e.preventDefault()
         e.stopPropagation()
         dispatch(desktopCommandUniverse())
