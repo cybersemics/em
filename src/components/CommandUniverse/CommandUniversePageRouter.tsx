@@ -7,8 +7,9 @@ import commandUniversePages from './commandUniversePages'
 /** Resolves registered page ids and forwards their props. Layout and navigation ownership live outside the router. */
 const CommandUniversePageRouter = ({
   listRef,
+  onFocusedRowChange,
   onBeforeExecute,
-}: Pick<ComponentProps<typeof CommandUniverseCommandPage>, 'listRef' | 'onBeforeExecute'>) => {
+}: Pick<ComponentProps<typeof CommandUniverseCommandPage>, 'listRef' | 'onFocusedRowChange' | 'onBeforeExecute'>) => {
   const entries = useSelector(state => state.commandUniverseNavigation.entries)
   return (
     <CommandUniversePageTransitions>
@@ -18,7 +19,11 @@ const CommandUniversePageRouter = ({
         return (
           <Fragment key={entryId}>
             {page.pageId === 'commands' ? (
-              <CommandUniverseCommandPage listRef={listRef} onBeforeExecute={onBeforeExecute} />
+              <CommandUniverseCommandPage
+                listRef={listRef}
+                onFocusedRowChange={onFocusedRowChange}
+                onBeforeExecute={onBeforeExecute}
+              />
             ) : (
               <Page {...page.props} />
             )}

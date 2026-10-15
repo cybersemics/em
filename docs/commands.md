@@ -908,3 +908,5 @@ Add or remove devices that can access and edit this thoughtspace.
 Cancel the current gesture.
 
 Search and sort order live in `commandUniverseNavigation` beside the page history, and every navigation reducer carries them over. Visiting details and returning retains both controls. Opening the Command Universe clears the search and keeps the sort order. The sort order starts at the platform default when the app loads: Recently used at the `lg` breakpoint and up, Type below it. `initialState.ts` reads the viewport width once, when the module loads, so crossing the breakpoint later does not change the default. Whatever the user chooses is kept until the app reloads. The commands page supports presentation as a grid or list. Browsing changes are transient and not undoable.
+
+The selection glow lights the focused row. When the focus moves to another row, it fades out of the old row and into the new one, each fade taking the `fast` duration, rather than sliding between them.
