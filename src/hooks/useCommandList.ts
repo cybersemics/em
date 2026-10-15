@@ -1,18 +1,17 @@
 /**
  * This hook supplies the command sections rendered by CommandTable and MobileCommandUniverse.
- * It centralizes three pieces of command-browsing logic:
+ * The caller owns the `search` string and `sortOrder` that its search input and sort button drive, and passes them in.
+ * The hook centralizes two pieces of command-browsing logic:
  *
- * 1. Search and sort state
- * It maintains the `search` string and `sortOrder` state which a consumer component's search input and sort button can drive.
- *
- * 2. Render decision tree
- * The hook unifies the logic for what to render, given the current search and sort state.
+ * 1. Render decision tree
+ * The hook unifies the logic for what to render, given the current search and sort order.
  * When a search query is active, it always overrides sort and collapses results into a single "Results"
  * section of fuzzy matches across all commands.
  * When there is no search query, `sortOrder` determines whether to render commands grouped by type
- * (the multi-section COMMAND_DIFFICULTIES layout) or as a single alphabetical list.
+ * (the multi-section COMMAND_DIFFICULTIES layout), as a single alphabetical list, or as a single list that puts
+ * the recently used commands first.
  *
- * 3. Rendered output shape
+ * 2. Rendered output shape
  * The hook exposes the commands to render as an array of `{ id, title, commands, difficulty? }` sections.
  * This uniform shape allows consumers' render logic to map over `sections` without special cases for different display modes.
  *
@@ -85,27 +84,14 @@ interface CommandSection {
   difficulty?: Pick<CommandDifficulty, 'id' | 'title'>
 }
 
-export interface UseCommandListReturn {
-  /** The current search query. If populated, `sections` will contain a single `CommandSection` titled "Results" with fuzzy matched search results. */
+/** Derives command sections from the search and ordering owned by its caller. */
+const useCommandList = ({
+  search,
+  sortOrder,
+}: {
   search: string
-
-  /** Sets the current search query. It also updates the filtered `sections`. */
-  setSearch: (value: string) => void
-
-  /** The current sort mode. Only consulted when `search` is empty. */
   sortOrder: CommandSortType
-
-  /** Sets the current sort mode. The selected sort mode is only consulted when `search` is empty. */
-  setSortOrder: (value: CommandSortType) => void
-
-  /** The commands to render, organized into titled sections. The shape of this data depends on the current `search` and `sortOrder` state. */
-  sections: CommandSection[]
-}
-
-/** A hook that allows consumers to access, search and sort a list of commands. */
-const useCommandList = (): UseCommandListReturn => {
-  const [search, setSearch] = useState('')
-  const [sortOrder, setSortOrder] = useState<CommandSortType>('type')
+}): { sections: CommandSection[] } => {
   const [recentCommands] = useState(() => storageModel.get('recentCommands'))
   const filteredCommands = useFilteredCommands(search, {
     platformCommandsOnly: true,
@@ -119,7 +105,7 @@ const useCommandList = (): UseCommandListReturn => {
     return [{ id: 'allCommands', title: 'All Commands', commands: commandsSortedByLabel }]
   }, [search, sortOrder, filteredCommands])
 
-  return { search, setSearch, sortOrder, setSortOrder, sections }
+  return { sections }
 }
 
 export default useCommandList

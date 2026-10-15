@@ -109,6 +109,8 @@ const initialState = (created: Timestamp = timestamp()) => {
     commandUniverseNavigation: {
       entries: [{ entryId: 'root', page: { pageId: 'grid', props: {} }, arrival: null }],
       index: 0,
+      search: '',
+      sortOrder: 'type',
     },
     contextViews: {},
     cursor: null,

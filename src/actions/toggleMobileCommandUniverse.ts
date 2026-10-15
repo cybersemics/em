@@ -4,17 +4,29 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import reducerFlow from '../util/reducerFlow'
-import commandUniverseReset from './commandUniverseReset'
 import { saveSelectionOffsetsActionCreator as saveSelectionOffsets } from './saveSelectionOffsets'
 
-/** Toggles (hide/show) the mobile command universe. */
-const toggleMobileCommandUniverse = (state: State, { value, entryId }: { value?: boolean; entryId?: string }) => {
+/** Toggles (hide/show) the mobile command universe. Opening it starts a fresh session at the grid root, with the search cleared and the sort order reset to Type. */
+const toggleMobileCommandUniverse = (
+  state: State,
+  { value, entryId = 'root' }: { value?: boolean; entryId?: string },
+): State => {
   const isOpen = value == null ? !state.showMobileCommandUniverse : value
-  return reducerFlow([
-    state => ({ ...state, showMobileCommandUniverse: isOpen }),
-    isOpen && !state.showMobileCommandUniverse ? state => commandUniverseReset(state, { entryId }) : null,
-  ])(state)
+  const isOpening = isOpen && !state.showMobileCommandUniverse
+  return {
+    ...state,
+    showMobileCommandUniverse: isOpen,
+    ...(isOpening
+      ? {
+          commandUniverseNavigation: {
+            entries: [{ entryId, page: { pageId: 'grid', props: {} }, arrival: null }],
+            index: 0,
+            search: '',
+            sortOrder: 'type',
+          },
+        }
+      : null),
+  }
 }
 
 /** Action-creator for toggleMobileCommandUniverse. */
