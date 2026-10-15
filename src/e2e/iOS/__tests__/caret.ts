@@ -18,8 +18,8 @@ import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import scrubSpaceBar from '../helpers/scrubSpaceBar'
 import setFontSize from '../helpers/setFontSize'
-import setSelection from '../helpers/setSelection'
 import tap from '../helpers/tap'
+import waitForCaretOffset from '../helpers/waitForCaretOffset'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
@@ -407,20 +407,18 @@ describe('Caret', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4220
-  it('a tap on the word before the caret moves the caret to it', async () => {
+  it('Tap moves the caret to a word a few characters away', async () => {
     const value = 'Hello beautiful people in the world'
     await newThought(value)
     const editable = await waitForEditable(value)
     await waitUntil(isKeyboardShown)
 
-    await setSelection('Hello beautiful people in the '.length, 'Hello beautiful people in the '.length)
-    await browser.pause(700)
+    // place the caret before "the"
+    await tap(editable, { offset: 26, pointerType: 'touch' })
+    await waitForCaretOffset(26)
 
-    // the "h" of "the"
-    await tap(editable, { offset: 'Hello beautiful people in t'.length, x: 3, pointerType: 'touch' })
-    // iOS moves the caret back within about 100ms of the touchend
-    await browser.pause(1000)
-
-    expect(await getSelection().focusOffset).toBeLessThanOrEqual('Hello beautiful people in the'.length)
+    // tap the "i" of "in", four characters to the left of the caret
+    await tap(editable, { offset: 23, pointerType: 'touch' })
+    await waitForCaretOffset(23)
   })
 })
