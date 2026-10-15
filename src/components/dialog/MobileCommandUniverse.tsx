@@ -4,10 +4,10 @@ import { css } from '../../../styled-system/css'
 import { commandUniverseBackActionCreator as commandUniverseBack } from '../../actions/commandUniverseBack'
 import { commandUniverseForwardActionCreator as commandUniverseForward } from '../../actions/commandUniverseForward'
 import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
+import CommandUniverseHeader from '../CommandUniverse/CommandUniverseHeader'
 import CommandUniversePageRouter from '../CommandUniverse/CommandUniversePageRouter'
 import FadeTransition from '../FadeTransition'
 import Dialog from './Dialog'
-import DialogHeader from './DialogHeader'
 
 /** Composes the Commands dialog without owning history or animation mechanics. */
 const CommandUniverseDialog = ({ isOpen }: { isOpen: boolean }) => {
@@ -23,7 +23,7 @@ const CommandUniverseDialog = ({ isOpen }: { isOpen: boolean }) => {
   return (
     <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
       <Dialog onClose={onClose} nodeRef={nodeRef}>
-        <DialogHeader
+        <CommandUniverseHeader
           onClose={onClose}
           onBack={onBack}
           onForward={onForward}
@@ -31,7 +31,7 @@ const CommandUniverseDialog = ({ isOpen }: { isOpen: boolean }) => {
           canGoForward={index < entries.length - 1}
         >
           Commands
-        </DialogHeader>
+        </CommandUniverseHeader>
         <div className={css({ height: 'min(70vh, 70dvh)', minHeight: 0 })}>
           <CommandUniversePageRouter />
         </div>
