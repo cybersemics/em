@@ -1,12 +1,12 @@
 ---
 name: create-issue
 description: >-
-  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another. Triggers on "create issue", "write issue", "file an issue", "open an issue", "make an issue", "report a bug", and any request to draft or edit issue text.
+  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another. Also covers the description of a pull request with no linked issue, which carries Steps to Reproduce, Current Behavior and Expected Behavior itself. Triggers on "create issue", "write issue", "file an issue", "open an issue", "make an issue", "report a bug", and any request to draft or edit issue text.
 allowed-tools:
   - bash
 ---
 
-Issues reporting broken behaviour in this repo follow a fixed format.
+Issues reporting broken behaviour in this repo follow a fixed format. A pull request with no linked issue reports the behaviour it fixes in its own description, using the same three sections, and everything below about them applies there too. A pull request that links an issue leaves them to the issue.
 
 ## Ask before posting
 
@@ -43,6 +43,17 @@ A round is not a quota. Two real questions and a third found by casting about is
 
 The rounds are cheap next to what they prevent — a question the reporter would have answered in a second breath, left instead as a guess in the issue or as a decision the assignee makes alone.
 
+### Design questions
+
+A feature whose design is still being decided is asked about one question at a time, and every decision is taken with the ask tool. The ask tool renders only short single-line text, though, and a design choice is only judged by seeing what it produces. When a question or its options depend on content the tool cannot render, such as steps, an outline or a table, render that content first in a separate reply, labelling the options with letters. Then ask for the decision with the ask tool, with options that refer back to those letters.
+
+- Open with the question as one plain sentence.
+- Give a starting tree in em's outline format, and numbered steps in the order a user would actually arrive at it. A tree a user could only reach by turning on a view and then typing should be built that way in the steps, not written out first.
+- Show each option's result: the resulting tree in outline format when the question is about structure, and a rendered Markdown table (not ASCII) when it is about layout. Keep the two separate, since the tree is the data and the table only its rendering.
+- When an option refers back to a step, name the step as well as its number: "After step 4, Insert Header Row, ...". The reader should not have to scroll back to learn what step 4 was.
+
+The answers to these questions are revised often, including ones given several rounds earlier. Do not post or rewrite the issue until the reporter says the design is settled, and treat a declined or interrupted question as a question still open, not as the end of the design.
+
 ## The template
 
 Exactly these headings, at `##`, in this order:
@@ -60,6 +71,29 @@ Exactly these headings, at `##`, in this order:
 
 
 ```
+
+A brand new feature omits `## Current Behavior`. Nothing exists yet to observe, and a line saying so ("Settings has no such link") restates the title. Keep Steps to Reproduce and Expected Behavior: the steps are how the feature will be used, and Expected Behavior is what it should do.
+
+Every thought tree in these sections is a fenced code block in em's outline format: the starting state in Steps to Reproduce, and the result in Current and Expected Behavior. Never write one as Markdown bullets in the body. GitHub renders those as the issue's own list, where a thought cannot be told apart from a step, a requirement or a note, and the outline can no longer be pasted into em to reproduce it.
+
+````markdown
+## Current Behavior
+
+```
+- antelucan
+  - Occurring before dawn; relating to the period immediately preceding sunrise.
+```
+
+## Expected Behavior
+
+The definition should be split into one subthought per sentence:
+
+```
+- antelucan
+  - Occurring before dawn
+  - Relating to the period immediately preceding sunrise
+```
+````
 
 ### Steps to Reproduce
 
@@ -84,6 +118,17 @@ Where the bug depends on a particular thought tree, give it as a fenced code blo
 The tree is the starting state, so it already says to create it. Do not add a step for that — "Create the thoughts above: `a`, `b`, and a `=note` on `a`" is the code block read back as prose, and the reader has to compare the two to find out they match. Number the steps from the first action taken on the tree.
 
 The same holds for anything the outline itself shows: which thoughts are children of which, that the last one is empty, that a thought carries a `=note`. A step is for what the outline cannot show — a caret position, a setting, a device width, a collapsed thought.
+
+The reverse holds too: a thought is content, never a step. A request often lists the content and leaves the action implied, as in "Steps: - antelucan" for a bug in Define Term. Read that as a tree and an action, not as a step named `antelucan`. The thought goes in the outline, and the steps say where the cursor is and which command runs on it:
+
+````markdown
+```
+- antelucan
+```
+
+1. Set the cursor on `antelucan`.
+2. Define Term (`↑→←`).
+````
 
 Every reproduction starts from a fresh app with no saved data, so that goes unsaid. "Open **em** with no saved data" is not a step. Number the steps from the first action taken in the app. Name a starting state only when it departs from a fresh app, such as a returning user or a setting already changed.
 
@@ -252,7 +297,9 @@ Verify it landed, since a body reference and a relationship look alike once rend
 gh issue view 5226 --repo cybersemics/em --json blockedBy
 ```
 
-Prefer `gh` to the REST endpoint, `POST /repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by`, which takes `issue_id` — the blocker's numeric database id, from `gh api repos/cybersemics/em/issues/5228 --jq .id` — rather than its issue number.
+Where `gh` cannot reach GitHub's GraphQL API, as in Claude Code cloud sessions, `gh issue create` and `gh issue edit` fail with HTTP 403. Create the issue with `gh api repos/cybersemics/em/issues -f title=... -f 'labels[]=feature' -F body=@body.md`, and set relationships through the REST endpoints below.
+
+Otherwise prefer `gh` to the REST endpoint, `POST /repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by`, which takes `issue_id` — the blocker's numeric database id, from `gh api repos/cybersemics/em/issues/5228 --jq .id` — rather than its issue number.
 
 Keep a `## Notes` bullet beside the relationship where the reason is not obvious from the two titles. The relationship carries the fact; only the note carries the why. [#5226](https://github.com/cybersemics/em/issues/5226):
 
@@ -294,7 +341,7 @@ Thought text turns up in more of a log than the `value` fields. Check all of the
 
 - `value`, `oldValue` and `newValue`, including inside `thoughts`, `sample` and `integrity` entries.
 - `data` on `input`, `beforeinput` and `composition` entries, and `key` on `keydown` entries when it is a printable character. These spell out what was typed one keystroke at a time.
-- `payload` on `action` entries, a stringified JSON object where the text appears escaped (`\"value\":\"...\"`) and in fields like `text` on `importData`.
+- The fields of `action` entries, which carry the action's payload, in fields like `text` on `importData`. In a payload the field cap cut, they sit inside a `payload` string where the text appears escaped (`\"value\":\"...\"`).
 - Each line of `--- state.thoughts`.
 
 Leave thought ids, ranks, sequence numbers, timestamps, action types, and the `---` device header as they are. None of them is the reporter's writing, and they are what lets the excerpt be matched to the log.
@@ -325,9 +372,12 @@ New issues often originate in a comment thread on another issue or PR.
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
 - A step telling the reader to create the thoughts the outline above already gives.
+- A thought listed as a step, as in `- antelucan` under Steps to Reproduce, with no outline and no command named.
+- A thought tree in Steps to Reproduce, Current Behavior or Expected Behavior written as Markdown bullets rather than an outline in a fenced code block.
 - A first step telling the reader to open a fresh app, which every reproduction already assumes.
 - A gesture written as letters — `ldr` where `←↓→` is what the reader swipes.
 - A keyboard shortcut written as plain text — `(Shift + Alt + S)` where `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>` is what renders as keys.
+- A Current Behavior on a brand new feature, describing that the feature does not exist yet.
 - A Current Behavior carrying a qualifier about the reproduction — "No drag is needed" — where the condition belongs in the steps.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
@@ -352,4 +402,4 @@ Ask, as above. State whatever survives the answers in the preamble rather than o
 
 Do not guess Expected Behavior, since a guess there becomes a regression test asserting behaviour nobody chose.
 
-- Use the ask tool now to inquire about ambiguous or undecided details. Never mark a new issue with the `design-needed` label. If more design is needed, or an answer leaves something newly undecided, break it down and ask another round with the ask tool, as many rounds as it takes to close the last question.
+- Use the ask tool now to inquire about ambiguous or undecided details. For design questions, render what the ask tool cannot first, as in [Design questions](#design-questions). Never mark a new issue with the `design-needed` label. If more design is needed, or an answer leaves something newly undecided, break it down and ask another round with the ask tool, as many rounds as it takes to close the last question.

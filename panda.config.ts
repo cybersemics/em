@@ -1,5 +1,6 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
+import breakpointsConfig from './src/breakpoints.config'
 import durationsConfig from './src/durations.config'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
@@ -274,6 +275,11 @@ const globalCss = defineGlobalStyles({
         userSelect: 'none',
       },
     },
+    // Hide the caret of the collapsed selection during a native text drag on Android, leaving the single drop
+    // caret rendered by NativeTextDragCaret. See onAndroidDragOver in NativeTextDragCaret.tsx.
+    _nativeTextDrag: {
+      caretColor: 'transparent',
+    },
     _test: {
       // Caret should be invisible in puppeteer tests as the blink timing differs between runs and will fail the screenshot tests.
       // Do this here rather than programmatically in order to avoid an extra page.evaluate.
@@ -292,6 +298,20 @@ const globalCss = defineGlobalStyles({
   },
   /* Disables pull-to-refresh but allows overscroll glow effects. */
   body: { overscrollBehaviorY: 'contain', color: 'fg', backgroundColor: 'bg' },
+  // In the dark theme, matches the caret to the Android app's native selection handles, which the Android theme tints with selectionHandle (android/app/src/main/res/values/styles.xml). On iOS, caret-color also tints the selection handles and selection highlight.
+  // Set on the body rather than on the editable so that the hideCaret animation on the LayoutTree can still hide the caret through inheritance.
+  'body[data-device=mobile][data-color-mode=dark]': { caretColor: 'selectionHandle' },
+  // Matches mobile Chromium's selection to the iOS highlight, a 0.2 alpha tint that iOS draws over the text, so the text shows through tinted. iOS ignores ::selection, and Desktop Chrome, Safari and Firefox keep their native highlight.
+  'body[data-device=mobile][data-browser=chrome] ::selection': { backgroundColor: 'selectionHighlight' },
+  'body[data-device=mobile][data-browser=chrome] [data-editable]::selection, body[data-device=mobile][data-browser=chrome] [data-editable] ::selection':
+    {
+      color: 'selectionHighlightText',
+    },
+  'body[data-device=mobile][data-browser=chrome] [aria-label=note-editable]::selection, body[data-device=mobile][data-browser=chrome] [aria-label=note-editable] ::selection':
+    { color: 'selectionHighlightDimText' },
+  // Colored text keeps its own color, since currentColor in a highlight resolves to the parent highlight's color and cannot be blended with the tint per element.
+  'body[data-device=mobile][data-browser=chrome] :is(font[color], [data-editable][style*=color], [data-editable] [style*=color], [aria-label=note-editable] [style*=color])::selection, body[data-device=mobile][data-browser=chrome] :is(font[color], [data-editable][style*=color], [data-editable] [style*=color], [aria-label=note-editable] [style*=color]) ::selection':
+    { color: 'currentColor' },
   button: { fontSize: '1.2em' },
   a: {
     cursor: 'pointer',
@@ -457,14 +477,7 @@ export default defineConfig({
   theme: {
     extend: {
       keyframes,
-      breakpoints: {
-        sm: '320px', // approx size of iPhone SE
-        md: '400px', // approx size of iPhone 12 Pro
-        lg: '600px', // landscape mobile devices and larger
-        xl: '800px', // approx size of a laptop
-        '2xl': '1000px', // approx size of a desktop
-        '3xl': '1200px', // approx size of a large desktop
-      },
+      breakpoints: breakpointsConfig,
       tokens: {
         colors: colorTokens,
         easings: {
@@ -631,6 +644,7 @@ export default defineConfig({
     iphone: '[data-platform=iphone] &',
     dragHold: '[data-drag-hold=true] &',
     dragInProgress: '[data-drag-in-progress=true] &',
+    nativeTextDrag: '[data-native-text-drag=true] &',
   },
 
   // The output directory for your css system

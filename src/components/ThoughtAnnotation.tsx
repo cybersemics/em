@@ -2,7 +2,6 @@ import moize from 'moize'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -110,7 +109,7 @@ const ThoughtAnnotation = React.memo(
     numContexts,
     showSuperscript,
     simplePath,
-    cssRaw,
+    className,
     style,
     // only applied to the .subthought container
     styleAnnotation,
@@ -124,7 +123,7 @@ const ThoughtAnnotation = React.memo(
     numContexts: number
     showSuperscript?: boolean
     simplePath: SimplePath
-    cssRaw?: SystemStyleObject
+    className?: string
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
     url?: string | null
@@ -160,7 +159,7 @@ const ThoughtAnnotation = React.memo(
         ellipsizedUrl={ellipsizedUrl}
         value={value}
         styleAnnotation={styleAnnotation}
-        cssRaw={cssRaw}
+        className={className}
         style={style}
         textMarkup={textMarkup}
         placeholder={placeholder}
@@ -173,7 +172,13 @@ const ThoughtAnnotation = React.memo(
         {
           // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
           showSuperscript ? (
-            <StaticSuperscript absolute n={numContexts} style={style} cssRaw={cssRaw} thoughtId={head(simplePath)} />
+            <StaticSuperscript
+              absolute
+              n={numContexts}
+              style={style}
+              className={className}
+              thoughtId={head(simplePath)}
+            />
           ) : null
         }
         <span className={css({ fontSize: '1.25em', margin: '-0.3625em 0 0 -0.0875em', position: 'absolute' })}>
@@ -193,7 +198,7 @@ const ThoughtAnnotationContainer = React.memo(
     ellipsizedUrl,
     placeholder,
     invalidState,
-    cssRaw,
+    className,
     style,
     // only applied to the .subthought container
     styleAnnotation,
@@ -208,7 +213,7 @@ const ThoughtAnnotationContainer = React.memo(
     placeholder?: string
     showContextBreadcrumbs?: boolean
     simplePath: SimplePath
-    cssRaw?: SystemStyleObject
+    className?: string
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
   }) => {
@@ -301,7 +306,7 @@ const ThoughtAnnotationContainer = React.memo(
           ellipsizedUrl: ellipsizedUrl,
           numContexts,
           showSuperscript,
-          cssRaw,
+          className,
           style,
           styleAnnotation,
           email,

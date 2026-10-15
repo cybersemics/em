@@ -99,7 +99,7 @@ const pushQueue: StoreEnhancer<any> =
             const value = thought.value.length > 100 ? `${thought.value.slice(0, 100)}…` : thought.value
             return { id, value, rank: thought.rank }
           })
-          debugLog.log('push', {
+          debugLog.log('push', () => ({
             batches: (dbQueue ?? []).length,
             thoughtCount: thoughtUpdates.length,
             deleteCount: thoughtUpdates.filter(([, thought]) => !thought).length,
@@ -108,7 +108,7 @@ const pushQueue: StoreEnhancer<any> =
             local: (dbQueue ?? []).some(batch => batch.local !== false),
             remote: (dbQueue ?? []).some(batch => batch.remote !== false),
             thoughts: sample,
-          })
+          }))
         }
 
         /** Pushes queued updates to the active thoughtspace provider sequentially. */
@@ -130,7 +130,7 @@ const pushQueue: StoreEnhancer<any> =
           })
           .catch(err => {
             console.error('Thoughtspace persistence failed', err)
-            debugLog.log('pushError', { error: String(err) })
+            debugLog.log('pushError', () => ({ error: String(err) }))
           })
       }
 
