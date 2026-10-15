@@ -139,7 +139,7 @@ const DesktopCommandUniverse: FC<{
       const commandsNew = [command.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
       restoreSelection()
       dispatch(desktopCommandUniverse())
-      executeCommandWithMulticursor(command, { event: e, type: 'desktopCommandUniverse', store })
+      executeCommandWithMulticursor(command, { event: e, type: 'commandUniverse', store })
       storageModel.set('recentCommands', commandsNew)
       setRecentCommands(commandsNew)
     },
