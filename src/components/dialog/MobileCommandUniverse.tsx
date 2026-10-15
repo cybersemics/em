@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, MotionValue, motion } from 'motion/react'
 import {
   ComponentProps,
   ComponentRef,
@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
+import { dialogRecipe } from '../../../styled-system/recipes'
 import Command from '../../@types/Command'
 import CommandId from '../../@types/CommandId'
 import State from '../../@types/State'
@@ -156,10 +157,18 @@ const RowGlow = ({ row, isActive }: { row: HTMLLIElement; isActive: boolean }) =
   )
 }
 
-/** The clip box that holds the light for the focused row. It gives the light room to spill past the glass, carries the screen blend and the soft edge fades, and hosts the crossfade between rows. */
-const SelectionGlow = ({ row, isActive }: { row: HTMLLIElement | null; isActive: boolean }) => {
+/** The clip box that holds the light for the focused row. It gives the light room to spill past the glass, carries the screen blend and the soft edge fades, fades with the dialog as it opens and closes, and hosts the crossfade between rows. */
+const SelectionGlow = ({
+  row,
+  isActive,
+  surfaceOpacity,
+}: {
+  row: HTMLLIElement | null
+  isActive: boolean
+  surfaceOpacity: MotionValue<number>
+}) => {
   return (
-    <div
+    <motion.div
       aria-hidden
       className={css({
         // Laid over the glass by the positioner's grid rather than absolutely positioned, so the light's containing block is the positioner, which holds the rows the light is anchored to. The mask below clips the light to this box.
@@ -179,11 +188,13 @@ const SelectionGlow = ({ row, isActive }: { row: HTMLLIElement | null; isActive:
         // Without anchor positioning (Safari before 26), the light could not find its row, so there is none.
         '@supports not (anchor-name: --row)': { display: 'none' },
       })}
+      // Fades with the dialog as it opens and closes.
+      style={{ opacity: surfaceOpacity }}
     >
       <AnimatePresence>
         {row && <RowGlow key={row.getAttribute('data-cu-command-id')} row={row} isActive={isActive} />}
       </AnimatePresence>
-    </div>
+    </motion.div>
   )
 }
 
@@ -196,6 +207,7 @@ const CommandUniverseSession = ({
   animation: ComponentProps<typeof Dialog>['animation']
 }) => {
   const dispatch = useDispatch()
+  const dialog = dialogRecipe()
   const [focusedRow, setFocusedRow] = useState<HTMLLIElement | null>(null)
   const isDesktop = useBreakpoint('lg')
   const restoreSelection = useCommandUniverseSelection({ enabled: isDesktop })
@@ -253,12 +265,21 @@ const CommandUniverseSession = ({
         className={css({
           position: 'relative',
           width: '100%',
+          containerType: 'inline-size',
           // Stacks the glass and the selection glow in one cell.
           display: 'grid',
           '& > *': { gridArea: '1 / 1' },
         })}
       >
-        <DialogGlass>
+        <motion.div className={dialog.glassBackdropBlur} style={{ opacity: animation.opacity }} />
+        <motion.div
+          className={css({ position: 'absolute', inset: 0, pointerEvents: 'none' })}
+          style={{ opacity: animation.opacity }}
+        >
+          <div className={dialog.roomLight} />
+          <div className={dialog.shellHalo} />
+        </motion.div>
+        <DialogGlass opacity={isDesktop ? animation.opacity : undefined}>
           <CommandUniverseHeader
             onClose={onClose}
             onBack={onBack}
@@ -297,10 +318,19 @@ const CommandUniverseSession = ({
             />
           </div>
         </DialogGlass>
-        {isDesktop && <SelectionGlow row={focusedRow} isActive={isOpen && isCommandsPage} />}
+        <motion.div
+          className={css({ position: 'absolute', inset: 0, pointerEvents: 'none' })}
+          style={{ opacity: animation.opacity }}
+        >
+          <div className={dialog.topLight} />
+          <div className={dialog.topStreak} />
+        </motion.div>
+        {isDesktop && (
+          <SelectionGlow surfaceOpacity={animation.opacity} row={focusedRow} isActive={isOpen && isCommandsPage} />
+        )}
       </div>
       {isDesktop && (
-        <DialogFooter>
+        <DialogFooter opacity={animation.opacity}>
           <CommandUniverseFooter
             canGoBack={nav.index > 0}
             // On the list, Tab opens the focused row's details. On a detail page, it replays the forward history.
