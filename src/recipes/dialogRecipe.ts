@@ -1,8 +1,8 @@
 import { defineSlotRecipe } from '@pandacss/dev'
 
 /**
- * Slot recipe for the liminal-glass Dialog shell. Owns the glass sheet, its decorative
- * highlight/rainbow/stroke layers, and the scrollable content region (Dialog.tsx,
+ * Slot recipe for the liminal-glass Dialog shell. Owns the overlay, the glass sheet, its decorative
+ * highlight/rainbow/stroke layers, and the scrollable content region (Dialog.tsx, DialogGlass.tsx,
  * DialogContent.tsx) so coupled values — radii, paddings, the scroll-fade mask — sit next
  * to each other rather than being kept in sync across files. The header row and its buttons
  * (DialogHeader.tsx, CircleButton.tsx) style themselves inline with `css()`.
@@ -66,6 +66,8 @@ const dialogRecipe = defineSlotRecipe({
       position: 'relative',
       maxWidth: '500px',
       width: '87.5%',
+      lg: { width: '80%', maxWidth: '650px' },
+      '2xl': { maxWidth: '826px' },
     },
     /** Light highlight image pinned to the top of the viewport — bleeds past the top edge of the glass to suggest light spilling onto the surrounding screen. */
     highlightUnclipped: {
@@ -138,6 +140,7 @@ const dialogRecipe = defineSlotRecipe({
       overflow: 'hidden',
       position: 'relative',
       maxHeight: '80dvh',
+      lg: { maxHeight: '560px' },
       display: 'flex',
       flexDirection: 'column',
     },
