@@ -4,7 +4,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
-/** Updates the session's sortOrder. */
+/** Sets the sort order the user chose. It is kept across opens of the Command Universe until the app reloads. */
 const commandUniverseSort = (state: State, { value }: { value: CommandSortType }): State => ({
   ...state,
   commandUniverseNavigation: { ...state.commandUniverseNavigation, sortOrder: value },

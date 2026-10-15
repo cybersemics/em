@@ -1,3 +1,5 @@
+import { token } from '../../styled-system/tokens'
+import CommandSortType from '../@types/CommandSortType'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
@@ -25,6 +27,12 @@ import storage from './storage'
 //       // 193.0.0.1/8 is considered localhost for IPv4.
 //       window.location.hostname.startsWith('127.168.1.'),
 //   )
+
+/** The Command Universe's sort order when the app loads: Recently used at the lg breakpoint and up, Type below it. Read once when this module loads rather than in initialState, so that clear, which runs initialState in a reducer, does not read the DOM. Crossing the breakpoint later does not change it. */
+const defaultCommandSortOrder: CommandSortType =
+  typeof window !== 'undefined' && window.matchMedia(`(min-width: ${token('breakpoints.lg')})`).matches
+    ? 'recent'
+    : 'type'
 
 /** Generates an initial ThoughtIndices with the root, em, and absolute contexts. Note that clientId will be undefined until clientIdReady resolves and initThoughts is dispatched. */
 const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
@@ -110,7 +118,7 @@ const initialState = (created: Timestamp = timestamp()) => {
       entries: [{ entryId: 'root', page: { pageId: 'commands', props: {} }, arrival: null }],
       index: 0,
       search: '',
-      sortOrder: 'type',
+      sortOrder: defaultCommandSortOrder,
     },
     contextViews: {},
     cursor: null,

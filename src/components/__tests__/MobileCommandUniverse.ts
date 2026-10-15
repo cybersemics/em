@@ -5,15 +5,21 @@ import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse
 import indentCommand from '../../commands/indent'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import useViewportForSuite from '../../test-helpers/useViewportForSuite'
+import durations from '../../util/durations'
 
 // These tests cover navigation and focus, not elapsed motion time. Use real Motion with zero-duration settings.
 vi.mock('../CommandUniverse/commandUniverseMotion', () => ({ default: { duration: 0, ease: 'linear' } }))
 
+const originalDurationMode = durations.get('fast') === 0
+beforeEach(() => durations.setInTest(true))
 beforeEach(createTestApp)
+useViewportForSuite({ width: 320 })
 afterEach(async () => {
   // Motion schedules cleanup on its shared frame loop. Unmount before flushing/resetting the fake clock.
   cleanup()
   await cleanupTestApp()
+  durations.setInTest(originalDurationMode)
 })
 
 it('opens command details even when the command cannot execute in the current context', async () => {

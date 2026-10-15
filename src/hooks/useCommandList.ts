@@ -88,14 +88,17 @@ interface CommandSection {
 const useCommandList = ({
   search,
   sortOrder,
+  sortActiveCommandsFirst = false,
 }: {
   search: string
   sortOrder: CommandSortType
+  sortActiveCommandsFirst?: boolean
 }): { sections: CommandSection[] } => {
   const [recentCommands] = useState(() => storageModel.get('recentCommands'))
   const filteredCommands = useFilteredCommands(search, {
     platformCommandsOnly: true,
     recentCommands,
+    sortActiveCommandsFirst,
   })
 
   const sections = useMemo<CommandSection[]>(() => {

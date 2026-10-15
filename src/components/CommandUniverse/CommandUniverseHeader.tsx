@@ -16,6 +16,7 @@ interface CommandUniverseHeaderProps {
   onForward?: () => void
   canGoBack?: boolean
   canGoForward?: boolean
+  searchControls?: React.ReactNode
 }
 
 /**
@@ -32,6 +33,7 @@ const CommandUniverseHeader: React.FC<PropsWithChildren<CommandUniverseHeaderPro
   onForward,
   canGoBack = false,
   canGoForward = false,
+  searchControls,
 }) => {
   const iconFill = token('colors.dialogHeaderButtonIcon')
   const dispatch = useDispatch()
@@ -47,31 +49,67 @@ const CommandUniverseHeader: React.FC<PropsWithChildren<CommandUniverseHeaderPro
     flex: 1,
     '&:last-child': {
       justifyContent: 'flex-end',
+      lg: { flex: '0 0 auto' },
+    },
+    '&:first-child': {
+      lg: { flex: '0 0 auto' },
     },
   })
   return (
     <DialogHeader>
-      <div className={headerSide}>
-        <CircleButton ariaLabel='Back' onClick={onBack} disabled={!canGoBack}>
-          <ArrowLeftIcon size={24} fill={iconFill} />
-        </CircleButton>
-        <CircleButton ariaLabel='Forward' onClick={onForward} disabled={!canGoForward}>
-          <ArrowRightIcon size={24} fill={iconFill} />
-        </CircleButton>
-      </div>
-      <h2
-        className={css({
-          fontWeight: '400',
-          color: 'fg',
-          borderBottom: 'none',
-          fontSize: '1.25rem',
-          margin: 0,
-          textAlign: 'center',
-          whiteSpace: 'nowrap',
-        })}
-      >
-        {children}
-      </h2>
+      {searchControls && (
+        <div
+          aria-hidden
+          className={css({
+            position: 'absolute',
+            inset: 0,
+            // Hangs 2rem below the header and fades out across its bottom edge, so the light dissolves into the list
+            // instead of stopping at a hard line where the header meets it. The list paints above this layer, so the
+            // overhang only lights the glass behind the rows.
+            bottom: '-2rem',
+            pointerEvents: 'none',
+            backgroundImage: 'url(/img/dialog/dialog-search-background.avif)',
+            // Offset by half the overhang so the image stays centred on the header row rather than on the taller box.
+            backgroundPosition: 'center calc(50% - 1rem)',
+            backgroundSize: 'cover',
+            maskImage: 'linear-gradient(to bottom, black 0, black calc(100% - 3.5rem), transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0, black calc(100% - 3.5rem), transparent 100%)',
+            opacity: 0.14,
+            mixBlendMode: 'overlay',
+          })}
+        />
+      )}
+      {!searchControls && (
+        <div className={headerSide}>
+          <CircleButton ariaLabel='Back' onClick={onBack} disabled={!canGoBack}>
+            <ArrowLeftIcon size={24} fill={iconFill} />
+          </CircleButton>
+          <CircleButton ariaLabel='Forward' onClick={onForward} disabled={!canGoForward}>
+            <ArrowRightIcon size={24} fill={iconFill} />
+          </CircleButton>
+        </div>
+      )}
+      {!searchControls && (
+        <h2
+          className={css({
+            fontWeight: '400',
+            color: 'fg',
+            borderBottom: 'none',
+            fontSize: '1.25rem',
+            margin: 0,
+            textAlign: 'center',
+            whiteSpace: 'nowrap',
+            lg: { textAlign: 'left', flex: 1 },
+          })}
+        >
+          {children}
+        </h2>
+      )}
+      {searchControls && (
+        <div className={css({ display: 'flex', flex: 1, minWidth: 0, alignItems: 'center', gap: '0.5rem' })}>
+          {searchControls}
+        </div>
+      )}
       <div className={headerSide}>
         <CircleButton
           ariaLabel='Help'

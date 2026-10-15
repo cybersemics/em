@@ -1,4 +1,5 @@
 import { expectTypeOf } from 'vitest'
+import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
 import CommandUniversePage from '../../@types/CommandUniversePage'
 import store from '../../stores/app'
@@ -155,7 +156,7 @@ it('ignores navigation while closed and resets history when reopened', () => {
   })
 })
 
-it('retains search and sorting through Navigate, Back, and Forward and resets them on a fresh open', () => {
+it('retains search and sorting through Navigate, Back, and Forward', () => {
   const open = toggleMobileCommandUniverse(initialState(), { value: true })
   const searched = commandUniverseSearch(commandUniverseSort(open, { value: 'alphabetical' }), { value: 'indent' })
   const detail = commandUniverseNavigate(searched, {
@@ -168,7 +169,47 @@ it('retains search and sorting through Navigate, Back, and Forward and resets th
   expect(detail.commandUniverseNavigation).toMatchObject({ search: 'indent', sortOrder: 'alphabetical' })
   expect(back.commandUniverseNavigation).toMatchObject({ search: 'indent', sortOrder: 'alphabetical' })
   expect(forward.commandUniverseNavigation).toMatchObject({ search: 'indent', sortOrder: 'alphabetical' })
-  const closed = toggleMobileCommandUniverse(forward, { value: false })
+})
+
+it('clears the search on a fresh open', () => {
+  const open = toggleMobileCommandUniverse(initialState(), { value: true })
+  const closed = toggleMobileCommandUniverse(commandUniverseSearch(open, { value: 'indent' }), { value: false })
   const reopened = toggleMobileCommandUniverse(closed, { value: true })
-  expect(reopened.commandUniverseNavigation).toMatchObject({ search: '', sortOrder: 'type' })
+  expect(reopened.commandUniverseNavigation.search).toBe('')
+})
+
+it('keeps the chosen sort order across opens', () => {
+  const open = toggleMobileCommandUniverse(initialState(), { value: true })
+  const closed = toggleMobileCommandUniverse(commandUniverseSort(open, { value: 'alphabetical' }), { value: false })
+  const reopened = toggleMobileCommandUniverse(closed, { value: true })
+  expect(reopened.commandUniverseNavigation.sortOrder).toBe('alphabetical')
+})
+
+describe('platform default sort order', () => {
+  const desktopQuery = `(min-width: ${token('breakpoints.lg')})`
+
+  /** Loads a fresh initialState module while the viewport does or does not match the lg breakpoint. */
+  const loadInitialState = async (isDesktop: boolean) => {
+    const matchMedia = window.matchMedia
+    vi.spyOn(window, 'matchMedia').mockImplementation(query =>
+      query === desktopQuery ? { ...matchMedia(query), matches: isDesktop } : matchMedia(query),
+    )
+    vi.resetModules()
+    const { default: freshInitialState } = await import('../../util/initialState')
+    return freshInitialState
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('starts at Recently used when the app loads at the lg breakpoint and up', async () => {
+    const freshInitialState = await loadInitialState(true)
+    expect(freshInitialState().commandUniverseNavigation.sortOrder).toBe('recent')
+  })
+
+  it('starts at Type when the app loads below the lg breakpoint', async () => {
+    const freshInitialState = await loadInitialState(false)
+    expect(freshInitialState().commandUniverseNavigation.sortOrder).toBe('type')
+  })
 })
