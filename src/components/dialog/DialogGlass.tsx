@@ -5,7 +5,7 @@ import { dialogRecipe } from '../../../styled-system/recipes'
 const DialogGlass = ({ children }: PropsWithChildren) => {
   const dialog = dialogRecipe()
   return (
-    <div className={dialog.glassSheet}>
+    <div className={dialog.glassSheet} data-cu-glass-sheet='true'>
       {/* Muted-purple radial fill concentrated near the top of the glass. */}
       <div className={dialog.containerBackground} />
       {/* Rounded clip region containing the highlights "trapped" inside the glass. */}
