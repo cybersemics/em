@@ -911,3 +911,5 @@ Search and sort order live in `commandUniverseNavigation` beside the page histor
 The selection glow lights the focused row. When the focus moves to another row, it fades out of the old row and into the new one, each fade taking the `fast` duration, rather than sliding between them.
 
 During a Command Universe page zoom, the destination accepts input immediately. Focus moves at navigation start rather than completion, so completing the animation does not steal focus from a control already used. The selection glow fades back over the return zoom and returns at its normal size.
+
+The optional deferred-rendering layer draws twelve command rows initially and schedules the remainder after the opening animation plus 50 ms. The complete navigation collection exists immediately. This approach remains a performance proposal: it needs measured opening-time benefit and review of interactions with rows not yet mounted before adoption.
