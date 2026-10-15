@@ -10,6 +10,7 @@ import CommandUniverseHeader from '../CommandUniverse/CommandUniverseHeader'
 import CommandUniversePageRouter from '../CommandUniverse/CommandUniversePageRouter'
 import ScaleFadeTransition from '../ScaleFadeTransition'
 import Dialog from './Dialog'
+import DialogGlass from './DialogGlass'
 
 /** Preloads the decorative dialog images before the user opens Commands. */
 const HiddenDialogAssets = () => (
@@ -33,18 +34,20 @@ const CommandUniverseDialog = ({ animation }: { animation: ComponentProps<typeof
 
   return (
     <Dialog animation={animation} onClose={onClose} nodeRef={nodeRef}>
-      <CommandUniverseHeader
-        onClose={onClose}
-        onBack={onBack}
-        onForward={onForward}
-        canGoBack={index > 0}
-        canGoForward={index < entries.length - 1}
-      >
-        Commands
-      </CommandUniverseHeader>
-      <div className={css({ height: 'min(70vh, 70dvh)', minHeight: 0 })}>
-        <CommandUniversePageRouter />
-      </div>
+      <DialogGlass>
+        <CommandUniverseHeader
+          onClose={onClose}
+          onBack={onBack}
+          onForward={onForward}
+          canGoBack={index > 0}
+          canGoForward={index < entries.length - 1}
+        >
+          Commands
+        </CommandUniverseHeader>
+        <div className={css({ height: 'min(70vh, 70dvh)', minHeight: 0 })}>
+          <CommandUniversePageRouter />
+        </div>
+      </DialogGlass>
     </Dialog>
   )
 }
