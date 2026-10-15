@@ -334,3 +334,23 @@ it('leaves the caret to the mousedown of a tap that gets mouse events', async ()
 
   expect(selection.offsetFromNode(editable)).toBe(2)
 })
+
+it('leaves a caret that returns to where it was more than 500ms after the touch began', async () => {
+  store.dispatch([importText({ text: '- ab cd\n- e' }), setCursor(['ab cd']), keyboardOpen({ value: true })])
+
+  const editable = createEditable(head(store.getState().cursor!), 'ab cd')
+  mountEditMode(editable)
+  act(() => editable.focus())
+  moveCaret(editable, 2)
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  getCaretOffset.mockReturnValue({ offset: 3 })
+  // a held finger dragging the caret away and slowly back, as with the loupe
+  touchStartAt(editable, 40, 10)
+  moveCaret(editable, 5)
+  await act(() => vi.advanceTimersByTimeAsync(600))
+  moveCaret(editable, 2)
+  await act(vi.runAllTimersAsync)
+
+  expect(selection.offsetFromNode(editable)).toBe(2)
+})
