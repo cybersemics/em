@@ -1,162 +1,241 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { css, cx } from '../../styled-system/css'
+// PROTOTYPE — visual experiment only, not for merge. A popup-button menu: on open, the selected
+// option sits exactly where the button's icon was and the other options unfold above and below it,
+// over a fog that dims the dialog and a purple glow behind the menu. The menu renders into the
+// dialog's glass sheet (data-glass-sheet in Dialog.tsx) because the page-transition wrapper around
+// the search row has overflow: hidden and would clip anything above the row.
+import { ComponentType, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import CommandSortType from '../@types/CommandSortType'
-import useOnClickOutside from '../hooks/useOnClickOutside'
-import FadeTransition from './FadeTransition'
-import SortOption from './SortOption'
+import { DEFAULT_FONT_SIZE } from '../constants'
+import { MEDIUM_DURATION, cssEaseOut } from './Sidebar/constants'
 import AToZIcon from './icons/AToZIcon'
-import ClockIcon from './icons/ClockIcon'
 import CommandsListIcon from './icons/CommandsListIcon'
 
 interface CommandUniverseSortButtonProps {
-  /** Currently selected sort. Controlled — the parent (`useCommandList`) owns the value. */
-  sortOrder: CommandSortType
   onSortChange: (sortOrder: CommandSortType) => void
 }
 
-/**
- * Group/sort button used by the Mobile Command Universe dialog. Flush styling (no
- * border or background) with the new 24×24 list glyph.
- *
- * Controlled component — the displayed glyph and the radio selection are driven by
- * `sortOrder`, so a default flip from the parent (e.g. desktop opening with `'recent'`
- * pre-selected) is reflected here without per-component initial state.
- *
- * Distinct from SortButton (used by Help / CustomizeToolbar via CommandTable),
- * which keeps the legacy bordered look.
- */
-const CommandUniverseSortButton = ({ sortOrder: selectedSort, onSortChange }: CommandUniverseSortButtonProps) => {
-  const [isDropdownOpen, setDropdownOpen] = useState(false)
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const closeDropdown = useCallback(() => setDropdownOpen(false), [])
+const OPTIONS: {
+  sort: CommandSortType
+  label: string
+  icon: ComponentType<{ size?: number; fill?: string; strokeWidth?: number; className?: string }>
+}[] = [
+  { sort: 'type', label: 'Type', icon: CommandsListIcon },
+  { sort: 'alphabetical', label: 'Alphabetical', icon: AToZIcon },
+]
 
-  useOnClickOutside(buttonRef, closeDropdown)
+/** Vertical padding of each option row (px). */
+const ROW_PAD = 6
 
-  /** Closes the sort dropdown when the user scrolls. */
-  const handleScroll = () => {
-    setDropdownOpen(false)
-  }
+/** Lavender used for the selected option, from the design. */
+const SELECTED_COLOR = '#B9AEF5'
+const ICON_COLOR = '#D9D3D5'
 
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll, true)
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true)
-    }
+type Phase = 'closed' | 'open' | 'closing'
+
+const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonProps) => {
+  const [phase, setPhase] = useState<Phase>('closed')
+  const isOpen = phase === 'open'
+  const fontSize = useSelector(state => state.fontSize)
+  const iconSize = Math.min((28 * fontSize) / DEFAULT_FONT_SIZE, 36)
+  const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const rowEls = useRef<Record<string, HTMLDivElement | null>>({})
+  const [sheet, setSheet] = useState<HTMLElement | null>(null)
+  // Button position relative to the glass sheet, measured on open.
+  const [anchor, setAnchor] = useState({ top: 0, right: 0, centerY: 0 })
+  const [offsets, setOffsets] = useState<Record<string, number>>({})
+  const closeTimer = useRef<number>(undefined)
+
+  useLayoutEffect(() => {
+    setSheet(wrapperRef.current?.closest<HTMLElement>('[data-glass-sheet]') ?? null)
   }, [])
 
-  /** Selects a sort order, propagates the change, and closes the dropdown. */
-  const handleSortChange = (sortOrder: CommandSortType) => {
-    onSortChange(sortOrder)
-    setDropdownOpen(false)
+  // Distance from the top of the menu to each option row (transforms don't affect offsetTop).
+  useLayoutEffect(() => {
+    const next: Record<string, number> = {}
+    OPTIONS.forEach(o => {
+      next[o.sort] = rowEls.current[o.sort]?.offsetTop ?? 0
+    })
+    setOffsets(next)
+  }, [sheet, iconSize])
+
+  /** Measures the button against the sheet and opens the menu on top of it. */
+  const open = () => {
+    if (!sheet || !wrapperRef.current) return
+    window.clearTimeout(closeTimer.current)
+    const s = sheet.getBoundingClientRect()
+    const b = wrapperRef.current.getBoundingClientRect()
+    setAnchor({ top: b.top - s.top, right: s.right - b.right, centerY: b.top - s.top + b.height / 2 })
+    setPhase('open')
   }
 
+  /** Folds the menu back onto the button, then hands the icon back to the button. */
+  const close = () => {
+    setPhase('closing')
+    closeTimer.current = window.setTimeout(() => setPhase('closed'), MEDIUM_DURATION * 1000)
+  }
+
+  const transition = (...props: string[]) => props.map(p => `${p} ${MEDIUM_DURATION}s ${cssEaseOut}`).join(', ')
+  const selectedOffset = offsets[selectedSort] ?? 0
+  const SelectedIcon = OPTIONS.find(o => o.sort === selectedSort)!.icon
+
+  const menu = sheet
+    ? createPortal(
+        <div
+          className={css({ position: 'absolute', inset: 0, zIndex: 'dialog' })}
+          style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
+        >
+          {/* Fog: dims and blurs the whole dialog, header included. Tapping it closes the menu. */}
+          <div
+            onClick={close}
+            className={css({ position: 'absolute', inset: 0, backdropFilter: 'blur(10px)' })}
+            style={{
+              backgroundColor: 'rgba(14, 12, 24, 0.72)',
+              opacity: isOpen ? 1 : 0,
+              transition: transition('opacity'),
+            }}
+          />
+
+          {/* Glow behind the menu, blooming out from the selected row. */}
+          <div
+            className={css({ position: 'absolute', pointerEvents: 'none', borderRadius: '50%', filter: 'blur(24px)' })}
+            style={{
+              width: 340,
+              height: 300,
+              right: anchor.right - 70,
+              top: anchor.centerY - 150,
+              background:
+                'radial-gradient(closest-side, rgba(150, 130, 255, 0.55), rgba(110, 95, 230, 0.28) 55%, rgba(90, 80, 200, 0) 100%)',
+              mixBlendMode: 'screen',
+              opacity: isOpen ? 1 : 0,
+              transform: `scale(${isOpen ? 1 : 0.4})`,
+              transition: transition('opacity', 'transform'),
+            }}
+          />
+
+          {/* Menu column, positioned so the selected option's icon lands exactly on the button. */}
+          <div
+            className={css({
+              position: 'absolute',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              whiteSpace: 'nowrap',
+            })}
+            style={{
+              right: anchor.right,
+              top: anchor.top - selectedOffset - ROW_PAD,
+              transition: transition('top'),
+              // Hidden once fully closed; the button draws the icon again.
+              visibility: phase === 'closed' ? 'hidden' : 'visible',
+            }}
+          >
+            <div
+              className={css({ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem' })}
+              style={{
+                color: 'rgba(255, 255, 255, 0.85)',
+                paddingBottom: 4,
+                opacity: isOpen ? 1 : 0,
+                transform: `translateY(${isOpen ? 0 : selectedOffset * 0.5}px)`,
+                transition: transition('opacity', 'transform'),
+              }}
+            >
+              <div
+                style={{ width: 60, height: 1, background: 'linear-gradient(to left, rgba(255,255,255,0.35), transparent)' }}
+              />
+              Sort by…
+            </div>
+
+            {OPTIONS.map(({ sort, label, icon: Icon }) => {
+              const isSelected = sort === selectedSort
+              const color = isSelected ? SELECTED_COLOR : 'rgba(255, 255, 255, 0.85)'
+              return (
+                <div
+                  key={sort}
+                  ref={el => {
+                    rowEls.current[sort] = el
+                  }}
+                  onClick={() => {
+                    setSelectedSort(sort)
+                    onSortChange(sort)
+                    close()
+                  }}
+                  className={css({
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    gap: '0.6rem',
+                    cursor: 'pointer',
+                  })}
+                  style={{
+                    paddingBlock: ROW_PAD,
+                    // The selected row never moves; the others start tucked toward it and fan out as they fade in.
+                    opacity: isSelected || isOpen ? 1 : 0,
+                    transform: `translateY(${isSelected || isOpen ? 0 : (selectedOffset - (offsets[sort] ?? 0)) * 0.5}px)`,
+                    transition: transition('opacity', 'transform'),
+                  }}
+                >
+                  <span
+                    className={css({ fontSize: '1.05rem' })}
+                    style={{ color, opacity: isOpen ? 1 : 0, transition: transition('opacity', 'color') }}
+                  >
+                    {label}
+                  </span>
+                  <div
+                    className={css({ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' })}
+                    style={{
+                      width: iconSize,
+                      height: iconSize,
+                      // Matches the button glyph (0.5 over plus-lighter) when closed, so the hand-off is invisible.
+                      opacity: isOpen ? 1 : 0.5,
+                      mixBlendMode: isOpen ? 'normal' : 'plus-lighter',
+                      transition: transition('opacity'),
+                    }}
+                  >
+                    <Icon
+                      size={iconSize}
+                      fill={isOpen && isSelected ? SELECTED_COLOR : ICON_COLOR}
+                      strokeWidth={0}
+                      className={css({ flex: 'none' })}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>,
+        sheet,
+      )
+    : null
+
   return (
-    <button
-      ref={buttonRef}
-      type='button'
+    <div
+      ref={wrapperRef}
+      role='button'
       aria-label='Group commands'
-      onClick={() => setDropdownOpen(!isDropdownOpen)}
-      onBlur={closeDropdown}
+      onClick={() => (isOpen ? close() : open())}
       className={css({
-        border: 'none',
-        fontFamily: 'inherit',
-        background: 'transparent',
-        padding: 0,
+        position: 'relative',
+        flex: 'none',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        position: 'relative',
-        // Keep the button (and the dropdown that fades in within it) above the gesture/text layer.
-        zIndex: 'dialog',
-        color: 'fg',
-        flex: 'none',
-        width: '28px',
-        height: '28px',
       })}
+      style={{ width: iconSize, height: iconSize }}
     >
-      {/*
-       * `flex: none` cancels iconRecipe's base `flex: 1`, which would otherwise let the
-       * glyph grow or shrink to whatever size the flex parent gives it. The wrapping div
-       * has explicit size so the icon always renders at its declared size.
-       */}
+      {/* The button's own glyph, hidden while the menu's copy of it is on screen. */}
       <div
-        className={css({
-          flex: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '28px',
-          height: '28px',
-          opacity: 0.5,
-          // Same plus-lighter blend as the search icon and gradient text so the row
-          // reads as one continuous luminous element.
-          mixBlendMode: 'plus-lighter',
-        })}
+        className={css({ display: 'flex', mixBlendMode: 'plus-lighter' })}
+        style={{ opacity: phase === 'closed' ? 0.5 : 0 }}
       >
-        {/* Reflect the active sort mode: A→Z glyph for alphabetical, clock for recent,
-            list/group glyph for type. */}
-        {selectedSort === 'alphabetical' ? (
-          <AToZIcon size={28} fill='#D9D3D5' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
-        ) : selectedSort === 'recent' ? (
-          <ClockIcon size={28} fill='#D9D3D5' strokeWidth={1.5} cssRaw={css.raw({ flex: 'none' })} />
-        ) : (
-          <CommandsListIcon size={28} fill='#D9D3D5' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
-        )}
+        <SelectedIcon size={iconSize} fill={ICON_COLOR} strokeWidth={0} className={css({ flex: 'none' })} />
       </div>
-      <FadeTransition in={isDropdownOpen} type='fast' unmountOnExit>
-        <div
-          className={cx(
-            css({
-              position: 'absolute',
-              top: '100%',
-              marginTop: '0.444rem',
-              right: 0,
-              // This popover is absolutely positioned inside the 28×28px `position: relative`
-              // button, so the button is its containing block. With `right: 0` and no
-              // `width`/`left`, the popover's shrink-to-fit width would collapse toward the
-              // 28px containing block — wrapping "Recently used" onto two lines and floating
-              // its radio out of alignment. `min-width: max-content` sizes the popover to its
-              // widest line's intrinsic content instead, so every option stays on one line.
-              minWidth: 'max-content',
-              backgroundColor: 'darkgray',
-              border: 'solid 1px {colors.gray50}',
-              borderRadius: '8px',
-              zIndex: 'dialog',
-              padding: '1rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.444rem',
-            }),
-          )}
-        >
-          <h2
-            className={css({
-              color: 'gray50',
-              borderBottom: 'none',
-              textAlign: 'left',
-              fontSize: '0.8rem',
-              margin: '0',
-            })}
-          >
-            Sort by:
-          </h2>
-          <SortOption
-            sort={'alphabetical'}
-            label='Alphabetical'
-            selectedSort={selectedSort}
-            handleSortChange={handleSortChange}
-          />
-          <SortOption sort={'type'} label='Type' selectedSort={selectedSort} handleSortChange={handleSortChange} />
-          <SortOption
-            sort={'recent'}
-            label='Recently used'
-            selectedSort={selectedSort}
-            handleSortChange={handleSortChange}
-          />
-        </div>
-      </FadeTransition>
-    </button>
+      {menu}
+    </div>
   )
 }
 
