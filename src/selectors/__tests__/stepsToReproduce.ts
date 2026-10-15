@@ -239,7 +239,7 @@ it.each([
   ['toolbar', 'Tap the Move Thought Down button.'],
   ['gesture', 'Move Thought Down (↓↑↓).'],
   ['commandCenter', 'Tap Move Thought Down in the Command Center.'],
-  ['desktopCommandUniverse', 'Choose Move Thought Down in the Command Universe.'],
+  ['commandUniverse', 'Choose Move Thought Down in the Command Universe.'],
   ['systemMenu', 'Choose Edit > Move Thought Down in the menu bar.'],
 ] as const)('describe the %s input method of a command', (type, sentence) => {
   store.dispatch([importText({ text: '- a\n- b' }), setCursor(['a'])])
