@@ -5,9 +5,12 @@ import useOnClickOutside from '../hooks/useOnClickOutside'
 import FadeTransition from './FadeTransition'
 import SortOption from './SortOption'
 import AToZIcon from './icons/AToZIcon'
+import ClockIcon from './icons/ClockIcon'
 import CommandsListIcon from './icons/CommandsListIcon'
 
 interface CommandUniverseSortButtonProps {
+  /** Currently selected sort. Controlled — the parent (`useCommandList`) owns the value. */
+  sortOrder: CommandSortType
   onSortChange: (sortOrder: CommandSortType) => void
 }
 
@@ -15,12 +18,15 @@ interface CommandUniverseSortButtonProps {
  * Group/sort button used by the Mobile Command Universe dialog. Flush styling (no
  * border or background) with the new 24×24 list glyph.
  *
+ * Controlled component — the displayed glyph and the radio selection are driven by
+ * `sortOrder`, so a default flip from the parent (e.g. desktop opening with `'recent'`
+ * pre-selected) is reflected here without per-component initial state.
+ *
  * Distinct from SortButton (used by Help / CustomizeToolbar via CommandTable),
  * which keeps the legacy bordered look.
  */
-const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonProps) => {
+const CommandUniverseSortButton = ({ sortOrder: selectedSort, onSortChange }: CommandUniverseSortButtonProps) => {
   const [isDropdownOpen, setDropdownOpen] = useState(false)
-  const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
   const buttonRef = useRef<HTMLButtonElement>(null)
   const closeDropdown = useCallback(() => setDropdownOpen(false), [])
 
@@ -40,7 +46,6 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
 
   /** Selects a sort order, propagates the change, and closes the dropdown. */
   const handleSortChange = (sortOrder: CommandSortType) => {
-    setSelectedSort(sortOrder)
     onSortChange(sortOrder)
     setDropdownOpen(false)
   }
@@ -88,9 +93,12 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
           mixBlendMode: 'plus-lighter',
         })}
       >
-        {/* Reflect the active sort mode: A→Z glyph for alphabetical, list/group glyph for type. */}
+        {/* Reflect the active sort mode: A→Z glyph for alphabetical, clock for recent,
+            list/group glyph for type. */}
         {selectedSort === 'alphabetical' ? (
           <AToZIcon size={28} fill='#D9D3D5' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
+        ) : selectedSort === 'recent' ? (
+          <ClockIcon size={28} fill='#D9D3D5' strokeWidth={1.5} cssRaw={css.raw({ flex: 'none' })} />
         ) : (
           <CommandsListIcon size={28} fill='#D9D3D5' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
         )}
@@ -103,6 +111,13 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
               top: '100%',
               marginTop: '0.444rem',
               right: 0,
+              // This popover is absolutely positioned inside the 28×28px `position: relative`
+              // button, so the button is its containing block. With `right: 0` and no
+              // `width`/`left`, the popover's shrink-to-fit width would collapse toward the
+              // 28px containing block — wrapping "Recently used" onto two lines and floating
+              // its radio out of alignment. `min-width: max-content` sizes the popover to its
+              // widest line's intrinsic content instead, so every option stays on one line.
+              minWidth: 'max-content',
               backgroundColor: 'darkgray',
               border: 'solid 1px {colors.gray50}',
               borderRadius: '8px',
@@ -132,6 +147,12 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
             handleSortChange={handleSortChange}
           />
           <SortOption sort={'type'} label='Type' selectedSort={selectedSort} handleSortChange={handleSortChange} />
+          <SortOption
+            sort={'recent'}
+            label='Recently used'
+            selectedSort={selectedSort}
+            handleSortChange={handleSortChange}
+          />
         </div>
       </FadeTransition>
     </button>

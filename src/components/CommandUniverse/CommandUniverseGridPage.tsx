@@ -45,7 +45,7 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
         })}
       >
         <CommandUniverseSearch onInput={setSearch} />
-        <CommandUniverseSortButton onSortChange={setSortOrder} />
+        <CommandUniverseSortButton sortOrder={sortOrder} onSortChange={setSortOrder} />
       </div>
 
       <DialogContent scrollRef={scrollRef}>
