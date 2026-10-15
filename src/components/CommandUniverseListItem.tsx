@@ -233,10 +233,11 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
       // Lets the parent's user-scroll handler map an `elementFromPoint` hit back to a command
       // key (so the row under the cursor becomes the highlight when the list is scrolled).
       data-cu-command-id={command.id}
+      // Lets the selection glow, which sits outside the list, anchor itself to this row.
+      style={{ anchorName: `--cu-row-${command.id}` }}
       aria-disabled={disabled || undefined}
       className={css({
         position: 'relative',
-        backgroundColor: isFocused ? 'commandSelectedBg' : undefined,
         display: 'flex',
         alignItems: 'center',
         cursor: disabled ? 'default' : 'pointer',

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { ComponentProps } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { SwitchTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
@@ -34,9 +34,11 @@ const isExecutable = (state: State, command: Command) =>
  */
 const CommandUniverseCommandPage = ({
   listRef,
+  onFocusedRowChange,
   onBeforeExecute,
 }: {
   listRef?: React.RefObject<React.ComponentRef<typeof CommandUniverseList> | null>
+  onFocusedRowChange?: ComponentProps<typeof CommandUniverseList>['onFocusedRowChange']
   onBeforeExecute?: () => void
 }) => {
   const dispatch = useDispatch()
@@ -113,6 +115,7 @@ const CommandUniverseCommandPage = ({
           ) : (
             <CommandUniverseList
               ref={listRef}
+              onFocusedRowChange={onFocusedRowChange}
               groups={sections}
               search={search}
               onItemTap={(command, row) => {
