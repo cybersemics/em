@@ -132,8 +132,8 @@ const RowGlow = ({ row, isActive }: { row: HTMLLIElement; isActive: boolean }) =
         initial={false}
         animate={{ opacity: isActive ? (disabled ? 0.5 : 1) : 0, scale: isActive ? 1 : 1.2 }}
         transition={{
-          opacity: { duration: isActive ? 0.2 : 0.22 },
-          scale: commandUniverseMotion,
+          opacity: { duration: isActive ? commandUniverseMotion.duration : 0.22 },
+          scale: { ...commandUniverseMotion, duration: isActive ? 0 : commandUniverseMotion.duration },
         }}
         className={css({
           position: 'absolute',
