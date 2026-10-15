@@ -1,5 +1,13 @@
+import { KnownDevices } from 'puppeteer'
 import click from '../helpers/click'
+import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
+import deviceEmulation from '../helpers/deviceEmulation'
 import newThought from '../helpers/newThought'
+import paste from '../helpers/paste'
+import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
+import waitForEditable from '../helpers/waitForEditable'
+import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -37,5 +45,45 @@ describe('bullet alignment', () => {
     // the bullet sits 1px above the lowercase optical center to balance the uppercase letter most thoughts begin with,
     // up to subpixel rounding
     expect(Math.abs(opticalCenter - bulletCenter - 1)).toBeLessThan(0.1)
+  })
+
+  describe('mobile', () => {
+    deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+    // https://github.com/cybersemics/em/issues/5980
+    it.skip('context view bullet stays inside the cursor highlight in Table View', async () => {
+      await paste('- Aaa')
+      await waitForEditable('Aaa')
+      await clickThought('Aaa')
+      await waitForSelector('[data-testid="bullet-cursor-overlay"]')
+
+      await clickToolbar('Table View')
+      await clickToolbar('Context View')
+      await waitForSelector('::-p-text(This thought is not found in any other contexts.)')
+      await waitForSelector('[aria-label="bullet"] [data-bullet="parent"]')
+      await waitForBrowserSettled()
+
+      const { bulletCenter, bulletRight, highlightCenter, textLeft } = await page.evaluate(() => {
+        const glyph = document.querySelector('[aria-label="bullet"] [data-bullet="parent"]')
+        const highlight = document.querySelector('[data-testid="bullet-cursor-overlay"]')
+        const editable = document.querySelector('[data-editable]')
+        if (!glyph || !highlight || !editable) throw new Error('Bullet glyph, cursor highlight, or editable not found.')
+
+        const glyphRect = glyph.getBoundingClientRect()
+        const highlightRect = highlight.getBoundingClientRect()
+
+        return {
+          bulletCenter: glyphRect.left + glyphRect.width / 2,
+          bulletRight: glyphRect.right,
+          highlightCenter: highlightRect.left + highlightRect.width / 2,
+          textLeft: editable.getBoundingClientRect().left,
+        }
+      })
+
+      // the bullet is horizontally centered in the cursor highlight, up to subpixel rounding
+      expect(Math.abs(bulletCenter - highlightCenter)).toBeLessThan(1)
+      // the bullet does not overlap the thought text
+      expect(bulletRight).toBeLessThanOrEqual(textLeft)
+    })
   })
 })
