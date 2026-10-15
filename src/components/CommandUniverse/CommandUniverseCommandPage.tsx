@@ -1,6 +1,9 @@
 import React from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { SwitchTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
+import { commandUniverseSearchActionCreator } from '../../actions/commandUniverseSearch'
+import { commandUniverseSortActionCreator } from '../../actions/commandUniverseSort'
 import useCommandList from '../../hooks/useCommandList'
 import CommandUniverseGrid from '../CommandUniverseGrid'
 import CommandUniverseSearch from '../CommandUniverseSearch'
@@ -14,8 +17,11 @@ import DialogContent from '../dialog/DialogContent'
  * remain subscribed to gestureStore, and this would trigger unnecessary re-renders when
  * gestures are inputted.
  */
-const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
-  const { search, setSearch, sortOrder, setSortOrder, sections } = useCommandList()
+const CommandUniverseCommandPageComponent: React.FC<Record<string, never>> = () => {
+  const dispatch = useDispatch()
+  const search = useSelector(state => state.commandUniverseBrowsing.search)
+  const sortOrder = useSelector(state => state.commandUniverseBrowsing.sortOrder)
+  const { sections } = useCommandList({ search, sortOrder })
 
   // Pass this ref to `DialogContent`, which owns the scrollable element, so that we can reset
   // the scroll position to the top as results crossfade.
@@ -44,8 +50,11 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
           paddingBlock: '0.5rem',
         })}
       >
-        <CommandUniverseSearch onInput={setSearch} />
-        <CommandUniverseSortButton sortOrder={sortOrder} onSortChange={setSortOrder} />
+        <CommandUniverseSearch onInput={value => dispatch(commandUniverseSearchActionCreator(value))} />
+        <CommandUniverseSortButton
+          sortOrder={sortOrder}
+          onSortChange={value => dispatch(commandUniverseSortActionCreator(value))}
+        />
       </div>
 
       <DialogContent scrollRef={scrollRef}>
@@ -129,7 +138,7 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
   )
 }
 
-const CommandUniverseGridPageMemo = React.memo(CommandUniverseGridPage)
-CommandUniverseGridPageMemo.displayName = 'CommandUniverseGridPage'
+const CommandUniverseCommandPage = React.memo(CommandUniverseCommandPageComponent)
+CommandUniverseCommandPage.displayName = 'CommandUniverseCommandPage'
 
-export default CommandUniverseGridPageMemo
+export default CommandUniverseCommandPage
