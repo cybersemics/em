@@ -71,3 +71,13 @@ it('Note keeps the caret in the new note when invoked from the Command Universe'
   const focused = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'))
   expect(focused).toBe('note-editable')
 })
+
+it('Bold applies only to the selected word when invoked from Command Universe', async () => {
+  await paste('- alpha beta gamma')
+  await clickThought('alpha beta gamma')
+  await setSelection(6, 10)
+
+  await command('Bold', { inputType: 'commandPalette' })
+
+  expect(await getEditingText()).toBe('alpha <b>beta</b> gamma')
+})
