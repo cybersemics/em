@@ -3,6 +3,7 @@ import { SwitchTransition } from 'react-transition-group'
 import { css, cva, cx } from '../../styled-system/css'
 import { modalTextRecipe } from '../../styled-system/recipes'
 import Command from '../@types/Command'
+import CommandSortType from '../@types/CommandSortType'
 import { isTouch } from '../browser'
 import useCommandList from '../hooks/useCommandList'
 import CommandTableSection from './CommandTableSection'
@@ -76,7 +77,9 @@ const CommandDifficultyHeading = ({ title }: { title: string }) => {
 
 /** Renders a table of commands with a fade-in animation when sorting changes. */
 const CommandTable = ({ customize, onSelect, selectedCommand }: CommandTableProps) => {
-  const { search, setSearch, sortOrder, setSortOrder, sections } = useCommandList()
+  const [search, setSearch] = useState('')
+  const [sortOrder, setSortOrder] = useState<CommandSortType>('type')
+  const { sections } = useCommandList({ search, sortOrder })
   const [isMobileGestures, setIsMobileGestures] = useState(isTouch)
 
   return (

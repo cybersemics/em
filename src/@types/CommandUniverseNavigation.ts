@@ -1,6 +1,7 @@
+import CommandSortType from './CommandSortType'
 import CommandUniversePage from './CommandUniversePage'
 
-/** Redux-owned page history for the current Command Universe session. */
+/** Redux-owned page history and browsing controls for the current Command Universe session. */
 interface CommandUniverseNavigation {
   entries: {
     entryId: string
@@ -14,6 +15,10 @@ interface CommandUniverseNavigation {
     } | null
   }[]
   index: number
+  /** The search query typed into the commands page. */
+  search: string
+  /** The order the commands page lists commands in when there is no search. */
+  sortOrder: CommandSortType
 }
 
 export default CommandUniverseNavigation
