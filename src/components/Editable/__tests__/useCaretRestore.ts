@@ -5,7 +5,6 @@ import { importTextActionCreator as importText } from '../../../actions/importTe
 import { keyboardOpenActionCreator as keyboardOpen } from '../../../actions/keyboardOpen'
 import * as selection from '../../../device/selection'
 import store from '../../../stores/app'
-import osVersionStore from '../../../stores/osVersionStore'
 import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
 import head from '../../../util/head'
@@ -253,7 +252,6 @@ const moveCaret = (editable: HTMLElement, offset: number) =>
 
 // https://github.com/cybersemics/em/issues/5981
 it('puts the caret where a withheld tap landed when iOS moves it there and back', async () => {
-  osVersionStore.update(27)
   store.dispatch([importText({ text: '- ab cd\n- e' }), setCursor(['ab cd']), keyboardOpen({ value: true })])
 
   const editable = createEditable(head(store.getState().cursor!), 'ab cd')
@@ -274,7 +272,6 @@ it('puts the caret where a withheld tap landed when iOS moves it there and back'
 })
 
 it('leaves the caret where it was when a withheld tap lands on it', async () => {
-  osVersionStore.update(27)
   store.dispatch([importText({ text: '- ab cd\n- e' }), setCursor(['ab cd']), keyboardOpen({ value: true })])
 
   const editable = createEditable(head(store.getState().cursor!), 'ab cd')
@@ -287,6 +284,51 @@ it('leaves the caret where it was when a withheld tap lands on it', async () => 
   getCaretOffset.mockReturnValue({ offset: 2 })
   touchStartAt(editable, 20, 10)
   moveCaret(editable, 1)
+  moveCaret(editable, 2)
+  await act(vi.runAllTimersAsync)
+
+  expect(selection.offsetFromNode(editable)).toBe(2)
+})
+
+// https://github.com/cybersemics/em/issues/4220
+it('puts the caret where a tap landed when iOS moves it there and back after the touchend', async () => {
+  store.dispatch([importText({ text: '- ab cd\n- e' }), setCursor(['ab cd']), keyboardOpen({ value: true })])
+
+  const editable = createEditable(head(store.getState().cursor!), 'ab cd')
+  mountEditMode(editable)
+  act(() => editable.focus())
+  moveCaret(editable, 2)
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  getCaretOffset.mockReturnValue({ offset: 3 })
+  touchStartAt(editable, 40, 10)
+  act(() => {
+    editable.dispatchEvent(new TouchEvent('touchend', { bubbles: true, changedTouches: [] }))
+  })
+  moveCaret(editable, 5)
+  moveCaret(editable, 2)
+  await act(vi.runAllTimersAsync)
+
+  expect(selection.offsetFromNode(editable)).toBe(3)
+})
+
+it('leaves the caret to the mousedown of a tap that gets mouse events', async () => {
+  store.dispatch([importText({ text: '- ab cd\n- e' }), setCursor(['ab cd']), keyboardOpen({ value: true })])
+
+  const editable = createEditable(head(store.getState().cursor!), 'ab cd')
+  mountEditMode(editable)
+  act(() => editable.focus())
+  moveCaret(editable, 2)
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  getCaretOffset.mockReturnValue({ offset: 4 })
+  touchStartAt(editable, 40, 10)
+  act(() => {
+    editable.dispatchEvent(new TouchEvent('touchend', { bubbles: true, changedTouches: [] }))
+    editable.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+  })
+  // later selection changes belong to whatever the mousedown started, not to a revert
+  moveCaret(editable, 5)
   moveCaret(editable, 2)
   await act(vi.runAllTimersAsync)
 

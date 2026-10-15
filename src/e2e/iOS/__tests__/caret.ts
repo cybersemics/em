@@ -407,7 +407,7 @@ describe('Caret', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4220
-  it.skip('a tap on the word before the caret moves the caret to it', async () => {
+  it('a tap on the word before the caret moves the caret to it', async () => {
     const value = 'Hello beautiful people in the world'
     await newThought(value)
     const editable = await waitForEditable(value)
