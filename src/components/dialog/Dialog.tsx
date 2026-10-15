@@ -14,7 +14,6 @@ interface DialogProps {
  * Dialog component with liminal glass treatment. All styling lives in dialogRecipe.
  */
 const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, nodeRef, animation, footer }) => {
-  const dialogRef = useRef<HTMLDivElement | null>(null)
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const dialog = dialogRecipe()
 
@@ -28,7 +27,7 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
    */
   useEffect(() => {
     const overlayElement = nodeRef.current
-    const dialogElement = dialogRef.current
+    const dialogElement = wrapperRef.current
 
     if (!overlayElement || !dialogElement) return
 
@@ -60,25 +59,7 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
         {/* Rainbow refraction that bleeds past the glass top edge. */}
         <div className={dialog.rainbowUnclipped} />
 
-        {/* The glass sheet itself. Decorative layers stack via DOM order: container fill → clipped highlights → glass stroke → content. */}
-        <div ref={dialogRef} className={dialog.glassSheet}>
-          {/* Muted-purple radial fill concentrated near the top of the glass. */}
-          <div className={dialog.containerBackground} />
-          {/* Rounded clip region containing the highlights "trapped" inside the glass. */}
-          <div className={dialog.glassClipWrapper}>
-            {/* Light highlight trapped inside the glass. */}
-            <div className={dialog.highlightClipped} />
-            {/* Rainbow refraction trapped inside the glass. */}
-            <div className={dialog.rainbowClipped} />
-          </div>
-          {/* Luminance mask that fades the glass stroke off toward the bottom. */}
-          <div className={dialog.glassStrokeMask}>
-            {/* Gradient border simulating light refracting through the glass edge. */}
-            <div className={dialog.glassStrokeBorder} />
-          </div>
-          {/* Dialog content (title + body). */}
-          <div className={dialog.contentLayer}>{children}</div>
-        </div>
+        {children}
         {footer}
       </motion.div>
     </motion.div>
