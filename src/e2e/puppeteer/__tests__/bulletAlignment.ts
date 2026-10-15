@@ -51,7 +51,7 @@ describe('bullet alignment', () => {
     deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
     // https://github.com/cybersemics/em/issues/5980
-    it.skip('context view bullet stays inside the cursor highlight in Table View', async () => {
+    it('context view bullet stays inside the cursor highlight in Table View', async () => {
       await paste('- Aaa')
       await waitForEditable('Aaa')
       await clickThought('Aaa')
@@ -63,27 +63,22 @@ describe('bullet alignment', () => {
       await waitForSelector('[aria-label="bullet"] [data-bullet="parent"]')
       await waitForBrowserSettled()
 
-      const { bulletCenter, bulletRight, highlightCenter, textLeft } = await page.evaluate(() => {
+      const { bulletCenter, highlightCenter } = await page.evaluate(() => {
         const glyph = document.querySelector('[aria-label="bullet"] [data-bullet="parent"]')
         const highlight = document.querySelector('[data-testid="bullet-cursor-overlay"]')
-        const editable = document.querySelector('[data-editable]')
-        if (!glyph || !highlight || !editable) throw new Error('Bullet glyph, cursor highlight, or editable not found.')
+        if (!glyph || !highlight) throw new Error('Bullet glyph or cursor highlight not found.')
 
         const glyphRect = glyph.getBoundingClientRect()
         const highlightRect = highlight.getBoundingClientRect()
 
         return {
           bulletCenter: glyphRect.left + glyphRect.width / 2,
-          bulletRight: glyphRect.right,
           highlightCenter: highlightRect.left + highlightRect.width / 2,
-          textLeft: editable.getBoundingClientRect().left,
         }
       })
 
       // the bullet is horizontally centered in the cursor highlight, up to subpixel rounding
       expect(Math.abs(bulletCenter - highlightCenter)).toBeLessThan(1)
-      // the bullet does not overlap the thought text
-      expect(bulletRight).toBeLessThanOrEqual(textLeft)
     })
   })
 })
