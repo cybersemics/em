@@ -29,7 +29,7 @@ const longPressWord = async (nodeHandle: ElementHandle<Element> | JSHandle<undef
   const coordinate = { x: wordRect.x + wordRect.width / 2, y: wordRect.y + wordRect.height / 2 }
 
   const bulletElement = await editable.evaluateHandle(el => {
-    const bullet = el.closest('[aria-label="thought-container"]')?.querySelector('[aria-label="bullet"]')
+    const bullet = (el as Element).closest('[aria-label="thought-container"]')?.querySelector('[aria-label="bullet"]')
     if (!bullet) throw new Error('Bullet not found in thought container')
     return bullet
   })

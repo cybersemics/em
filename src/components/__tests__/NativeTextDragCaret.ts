@@ -1,3 +1,4 @@
+import { fireEvent } from '@testing-library/react'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
@@ -152,6 +153,25 @@ it('does not let the long press context menu interrupt a native drag of selected
 
   expect(contextMenu.defaultPrevented).toBe(true)
   expect(onContextMenu).not.toHaveBeenCalled()
+})
+
+// https://github.com/cybersemics/em/issues/5976
+it('does not let the long press context menu that arrives before dragstart interrupt a native drag of selected text', async () => {
+  await importOutline('- Sed et fringilla lacus')
+  const editable = getEditable('Sed et fringilla lacus')
+  selectWord(editable, 'fringilla')
+
+  // the long press on the selected word begins, and its context menu arrives before the native drag starts
+  fireEvent.touchStart(editable, { touches: [{ clientX: 0, clientY: 0 }] })
+  const onContextMenu = vi.fn()
+  editable.addEventListener('contextmenu', onContextMenu)
+  const contextMenu = new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+  Object.assign(contextMenu, { pointerType: 'touch' })
+  editable.dispatchEvent(contextMenu)
+
+  expect(contextMenu.defaultPrevented).toBe(true)
+  expect(onContextMenu).not.toHaveBeenCalled()
+  expect(window.getSelection()!.toString()).toBe('fringilla')
 })
 
 // https://github.com/cybersemics/em/issues/4225

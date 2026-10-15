@@ -794,7 +794,7 @@ describe('mobile only', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5976
-  it.skip('long press on a word in the thought text starts drag-and-drop instead of selecting the word', async () => {
+  it('long press on a word in the thought text starts drag-and-drop instead of selecting the word', async () => {
     await paste(`
       - Second thought with several words in it
       - Third thought here
