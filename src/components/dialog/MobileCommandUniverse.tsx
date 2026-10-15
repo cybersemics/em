@@ -1,4 +1,4 @@
-import { animate, motion, useMotionValue } from 'motion/react'
+import { MotionValue, animate, motion, useMotionValue, useTransform } from 'motion/react'
 import {
   ComponentProps,
   ComponentRef,
@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
+import { dialogRecipe } from '../../../styled-system/recipes'
 import CommandId from '../../@types/CommandId'
 import { commandUniverseBackActionCreator as commandUniverseBack } from '../../actions/commandUniverseBack'
 import { commandUniverseForwardActionCreator as commandUniverseForward } from '../../actions/commandUniverseForward'
@@ -152,11 +153,15 @@ const SelectionGlow = ({
   row,
   positionerRef,
   isActive,
+  surfaceOpacity,
 }: {
   row: HTMLLIElement | null
   positionerRef: React.RefObject<HTMLDivElement | null>
   isActive: boolean
+  surfaceOpacity: MotionValue<number>
 }) => {
+  const activeOpacity = useMotionValue(isActive ? 1 : 0)
+  const opacity = useTransform([surfaceOpacity, activeOpacity], ([surface, active]) => Number(surface) * Number(active))
   const x = useMotionValue(0)
   const y = useMotionValue(0)
   const [rightFade, setRightFade] = useState({ start: 0, end: 0 })
@@ -206,6 +211,11 @@ const SelectionGlow = ({
     }
   }, [positionerRef, row, x, y])
 
+  useEffect(() => {
+    const fade = animate(activeOpacity, isActive && row ? (disabled ? 0.5 : 1) : 0, { duration: isActive ? 0.2 : 0.22 })
+    return () => fade.stop()
+  }, [activeOpacity, disabled, isActive, row])
+
   const mask = `linear-gradient(to right, transparent 0%, black 8%, black ${rightFade.start}px, transparent ${rightFade.end}px)`
   return (
     <div
@@ -226,7 +236,7 @@ const SelectionGlow = ({
         alt=''
         draggable={false}
         initial={false}
-        animate={{ opacity: isActive && row ? (disabled ? 0.5 : 1) : 0, scale: isActive ? 1 : 1.2 }}
+        animate={{ scale: isActive ? 1 : 1.2 }}
         transition={{ opacity: { duration: isActive ? 0.2 : 0.22 }, scale: commandUniverseMotion }}
         className={css({
           position: 'absolute',
@@ -243,7 +253,7 @@ const SelectionGlow = ({
           zIndex: 10,
           willChange: 'transform',
         })}
-        style={{ x, y, translateY: '-50%', maskImage: mask, WebkitMaskImage: mask }}
+        style={{ opacity, x, y, translateY: '-50%', maskImage: mask, WebkitMaskImage: mask }}
       />
     </div>
   )
@@ -258,6 +268,7 @@ const CommandUniverseSession = ({
   animation: ComponentProps<typeof Dialog>['animation']
 }) => {
   const dispatch = useDispatch()
+  const dialog = dialogRecipe()
   const [focusedRow, setFocusedRow] = useState<HTMLLIElement | null>(null)
   const glassPositionerRef = useRef<HTMLDivElement>(null)
   const isDesktop = useBreakpoint('md')
@@ -328,9 +339,17 @@ const CommandUniverseSession = ({
       <div
         ref={glassPositionerRef}
         data-cu-glass-positioner='true'
-        className={css({ position: 'relative', width: '100%' })}
+        className={css({ position: 'relative', width: '100%', containerType: 'inline-size' })}
       >
-        <DialogGlass>
+        <motion.div className={dialog.glassBackdropBlur} style={{ opacity: animation.opacity }} />
+        <motion.div
+          className={css({ position: 'absolute', inset: 0, pointerEvents: 'none' })}
+          style={{ opacity: animation.opacity }}
+        >
+          <div className={dialog.roomLight} />
+          <div className={dialog.shellHalo} />
+        </motion.div>
+        <DialogGlass opacity={isDesktop ? animation.opacity : undefined}>
           <CommandUniverseHeader
             onClose={onClose}
             onBack={onBack}
@@ -369,8 +388,20 @@ const CommandUniverseSession = ({
             />
           </div>
         </DialogGlass>
+        <motion.div
+          className={css({ position: 'absolute', inset: 0, pointerEvents: 'none' })}
+          style={{ opacity: animation.opacity }}
+        >
+          <div className={dialog.topLight} />
+          <div className={dialog.topStreak} />
+        </motion.div>
         {isDesktop && (
-          <SelectionGlow row={focusedRow} positionerRef={glassPositionerRef} isActive={isOpen && isCommandsPage} />
+          <SelectionGlow
+            surfaceOpacity={animation.opacity}
+            row={focusedRow}
+            positionerRef={glassPositionerRef}
+            isActive={isOpen && isCommandsPage}
+          />
         )}
       </div>
     </Dialog>
