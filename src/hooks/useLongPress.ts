@@ -37,6 +37,8 @@ const useLongPress = (
   const [pressing, setPressing] = useState(false)
   const longPressState = useSelector(state => state.longPress)
   const timerIdRef = useRef<number | undefined>(undefined)
+  // Whether this press has become a long press, so that only the press that began it is ended along with it.
+  const longPressedRef = useRef(false)
   const dispatch = useDispatch()
   const dragDropManager = useDragDropManager()
 
@@ -57,6 +59,7 @@ const useLongPress = (
       allowTouchToScroll(false)
 
       haptics.light()
+      longPressedRef.current = true
       onLongPressStart?.()
     }
 
@@ -111,6 +114,7 @@ const useLongPress = (
   const stop = useCallback(
     (e?: React.MouseEvent | React.TouchEvent | MouseEvent) => {
       setPressing(false)
+      longPressedRef.current = false
 
       // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
       // but endDrag in useDragAndDropThought will happen instead.
@@ -129,6 +133,19 @@ const useLongPress = (
     },
     [onLongPressEnd, setPressing],
   )
+
+  // A long press can be ended without this element hearing the release, e.g. by the drag ending or by EndDragOnRelease
+  // once no finger is down (#5895). End the press with it, or the backend's next dragStart would begin a long press on
+  // this element instead of the one being pressed.
+  // Only a transition counts: a long press that never left Inactive, such as a toolbar button's, has nothing to end, and
+  // stop changes identity whenever onLongPressEnd does.
+  const prevLongPressStateRef = useRef(longPressState)
+  useEffect(() => {
+    const ended =
+      prevLongPressStateRef.current !== LongPressState.Inactive && longPressState === LongPressState.Inactive
+    prevLongPressStateRef.current = longPressState
+    if (ended && longPressedRef.current) stop()
+  }, [longPressState, stop])
 
   // iOS 27 can withhold a press's touchend until the next touch, but still fires mouseup when the finger lifts (#5660).
   useEffect(() => {
