@@ -212,7 +212,9 @@ const SelectionGlow = ({
   }, [positionerRef, row, x, y])
 
   useEffect(() => {
-    const fade = animate(activeOpacity, isActive && row ? (disabled ? 0.5 : 1) : 0, { duration: isActive ? 0.2 : 0.22 })
+    const fade = animate(activeOpacity, isActive && row ? (disabled ? 0.5 : 1) : 0, {
+      duration: isActive ? commandUniverseMotion.duration : 0.22,
+    })
     return () => fade.stop()
   }, [activeOpacity, disabled, isActive, row])
 
@@ -237,7 +239,10 @@ const SelectionGlow = ({
         draggable={false}
         initial={false}
         animate={{ scale: isActive ? 1 : 1.2 }}
-        transition={{ opacity: { duration: isActive ? 0.2 : 0.22 }, scale: commandUniverseMotion }}
+        transition={{
+          opacity: { duration: isActive ? commandUniverseMotion.duration : 0.22 },
+          scale: { ...commandUniverseMotion, duration: isActive ? 0 : commandUniverseMotion.duration },
+        }}
         className={css({
           position: 'absolute',
           top: '-0.2rem',

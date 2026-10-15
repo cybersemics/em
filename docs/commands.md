@@ -892,3 +892,5 @@ The Command Universe grid mounts gesture diagrams within 180px of its inner scro
 Navigation accepts `transition: 'zoom' | 'none'`, defaulting to zoom. A visit without animation retains Back/Forward history and settles before focus moves into the destination. Zoom origins are measured relative to the page before navigation mounts the destination, avoiding a second layout-measurement render. Complete `transform: scale(...)` targets allow Motion to use native Web Animations. Opening the dialog can preserve an editor selection snapshot already captured by its caller.
 
 Search and sort order live in `commandUniverseBrowsing`, beside the Redux navigation session. Opening a fresh session resets both controls; visiting details and returning retains them. The commands page supports presentation as a grid or list. Browsing changes are transient and not undoable.
+
+During a Command Universe page zoom, the destination accepts input immediately. Focus moves at navigation start rather than completion, so completing the animation does not steal focus from a control already used. The selection glow fades back over the return zoom and returns at its normal size.
