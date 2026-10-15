@@ -1,44 +1,26 @@
-import { FC, PropsWithChildren } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Key from '../@types/Key'
 import { isMac } from '../browser'
+import { ColorToken } from '../colors.config'
 import { arrowTextToArrowCharacter, isArrowKey } from '../commands'
-
-/** A border around special keys. */
-const Kbd: FC<PropsWithChildren<{ isText?: boolean }>> = ({ children, isText }) => {
-  const size = useSelector(state => state.fontSize * 1.1)
-
-  return (
-    <kbd
-      className={css({
-        boxSizing: 'border-box',
-        height: '1.1em',
-        width: '1.1em',
-        border: '1px solid {colors.fgOverlay30}',
-        fontSize: isText ? '0.65em' : '0.7em',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 3,
-      })}
-      style={{ width: size, height: size }}
-    >
-      {children}
-    </kbd>
-  )
-}
+import themeColors from '../selectors/themeColors'
+import Kbd from './Kbd'
 
 /** Displays keyboard shortcuts. Replaces formatKeyboardShortcut in commands.ts. */
 const CommandKeyboardShortcut = ({
   keyboardOrString,
+  color,
 }: {
   keyboardOrString: Key | Key[] | string
+  /** Optional theme color for the shortcut. */
+  color?: ColorToken
 }): React.JSX.Element => {
   const fontSize = useSelector(state => state.fontSize)
+  const colors = useSelector(themeColors)
 
   if (Array.isArray(keyboardOrString)) {
-    return <CommandKeyboardShortcut keyboardOrString={keyboardOrString[0]} />
+    return <CommandKeyboardShortcut keyboardOrString={keyboardOrString[0]} color={color} />
   }
   const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString } : keyboardOrString
 
@@ -53,7 +35,7 @@ const CommandKeyboardShortcut = ({
         color: 'fgOverlay50',
         fontWeight: 400,
       })}
-      style={{ fontSize }}
+      style={{ fontSize, color: color ? colors[color] : undefined }}
     >
       {keyboard.meta && (isMac ? <Kbd>⌘</Kbd> : <Kbd isText>ctrl</Kbd>)}
       {keyboard.alt && (isMac ? <Kbd>⌥</Kbd> : <Kbd isText>alt</Kbd>)}
