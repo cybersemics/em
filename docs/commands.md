@@ -149,7 +149,7 @@ The Toolbar renders a configurable subset of commands as buttons. The user's cus
 The **Command Universe** is the searchable command palette. Two flavors:
 
 - **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.
-- **`MobileCommandUniverse`** — dialog opened by `openMobileCommandUniverse`, also reachable by gesture. Clicking a grid cell opens its command detail page, including when the command cannot currently execute. Cells are native buttons, so Enter and Space also open details. Back/Forward in `DialogHeader` navigate the dialog history. Search stays above the grid scroller, and changing search or sort resets the results to the top.
+- **`MobileCommandUniverse`** is the responsive dialog opened by the Open Command Universe gesture. Below `md`, it presents the mobile command grid. At `md` and above, it presents a keyboard-driven list with search and sorting in the header and navigation hints in its footer. Enter or a row click executes a command; Tab opens its details, and Shift+Tab navigates back. Unavailable commands remain inspectable.
 
 The Command Universe has Redux-owned session navigation with separate routing and presentation layers:
 

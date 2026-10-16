@@ -79,6 +79,7 @@ const describeCommandInvocation = (patch: Patch): string => {
       return `Tap the ${command.label} button.`
     case 'commandCenter':
       return `Tap ${command.label} in the Command Center.`
+    case 'commandUniverse':
     case 'desktopCommandUniverse':
       return `Choose ${command.label} in the Command Universe.`
   }

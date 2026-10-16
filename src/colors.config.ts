@@ -42,6 +42,9 @@ const colors = {
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
     red: 'rgba(255, 87, 61, 1)', // #ff573d
     vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
+    whiteOverlay6: 'rgba(255, 255, 255, 0.06)',
+    whiteOverlay40: 'rgba(255, 255, 255, 0.4)',
+    commandUniverseTitleMuted: 'rgba(234, 234, 234, 0.7)',
     highlightedTextMatch: 'rgba(255, 255, 255, 1)',
     highlightedTextUnmatched: 'rgba(255, 255, 255, 0.45)',
     white: 'rgba(255, 255, 255, 1)',
@@ -161,6 +164,9 @@ const colors = {
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
     red: 'rgba(255, 87, 61, 1)', // #ff573d
     vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
+    whiteOverlay6: 'rgba(255, 255, 255, 0.06)',
+    whiteOverlay40: 'rgba(255, 255, 255, 0.4)',
+    commandUniverseTitleMuted: 'rgba(234, 234, 234, 0.7)',
     highlightedTextMatch: 'rgba(255, 255, 255, 1)',
     highlightedTextUnmatched: 'rgba(255, 255, 255, 0.45)',
     white: 'rgba(255, 255, 255, 1)',
