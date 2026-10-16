@@ -16,6 +16,7 @@ import Path from './@types/Path'
 import State from './@types/State'
 import { addMulticursorActionCreator as addMulticursor } from './actions/addMulticursor'
 import { alertActionCreator as alert } from './actions/alert'
+import { awardPracticeRepActionCreator as awardPracticeRep } from './actions/awardPracticeRep'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
 import { cursorClearedActionCreator as cursorCleared } from './actions/cursorCleared'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
@@ -504,9 +505,10 @@ export const executeCommandWithMulticursor = (
 
   const state = commandStore.getState()
 
-  /** Reports a successful invocation once exec has returned, unless it raised an app error. Asynchronous work is not awaited: the user has completed the command once it starts, whatever a server or the clipboard later returns. */
+  /** Reports a successful invocation once exec has returned, unless it raised an app error, and awards a practice rep when a keyboard shortcut or gesture invoked the pinned command. Asynchronous work is not awaited: the user has completed the command once it starts, whatever a server or the clipboard later returns. */
   const reportSuccess = () => {
     if (commandStore.getState().error !== state.error) return
+    if (type === 'keyboard' || type === 'gesture') commandStore.dispatch(awardPracticeRep({ commandId: commandArg.id }))
     commandEmitter.trigger('commandSucceeded', {
       commandId: commandArg.id,
       source: type ?? 'internal',

@@ -22,11 +22,12 @@ const awardPracticeRep = (state: State, { commandId }: { commandId: CommandId })
   }
 }
 
-/** Dispatches and persists an earned practice rep. */
+/** Dispatches and persists a rep when the command is the current pin with a progress record. Dispatches nothing otherwise. */
 export const awardPracticeRepActionCreator =
   (payload: Parameters<typeof awardPracticeRep>[1]): Thunk =>
   (dispatch, getState) => {
     const learningBefore = getState().learning
+    if (learningBefore.pinnedCommandId !== payload.commandId || !learningBefore.progress[payload.commandId]) return
     dispatch({ type: 'awardPracticeRep', ...payload })
     const learningAfter = getState().learning
     if (learningAfter !== learningBefore) storageModel.set('learning', learningAfter)
