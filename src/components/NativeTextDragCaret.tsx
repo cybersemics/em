@@ -9,6 +9,7 @@ import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import thoughtToPath from '../selectors/thoughtToPath'
+import isFormattingElement from '../util/isFormattingElement'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import wrapInFormattingAncestors from '../util/wrapInFormattingAncestors'
 
@@ -223,6 +224,22 @@ const useNativeTextDrag = () => {
             : target.offset
         const insertRange = selection.collapsedRangeAtOffset(targetCopy, offset)
         if (!insertRange) return
+
+        // Unwrap the formatting that the drop point is already in from the dragged text, rather than nesting it in a
+        // copy of itself, which the toolbar does not recognize as applied and cannot toggle off. Only an element with
+        // the same tag and attributes is unwrapped, so e.g. a different color is kept.
+        const insertContainer = insertRange.startContainer
+        for (
+          let ancestor = insertContainer instanceof Element ? insertContainer : insertContainer.parentElement;
+          isFormattingElement(ancestor);
+          ancestor = ancestor.parentElement
+        ) {
+          const shell = ancestor.cloneNode(false)
+          Array.from(dragged.querySelectorAll(ancestor.localName))
+            .filter(element => element.cloneNode(false).isEqualNode(shell))
+            .forEach(element => element.replaceWith(...Array.from(element.childNodes)))
+        }
+
         insertRange.insertNode(dragged)
 
         const sourceValue = stripEmptyFormattingTags(sourceCopy.innerHTML)

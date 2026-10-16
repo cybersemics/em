@@ -256,7 +256,7 @@ it('keeps the formatting that encloses dragged text and leaves a single space wh
 })
 
 // https://github.com/cybersemics/em/pull/5967#discussion_r4299621368
-it.skip('does not nest formatting when dragged text is dropped into the same formatting', async () => {
+it('does not nest formatting when dragged text is dropped into the same formatting', async () => {
   await importOutline('- <b>Foo Bar Baz Qux</b>')
   const editable = getEditable('Foo Bar Baz Qux')
   layOutCaretBefore(editable, 'Qux')
