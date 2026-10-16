@@ -60,7 +60,9 @@ const layOutCaretBefore = (editable: HTMLElement, word: string) => {
     configurable: true,
     value: (x: number, y: number) => {
       if (y < 50 || y > 70) return null
-      const text = editable.firstChild!
+      const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+      let text = walker.nextNode()!
+      while (!text.textContent!.includes(word)) text = walker.nextNode()!
       const range = document.createRange()
       range.setStart(text, text.textContent!.indexOf(word))
       return Object.assign(range, { getBoundingClientRect: () => new DOMRect(x, 50, 0, 20) })
@@ -250,6 +252,21 @@ it('keeps the formatting that encloses dragged text and leaves a single space wh
 
   expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
     '<b>foo baz</b> qux<b>bar</b>',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#discussion_r4299621368
+it.skip('does not nest formatting when dragged text is dropped into the same formatting', async () => {
+  await importOutline('- <b>Foo Bar Baz Qux</b>')
+  const editable = getEditable('Foo Bar Baz Qux')
+  layOutCaretBefore(editable, 'Qux')
+  selectWord(editable, 'Bar')
+  await startDrag(editable)
+
+  await dropBelowCaret(editable)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<b>Foo Baz BarQux</b>',
   ])
 })
 
