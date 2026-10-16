@@ -20,7 +20,14 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const split = (state: State, el: HTMLElement): SplitResult | null => {
   const { cursor } = state
 
-  if (!cursor || isContextViewActive(state, rootedParentOf(state, cursor)) || !editingValueStore.getState()) return null
+  // Enter in a note creates a new thought instead of splitting, since the selection is in the note rather than the cursor thought
+  if (
+    !cursor ||
+    state.noteFocus ||
+    isContextViewActive(state, rootedParentOf(state, cursor)) ||
+    !editingValueStore.getState()
+  )
+    return null
 
   const splitResult = cursor ? selection.split(el) : null
 

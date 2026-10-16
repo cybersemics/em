@@ -8,7 +8,7 @@ import waitForEditingTextChange from '../helpers/waitForEditingTextChange'
 import waitForNoteFocus from '../helpers/waitForNoteFocus'
 
 // https://github.com/cybersemics/em/issues/6001
-it.skip('pressing Enter mid-note creates an empty sibling without changing the thought or the note', async () => {
+it('pressing Enter mid-note creates an empty sibling without changing the thought or the note', async () => {
   await paste(`- aaa bbb ccc ddd`)
   await clickThought('aaa bbb ccc ddd')
   await press('n', { meta: true, alt: true })
@@ -28,5 +28,6 @@ it.skip('pressing Enter mid-note creates an empty sibling without changing the t
 - aaa bbb ccc ddd
   - =note
     - eee fff ggg
-- `)
+- 
+`)
 })
