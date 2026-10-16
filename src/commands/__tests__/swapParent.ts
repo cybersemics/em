@@ -83,6 +83,37 @@ describe('canExecute', () => {
 
     expect(swapParentCommand.canExecute!(store.getState())).toBe(false)
   })
+
+  // https://github.com/cybersemics/em/issues/3726
+  it('cannot swap parent of a metaprogramming attribute', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =favorite
+        `,
+      }),
+      setCursor(['a', '=favorite']),
+    ])
+
+    expect(swapParentCommand.canExecute!(store.getState())).toBe(false)
+  })
+
+  // https://github.com/cybersemics/em/issues/3726
+  it('cannot swap a thought with a metaprogramming attribute parent', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =pin
+              - true
+        `,
+      }),
+      setCursor(['a', '=pin', 'true']),
+    ])
+
+    expect(swapParentCommand.canExecute!(store.getState())).toBe(false)
+  })
 })
 
 describe('multicursor', () => {
