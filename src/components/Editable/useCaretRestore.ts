@@ -6,9 +6,6 @@ import * as selection from '../../device/selection'
 import osVersionStore from '../../stores/osVersionStore'
 import lastTouch from './lastTouch'
 
-/** How long after a touch begins a return of the caret to where it was is taken for iOS reverting a withheld tap. The reverts seen took up to about 280ms. A withheld touch sends no touchmove or touchend, so this is what ends the watch for it. */
-const REVERT_WINDOW = 500
-
 /**
  * Keeps the caret inside the editable the user is editing while the keyboard is open. The iOS keyboard trackpad
  * (long press the space bar) moves the browser selection by hit-testing the whole document, so it drags the
@@ -30,12 +27,11 @@ const useCaretRestore = ({
 }) => {
   const pressingRef = useRef(false)
   const scrubbingRef = useRef(false)
-  // The touch in progress, where it landed, and the caret before it, while iOS may still revert the tap.
+  // The touch in progress, where it landed, and the caret before it, until the user does anything else.
   const revertWatchRef = useRef<{
     clientX: number
     clientY: number
     before: number
-    startedAt: number
     moved: boolean
   } | null>(null)
 
@@ -53,13 +49,18 @@ const useCaretRestore = ({
       const before = selection.isCollapsed() ? selection.offsetFromNode(editable) : null
       revertWatchRef.current =
         touch && before !== null && (osVersionStore.getState() ?? 0) >= 27
-          ? { clientX: touch.clientX, clientY: touch.clientY, before, startedAt: performance.now(), moved: false }
+          ? { clientX: touch.clientX, clientY: touch.clientY, before, moved: false }
           : null
     }
 
     /** Marks the end of a touch. */
     const onTouchEnd = () => {
       pressingRef.current = false
+      revertWatchRef.current = null
+    }
+
+    /** Ends the watch on any other input: a touch or click anywhere, a key, or an edit. */
+    const endWatch = () => {
       revertWatchRef.current = null
     }
 
@@ -85,10 +86,6 @@ const useCaretRestore = ({
     const correctRevert = () => {
       const watch = revertWatchRef.current
       if (!watch) return
-      if (performance.now() - watch.startedAt > REVERT_WINDOW) {
-        revertWatchRef.current = null
-        return
-      }
       if (!selection.isCollapsed()) return
       const offset = selection.offsetFromNode(editable)
       if (offset === null) return
@@ -122,6 +119,11 @@ const useCaretRestore = ({
       if (scrubbingRef.current && !selection.isCollapsed()) restore()
     }
 
+    // Capture, so that a touch on this editable ends the old watch before onTouchStart begins a new one.
+    document.addEventListener('touchstart', endWatch, { capture: true })
+    document.addEventListener('mousedown', endWatch)
+    editable.addEventListener('keydown', endWatch)
+    editable.addEventListener('beforeinput', endWatch)
     editable.addEventListener('touchstart', onTouchStart)
     editable.addEventListener('touchmove', onTouchMove, { passive: true })
     editable.addEventListener('touchend', onTouchEnd)
@@ -131,6 +133,10 @@ const useCaretRestore = ({
     return () => {
       scrubbingRef.current = false
       revertWatchRef.current = null
+      document.removeEventListener('touchstart', endWatch, { capture: true })
+      document.removeEventListener('mousedown', endWatch)
+      editable.removeEventListener('keydown', endWatch)
+      editable.removeEventListener('beforeinput', endWatch)
       editable.removeEventListener('touchstart', onTouchStart)
       editable.removeEventListener('touchmove', onTouchMove)
       editable.removeEventListener('touchend', onTouchEnd)
