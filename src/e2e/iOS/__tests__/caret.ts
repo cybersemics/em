@@ -18,6 +18,7 @@ import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import scrubSpaceBar from '../helpers/scrubSpaceBar'
 import setFontSize from '../helpers/setFontSize'
+import setSelection from '../helpers/setSelection'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForElement from '../helpers/waitForElement'
@@ -191,6 +192,23 @@ describe('Caret', () => {
     expect(await getSelection().focusNode?.textContent).toBe('A')
     expect(await getSelection().focusOffset).toBe(1)
     expect(await isKeyboardShown()).toBeTruthy()
+  })
+
+  // https://github.com/cybersemics/em/issues/3767
+  it.skip('a caret scrubbed up moves into the thought above', async () => {
+    await newThought('The first thought sentence')
+    await newThought('The second thought sentence')
+    await newThought('The third thought sentence')
+
+    await clickThought('The second thought sentence')
+    await waitUntil(async () => (await getEditingText()) === 'The second thought sentence')
+    await setSelection(13, 13)
+    await waitUntil(isKeyboardShown)
+
+    await scrubSpaceBar(-1, { vertical: true })
+
+    expect(await getEditingText()).toBe('The first thought sentence')
+    expect(await getSelection().focusNode?.textContent).toBe('The first thought sentence')
   })
 
   it.skip('Tap empty content while keyboard up', async () => {
