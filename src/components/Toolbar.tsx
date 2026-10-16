@@ -17,6 +17,7 @@ import CommandType from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import TipId from '../@types/TipId'
 import { showTipActionCreator as showTip } from '../actions/showTip'
+import { isSafari, isTouch } from '../browser'
 import { commandById } from '../commands'
 import {
   ICON_SCALING_FACTOR,
@@ -297,26 +298,31 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             id='toolbar'
             data-testid='toolbar'
             ref={toolbarRef}
-            className={css({
-              maxWidth: '100%',
-              position: 'relative',
-              // Constrain the horizontally-scrolling toolbar to horizontal panning only. Without this, a diagonal
-              // (~45°) or vertical drag beginning on the toolbar is treated as a vertical pan and scrolls/overscrolls
-              // the page; because the toolbar is position: fixed (usePositionFixed), that overscroll visually drags
-              // the toolbar downward on iOS. pan-x preserves horizontal scrolling while blocking the vertical drag.
-              // Keep inherit in customize mode so react-dnd TouchBackend button reordering is unaffected.
-              touchAction: customize ? 'inherit' : 'pan-x',
-              display: 'inline-flex',
-              overflowX: 'scroll',
-              zIndex: 'toolbar',
-              alignItems: 'flex-start',
-              '&::-webkit-scrollbar': {
-                display: 'none',
-              },
-              ...(!customize && { maxWidth: 'calc(100% - 4em)', '& > *:last-child': { marginRight: '1em' } }),
-              marginLeft: customize ? -3 : 0,
-              paddingLeft: customize ? 3 : 0,
-            })}
+            className={cx(
+              // On iOS, WebKit does not scroll a scroll container with pointer-events: none, even when the touch starts on a toolbar button that overrides it, so the toolbar could not be scrolled while ColorPicker or LetterCase was open. Make the scroll container itself interactive there. This blocks taps on the thoughts beside the dropdown, as SortPicker and BulletPicker already do.
+              // https://github.com/cybersemics/em/issues/3462
+              showDropdown && isTouch && isSafari() && toolbarPointerEventsRecipe({ override: true }),
+              css({
+                maxWidth: '100%',
+                position: 'relative',
+                // Constrain the horizontally-scrolling toolbar to horizontal panning only. Without this, a diagonal
+                // (~45°) or vertical drag beginning on the toolbar is treated as a vertical pan and scrolls/overscrolls
+                // the page; because the toolbar is position: fixed (usePositionFixed), that overscroll visually drags
+                // the toolbar downward on iOS. pan-x preserves horizontal scrolling while blocking the vertical drag.
+                // Keep inherit in customize mode so react-dnd TouchBackend button reordering is unaffected.
+                touchAction: customize ? 'inherit' : 'pan-x',
+                display: 'inline-flex',
+                overflowX: 'scroll',
+                zIndex: 'toolbar',
+                alignItems: 'flex-start',
+                '&::-webkit-scrollbar': {
+                  display: 'none',
+                },
+                ...(!customize && { maxWidth: 'calc(100% - 4em)', '& > *:last-child': { marginRight: '1em' } }),
+                marginLeft: customize ? -3 : 0,
+                paddingLeft: customize ? 3 : 0,
+              }),
+            )}
             data-scroll-at-edge={customize}
             onScroll={onScroll}
           >
