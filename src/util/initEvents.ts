@@ -365,7 +365,6 @@ const initEvents = (store: Store<State, any>) => {
     const before =
       isTouch &&
       isSafari() &&
-      (osVersionStore.getState() ?? 0) >= 27 &&
       e.touches.length === 1 &&
       editable instanceof HTMLElement &&
       editable.isContentEditable &&
@@ -395,7 +394,7 @@ const initEvents = (store: Store<State, any>) => {
     })
   }
 
-  /** Ends the revert watch on any input other than the touch it watches: its end, a key, an edit, or a mousedown, which useEditMode's onMouseDown places itself. */
+  /** Ends the revert watch on any input other than the touch it watches: a key, an edit, a cancelled touch, or a mousedown, which useEditMode's onMouseDown places itself. The watch outlives the touchend, since the revert of a tap that gets no mouse events comes after it (#4220). */
   const endRevertWatch = () => {
     if (touchStore.getState().revertWatch) touchStore.update({ revertWatch: null })
   }
@@ -589,7 +588,6 @@ const initEvents = (store: Store<State, any>) => {
   // The revert watch only starts on a touch device. Capture, so that a handler that stops propagation cannot keep it open.
   if (isTouch) {
     window.addEventListener('touchmove', onRevertWatchMove, { capture: true, passive: true })
-    window.addEventListener('touchend', endRevertWatch, { capture: true })
     window.addEventListener('touchcancel', endRevertWatch, { capture: true })
     window.addEventListener('mousedown', endRevertWatch, { capture: true })
     window.addEventListener('keydown', endRevertWatch, { capture: true })
@@ -658,7 +656,6 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
     window.removeEventListener('touchmove', onRevertWatchMove, { capture: true })
-    window.removeEventListener('touchend', endRevertWatch, { capture: true })
     window.removeEventListener('touchcancel', endRevertWatch, { capture: true })
     window.removeEventListener('mousedown', endRevertWatch, { capture: true })
     window.removeEventListener('keydown', endRevertWatch, { capture: true })

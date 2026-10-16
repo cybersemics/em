@@ -5,8 +5,9 @@ import * as selection from '../../device/selection'
 import touchStore from '../../stores/touchStore'
 
 /**
- * On WebKit 27, iOS can move the caret for a tap whose touchend it withholds (#5660), then move it back to where it was
- * before the touch (#5981). Puts the caret where the tap landed instead. The touch is recorded in touchStore's
+ * IOS can move the caret for a tap that gets no mouse events and then move it back to where it was before the touch,
+ * either after the touchend (#4220) or, on WebKit 27, before a touchend it withholds (#5981). Puts the caret where the
+ * tap landed instead. The touch is recorded in touchStore's
  * revertWatch by initEvents, which also ends the watch on any other input.
  */
 const useRevertCorrection = ({
