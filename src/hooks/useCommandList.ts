@@ -25,6 +25,7 @@ import CommandSortType from '../@types/CommandSortType'
 import { isTouch } from '../browser'
 import { commandById, globalCommands } from '../commands'
 import { COMMAND_DIFFICULTIES } from '../constants'
+import storageModel from '../stores/storageModel'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
 import useFilteredCommands from './useFilteredCommands'
@@ -77,7 +78,7 @@ const commandsSortedByLabel: Command[] = COMMAND_DIFFICULTIES.flatMap(level =>
 
 /** A titled display section containing a category, search results, or the alphabetical command list. */
 interface CommandSection {
-  id: CommandGroup['id'] | 'results' | 'allCommands'
+  id: CommandGroup['id'] | 'results' | 'allCommands' | 'recent'
   title: string
   commands: Command[]
   /** The difficulty of the category represented by this section. Only defined when commands are grouped by type. */
@@ -105,10 +106,15 @@ export interface UseCommandListReturn {
 const useCommandList = (): UseCommandListReturn => {
   const [search, setSearch] = useState('')
   const [sortOrder, setSortOrder] = useState<CommandSortType>('type')
-  const filteredCommands = useFilteredCommands(search, { platformCommandsOnly: true })
+  const [recentCommands] = useState(() => storageModel.get('recentCommands'))
+  const filteredCommands = useFilteredCommands(search, {
+    platformCommandsOnly: true,
+    recentCommands,
+  })
 
   const sections = useMemo<CommandSection[]>(() => {
     if (search) return [{ id: 'results', title: 'Results', commands: filteredCommands }]
+    if (sortOrder === 'recent') return [{ id: 'recent', title: 'Recently used', commands: filteredCommands }]
     if (sortOrder === 'type') return commandSectionsByCategory
     return [{ id: 'allCommands', title: 'All Commands', commands: commandsSortedByLabel }]
   }, [search, sortOrder, filteredCommands])
