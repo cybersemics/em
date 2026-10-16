@@ -219,7 +219,6 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
       aria-disabled={disabled || undefined}
       className={css({
         position: 'relative',
-        backgroundColor: isFocused ? 'commandSelectedBg' : undefined,
         display: 'flex',
         alignItems: 'center',
         cursor: disabled ? 'default' : 'pointer',

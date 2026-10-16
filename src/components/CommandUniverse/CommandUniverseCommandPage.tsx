@@ -29,9 +29,11 @@ import DialogContent from '../dialog/DialogContent'
  */
 const CommandUniverseCommandPageComponent = ({
   listRef,
+  onFocusedRowChange,
   onBeforeExecute,
 }: {
   listRef?: React.RefObject<React.ComponentRef<typeof CommandUniverseList> | null>
+  onFocusedRowChange?: (row: HTMLLIElement | null) => void
   onBeforeExecute?: () => void
 }) => {
   const dispatch = useDispatch()
@@ -103,6 +105,7 @@ const CommandUniverseCommandPageComponent = ({
           ) : (
             <CommandUniverseList
               ref={listRef}
+              onFocusedRowChange={onFocusedRowChange}
               groups={sections}
               search={search}
               onItemTap={(command, origin) => dispatch(commandUniverseNavigate('detail', { command }, { origin }))}
