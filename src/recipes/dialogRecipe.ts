@@ -64,6 +64,8 @@ const dialogRecipe = defineSlotRecipe({
       position: 'relative',
       maxWidth: '500px',
       width: '87.5%',
+      md: { width: '80%', maxWidth: '650px' },
+      '2xl': { maxWidth: '826px' },
     },
     /** Light highlight image pinned to the top of the viewport — bleeds past the top edge of the glass to suggest light spilling onto the surrounding screen. */
     highlightUnclipped: {
@@ -136,6 +138,7 @@ const dialogRecipe = defineSlotRecipe({
       overflow: 'hidden',
       position: 'relative',
       maxHeight: '80dvh',
+      md: { maxHeight: '560px' },
       display: 'flex',
       flexDirection: 'column',
     },

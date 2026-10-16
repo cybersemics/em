@@ -5,6 +5,7 @@ import useOnClickOutside from '../../hooks/useOnClickOutside'
 
 interface DialogProps {
   animation: { opacity: MotionValue<number>; scale: MotionValue<number> }
+  footer?: React.ReactNode
   onClose: () => void
   nodeRef: React.RefObject<HTMLDivElement | null>
 }
@@ -12,12 +13,13 @@ interface DialogProps {
 /**
  * Dialog component with liminal glass treatment. All styling lives in dialogRecipe.
  */
-const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, nodeRef, animation }) => {
+const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, nodeRef, animation, footer }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
+  const wrapperRef = useRef<HTMLDivElement | null>(null)
   const dialog = dialogRecipe()
 
   // Close the dialog when the user clicks or taps outside of it.
-  useOnClickOutside(dialogRef, onClose)
+  useOnClickOutside(wrapperRef, onClose)
 
   /**
    * Disable swipe-to-go-back.
@@ -52,7 +54,7 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
       <div className={dialog.backgroundGlow} />
 
       {/* Wrapper around the glass sheet — lets unclipped highlights bleed past the glass edges. */}
-      <motion.div className={dialog.wrapper} style={{ scale: animation.scale }}>
+      <motion.div ref={wrapperRef} className={dialog.wrapper} style={{ scale: animation.scale }}>
         {/* Top-of-screen light highlight that bleeds past the glass top edge. */}
         <div className={dialog.highlightUnclipped} />
         {/* Rainbow refraction that bleeds past the glass top edge. */}
@@ -77,6 +79,7 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
           {/* Dialog content (title + body). */}
           <div className={dialog.contentLayer}>{children}</div>
         </div>
+        {footer}
       </motion.div>
     </motion.div>
   )
