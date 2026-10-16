@@ -85,6 +85,56 @@ describe('canExecute', () => {
   })
 })
 
+// https://github.com/cybersemics/em/issues/3750
+it('carries the done state with the thought', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+            - =done
+      `,
+    }),
+    setCursor(['a', 'b']),
+  ])
+
+  executeCommandWithMulticursor(swapParentCommand, { store })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toEqual(`- ${HOME_TOKEN}
+  - b
+    - =done
+    - a`)
+})
+
+// https://github.com/cybersemics/em/issues/3750
+it('leaves the done state with the parent', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - =done
+          - b
+            - c
+            - d
+      `,
+    }),
+    setCursor(['a', 'b']),
+  ])
+
+  executeCommandWithMulticursor(swapParentCommand, { store })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toEqual(`- ${HOME_TOKEN}
+  - b
+    - a
+      - =done
+      - c
+      - d`)
+})
+
 describe('multicursor', () => {
   it('swaps each selected thought with its own parent', () => {
     store.dispatch([
