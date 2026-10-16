@@ -18,7 +18,17 @@ const HighlightedText: FC<{ value: string; match: string; disabled?: boolean }> 
 
         return (
           <span key={i}>
-            <span className={css({ color: !disabled && isMatch ? 'vividHighlight' : undefined })}>{char}</span>
+            <span
+              className={css({
+                color: match.trim()
+                  ? !disabled && isMatch
+                    ? 'highlightedTextMatch'
+                    : 'highlightedTextUnmatched'
+                  : undefined,
+              })}
+            >
+              {char}
+            </span>
           </span>
         )
       })}
