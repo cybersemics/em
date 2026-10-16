@@ -1,7 +1,9 @@
 import { MotionValue, motion } from 'motion/react'
 import React, { PropsWithChildren, useEffect, useRef } from 'react'
 import { dialogRecipe } from '../../../styled-system/recipes'
+import useBreakpoint from '../../hooks/useBreakpoint'
 import useOnClickOutside from '../../hooks/useOnClickOutside'
+import ProgressiveBlur from '../ProgressiveBlur'
 
 interface DialogProps {
   animation: { opacity: MotionValue<number>; scale: MotionValue<number> }
@@ -16,6 +18,7 @@ interface DialogProps {
 const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, nodeRef, animation, footer }) => {
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const dialog = dialogRecipe()
+  const isDesktop = useBreakpoint('md')
 
   // Close the dialog when the user clicks or taps outside of it.
   useOnClickOutside(wrapperRef, onClose)
@@ -47,22 +50,27 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
   }, [nodeRef])
 
   return (
-    // Full-viewport backdrop with blur.
-    <motion.div ref={nodeRef} className={dialog.overlay} style={{ opacity: animation.opacity }}>
-      {/* Soft full-screen color glow rendered behind the glass. */}
-      <div className={dialog.backgroundGlow} />
+    <>
+      <div className={dialog.progressiveBlurLayer}>
+        <ProgressiveBlur direction='to bottom' maxBlur={8} minBlur={0} layers={3} opacity={animation.opacity} />
+      </div>
+      <motion.div ref={nodeRef} className={dialog.overlay} style={{ opacity: isDesktop ? 1 : animation.opacity }}>
+        <motion.div className={dialog.appScrim} style={{ opacity: animation.opacity }} />
+        {/* Soft full-screen color glow rendered behind the glass. */}
+        <div className={dialog.backgroundGlow} />
 
-      {/* Wrapper around the glass sheet — lets unclipped highlights bleed past the glass edges. */}
-      <motion.div ref={wrapperRef} className={dialog.wrapper} style={{ scale: animation.scale }}>
-        {/* Top-of-screen light highlight that bleeds past the glass top edge. */}
-        <div className={dialog.highlightUnclipped} />
-        {/* Rainbow refraction that bleeds past the glass top edge. */}
-        <div className={dialog.rainbowUnclipped} />
+        {/* Wrapper around the glass sheet — lets unclipped highlights bleed past the glass edges. */}
+        <motion.div ref={wrapperRef} className={dialog.wrapper} style={{ scale: animation.scale }}>
+          {/* Top-of-screen light highlight that bleeds past the glass top edge. */}
+          <div className={dialog.highlightUnclipped} />
+          {/* Rainbow refraction that bleeds past the glass top edge. */}
+          <div className={dialog.rainbowUnclipped} />
 
-        {children}
-        {footer}
+          {children}
+          <motion.div style={{ opacity: isDesktop ? animation.opacity : undefined }}>{footer}</motion.div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </>
   )
 }
 
