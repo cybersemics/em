@@ -6,8 +6,9 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 /** Resets Command Universe navigation to the registered grid root. */
 const commandUniverseReset = (state: State, { entryId = 'root' }: { entryId?: string } = {}): State => ({
   ...state,
+  commandUniverseBrowsing: { search: '', sortOrder: 'type' },
   commandUniverseNavigation: {
-    entries: [{ entryId, page: { pageId: 'grid', props: {} }, arrival: null }],
+    entries: [{ entryId, page: { pageId: 'commands', props: {} }, arrival: null }],
     index: 0,
   },
 })
