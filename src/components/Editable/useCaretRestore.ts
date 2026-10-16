@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { isSafari, isTouch } from '../../browser'
+import { TOUCH_SLOP } from '../../constants'
 import getCaretOffset from '../../device/getCaretOffset'
 import * as selection from '../../device/selection'
 import lastTouch from './lastTouch'
 
-/** How long after a touch begins a return of the caret to where it was is taken for iOS reverting a withheld tap. The reverts seen took up to about 280ms, and the loupe only starts after a long press. */
+/** How long after a touch begins a return of the caret to where it was is taken for iOS reverting the tap. The reverts seen took up to about 280ms. The watch outlives the touchend, and a withheld touch sends no touchmove, so this is what ends it. */
 const REVERT_WINDOW = 500
 
 /**
@@ -71,6 +72,16 @@ const useCaretRestore = ({
       revertWatchRef.current = null
     }
 
+    /** Ends the watch for a touch that moved farther than a tap, since a caret drag crossing its starting offset is not a revert. */
+    const onTouchMove = (e: TouchEvent) => {
+      const watch = revertWatchRef.current
+      const touch = e.touches[0]
+      if (!watch || !touch) return
+      if (Math.hypot(touch.clientX - watch.clientX, touch.clientY - watch.clientY) > TOUCH_SLOP) {
+        revertWatchRef.current = null
+      }
+    }
+
     /** Puts the caret back and remembers that a trackpad drag is underway. */
     const restore = () => {
       // selectionchange is queued rather than dispatched synchronously, so this cannot recurse; and a set that
@@ -121,6 +132,7 @@ const useCaretRestore = ({
     }
 
     editable.addEventListener('touchstart', onTouchStart)
+    editable.addEventListener('touchmove', onTouchMove, { passive: true })
     editable.addEventListener('touchend', onTouchEnd)
     editable.addEventListener('touchcancel', onTouchCancel)
     editable.addEventListener('mousedown', onMouseDown)
@@ -130,6 +142,7 @@ const useCaretRestore = ({
       scrubbingRef.current = false
       revertWatchRef.current = null
       editable.removeEventListener('touchstart', onTouchStart)
+      editable.removeEventListener('touchmove', onTouchMove)
       editable.removeEventListener('touchend', onTouchEnd)
       editable.removeEventListener('touchcancel', onTouchCancel)
       editable.removeEventListener('mousedown', onMouseDown)
