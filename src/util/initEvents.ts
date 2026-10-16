@@ -585,12 +585,14 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('touchstart', onTouchStart, { capture: true })
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
-  // Capture, so that a handler that stops propagation cannot keep the watch open.
-  window.addEventListener('touchmove', onRevertWatchMove, { capture: true, passive: true })
-  window.addEventListener('touchcancel', endRevertWatch, { capture: true })
-  window.addEventListener('mousedown', endRevertWatch, { capture: true })
-  window.addEventListener('keydown', endRevertWatch, { capture: true })
-  window.addEventListener('beforeinput', endRevertWatch, { capture: true })
+  // The revert watch only starts on a touch device. Capture, so that a handler that stops propagation cannot keep it open.
+  if (isTouch) {
+    window.addEventListener('touchmove', onRevertWatchMove, { capture: true, passive: true })
+    window.addEventListener('touchcancel', endRevertWatch, { capture: true })
+    window.addEventListener('mousedown', endRevertWatch, { capture: true })
+    window.addEventListener('keydown', endRevertWatch, { capture: true })
+    window.addEventListener('beforeinput', endRevertWatch, { capture: true })
+  }
   // track the number of active touch points so that multi-touch input can be rejected (e.g. two-finger
   // tracing must not begin a drag-and-drop). Registered in the capture phase for the same reason as
   // onTouchStart above (touchstart may not be propagated), and so that the latch is set before the gesture
