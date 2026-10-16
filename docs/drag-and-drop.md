@@ -142,7 +142,7 @@ The long-press → drag coupling is subtle because both react-dnd-touch-backend 
 
 On desktop, `useLongPress` runs its own `setTimeout(delay)` because the HTML5 backend doesn't have a long-press concept.
 
-`useLongPress` also calls [`allowTouchToScroll(false)`](../src/device/allowTouchToScroll.ts) on long-press start to prevent iOS Safari from initiating a scroll before drag-and-drop kicks in (see [issue #3141](https://github.com/cybersemics/em/issues/3141)).
+`useLongPress` also calls [`allowTouchToScroll(false)`](../src/device/allowTouchToScroll.ts) on long-press start to prevent iOS Safari from initiating a scroll before drag-and-drop kicks in (see [issue #3141](https://github.com/cybersemics/em/issues/3141)). The lock blocks every `touchmove` on the page until the press ends, so an element that cannot be dragged opts out with `lockScroll: false`. [`ToolbarButton`](../src/components/ToolbarButton.tsx) does so outside customize mode, where its buttons are not drag sources, so the toolbar can still be swiped after a long press ([issue #3461](https://github.com/cybersemics/em/issues/3461)). Because the backend emits `dragStart` without consulting `canDrag`, the lock would otherwise engage for any held press on any element using `useLongPress`.
 
 On start it bails out entirely while the multitouch latch is set. That is a second, independent guard rather than a duplicate of `canDrag`: the patched backend arms its drag timer from the primary touch and emits `dragStart` without consulting react-dnd's `canDrag`, so without it a two-finger trace would still glow the bullet and enter `DragHold`. See [Multi-touch rejection](commands.md#multi-touch-rejection).
 
