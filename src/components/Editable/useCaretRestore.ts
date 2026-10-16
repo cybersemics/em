@@ -5,9 +5,6 @@ import getCaretOffset from '../../device/getCaretOffset'
 import * as selection from '../../device/selection'
 import lastTouch from './lastTouch'
 
-/** How long after a touch begins a return of the caret to where it was is taken for iOS reverting the tap. The reverts seen took up to about 280ms. The watch outlives the touchend, and a withheld touch sends no touchmove, so this is what ends it. */
-const REVERT_WINDOW = 500
-
 /**
  * Keeps the caret inside the editable the user is editing while the keyboard is open. The iOS keyboard trackpad
  * (long press the space bar) moves the browser selection by hit-testing the whole document, so it drags the
@@ -29,12 +26,11 @@ const useCaretRestore = ({
 }) => {
   const pressingRef = useRef(false)
   const scrubbingRef = useRef(false)
-  // The last touch, where it landed, and the caret before it, while iOS may still revert the tap.
+  // The last touch, where it landed, and the caret before it, until the user does anything else.
   const revertWatchRef = useRef<{
     clientX: number
     clientY: number
     before: number
-    startedAt: number
     moved: boolean
   } | null>(null)
 
@@ -51,9 +47,7 @@ const useCaretRestore = ({
       const touch = e.touches[0]
       const before = selection.isCollapsed() ? selection.offsetFromNode(editable) : null
       revertWatchRef.current =
-        touch && before !== null
-          ? { clientX: touch.clientX, clientY: touch.clientY, before, startedAt: performance.now(), moved: false }
-          : null
+        touch && before !== null ? { clientX: touch.clientX, clientY: touch.clientY, before, moved: false } : null
     }
 
     /** Marks the end of a touch. */
@@ -67,8 +61,8 @@ const useCaretRestore = ({
       revertWatchRef.current = null
     }
 
-    /** A tap with mouse events is placed by useEditMode's onMouseDown or the browser, not reverted. */
-    const onMouseDown = () => {
+    /** Ends the watch on any other input: a touch or click anywhere, a key, or an edit. A tap with mouse events is placed by useEditMode's onMouseDown or the browser, not reverted. */
+    const endWatch = () => {
       revertWatchRef.current = null
     }
 
@@ -94,10 +88,6 @@ const useCaretRestore = ({
     const correctRevert = () => {
       const watch = revertWatchRef.current
       if (!watch) return
-      if (performance.now() - watch.startedAt > REVERT_WINDOW) {
-        revertWatchRef.current = null
-        return
-      }
       if (!selection.isCollapsed()) return
       const offset = selection.offsetFromNode(editable)
       if (offset === null) return
@@ -131,21 +121,28 @@ const useCaretRestore = ({
       if (scrubbingRef.current && !selection.isCollapsed()) restore()
     }
 
+    // Capture, so that a touch on this editable ends the old watch before onTouchStart begins a new one.
+    document.addEventListener('touchstart', endWatch, { capture: true })
+    document.addEventListener('mousedown', endWatch)
+    editable.addEventListener('keydown', endWatch)
+    editable.addEventListener('beforeinput', endWatch)
     editable.addEventListener('touchstart', onTouchStart)
     editable.addEventListener('touchmove', onTouchMove, { passive: true })
     editable.addEventListener('touchend', onTouchEnd)
     editable.addEventListener('touchcancel', onTouchCancel)
-    editable.addEventListener('mousedown', onMouseDown)
     document.addEventListener('selectionchange', onSelectionChange)
 
     return () => {
       scrubbingRef.current = false
       revertWatchRef.current = null
+      document.removeEventListener('touchstart', endWatch, { capture: true })
+      document.removeEventListener('mousedown', endWatch)
+      editable.removeEventListener('keydown', endWatch)
+      editable.removeEventListener('beforeinput', endWatch)
       editable.removeEventListener('touchstart', onTouchStart)
       editable.removeEventListener('touchmove', onTouchMove)
       editable.removeEventListener('touchend', onTouchEnd)
       editable.removeEventListener('touchcancel', onTouchCancel)
-      editable.removeEventListener('mousedown', onMouseDown)
       document.removeEventListener('selectionchange', onSelectionChange)
     }
   }, [editableRef, enabled, end])
