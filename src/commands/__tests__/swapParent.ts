@@ -4,6 +4,8 @@ import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
+import getLexeme from '../../selectors/getLexeme'
+import thoughtToContext from '../../selectors/thoughtToContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -288,5 +290,28 @@ describe('multicursor', () => {
     - BBB
   - CCC
   - DDD`)
+  })
+})
+
+describe('meta attributes', () => {
+  // https://github.com/cybersemics/em/issues/3725
+  it('a favorited subthought stays in the Favorites list after swapping with its parent', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+              - =favorite
+        `,
+      }),
+      setCursor(['a', 'b']),
+    ])
+
+    executeCommandWithMulticursor(swapParentCommand, { store })
+
+    const state = store.getState()
+    const favorites = getLexeme(state, '=favorite')!.contexts.map(id => thoughtToContext(state, id))
+
+    expect(favorites).toEqual([['b', '=favorite']])
   })
 })

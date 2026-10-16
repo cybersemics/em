@@ -379,7 +379,7 @@ https://github.com/user-attachments/assets/39bf1ddd-d780-4a4c-8256-1ee7dbfb4311
 
 ### Swap Parent
 
-Swap the current thought with its parent.
+Swap the current thought with its parent. The two thoughts exchange their regular children, while each keeps its own meta attributes (e.g. `=note`, `=favorite`, `=pin`, `=sort`).
 
 https://github.com/user-attachments/assets/0ca1a77b-e174-4884-9606-739a94cde039
 
