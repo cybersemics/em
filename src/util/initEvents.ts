@@ -402,8 +402,9 @@ const initEvents = (store: Store<State, any>) => {
   /** Ends the revert watch once the touch moves farther than a tap, since a caret drag sweeping back across its starting offset is not a revert. */
   const onRevertWatchMove = (e: TouchEvent) => {
     const watch = touchStore.getState().revertWatch
+    if (!watch) return
     const touch = e.touches[0]
-    if (!watch || !touch) return
+    if (!touch) return
     if (Math.hypot(touch.clientX - watch.clientX, touch.clientY - watch.clientY) > TOUCH_SLOP) endRevertWatch()
   }
 
