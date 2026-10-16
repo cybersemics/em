@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { isSafari, isTouch } from '../../browser'
-import getCaretOffset from '../../device/getCaretOffset'
 import * as selection from '../../device/selection'
-import touchStore from '../../stores/touchStore'
 import lastTouch from './lastTouch'
 
 /**
@@ -39,9 +37,7 @@ const useCaretRestore = ({
     }
 
     /** Marks the end of a touch. */
-    const onTouchEnd = () => {
-      pressingRef.current = false
-    }
+    const onTouchEnd = () => (pressingRef.current = false)
 
     /** Puts the caret back and remembers that a trackpad drag is underway. */
     const restore = () => {
@@ -51,30 +47,9 @@ const useCaretRestore = ({
       scrubbingRef.current = true
     }
 
-    /** IOS can move the caret for a tap that gets no mouse events and then move it back to where it was before the touch, either after the touchend (#4220) or, on WebKit 27, before a touchend it withholds (#5981). Puts it where the tap landed instead. */
-    const correctRevert = () => {
-      const watch = touchStore.getState().revertWatch
-      if (watch?.editable !== editable) return
-      if (!selection.isCollapsed()) return
-      const offset = selection.offsetFromNode(editable)
-      if (offset === null) return
-      if (offset !== watch.before) {
-        if (!watch.moved) touchStore.update({ revertWatch: { ...watch, moved: true } })
-        return
-      }
-      if (!watch.moved) return
-
-      touchStore.update({ revertWatch: null })
-      const tapped = getCaretOffset(editable, watch).offset
-      if (tapped === null || tapped === watch.before) return
-      // iOS is still handling the tap when it fires this selectionchange.
-      requestAnimationFrame(() => selection.set(editable, { offset: tapped }))
-    }
-
     /** Pulls the selection back into the editable when the trackpad has dragged it out. */
     const onSelectionChange = () => {
       if (document.activeElement !== editable) return
-      correctRevert()
       // The trackpad moves the selection without generating a single touch event in the page, so anything the
       // user did with a finger is not this. A press still in progress is a long press dragging a selection
       // within this editable; a recently ended one is a tap, which may deliberately have moved the selection to
@@ -95,7 +70,6 @@ const useCaretRestore = ({
 
     return () => {
       scrubbingRef.current = false
-      if (touchStore.getState().revertWatch?.editable === editable) touchStore.update({ revertWatch: null })
       editable.removeEventListener('touchstart', onTouchStart)
       editable.removeEventListener('touchend', onTouchEnd)
       editable.removeEventListener('touchcancel', onTouchEnd)
