@@ -1,9 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { isSafari, isTouch } from '../../browser'
-import { TOUCH_SLOP } from '../../constants'
 import getCaretOffset from '../../device/getCaretOffset'
 import * as selection from '../../device/selection'
-import osVersionStore from '../../stores/osVersionStore'
+import touchStore from '../../stores/touchStore'
 import lastTouch from './lastTouch'
 
 /**
@@ -27,51 +26,21 @@ const useCaretRestore = ({
 }) => {
   const pressingRef = useRef(false)
   const scrubbingRef = useRef(false)
-  // The touch in progress, where it landed, and the caret before it, until the user does anything else.
-  const revertWatchRef = useRef<{
-    clientX: number
-    clientY: number
-    before: number
-    moved: boolean
-  } | null>(null)
 
   useEffect(() => {
     const editable = editableRef.current
     if (!editable || !enabled || !isTouch || !isSafari()) return
 
     /** Marks the beginning of a touch so that a finger-driven selection drag can be told from the trackpad. */
-    const onTouchStart = (e: TouchEvent) => {
+    const onTouchStart = () => {
       pressingRef.current = true
       // A finger back on the page ends the trackpad session, so any range from here is the user's own.
       scrubbingRef.current = false
-
-      const touch = e.touches[0]
-      const before = selection.isCollapsed() ? selection.offsetFromNode(editable) : null
-      revertWatchRef.current =
-        touch && before !== null && (osVersionStore.getState() ?? 0) >= 27
-          ? { clientX: touch.clientX, clientY: touch.clientY, before, moved: false }
-          : null
     }
 
     /** Marks the end of a touch. */
     const onTouchEnd = () => {
       pressingRef.current = false
-      revertWatchRef.current = null
-    }
-
-    /** Ends the watch on any other input: a touch or click anywhere, a key, or an edit. */
-    const endWatch = () => {
-      revertWatchRef.current = null
-    }
-
-    /** Ends the watch for a touch that moved farther than a tap, since a caret drag crossing its starting offset is not a revert. */
-    const onTouchMove = (e: TouchEvent) => {
-      const watch = revertWatchRef.current
-      const touch = e.touches[0]
-      if (!watch || !touch) return
-      if (Math.hypot(touch.clientX - watch.clientX, touch.clientY - watch.clientY) > TOUCH_SLOP) {
-        revertWatchRef.current = null
-      }
     }
 
     /** Puts the caret back and remembers that a trackpad drag is underway. */
@@ -84,18 +53,18 @@ const useCaretRestore = ({
 
     /** On WebKit 27, iOS can move the caret for a tap whose touchend it withholds (#5660), then move it back to where it was before the touch (#5981). Puts it where the tap landed instead. */
     const correctRevert = () => {
-      const watch = revertWatchRef.current
-      if (!watch) return
+      const watch = touchStore.getState().revertWatch
+      if (watch?.editable !== editable) return
       if (!selection.isCollapsed()) return
       const offset = selection.offsetFromNode(editable)
       if (offset === null) return
       if (offset !== watch.before) {
-        watch.moved = true
+        if (!watch.moved) touchStore.update({ revertWatch: { ...watch, moved: true } })
         return
       }
       if (!watch.moved) return
 
-      revertWatchRef.current = null
+      touchStore.update({ revertWatch: null })
       const tapped = getCaretOffset(editable, watch).offset
       if (tapped === null || tapped === watch.before) return
       // iOS is still handling the tap when it fires this selectionchange.
@@ -119,26 +88,15 @@ const useCaretRestore = ({
       if (scrubbingRef.current && !selection.isCollapsed()) restore()
     }
 
-    // Capture, so that a touch on this editable ends the old watch before onTouchStart begins a new one.
-    document.addEventListener('touchstart', endWatch, { capture: true })
-    document.addEventListener('mousedown', endWatch)
-    editable.addEventListener('keydown', endWatch)
-    editable.addEventListener('beforeinput', endWatch)
     editable.addEventListener('touchstart', onTouchStart)
-    editable.addEventListener('touchmove', onTouchMove, { passive: true })
     editable.addEventListener('touchend', onTouchEnd)
     editable.addEventListener('touchcancel', onTouchEnd)
     document.addEventListener('selectionchange', onSelectionChange)
 
     return () => {
       scrubbingRef.current = false
-      revertWatchRef.current = null
-      document.removeEventListener('touchstart', endWatch, { capture: true })
-      document.removeEventListener('mousedown', endWatch)
-      editable.removeEventListener('keydown', endWatch)
-      editable.removeEventListener('beforeinput', endWatch)
+      if (touchStore.getState().revertWatch?.editable === editable) touchStore.update({ revertWatch: null })
       editable.removeEventListener('touchstart', onTouchStart)
-      editable.removeEventListener('touchmove', onTouchMove)
       editable.removeEventListener('touchend', onTouchEnd)
       editable.removeEventListener('touchcancel', onTouchEnd)
       document.removeEventListener('selectionchange', onSelectionChange)
