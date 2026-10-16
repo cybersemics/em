@@ -12,7 +12,7 @@ import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
-import { AlertType, DEFAULT_FONT_SIZE, LongPressState } from '../constants'
+import { AlertType, DEFAULT_FONT_SIZE, LongPressState, TOUCH_SLOP } from '../constants'
 import initKeyboardSelection from '../device/initKeyboardSelection'
 import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
@@ -367,6 +367,18 @@ const initEvents = (store: Store<State, any>) => {
     const touch = e.changedTouches[0]
     const state = store.getState()
     const isEmptyThought = !!state.cursor && getThoughtById(state, head(state.cursor))?.value === ''
+    const editable = document.activeElement
+    const before =
+      isTouch &&
+      isSafari() &&
+      (osVersionStore.getState() ?? 0) >= 27 &&
+      e.touches.length === 1 &&
+      editable instanceof HTMLElement &&
+      editable.isContentEditable &&
+      editable.contains(e.target as Node) &&
+      selection.isCollapsed()
+        ? selection.offsetFromNode(editable)
+        : null
     touchStore.update({
       pressOnCaret:
         isTouch && (isSafari() || isEmptyThought) && !!touch && selection.isCaretNear(touch.clientX, touch.clientY),
@@ -381,7 +393,26 @@ const initEvents = (store: Store<State, any>) => {
        * the completed touch. Registered in the capture phase because touchstart propagation is unreliable in the bubble
        * phase (see the note on the touchmove listener below). */
       suppressCursorAfterTouch: false,
+      // A touch anywhere replaces the previous watch, ending it.
+      revertWatch:
+        touch && before !== null
+          ? { editable: editable as HTMLElement, clientX: touch.clientX, clientY: touch.clientY, before, moved: false }
+          : null,
     })
+  }
+
+  /** Ends the revert watch on any input other than the touch it watches: its end, a key, an edit, or a mousedown, which useEditMode's onMouseDown places itself. */
+  const endRevertWatch = () => {
+    if (touchStore.getState().revertWatch) touchStore.update({ revertWatch: null })
+  }
+
+  /** Ends the revert watch once the touch moves farther than a tap, since a caret drag sweeping back across its starting offset is not a revert. */
+  const onRevertWatchMove = (e: TouchEvent) => {
+    const watch = touchStore.getState().revertWatch
+    if (!watch) return
+    const touch = e.touches[0]
+    if (!touch) return
+    if (Math.hypot(touch.clientX - watch.clientX, touch.clientY - watch.clientY) > TOUCH_SLOP) endRevertWatch()
   }
 
   /**
@@ -590,6 +621,15 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('touchstart', onTouchStart, { capture: true })
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
+  // The revert watch only starts on a touch device. Capture, so that a handler that stops propagation cannot keep it open.
+  if (isTouch) {
+    window.addEventListener('touchmove', onRevertWatchMove, { capture: true, passive: true })
+    window.addEventListener('touchend', endRevertWatch, { capture: true })
+    window.addEventListener('touchcancel', endRevertWatch, { capture: true })
+    window.addEventListener('mousedown', endRevertWatch, { capture: true })
+    window.addEventListener('keydown', endRevertWatch, { capture: true })
+    window.addEventListener('beforeinput', endRevertWatch, { capture: true })
+  }
   // track the number of active touch points so that multi-touch input can be rejected (e.g. two-finger
   // tracing must not begin a drag-and-drop). Registered in the capture phase for the same reason as
   // onTouchStart above (touchstart may not be propagated), and so that the latch is set before the gesture
@@ -652,6 +692,12 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('touchstart', onTouchStart, { capture: true })
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
+    window.removeEventListener('touchmove', onRevertWatchMove, { capture: true })
+    window.removeEventListener('touchend', endRevertWatch, { capture: true })
+    window.removeEventListener('touchcancel', endRevertWatch, { capture: true })
+    window.removeEventListener('mousedown', endRevertWatch, { capture: true })
+    window.removeEventListener('keydown', endRevertWatch, { capture: true })
+    window.removeEventListener('beforeinput', endRevertWatch, { capture: true })
     window.removeEventListener('touchstart', updateMultitouch, { capture: true })
     window.removeEventListener('touchend', updateMultitouch)
     window.removeEventListener('touchcancel', updateMultitouch)

@@ -19,6 +19,14 @@ const touchStore = ministore({
   touching: false,
   /** Set when a completed touch has already handled its intended cursor behavior, and cleared on the next touchstart. While set, cursor-producing events on an editable belong to the completed touch: browsers can synthesize them after touchend called preventDefault, or after drag cleanup has finished. A legitimate tap always begins with a new touchstart, which clears the flag first. */
   suppressCursorAfterTouch: false,
+  /** On WebKit 27, the touch on the focused editable, where it landed, and the collapsed caret offset before it, so that useRevertCorrection can tell iOS reverting the tap from the caret moving for any other reason (#5981). Set by the capture-phase touchstart listener in initEvents and cleared by the next input of any kind. `moved` records that the caret has left `before` since. */
+  revertWatch: null as {
+    editable: HTMLElement
+    clientX: number
+    clientY: number
+    before: number
+    moved: boolean
+  } | null,
 })
 
 export default touchStore

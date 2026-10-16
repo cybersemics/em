@@ -64,4 +64,29 @@ describe('Double tap', () => {
     expect(alertText).not.toBe('Drag and drop to move thought')
     expect(await isKeyboardShown()).toBe(true)
   })
+
+  // https://github.com/cybersemics/em/issues/5981
+  it('a tap within the thought being edited after a double tap leaves the caret in the tapped word', async () => {
+    await newThought('Existentialism eternally')
+    await hideKeyboardByTappingDone()
+    const editable = await waitForEditable('Existentialism eternally')
+    await tap(editable, { pointerType: 'touch' })
+    await waitUntil(isKeyboardShown)
+
+    await tap(editable, { offset: 'Existentialism'.length, pointerType: 'touch' })
+    await waitUntil(
+      async () => (await browser.execute(() => document.getSelection()?.focusOffset)) === 'Existentialism'.length,
+    )
+    await tap(editable, { offset: 'Existentialism'.length, pointerType: 'touch', count: 2 })
+    await waitUntil(async () => (await getSelection().toString()) === 'Existentialism')
+    await setSelection('Existentialism'.length, 'Existentialism'.length)
+
+    // the middle of "eternally"
+    await tap(editable, { offset: 'Existentialism eter'.length, pointerType: 'touch' })
+    // iOS moves the caret back within about 300ms of the tap
+    await browser.pause(1000)
+
+    const offset = await browser.execute(() => document.getSelection()?.focusOffset ?? null)
+    expect(offset).toBeGreaterThanOrEqual('Existentialism '.length)
+  })
 })
