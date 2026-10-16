@@ -35,6 +35,7 @@ import strip from '../util/strip'
 import trimHtml from '../util/trimHtml'
 import useCaretRestore from './Editable/useCaretRestore'
 import useOnCut from './Editable/useOnCut'
+import useRevertCorrection from './Editable/useRevertCorrection'
 import FauxCaret from './FauxCaret'
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
@@ -81,6 +82,7 @@ const Note = React.memo(
     // pressed, so the caret escapes without any drag at all. It only escapes from the end, where the note abuts
     // the parent thought, so that is where it belongs when restored. (#3276)
     useCaretRestore({ editableRef: noteRef, enabled: !!hasFocus, end: true })
+    useRevertCorrection({ editableRef: noteRef, enabled: !!hasFocus })
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {

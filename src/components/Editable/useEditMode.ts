@@ -11,6 +11,7 @@ import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import virtualKeyboard from '../../device/virtual-keyboard'
+import useFreshCallback from '../../hooks/useFreshCallback'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
@@ -23,6 +24,7 @@ import head from '../../util/head'
 import isCommandKey from '../../util/isCommandKey'
 import lastTouch from './lastTouch'
 import useCaretRestore from './useCaretRestore'
+import useRevertCorrection from './useRevertCorrection'
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
@@ -200,19 +202,34 @@ const useEditMode = ({
     })
   }, [])
 
+  /** Sets the DOM selection and updates the Redux cursor state. */
+  const setCaretOffset = useFreshCallback(
+    (
+      offset: number,
+      { cursorHistoryClear, preserveMulticursor }: { cursorHistoryClear?: boolean; preserveMulticursor?: boolean } = {},
+    ) => {
+      selection.set(contentRef.current, { offset })
+      dispatch(setCursor({ path, offset, cursorHistoryClear, preserveMulticursor }))
+    },
+    [path],
+  )
+
+  /** Places the caret where a tap that iOS reverted landed, as onMouseDown does for a tap with mouse events. */
+  const onRevertCorrect = useFreshCallback(
+    (offset: number) => {
+      const state = store.getState()
+      allowDefaultSelection()
+      setCaretOffset(offset, { preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path) })
+    },
+    [path],
+  )
+
+  useRevertCorrection({ editableRef: contentRef, enabled: isCursor && !!editing, onCorrect: onRevertCorrect })
+
   // Handles the caret positioning logic for the editable element.
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
-
-    /** Sets the DOM selection and updates the Redux cursor state. */
-    const setCaretOffset = (
-      offset: number,
-      { cursorHistoryClear, preserveMulticursor }: { cursorHistoryClear?: boolean; preserveMulticursor?: boolean } = {},
-    ) => {
-      selection.set(editable, { offset })
-      dispatch(setCursor({ path, offset, cursorHistoryClear, preserveMulticursor }))
-    }
 
     /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
     const onTouchStart = () => (pressingRef.current = true)
@@ -381,6 +398,7 @@ const useEditMode = ({
     allowDefaultSelection,
     path,
     dispatch,
+    setCaretOffset,
     store,
     style?.visibility,
   ])
