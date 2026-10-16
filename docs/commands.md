@@ -894,3 +894,5 @@ Navigation accepts `transition: 'zoom' | 'none'`, defaulting to zoom. A visit wi
 Search and sort order live in `commandUniverseBrowsing`, beside the Redux navigation session. Opening a fresh session resets both controls; visiting details and returning retains them. The commands page supports presentation as a grid or list. Browsing changes are transient and not undoable.
 
 During a Command Universe page zoom, the destination accepts input immediately. Focus moves at navigation start rather than completion, so completing the animation does not steal focus from a control already used. The selection glow fades back over the return zoom and returns at its normal size.
+
+The optional deferred-rendering layer draws twelve command rows initially and schedules the remainder after the opening animation plus 50 ms. The complete navigation collection exists immediately. This approach remains a performance proposal: it needs measured opening-time benefit and review of interactions with rows not yet mounted before adoption.
