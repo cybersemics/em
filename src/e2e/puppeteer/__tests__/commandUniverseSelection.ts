@@ -50,7 +50,7 @@ it('a collapsed caret survives a command run from the Command Universe', async (
 
   // The caret is restored when the Command Universe unmounts, which is gated on its fade-out rather than on the
   // command, so the assertion has to wait for the palette to leave the DOM or it races the restore.
-  await waitForSelector('[data-testid=desktop-command-universe]', { hidden: true })
+  await waitForSelector('input[aria-label="Search for a command"]', { hidden: true })
 
   // moveThoughtUp reads selection.offset() unguarded, which reports 0 while the search input holds focus. The caret
   // still lands correctly because the Command Universe saves and restores it around the input focus, so this pins the
@@ -66,7 +66,7 @@ it('Note keeps the caret in the new note when invoked from the Command Universe'
   await command('Note', { inputType: 'commandPalette' })
 
   // the Command Universe restores focus when it unmounts, so wait for it to leave the DOM before reading the focus
-  await waitForSelector('[data-testid=desktop-command-universe]', { hidden: true })
+  await waitForSelector('input[aria-label="Search for a command"]', { hidden: true })
 
   const focused = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'))
   expect(focused).toBe('note-editable')

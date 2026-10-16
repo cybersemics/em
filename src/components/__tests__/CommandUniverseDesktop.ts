@@ -2,6 +2,7 @@ import { cleanup, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
+import { isMac } from '../../browser'
 import store from '../../stores/app'
 import storageModel from '../../stores/storageModel'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -26,10 +27,10 @@ afterEach(async () => {
   vi.restoreAllMocks()
 })
 
-it('navigates a disabled command to details, and retains search on Back', async () => {
+it('opens with the desktop shortcut and navigates a disabled command to details, and retains search on Back', async () => {
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    fireEvent.keyDown(window, { key: 'p', [isMac ? 'metaKey' : 'ctrlKey']: true })
     await vi.runAllTimersAsync()
   })
   const search = screen.getByRole('textbox', { name: 'Search for a command' })

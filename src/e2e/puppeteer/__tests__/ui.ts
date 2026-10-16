@@ -4,12 +4,12 @@ import { KnownDevices } from 'puppeteer'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
-import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
 import waitForBackgroundImage from '../helpers/waitForBackgroundImage'
@@ -25,7 +25,7 @@ it('DesktopCommandUniverse', async () => {
   // hide the HUD so that the snapshot only includes the command universe and is not affected by unrelated toolbar or navbar changes
   await hideHUD()
 
-  await press('P', { meta: true })
+  await command('openDesktopCommandUniverse')
 
   // wait for the desktop command universe to appear before taking screenshot
   await waitForSelector('[data-testid=desktop-command-universe]')

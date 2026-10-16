@@ -13,6 +13,8 @@ import { commandUniverseForwardActionCreator as commandUniverseForward } from '.
 import { commandUniverseSearchActionCreator } from '../../actions/commandUniverseSearch'
 import { commandUniverseSortActionCreator } from '../../actions/commandUniverseSort'
 import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
+import { hashCommand, hashKeyDown } from '../../commands'
+import openMobileCommandUniverse from '../../commands/openMobileCommandUniverse'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import useCommandUniverseSelection from '../../hooks/useCommandUniverseSelection'
 import durations from '../../util/durations'
@@ -166,7 +168,7 @@ const CommandUniverseSession = ({
     /** Routes dialog keys without changing ordinary search text editing. */
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.isComposing) return
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' || hashKeyDown(event) === hashCommand(openMobileCommandUniverse.keyboard)) {
         event.preventDefault()
         event.stopImmediatePropagation()
         onClose()
