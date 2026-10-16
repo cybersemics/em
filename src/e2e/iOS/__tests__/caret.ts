@@ -18,9 +18,13 @@ import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import scrubSpaceBar from '../helpers/scrubSpaceBar'
 import setFontSize from '../helpers/setFontSize'
+import setSelection from '../helpers/setSelection'
+import showEditMenu from '../helpers/showEditMenu'
 import tap from '../helpers/tap'
+import tapEditMenuItem from '../helpers/tapEditMenuItem'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForElement from '../helpers/waitForElement'
+import waitForElementAtRest from '../helpers/waitForElementAtRest'
 import waitUntil from '../helpers/waitUntil'
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
@@ -169,7 +173,7 @@ describe('Caret', () => {
   // The same hit test escapes a note without any drag: a note is short enough that the point lands outside it
   // as soon as the space bar is held, and it leaves from the end, where the note abuts the parent thought.
   it('a caret scrubbed in a note stays in the note (#3276)', async () => {
-    // The note slides into place after the paste, and a tap aimed at it mid-slide lands on the parent thought.
+    // The note moves into place after the paste, and a tap aimed at it mid-move lands on the parent thought.
     await disableTransitions()
     await newThought()
     await paste(
@@ -181,6 +185,8 @@ describe('Caret', () => {
     )
 
     const note = await waitForElement('[aria-label="note-editable"]')
+    // Disabling transitions does not stop the smooth scroll that brings the pasted cursor into view.
+    await waitForElementAtRest(note)
     await tap(note)
     await waitUntil(isKeyboardShown)
 
@@ -191,6 +197,47 @@ describe('Caret', () => {
     expect(await getSelection().focusNode?.textContent).toBe('A')
     expect(await getSelection().focusOffset).toBe(1)
     expect(await isKeyboardShown()).toBeTruthy()
+  })
+
+  // https://github.com/cybersemics/em/issues/3828
+  it('a caret pasted into the middle of a note stays after the pasted text', async () => {
+    await disableTransitions()
+    await paste(`
+    - Lorem Ipsum Dolor Sit Amet
+      - =note
+        - Sed tortor nunc`)
+
+    await tap(await waitForEditable('Lorem Ipsum Dolor Sit Amet'), { pointerType: 'touch' })
+    await setSelection('Lorem '.length, 'Lorem Ipsum'.length)
+    await showEditMenu()
+    await tapEditMenuItem('Copy')
+
+    // The first tap places the caret between "Sed " and "tortor", the second raises the edit menu on it.
+    const note = await waitForElement('[aria-label="note-editable"]')
+    // Disabling transitions does not stop the smooth scroll that brings the cursor into view.
+    await waitForElementAtRest(note)
+    await tap(note, { pointerType: 'touch', offset: 'Sed '.length })
+    await waitUntil(isKeyboardShown)
+    await tap(note, { pointerType: 'touch', offset: 'Sed '.length })
+    await tapEditMenuItem('Paste')
+
+    await waitUntil(() =>
+      browser.execute(() => document.querySelector('[aria-label="note-editable"]')?.textContent !== 'Sed tortor nunc'),
+    )
+    const { text, caretOffset } = await browser.execute(() => {
+      const editable = document.querySelector('[aria-label="note-editable"]')!
+      const selection = window.getSelection()!
+      // measure the caret relative to the whole note, since the paste may leave the caret in a text node nested in it
+      const range = document.createRange()
+      range.selectNodeContents(editable)
+      range.setEnd(selection.focusNode!, selection.focusOffset)
+      return {
+        text: editable.textContent,
+        caretOffset: editable.contains(selection.focusNode) ? range.toString().length : null,
+      }
+    })
+    expect(text).toBe('Sed Ipsumtortor nunc')
+    expect(caretOffset).toBe('Sed Ipsum'.length)
   })
 
   it.skip('Tap empty content while keyboard up', async () => {
