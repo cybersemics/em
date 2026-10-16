@@ -5,13 +5,14 @@ import { composeWithDevTools } from '@redux-devtools/extension'
 import _ from 'lodash'
 import { applyMiddleware, createStore } from 'redux'
 import { thunk } from 'redux-thunk'
+import CommandSuccess from '../@types/CommandSuccess'
 import appReducer from '../actions/app'
+import { awardPracticeRepActionCreator as awardPracticeRep } from '../actions/awardPracticeRep'
 import pushQueue from '../redux-enhancers/pushQueue'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import updateJumpHistory from '../redux-enhancers/updateJumpHistoryEnhancer'
 import validateStateEnhancer from '../redux-enhancers/validateStateEnhancer'
-import awardPracticeRepMiddleware from '../redux-middleware/awardPracticeRep'
 import clearSelection from '../redux-middleware/clearSelection'
 import closeDropdownsWhenCursorNull from '../redux-middleware/closeDropdownsWhenCursorNull'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
@@ -24,6 +25,7 @@ import pullQueue from '../redux-middleware/pullQueue'
 import updateEditingValue from '../redux-middleware/updateEditingValue'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
 import validateActionRegistrations from '../util/actionMetadata.registry'
+import commandEmitter from './commandEmitter'
 
 // composeWithDevTools is typed as redux.compose, which hard codes up to four function arguments.
 // Therefore, type it as the functionally equivalent _.flowRight in order to compose more than four enhancers.
@@ -48,7 +50,6 @@ const middlewareEnhancer = applyMiddleware(
   multicursorAlertMiddleware,
   multiselectCursorMiddleware,
   closeDropdownsWhenCursorNull,
-  awardPracticeRepMiddleware,
 )
 
 // only validate Redux state in dev and test environments
@@ -76,5 +77,10 @@ if (import.meta.env.MODE === 'development') {
   // This can be safely called here because it lazy-loads the actions module
   validateActionRegistrations()
 }
+
+// award a practice rep when a keyboard shortcut or gesture invokes the pinned command
+commandEmitter.on('commandSucceeded', ({ commandId, source }: CommandSuccess) => {
+  if (source === 'keyboard' || source === 'gesture') store.dispatch(awardPracticeRep({ commandId }))
+})
 
 export default store
