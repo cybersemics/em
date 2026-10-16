@@ -10,6 +10,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import keyValueBy from '../util/keyValueBy'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
@@ -50,17 +51,25 @@ const swapParent = (state: State): State => {
 
   // Get siblings (other children of parent excluding the child being swapped)
   const parentChildren = getChildrenRanked(state, parentId)
-  const siblings = parentChildren.filter(sibling => sibling.id !== childId)
+
+  // Meta attributes describe the thought they belong to (e.g. =favorite, =note, =pin, =sort), so they stay with their
+  // own thought rather than being exchanged along with the regular children.
+  const grandchildren = childChildren.filter(grandchild => !isAttribute(grandchild.value))
+  const siblings = parentChildren.filter(sibling => sibling.id !== childId && !isAttribute(sibling.value))
+  const parentAttributes = parentChildren.filter(parentChild => isAttribute(parentChild.value))
 
   // The parent and the siblings arrive under the child before the child's own children have left it, so giving them
   // the ranks they held under the parent can collide with the ranks already in place. moveThought reranks a context
   // whose ranks collide, and rerank resolves an exact tie in whatever order the tied thoughts happen to enumerate,
   // reordering thoughts the swap should have left alone. Ranking them past everything the child currently holds keeps
   // them clear of it, and once the child's own children have moved out, all that remains is their order relative to
-  // each other — the parent taking the slot the child vacated. The reverse move needs no such offset: the parent has
-  // been emptied by the time the child's children arrive, so they keep the ranks they already had.
+  // each other — the parent taking the slot the child vacated. The reverse move needs the same offset, since the
+  // parent keeps its own meta attributes while the child's children arrive.
   const ranksUnderChild = keyValueBy(parentChildren, (parentChild, i) => ({
     [parentChild.id === childId ? parentId : parentChild.id]: (childChildren.at(-1)?.rank ?? -1) + 1 + i,
+  }))
+  const ranksUnderParent = keyValueBy(grandchildren, (grandchild, i) => ({
+    [grandchild.id]: (parentAttributes.at(-1)?.rank ?? -1) + 1 + i,
   }))
 
   const grandparent = parentOf(parent)
@@ -94,11 +103,11 @@ const swapParent = (state: State): State => {
     ),
 
     // Move grandchildren under the parent's new position
-    ...childChildren.map(grandchild =>
+    ...grandchildren.map(grandchild =>
       moveThought({
         oldPath: simplifyPath(state, [...cursor, grandchild.id]),
         newPath: simplifyPath(state, [...grandparent, childId, parentId, grandchild.id]),
-        newRank: grandchild.rank,
+        newRank: ranksUnderParent[grandchild.id],
         skipMerge: true,
       }),
     ),
@@ -108,11 +117,11 @@ const swapParent = (state: State): State => {
     // No-op when no sort preference is active (sort returns early for type === 'None').
     sort(grandparentId),
 
-    // If an active sort preference migrated to the child (e.g. =sort was a sibling of the child
-    // under the original parent and is now a sibling of the moved parent under the child), re-rank
-    // the child's new children to match the sort order.
+    // The child and the parent each keep their own =sort while exchanging children, so re-rank the
+    // children each of them received to match its sort order.
     // No-op when no sort preference is active (sort returns early for type === 'None').
     sort(childId),
+    sort(parentId),
 
     // Keep cursor on the child at its new position
     setCursor({

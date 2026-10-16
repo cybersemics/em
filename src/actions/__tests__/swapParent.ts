@@ -73,6 +73,7 @@ it('swaps two empty thoughts without error', () => {
 })
 
 // https://github.com/cybersemics/em/issues/3628
+// https://github.com/cybersemics/em/issues/3725
 it('preserves both notes when swapping a parent and child that each have a note', () => {
   const text = `
     - parent
@@ -90,10 +91,36 @@ it('preserves both notes when swapping a parent and child that each have a note'
   expect(exported).toBe(`- ${HOME_TOKEN}
   - child
     - =note
-      - parent note
+      - child note
     - parent
       - =note
-        - child note`)
+        - parent note`)
+})
+
+// https://github.com/cybersemics/em/issues/3725
+it('keeps the meta attributes of the parent and the child with their own thoughts', () => {
+  const text = `
+    - a
+      - =pin
+        - true
+      - b
+        - =favorite
+        - c
+      - d
+  `
+
+  const steps = [importText({ text }), setCursor(['a', 'b']), swapParent]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - b
+    - =favorite
+    - a
+      - =pin
+        - true
+      - c
+    - d`)
 })
 
 it('swaps child thought with parent', () => {
@@ -314,6 +341,29 @@ describe('context view', () => {
 })
 
 describe('sort', () => {
+  // https://github.com/cybersemics/em/issues/3725
+  it('re-sorts the children the parent receives by its own sort preference', () => {
+    const text = `
+    - a
+      - =sort
+        - Alphabetical
+          - Asc
+      - b
+        - z
+        - y
+  `
+
+    const steps = [importText({ text }), setCursor(['a', 'b']), swapParent]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain', { excludeMeta: true })
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - b
+    - a
+      - y
+      - z`)
+  })
+
   it('does not throw when re-swapping parent with Created sort active', () => {
     const text = `
     - a

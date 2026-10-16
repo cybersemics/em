@@ -295,7 +295,7 @@ describe('multicursor', () => {
 
 describe('meta attributes', () => {
   // https://github.com/cybersemics/em/issues/3725
-  it.skip('a favorited subthought stays in the Favorites list after swapping with its parent', () => {
+  it('a favorited subthought stays in the Favorites list after swapping with its parent', () => {
     store.dispatch([
       importText({
         text: `
