@@ -1,8 +1,10 @@
+import { MotionValue, motion } from 'motion/react'
 import React, { PropsWithChildren, useEffect, useRef } from 'react'
 import { dialogRecipe } from '../../../styled-system/recipes'
 import useOnClickOutside from '../../hooks/useOnClickOutside'
 
 interface DialogProps {
+  animation: { opacity: MotionValue<number>; scale: MotionValue<number> }
   onClose: () => void
   nodeRef: React.RefObject<HTMLDivElement | null>
 }
@@ -10,7 +12,7 @@ interface DialogProps {
 /**
  * Dialog component with liminal glass treatment. All styling lives in dialogRecipe.
  */
-const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, nodeRef }) => {
+const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, nodeRef, animation }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const dialog = dialogRecipe()
 
@@ -45,12 +47,12 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
 
   return (
     // Full-viewport backdrop with blur.
-    <div ref={nodeRef} className={dialog.overlay}>
+    <motion.div ref={nodeRef} className={dialog.overlay} style={{ opacity: animation.opacity }}>
       {/* Soft full-screen color glow rendered behind the glass. */}
       <div className={dialog.backgroundGlow} />
 
       {/* Wrapper around the glass sheet — lets unclipped highlights bleed past the glass edges. */}
-      <div className={dialog.wrapper}>
+      <motion.div className={dialog.wrapper} style={{ scale: animation.scale }}>
         {/* Top-of-screen light highlight that bleeds past the glass top edge. */}
         <div className={dialog.highlightUnclipped} />
         {/* Rainbow refraction that bleeds past the glass top edge. */}
@@ -75,8 +77,8 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
           {/* Dialog content (title + body). */}
           <div className={dialog.contentLayer}>{children}</div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
