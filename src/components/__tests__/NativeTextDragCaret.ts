@@ -270,6 +270,107 @@ it('does not nest formatting when dragged text is dropped into the same formatti
   ])
 })
 
+// https://github.com/cybersemics/em/pull/5967#discussion_r4299621368
+it('nests only the formatting that the drop point does not already have', async () => {
+  await importOutline(`- <b>Foo Baz Qux</b>
+- <b><i>Bar</i></b>`)
+  const target = getEditable('Foo Baz Qux')
+  const source = getEditable('Bar')
+  layOutCaretBefore(target, 'Qux')
+  selectWord(source, 'Bar')
+  await startDrag(source)
+
+  await dropBelowCaret(target)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<b>Foo Baz <i>Bar</i>Qux</b>',
+    '',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#discussion_r4300374926
+it('does not nest a color in the same color when dragged text is dropped into it', async () => {
+  await importOutline('- <span style="color: #ff0000;">Foo Bar Baz Qux</span>')
+  const editable = getEditable('Foo Bar Baz Qux')
+  layOutCaretBefore(editable, 'Qux')
+  selectWord(editable, 'Bar')
+  await startDrag(editable)
+
+  await dropBelowCaret(editable)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="color: #ff0000;">Foo Baz BarQux</span>',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#discussion_r4300374926
+it('keeps the color of dragged text dropped into text of another color', async () => {
+  await importOutline(`- <span style="color: #ff0000;">Left Right</span>
+- <span style="color: #0000ff;">Blue</span>
+- <span style="color: #ff0000;">Red</span>`)
+
+  const blue = getEditable('Blue')
+  layOutCaretBefore(getEditable('Left Right'), 'Right')
+  selectWord(blue, 'Blue')
+  await startDrag(blue)
+  await dropBelowCaret(getEditable('Left Right'))
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="color: #ff0000;">Left </span><span style="color: #0000ff;">Blue</span><span style="color: #ff0000;">Right</span>',
+    '',
+    '<span style="color: #ff0000;">Red</span>',
+  ])
+
+  // the red text is dropped between "Bl" and "ue", inside the blue text, which is inside no red text any more
+  const red = getEditable('Red')
+  layOutCaretBefore(getEditable('Left BlueRight'), 'ue')
+  selectWord(red, 'Red')
+  await startDrag(red)
+  await dropBelowCaret(getEditable('Left BlueRight'))
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="color: #ff0000;">Left </span><span style="color: #0000ff;">Bl</span><span style="color: #ff0000;">Red</span><span style="color: #0000ff;">ue</span><span style="color: #ff0000;">Right</span>',
+    '',
+    '',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#discussion_r4300374926
+it('keeps the formatting at the drop point on colored text dropped into text of another color', async () => {
+  await importOutline(`- <span style="color: #ff0000;"><b>Left Right</b></span>
+- <span style="color: #0000ff;">Blue</span>`)
+  const target = getEditable('Left Right')
+  const source = getEditable('Blue')
+  layOutCaretBefore(target, 'Right')
+  selectWord(source, 'Blue')
+  await startDrag(source)
+
+  await dropBelowCaret(target)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="color: #ff0000;"><b>Left </b></span><span style="color: #0000ff;"><b>Blue</b></span><span style="color: #ff0000;"><b>Right</b></span>',
+    '',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#discussion_r4300374926
+it('colors uncolored dragged text dropped into colored text', async () => {
+  await importOutline(`- <span style="color: #ff0000;">Left Right</span>
+- Plain`)
+  const target = getEditable('Left Right')
+  const source = getEditable('Plain')
+  layOutCaretBefore(target, 'Right')
+  selectWord(source, 'Plain')
+  await startDrag(source)
+
+  await dropBelowCaret(target)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="color: #ff0000;">Left PlainRight</span>',
+    '',
+  ])
+})
+
 // https://github.com/cybersemics/em/issues/4225
 it('does not drop dragged text into a read-only thought', async () => {
   await importOutline(`- foo bar baz
