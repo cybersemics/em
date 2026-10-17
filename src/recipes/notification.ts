@@ -105,6 +105,9 @@ const notificationRecipe = defineSlotRecipe({
     glow: {
       rainbow: {
         glow: {
+          // The rainbow glow is mirrored only at the full-width anchor, which depends on the anchor and the glow
+          // together. That would be a compound variant, but Panda rejects compound variants when a variant is passed
+          // responsively, as Tip passes its anchor. So each anchor sets this variable and the glow reads it.
           transform: 'var(--notification-glow-flip)',
         },
       },
