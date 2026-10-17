@@ -60,7 +60,7 @@ describe('space-to-indent', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5969
-  it.skip('inserts a space typed in the note of a multiselected empty thought instead of indenting the thought', async () => {
+  it('inserts a space typed in the note of a multiselected empty thought instead of indenting the thought', async () => {
     await newThought('a')
     await newThought('b')
     await press('Enter')

@@ -953,6 +953,11 @@ export const keyDown = (e: KeyboardEvent) => {
   // disable if modal is shown, except for navigation commands
   if (!command || state.showMobileCommandUniverse || (state.showModal && !command.allowExecuteFromModal)) return
 
+  // A space typed in a note is text. Space-to-indent applies only when the caret is in the thought itself, so reject it
+  // here rather than in indent's exec: executeCommandWithMulticursor sets the cursor on each selected thought before
+  // exec runs, which clears noteFocus, so the empty thought would be indented and the space dropped (#5969).
+  if (command.id === 'indent' && state.noteFocus) return
+
   // execute the command
   commandEmitter.trigger('command', command)
 
