@@ -202,7 +202,7 @@ describe('toggleSortPicker error', () => {
       store.dispatch(
         setSortPreference({
           simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
-          sortPreference: { type: 'Created', direction: 'Asc' },
+          sortPreference: { type: 'Created', direction },
         }),
       )
 
@@ -564,7 +564,7 @@ describe('toggleSortPicker error', () => {
       store.dispatch(
         setSortPreference({
           simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
-          sortPreference: { type: 'Created', direction: 'Asc' },
+          sortPreference: { type: 'Created', direction },
         }),
       )
 
