@@ -126,6 +126,24 @@ it('dismisses when Clear is activated', async () => {
   expect(screen.queryByRole('dialog', { name: 'Gesture for New Thought' })).toBeNull()
 })
 
+it('closes when the ring is tapped again', async () => {
+  await act(async () => {
+    store.dispatch(pinCommand({ commandId: 'newThought' }))
+    await vi.runAllTimersAsync()
+  })
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+
+  const ring = screen.getByRole('button', { name: 'Show gesture for New Thought' })
+  await user.click(ring)
+  expect(ring).toHaveAttribute('aria-expanded', 'true')
+
+  await user.click(ring)
+  await act(vi.runAllTimersAsync)
+
+  expect(ring).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.queryByRole('dialog', { name: 'Gesture for New Thought' })).toBeNull()
+})
+
 it('dismisses when the user taps outside the tooltip', async () => {
   await act(async () => {
     store.dispatch(pinCommand({ commandId: 'newThought' }))

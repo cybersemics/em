@@ -1,42 +1,32 @@
-import { motion, useMotionTemplate, useMotionValue, useTransform } from 'framer-motion'
+import { motion, useMotionValue } from 'framer-motion'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from '../../actions/commandUniverseNavigate'
 import { saveSelectionOffsetsActionCreator as saveSelectionOffsets } from '../../actions/saveSelectionOffsets'
-import { showPinnedCommandTooltipActionCreator as showPinnedCommandTooltip } from '../../actions/showPinnedCommandTooltip'
 import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
 import { commandById } from '../../commands'
-import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../constants'
-import useBreakpoint from '../../hooks/useBreakpoint'
-import durations from '../../util/durations'
-import haptics from '../../util/haptics'
 import PinnedCommandIcon from './PinnedCommandIcon'
 import PinnedCommandRing from './PinnedCommandRing'
 import PinnedCommandTooltip from './PinnedCommandTooltip'
+import usePinnedCommandTooltip from './usePinnedCommandTooltip'
+import useRingExpansion from './useRingExpansion'
+import useRingHold from './useRingHold'
 
 /**
  * The persistent bottom-right widget showing the pinned command's icon inside its practice ring. Renders nothing when
- * no command is pinned. Its ring opens the expanded gesture without executing the command.
+ * no command is pinned. Tapping the ring opens or closes the command's gesture tooltip, and holding it opens the
+ * command's Command Universe detail page; neither executes the command.
+ *
+ * The component renders the ring and the tooltip and notices reps as they land. The animations belong to hooks and
+ * components of their own: useRingExpansion grows the ring into the tooltip, PinnedCommandRing animates the fill and
+ * the flourish, and PinnedCommandIcon plays the icon animation.
  */
 const PinnedCommand = () => {
   const dispatch = useDispatch()
   const tooltipId = useId()
-  const [keepRaisedDuringExit, setKeepRaisedDuringExit] = useState(false)
-  // Tap and hold on the ring opens the command's detail page instead of the tooltip. The timer runs from pointerdown;
-  // held records that it fired so the click that follows the release does not also open the tooltip.
-  const holdTimer = useRef<number | undefined>(undefined)
-  const held = useRef(false)
-  useEffect(() => () => window.clearTimeout(holdTimer.current), [])
-  const isBottomRight = useBreakpoint('lg')
-  const tooltipOpacity = useMotionValue(0)
-  const ringScale = useTransform(tooltipOpacity, opacity => 1 + opacity * 0.25)
-  // Keep the ring's center aligned with the tooltip row as it grows. CSS resolves rem and safe-area units;
-  // Motion supplies the animated opacity and scale directly, as CommandCenter does for its animated mask.
-  const surfaceBottomPadding = isBottomRight ? '1.5rem' : 'max(1.5rem, 0.5rem + env(safe-area-inset-bottom))'
-  const ringTransform = useMotionTemplate`translateY(calc(${tooltipOpacity} * (max(11px, env(safe-area-inset-bottom)) + 36.84px * 1.25 - 22.5px - (${surfaceBottomPadding} + max(0px, 0.75rem - env(safe-area-inset-bottom)) + 3rem / 2 + 0.3889rem)))) scale(${ringScale})`
-  const handleTooltipOpacityChange = useCallback((opacity: number) => tooltipOpacity.set(opacity), [tooltipOpacity])
   const pinnedCommandId = useSelector(state => state.learning.pinnedCommandId)
+  const command = pinnedCommandId ? commandById(pinnedCommandId) : undefined
   // The pinned command's practice record: how many reps the user has done and how many the ring is aiming for.
   const progressRecord = useSelector(state => (pinnedCommandId ? state.learning.progress[pinnedCommandId] : undefined))
   // Reps completed so far.
@@ -61,68 +51,45 @@ const PinnedCommand = () => {
     if (reps >= targetReps) setFlourishes(count => count + 1)
   }, [pinnedCommandId, reps, targetReps])
 
-  // Changing the pinned command also closes the tooltip for any previous pinned command that might be open.
-  const isOpen = useSelector(state => state.showPinnedCommandTooltip && !!state.learning.pinnedCommandId)
-  const isRingRaised = isOpen || keepRaisedDuringExit
+  const { isOpen, close, toggle } = usePinnedCommandTooltip()
+  // The ring's fixed dock in the corner, and the ring button inside it.
+  const dockRef = useRef<HTMLDivElement>(null)
+  const ringRef = useRef<HTMLButtonElement>(null)
+  // The tooltip's row of genie and text, which the expanded ring lines up with.
+  const rowRef = useRef<HTMLDivElement>(null)
+  // The tooltip surface's opacity, which the ring's expansion and color follow.
+  const tooltipOpacity = useMotionValue(0)
+  const handleTooltipOpacityChange = useCallback((opacity: number) => tooltipOpacity.set(opacity), [tooltipOpacity])
+  const { transform, isRaised, ringClearance } = useRingExpansion({ isOpen, tooltipOpacity, dockRef, rowRef })
 
-  // Close the tooltip when this widget disappears. A modal (such as Settings) replaces the widget while it is open, and
-  // the tooltip should not reappear when the modal closes.
-  useEffect(() => {
-    return () => {
-      dispatch(showPinnedCommandTooltip({ value: false }))
-    }
-  }, [dispatch])
+  /** Opens the registered Command Universe detail page for this command. */
+  const revealCommand = useCallback(() => {
+    if (!command) return
+    close()
+    dispatch(toggleMobileCommandUniverse({ value: true, preserveSelectionOffsets: true }))
+    dispatch(commandUniverseNavigate('detail', { command }, { transition: 'none' }))
+  }, [close, command, dispatch])
+  const hold = useRingHold(revealCommand)
 
-  useEffect(() => {
-    if (isOpen) {
-      if (!keepRaisedDuringExit) setKeepRaisedDuringExit(true)
-      return
-    }
-    if (!keepRaisedDuringExit) return
-
-    const timeout = window.setTimeout(() => setKeepRaisedDuringExit(false), durations.get('medium'))
-    return () => window.clearTimeout(timeout)
-  }, [isOpen, keepRaisedDuringExit])
-
-  useEffect(() => {
-    if (!isOpen) return
-
-    /** Dismiss the expanded gesture through the keyboard without changing the pin. */
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') dispatch(showPinnedCommandTooltip({ value: false }))
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [dispatch, isOpen])
-
-  if (!pinnedCommandId) return null
-
-  const command = commandById(pinnedCommandId)
   // A stored command may have been removed since the last app version.
   if (!command) return null
 
-  /** Open the registered Command Universe detail page for this command. */
-  const revealCommand = () => {
-    dispatch(showPinnedCommandTooltip({ value: false }))
-    dispatch(toggleMobileCommandUniverse({ value: true, preserveSelectionOffsets: true }))
-    dispatch(commandUniverseNavigate('detail', { command }, { transition: 'none' }))
-  }
-
   return (
     <>
-      {/* Fixed to the screen corner, so the ring stays put however the page scrolls, including over the footer at the end of the page. It sits on the pinnedCommand layer just above the NavBar, and rises above the tooltip's surface while that is open or fading out. Position lives here; scale and lift stay on the button. */}
+      {/* Fixed to the screen corner, so the ring stays put however the page scrolls, including over the footer at the end of the page. It sits on the pinnedCommand layer just above the NavBar, and rises above the tooltip's surface while that is visible. Position lives here; scale and lift stay on the button. */}
       <div
+        ref={dockRef}
         className={css({
           position: 'fixed',
           right: 0,
           // The ring center sits 13.5px above the NavBar's bottom edge; its box center is 36.16px above its bottom.
           bottom: 'calc(max(11px, token(spacing.safeAreaBottom)) - 22.5px)',
-          zIndex: isRingRaised ? 'pinnedCommandExpanded' : 'pinnedCommand',
+          zIndex: isRaised ? 'pinnedCommandExpanded' : 'pinnedCommand',
           pointerEvents: 'none',
         })}
       >
         <motion.button
+          ref={ringRef}
           type='button'
           aria-label={`Show gesture for ${command.label}`}
           aria-description={
@@ -137,27 +104,18 @@ const PinnedCommand = () => {
             // Record the editor selection before focusing an interactive control in the corner.
             dispatch(saveSelectionOffsets())
             event.preventDefault()
-            held.current = false
-            window.clearTimeout(holdTimer.current)
-            holdTimer.current = window.setTimeout(() => {
-              held.current = true
-              haptics.light()
-              revealCommand()
-            }, TIMEOUT_LONG_PRESS_THOUGHT)
+            hold.start()
           }}
-          onPointerUp={() => window.clearTimeout(holdTimer.current)}
-          onPointerCancel={() => window.clearTimeout(holdTimer.current)}
-          onPointerLeave={() => window.clearTimeout(holdTimer.current)}
+          onPointerUp={hold.cancel}
+          onPointerCancel={hold.cancel}
+          onPointerLeave={hold.cancel}
           // The hold is em's own; keep the platform's long-press menu out of it.
           onContextMenu={event => event.preventDefault()}
           onClick={event => {
-            if (held.current) {
-              held.current = false
-              return
-            }
+            if (hold.consumeHold()) return
             // Keyboard activation has no pointerdown; clear any stale snapshot before opening.
             if (event.detail === 0) dispatch(saveSelectionOffsets())
-            dispatch(showPinnedCommandTooltip({ value: true }))
+            toggle()
           }}
           className={css({
             display: 'block',
@@ -183,11 +141,7 @@ const PinnedCommand = () => {
               bottom: 0,
             },
           })}
-          style={{
-            transform: ringTransform,
-            // The enlarged ring overlaps Clear on desktop; let that control remain tappable.
-            pointerEvents: isRingRaised ? 'none' : undefined,
-          }}
+          style={{ transform }}
         >
           <PinnedCommandRing
             key={pinnedCommandId}
@@ -203,9 +157,12 @@ const PinnedCommand = () => {
         id={tooltipId}
         command={command}
         isOpen={isOpen}
-        onClose={() => dispatch(showPinnedCommandTooltip({ value: false }))}
+        onClose={close}
         onOpacityChange={handleTooltipOpacityChange}
         onReveal={revealCommand}
+        ringRef={ringRef}
+        rowRef={rowRef}
+        ringClearance={ringClearance}
       />
     </>
   )
