@@ -195,7 +195,12 @@ const RingProgress = ({ progress, activeOpacity }: RingProgressProps) => {
   }, [progress, prefersReducedMotion])
   return progress > 0 ? (
     <motion.div className={css({ position: 'absolute', inset: 0 })}>
-      <motion.div className={css({ position: 'absolute', inset: 0 })} style={{ opacity: 1 - colorOpacity }}>
+      <motion.div
+        data-testid='pinned-command-ring-fill'
+        data-progress={visibleProgress}
+        className={css({ position: 'absolute', inset: 0 })}
+        style={{ opacity: 1 - colorOpacity }}
+      >
         <BlurredProgressArc progress={visibleProgress} stops={STOPS_MONO} />
       </motion.div>
       {colorOpacity > 0 && (

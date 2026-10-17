@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { act, createElement } from 'react'
 import PinnedCommandRing from '../PinnedCommandRing'
 
@@ -12,17 +12,18 @@ it('animates the fill angle when progress increases after a rep', async () => {
     toFake: ['Date', 'performance', 'requestAnimationFrame', 'cancelAnimationFrame', 'setTimeout', 'clearTimeout'],
   })
 
-  const { container, rerender } = render(createElement(PinnedCommandRing, { progress: 0.2 }))
-  /** Returns the rendered conic gradient that paints the progress arc. */
-  const fill = () =>
-    Array.from(container.querySelectorAll('div')).find(element => element.style.background.includes('conic-gradient'))!
+  const { rerender } = render(createElement(PinnedCommandRing, { progress: 0.2 }))
+  /** Returns the fill progress currently drawn, from 0 to 1. */
+  const drawnProgress = () => Number(screen.getByTestId('pinned-command-ring-fill').dataset.progress)
 
-  expect(fill().style.background).toContain('transparent 72.00deg')
+  expect(drawnProgress()).toBe(0.2)
 
+  // A rep raises the target, but the fill starts from where it is drawn.
   rerender(createElement(PinnedCommandRing, { progress: 0.4 }))
-  expect(fill().style.background).toContain('transparent 72.00deg')
+  expect(drawnProgress()).toBe(0.2)
 
+  // Partway through the tween, the fill is between the old and new progress.
   await act(async () => vi.advanceTimersByTimeAsync(200))
-  expect(fill().style.background).not.toContain('transparent 72.00deg')
-  expect(fill().style.background).not.toContain('transparent 144.00deg')
+  expect(drawnProgress()).toBeGreaterThan(0.2)
+  expect(drawnProgress()).toBeLessThan(0.4)
 })
