@@ -12,7 +12,8 @@ const EXPANDED_SCALE = 1.25
  * settles back in step with the tooltip's fade.
  *
  * The rise is measured, not calculated. When the tooltip opens, and whenever the window resizes while it is open, this
- * reads where the docked ring and the row are on screen. Calculating it instead meant restating the tooltip's padding,
+ * reads where the docked ring and the row are on screen, and how far the expanded ring reaches in from the edge of the
+ * screen, which the tooltip keeps its text clear of. Calculating it instead meant restating the tooltip's padding,
  * row height, and the safe-area inset in a CSS expression here, in step with the same numbers in the tooltip, and the
  * two files had to be kept in sync by hand. The measurement is one layout read when the tooltip opens; it does not run
  * while scrolling, typing, or animating. PopupBase measures itself once before paint for the same reason.
@@ -37,12 +38,12 @@ const useRingExpansion = ({
 }): {
   transform: MotionValue<string>
   isRaised: boolean
-  ringClearance: number
+  ringFootprint: number
 } => {
   // How far the fully expanded ring rises, in px, from its dock to the row's center. Negative is upward.
   const rise = useMotionValue(0)
-  // How far from its right edge the row must keep its text to clear the expanded ring, in px.
-  const [ringClearance, setRingClearance] = useState(0)
+  // How far the expanded ring reaches in from the right edge of the screen, in px.
+  const [ringFootprint, setRingFootprint] = useState(0)
 
   useLayoutEffect(() => {
     if (!isOpen) return
@@ -55,7 +56,7 @@ const useRingExpansion = ({
       const expandedCenterY = dock.bottom - (dock.height - ringGeometry.visible.centerY) * EXPANDED_SCALE
       const expandedLeft = dock.right - (dock.width - ringGeometry.visible.left) * EXPANDED_SCALE
       rise.set(row.top + row.height / 2 - expandedCenterY)
-      setRingClearance(Math.max(0, row.right - expandedLeft))
+      setRingFootprint(dock.right - expandedLeft)
     }
     measure()
     window.addEventListener('resize', measure)
@@ -73,7 +74,7 @@ const useRingExpansion = ({
   const [isRaised, setIsRaised] = useState(tooltipOpacity.get() > 0)
   useMotionValueEvent(tooltipOpacity, 'change', opacity => setIsRaised(opacity > 0))
 
-  return { transform, isRaised, ringClearance }
+  return { transform, isRaised, ringFootprint }
 }
 
 export default useRingExpansion

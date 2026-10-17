@@ -30,8 +30,8 @@ interface PinnedCommandTooltipProps {
   ringRef: RefObject<HTMLElement | null>
   /** The row of genie and text, which the ring measures to line its center up with the row's. */
   rowRef: RefObject<HTMLDivElement | null>
-  /** How far from its right edge the row keeps its text, in px, so the text stays clear of the enlarged ring. */
-  ringClearance: number
+  /** How far the enlarged ring reaches in from the right edge of the screen, in px. The row keeps its text clear of it. */
+  ringFootprint: number
 }
 
 /** The image behind the tooltip's surface glow. */
@@ -267,7 +267,7 @@ const PinnedCommandTooltip = ({
   onReveal,
   ringRef,
   rowRef,
-  ringClearance,
+  ringFootprint,
 }: PinnedCommandTooltipProps) => {
   const surfaceRef = useRef<{ dismiss: () => void }>(null)
   const tooltipRef = useRef<HTMLElement>(null)
@@ -330,8 +330,9 @@ const PinnedCommandTooltip = ({
             translate: '0 -0.3889rem',
             gap: '1rem',
           })}
-          // The measured clearance, plus a gap between the text and the ring.
-          style={{ paddingRight: `calc(${ringClearance}px + 0.5rem)` }}
+          // Reserve what the enlarged ring covers, plus a gap, less the surface's own 1.5rem side padding that already
+          // keeps the text off the edge of the screen.
+          style={{ paddingRight: `calc(${ringFootprint}px + 0.5rem - 1.5rem)` }}
         >
           <LearningGenieButton />
           {/* Title and subtitle, tuned against the design; text metrics are rem so they follow the font size setting. */}

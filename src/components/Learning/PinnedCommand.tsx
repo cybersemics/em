@@ -60,7 +60,7 @@ const PinnedCommand = () => {
   // The tooltip surface's opacity, which the ring's expansion and color follow.
   const tooltipOpacity = useMotionValue(0)
   const handleTooltipOpacityChange = useCallback((opacity: number) => tooltipOpacity.set(opacity), [tooltipOpacity])
-  const { transform, isRaised, ringClearance } = useRingExpansion({ isOpen, tooltipOpacity, dockRef, rowRef })
+  const { transform, isRaised, ringFootprint } = useRingExpansion({ isOpen, tooltipOpacity, dockRef, rowRef })
 
   /** Opens the registered Command Universe detail page for this command. */
   const revealCommand = useCallback(() => {
@@ -162,7 +162,7 @@ const PinnedCommand = () => {
         onReveal={revealCommand}
         ringRef={ringRef}
         rowRef={rowRef}
-        ringClearance={ringClearance}
+        ringFootprint={ringFootprint}
       />
     </>
   )
