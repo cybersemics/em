@@ -21,7 +21,7 @@ beforeEach(async () => {
 
 afterEach(clearAiDisclosureAcknowledgement)
 
-it('awards and persists one rep for a successful keyboard invocation', () => {
+it('adds and persists one rep for a successful keyboard invocation', () => {
   store.dispatch(pinCommand({ commandId: 'toggleDone' }))
   const command = { ...runnableCommand, exec: vi.fn() }
 
@@ -32,7 +32,7 @@ it('awards and persists one rep for a successful keyboard invocation', () => {
   expect(storageModel.get('learning')?.progress.toggleDone?.reps).toBe(1)
 })
 
-it('does not award a rep for non-execution, internal invocation, toolbar, or an error', () => {
+it('does not add a rep for non-execution, internal invocation, toolbar, or an error', () => {
   store.dispatch(pinCommand({ commandId: 'toggleDone' }))
   const command = { ...runnableCommand, exec: vi.fn() }
 
@@ -47,7 +47,7 @@ it('does not award a rep for non-execution, internal invocation, toolbar, or an 
   expect(store.getState().learning.progress.toggleDone?.reps).toBe(0)
 })
 
-it('awards a rep as soon as an asynchronous command starts', () => {
+it('adds a rep as soon as an asynchronous command starts', () => {
   store.dispatch(pinCommand({ commandId: 'toggleDone' }))
 
   executeCommandWithMulticursor(
@@ -58,7 +58,7 @@ it('awards a rep as soon as an asynchronous command starts', () => {
   expect(store.getState().learning.progress.toggleDone?.reps).toBe(1)
 })
 
-it('awards one rep when first-use AI disclosure is shown, and none when it is accepted', () => {
+it('adds one rep when first-use AI disclosure is shown, and none when it is accepted', () => {
   store.dispatch(pinCommand({ commandId: 'toggleDone' }))
   const command = {
     ...runnableCommand,
@@ -74,7 +74,7 @@ it('awards one rep when first-use AI disclosure is shown, and none when it is ac
   expect(store.getState().learning.progress.toggleDone?.reps).toBe(1)
 })
 
-it('awards one rep for the whole multicursor invocation', () => {
+it('adds one rep for the whole multicursor invocation', () => {
   store.dispatch(pinCommand({ commandId: 'toggleDone' }))
   store.dispatch(importToContext('- a\n- b'))
   store.dispatch(addMulticursor(['a']))
