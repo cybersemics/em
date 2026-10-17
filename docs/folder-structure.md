@@ -7,7 +7,7 @@ The main directory structure is organized as follows. Tests are located in a sub
 - [`/src/@types`](../src/@types) — Shared TypeScript type definitions and ambient declarations. The canonical shapes (`Thought`, `Path`, `Lexeme`, `Command`, `State`, etc.) live here.
 - [`/src/actions`](../src/actions) — Redux reducers and action-creators are co-located. Prefer reducers when possible, as they are pure functions that are more easily testable and composable. Only define an action creator if it requires a side effect. Use [`util/reducerFlow`](../src/util/reducerFlow.ts) to compose reducers.
 - [`/src/commands`](../src/commands) — Keyboard, gesture, and toolbar commands (formerly `shortcuts`). One file per command, plus an `index.ts` barrel. See [commands.md](commands.md) for the architecture.
-- [`/src/components`](../src/components) — React components.
+- [`/src/components`](../src/components) — React components. [`components/Notifications`](../src/components/Notifications) holds the shared `NotificationSurface` and the Tip wrapper built on it; [`components/Tips`](../src/components/Tips) holds each tip’s content.
 - [`/src/data-providers`](../src/data-providers) — Storage and sync backends implementing the [`DataProvider`](../src/data-providers/DataProvider.ts) interface. The live implementation is TreeCRDT in [`treecrdt/thoughtspace.ts`](../src/data-providers/treecrdt/thoughtspace.ts). See [persistence.md](persistence.md).
 - [`/src/device`](../src/device) — Device/DOM-level helpers for selection, scrolling, clipboard, focus, and platform detection. The selection wrapper [`device/selection.ts`](../src/device/selection.ts) is the single point of access to `window.getSelection()` (enforced by lint). See [cursor-and-caret.md](cursor-and-caret.md).
 - [`/src/e2e`](../src/e2e) — End-to-end test setup, including the Puppeteer, iOS, and Android environments. See [testing.md](testing.md).
@@ -52,5 +52,3 @@ The main directory structure is organized as follows. Tests are located in a sub
 - **One concern per directory.** A file that both reads state and dispatches probably belongs in `actions/`, not `selectors/`. A util that imports React belongs in `hooks/` or `components/`, not `util/`.
 - **Tests next to source.** Tests live in `__tests__/` subdirectories, not in a separate `tests/` tree.
 - **Browser API access is gated.** `window.getSelection`, `localStorage`, viewport reads — all go through `device/` or `stores/` wrappers, not direct calls in feature code.
-
-`components/Notifications/` owns the shared `NotificationSurface` and Tip wrapper. `components/Tips/` contains each tip’s content; swipe dismissal lives in `hooks/useSwipeToClear.ts`.

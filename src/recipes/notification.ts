@@ -1,6 +1,6 @@
 import { defineSlotRecipe } from '@pandacss/dev'
 
-/** The positioned blur, glow, and content layers shared by bottom-screen notifications. */
+/** The positioned blur, glow, and content layers shared by notifications. */
 const notificationRecipe = defineSlotRecipe({
   className: 'notification',
   slots: ['container', 'glow', 'content'],
@@ -105,7 +105,6 @@ const notificationRecipe = defineSlotRecipe({
     glow: {
       rainbow: {
         glow: {
-          backgroundImage: 'url(/img/tip/tip-glow-alpha.webp)',
           transform: 'var(--notification-glow-flip)',
         },
       },
