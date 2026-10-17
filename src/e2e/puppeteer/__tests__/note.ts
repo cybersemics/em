@@ -34,7 +34,7 @@ it('pressing Enter mid-note creates an empty sibling without changing the though
 })
 
 // https://github.com/cybersemics/em/pull/6004#discussion_r4304406695
-it.skip('pressing Enter mid-note with one thought multiselected creates an empty sibling without changing the thought or the note', async () => {
+it('pressing Enter mid-note with one thought multiselected creates an empty sibling without changing the thought or the note', async () => {
   await paste(`- foo bar`)
   await multiselectThoughts(['foo bar'])
   await press('n', { meta: true, alt: true })
@@ -61,7 +61,7 @@ it.skip('pressing Enter mid-note with one thought multiselected creates an empty
 })
 
 // https://github.com/cybersemics/em/pull/6004#discussion_r4304406695
-it.skip('pressing Enter mid-note with multiple thoughts multiselected creates an empty sibling after each without changing their text', async () => {
+it('pressing Enter mid-note with multiple thoughts multiselected creates an empty sibling after each without changing their text', async () => {
   await paste(`
     - foo bar
     - baz qux

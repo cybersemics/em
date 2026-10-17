@@ -20,10 +20,11 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const split = (state: State, el: HTMLElement): SplitResult | null => {
   const { cursor } = state
 
-  // Enter in a note creates a new thought instead of splitting, since the selection is in the note rather than the cursor thought
+  // Enter in a note creates a new thought instead of splitting, since the selection is in the note rather than the cursor thought.
+  // Check the event target rather than state.noteFocus, which executeCommandWithMulticursor clears when it sets the cursor on each selected thought.
   if (
     !cursor ||
-    state.noteFocus ||
+    selection.isNote(el) ||
     isContextViewActive(state, rootedParentOf(state, cursor)) ||
     !editingValueStore.getState()
   )
