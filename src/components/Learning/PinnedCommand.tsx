@@ -51,7 +51,7 @@ const PinnedCommand = () => {
     if (reps >= targetReps) setFlourishes(count => count + 1)
   }, [pinnedCommandId, reps, targetReps])
 
-  const { isOpen, close, toggle } = usePinnedCommandTooltip()
+  const { isOpen, close, toggle } = usePinnedCommandTooltip({ reps })
   // The ring's fixed dock in the corner, and the ring button inside it.
   const dockRef = useRef<HTMLDivElement>(null)
   const ringRef = useRef<HTMLButtonElement>(null)

@@ -1,4 +1,4 @@
-import { cleanup, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { pinCommandActionCreator as pinCommand } from '../../actions/pinCommand'
@@ -7,6 +7,7 @@ import { HOME_TOKEN } from '../../constants'
 import * as selection from '../../device/selection'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import gestureStore from '../../stores/gestureStore'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import importToContext from '../../test-helpers/importToContext'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
@@ -160,6 +161,28 @@ it('dismisses when the user taps outside the tooltip', async () => {
 
   expect(screen.getByTestId('pinned-command')).toHaveAttribute('aria-expanded', 'false')
   expect(screen.queryByRole('dialog', { name: 'Gesture for New Thought' })).toBeNull()
+})
+
+it('stays open when a press outside it traces a gesture', async () => {
+  await act(async () => {
+    store.dispatch(pinCommand({ commandId: 'newThought' }))
+    await vi.runAllTimersAsync()
+  })
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+
+  const ring = screen.getByRole('button', { name: 'Show gesture for New Thought' })
+  await user.click(ring)
+
+  // MultiGesture records the trace in the gesture store while the press is down.
+  act(() => {
+    fireEvent.pointerDown(document.body)
+    gestureStore.update({ gesture: 'r' })
+    fireEvent.pointerUp(document.body)
+    gestureStore.update({ gesture: '' })
+  })
+  await act(vi.runAllTimersAsync)
+
+  expect(ring).toHaveAttribute('aria-expanded', 'true')
 })
 
 it('keeps the editor selection for Command Universe commands and earns no practice reps', async () => {
