@@ -193,7 +193,7 @@ Description components can dispatch the Command Universe navigation actions when
 
 The router and route types update from the registry. No separate id union, props union, or routing switch needs editing. `commandUniverseNavigateActionCreator` calls are checked against the registered component's props. Add tests for the new page's behavior.
 
-Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`.
+Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`. A search matches a command when the query appears in its label contiguously, or when each character of the query either follows the previous match directly or falls at the start of a word ([`fuzzyWordMatch`](../src/util/fuzzyWordMatch.ts)), so "net" matches **Ne**w **T**hought but not Close Command Center. Typing another character can therefore only narrow the results. The search highlight shows the same characters that matched.
 
 Help and Customize Toolbar present commands grouped by `COMMAND_DIFFICULTIES` (in [`constants.ts`](../src/constants.ts)), a two-level hierarchy of difficulty levels containing category groups, which defines the order: Beginner (Creating Thoughts → Navigation → Contexts) → Intermediate (Categorizing → Nudging → Deleting) → Advanced (Creating Thoughts II → Edit History → Notes → Views).
 

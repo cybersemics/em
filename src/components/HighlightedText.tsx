@@ -1,37 +1,28 @@
 import { FC } from 'react'
 import { css } from '../../styled-system/css'
+import fuzzyWordMatch from '../util/fuzzyWordMatch'
 
-/** Renders text with matching characters highlighted. */
+/** Renders text with the characters that matched the search highlighted, using the same matching as the command search so that the highlight shows why a command matched. */
 const HighlightedText: FC<{ value: string; match: string; disabled?: boolean }> = ({ value, match, disabled }) => {
-  // move an index forward as matches are found so that chars are only matched once each
-  let index = 0
+  const matched = new Set(fuzzyWordMatch(value, match) ?? [])
 
   return (
     <span>
-      {value.split('').map((char, i) => {
-        const matchIndex = match.trim().slice(index).toLowerCase().indexOf(char.toLowerCase()) + index
-        const isMatch = matchIndex >= index
-
-        if (isMatch) {
-          index++
-        }
-
-        return (
-          <span key={i}>
-            <span
-              className={css({
-                color: match.trim()
-                  ? !disabled && isMatch
-                    ? 'highlightedTextMatch'
-                    : 'highlightedTextUnmatched'
-                  : undefined,
-              })}
-            >
-              {char}
-            </span>
+      {value.split('').map((char, i) => (
+        <span key={i}>
+          <span
+            className={css({
+              color: match.trim()
+                ? !disabled && matched.has(i)
+                  ? 'highlightedTextMatch'
+                  : 'highlightedTextUnmatched'
+                : undefined,
+            })}
+          >
+            {char}
           </span>
-        )
-      })}
+        </span>
+      ))}
     </span>
   )
 }
