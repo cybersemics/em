@@ -17,7 +17,7 @@ vi.hoisted(() => {
 
 vi.mock('../../browser', async importOriginal => {
   const actual = await importOriginal<typeof import('../../browser')>()
-  return { ...actual, isIOS: true, isTouch: true }
+  return { ...actual, hasElasticOverscroll: true, isIOS: true, isTouch: true }
 })
 
 vi.mock('../../hooks/usePositionedThoughts', () => ({ default: vi.fn() }))

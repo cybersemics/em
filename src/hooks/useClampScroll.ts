@@ -1,10 +1,6 @@
 import { AnimationPlaybackControls, animate } from 'motion/react'
 import { RefObject, useEffect, useLayoutEffect, useRef } from 'react'
-import { isIOS, isMac } from '../browser'
-
-// iPadOS can identify itself as a Mac in Safari's desktop browsing mode.
-const hasElasticOverscroll =
-  isIOS || /iP(ad|hone|od)/.test(navigator.userAgent) || (isMac && navigator.maxTouchPoints > 1)
+import { hasElasticOverscroll } from '../browser'
 
 // The observed UIScrollView rubber-band curve, with distance normalized by viewport height.
 // https://holko.pl/2014/07/06/inertia-bouncing-rubber-banding-uikit-dynamics/
