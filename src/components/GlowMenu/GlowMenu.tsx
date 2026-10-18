@@ -4,8 +4,10 @@
 // 14593:170852, "#2"). When open:
 //   - The surface it belongs to (e.g. the Command Universe glass sheet) fades to 20% and is masked by
 //     a radial gradient centred under the menu, so the options get clear space.
-//   - A global light spreads across the whole viewport from the anchor: a tint over the surface, a
-//     colour-dodge band with a backdrop blur, a coloured bloom and an overlay highlight.
+//   - A light spreads from the anchor: a tint over the surface, Figma's background-glow image and a
+//     colour-dodge band (both colour-dodge), and a soft additive bloom spilling a little past the
+//     surface's edge. Kept to a few modest layers: full-viewport backdrop filters and blends made
+//     opening sluggish and the colour far stronger than the design.
 //   - The selected row carries a soft luminosity glow.
 //   - Labels are plain white drawn with plus-lighter (Figma "linear dodge"), so they take their
 //     lavender tint from the light underneath rather than from a colour of their own.
@@ -286,19 +288,6 @@ const GlowMenu = <T extends string>({
         document.body,
       )}
 
-      {/* Backdrop dim: darkens what shows through the glass from behind it (e.g. the editor's cursor glow), so only the
-          light reads in the cleared space. Figma's editor layer sits under an opaque-enough modal not to need this. */}
-      {sr && (
-        <Layer
-          style={{
-            // The whole viewport, not the surface's rounded rect, so the dim doesn't trace the dialog's outline.
-            inset: 0,
-            backdropFilter: isOpen ? 'brightness(0.55)' : 'brightness(1)',
-            transition: transition(['backdrop-filter'], { dur: LIGHT_DURATION }),
-          }}
-        />
-      )}
-
       {/* Surface tint (Figma Rectangle 752): fill 35% × layer 80%, over the surface's rounded rect. */}
       {sr && (
         <Layer
@@ -317,90 +306,60 @@ const GlowMenu = <T extends string>({
         />
       )}
 
-      {/* Background glow (Figma "Background glow" image under its elliptical mask, inside the colour-dodge frame at
-          86%): a soft, shapeless lavender field across the full width from the surface's top to its bottom. It fills
-          inside and outside the glass alike, which is what dissolves the dialog's edge. Exported from Figma. */}
+      {/* Background glow (Figma "Background glow" image, inside the colour-dodge frame): a soft, shapeless lavender
+          field over the surface, bleeding slightly past its edges so the glass edge doesn't read as a boundary.
+          Exported from Figma. Kept faint: in Figma the frame's other layers temper it. */}
       {sr && (
         <Layer
           style={{
-            left: 0,
-            right: 0,
-            top: sr.top,
-            height: sr.height,
+            left: sr.left - 16,
+            top: sr.top - 16,
+            width: sr.width + 32,
+            height: sr.height + 32,
             backgroundImage: 'url(/img/glow-menu/background-glow.png)',
             backgroundSize: '100% 100%',
             mixBlendMode: 'color-dodge',
-            maskImage: 'linear-gradient(to bottom, transparent, black 12%, black 85%, transparent)',
+            maskImage: 'radial-gradient(ellipse 75% 70% at 65% 30%, black 35%, transparent 100%)',
+            opacity: isOpen ? 0.22 : 0,
+            transition: transition(['opacity'], { dur: LIGHT_DURATION }),
+          }}
+        />
+      )}
+
+      {/* Colour-dodge band (inside Figma's dodge frame): the right side of the surface, brightening toward the menu.
+          No backdrop blur: over this much area it made opening the menu sluggish. */}
+      {sr && (
+        <Layer
+          style={{
+            left: sr.left + sr.width * 0.17,
+            top: sr.top,
+            width: sr.width * 0.83 + 12,
+            height: sr.height,
+            background: SURFACE_TINT,
+            maskImage:
+              'linear-gradient(to right, transparent, black 45%), linear-gradient(to bottom, black 55%, transparent)',
+            maskComposite: 'intersect',
+            WebkitMaskComposite: 'source-in',
+            mixBlendMode: 'color-dodge',
             opacity: isOpen ? 0.5 : 0,
             transition: transition(['opacity'], { dur: LIGHT_DURATION }),
           }}
         />
       )}
 
-      {/* Colour-dodge band with backdrop blur (inside Figma's dodge frame, 86%): from the surface's left third to the
-          viewport's right edge, top to bottom, so it lies over the surface's edge rather than inside it. */}
-      {sr && (
-        <Layer
-          style={{
-            left: sr.left + sr.width * 0.17,
-            top: 0,
-            right: 0,
-            bottom: 0,
-            background: SURFACE_TINT,
-            backdropFilter: 'blur(18.5px)',
-            // Feather the left edge and both ends so the backdrop blur has no hard edge.
-            maskImage:
-              'linear-gradient(to right, transparent, black 45%), linear-gradient(to bottom, transparent, black 15%, black 70%, transparent)',
-            maskComposite: 'intersect',
-            WebkitMaskComposite: 'source-in',
-            mixBlendMode: 'color-dodge',
-            opacity: isOpen ? 0.86 : 0,
-            transition: transition(['opacity'], { dur: LIGHT_DURATION }),
-          }}
-        />
-      )}
-
-      {/* Global wash: the light reaching the whole viewport, outside the surface too, strongest at the anchor. */}
+      {/* Bloom centred on the anchor (Figma "CC glow" under a radial mask): a soft lavender light, additive, mostly
+          within the surface with a little spill past its top-right corner. */}
       <Layer
         style={{
-          inset: 0,
-          background: `radial-gradient(circle farthest-corner at ${anchorX}px ${anchorY}px, rgba(90, 80, 200, 0.32) 0%, rgba(75, 65, 180, 0.2) 30%, rgba(50, 45, 140, 0.1) 60%, rgba(40, 40, 120, 0.04) 100%)`,
-          mixBlendMode: 'plus-lighter',
-          opacity: isOpen ? 1 : 0,
-          transition: transition(['opacity'], { dur: LIGHT_DURATION }),
-        }}
-      />
-
-      {/* Coloured bloom centred on the anchor (Figma "CC glow" under a radial mask): lavender to cyan with pink and navy edges, additive. */}
-      <Layer
-        style={{
-          left: anchorX - 650,
-          top: anchorY - 650,
-          width: 1300,
-          height: 1300,
+          left: anchorX - 380,
+          top: anchorY - 380,
+          width: 760,
+          height: 760,
           borderRadius: '50%',
-          background: [
-            'radial-gradient(closest-side, rgba(110, 95, 220, 0.36) 0%, rgba(95, 82, 205, 0.26) 35%, rgba(60, 60, 160, 0.12) 65%, rgba(44, 44, 133, 0) 100%)',
-            'radial-gradient(closest-side at 35% 60%, rgba(193, 98, 158, 0.16), rgba(193, 98, 158, 0) 70%)',
-            'radial-gradient(closest-side at 60% 40%, rgba(117, 220, 255, 0.10), rgba(117, 220, 255, 0) 60%)',
-          ].join(', '),
+          background:
+            'radial-gradient(closest-side, rgba(120, 105, 225, 0.3) 0%, rgba(100, 88, 210, 0.17) 35%, rgba(70, 65, 170, 0.05) 70%, rgba(44, 44, 133, 0) 100%)',
           mixBlendMode: 'plus-lighter',
           ...lightMotion(0.3),
-        }}
-      />
-
-      {/* Overlay highlight (Figma Rectangle 1201, overlay 65%): lifts contrast toward the anchor's corner. */}
-      <Layer
-        style={{
-          left: anchorX - 300,
-          top: anchorY - 400,
-          width: 600,
-          height: 600,
-          background: 'radial-gradient(closest-side, rgba(217, 217, 217, 1) 0%, rgba(217, 217, 217, 0) 90%)',
-          mixBlendMode: 'overlay',
-          ...lightMotion(0.4),
-          // Figma has it at 65%, but there it sits inside the dodge frame; on its own it whitens the light.
-          opacity: isOpen ? 0.25 : 0,
         }}
       />
 
@@ -415,7 +374,7 @@ const GlowMenu = <T extends string>({
           background: 'radial-gradient(closest-side, rgba(170, 160, 255, 1), rgba(170, 160, 255, 0))',
           filter: 'blur(25px)',
           mixBlendMode: 'plus-lighter',
-          opacity: isOpen ? 0.22 : 0,
+          opacity: isOpen ? 0.14 : 0,
           transition: transition(['opacity'], { dur: LIGHT_DURATION }),
         }}
       />
