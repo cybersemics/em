@@ -766,7 +766,8 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     const chainedGestureCollapsed = sequence!.toString().slice(chainedGesture1.length - 1)
     const chainedGesture = sequence!.toString().slice(chainedGesture1.length)
     const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
-    if (commandMatch) {
+    // only chain a command that the first command allows to follow it, as the gesture menu does
+    if (commandMatch && chainableCommandInProgressExclusive.isChainable?.(commandMatch)) {
       command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
     }
   }
