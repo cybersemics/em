@@ -206,7 +206,7 @@ const dialogRecipe = defineSlotRecipe({
       overflowY: 'auto',
       // Horizontal text padding lives on contentInner; this paddingRight gives the scrollbar breathing room from the modal edge.
       paddingTop: '0.5rem',
-      paddingRight: '0.5rem',
+      paddingRight: '8px',
       // The native scrollbar is hidden and replaced by the custom `scrollbarThumb` overlay (rendered in
       // DialogContent). iOS WebKit cannot recolor its native overflow scrollbar via CSS — `scrollbarColor`,
       // the `::-webkit-scrollbar-*` pseudo-elements, and `color-scheme` are all ignored for the inner
@@ -264,10 +264,11 @@ const dialogRecipe = defineSlotRecipe({
     },
     /** Inner wrapper inside `content` that carries the horizontal text inset. Kept separate from `content` so the scrollbar gutter doesn't push text in further. */
     contentInner: {
-      // 1rem matches the rest of the dialog inset (the header row in DialogHeader and the search row in MobileCommandUniverse).
-      // 0.5rem right padding gives the scrollbar some breathing room from the panel's content and the edge of the panel.
-      paddingLeft: '1rem',
-      paddingRight: '0.5rem',
+      // 16px matches the rest of the dialog inset (the header row in DialogHeader and the search row in CommandUniverseGridPage).
+      // The dialog's width is bound to the screen, so its horizontal insets are fixed rather than growing with the font size.
+      // 8px right padding gives the scrollbar some breathing room from the panel's content and the edge of the panel.
+      paddingLeft: '16px',
+      paddingRight: '8px',
       // Add bottom padding to the inner content wrapper, so the mask doesn't fade out the last bit of content.
       paddingBottom: '2rem',
     },

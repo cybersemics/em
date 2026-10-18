@@ -23,8 +23,11 @@ const CommandUniverseGrid = ({ commands, search, scrollRootRef, pageRef }: Comma
       <tbody
         className={css({
           display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-          gap: '0.75rem',
+          // Two columns while each can be at least 6rem wide, which holds on a phone up to about font size 25. Past that the grid drops to one column rather than squeezing the text.
+          gridTemplateColumns: 'repeat(auto-fill, minmax(max(6rem, calc(50% - 6px)), 1fr))',
+          // The gap between rows grows with the text. The gutter between columns is fixed, so that a larger font size leaves the room to the text (6px above is half of it).
+          rowGap: '0.75rem',
+          columnGap: '12px',
         })}
         // anchor all `em` units used in children to `fontSize`.
         style={{ fontSize }}

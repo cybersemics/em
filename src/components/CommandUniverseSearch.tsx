@@ -1,8 +1,16 @@
-import { FC, useRef } from 'react'
+import { FC, useRef, useState } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import useDismissKeyboardOnScroll from '../hooks/useDismissKeyboardOnScroll'
+import useFitText from '../hooks/useFitText'
+import useRemAsPx from '../hooks/useRemAsPx'
 import CommandsSearchIcon from './icons/CommandsSearchIcon'
+
+/** The text shown in the empty search input. */
+const PLACEHOLDER = 'Search for a command'
+
+/** The largest the search glyph grows to as the font size increases. */
+const MAX_ICON_SIZE = 36
 
 /**
  * Search input used by the Mobile Command Universe dialog. Sits flush against the
@@ -14,6 +22,11 @@ import CommandsSearchIcon from './icons/CommandsSearchIcon'
  */
 const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onInput }) => {
   const inputRef = useRef<HTMLInputElement>(null)
+  // The glyph is read with the search text, so it grows with the font size, but only as far as the search row has room for.
+  const iconSize = Math.min(useRemAsPx(1.75), MAX_ICON_SIZE)
+  const [hasValue, setHasValue] = useState(false)
+  // The placeholder follows the user's font size for as long as it fits the search row, and holds the largest size that fits beyond that. Typed text stays at the user's font size and scrolls, as text in an input does.
+  useFitText(inputRef, { text: hasValue ? '' : PLACEHOLDER, maxFontSize: useRemAsPx(0.9) })
 
   useDismissKeyboardOnScroll(inputRef)
 
@@ -49,16 +62,15 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
           alignItems: 'center',
           justifyContent: 'center',
           pointerEvents: 'none',
-          width: '28px',
-          height: '28px',
           opacity: 0.5,
           // plus-lighter additively brightens the glyph against the dialog glass, same as
           // the gradient text — so search icon, text, and sort icon read as one element.
           mixBlendMode: 'plus-lighter',
         })}
+        style={{ width: iconSize, height: iconSize }}
       >
         <CommandsSearchIcon
-          size={28}
+          size={iconSize}
           fill={token('colors.dialogSearchAccent')}
           strokeWidth={1.5}
           className={css({ flex: 'none' })}
@@ -67,9 +79,12 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
       <input
         ref={inputRef}
         type='text'
-        placeholder='Search for a command'
+        // The glyph plus an 8px gap, so typed text always clears it.
+        style={{ paddingLeft: iconSize + 8 }}
+        placeholder={PLACEHOLDER}
         onMouseDown={handleMouseDown}
         onInput={(e: React.FormEvent<HTMLInputElement>) => {
+          setHasValue(!!e.currentTarget.value)
           onInput?.(e.currentTarget.value)
         }}
         className={css({
@@ -78,13 +93,11 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
           boxSizing: 'border-box',
           width: '100%',
           minWidth: '100%',
-          // 28 (28px) + 8px gap so typed text always clears the glyph. Written
-          // as a literal because Panda's `css()` is compile-time and won't evaluate `${expr}`.
-          paddingLeft: '36px',
           paddingBlock: '0.25rem',
+          // A placeholder too long for the row at a large font size is cut short rather than clipped mid-word.
+          textOverflow: 'ellipsis',
           border: 'none',
           outline: 'none',
-          fontSize: '0.9rem',
           // Form controls don't inherit font-family by default — opt in so the dialog's font applies to the placeholder and typed text.
           fontFamily: 'inherit',
           // plus-lighter brightens the input text against the dialog's translucent glass — additive blend lifts the placeholder & typed text out of the background.
