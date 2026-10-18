@@ -5,7 +5,9 @@ import { composeWithDevTools } from '@redux-devtools/extension'
 import _ from 'lodash'
 import { applyMiddleware, createStore } from 'redux'
 import { thunk } from 'redux-thunk'
+import CommandSuccess from '../@types/CommandSuccess'
 import appReducer from '../actions/app'
+import { pinnedCommandAddRepActionCreator as pinnedCommandAddRep } from '../actions/pinnedCommandAddRep'
 import pushQueue from '../redux-enhancers/pushQueue'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
@@ -19,11 +21,11 @@ import loggerMiddleware from '../redux-middleware/loggerMiddleware'
 import multi from '../redux-middleware/multi'
 import multicursorAlertMiddleware from '../redux-middleware/multicursorAlertMiddleware'
 import multiselectCursorMiddleware from '../redux-middleware/multiselectCursorMiddleware'
-import pinnedCommandRepsMiddleware from '../redux-middleware/pinnedCommandReps'
 import pullQueue from '../redux-middleware/pullQueue'
 import updateEditingValue from '../redux-middleware/updateEditingValue'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
 import validateActionRegistrations from '../util/actionMetadata.registry'
+import commandEmitter from './commandEmitter'
 
 // composeWithDevTools is typed as redux.compose, which hard codes up to four function arguments.
 // Therefore, type it as the functionally equivalent _.flowRight in order to compose more than four enhancers.
@@ -48,7 +50,6 @@ const middlewareEnhancer = applyMiddleware(
   multicursorAlertMiddleware,
   multiselectCursorMiddleware,
   closeDropdownsWhenCursorNull,
-  pinnedCommandRepsMiddleware,
 )
 
 // only validate Redux state in dev and test environments
@@ -76,5 +77,10 @@ if (import.meta.env.MODE === 'development') {
   // This can be safely called here because it lazy-loads the actions module
   validateActionRegistrations()
 }
+
+// add a rep to the pinned command when the user performs it by keyboard or gesture
+commandEmitter.on('commandSucceeded', ({ commandId, source }: CommandSuccess) => {
+  if (source === 'keyboard' || source === 'gesture') store.dispatch(pinnedCommandAddRep({ commandId }))
+})
 
 export default store
