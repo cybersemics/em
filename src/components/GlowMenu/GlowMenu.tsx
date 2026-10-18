@@ -89,6 +89,17 @@ const Layer = ({ style, className, children }: { style: CSSProperties; className
     document.body,
   )
 
+/**
+ * Stops a press from reaching document-level listeners. The menu lives in <body>, outside the
+ * surface it belongs to, so a dialog's click-outside handler (useOnClickOutside listens for
+ * mousedown/touchstart on document) would otherwise treat every tap on the menu as a dismissal.
+ */
+const stopPress = {
+  onMouseDown: (e: React.SyntheticEvent) => e.stopPropagation(),
+  onTouchStart: (e: React.SyntheticEvent) => e.stopPropagation(),
+  onPointerDown: (e: React.SyntheticEvent) => e.stopPropagation(),
+}
+
 const GlowMenu = <T extends string>({
   open,
   onClose,
@@ -104,6 +115,9 @@ const GlowMenu = <T extends string>({
 }: GlowMenuProps<T>) => {
   useMaskProperty()
   const [visible, setVisible] = useState(false)
+  // False for the first frame after mounting, so the layers render in their closed state before
+  // switching to open. Without it they mount already open and nothing animates.
+  const [entered, setEntered] = useState(false)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
   const [surfaceRect, setSurfaceRect] = useState<DOMRect | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -123,6 +137,11 @@ const GlowMenu = <T extends string>({
     if (anchor) setAnchorRect(anchor.getBoundingClientRect())
     if (surface) setSurfaceRect(surface.getBoundingClientRect())
     setVisible(true)
+    // Two frames: one to paint the closed state, one to start the transition from it.
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => setEntered(true))
+    })
+    return () => cancelAnimationFrame(frame)
   }, [open, anchor, surface])
 
   // Keep the layers mounted through the close animation, then report back.
@@ -131,6 +150,7 @@ const GlowMenu = <T extends string>({
     closeTimer.current = window.setTimeout(
       () => {
         setVisible(false)
+        setEntered(false)
         onClosedRef.current?.()
       },
       (duration + LIGHT_SPREAD) * 1000,
@@ -147,6 +167,9 @@ const GlowMenu = <T extends string>({
     })
     setRows(next)
   }, [visible, iconSize, items.length, actions.length])
+
+  /** Open for styling purposes: requested open and past the first closed-state frame. */
+  const isOpen = open && entered
 
   const selectedRow = rows[selectedId] ?? { top: 0, height: iconSize + ROW_PAD * 2 }
   const selectedCenter = selectedRow.top + selectedRow.height / 2
@@ -175,17 +198,17 @@ const GlowMenu = <T extends string>({
       el.style.maskImage = mask
       el.style.webkitMaskImage = mask
       el.style.transition = transition(['opacity', '--glow-menu-mask'], { dur: duration + LIGHT_SPREAD })
-      el.style.opacity = open ? '0.2' : '1'
-      el.style.setProperty('--glow-menu-mask', open ? '0.06' : '1')
+      el.style.opacity = isOpen ? '0.2' : '1'
+      el.style.setProperty('--glow-menu-mask', isOpen ? '0.06' : '1')
     })
     // The glass's decorative layers (highlights, stroke) are absolute siblings of the content. Dim them too, or
     // their bright highlights show through the cleared space. The first child is the glass fill, which stays.
     ;[...surface.children].slice(1).forEach(el => {
       if (!(el instanceof HTMLElement) || getComputedStyle(el).position !== 'absolute') return
       el.style.transition = transition(['opacity'], { dur: duration + LIGHT_SPREAD })
-      el.style.opacity = open ? '0.25' : ''
+      el.style.opacity = isOpen ? '0.25' : ''
     })
-  }, [surface, visible, open, menuTop, menuRight, menuWidth, menuHeight])
+  }, [surface, visible, isOpen, menuTop, menuRight, menuWidth, menuHeight])
 
   // Clear the mask once fully closed so the surface is untouched between uses.
   useEffect(() => {
@@ -205,22 +228,22 @@ const GlowMenu = <T extends string>({
     const row = rows[key] ?? { top: 0, height: 0 }
     const d = row.top + row.height / 2 - selectedCenter
     const reach = Math.abs(d) / maxDistance
-    const delay = (open ? reach : 1 - reach) * LIGHT_SPREAD
+    const delay = (isOpen ? reach : 1 - reach) * LIGHT_SPREAD
     return {
-      opacity: open ? 1 : 0,
-      transform: open ? 'none' : `translateY(${-d * 0.5}px)`,
-      filter: open ? 'blur(0px)' : 'blur(10px)',
+      opacity: isOpen ? 1 : 0,
+      transform: isOpen ? 'none' : `translateY(${-d * 0.5}px)`,
+      filter: isOpen ? 'blur(0px)' : 'blur(10px)',
       transition: transition(['opacity', 'transform', 'filter'], { delay }),
     }
   }
 
   /** The light's own motion: grows out of the anchor. */
   const lightMotion = (scaleFrom = 0.4): CSSProperties => ({
-    opacity: open ? 1 : 0,
-    transform: open ? 'scale(1)' : `scale(${scaleFrom})`,
+    opacity: isOpen ? 1 : 0,
+    transform: isOpen ? 'scale(1)' : `scale(${scaleFrom})`,
     transition: transition(['opacity', 'transform'], {
       dur: duration + LIGHT_SPREAD,
-      delay: open ? 0 : LIGHT_SPREAD * 0.6,
+      delay: isOpen ? 0 : LIGHT_SPREAD * 0.6,
     }),
   })
 
@@ -253,11 +276,12 @@ const GlowMenu = <T extends string>({
             e.stopPropagation()
             onClose()
           }}
+          {...stopPress}
           style={{
             position: 'fixed',
             inset: 0,
             zIndex: Z_INDEX,
-            pointerEvents: open ? 'auto' : 'none',
+            pointerEvents: isOpen ? 'auto' : 'none',
           }}
         />,
         document.body,
@@ -273,7 +297,7 @@ const GlowMenu = <T extends string>({
             width: sr.width,
             height: sr.height,
             borderRadius: 32,
-            backdropFilter: open ? 'brightness(0.55)' : 'brightness(1)',
+            backdropFilter: isOpen ? 'brightness(0.55)' : 'brightness(1)',
             transition: transition(['backdrop-filter'], { dur: duration + LIGHT_SPREAD }),
           }}
         />
@@ -289,42 +313,53 @@ const GlowMenu = <T extends string>({
             height: sr.height,
             borderRadius: 28,
             background: SURFACE_TINT,
-            opacity: open ? 0.28 : 0,
+            opacity: isOpen ? 0.28 : 0,
             transition: transition(['opacity'], { dur: duration + LIGHT_SPREAD }),
           }}
         />
       )}
 
-      {/* Colour-dodge band with backdrop blur (inside Figma's dodge frame, 86%): the right side of the surface, behind the menu. */}
+      {/* Colour-dodge band with backdrop blur (inside Figma's dodge frame, 86%): from the surface's left third to the
+          viewport's right edge, top to bottom, so it lies over the surface's edge rather than inside it. */}
       {sr && (
         <Layer
           style={{
             left: sr.left + sr.width * 0.17,
-            top: sr.top,
-            width: sr.width * 0.83,
-            height: sr.height * 0.94,
-            borderRadius: '0 28px 28px 0',
+            top: 0,
+            right: 0,
+            bottom: 0,
             background: SURFACE_TINT,
             backdropFilter: 'blur(18.5px)',
-            // Feather the left and bottom so the backdrop blur has no hard edge (in Figma the gradient's clear end hides it).
+            // Feather the left edge and both ends so the backdrop blur has no hard edge.
             maskImage:
-              'linear-gradient(to right, transparent, black 45%), linear-gradient(to bottom, black 65%, transparent)',
+              'linear-gradient(to right, transparent, black 45%), linear-gradient(to bottom, transparent, black 15%, black 70%, transparent)',
             maskComposite: 'intersect',
             WebkitMaskComposite: 'source-in',
             mixBlendMode: 'color-dodge',
-            opacity: open ? 0.86 : 0,
+            opacity: isOpen ? 0.86 : 0,
             transition: transition(['opacity'], { dur: duration + LIGHT_SPREAD }),
           }}
         />
       )}
 
+      {/* Global wash: the light reaching the whole viewport, outside the surface too, strongest at the anchor. */}
+      <Layer
+        style={{
+          inset: 0,
+          background: `radial-gradient(circle farthest-corner at ${anchorX}px ${anchorY}px, rgba(90, 80, 200, 0.32) 0%, rgba(75, 65, 180, 0.2) 30%, rgba(50, 45, 140, 0.1) 60%, rgba(40, 40, 120, 0.04) 100%)`,
+          mixBlendMode: 'plus-lighter',
+          opacity: isOpen ? 1 : 0,
+          transition: transition(['opacity'], { dur: duration + LIGHT_SPREAD, delay: isOpen ? 0 : LIGHT_SPREAD * 0.6 }),
+        }}
+      />
+
       {/* Coloured bloom centred on the anchor (Figma "CC glow" under a radial mask): lavender to cyan with pink and navy edges, additive. */}
       <Layer
         style={{
-          left: anchorX - 450,
-          top: anchorY - 450,
-          width: 900,
-          height: 900,
+          left: anchorX - 650,
+          top: anchorY - 650,
+          width: 1300,
+          height: 1300,
           borderRadius: '50%',
           background: [
             'radial-gradient(closest-side, rgba(110, 95, 220, 0.36) 0%, rgba(95, 82, 205, 0.26) 35%, rgba(60, 60, 160, 0.12) 65%, rgba(44, 44, 133, 0) 100%)',
@@ -347,7 +382,7 @@ const GlowMenu = <T extends string>({
           mixBlendMode: 'overlay',
           ...lightMotion(0.4),
           // Figma has it at 65%, but there it sits inside the dodge frame; on its own it whitens the light.
-          opacity: open ? 0.25 : 0,
+          opacity: isOpen ? 0.25 : 0,
         }}
       />
 
@@ -362,7 +397,7 @@ const GlowMenu = <T extends string>({
           background: 'radial-gradient(closest-side, rgba(170, 160, 255, 1), rgba(170, 160, 255, 0))',
           filter: 'blur(25px)',
           mixBlendMode: 'plus-lighter',
-          opacity: open ? 0.22 : 0,
+          opacity: isOpen ? 0.22 : 0,
           transition: transition(['opacity'], { dur: duration + LIGHT_SPREAD }),
         }}
       />
@@ -372,6 +407,7 @@ const GlowMenu = <T extends string>({
         <div
           ref={menuRef}
           onClick={e => e.stopPropagation()}
+          {...stopPress}
           className={css({ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', whiteSpace: 'nowrap' })}
           style={{
             position: 'fixed',
@@ -379,7 +415,7 @@ const GlowMenu = <T extends string>({
             right: menuRight,
             top: menuTop,
             mixBlendMode: 'plus-lighter',
-            pointerEvents: open ? 'auto' : 'none',
+            pointerEvents: isOpen ? 'auto' : 'none',
             // Glides only while closing (a newly picked row sliding onto the anchor); jumps on open.
             transition: open ? undefined : transition(['top']),
           }}
@@ -430,7 +466,7 @@ const GlowMenu = <T extends string>({
                 {/* Selected 60%, others 34% (Figma row opacities). */}
                 <span
                   style={{
-                    opacity: open ? (isSelected ? 0.6 : 0.34) : 0,
+                    opacity: isOpen ? (isSelected ? 0.6 : 0.34) : 0,
                     transition: transition(['opacity']),
                   }}
                 >
@@ -442,7 +478,7 @@ const GlowMenu = <T extends string>({
                     width: iconSize,
                     height: iconSize,
                     // Icons at 75% of the row; closed, matches the anchor glyph's 50%.
-                    opacity: open ? (isSelected ? 0.6 : 0.34) * 0.75 * 1.6 : 0.5,
+                    opacity: isOpen ? (isSelected ? 0.6 : 0.34) * 0.75 * 1.6 : 0.5,
                     transition: transition(['opacity']),
                   }}
                 >
