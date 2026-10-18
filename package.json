@@ -107,7 +107,7 @@
     "@capacitor/status-bar": "^8.0.4",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@mui/material": "^9.4.0",
+    "@mui/material": "^9.5.0",
     "@radix-ui/react-dialog": "^1.2.0",
     "@radix-ui/react-visually-hidden": "^1.2.11",
     "@redux-devtools/extension": "^4.0.0",
