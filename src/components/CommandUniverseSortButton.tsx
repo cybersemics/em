@@ -1,6 +1,6 @@
 // PROTOTYPE — visual experiment only, not for merge. The Command Universe sort button, opening a
-// GlowMenu (see GlowMenu.tsx) lit from the button. The menu's selected row sits on the button, so
-// the button hides its own glyph while the menu is on screen.
+// Dropdown (see Dropdown/) lit from the button. The menu's selected row sits on the button, so the
+// button hides its own glyph while the menu is on screen.
 import { useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
@@ -8,7 +8,9 @@ import CommandSortType from '../@types/CommandSortType'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../actions/toggleMobileCommandUniverse'
 import { DEFAULT_FONT_SIZE } from '../constants'
-import GlowMenu, { GlowMenuAction, GlowMenuItem } from './GlowMenu/GlowMenu'
+import Dropdown from './Dropdown/Dropdown'
+import DropdownLight from './Dropdown/DropdownLight'
+import DropdownRows, { DropdownAction, DropdownItem } from './Dropdown/DropdownRows'
 import AToZIcon from './icons/AToZIcon'
 import CommandsListIcon from './icons/CommandsListIcon'
 
@@ -61,7 +63,7 @@ const AlphabeticalIcon = ({ size }: { size: number }) => (
   <AToZIcon size={size} fill='white' strokeWidth={0} className={css({ flex: 'none' })} />
 )
 
-const ITEMS: GlowMenuItem<CommandSortType>[] = [
+const ITEMS: DropdownItem<CommandSortType>[] = [
   { id: 'type', label: 'Type', icon: TypeIcon },
   { id: 'alphabetical', label: 'Alphabetical', icon: AlphabeticalIcon },
 ]
@@ -83,7 +85,7 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
     setSurface(buttonRef.current?.closest<HTMLElement>('[data-glass-sheet]') ?? null)
   }, [])
 
-  const actions: GlowMenuAction[] = [
+  const actions: DropdownAction[] = [
     {
       id: 'customize',
       label: 'Customize Toolbar',
@@ -122,23 +124,22 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
       <div className={css({ display: 'flex', mixBlendMode: 'plus-lighter' })} style={{ opacity: menuShown ? 0 : 0.5 }}>
         <SelectedIcon size={iconSize} fill={ICON_COLOR} strokeWidth={0} className={css({ flex: 'none' })} />
       </div>
-      <GlowMenu
+      <Dropdown
         open={open}
         onClose={() => setOpen(false)}
         onClosed={() => setMenuShown(false)}
-        anchor={anchor}
-        surface={surface}
-        iconSize={iconSize}
-        heading='Sort by…'
-        items={ITEMS}
-        selectedId={selectedSort}
         onSelect={id => {
           setSelectedSort(id)
           onSortChange(id)
           setOpen(false)
         }}
-        actions={actions}
-      />
+        anchor={anchor}
+        selectedId={selectedSort}
+      >
+        {/* Light first, so the rows paint over it. */}
+        <DropdownLight surface={surface} />
+        <DropdownRows heading='Sort by…' items={ITEMS} actions={actions} iconSize={iconSize} />
+      </Dropdown>
     </div>
   )
 }

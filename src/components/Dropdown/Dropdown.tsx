@@ -1,0 +1,284 @@
+// PROTOTYPE — visual experiment only, not for merge.
+//
+// Dropdown: the timeline and geometry shared by every layer of a popup-button menu. It owns
+//   - the phase (closed → entering → open → closing → closed), including the one frame drawn in the
+//     closed state so the layers have something to animate from;
+//   - the timings (content and light durations, easing), so every layer moves on one clock;
+//   - the geometry: the anchor's rect, the menu's rect, and where the selected row sits in the menu;
+//   - dismissal: the tap catcher, and stopping presses from reaching click-outside handlers.
+// Layers read all of this from context and only decide how they look at each phase:
+// DropdownRows draws the menu, DropdownLight draws the glow, useSurfaceMask dims what's underneath.
+import {
+  CSSProperties,
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
+import { createPortal } from 'react-dom'
+import { token } from '../../../styled-system/tokens'
+import durations from '../../util/durations'
+
+/** Above the dialog: the layers are later in <body>, so the same z-index paints over it. */
+export const DROPDOWN_Z_INDEX = Number(token('zIndex.dialog'))
+
+/** Default easing for every layer (matches the sidebar's EASE_OUT). */
+const EASE = 'cubic-bezier(0.16, 0.6, 0.2, 1)'
+
+/** Where the menu sits relative to its anchor. 'around': the selected row lands on the anchor, the rest above and below. */
+export type DropdownPlacement = 'around'
+
+/** Which edge of the anchor the menu lines up with. 'end': right edges (icons on the right). */
+export type DropdownAlign = 'end'
+
+interface Timing {
+  /** Rows, content mask: the sidebar's MEDIUM duration (s). */
+  content: number
+  /** Light: runs longer, starting at the same moment, like the sidebar's glow (s). */
+  light: number
+  ease: string
+}
+
+interface Rect {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+interface DropdownContextValue {
+  /** Requested open (true the moment the user opens it, false the moment they close it). */
+  open: boolean
+  /** Open for styling purposes: requested open and past the first closed-state frame. */
+  isOpen: boolean
+  /** Mounted: from opening until the close animation has finished. */
+  visible: boolean
+  timing: Timing
+  /** Builds a transition string on the shared clock. dur defaults to timing.content. */
+  transition: (props: string[], opts?: { dur?: number; delay?: number }) => string
+  anchorRect: DOMRect | null
+  /** The menu's rect in viewport coordinates (zero-sized until measured). */
+  menuRect: Rect
+  selectedId: string
+  /** Style for the menu column: position, the closing glide, pointer events. */
+  menuStyle: CSSProperties
+  /** Motion for a non-selected row (or heading/separator/action): wakes with the light, settles out of the selection. */
+  rowMotion: (key: string) => CSSProperties
+  /** Motion for a light layer: fades in and grows from scaleFrom, on the light's duration. */
+  lightMotion: (scaleFrom?: number) => CSSProperties
+  /** Ref for the menu column, so its size can be measured. */
+  menuRef: (el: HTMLElement | null) => void
+  /** Ref for a row, keyed, so its offset in the menu can be measured. */
+  registerRow: (key: string) => (el: HTMLElement | null) => void
+  /** Ref for an item's anchor point (its icon box): the element that lands on the anchor when the item is selected. */
+  registerAnchorPoint: (id: string) => (el: HTMLElement | null) => void
+  select: (id: string) => void
+  close: () => void
+  /** Spread onto anything interactive the dropdown renders outside the surface it belongs to. */
+  stopPress: typeof stopPress
+}
+
+const DropdownContext = createContext<DropdownContextValue | null>(null)
+
+/** Reads the enclosing Dropdown's shared state. */
+export const useDropdown = () => {
+  const ctx = useContext(DropdownContext)
+  if (!ctx) throw new Error('useDropdown must be used inside a <Dropdown>.')
+  return ctx
+}
+
+/**
+ * Stops a press from reaching document-level listeners. The dropdown's layers live in <body>,
+ * outside the surface they belong to, so a dialog's click-outside handler (useOnClickOutside
+ * listens for mousedown/touchstart on document) would otherwise treat every tap as a dismissal.
+ */
+const stopPress = {
+  onMouseDown: (e: React.SyntheticEvent) => e.stopPropagation(),
+  onTouchStart: (e: React.SyntheticEvent) => e.stopPropagation(),
+  onPointerDown: (e: React.SyntheticEvent) => e.stopPropagation(),
+}
+
+interface DropdownProps<T extends string> {
+  open: boolean
+  /** The user dismissed the menu (tap outside, or an action). */
+  onClose: () => void
+  /** The close animation has finished; the anchor can draw its own glyph again. */
+  onClosed?: () => void
+  onSelect: (id: T) => void
+  /** The element the menu opens from. */
+  anchor: HTMLElement | null
+  selectedId: T
+  placement?: DropdownPlacement
+  align?: DropdownAlign
+  children: ReactNode
+}
+
+/** Shallow-compares two measurement maps, so re-measuring every render only re-renders on a real change. */
+const sameRects = (a: Record<string, Rect>, b: Record<string, Rect>) => {
+  const keys = Object.keys(a)
+  return (
+    keys.length === Object.keys(b).length &&
+    keys.every(k => b[k] && a[k].top === b[k].top && a[k].height === b[k].height && a[k].width === b[k].width)
+  )
+}
+
+const Dropdown = <T extends string>({
+  open,
+  onClose,
+  onClosed,
+  onSelect,
+  anchor,
+  selectedId,
+  children,
+}: DropdownProps<T>) => {
+  const [visible, setVisible] = useState(false)
+  const [entered, setEntered] = useState(false)
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
+  const menuEl = useRef<HTMLElement | null>(null)
+  const rowEls = useRef<Record<string, HTMLElement | null>>({})
+  const anchorPointEls = useRef<Record<string, HTMLElement | null>>({})
+  const [rows, setRows] = useState<Record<string, Rect>>({})
+  const [anchorPoints, setAnchorPoints] = useState<Record<string, Rect>>({})
+  const [menuSize, setMenuSize] = useState({ width: 0, height: 0 })
+  const closeTimer = useRef<number>(undefined)
+  // Held in a ref so a new callback identity each render doesn't restart the close timer.
+  const onClosedRef = useRef(onClosed)
+  onClosedRef.current = onClosed
+
+  const timing: Timing = { content: durations.get('medium') / 1000, light: durations.get('slow') / 1000, ease: EASE }
+  const isOpen = open && entered
+
+  // Measure the anchor and mount the layers each time the menu opens, then wait two frames (one to paint the
+  // closed state, one to start the transition from it) before switching to open.
+  useLayoutEffect(() => {
+    if (!open) return
+    window.clearTimeout(closeTimer.current)
+    if (anchor) setAnchorRect(anchor.getBoundingClientRect())
+    setVisible(true)
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => setEntered(true))
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [open, anchor])
+
+  // Keep the layers mounted through the close animation (the light runs longest), then report back.
+  useEffect(() => {
+    if (open || !visible) return
+    closeTimer.current = window.setTimeout(() => {
+      setVisible(false)
+      setEntered(false)
+      onClosedRef.current?.()
+    }, timing.light * 1000)
+    return () => window.clearTimeout(closeTimer.current)
+  }, [open, visible, timing.light])
+
+  // Measure rows, anchor points and the menu every render while visible; transforms don't affect offsetTop.
+  useLayoutEffect(() => {
+    if (!visible) return
+    const measure = (els: Record<string, HTMLElement | null>) => {
+      const out: Record<string, Rect> = {}
+      Object.entries(els).forEach(([key, el]) => {
+        if (el) out[key] = { left: el.offsetLeft, top: el.offsetTop, width: el.offsetWidth, height: el.offsetHeight }
+      })
+      return out
+    }
+    const nextRows = measure(rowEls.current)
+    const nextPoints = measure(anchorPointEls.current)
+    if (!sameRects(rows, nextRows)) setRows(nextRows)
+    if (!sameRects(anchorPoints, nextPoints)) setAnchorPoints(nextPoints)
+    const el = menuEl.current
+    if (el && (el.offsetWidth !== menuSize.width || el.offsetHeight !== menuSize.height)) {
+      setMenuSize({ width: el.offsetWidth, height: el.offsetHeight })
+    }
+  })
+
+  const transition: DropdownContextValue['transition'] = (props, { dur = timing.content, delay = 0 } = {}) =>
+    props.map(p => `${p} ${dur}s ${timing.ease} ${delay}s`).join(', ')
+
+  // 'around' + 'end': the selected item's anchor point sits exactly on the anchor; right edges line up.
+  const selectedPoint = anchorPoints[selectedId]?.top ?? 0
+  const menuTop = anchorRect ? anchorRect.top - selectedPoint : 0
+  const menuRight = anchorRect ? window.innerWidth - anchorRect.right : 0
+  const menuRect: Rect = {
+    left: window.innerWidth - menuRight - menuSize.width,
+    top: menuTop,
+    width: menuSize.width,
+    height: menuSize.height,
+  }
+
+  const selectedRow = rows[selectedId] ?? { left: 0, top: 0, width: 0, height: 0 }
+  const selectedCenter = selectedRow.top + selectedRow.height / 2
+
+  const value: DropdownContextValue = {
+    open,
+    isOpen,
+    visible,
+    timing,
+    transition,
+    anchorRect,
+    menuRect,
+    selectedId,
+    menuStyle: {
+      position: 'fixed',
+      zIndex: DROPDOWN_Z_INDEX,
+      right: menuRight,
+      top: menuTop,
+      pointerEvents: isOpen ? 'auto' : 'none',
+      // Glides only while closing (a newly picked row sliding onto the anchor); jumps on open.
+      transition: open ? undefined : transition(['top']),
+    },
+    rowMotion: key => {
+      const row = rows[key] ?? { left: 0, top: 0, width: 0, height: 0 }
+      const d = row.top + row.height / 2 - selectedCenter
+      return {
+        opacity: isOpen ? 1 : 0,
+        transform: isOpen ? 'none' : `translateY(${-d * 0.5}px)`,
+        filter: isOpen ? 'blur(0px)' : 'blur(10px)',
+        transition: transition(['opacity', 'transform', 'filter']),
+      }
+    },
+    lightMotion: (scaleFrom = 0.4) => ({
+      opacity: isOpen ? 1 : 0,
+      transform: isOpen ? 'scale(1)' : `scale(${scaleFrom})`,
+      transition: transition(['opacity', 'transform'], { dur: timing.light }),
+    }),
+    menuRef: el => {
+      menuEl.current = el
+    },
+    registerRow: key => el => {
+      rowEls.current[key] = el
+    },
+    registerAnchorPoint: id => el => {
+      anchorPointEls.current[id] = el
+    },
+    select: id => onSelect(id as T),
+    close: onClose,
+    stopPress,
+  }
+
+  return (
+    <DropdownContext.Provider value={value}>
+      {visible &&
+        anchorRect &&
+        createPortal(
+          // Tap catcher: dismisses the menu. Transparent; the light does the visual work.
+          <div
+            onClick={e => {
+              // Portal events bubble up the React tree, which would reach the anchor's open handler.
+              e.stopPropagation()
+              onClose()
+            }}
+            {...stopPress}
+            style={{ position: 'fixed', inset: 0, zIndex: DROPDOWN_Z_INDEX, pointerEvents: isOpen ? 'auto' : 'none' }}
+          />,
+          document.body,
+        )}
+      {visible && anchorRect && children}
+    </DropdownContext.Provider>
+  )
+}
+
+export default Dropdown
