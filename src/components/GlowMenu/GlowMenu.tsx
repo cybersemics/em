@@ -199,12 +199,11 @@ const GlowMenu = <T extends string>({
       el.style.opacity = isOpen ? '0.2' : '1'
       el.style.setProperty('--glow-menu-mask', isOpen ? '0.06' : '1')
     })
-    // The glass's decorative layers (highlights, stroke) are absolute siblings of the content. Their edges are what
-    // draw the rounded rectangle, so they fade out; the light should read as one field across the dialog and its
-    // surroundings. The first child is the glass fill, which stays.
+    // The glass's decorative layers (fill, highlights, stroke) are absolute siblings of the content. Their edges are
+    // what draw the rounded rectangle, so they all fade out; the light should read as one field across the dialog
+    // and its surroundings.
     ;[...surface.children].forEach(el => {
       if (!(el instanceof HTMLElement) || getComputedStyle(el).position !== 'absolute') return
-      if (el === surface.children[0]) return
       el.style.transition = transition(['opacity'])
       el.style.opacity = isOpen ? '0' : ''
     })
@@ -296,18 +295,17 @@ const GlowMenu = <T extends string>({
         }}
       />
 
-      {/* Surface tint (Figma Rectangle 752): fill 35% × layer 80%, over the surface's rounded rect. */}
+      {/* Surface tint (Figma Rectangle 752, transparent to #434378 left to right): a free-floating ellipse centred
+          toward the menu that fades out before its own bounds, so no part of it lines up with the surface's edge. */}
       {sr && (
         <Layer
           style={{
-            left: sr.left,
-            top: sr.top,
-            width: sr.width,
-            height: sr.height,
-            borderRadius: 28,
+            left: sr.left - 120,
+            top: sr.top - 120,
+            width: sr.width + 240,
+            height: sr.height + 240,
             background: SURFACE_TINT,
-            // Feathered so its rounded edge doesn't redraw the dialog's outline.
-            maskImage: 'radial-gradient(ellipse 70% 60% at 70% 30%, black 40%, transparent 100%)',
+            maskImage: 'radial-gradient(closest-side at 65% 35%, black 30%, transparent 100%)',
             opacity: isOpen ? 0.28 : 0,
             transition: transition(['opacity'], { dur: LIGHT_DURATION }),
           }}
