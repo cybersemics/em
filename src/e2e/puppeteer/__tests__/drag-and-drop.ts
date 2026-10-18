@@ -19,6 +19,7 @@ import screenshot from '../helpers/screenshot'
 import setSelection from '../helpers/setSelection'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForAlert from '../helpers/waitForAlert'
+import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 import withDebugLog from '../helpers/withDebugLog'
@@ -606,9 +607,12 @@ describe('pinned drop hovers', () => {
 
     // hover the DropChild of the leaf thought d (drop as a child of d)
     await dragAndDropThought('x', 'd', { hold: true, position: 'child' })
+    // Let the hover's pin effect finish before moving to the next target.
+    await waitForBrowserSettled()
 
     // then hover the DropEnd at the end of a's children (drop as a sibling after d)
     await dragAndDropThought('x', 'd', { hold: true, position: 'after', skipMouseDown: true })
+    await waitForBrowserSettled()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -632,9 +636,12 @@ describe('pinned drop hovers', () => {
 
     // hover the cliff DropEnd below the deepest thought c
     await dragAndDropThought('x', 'c', { hold: true, position: 'after' })
+    // Let the hover's pin effect finish before moving to the next target.
+    await waitForBrowserSettled()
 
     // then hover the ThoughtDrop before the root thought d
     await dragAndDropThought('x', 'd', { hold: true, position: 'before', skipMouseDown: true })
+    await waitForBrowserSettled()
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
