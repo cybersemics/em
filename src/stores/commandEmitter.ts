@@ -1,6 +1,6 @@
 import Emitter from 'emitter20'
 
-/** Notifies listeners before command execution and after a successful invocation settles. */
+/** Notifies listeners before command execution. */
 const commandEmitter = new Emitter()
 
 export default commandEmitter
