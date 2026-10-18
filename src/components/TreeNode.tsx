@@ -131,13 +131,11 @@ const TreeNode = ({
       y > Math.max(scrollTop, 0) + viewportHeight + viewportBottomOffset + singleLineHeightWithCliff,
   )
 
-  const wasBelowViewport = useRef(isBelowViewport)
   const completeExit = transitionGroupsProps.in === false ? transitionGroupsProps.onExited : undefined
 
-  // Virtualized rows have no transition to finish, even if scrolling reveals one in the same update that removes it.
+  // Without a mounted fade node, there is no transition to finish the exit.
   useEffect(() => {
-    if (isBelowViewport || wasBelowViewport.current) completeExit?.()
-    wasBelowViewport.current = isBelowViewport
+    if (!fadeThoughtRef.current) completeExit?.()
   }, [isBelowViewport, completeExit])
 
   // List Virtualization
