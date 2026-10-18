@@ -318,16 +318,17 @@ const GlowMenu = <T extends string>({
       {sr && (
         <Layer
           style={{
-            left: sr.left - 60,
-            top: sr.top - 60,
-            width: sr.width + 120,
-            height: sr.height + 120,
+            left: sr.left - 120,
+            top: sr.top - 120,
+            width: sr.width + 240,
+            height: sr.height + 240,
             backgroundImage: 'url(/img/glow-menu/background-glow.png)',
             backgroundSize: '100% 100%',
             // Screen rather than Figma's colour dodge: dodge multiplies bright spots behind the glass (the editor's cursor
             // glow) into a glaring patch; screen brightens evenly.
             mixBlendMode: 'screen',
-            maskImage: 'radial-gradient(ellipse 75% 70% at 65% 30%, black 35%, transparent 100%)',
+            // closest-side: the fade completes inside the layer, so no edge of the layer cuts it off as a straight line.
+            maskImage: 'radial-gradient(closest-side at 60% 40%, black 35%, transparent 100%)',
             opacity: isOpen ? 0.22 : 0,
             transition: transition(['opacity'], { dur: LIGHT_DURATION }),
           }}
