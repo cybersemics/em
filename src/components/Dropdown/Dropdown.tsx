@@ -28,8 +28,14 @@ export const DROPDOWN_Z_INDEX = Number(token('zIndex.dialog'))
 /** Default easing for every layer (matches the sidebar's EASE_OUT). */
 const EASE = 'cubic-bezier(0.16, 0.6, 0.2, 1)'
 
-/** Where the menu sits relative to its anchor. 'around': the selected row lands on the anchor, the rest above and below. */
-export type DropdownPlacement = 'around'
+/**
+ * Where the menu sits relative to its anchor.
+ * - 'around': the menu is positioned so the selected item lands on the anchor; the rest appear above and below.
+ *   The selected row never moves; the menu does (and glides when a new item is picked).
+ * - 'below': the menu hangs from the top of its container; the selected row slides up to the top when closing and
+ *   back to its place when opening (the sidebar's section picker).
+ */
+export type DropdownPlacement = 'around' | 'below'
 
 /** Which edge of the anchor the menu lines up with. 'end': right edges (icons on the right). */
 export type DropdownAlign = 'end'
@@ -67,6 +73,10 @@ interface DropdownContextValue {
   menuStyle: CSSProperties
   /** Motion for a non-selected row (or heading/separator/action): wakes with the light, settles out of the selection. */
   rowMotion: (key: string) => CSSProperties
+  /** For 'below': motion for the selected row, which slides up onto the trigger when closed and back when open. */
+  selectedTravel: CSSProperties
+  /** For 'below': how far the selected item's anchor point sits from the top of the menu (px). */
+  selectedOffset: number
   /** Motion for a light layer: fades in and grows from scaleFrom, on the light's duration. */
   lightMotion: (scaleFrom?: number) => CSSProperties
   /** Ref for the menu column, so its size can be measured. */
@@ -113,6 +123,13 @@ interface DropdownProps<T extends string> {
   selectedId: T
   placement?: DropdownPlacement
   align?: DropdownAlign
+  /**
+   * Keep the children mounted while closed, with no entering frame. For menus whose selected row is
+   * always on screen (the sidebar's header), rather than layers that appear only while open.
+   */
+  persistent?: boolean
+  /** Render the full-screen tap catcher. Off for owners that provide their own dismissal area. */
+  catcher?: boolean
   children: ReactNode
 }
 
@@ -132,10 +149,14 @@ const Dropdown = <T extends string>({
   onSelect,
   anchor,
   selectedId,
+  placement = 'around',
+  persistent = false,
+  catcher = true,
   children,
 }: DropdownProps<T>) => {
-  const [visible, setVisible] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [entered, setEntered] = useState(false)
+  const visible = persistent || mounted
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
   const menuEl = useRef<HTMLElement | null>(null)
   const rowEls = useRef<Record<string, HTMLElement | null>>({})
@@ -144,12 +165,15 @@ const Dropdown = <T extends string>({
   const [anchorPoints, setAnchorPoints] = useState<Record<string, Rect>>({})
   const [menuSize, setMenuSize] = useState({ width: 0, height: 0 })
   const closeTimer = useRef<number>(undefined)
+  // Persistent menus are "visible" from the start; only report onClosed after an actual open.
+  const wasOpen = useRef(false)
+  if (open) wasOpen.current = true
   // Held in a ref so a new callback identity each render doesn't restart the close timer.
   const onClosedRef = useRef(onClosed)
   onClosedRef.current = onClosed
 
   const timing: Timing = { content: durations.get('medium') / 1000, light: durations.get('slow') / 1000, ease: EASE }
-  const isOpen = open && entered
+  const isOpen = persistent ? open : open && entered
 
   // Measure the anchor and mount the layers each time the menu opens, then wait two frames (one to paint the
   // closed state, one to start the transition from it) before switching to open.
@@ -157,23 +181,25 @@ const Dropdown = <T extends string>({
     if (!open) return
     window.clearTimeout(closeTimer.current)
     if (anchor) setAnchorRect(anchor.getBoundingClientRect())
-    setVisible(true)
+    if (persistent) return
+    setMounted(true)
     let frame = requestAnimationFrame(() => {
       frame = requestAnimationFrame(() => setEntered(true))
     })
     return () => cancelAnimationFrame(frame)
-  }, [open, anchor])
+  }, [open, anchor, persistent])
 
   // Keep the layers mounted through the close animation (the light runs longest), then report back.
   useEffect(() => {
-    if (open || !visible) return
+    if (open || !visible || (persistent && !wasOpen.current)) return
     closeTimer.current = window.setTimeout(() => {
-      setVisible(false)
+      setMounted(false)
       setEntered(false)
+      wasOpen.current = false
       onClosedRef.current?.()
     }, timing.light * 1000)
     return () => window.clearTimeout(closeTimer.current)
-  }, [open, visible, timing.light])
+  }, [open, visible, persistent, timing.light])
 
   // Measure rows, anchor points and the menu every render while visible; transforms don't affect offsetTop.
   useLayoutEffect(() => {
@@ -186,7 +212,15 @@ const Dropdown = <T extends string>({
       return out
     }
     const nextRows = measure(rowEls.current)
-    const nextPoints = measure(anchorPointEls.current)
+    // An anchor point's offset in the menu is its row's offset plus where it sits inside the row. Measured from the
+    // two rects, which move together, so a transform on the row doesn't skew it.
+    const nextPoints: Record<string, Rect> = {}
+    Object.entries(anchorPointEls.current).forEach(([id, el]) => {
+      const row = rowEls.current[id]
+      if (!el || !row) return
+      const inRow = el.getBoundingClientRect().top - row.getBoundingClientRect().top
+      nextPoints[id] = { left: 0, top: row.offsetTop + inRow, width: el.offsetWidth, height: el.offsetHeight }
+    })
     if (!sameRects(rows, nextRows)) setRows(nextRows)
     if (!sameRects(anchorPoints, nextPoints)) setAnchorPoints(nextPoints)
     const el = menuEl.current
@@ -200,7 +234,7 @@ const Dropdown = <T extends string>({
 
   // 'around' + 'end': the selected item's anchor point sits exactly on the anchor; right edges line up.
   const selectedPoint = anchorPoints[selectedId]?.top ?? 0
-  const menuTop = anchorRect ? anchorRect.top - selectedPoint : 0
+  const menuTop = anchorRect && placement === 'around' ? anchorRect.top - selectedPoint : 0
   const menuRight = anchorRect ? window.innerWidth - anchorRect.right : 0
   const menuRect: Rect = {
     left: window.innerWidth - menuRight - menuSize.width,
@@ -229,6 +263,11 @@ const Dropdown = <T extends string>({
       pointerEvents: isOpen ? 'auto' : 'none',
       // Glides only while closing (a newly picked row sliding onto the anchor); jumps on open.
       transition: open ? undefined : transition(['top']),
+    },
+    selectedOffset: selectedPoint,
+    selectedTravel: {
+      transform: `translateY(${!isOpen && placement === 'below' ? -selectedPoint : 0}px)`,
+      transition: transition(['opacity', 'transform']),
     },
     rowMotion: key => {
       const row = rows[key] ?? { left: 0, top: 0, width: 0, height: 0 }
@@ -261,7 +300,8 @@ const Dropdown = <T extends string>({
 
   return (
     <DropdownContext.Provider value={value}>
-      {visible &&
+      {catcher &&
+        visible &&
         anchorRect &&
         createPortal(
           // Tap catcher: dismisses the menu. Transparent; the light does the visual work.
@@ -276,7 +316,7 @@ const Dropdown = <T extends string>({
           />,
           document.body,
         )}
-      {visible && anchorRect && children}
+      {(persistent || (visible && anchorRect)) && children}
     </DropdownContext.Provider>
   )
 }
