@@ -1,0 +1,496 @@
+// PROTOTYPE — visual experiment only, not for merge.
+//
+// GlowMenu: a reusable popup menu lit from its anchor, built from the em design file (Figma node
+// 14593:170852, "#2"). When open:
+//   - The surface it belongs to (e.g. the Command Universe glass sheet) fades to 20% and is masked by
+//     a radial gradient centred under the menu, so the options get clear space.
+//   - A global light spreads across the whole viewport from the anchor: a tint over the surface, a
+//     colour-dodge band with a backdrop blur, a coloured bloom and an overlay highlight.
+//   - The selected row carries a soft luminosity glow.
+//   - Labels are plain white drawn with plus-lighter (Figma "linear dodge"), so they take their
+//     lavender tint from the light underneath rather than from a colour of their own.
+// The selected row's icon sits exactly on the anchor, so the menu reads as the button opening up.
+//
+// Every layer is its own fixed element portalled to <body>, so each blends with the whole page
+// (a shared fixed wrapper would be a stacking context and isolate the blend modes).
+import { CSSProperties, ComponentType, ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { css } from '../../../styled-system/css'
+import { token } from '../../../styled-system/tokens'
+import { MEDIUM_DURATION, cssEaseOut } from '../Sidebar/constants'
+
+/** A selectable option. The selected one becomes the anchor's glyph. */
+export interface GlowMenuItem<T extends string> {
+  id: T
+  label: string
+  icon: ComponentType<{ size: number }>
+}
+
+/** A one-shot action below the separator. Never selected; never becomes the anchor. */
+export interface GlowMenuAction {
+  id: string
+  label: string
+  icon: ComponentType<{ size: number }>
+  onAction: () => void
+}
+
+interface GlowMenuProps<T extends string> {
+  open: boolean
+  /** Called when the user dismisses the menu (tap outside). */
+  onClose: () => void
+  /** Called once the close animation has finished, so the anchor can draw its own glyph again. */
+  onClosed?: () => void
+  /** The element the menu opens from. The selected row's icon lands exactly on it. */
+  anchor: HTMLElement | null
+  /** The surface the menu belongs to. Its in-flow children are dimmed and masked while open. */
+  surface: HTMLElement | null
+  /** Size of the icon box, matching the anchor so the hand-off is seamless (px). */
+  iconSize: number
+  heading?: string
+  items: GlowMenuItem<T>[]
+  selectedId: T
+  onSelect: (id: T) => void
+  actions?: GlowMenuAction[]
+}
+
+/** Above the dialog: the layers are later in <body>, so the same z-index paints over it. */
+const Z_INDEX = Number(token('zIndex.dialog'))
+
+/** Vertical padding of each row (px). With a 28px icon this gives the design's 36px row pitch. */
+const ROW_PAD = 4
+/** How long the light takes to reach the farthest row (s). */
+const LIGHT_SPREAD = 0.18
+/** Radius of the surface mask (px). Figma's mask ellipse is ~545×605 on a 384px-wide frame. */
+const MASK_RADIUS = 575
+
+/** Figma Rectangle 752: the tint across the surface, transparent on the left to #434378 on the right. */
+const SURFACE_TINT = 'linear-gradient(90deg, rgba(10, 10, 18, 0) 0%, rgba(67, 67, 120, 1) 100%)'
+
+// Registered so the mask's inner alpha can transition (a gradient itself cannot).
+const MASK_PROPERTY_CSS = `@property --glow-menu-mask { syntax: '<number>'; inherits: false; initial-value: 1; }`
+
+/** Injects the @property rule once. */
+const useMaskProperty = () => {
+  useEffect(() => {
+    if (document.getElementById('glow-menu-mask-property')) return
+    const style = document.createElement('style')
+    style.id = 'glow-menu-mask-property'
+    style.textContent = MASK_PROPERTY_CSS
+    document.head.appendChild(style)
+  }, [])
+}
+
+/** A full-viewport fixed layer portalled to <body>. */
+const Layer = ({ style, className, children }: { style: CSSProperties; className?: string; children?: ReactNode }) =>
+  createPortal(
+    <div className={className} style={{ position: 'fixed', pointerEvents: 'none', zIndex: Z_INDEX, ...style }}>
+      {children}
+    </div>,
+    document.body,
+  )
+
+const GlowMenu = <T extends string>({
+  open,
+  onClose,
+  onClosed,
+  anchor,
+  surface,
+  iconSize,
+  heading,
+  items,
+  selectedId,
+  onSelect,
+  actions = [],
+}: GlowMenuProps<T>) => {
+  useMaskProperty()
+  const [visible, setVisible] = useState(false)
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
+  const [surfaceRect, setSurfaceRect] = useState<DOMRect | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const rowEls = useRef<Record<string, HTMLElement | null>>({})
+  const [rows, setRows] = useState<Record<string, { top: number; height: number }>>({})
+  const closeTimer = useRef<number>(undefined)
+  // Held in a ref so a new callback identity each render doesn't restart the close timer.
+  const onClosedRef = useRef(onClosed)
+  onClosedRef.current = onClosed
+
+  const duration = MEDIUM_DURATION
+
+  // Measure the anchor and surface each time the menu opens.
+  useLayoutEffect(() => {
+    if (!open) return
+    window.clearTimeout(closeTimer.current)
+    if (anchor) setAnchorRect(anchor.getBoundingClientRect())
+    if (surface) setSurfaceRect(surface.getBoundingClientRect())
+    setVisible(true)
+  }, [open, anchor, surface])
+
+  // Keep the layers mounted through the close animation, then report back.
+  useEffect(() => {
+    if (open || !visible) return
+    closeTimer.current = window.setTimeout(
+      () => {
+        setVisible(false)
+        onClosedRef.current?.()
+      },
+      (duration + LIGHT_SPREAD) * 1000,
+    )
+    return () => window.clearTimeout(closeTimer.current)
+  }, [open, visible, duration])
+
+  // Row positions within the menu column (transforms don't affect offsetTop).
+  useLayoutEffect(() => {
+    if (!visible) return
+    const next: Record<string, { top: number; height: number }> = {}
+    Object.entries(rowEls.current).forEach(([key, el]) => {
+      if (el) next[key] = { top: el.offsetTop, height: el.offsetHeight }
+    })
+    setRows(next)
+  }, [visible, iconSize, items.length, actions.length])
+
+  const selectedRow = rows[selectedId] ?? { top: 0, height: iconSize + ROW_PAD * 2 }
+  const selectedCenter = selectedRow.top + selectedRow.height / 2
+  const menuTop = anchorRect ? anchorRect.top - selectedRow.top - ROW_PAD : 0
+  const menuRight = anchorRect ? window.innerWidth - anchorRect.right : 0
+  const anchorX = anchorRect ? anchorRect.left + anchorRect.width / 2 : 0
+  const anchorY = anchorRect ? anchorRect.top + anchorRect.height / 2 : 0
+  const menuHeight = menuRef.current?.offsetHeight ?? 0
+  const menuWidth = menuRef.current?.offsetWidth ?? 0
+  const maxDistance = Math.max(1, ...Object.values(rows).map(r => Math.abs(r.top + r.height / 2 - selectedCenter)))
+
+  const transition = (props: string[], { delay = 0, dur = duration } = {}) =>
+    props.map(p => `${p} ${dur}s ${cssEaseOut} ${delay}s`).join(', ')
+
+  // Dim and mask the surface's in-flow children (the header and the page), centred under the menu.
+  useEffect(() => {
+    if (!surface || !visible) return
+    const centreX = window.innerWidth - menuRight - menuWidth / 2
+    const centreY = menuTop + menuHeight / 2
+    const children = [...surface.children].filter(
+      (el): el is HTMLElement => el instanceof HTMLElement && getComputedStyle(el).position !== 'absolute',
+    )
+    children.forEach(el => {
+      const r = el.getBoundingClientRect()
+      const mask = `radial-gradient(circle ${MASK_RADIUS}px at ${centreX - r.left}px ${centreY - r.top}px, rgba(0, 0, 0, var(--glow-menu-mask)) 9%, black 100%)`
+      el.style.maskImage = mask
+      el.style.webkitMaskImage = mask
+      el.style.transition = transition(['opacity', '--glow-menu-mask'], { dur: duration + LIGHT_SPREAD })
+      el.style.opacity = open ? '0.2' : '1'
+      el.style.setProperty('--glow-menu-mask', open ? '0.06' : '1')
+    })
+    // The glass's decorative layers (highlights, stroke) are absolute siblings of the content. Dim them too, or
+    // their bright highlights show through the cleared space. The first child is the glass fill, which stays.
+    ;[...surface.children].slice(1).forEach(el => {
+      if (!(el instanceof HTMLElement) || getComputedStyle(el).position !== 'absolute') return
+      el.style.transition = transition(['opacity'], { dur: duration + LIGHT_SPREAD })
+      el.style.opacity = open ? '0.25' : ''
+    })
+  }, [surface, visible, open, menuTop, menuRight, menuWidth, menuHeight])
+
+  // Clear the mask once fully closed so the surface is untouched between uses.
+  useEffect(() => {
+    if (!surface || visible) return
+    ;[...surface.children].forEach(el => {
+      if (!(el instanceof HTMLElement)) return
+      el.style.maskImage = ''
+      el.style.webkitMaskImage = ''
+      el.style.removeProperty('--glow-menu-mask')
+    })
+  }, [surface, visible])
+
+  if (!visible || !anchorRect) return null
+
+  /** Light-reveal motion for a non-selected row: it wakes (fades in, sharpens, settles) when the spreading light reaches it. */
+  const rowMotion = (key: string): CSSProperties => {
+    const row = rows[key] ?? { top: 0, height: 0 }
+    const d = row.top + row.height / 2 - selectedCenter
+    const reach = Math.abs(d) / maxDistance
+    const delay = (open ? reach : 1 - reach) * LIGHT_SPREAD
+    return {
+      opacity: open ? 1 : 0,
+      transform: open ? 'none' : `translateY(${-d * 0.5}px)`,
+      filter: open ? 'blur(0px)' : 'blur(10px)',
+      transition: transition(['opacity', 'transform', 'filter'], { delay }),
+    }
+  }
+
+  /** The light's own motion: grows out of the anchor. */
+  const lightMotion = (scaleFrom = 0.4): CSSProperties => ({
+    opacity: open ? 1 : 0,
+    transform: open ? 'scale(1)' : `scale(${scaleFrom})`,
+    transition: transition(['opacity', 'transform'], {
+      dur: duration + LIGHT_SPREAD,
+      delay: open ? 0 : LIGHT_SPREAD * 0.6,
+    }),
+  })
+
+  const register = (key: string) => (el: HTMLElement | null) => {
+    rowEls.current[key] = el
+  }
+
+  const rowClass = css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: '12px',
+    cursor: 'pointer',
+    fontFamily: 'radioCanada',
+    fontSize: '17.75px',
+    lineHeight: '1.5',
+    letterSpacing: '-0.011em',
+    color: 'white',
+  })
+
+  const sr = surfaceRect
+
+  return (
+    <>
+      {/* Tap catcher: dismisses the menu. Transparent; the light does the visual work. */}
+      {createPortal(
+        <div
+          onClick={e => {
+            // Portal events bubble up the React tree, which would reach the anchor's open handler.
+            e.stopPropagation()
+            onClose()
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: Z_INDEX,
+            pointerEvents: open ? 'auto' : 'none',
+          }}
+        />,
+        document.body,
+      )}
+
+      {/* Backdrop dim: darkens what shows through the glass from behind it (e.g. the editor's cursor glow), so only the
+          light reads in the cleared space. Figma's editor layer sits under an opaque-enough modal not to need this. */}
+      {sr && (
+        <Layer
+          style={{
+            left: sr.left,
+            top: sr.top,
+            width: sr.width,
+            height: sr.height,
+            borderRadius: 32,
+            backdropFilter: open ? 'brightness(0.55)' : 'brightness(1)',
+            transition: transition(['backdrop-filter'], { dur: duration + LIGHT_SPREAD }),
+          }}
+        />
+      )}
+
+      {/* Surface tint (Figma Rectangle 752): fill 35% × layer 80%, over the surface's rounded rect. */}
+      {sr && (
+        <Layer
+          style={{
+            left: sr.left,
+            top: sr.top,
+            width: sr.width,
+            height: sr.height,
+            borderRadius: 28,
+            background: SURFACE_TINT,
+            opacity: open ? 0.28 : 0,
+            transition: transition(['opacity'], { dur: duration + LIGHT_SPREAD }),
+          }}
+        />
+      )}
+
+      {/* Colour-dodge band with backdrop blur (inside Figma's dodge frame, 86%): the right side of the surface, behind the menu. */}
+      {sr && (
+        <Layer
+          style={{
+            left: sr.left + sr.width * 0.17,
+            top: sr.top,
+            width: sr.width * 0.83,
+            height: sr.height * 0.94,
+            borderRadius: '0 28px 28px 0',
+            background: SURFACE_TINT,
+            backdropFilter: 'blur(18.5px)',
+            // Feather the left and bottom so the backdrop blur has no hard edge (in Figma the gradient's clear end hides it).
+            maskImage:
+              'linear-gradient(to right, transparent, black 45%), linear-gradient(to bottom, black 65%, transparent)',
+            maskComposite: 'intersect',
+            WebkitMaskComposite: 'source-in',
+            mixBlendMode: 'color-dodge',
+            opacity: open ? 0.86 : 0,
+            transition: transition(['opacity'], { dur: duration + LIGHT_SPREAD }),
+          }}
+        />
+      )}
+
+      {/* Coloured bloom centred on the anchor (Figma "CC glow" under a radial mask): lavender to cyan with pink and navy edges, additive. */}
+      <Layer
+        style={{
+          left: anchorX - 450,
+          top: anchorY - 450,
+          width: 900,
+          height: 900,
+          borderRadius: '50%',
+          background: [
+            'radial-gradient(closest-side, rgba(110, 95, 220, 0.36) 0%, rgba(95, 82, 205, 0.26) 35%, rgba(60, 60, 160, 0.12) 65%, rgba(44, 44, 133, 0) 100%)',
+            'radial-gradient(closest-side at 35% 60%, rgba(193, 98, 158, 0.16), rgba(193, 98, 158, 0) 70%)',
+            'radial-gradient(closest-side at 60% 40%, rgba(117, 220, 255, 0.10), rgba(117, 220, 255, 0) 60%)',
+          ].join(', '),
+          mixBlendMode: 'plus-lighter',
+          ...lightMotion(0.3),
+        }}
+      />
+
+      {/* Overlay highlight (Figma Rectangle 1201, overlay 65%): lifts contrast toward the anchor's corner. */}
+      <Layer
+        style={{
+          left: anchorX - 300,
+          top: anchorY - 400,
+          width: 600,
+          height: 600,
+          background: 'radial-gradient(closest-side, rgba(217, 217, 217, 1) 0%, rgba(217, 217, 217, 0) 90%)',
+          mixBlendMode: 'overlay',
+          ...lightMotion(0.4),
+          // Figma has it at 65%, but there it sits inside the dodge frame; on its own it whitens the light.
+          opacity: open ? 0.25 : 0,
+        }}
+      />
+
+      {/* Selection glow (Figma "Selection highlight"): a soft ellipse behind the selected row. Figma uses an image fill
+          with a luminosity blend; a white stand-in at luminosity bleaches everything, so this is a faint additive lavender. */}
+      <Layer
+        style={{
+          left: anchorRect.right + 43 - 286,
+          top: anchorY - 35,
+          width: 286,
+          height: 70,
+          background: 'radial-gradient(closest-side, rgba(170, 160, 255, 1), rgba(170, 160, 255, 0))',
+          filter: 'blur(25px)',
+          mixBlendMode: 'plus-lighter',
+          opacity: open ? 0.22 : 0,
+          transition: transition(['opacity'], { dur: duration + LIGHT_SPREAD }),
+        }}
+      />
+
+      {/* The menu. plus-lighter on the whole column adds its white text onto the light below. */}
+      {createPortal(
+        <div
+          ref={menuRef}
+          onClick={e => e.stopPropagation()}
+          className={css({ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', whiteSpace: 'nowrap' })}
+          style={{
+            position: 'fixed',
+            zIndex: Z_INDEX,
+            right: menuRight,
+            top: menuTop,
+            mixBlendMode: 'plus-lighter',
+            pointerEvents: open ? 'auto' : 'none',
+            // Glides only while closing (a newly picked row sliding onto the anchor); jumps on open.
+            transition: open ? undefined : transition(['top']),
+          }}
+        >
+          {heading && (
+            <div
+              ref={register('heading')}
+              className={css({
+                display: 'flex',
+                alignItems: 'center',
+                gap: '11px',
+                fontFamily: 'radioCanada',
+                fontSize: '18px',
+                fontWeight: 500,
+                lineHeight: '1.5',
+                letterSpacing: '-0.011em',
+                color: 'white',
+              })}
+              style={{ paddingBottom: 6, ...rowMotion('heading') }}
+            >
+              {/* Figma Line 47: 99px, white fading out to the left, 32%. */}
+              <div
+                style={{
+                  width: 99,
+                  height: 1,
+                  opacity: 0.32,
+                  background: 'linear-gradient(to left, white, rgba(255, 255, 255, 0))',
+                }}
+              />
+              <span style={{ opacity: 0.65 }}>{heading}</span>
+            </div>
+          )}
+
+          {items.map(({ id, label, icon: Icon }) => {
+            const isSelected = id === selectedId
+            return (
+              <div
+                key={id}
+                ref={register(id)}
+                onClick={() => onSelect(id)}
+                className={rowClass}
+                style={{
+                  paddingBlock: ROW_PAD,
+                  // The selected row never moves within the menu; the menu's top carries it onto the anchor.
+                  ...(isSelected ? { transition: transition(['opacity']) } : rowMotion(id)),
+                }}
+              >
+                {/* Selected 60%, others 34% (Figma row opacities). */}
+                <span
+                  style={{
+                    opacity: open ? (isSelected ? 0.6 : 0.34) : 0,
+                    transition: transition(['opacity']),
+                  }}
+                >
+                  {label}
+                </span>
+                <div
+                  className={css({ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' })}
+                  style={{
+                    width: iconSize,
+                    height: iconSize,
+                    // Icons at 75% of the row; closed, matches the anchor glyph's 50%.
+                    opacity: open ? (isSelected ? 0.6 : 0.34) * 0.75 * 1.6 : 0.5,
+                    transition: transition(['opacity']),
+                  }}
+                >
+                  <Icon size={iconSize} />
+                </div>
+              </div>
+            )
+          })}
+
+          {actions.length > 0 && (
+            <>
+              <div
+                ref={register('separator')}
+                style={{
+                  width: '100%',
+                  height: 1,
+                  marginBlock: 6,
+                  background: 'linear-gradient(to left, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0))',
+                  ...rowMotion('separator'),
+                }}
+              />
+              {actions.map(({ id, label, icon: Icon, onAction }) => (
+                <div
+                  key={id}
+                  ref={register(id)}
+                  onClick={() => {
+                    onClose()
+                    onAction()
+                  }}
+                  className={rowClass}
+                  style={{ paddingBlock: ROW_PAD, ...rowMotion(id) }}
+                >
+                  <span style={{ opacity: 0.34 }}>{label}</span>
+                  <div
+                    className={css({ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' })}
+                    style={{ width: iconSize, height: iconSize, opacity: 0.4 }}
+                  >
+                    <Icon size={iconSize * 0.85} />
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>,
+        document.body,
+      )}
+    </>
+  )
+}
+
+export default GlowMenu
