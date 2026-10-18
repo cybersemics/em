@@ -5,7 +5,6 @@ import { Store } from 'redux'
 import { ArrowKey } from './@types/ArrowKey'
 import Command from './@types/Command'
 import CommandId from './@types/CommandId'
-import CommandSuccess from './@types/CommandSuccess'
 import CommandType from './@types/CommandType'
 import Direction from './@types/Direction'
 import Gesture from './@types/Gesture'
@@ -505,15 +504,11 @@ export const executeCommandWithMulticursor = (
 
   const state = commandStore.getState()
 
-  /** Reports a successful invocation once exec has returned, unless it raised an app error, and adds a rep to the pinned command when the user performed it by keyboard or gesture. Asynchronous work is not awaited: the user has completed the command once it starts, whatever a server or the clipboard later returns. */
+  /** Adds a rep to the pinned command once exec has returned, when the user performed it by keyboard or gesture and it raised no app error. Asynchronous work is not awaited: the user has completed the command once it starts, whatever a server or the clipboard later returns. */
   const reportSuccess = () => {
     if (commandStore.getState().error !== state.error) return
     if (type === 'keyboard' || type === 'gesture')
       commandStore.dispatch(pinnedCommandAddRep({ commandId: commandArg.id }))
-    commandEmitter.trigger('commandSucceeded', {
-      commandId: commandArg.id,
-      source: type ?? 'internal',
-    } satisfies CommandSuccess)
   }
 
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.
