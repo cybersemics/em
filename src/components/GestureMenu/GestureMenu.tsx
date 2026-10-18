@@ -8,7 +8,7 @@ import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUn
 import * as selection from '../../device/selection'
 import useFilteredCommands from '../../hooks/useFilteredCommands'
 import useGestureMenuLayout, {
-  COLUMN_GAP_REM,
+  COLUMN_GAP_PX,
   HEADER_BLOCK_MARGIN_BOTTOM_REM,
   HEADER_FONT_SIZE_REM,
   HEADER_TITLE_MARGIN_BOTTOM_REM,
@@ -44,7 +44,7 @@ const GestureMenu: FC<{
     maxColumns,
     columnWidth,
     dividerWidth,
-    horizontalPaddingRem,
+    horizontalPaddingPx,
     paddingTopRem,
     verticalPaddingRem,
     rowsPerColumn,
@@ -114,9 +114,9 @@ const GestureMenu: FC<{
             data-testid='gesture-menu-content'
             style={{
               paddingBlock: `${verticalPaddingRem}rem`,
-              paddingInline: `${horizontalPaddingRem}rem`,
+              paddingInline: `${horizontalPaddingPx}px`,
               paddingTop: `${paddingTopRem}rem`,
-              paddingLeft: `calc(${horizontalPaddingRem}rem + ${token.var('spacing.safeAreaLeft')})`,
+              paddingLeft: `calc(${horizontalPaddingPx}px + ${token.var('spacing.safeAreaLeft')})`,
             }}
           >
             {/* Header */}
@@ -151,7 +151,7 @@ const GestureMenu: FC<{
                   // Track count comes from what fits, not what's used, so the tracks keep their width
                   // as commands drop away; unused tracks simply render empty.
                   gridTemplateColumns: `repeat(${maxColumns}, minmax(0, 1fr))`,
-                  columnGap: `${COLUMN_GAP_REM}rem`,
+                  columnGap: `${COLUMN_GAP_PX}px`,
                 }}
               >
                 {/* Split the commands into column-major chunks (top-to-bottom then left-to-right)

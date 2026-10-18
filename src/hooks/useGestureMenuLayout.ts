@@ -5,18 +5,22 @@ import viewportStore, { isTablet } from '../stores/viewportStore'
 
 /**************************************************************
  * Width capacity
+ *
+ * Horizontal spacing is fixed px, so that a larger font size leaves the width of the screen to the
+ * text rather than to padding and gutters. The values are what the rem values were at the default
+ * font size. Columns are still sized in rem, so fewer of them fit as the font size grows.
  **************************************************************/
 /** Smallest usable column width in rem. */
 export const MIN_COLUMN_WIDTH_REM = 15.5
 
-/** Horizontal space between columns. Also rendered by GestureMenu. */
-export const COLUMN_GAP_REM = 2
+/** Horizontal space between columns in px. Also rendered by GestureMenu. */
+export const COLUMN_GAP_PX = 32
 
-/** Panel inset used when only one column fits. */
-export const SINGLE_COLUMN_INLINE_PADDING_REM = 2.25
+/** Panel inset in px used when only one column fits. */
+export const SINGLE_COLUMN_INLINE_PADDING_PX = 36
 
-/** Panel inset used when multi columns fit with wide gutters. */
-export const MULTI_COLUMN_INLINE_PADDING_REM = 5
+/** Panel inset in px used when multi columns fit with wide gutters. */
+export const MULTI_COLUMN_INLINE_PADDING_PX = 80
 
 /**************************************************************
  * Height capacity
@@ -109,19 +113,16 @@ export const ESTIMATED_SELECTED_ITEM_EXTRA_HEIGHT_REM =
  * have a trailing gap.
  */
 const columnsFittingAtPadding = ({
-  paddingRem,
+  paddingPx,
   viewportWidth,
-  remInPx,
   columnGapPx,
   minColumnWidthPx,
 }: {
   viewportWidth: number
-  paddingRem: number
-  remInPx: number
+  paddingPx: number
   columnGapPx: number
   minColumnWidthPx: number
-}) =>
-  Math.max(1, Math.floor((viewportWidth - 2 * paddingRem * remInPx + columnGapPx) / (minColumnWidthPx + columnGapPx)))
+}) => Math.max(1, Math.floor((viewportWidth - 2 * paddingPx + columnGapPx) / (minColumnWidthPx + columnGapPx)))
 
 /**
  * How many command rows fit in a column height.
@@ -159,9 +160,9 @@ type GestureMenuLayout = {
    * to 100%. */
   dividerWidth: string
   /**
-   * Horizontal panel padding per side, in rem.
+   * Horizontal panel padding per side, in px.
    */
-  horizontalPaddingRem: number
+  horizontalPaddingPx: number
   /**
    * Top panel padding, in rem.
    */
@@ -206,7 +207,6 @@ const useGestureMenuLayout = (
 
   // convert rem-based measurements to px for layout calculations.
   const minColumnWidthPx = MIN_COLUMN_WIDTH_REM * remPx
-  const columnGapPx = COLUMN_GAP_REM * remPx
   const rowGapPx = ROW_GAP_REM * remPx
   const headerPx = ESTIMATED_HEADER_HEIGHT_REM * remPx
   const approxRowHeightPx = APPROXIMATE_ROW_HEIGHT_REM * remPx
@@ -216,17 +216,15 @@ const useGestureMenuLayout = (
   // This is useful on smaller tablets like the iPad mini, allowing more commands
   // to fit while still avoiding rendering the list in the hand-grip area.
   const columnsAtWidePadding = columnsFittingAtPadding({
-    paddingRem: MULTI_COLUMN_INLINE_PADDING_REM,
+    paddingPx: MULTI_COLUMN_INLINE_PADDING_PX,
     viewportWidth: innerWidth,
-    remInPx: remPx,
-    columnGapPx,
+    columnGapPx: COLUMN_GAP_PX,
     minColumnWidthPx,
   })
   const columnsAtNarrowPadding = columnsFittingAtPadding({
-    paddingRem: SINGLE_COLUMN_INLINE_PADDING_REM,
+    paddingPx: SINGLE_COLUMN_INLINE_PADDING_PX,
     viewportWidth: innerWidth,
-    remInPx: remPx,
-    columnGapPx,
+    columnGapPx: COLUMN_GAP_PX,
     minColumnWidthPx,
   })
 
@@ -240,8 +238,8 @@ const useGestureMenuLayout = (
   const fitsMultiColumn = maxColumns > 1
 
   // Determine which inset values to use based on the column layout.
-  const horizontalPaddingRem =
-    fitsMultiColumn && !useNarrowMultiColumn ? MULTI_COLUMN_INLINE_PADDING_REM : SINGLE_COLUMN_INLINE_PADDING_REM
+  const horizontalPaddingPx =
+    fitsMultiColumn && !useNarrowMultiColumn ? MULTI_COLUMN_INLINE_PADDING_PX : SINGLE_COLUMN_INLINE_PADDING_PX
   const verticalPaddingRem = fitsMultiColumn ? MULTI_COLUMN_BLOCK_PADDING_REM : SINGLE_COLUMN_BLOCK_PADDING_REM
 
   const verticalPaddingPx = 2 * verticalPaddingRem * remPx
@@ -251,7 +249,7 @@ const useGestureMenuLayout = (
   const paddingTopRem = !fitsMultiColumn && !isBrowser ? CAPACITOR_TOP_PADDING_REM : verticalPaddingRem
 
   // Compute actual column width and divider width based on the number of columns that can fit in the viewport.
-  const columnWidth = `calc((100% - ${(maxColumns - 1) * COLUMN_GAP_REM}rem) / ${maxColumns})`
+  const columnWidth = `calc((100% - ${(maxColumns - 1) * COLUMN_GAP_PX}px) / ${maxColumns})`
   const dividerWidth = isMobilePortrait ? '100%' : columnWidth
 
   // Extra height (in px) for selected GestureMenuItem to budget for the description.
@@ -280,7 +278,7 @@ const useGestureMenuLayout = (
     maxColumns,
     columnWidth,
     dividerWidth,
-    horizontalPaddingRem,
+    horizontalPaddingPx,
     paddingTopRem,
     verticalPaddingRem,
     rowsPerColumn,
