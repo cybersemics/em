@@ -64,6 +64,21 @@ const ROW_PAD = 4
 const LIGHT_DURATION = SLOW_DURATION
 /** Radius of the surface mask (px). Figma's mask ellipse is ~545×605 on a 384px-wide frame. */
 const MASK_RADIUS = 575
+/** Mask radius when the light is localised to the menu (px): clears the options without dimming the whole surface as hard. */
+const MASK_RADIUS_LOCAL = 360
+
+/** Where the light is drawn from. 'surface': sized to the whole surface, bloom on the anchor. 'menu': hugs the options. */
+type LightScope = 'surface' | 'menu'
+const SCOPE_KEY = 'glowMenuPrototype.lightScope'
+
+/** Reads the prototype's light-scope toggle; storage can be unavailable. */
+const loadScope = (): LightScope => {
+  try {
+    return localStorage.getItem(SCOPE_KEY) === 'surface' ? 'surface' : 'menu'
+  } catch {
+    return 'menu'
+  }
+}
 
 /** Figma Rectangle 752: the tint across the surface, transparent on the left to #434378 on the right. */
 const SURFACE_TINT = 'linear-gradient(90deg, rgba(10, 10, 18, 0) 0%, rgba(67, 67, 120, 1) 100%)'
@@ -120,6 +135,15 @@ const GlowMenu = <T extends string>({
   // False for the first frame after mounting, so the layers render in their closed state before
   // switching to open. Without it they mount already open and nothing animates.
   const [entered, setEntered] = useState(false)
+  const [scope, setScopeState] = useState<LightScope>(loadScope)
+  const setScope = (next: LightScope) => {
+    setScopeState(next)
+    try {
+      localStorage.setItem(SCOPE_KEY, next)
+    } catch {
+      // ignore
+    }
+  }
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
   const [surfaceRect, setSurfaceRect] = useState<DOMRect | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -192,7 +216,7 @@ const GlowMenu = <T extends string>({
     )
     children.forEach(el => {
       const r = el.getBoundingClientRect()
-      const mask = `radial-gradient(circle ${MASK_RADIUS}px at ${centreX - r.left}px ${centreY - r.top}px, rgba(0, 0, 0, var(--glow-menu-mask)) 9%, black 100%)`
+      const mask = `radial-gradient(circle ${scope === 'menu' ? MASK_RADIUS_LOCAL : MASK_RADIUS}px at ${centreX - r.left}px ${centreY - r.top}px, rgba(0, 0, 0, var(--glow-menu-mask)) 9%, black 100%)`
       el.style.maskImage = mask
       el.style.webkitMaskImage = mask
       el.style.transition = transition(['opacity', '--glow-menu-mask'])
@@ -207,7 +231,14 @@ const GlowMenu = <T extends string>({
       el.style.transition = transition(['opacity'])
       el.style.opacity = isOpen ? '0' : ''
     })
-  }, [surface, visible, isOpen, menuTop, menuRight, menuWidth, menuHeight])
+    // Likewise the surface's absolute siblings: the dialog's "unclipped" highlight and rainbow layers bleed past the
+    // glass's top edge and draw a lighter strip along it.
+    ;[...(surface.parentElement?.children ?? [])].forEach(el => {
+      if (el === surface || !(el instanceof HTMLElement) || getComputedStyle(el).position !== 'absolute') return
+      el.style.transition = transition(['opacity'])
+      el.style.opacity = isOpen ? '0' : ''
+    })
+  }, [surface, visible, isOpen, menuTop, menuRight, menuWidth, menuHeight, scope])
 
   // Clear the mask once fully closed so the surface is untouched between uses.
   useEffect(() => {
@@ -262,6 +293,23 @@ const GlowMenu = <T extends string>({
 
   const sr = surfaceRect
 
+  // The box the light layers are laid out in. 'surface': the whole surface. 'menu': the options' bounds, padded.
+  const menuLeft = window.innerWidth - menuRight - menuWidth
+  const lb =
+    scope === 'menu'
+      ? { left: menuLeft - 60, top: menuTop - 40, width: menuWidth + 100, height: menuHeight + 80 }
+      : (sr ?? { left: 0, top: 0, width: 0, height: 0 })
+  // Bloom centre and size: on the anchor across most of the screen, or on the options and sized to them.
+  const bloom =
+    scope === 'menu'
+      ? {
+          x: menuLeft + menuWidth * 0.6,
+          y: menuTop + menuHeight / 2,
+          w: menuWidth + 280,
+          h: menuHeight + 260,
+        }
+      : { x: anchorX, y: anchorY, w: 1000, h: 1000 }
+
   return (
     <>
       {/* Tap catcher: dismisses the menu. Transparent; the light does the visual work. */}
@@ -300,10 +348,10 @@ const GlowMenu = <T extends string>({
       {sr && (
         <Layer
           style={{
-            left: sr.left - 120,
-            top: sr.top - 120,
-            width: sr.width + 240,
-            height: sr.height + 240,
+            left: lb.left - 120,
+            top: lb.top - 120,
+            width: lb.width + 240,
+            height: lb.height + 240,
             background: SURFACE_TINT,
             maskImage: 'radial-gradient(closest-side at 65% 35%, black 30%, transparent 100%)',
             opacity: isOpen ? 0.28 : 0,
@@ -318,10 +366,10 @@ const GlowMenu = <T extends string>({
       {sr && (
         <Layer
           style={{
-            left: sr.left - 120,
-            top: sr.top - 120,
-            width: sr.width + 240,
-            height: sr.height + 240,
+            left: lb.left - 120,
+            top: lb.top - 120,
+            width: lb.width + 240,
+            height: lb.height + 240,
             backgroundImage: 'url(/img/glow-menu/background-glow.png)',
             backgroundSize: '100% 100%',
             // Screen rather than Figma's colour dodge: dodge multiplies bright spots behind the glass (the editor's cursor
@@ -340,14 +388,14 @@ const GlowMenu = <T extends string>({
       {sr && (
         <Layer
           style={{
-            left: sr.left + sr.width * 0.17,
-            top: sr.top,
-            width: sr.width * 0.83 + 40,
-            height: sr.height,
+            left: lb.left + lb.width * 0.17,
+            top: lb.top,
+            width: lb.width * 0.83 + 40,
+            height: lb.height,
             background: SURFACE_TINT,
             // Feathered on every side, so no edge of the band reads as a line.
             maskImage:
-              'linear-gradient(to right, transparent, black 45%, black 80%, transparent), linear-gradient(to bottom, transparent, black 12%, black 55%, transparent)',
+              'linear-gradient(to right, transparent, black 45%, black 80%, transparent), linear-gradient(to bottom, transparent, black 35%, black 55%, transparent)',
             maskComposite: 'intersect',
             WebkitMaskComposite: 'source-in',
             // Screen rather than Figma's colour dodge: dodge multiplies bright spots behind the glass (the editor's cursor
@@ -363,10 +411,10 @@ const GlowMenu = <T extends string>({
           within the surface with a little spill past its top-right corner. */}
       <Layer
         style={{
-          left: anchorX - 500,
-          top: anchorY - 500,
-          width: 1000,
-          height: 1000,
+          left: bloom.x - bloom.w / 2,
+          top: bloom.y - bloom.h / 2,
+          width: bloom.w,
+          height: bloom.h,
           borderRadius: '50%',
           background:
             'radial-gradient(closest-side, rgba(120, 105, 225, 0.3) 0%, rgba(100, 88, 210, 0.17) 35%, rgba(70, 65, 170, 0.05) 70%, rgba(44, 44, 133, 0) 100%)',
@@ -390,6 +438,34 @@ const GlowMenu = <T extends string>({
           transition: transition(['opacity'], { dur: LIGHT_DURATION }),
         }}
       />
+
+      {/* Prototype toggle: compare the light localised to the options against the light across the surface. */}
+      {createPortal(
+        <button
+          onClick={e => {
+            e.stopPropagation()
+            setScope(scope === 'menu' ? 'surface' : 'menu')
+          }}
+          {...stopPress}
+          className={css({
+            position: 'fixed',
+            left: '12px',
+            bottom: 'calc(12px + env(safe-area-inset-bottom))',
+            padding: '6px 10px',
+            borderRadius: '8px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            background: 'rgba(0, 0, 0, 0.7)',
+            color: 'white',
+            fontFamily: 'monospace',
+            fontSize: '11px',
+            cursor: 'pointer',
+          })}
+          style={{ zIndex: Z_INDEX, opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none' }}
+        >
+          Light: {scope === 'menu' ? 'around options' : 'across dialog'} (tap to switch)
+        </button>,
+        document.body,
+      )}
 
       {/* The menu. plus-lighter on the whole column adds its white text onto the light below. */}
       {createPortal(
