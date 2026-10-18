@@ -5,7 +5,9 @@ import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import { isTouch } from '../../browser'
+import { DEFAULT_FONT_SIZE } from '../../constants'
 import usePrefetchImages from '../../hooks/usePrefetchImages'
+import useRemAsPx from '../../hooks/useRemAsPx'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import ProgressiveBlur from '../ProgressiveBlur'
@@ -72,38 +74,44 @@ const TipBlur: FC<{
 )
 
 /** Layer 2: Glow image — a pre-rendered WebP light-leak effect positioned behind the text content. */
-const TipGlow: FC = () => (
-  <div
-    className={css({
-      position: 'absolute',
-      pointerEvents: 'none',
-      opacity: 1,
-      backgroundImage: 'url(/img/tip/tip-glow-alpha.webp)',
-      backgroundRepeat: 'no-repeat',
+const TipGlow: FC = () => {
+  // How many times larger than the default the user's font size is. 1 at the default 16px.
+  const fontScale = useSelector(state => state.fontSize) / DEFAULT_FONT_SIZE
+  return (
+    <div
+      // Exposes the font scale to the mobile width below. Panda drops a value interpolated into css(), so it is passed as a variable.
+      style={{ '--tip-glow-font-scale': fontScale } as React.CSSProperties}
+      className={css({
+        position: 'absolute',
+        pointerEvents: 'none',
+        opacity: 1,
+        backgroundImage: 'url(/img/tip/tip-glow-alpha.webp)',
+        backgroundRepeat: 'no-repeat',
 
-      backgroundSize: 'cover',
-      backgroundPosition: 'top right',
+        backgroundSize: 'cover',
+        backgroundPosition: 'top right',
 
-      // Mobile portrait: 175vw – push some of the glow image off-screen
-      // Larger: clamped between 1000–1500px so the glow covers enough area without stretching too far.
-      width: { base: '175vw', lg: 'clamp(1000px, calc(100vw + 32px), 1500px)' },
-      // Content-relative height: 100% tracks the tip text area, plus fixed headroom
-      // so the glow extends above the text. As the tip grows taller, the glow grows with it.
-      height: 'calc(100% + 64px)',
-      bottom: { base: -72, lg: -64 },
+        // Mobile portrait: 175vw at the default font size – push some of the glow image off-screen. It grows in proportion to the font size, so that as a larger font size makes the tip taller, the glow scales as a whole and keeps roughly the crop it has at the default size. Otherwise `cover` would rescale and recrop the image to fit the taller box, moving its bright edge and spreading the glow out. At the default font size it is exactly 175vw, as before.
+        // Larger: clamped between 1000–1500px so the glow covers enough area without stretching too far.
+        width: { base: 'calc(175vw * var(--tip-glow-font-scale, 1))', lg: 'clamp(1000px, calc(100vw + 32px), 1500px)' },
+        // Content-relative height: 100% tracks the tip text area, plus fixed headroom
+        // so the glow extends above the text. As the tip grows taller, the glow grows with it.
+        height: 'calc(100% + 64px)',
+        bottom: { base: -72, lg: -64 },
 
-      // Positioning: on mobile portrait, the glow comes from the left edge. On landscape mobile and larger, it comes from the right edge.
-      left: { base: -16, lg: 'auto' },
-      right: { base: 'auto', lg: -16 },
+        // Positioning: on mobile portrait, the glow comes from the left edge. On landscape mobile and larger, it comes from the right edge.
+        left: { base: -16, lg: 'auto' },
+        right: { base: 'auto', lg: -16 },
 
-      // Flip the glow image horizontally on mobile so the brighter part of the glow is on the left side.
-      transform: { base: 'scaleX(-1)', lg: 'none' },
+        // Flip the glow image horizontally on mobile so the brighter part of the glow is on the left side.
+        transform: { base: 'scaleX(-1)', lg: 'none' },
 
-      // Applying filter: blur helps us eliminate banding artifacts in the glow image.
-      filter: 'blur(8px)',
-    })}
-  />
-)
+        // Applying filter: blur helps us eliminate banding artifacts in the glow image.
+        filter: 'blur(8px)',
+      })}
+    />
+  )
+}
 
 /**
  * A tip that gets displayed at the bottom of the screen, with a Liminal UI design style.
@@ -126,6 +134,8 @@ const Tip: FC<
 > = ({ tipId, children }) => {
   const dispatch = useDispatch()
   const tip = useSelector(state => state.tip)
+  // Sized with the Clear label beside it.
+  const closeIconSize = useRemAsPx(0.75)
 
   // Selector for UI state that should temporarily hide the tip when active to avoid visual conflicts.
   const isHidden = useSelector(
@@ -203,7 +213,8 @@ const Tip: FC<
                 marginLeft: { base: 0, lg: 'auto' },
                 alignItems: { base: 'flex-start', lg: 'flex-end' },
                 textAlign: { base: 'left', lg: 'right' },
-                padding: '1rem 1.5rem',
+                // The horizontal padding is fixed, so that a larger font size leaves the width of the screen to the text.
+                padding: '1rem 24px',
                 // Extra top padding creates visual breathing room above the text.
                 paddingTop: '4.5rem',
                 // On devices with safe area insets (notch/home indicator), add the inset to the bottom padding.
@@ -263,7 +274,7 @@ const Tip: FC<
                 })}
                 {...fastClick(() => dismiss())}
               >
-                <CloseIcon size={12} />
+                <CloseIcon size={closeIconSize} />
                 <span className={css({ fontSize: '0.75rem' })}>Clear</span>
               </div>
             </div>
