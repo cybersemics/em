@@ -23,7 +23,7 @@ const NewSubthoughtTip: FC = () => {
         path={gestureString(newSubthoughtCommand)}
         size={30}
         color={token('colors.gray66')}
-        cssRaw={css.raw({ verticalAlign: 'middle' })}
+        className={css({ verticalAlign: 'middle' })}
       />
     </span>
   ) : (

@@ -320,7 +320,7 @@ const Editable = ({
   /** Set or reset invalid state. */
   const invalidStateError = (invalidValue: string | null) => {
     const isInvalid = invalidValue != null
-    dispatch(error({ value: isInvalid ? `Invalid Value: "${invalidValue}"` : null }))
+    dispatch(error({ value: isInvalid ? `Invalid Value: "${ellipsize(invalidValue)}"` : null }))
     setInvalidState(isInvalid)
 
     // the Editable cannot connect to state.invalidState, as it would re-render during editing
@@ -546,7 +546,7 @@ const Editable = ({
         // Neither focus may scroll: on iOS 27, focusing the dummy input and then the editable again scrolls the cursor
         // thought to the center of the screen, even though it was already visible (#5676).
         editableSyncStore.update({ suppressBlurSync: true })
-        asyncFocus({ force: true, preventScroll: true })
+        asyncFocus({ force: true })
         editableSyncStore.update({ suppressBlurSync: false })
 
         debugLog.log('retarget', { step: 'preventAutoscroll', savedOffset: savedCharOffset })
@@ -770,7 +770,7 @@ const Editable = ({
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
           })
-          dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
+          dispatch(error({ value: `"${oldValueClean}" is read-only and cannot be edited.` }))
           throttledChangeRef.current.cancel() // see above
           return
         } else if (uneditable) {
@@ -781,7 +781,7 @@ const Editable = ({
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
           })
-          dispatch(error({ value: `"${ellipsize(oldValueClean)}" is uneditable.` }))
+          dispatch(error({ value: `"${oldValueClean}" is uneditable.` }))
           throttledChangeRef.current.cancel() // see above
           return
         } else if (options && !options.includes(newValue.toLowerCase())) {
