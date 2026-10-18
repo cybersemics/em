@@ -208,10 +208,6 @@ const GlowMenu = <T extends string>({
       el.style.transition = transition(['opacity'])
       el.style.opacity = isOpen ? '0' : ''
     })
-    // Make the glass opaque so nothing behind it (e.g. the editor's cursor glow) shows through the cleared space;
-    // the colour-dodge layers would otherwise brighten it several times over.
-    surface.style.transition = transition(['background-color'])
-    surface.style.backgroundColor = isOpen ? 'rgba(12, 12, 22, 0.92)' : ''
   }, [surface, visible, isOpen, menuTop, menuRight, menuWidth, menuHeight])
 
   // Clear the mask once fully closed so the surface is untouched between uses.
@@ -288,6 +284,18 @@ const GlowMenu = <T extends string>({
         document.body,
       )}
 
+      {/* Even dim: a plain dark fill over the whole viewport (no backdrop filter, so it's cheap). It darkens inside and
+          outside the surface alike, which flattens the glass edge, and keeps anything behind the glass (e.g. the
+          editor's cursor glow) from being brightened by the colour-dodge layers above. */}
+      <Layer
+        style={{
+          inset: 0,
+          background: 'rgba(8, 8, 16, 0.55)',
+          opacity: isOpen ? 1 : 0,
+          transition: transition(['opacity'], { dur: LIGHT_DURATION }),
+        }}
+      />
+
       {/* Surface tint (Figma Rectangle 752): fill 35% × layer 80%, over the surface's rounded rect. */}
       {sr && (
         <Layer
@@ -312,13 +320,15 @@ const GlowMenu = <T extends string>({
       {sr && (
         <Layer
           style={{
-            left: sr.left - 16,
-            top: sr.top - 16,
-            width: sr.width + 32,
-            height: sr.height + 32,
+            left: sr.left - 60,
+            top: sr.top - 60,
+            width: sr.width + 120,
+            height: sr.height + 120,
             backgroundImage: 'url(/img/glow-menu/background-glow.png)',
             backgroundSize: '100% 100%',
-            mixBlendMode: 'color-dodge',
+            // Screen rather than Figma's colour dodge: dodge multiplies bright spots behind the glass (the editor's cursor
+            // glow) into a glaring patch; screen brightens evenly.
+            mixBlendMode: 'screen',
             maskImage: 'radial-gradient(ellipse 75% 70% at 65% 30%, black 35%, transparent 100%)',
             opacity: isOpen ? 0.22 : 0,
             transition: transition(['opacity'], { dur: LIGHT_DURATION }),
@@ -333,14 +343,17 @@ const GlowMenu = <T extends string>({
           style={{
             left: sr.left + sr.width * 0.17,
             top: sr.top,
-            width: sr.width * 0.83 + 12,
+            width: sr.width * 0.83 + 40,
             height: sr.height,
             background: SURFACE_TINT,
+            // Feathered on every side, so no edge of the band reads as a line.
             maskImage:
-              'linear-gradient(to right, transparent, black 45%), linear-gradient(to bottom, black 55%, transparent)',
+              'linear-gradient(to right, transparent, black 45%, black 80%, transparent), linear-gradient(to bottom, transparent, black 12%, black 55%, transparent)',
             maskComposite: 'intersect',
             WebkitMaskComposite: 'source-in',
-            mixBlendMode: 'color-dodge',
+            // Screen rather than Figma's colour dodge: dodge multiplies bright spots behind the glass (the editor's cursor
+            // glow) into a glaring patch; screen brightens evenly.
+            mixBlendMode: 'screen',
             opacity: isOpen ? 0.5 : 0,
             transition: transition(['opacity'], { dur: LIGHT_DURATION }),
           }}
@@ -351,10 +364,10 @@ const GlowMenu = <T extends string>({
           within the surface with a little spill past its top-right corner. */}
       <Layer
         style={{
-          left: anchorX - 380,
-          top: anchorY - 380,
-          width: 760,
-          height: 760,
+          left: anchorX - 500,
+          top: anchorY - 500,
+          width: 1000,
+          height: 1000,
           borderRadius: '50%',
           background:
             'radial-gradient(closest-side, rgba(120, 105, 225, 0.3) 0%, rgba(100, 88, 210, 0.17) 35%, rgba(70, 65, 170, 0.05) 70%, rgba(44, 44, 133, 0) 100%)',
