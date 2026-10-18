@@ -116,6 +116,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **Lexeme** — Object collecting all the contexts where a value (or any of its near-identical word forms — case, plurality, emoji variants) appears. Stored in `state.thoughts.lexemeIndex` keyed by `hashThought(value)`. The "inbound links" view of a thought. See [data-model.md → Lexeme](data-model.md#lexeme).
 
+**Liminal UI** — em's design language: white on black over a soft background glow, with translucent glass panels such as the Dialog and the Command Center. Its accessibility rules, including how sizes follow the user's font size, are in [liminal-ui/a11y.md](liminal-ui/a11y.md).
+
 **linearizeTree** — Selector that produces `treeThoughts: TreeThought[]` — an in-order traversal of every visible thought. Output drives layout. See [layout-rendering.md → linearizeTree](layout-rendering.md#linearizetree-the-in-order-traversal).
 
 **LongPressState** — Enum (`Inactive | DragHold | DragInProgress | DragCanceled`) tracking the long-press / drag-in-progress state machine. Stored on `state.longPress`. See [drag-and-drop.md](drag-and-drop.md#state-machine-statelongpress).
