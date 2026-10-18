@@ -273,8 +273,11 @@ const useNativeTextDrag = () => {
             .forEach(element => element.replaceWith(...Array.from(element.childNodes)))
         }
 
+        // Only the outermost dragged colors are resolved against the destination. A color nested in another dragged color
+        // was nested that way at the source, and moving it out of the copy of its source wrapper would drop that color.
         const colorElements = Array.from(dragged.querySelectorAll<HTMLElement>('font, span')).filter(
-          element => enclosingColorElement(element, dragged) === element,
+          element =>
+            enclosingColorElement(element, dragged) === element && !enclosingColorElement(element.parentNode!, dragged),
         )
         insertRange.insertNode(dragged)
 

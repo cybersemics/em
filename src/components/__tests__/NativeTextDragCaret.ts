@@ -371,6 +371,42 @@ it('colors uncolored dragged text dropped into colored text', async () => {
   ])
 })
 
+// https://github.com/cybersemics/em/pull/5967#discussion_r4308776291
+it('keeps the source colors that enclose a dragged color', async () => {
+  await importOutline(`- <span style="background-color: #ffff00;">Left <span style="color: #0000ff;">Blue</span>Right</span>
+- Plain`)
+  const source = getEditable('Left BlueRight')
+  const target = getEditable('Plain')
+  layOutCaretAtEnd(target)
+  selectWord(source, 'Blue')
+  await startDrag(source)
+
+  await dropBelowCaret(target)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="background-color: #ffff00;">Left Right</span>',
+    'Plain<span style="background-color: #ffff00;"><span style="color: #0000ff;">Blue</span></span>',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#discussion_r4308776291
+it('keeps the source colors that enclose a dragged color dropped into another color', async () => {
+  await importOutline(`- <span style="background-color: #ffff00;">Left <span style="color: #0000ff;">Blue</span>Right</span>
+- <span style="color: #ff0000;">One Two</span>`)
+  const source = getEditable('Left BlueRight')
+  const target = getEditable('One Two')
+  layOutCaretBefore(target, 'Two')
+  selectWord(source, 'Blue')
+  await startDrag(source)
+
+  await dropBelowCaret(target)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="background-color: #ffff00;">Left Right</span>',
+    '<span style="color: #ff0000;">One </span><span style="background-color: #ffff00;"><span style="color: #0000ff;">Blue</span></span><span style="color: #ff0000;">Two</span>',
+  ])
+})
+
 // https://github.com/cybersemics/em/issues/4225
 it('does not drop dragged text into a read-only thought', async () => {
   await importOutline(`- foo bar baz
