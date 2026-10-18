@@ -22,11 +22,12 @@ const pinnedCommandAddRep = (state: State, { commandId }: { commandId: CommandId
   }
 }
 
-/** Dispatches and persists one rep for the pinned command. */
+/** Dispatches and persists one rep when the command is the current pin with a progress record. Dispatches nothing otherwise, so other commands add no Redux action. */
 export const pinnedCommandAddRepActionCreator =
   (payload: Parameters<typeof pinnedCommandAddRep>[1]): Thunk =>
   (dispatch, getState) => {
     const learningBefore = getState().learning
+    if (learningBefore.pinnedCommandId !== payload.commandId || !learningBefore.progress[payload.commandId]) return
     dispatch({ type: 'pinnedCommandAddRep', ...payload })
     const learningAfter = getState().learning
     if (learningAfter !== learningBefore) storageModel.set('learning', learningAfter)
