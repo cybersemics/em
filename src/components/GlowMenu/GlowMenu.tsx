@@ -17,7 +17,7 @@ import { CSSProperties, ComponentType, ReactNode, useEffect, useLayoutEffect, us
 import { createPortal } from 'react-dom'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
-import { MEDIUM_DURATION, cssEaseOut } from '../Sidebar/constants'
+import { MEDIUM_DURATION, SLOW_DURATION, cssEaseOut } from '../Sidebar/constants'
 
 /** A selectable option. The selected one becomes the anchor's glyph. */
 export interface GlowMenuItem<T extends string> {
@@ -58,8 +58,8 @@ const Z_INDEX = Number(token('zIndex.dialog'))
 
 /** Vertical padding of each row (px). With a 28px icon this gives the design's 36px row pitch. */
 const ROW_PAD = 4
-/** How long the light takes to reach the farthest row (s). */
-const LIGHT_SPREAD = 0.18
+/** The light's duration. Like the sidebar, the light and the rows start together; the light just runs longer. */
+const LIGHT_DURATION = SLOW_DURATION
 /** Radius of the surface mask (px). Figma's mask ellipse is ~545×605 on a 384px-wide frame. */
 const MASK_RADIUS = 575
 
@@ -147,14 +147,11 @@ const GlowMenu = <T extends string>({
   // Keep the layers mounted through the close animation, then report back.
   useEffect(() => {
     if (open || !visible) return
-    closeTimer.current = window.setTimeout(
-      () => {
-        setVisible(false)
-        setEntered(false)
-        onClosedRef.current?.()
-      },
-      (duration + LIGHT_SPREAD) * 1000,
-    )
+    closeTimer.current = window.setTimeout(() => {
+      setVisible(false)
+      setEntered(false)
+      onClosedRef.current?.()
+    }, LIGHT_DURATION * 1000)
     return () => window.clearTimeout(closeTimer.current)
   }, [open, visible, duration])
 
@@ -179,7 +176,6 @@ const GlowMenu = <T extends string>({
   const anchorY = anchorRect ? anchorRect.top + anchorRect.height / 2 : 0
   const menuHeight = menuRef.current?.offsetHeight ?? 0
   const menuWidth = menuRef.current?.offsetWidth ?? 0
-  const maxDistance = Math.max(1, ...Object.values(rows).map(r => Math.abs(r.top + r.height / 2 - selectedCenter)))
 
   const transition = (props: string[], { delay = 0, dur = duration } = {}) =>
     props.map(p => `${p} ${dur}s ${cssEaseOut} ${delay}s`).join(', ')
@@ -197,17 +193,23 @@ const GlowMenu = <T extends string>({
       const mask = `radial-gradient(circle ${MASK_RADIUS}px at ${centreX - r.left}px ${centreY - r.top}px, rgba(0, 0, 0, var(--glow-menu-mask)) 9%, black 100%)`
       el.style.maskImage = mask
       el.style.webkitMaskImage = mask
-      el.style.transition = transition(['opacity', '--glow-menu-mask'], { dur: duration + LIGHT_SPREAD })
+      el.style.transition = transition(['opacity', '--glow-menu-mask'])
       el.style.opacity = isOpen ? '0.2' : '1'
       el.style.setProperty('--glow-menu-mask', isOpen ? '0.06' : '1')
     })
-    // The glass's decorative layers (highlights, stroke) are absolute siblings of the content. Dim them too, or
-    // their bright highlights show through the cleared space. The first child is the glass fill, which stays.
-    ;[...surface.children].slice(1).forEach(el => {
+    // The glass's decorative layers (highlights, stroke) are absolute siblings of the content. Their edges are what
+    // draw the rounded rectangle, so they fade out; the light should read as one field across the dialog and its
+    // surroundings. The first child is the glass fill, which stays.
+    ;[...surface.children].forEach(el => {
       if (!(el instanceof HTMLElement) || getComputedStyle(el).position !== 'absolute') return
-      el.style.transition = transition(['opacity'], { dur: duration + LIGHT_SPREAD })
-      el.style.opacity = isOpen ? '0.25' : ''
+      if (el === surface.children[0]) return
+      el.style.transition = transition(['opacity'])
+      el.style.opacity = isOpen ? '0' : ''
     })
+    // Make the glass opaque so nothing behind it (e.g. the editor's cursor glow) shows through the cleared space;
+    // the colour-dodge layers would otherwise brighten it several times over.
+    surface.style.transition = transition(['background-color'])
+    surface.style.backgroundColor = isOpen ? 'rgba(12, 12, 22, 0.92)' : ''
   }, [surface, visible, isOpen, menuTop, menuRight, menuWidth, menuHeight])
 
   // Clear the mask once fully closed so the surface is untouched between uses.
@@ -223,17 +225,15 @@ const GlowMenu = <T extends string>({
 
   if (!visible || !anchorRect) return null
 
-  /** Light-reveal motion for a non-selected row: it wakes (fades in, sharpens, settles) when the spreading light reaches it. */
+  /** Motion for a non-selected row: it wakes (fades in, sharpens, settles out of the selection) together with the light. */
   const rowMotion = (key: string): CSSProperties => {
     const row = rows[key] ?? { top: 0, height: 0 }
     const d = row.top + row.height / 2 - selectedCenter
-    const reach = Math.abs(d) / maxDistance
-    const delay = (isOpen ? reach : 1 - reach) * LIGHT_SPREAD
     return {
       opacity: isOpen ? 1 : 0,
       transform: isOpen ? 'none' : `translateY(${-d * 0.5}px)`,
       filter: isOpen ? 'blur(0px)' : 'blur(10px)',
-      transition: transition(['opacity', 'transform', 'filter'], { delay }),
+      transition: transition(['opacity', 'transform', 'filter']),
     }
   }
 
@@ -242,8 +242,7 @@ const GlowMenu = <T extends string>({
     opacity: isOpen ? 1 : 0,
     transform: isOpen ? 'scale(1)' : `scale(${scaleFrom})`,
     transition: transition(['opacity', 'transform'], {
-      dur: duration + LIGHT_SPREAD,
-      delay: isOpen ? 0 : LIGHT_SPREAD * 0.6,
+      dur: LIGHT_DURATION,
     }),
   })
 
@@ -292,13 +291,10 @@ const GlowMenu = <T extends string>({
       {sr && (
         <Layer
           style={{
-            left: sr.left,
-            top: sr.top,
-            width: sr.width,
-            height: sr.height,
-            borderRadius: 32,
+            // The whole viewport, not the surface's rounded rect, so the dim doesn't trace the dialog's outline.
+            inset: 0,
             backdropFilter: isOpen ? 'brightness(0.55)' : 'brightness(1)',
-            transition: transition(['backdrop-filter'], { dur: duration + LIGHT_SPREAD }),
+            transition: transition(['backdrop-filter'], { dur: LIGHT_DURATION }),
           }}
         />
       )}
@@ -313,8 +309,30 @@ const GlowMenu = <T extends string>({
             height: sr.height,
             borderRadius: 28,
             background: SURFACE_TINT,
+            // Feathered so its rounded edge doesn't redraw the dialog's outline.
+            maskImage: 'radial-gradient(ellipse 70% 60% at 70% 30%, black 40%, transparent 100%)',
             opacity: isOpen ? 0.28 : 0,
-            transition: transition(['opacity'], { dur: duration + LIGHT_SPREAD }),
+            transition: transition(['opacity'], { dur: LIGHT_DURATION }),
+          }}
+        />
+      )}
+
+      {/* Background glow (Figma "Background glow" image under its elliptical mask, inside the colour-dodge frame at
+          86%): a soft, shapeless lavender field across the full width from the surface's top to its bottom. It fills
+          inside and outside the glass alike, which is what dissolves the dialog's edge. Exported from Figma. */}
+      {sr && (
+        <Layer
+          style={{
+            left: 0,
+            right: 0,
+            top: sr.top,
+            height: sr.height,
+            backgroundImage: 'url(/img/glow-menu/background-glow.png)',
+            backgroundSize: '100% 100%',
+            mixBlendMode: 'color-dodge',
+            maskImage: 'linear-gradient(to bottom, transparent, black 12%, black 85%, transparent)',
+            opacity: isOpen ? 0.5 : 0,
+            transition: transition(['opacity'], { dur: LIGHT_DURATION }),
           }}
         />
       )}
@@ -337,7 +355,7 @@ const GlowMenu = <T extends string>({
             WebkitMaskComposite: 'source-in',
             mixBlendMode: 'color-dodge',
             opacity: isOpen ? 0.86 : 0,
-            transition: transition(['opacity'], { dur: duration + LIGHT_SPREAD }),
+            transition: transition(['opacity'], { dur: LIGHT_DURATION }),
           }}
         />
       )}
@@ -349,7 +367,7 @@ const GlowMenu = <T extends string>({
           background: `radial-gradient(circle farthest-corner at ${anchorX}px ${anchorY}px, rgba(90, 80, 200, 0.32) 0%, rgba(75, 65, 180, 0.2) 30%, rgba(50, 45, 140, 0.1) 60%, rgba(40, 40, 120, 0.04) 100%)`,
           mixBlendMode: 'plus-lighter',
           opacity: isOpen ? 1 : 0,
-          transition: transition(['opacity'], { dur: duration + LIGHT_SPREAD, delay: isOpen ? 0 : LIGHT_SPREAD * 0.6 }),
+          transition: transition(['opacity'], { dur: LIGHT_DURATION }),
         }}
       />
 
@@ -398,7 +416,7 @@ const GlowMenu = <T extends string>({
           filter: 'blur(25px)',
           mixBlendMode: 'plus-lighter',
           opacity: isOpen ? 0.22 : 0,
-          transition: transition(['opacity'], { dur: duration + LIGHT_SPREAD }),
+          transition: transition(['opacity'], { dur: LIGHT_DURATION }),
         }}
       />
 
