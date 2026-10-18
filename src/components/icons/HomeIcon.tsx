@@ -4,14 +4,7 @@ import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 
 /** A home icon. */
-const HomeIcon = ({
-  className,
-  fill,
-  size,
-  style,
-  wrapperClassName,
-  cssRaw,
-}: IconType & { wrapperClassName?: string; className?: string }) => {
+const HomeIcon = ({ className, fill, size, style, wrapperClassName }: IconType & { wrapperClassName?: string }) => {
   const sizeCalculated = useSelector(state => size || state.fontSize)
   return (
     <span role='img' aria-label='home' className={wrapperClassName}>
@@ -21,7 +14,7 @@ const HomeIcon = ({
         height={sizeCalculated}
         viewBox='0 0 24 24'
         aria-label='logo'
-        className={cx(className, css({ width: '24px' }, cssRaw))}
+        className={cx(className, css({ width: '24px' }))}
         fill={fill || token('colors.fg')}
         style={{ height: sizeCalculated, width: sizeCalculated, ...style }}
       >

@@ -52,12 +52,20 @@ export const pathAndRankToArchive = (
   }
 }
 
-/** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it.
- *
- * @param path     Defaults to cursor.
- */
-const archiveThought = (state: State, options: { path?: Path }): State => {
-  const path = options.path || state.cursor
+/** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it. */
+const archiveThought = (
+  state: State,
+  {
+    path: pathOption,
+    showAlert = true,
+  }: {
+    /** Defaults to cursor. */
+    path?: Path
+    /** Alerts the user that the thought was deleted. Default: true. */
+    showAlert?: boolean
+  },
+): State => {
+  const path = pathOption || state.cursor
 
   if (!path) return state
 
@@ -69,7 +77,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   // rewrite context view operaton in terms of normal view and update cursor
   if (showContexts) {
     return reducerFlow([
-      state => archiveThought(state, { path: simplePath }),
+      state => archiveThought(state, { path: simplePath, showAlert }),
       stateNew => updateCursorAfterDelete(stateNew, state),
     ])(state)
   }
@@ -129,9 +137,11 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           setDescendant({ path: pathParent, values: ['=archive'] }),
 
           // alert
-          alert({
-            value: deleteThoughtAlertText(state, path, { archive: true }),
-          }),
+          showAlert
+            ? alert({
+                value: deleteThoughtAlertText(state, path, { archive: true }),
+              })
+            : null,
 
           // execute moveThought after setDescendant has updated the state
           (state: State) => {
