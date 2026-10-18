@@ -99,10 +99,10 @@ After the loop:
 
 When the cursor is deep, many ancestors and ancestor-siblings are hidden by autofocus. Their hidden heights still occupy the document's y-coordinate space, leaving large blank regions that native scrolling can move into.
 
-`LayoutTree` keeps hidden heights in the document. [`useClampScrollToVisibleThoughts`](../src/hooks/useClampScrollToVisibleThoughts.ts) owns the visible-band bounds, native scrolling, touch handling, and elastic return, and provides the temporary transform style applied by `LayoutTree`:
+`LayoutTree` keeps hidden heights in the document and computes the visible content extents. [`useClampScroll`](../src/hooks/useClampScroll.ts) receives those extents and owns scroll bounds, native scrolling, touch handling, and elastic return, and provides the temporary transform style applied by `LayoutTree`:
 
 1. `usePositionedThoughts` provides `y` and `height` for each thought, and marks autofocus state (`show`, `dim`, `hide`, `hide-parent`).
-2. `useClampScrollToVisibleThoughts` reduces those positioned thoughts to the minimum top and maximum bottom among `show`/`dim` entries.
+2. `LayoutTree` reduces those positioned thoughts to the minimum top and maximum bottom among `show`/`dim` entries and passes them to `useClampScroll` as `visibleTop` and `visibleBottom`.
 3. The clamp bounds are computed within the usable viewport between the toolbar bottom (`viewportTopBoundary`) and the sticky nav top (`viewportBottomBoundary`). A symmetric allowance (`viewportAllowance`) is measured within that usable height. The lower content extent is the greater of the last visible thought and the normal-flow footer, so the clamp does not prevent scrolling to footer controls and build information:
    - `minScrollY = max(0, layoutTreeTop + visibleTop - (viewportTopBoundary + viewportAllowance))`
    - `maxScrollY = max(minScrollY, visibleContentBottom - (viewportBottomBoundary - viewportAllowance))`

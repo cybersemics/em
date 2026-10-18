@@ -1,6 +1,5 @@
 import { AnimationPlaybackControls, animate } from 'motion/react'
-import { RefObject, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
+import { RefObject, useEffect, useLayoutEffect, useRef } from 'react'
 import { isIOS, isMac } from '../browser'
 
 // iPadOS can identify itself as a Mac in Safari's desktop browsing mode.
@@ -19,34 +18,22 @@ const SPRING_DAMPING = 2 * SPRING_FREQUENCY
 const DECELERATION_TIME_CONSTANT = -1 / Math.log(0.998)
 const LAYOUT_TREE_ELASTIC_OFFSET = '--layout-tree-elastic-offset'
 
-/** Clamps native window scrolling to the vertical band of autofocus-visible thoughts. */
-const useClampScrollToVisibleThoughts = ({
+/** Clamps native window scrolling to the vertical band of visible content. */
+const useClampScroll = ({
   ref,
   viewportHeight,
-  treeThoughtsPositioned,
+  visibleTop,
+  visibleBottom,
 }: {
   /** The layout container that receives the temporary elastic transform. */
   ref: RefObject<HTMLElement | null>
   /** The viewport height, including any space occupied by the virtual keyboard. */
   viewportHeight: number
-  /** Positioned thoughts whose autofocus states determine the scrollable band. */
-  treeThoughtsPositioned: TreeThoughtPositioned[]
+  /** The top of visible content relative to the layout container, or undefined when empty. */
+  visibleTop: number | undefined
+  /** The bottom of visible content relative to the layout container, or undefined when empty. */
+  visibleBottom: number | undefined
 }) => {
-  const visibleThoughtExtrema = useMemo(
-    () =>
-      treeThoughtsPositioned.reduce<{ top: number; bottom: number } | null>((accum, thought) => {
-        if (thought.autofocus !== 'show' && thought.autofocus !== 'dim') return accum
-        const bottom = thought.y + thought.height
-        return !accum
-          ? { top: thought.y, bottom }
-          : {
-              top: Math.min(accum.top, thought.y),
-              bottom: Math.max(accum.bottom, bottom),
-            }
-      }, null),
-    [treeThoughtsPositioned],
-  )
-
   const touchInProgress = useRef(false)
   const touchMoved = useRef(false)
   const touchStartScrollY = useRef(window.scrollY)
@@ -65,8 +52,6 @@ const useClampScrollToVisibleThoughts = ({
     controlled: false,
   })
   const scrollSample = useRef({ y: window.scrollY, time: performance.now(), velocity: 0 })
-  const visibleTop = visibleThoughtExtrema?.top
-  const visibleBottom = visibleThoughtExtrema?.bottom
 
   const geometry = useRef({ viewportHeight, visibleTop, visibleBottom })
   const updateBounds = useRef<(() => void) | null>(null)
@@ -420,4 +405,4 @@ const useClampScrollToVisibleThoughts = ({
   return { transform: `translateY(var(${LAYOUT_TREE_ELASTIC_OFFSET}, 0px))` }
 }
 
-export default useClampScrollToVisibleThoughts
+export default useClampScroll

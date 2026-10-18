@@ -8,7 +8,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { CONTENT_BOX_PADDING_LEFT, LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
-import useClampScrollToVisibleThoughts from '../hooks/useClampScrollToVisibleThoughts'
+import useClampScroll from '../hooks/useClampScroll'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
 import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
@@ -195,6 +195,21 @@ const LayoutTree = () => {
     },
   )
 
+  const visibleThoughtExtrema = useMemo(
+    () =>
+      treeThoughtsPositioned.reduce<{ top: number; bottom: number } | null>((accum, thought) => {
+        if (thought.autofocus !== 'show' && thought.autofocus !== 'dim') return accum
+        const bottom = thought.y + thought.height
+        return !accum
+          ? { top: thought.y, bottom }
+          : {
+              top: Math.min(accum.top, thought.y),
+              bottom: Math.max(accum.bottom, bottom),
+            }
+      }, null),
+    [treeThoughtsPositioned],
+  )
+
   // compare between state.cursor and the position of the thought
   const cursorThoughtPositionedIndex = treeThoughtsPositioned.findIndex(thought => thought.isCursor)
   const cursorThoughtPositioned = treeThoughtsPositioned[cursorThoughtPositionedIndex]
@@ -207,7 +222,12 @@ const LayoutTree = () => {
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
   useLayoutTreeTop(ref)
-  const scrollStyle = useClampScrollToVisibleThoughts({ ref, viewportHeight, treeThoughtsPositioned })
+  const scrollStyle = useClampScroll({
+    ref,
+    viewportHeight,
+    visibleTop: visibleThoughtExtrema?.top,
+    visibleBottom: visibleThoughtExtrema?.bottom,
+  })
 
   const treeThoughtsMemoized = useMemo(
     () =>
