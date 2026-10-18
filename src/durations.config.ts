@@ -45,6 +45,8 @@ const durationsConfig = {
   commandCenter: 320,
   /* Duration of the Mobile Command Universe zoom transition between levels (e.g. Level 2 grid ↔ Level 1 detail). */
   commandUniverseZoom: 750,
+  /* Duration of the Command Universe grid rearranging itself when the sort order or search changes. */
+  commandUniverseRearrange: 450,
 } as const
 
 export default durationsConfig
