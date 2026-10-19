@@ -1,15 +1,18 @@
 import { KnownDevices } from 'puppeteer'
 import type { PreloadedEmWindow } from '../../../@types'
 import cursorBackCommand from '../../../commands/cursorBack'
+import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import deviceEmulation from '../helpers/deviceEmulation'
 import gesture, { startGesture } from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getThoughtTop from '../helpers/getThoughtTop'
 import getVisibleThoughtBounds from '../helpers/getVisibleThoughtBounds'
+import hideFooterMetadata from '../helpers/hideFooterMetadata'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
+import screenshot from '../helpers/screenshot'
 import scrollTo from '../helpers/scrollTo'
 import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForCursor from '../helpers/waitForCursor'
@@ -56,6 +59,10 @@ const OVERSCROLL_DOCUMENT = `
     `
 
 const MOCK_REPLICATION_DELAY = 100
+
+expect.extend({
+  toMatchImageSnapshot: configureSnapshots({ fileName: 'scroll' }),
+})
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 usePersistentTreecrdtStorage()
@@ -146,161 +153,48 @@ describe('scrollCursorIntoView', () => {
 })
 
 describe('scroll clamp', () => {
-  it('clamps window scrolling to visible content while preserving footer access', async () => {
-    const importText = `
-      - a
-      - b
-      - c
-      - d
-      - e
-      - f
-      - g
-      - h
-      - i
-      - j
-      - k
-      - l
-      - m
-        - n
-        - o
-        - p
-        - q
-        - r
-        - s
-        - t
-        - u
-        - v
-        - w
-        - x
-        - y
-        - z
-          - 1
-            - 2
-              - 3
-    `
-
-    await paste(importText)
+  it('limits empty space above the visible thoughts', async () => {
+    await paste(OVERSCROLL_DOCUMENT)
 
     await clickThought('m')
-
-    // scroll down so that deep descendants are rendered and visible
     await scrollTo(200)
-
     await clickThought('z')
     await waitForCursor('z')
-    await waitForBrowserSettled()
     await press('ArrowDown')
     await waitForCursor('1')
-    await waitForBrowserSettled()
     await press('ArrowDown')
     await waitForCursor('2')
-    await waitForBrowserSettled()
     await press('ArrowDown')
     await waitForCursor('3')
     await waitForBrowserSettled()
 
-    const { minScrollY, viewportAllowance, viewportTopBoundary } = await getVisibleThoughtBounds()
-    expect(minScrollY).toBeGreaterThan(1)
-    await scrollTo(minScrollY)
+    await scrollTo(0)
     await waitForBrowserSettled()
-    const topBeforeOverscroll = await getThoughtTop('1')
-    const scrollYBeforeOverscroll = await page.evaluate(() => window.scrollY)
-    const viewport = await page.viewport()
-    if (!viewport) {
-      throw new Error('Missing viewport.')
-    }
-    const activeGesture = await startGesture({
-      // Start in the scroll zone to preserve native page scroll behavior while touching.
-      xStart: (viewport.width * 7) / 8,
-      yStart: viewport.height / 3,
-    })
 
-    await activeGesture.move('d', { segmentLength: 200 })
+    await hideFooterMetadata()
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
+
+  it('keeps the footer accessible at the bottom scroll limit', async () => {
+    await paste(OVERSCROLL_DOCUMENT)
+
+    await clickThought('m')
+    await scrollTo(200)
+    await clickThought('z')
+    await waitForCursor('z')
+    await press('ArrowDown')
+    await waitForCursor('1')
+    await press('ArrowDown')
+    await waitForCursor('2')
+    await press('ArrowDown')
+    await waitForCursor('3')
     await waitForBrowserSettled()
-    const scrollTopWhileTouching = await page.evaluate(() => window.scrollY)
-    expect(Math.abs(scrollTopWhileTouching - minScrollY)).toBeLessThan(1)
-    const topWhileTouching = await getThoughtTop('1')
-    const visualDelta = Math.abs(topWhileTouching - topBeforeOverscroll)
-    expect(visualDelta).toBeGreaterThan(0.5)
-    expect(visualDelta).toBeLessThan(200)
-    expect(Math.abs(scrollTopWhileTouching - scrollYBeforeOverscroll)).toBeLessThan(1)
-
-    await page.evaluate(() => {
-      const runtimeWindow = window as unknown as { __releaseSamples: Promise<{ scrollY: number; top: number }[]> }
-      runtimeWindow.__releaseSamples = new Promise(resolve => {
-        const anchor = document.querySelector('[data-editing=true]') as HTMLElement | null
-        if (!anchor) {
-          throw new Error('Missing editing thought for release samples.')
-        }
-
-        const samples: { scrollY: number; top: number }[] = []
-        /** Captures the current scroll position and anchor top for release-frame assertions. */
-        const capture = () => {
-          samples.push({ scrollY: window.scrollY, top: anchor.getBoundingClientRect().top })
-        }
-        /** Samples the synchronous release handoff, then starts frame-by-frame spring sampling. */
-        const onRelease = () => {
-          capture()
-          queueMicrotask(() => {
-            capture()
-            let frames = 0
-            /** Samples geometry on animation frames until enough samples are collected. */
-            const sampleFrame = () => {
-              capture()
-              frames += 1
-              if (frames >= 5) {
-                resolve(samples)
-                return
-              }
-              requestAnimationFrame(sampleFrame)
-            }
-            requestAnimationFrame(sampleFrame)
-          })
-        }
-        window.addEventListener('touchend', onRelease, { capture: true, once: true })
-        window.addEventListener('touchcancel', onRelease, { capture: true, once: true })
-      })
-    })
-
-    await activeGesture.end()
-    await page.waitForFunction(min => Math.abs(window.scrollY - min) <= 1, {}, minScrollY)
-    const releaseSamples = await page.evaluate(
-      () => (window as unknown as { __releaseSamples: Promise<{ scrollY: number; top: number }[]> }).__releaseSamples,
-    )
-    const firstSample = releaseSamples[0]
-    const lastSample = releaseSamples[releaseSamples.length - 1]
-    expect(Math.abs(releaseSamples[1].top - firstSample.top)).toBeLessThanOrEqual(1)
-    expect(Math.abs(lastSample.top - firstSample.top)).toBeGreaterThan(2)
-    // Native scrolling stays at the visible boundary throughout the drag and return.
-    expect(Math.abs(firstSample.scrollY - minScrollY)).toBeLessThanOrEqual(1)
-    expect(Math.abs(lastSample.scrollY - firstSample.scrollY)).toBeLessThanOrEqual(1)
-
-    const scrollTopClamped = await page.evaluate(() => window.scrollY)
-    expect(scrollTopClamped).toBeGreaterThanOrEqual(minScrollY - 1)
-    expect(scrollTopClamped).toBeLessThanOrEqual(minScrollY + 1)
-
-    await page.waitForFunction(
-      maxTop => {
-        const thought = Array.from(document.querySelectorAll('[data-editable]')).find(
-          element => element.innerHTML === '1',
-        )
-        return thought ? thought.getBoundingClientRect().top <= maxTop : false
-      },
-      {},
-      viewportTopBoundary + viewportAllowance + 2,
-    )
-    const topThoughtAfterClamp = await getThoughtTop('1')
-    expect(topThoughtAfterClamp).toBeLessThanOrEqual(viewportTopBoundary + viewportAllowance + 2)
 
     await scrollTo(100000)
     await waitForBrowserSettled()
-    const footerRect = await page.$eval('[aria-label="footer"]', element => {
-      const rect = element.getBoundingClientRect()
-      return { bottom: rect.bottom, top: rect.top }
-    })
-    const viewportHeight = await page.evaluate(() => window.innerHeight)
-    expect(footerRect.top).toBeLessThan(viewportHeight)
-    expect(footerRect.bottom).toBeLessThanOrEqual(viewportHeight + 1)
+
+    await hideFooterMetadata()
+    expect(await screenshot()).toMatchImageSnapshot()
   })
 })
 
