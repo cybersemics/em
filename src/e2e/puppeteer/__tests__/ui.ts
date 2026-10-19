@@ -3,6 +3,7 @@ import path from 'path'
 import { KnownDevices } from 'puppeteer'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import configureSnapshots from '../configureSnapshots'
+import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
@@ -121,6 +122,36 @@ describe('CommandCenter', async () => {
 
     // wait for the command center panel to appear before taking screenshot
     await waitForSelector('[data-testid=command-center-panel]')
+
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
+
+  it('expanded stage', async () => {
+    // the undo button toggles between active and inactive states for some reason. Hence hide the HUD to ensure the undo button is not visible.
+    await hideHUD()
+
+    await paste('Hello')
+
+    // Sometimes after pasting, the cursor is not on the thought. Hence click it to ensure the cursor is on the thought.
+    await clickThought('Hello')
+
+    // open the Command Center
+    await gesture(openCommandCenterCommand)
+
+    await waitForSelector('[data-testid=command-center-panel]')
+
+    // raise the drawer to the expanded stage, which crossfades the command grid out and the full command list in
+    await click('[aria-label="Expand Command Center"]')
+
+    // The stage is recorded once the sheet's snap animation completes, so the crossfade between the two stages has
+    // finished by the time the attribute appears. Waiting for the expanded content itself would not do: it is in the
+    // DOM at either stage and only its opacity changes, which no visibility check reads.
+    await waitForSelector('[data-testid=command-menu-panel][data-stage=expanded]')
+
+    // wait for the drawer's overlay image to be decoded and painted before taking the snapshot. The element is in the
+    // DOM before its image is available to the renderer, so a screenshot taken as soon as it appears can be missing
+    // the overlay entirely.
+    await waitForBackgroundImage('[data-testid=command-center-overlay]')
 
     expect(await screenshot()).toMatchImageSnapshot()
   })
