@@ -5,6 +5,7 @@ import { Store } from 'redux'
 import { ArrowKey } from './@types/ArrowKey'
 import Command from './@types/Command'
 import CommandId from './@types/CommandId'
+import CommandSuccess from './@types/CommandSuccess'
 import CommandType from './@types/CommandType'
 import Direction from './@types/Direction'
 import Gesture from './@types/Gesture'
@@ -504,9 +505,13 @@ export const executeCommandWithMulticursor = (
 
   const state = commandStore.getState()
 
-  /** Adds a rep to the pinned command once exec has returned, when the user performed it by keyboard or gesture and it raised no app error. Asynchronous work is not awaited: the user has completed the command once it starts, whatever a server or the clipboard later returns. */
+  /** Reports a successful invocation once exec has returned, unless it raised an app error, and adds a rep to the pinned command when the user performed it by keyboard or gesture. Asynchronous work is not awaited: the user has completed the command once it starts, whatever a server or the clipboard later returns. */
   const reportSuccess = () => {
     if (commandStore.getState().error !== state.error) return
+    commandEmitter.trigger('commandSucceeded', {
+      commandId: commandArg.id,
+      source: type ?? 'internal',
+    } satisfies CommandSuccess)
     if (type === 'keyboard' || type === 'gesture')
       commandStore.dispatch(pinnedCommandAddRep({ commandId: commandArg.id }))
   }
@@ -791,6 +796,13 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     }
   }
 
+  // In training mode, show the command's label as a gesture hint.
+  // Dispatch it before the command executes so that an alert raised by the command itself (e.g. an error explaining why it cannot be executed) replaces the label rather than being replaced by it.
+  const showLabel = !getUserSetting(state, Settings.experienceMode) && !!command && !command.hideAlert
+  if (command && showLabel) {
+    store.dispatch(alert(command.label, { alertType: AlertType.GestureHint }))
+  }
+
   // execute command
   // do not execute when modal is displayed or a drag is in progress
   if (
@@ -832,7 +844,6 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
   // clear gesture hint
   clearGestureMenuTimer()
 
-  // In training mode, show alert for any valid command (except forward/back)
   // In experience mode, clear any existing gesture hint
   setTimeout(() => {
     store.dispatch((dispatch, getState) => {
@@ -844,21 +855,16 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
         dispatch(gestureMenu())
       }
 
-      // Show alert for valid commands in training mode
-      if (!experienceMode && command && !command.hideAlert) {
-        dispatch(
-          alert(command.label, {
-            alertType: AlertType.GestureHint,
-          }),
-        )
-      } else if (
+      // Do not clear the label shown above, nor the alert that the command raised in its place
+      if (
+        !showLabel &&
         // Clear alert if gesture is cancelled (no command)
-        !command ||
-        // Clear alert if back/forward
-        command?.id === 'cursorForward' ||
-        command?.id === 'cursorBack' ||
-        // In experience mode, clear any existing gesture hint
-        (experienceMode && alertType === AlertType.GestureHint)
+        (!command ||
+          // Clear alert if back/forward
+          command?.id === 'cursorForward' ||
+          command?.id === 'cursorBack' ||
+          // In experience mode, clear any existing gesture hint
+          (experienceMode && alertType === AlertType.GestureHint))
       ) {
         dispatch(alert(null))
       }

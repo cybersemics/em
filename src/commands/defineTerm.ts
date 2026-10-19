@@ -36,6 +36,19 @@ const pendingDefinitions = new Map<ThoughtId, symbol>()
 /** Returns the visible, decoded term represented by a thought value. */
 const normalizeTerm = (value: string): string => unescapeHtml(strip(value))
 
+/** Splits a definition on semicolons and periods into capitalized sentences without trailing punctuation or whitespace. */
+const splitDefinition = (definition: string): string[] =>
+  definition
+    .split(/[;.]/)
+    .map(sentence =>
+      sentence
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/[\s,:!?]+$/, ''),
+    )
+    .filter(sentence => sentence.length > 0)
+    .map(sentence => sentence[0].toUpperCase() + sentence.slice(1))
+
 /** Returns true when the thought at a path can be defined. */
 const canDefineTermAtPath = (state: State, path: Path): boolean => {
   const thought = getThoughtById(state, head(simplifyPath(state, path)))
@@ -43,7 +56,7 @@ const canDefineTermAtPath = (state: State, path: Path): boolean => {
   return normalizeTerm(thought.value).length > 0
 }
 
-/** Defines all thoughts at the given paths in one API request and adds each definition as the first subthought of its unchanged source thought. */
+/** Defines all thoughts at the given paths in one API request and adds each definition's sentences as the first subthoughts of its unchanged source thought. */
 const defineTermAtPaths =
   (paths: Path[]): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
@@ -114,8 +127,13 @@ const defineTermAtPaths =
       if (
         !Array.isArray(definitions) ||
         definitions.length !== requests.length ||
-        definitions.some(definition => typeof definition !== 'string' || !definition.trim())
+        definitions.some(definition => typeof definition !== 'string')
       ) {
+        throw new Error('Invalid AI response')
+      }
+
+      const sentencesPerRequest = (definitions as string[]).map(splitDefinition)
+      if (sentencesPerRequest.some(sentences => sentences.length === 0)) {
         throw new Error('Invalid AI response')
       }
 
@@ -132,15 +150,19 @@ const defineTermAtPaths =
 
         const currentPath = thoughtToPath(currentState, request.thought.id)
         if (!currentPath) return
-        const definition = (definitions[index] as string).trim().replace(/\s+/g, ' ')
+        const path = simplifyPath(currentState, currentPath)
 
-        dispatch(
-          createThought({
-            path: simplifyPath(currentState, currentPath),
-            rank: getPrevRank(currentState, request.thought.id),
-            value: escapeHtml(definition),
-          }),
-        )
+        // Insert in reverse so that each sentence lands before the previous one, leaving them in reading order above any existing subthoughts.
+        const sentencesReversed = [...sentencesPerRequest[index]].reverse()
+        sentencesReversed.forEach(sentence => {
+          dispatch(
+            createThought({
+              path,
+              rank: getPrevRank(getState(), request.thought.id),
+              value: escapeHtml(sentence),
+            }),
+          )
+        })
       })
     } catch {
       dispatch(error({ value: 'Failed to define term' }))

@@ -1,0 +1,52 @@
+# iOS Safari Viewport
+
+How mobile Safari places fixed elements while the virtual keyboard is open, what it reports to the page, and what has and has not worked against it. Read this before changing anything that is `position: fixed` or `position: sticky` on iOS, or before reading the viewport entries of a [Debug Log](debug-log.md) from an iPhone. The general rule that follows from it, that emulating fixed positioning is a last resort, lives in the CSS section of the [code standards](../.github/instructions/code-standards.instructions.md); the rendering-cost rules live in their Performance section.
+
+The figures below are samples from one iPhone in Safari (a 393×852 screen, a 793pt layout viewport, a 424pt visual viewport with the keyboard up). They show the shape of the behaviour, not thresholds.
+
+## Two viewports
+
+- **The layout viewport** is what `position: fixed` and `position: sticky` are laid out against. Its height is `document.documentElement.clientHeight`, and opening the keyboard does not change it.
+- **The visual viewport** is the part the user can see. `visualViewport.height` shrinks when the keyboard opens, and `visualViewport.offsetTop` says how far down the layout viewport the visible area sits.
+
+While the keyboard is up, iOS pans the visual viewport within the layout viewport as the user scrolls: `offsetTop` ranges from 0 to `clientHeight - visualViewport.height`. A fixed element anchored to the bottom therefore sits anywhere from flush with the visible bottom to hidden behind the keyboard. With the keyboard closed, the two viewports coincide again; in every keyboard close captured so far the geometry returned to `offsetTop` 0 and equal heights at once.
+
+## What Safari reports
+
+- **`window.innerHeight` is not the layout viewport height.** While scrolling at the end of the page with the keyboard up, `innerHeight` has been seen to fall from 793 to 611 while `clientHeight` stayed 793. Use `clientHeight` for anything fixed elements are positioned against.
+- **`getBoundingClientRect()` is measured from the top of the visual viewport**, not the layout viewport. A fixed element anchored to the bottom is laid out correctly when `rect.bottom + visualViewport.offsetTop === clientHeight`, and is flush with the bottom of the screen when `rect.bottom === visualViewport.height`.
+- **Panning the visual viewport fires `scroll` on `window.visualViewport`, not on `window`.** A listener that must see every scroll has to listen on both, as `initEvents` does.
+- **`visualViewport` fires `resize` repeatedly while the user scrolls with the keyboard up**, not only when the keyboard opens and closes. Anything hooked to that event runs mid-scroll. Work that should happen once per keyboard open or close belongs on the app's keyboard state (`state.isKeyboardOpen`) changing, after the keyboard animation has finished.
+
+## Rubber-band overscroll uncovers what is below a fixed background
+
+When the user bounces past the end of the page, the visual viewport moves below the bottom of the layout viewport (`offsetTop` beyond `clientHeight - visualViewport.height`), with the keyboard open or closed. A full-screen fixed background ends at the layout viewport's bottom, so the bounce uncovers a band of plain page background beneath it. That band is a visible defect, not acceptable platform behaviour.
+
+The fix that works is to extend the background below the layout viewport in CSS. [`BackgroundGlow`](../src/components/BackgroundGlow.tsx) hangs a vertically mirrored copy of the glow below itself with an `::after` that inherits the background image, so the brightest edge continues across the seam and a bounce reveals more glow. Nothing is positioned from JavaScript. The extension can be tall: WebKit splits a large layer into tiles and only draws the tiles near the visible area, so the off-screen part costs nothing measurable.
+
+## Fixed elements can render stale after the keyboard opens
+
+After the keyboard first opens, Safari can draw a fixed element as if it scrolled with the page, and keep doing so for seconds after the keyboard closes, until something makes it repaint. The layout is right and only the drawing is stale: the element corrected itself after a few taps with no viewport change, and no ancestor had a `transform`, `filter` or `contain` that would legitimately make it scroll. In a log that measures the element, the signature is `rect.bottom + scrollY` holding constant across scrolls. This is not fixed. [#3325](https://github.com/cybersemics/em/issues/3325), the toolbar and nav bar losing their fixed position after the keyboard closes, may be the same bug.
+
+The untested candidate is a change that only the compositor has to handle, run once after each keyboard open or close has finished: keep a do-nothing 3D transform on the element at all times, and swap it for a different do-nothing value and back. Whether that clears the stale drawing, and whether it really skips layout on iOS, has not been measured.
+
+## The visual viewport can be left corrupt after an app switch
+
+When the app is backgrounded, iOS briefly lays the page out in landscape for the app switcher snapshot. On return, `visualViewport.height` has been seen to read `innerHeight` minus the landscape width (-59 on a 393×852 iPhone) for the rest of the session, a fraction of a second after the `resume` entry still showed the right height, and with no resize event in between ([#5972](https://github.com/cybersemics/em/issues/5972)). With a visual viewport that small, iOS lets the visible area pan far below the bottom of the layout viewport. The footer, which is in normal flow, scrolls into view, while the background glow and the nav bar stay anchored to the layout viewport's bottom mid-screen, with a band of plain page background between them.
+
+[`initEvents`](../src/util/initEvents.ts) checks for a height of zero or less at the `settled` snapshot after resume and at the end of every scroll, the discrete moments that already read the viewport, and repairs it by adding `shrink-to-fit=no` to the viewport meta tag and restoring it on the next frame, so that WebKit has to recompute the viewport. Whether that clears the corruption has not been observed on a device. A `repaired` entry in the Debug Log a second later records the outcome, and `visualViewportScale` tells a zoom glitch, which the meta tag rewrite should clear, from a stale inset, which it may not.
+
+## Dead ends
+
+- **Positioning the element from JavaScript as the page scrolls** (absolute positioning recomputed from `scrollY`, a transform tracking `visualViewport`, a scroll-linked animation). Safari scrolls on its own thread and tells the page afterwards, so the element lands at least a frame late and jitters during flicks and bounces. The toolbar has been through this repeatedly ([#3758](https://github.com/cybersemics/em/issues/3758), [#3325](https://github.com/cybersemics/em/issues/3325), [#4091](https://github.com/cybersemics/em/pull/4091)); [`usePositionFixed`](../src/hooks/usePositionFixed.ts) is the one sanctioned emulation, for elements that must stay pinned and have no alternative.
+- **Remounting the element to force a repaint**, such as by bumping its `key`. It does repaint, but it also lays the element out again.
+- **Hooking a repair to `visualViewport` resize.** It fires dozens of times a second while scrolling with the keyboard up.
+- **A taller background image instead of the mirror.** Each glow is about 1.25 MB at 1179×2556; hanging 200pt more off the bottom adds roughly 290 KB to download and 2.8 MB decoded per image, and every artwork has to be redrawn to continue the glow. The mirror costs neither.
+
+## Techniques
+
+- **Read the viewport entries of the Debug Log.** They record `clientHeight`, `innerHeight`, the visual viewport's height and offset, `scrollY` and the keyboard state on every resize, on resume, and at the start and end of every scroll. Tally them by geometry to find the states that differ from the rest.
+- **Measure the element in question only while the question is open.** A temporary field such as an element's `getBoundingClientRect().bottom` on the scroll start and end entries is what proved the stale-drawing bug above. Remove it once the question is answered, since it is a layout read after every scroll.
+- **Test on a device through the pull request's preview.** Every pull request gets a Vercel preview, posted as a bot comment with a QR code, and logging auto-enables on `*.vercel.app`, so a capture from the preview carries the new instrumentation.
+- **Check a CSS-only fix in headless Chromium first** by offsetting the fixed layer with a `translateY` in a standalone page and taking a screenshot (`/opt/pw-browsers/chromium --headless --screenshot=…` in the cloud environment, where Playwright itself is not installed). It shows seams and placement, not Safari's behaviour, so it does not replace the device test.
+- **Measure rendering cost on the device** with Safari Web Inspector: the Layers tab for a layer's memory, Timelines for whether a change triggers layout.

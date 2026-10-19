@@ -1,8 +1,7 @@
 import { nanoid } from 'nanoid'
 import React, { useMemo, useState } from 'react'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
-import { SystemStyleObject } from '../../styled-system/types'
 import Gesture from '../@types/Gesture'
 import { GESTURE_GLOW_BLUR, GESTURE_GLOW_COLOR } from '../constants'
 import ArrowheadMarker from './GestureDiagram/ArrowheadMarker'
@@ -39,8 +38,10 @@ interface GestureDiagramBaseProps {
   maxWidth?: number
   /** Applies the positional adjustment used by GestureContainer. */
   inGestureContainer?: boolean
+  /** The svg's display. Given as a prop rather than through className because the component sets display itself, and cx does not resolve a conflict between two classes that set the same property. */
+  display?: 'block' | 'inline-block'
   /** Panda CSS overrides applied to the outer element. */
-  cssRaw?: SystemStyleObject
+  className?: string
   /** Whether to render the gesture with rounded corners. */
   rounded?: boolean
   /** If true, the cancel gesture will have the same styling as the other gestures. Otherwise, there are additional sizing and margin styles applied. */
@@ -95,7 +96,8 @@ const GestureDiagram = ({
   viewBox,
   maxWidth,
   inGestureContainer,
-  cssRaw,
+  className,
+  display = 'inline-block',
   rounded,
   styleCancelAsRegularGesture,
   arrowhead = 'filled',
@@ -153,7 +155,7 @@ const GestureDiagram = ({
       <svg
         width={styleCancelAsRegularGesture ? size / 2 : 20}
         height={styleCancelAsRegularGesture ? size / 2 : 24}
-        className={css(inGestureContainer && { position: 'relative', top: '10px' }, cssRaw)}
+        className={cx(css(inGestureContainer && { position: 'relative', top: '10px' }), className)}
         style={{
           ...style,
           ...(arrowhead === 'none'
@@ -184,10 +186,12 @@ const GestureDiagram = ({
     <svg
       width={maxWidth ?? size}
       height={maxHeight ?? size}
-      className={css(
-        { display: 'inline-block', maxWidth: '100%', height: 'auto' },
-        inGestureContainer && { position: 'relative', top: '10px' },
-        cssRaw,
+      className={cx(
+        display === 'block'
+          ? css({ display: 'block', maxWidth: '100%', height: 'auto' })
+          : css({ display: 'inline-block', maxWidth: '100%', height: 'auto' }),
+        css(inGestureContainer && { position: 'relative', top: '10px' }),
+        className,
       )}
       style={{ aspectRatio: `${maxWidth ?? size} / ${maxHeight ?? size}`, ...style }}
       viewBox={

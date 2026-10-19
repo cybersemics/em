@@ -41,7 +41,7 @@ const PinnedCommand = () => {
           }
         >
           <PinnedCommandRing key={pinnedCommandId} progress={progress}>
-            <Icon size={14} fill={token('colors.gray50')} cssRaw={css.raw({ flex: 'none' })} />
+            <Icon size={14} fill={token('colors.gray50')} className={css({ flex: 'none' })} />
           </PinnedCommandRing>
         </div>
       </div>
