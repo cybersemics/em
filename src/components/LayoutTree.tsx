@@ -316,12 +316,10 @@ const LayoutTree = () => {
         <TransitionGroup>
           {treeThoughtsMemoized.map((thought, index) => (
             <TreeNode
-              {...thought}
+              thought={thought}
               index={index}
               // Pass unique key for the component
               key={thought.key}
-              // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
-              thoughtKey={thought.key}
               editing={editing || false}
               {...{
                 viewportHeight,
