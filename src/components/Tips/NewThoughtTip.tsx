@@ -8,6 +8,7 @@ import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
 import { gestureString } from '../../commands'
 import newThoughtCommand from '../../commands/newThought'
+import useRemAsPx from '../../hooks/useRemAsPx'
 import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
 import Tip from './Tip'
@@ -15,12 +16,14 @@ import Tip from './Tip'
 /** A tip that explains how to add a new thought. */
 const NewThoughtTip: FC = () => {
   const dispatch = useDispatch()
+  // Sized with the sentence it sits in.
+  const diagramSize = useRemAsPx(1.875)
   const instructions = isTouch ? (
     <span>
       You can add a new thought by swiping
       <GestureDiagram
         path={gestureString(newThoughtCommand)}
-        size={30}
+        size={diagramSize}
         color={token('colors.gray66')}
         className={css({ verticalAlign: 'middle' })}
       />
