@@ -392,9 +392,12 @@ const useClampScroll = ({
       // must not dilute the last moving velocity merely because the finger lifted between input frames.
       const finalTouch = event.changedTouches[0]
       if (finalTouch && finalTouch.clientY !== drag.current.clientY) sampleTouch(finalTouch, event.timeStamp)
-      const recentTouches = touchSamples.current.filter(
-        sample => event.timeStamp - sample.time <= TOUCH_VELOCITY_WINDOW,
-      )
+      // Age the latest input separately so a short release gap cannot discard the history needed for its velocity.
+      const lastTouch = touchSamples.current[touchSamples.current.length - 1]
+      const recentTouches =
+        lastTouch && event.timeStamp - lastTouch.time < TOUCH_VELOCITY_WINDOW
+          ? touchSamples.current.filter(sample => lastTouch.time - sample.time <= TOUCH_VELOCITY_WINDOW)
+          : []
       const touchVelocity = getTouchVelocity(recentTouches)
       const nativeVelocity =
         performance.now() - scrollSample.current.time < TOUCH_VELOCITY_WINDOW ? scrollSample.current.velocity : 0

@@ -648,13 +648,13 @@ describe('iOS momentum', () => {
     await scrollTo(minScrollY + 100)
     await waitForBrowserSettled()
 
+    const topBeforeSwipe = await getThoughtTop('1')
     const swipe = await startGesture({ xStart: 350, yStart: 450 })
     await swipe.move('u', { segmentLength: 80, stepSize: 5 })
-    const topAtRelease = await getThoughtTop('1')
     await swipe.end()
 
     await waitForSmoothScroll('1')
-    expect(await getThoughtTop('1')).toBeLessThan(topAtRelease)
+    expect(await getThoughtTop('1')).toBeLessThan(topBeforeSwipe - 80)
     expect(await page.evaluate(() => window.scrollY)).toBeLessThan(maxScrollY - 20)
   })
 
@@ -684,19 +684,21 @@ describe('iOS momentum', () => {
     await waitForBrowserSettled()
     await gesture.end()
     const resumed = await startGesture({ xStart: 350, yStart: 600 })
-    await resumed.move('u', { segmentLength: 300, stepSize: 40 })
-    const topAtRelease = await getThoughtTop('1')
-    expect(topAtRelease).toBeLessThan(topInDocument - minScrollY - 40)
+    await resumed.move('u', { segmentLength: 220, stepSize: 40 })
+    const topBeforeFlick = await getThoughtTop('1')
+    expect(topBeforeFlick).toBeLessThan(topInDocument - minScrollY - 20)
+    // Measure before the final flick so page round trips cannot turn its release into a pause.
+    await resumed.move('u', { segmentLength: 80, stepSize: 40 })
     await resumed.end()
     await page.waitForFunction(
       top => {
         const thought = Array.from(document.querySelectorAll('[data-editable]')).find(
           element => element.innerHTML === '1',
         )
-        return !!thought && thought.getBoundingClientRect().top < top - 10
+        return !!thought && thought.getBoundingClientRect().top < top - 90
       },
       {},
-      topAtRelease,
+      topBeforeFlick,
     )
     expect(Math.abs((await getThoughtTop('1', { relativeTo: 'document' })) - topInDocument)).toBeLessThan(1)
   })

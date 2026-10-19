@@ -239,6 +239,18 @@ it.each([
     maximumTravel: 110,
   },
   {
+    description: 'preserves recent release velocity through a brief pause before lifting',
+    moves: [
+      { y: 280, time: 20, delivered: 20 },
+      { y: 260, time: 40, delivered: 40 },
+      { y: 240, time: 60, delivered: 60 },
+    ],
+    releaseTime: 124,
+    releaseDelivered: 124,
+    minimumTravel: 75,
+    maximumTravel: 110,
+  },
+  {
     description: 'stops momentum when the finger pauses before release',
     moves: [
       { y: 280, time: 20, delivered: 20 },
