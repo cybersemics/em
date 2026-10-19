@@ -1,12 +1,12 @@
 import React from 'react'
-import { SwitchTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
+import CommandSortType from '../../@types/CommandSortType'
 import useCommandList from '../../hooks/useCommandList'
 import CommandUniverseGrid from '../CommandUniverseGrid'
 import CommandUniverseSearch from '../CommandUniverseSearch'
 import CommandUniverseSortButton from '../CommandUniverseSortButton'
-import FadeTransition from '../FadeTransition'
 import DialogContent from '../dialog/DialogContent'
+import useRearrangeAnimation from './useRearrangeAnimation'
 
 /**
  * Body of the dialog at Level 2 (the grid). Split out so that useCommandList only runs
@@ -15,21 +15,24 @@ import DialogContent from '../dialog/DialogContent'
  * gestures are inputted.
  */
 const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
-  const { search, setSearch, sortOrder, setSortOrder, sections } = useCommandList()
+  const { search, setSearch, setSortOrder, sections } = useCommandList()
 
   // Pass this ref to `DialogContent`, which owns the scrollable element, so that we can reset
-  // the scroll position to the top as results crossfade.
+  // the scroll position to the top as the results rearrange.
   const scrollRef = React.useRef<HTMLDivElement>(null)
-
-  // This ref is used to animate a block <div>, rather than the default inline <span> used by FadeTransition.
-  // This fixes a bug where the crossfade between results when searching/sorting did not play on WebKit/Safari.
-  const fadeRef = React.useRef<HTMLDivElement>(null)
 
   // Fills the page surface, so zoom origins measured against it match the surface's transform origin.
   const pageRef = React.useRef<HTMLDivElement>(null)
 
+  const ghostLayerRef = React.useRef<HTMLDivElement>(null)
+
+  const captureLayout = useRearrangeAnimation({ scrollRef, ghostLayerRef, layoutKey: sections })
+
   return (
-    <div ref={pageRef} className={css({ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 })}>
+    <div
+      ref={pageRef}
+      className={css({ position: 'relative', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 })}
+    >
       {/* Search row that lives between the header and the scrollable content. Sits outside the scroll
           container so it stays put as the command list scrolls. Left padding matches contentInner so the
           search glyph aligns with the section headers and command list down the left edge of the panel. */}
@@ -44,87 +47,26 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
           paddingBlock: '0.5rem',
         })}
       >
-        <CommandUniverseSearch onInput={setSearch} />
-        <CommandUniverseSortButton onSortChange={setSortOrder} />
+        <CommandUniverseSearch
+          onInput={(value: string) => {
+            captureLayout()
+            setSearch(value)
+          }}
+        />
+        <CommandUniverseSortButton
+          onSortChange={(sortOrder: CommandSortType) => {
+            captureLayout()
+            setSortOrder(sortOrder)
+          }}
+        />
       </div>
 
       <DialogContent scrollRef={scrollRef}>
-        <SwitchTransition>
-          {/* Use a key here composed of the sort order and search query to crossfade when search results change. */}
-          <FadeTransition
-            key={`${sortOrder}-${search}`}
-            in={true}
-            type='medium'
-            unmountOnExit
-            nodeRef={fadeRef}
-            onEnter={() => scrollRef.current?.scrollTo({ top: 0 })}
-          >
-            <div ref={fadeRef}>
-              {sections.map((section, index) => (
-                <div
-                  key={section.id}
-                  className={css({
-                    position: 'relative',
-                    contain: 'layout paint',
-                  })}
-                >
-                  {/* Section header row — centered title flanked by gradient hairlines that fade outward to delimit each command section. */}
-                  <div
-                    className={css({
-                      display: 'flex',
-                      alignItems: 'center',
-                      // 1rem horizontal gap between the title text and the gradient hairlines.
-                      gap: '1rem',
-                      paddingBlock: '1.25rem',
-                    })}
-                    // First section sits flush against the search row — skip its top padding so it doesn't double up.
-                    style={index === 0 ? { paddingTop: 0 } : undefined}
-                  >
-                    {/* Left hairline: transparent at the panel edge, solid near the title. */}
-                    <div
-                      className={css({
-                        flexGrow: 1,
-                        height: '1px',
-                        // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
-                        background:
-                          'linear-gradient(to right, {colors.transparent} 0%, {colors.dialogHeaderDivider} 100%)',
-                      })}
-                    />
-                    <h2
-                      className={css({
-                        fontSize: '1rem',
-                        fontWeight: 500,
-                        color: 'fg',
-                        borderBottom: 'none',
-                        margin: 0,
-                        whiteSpace: 'nowrap',
-                      })}
-                    >
-                      {section.title}
-                    </h2>
-                    {/* Right hairline: solid near the title, fading to transparent at the panel edge. */}
-                    <div
-                      className={css({
-                        flexGrow: 1,
-                        height: '1px',
-                        // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
-                        background:
-                          'linear-gradient(to right, {colors.dialogHeaderDivider} 0%, {colors.transparent} 100%)',
-                      })}
-                    />
-                  </div>
-                  <CommandUniverseGrid
-                    commands={section.commands}
-                    search={search}
-                    scrollRootRef={scrollRef}
-                    pageRef={pageRef}
-                  />
-                </div>
-              ))}
-            </div>
-          </FadeTransition>
-        </SwitchTransition>
+        <CommandUniverseGrid sections={sections} search={search} scrollRootRef={scrollRef} pageRef={pageRef} />
       </DialogContent>
+
+      {/* Holds the ghosts of the cells that leave the view during a rearrangement while they animate out. */}
+      <div ref={ghostLayerRef} className={css({ position: 'absolute', inset: 0, pointerEvents: 'none' })} />
     </div>
   )
 }

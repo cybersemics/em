@@ -64,7 +64,8 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
   }, [isNearViewport])
 
   return (
-    <tr>
+    // The key that useRearrangeAnimation tracks this cell by when it animates a sort or search rearranging the grid.
+    <tr data-rearrange-key={`command:${command.id}`}>
       <td className={css({ display: 'block', height: '100%' })}>
         <button
           type='button'
