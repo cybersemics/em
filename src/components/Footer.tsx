@@ -273,8 +273,9 @@ const Footer = () => {
       className={css({
         position: 'relative',
         padding: '1.75em',
-        // Follow bottom elasticity while leaving the footer in place during top overscroll.
-        transform: 'translateY(min(0px, var(--layout-tree-elastic-offset, 0px)))',
+        // Follow normal-flow subpixel scrolling and bottom elasticity, but not top overscroll.
+        transform:
+          'translateY(calc(min(0px, var(--layout-tree-elastic-offset, 0px)) + var(--layout-tree-scroll-remainder, 0px)))',
         margin: '0',
         textAlign: 'right',
         fontSize: '75%',

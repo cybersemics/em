@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react'
+import { createEvent, fireEvent, render } from '@testing-library/react'
 import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import TreeThoughtPositioned from '../../@types/TreeThoughtPositioned'
@@ -184,6 +184,193 @@ it('keeps synthesized momentum through a measurement update after reversing an i
     expect(document.documentElement.style.getPropertyValue('--layout-tree-elastic-offset')).toBe('0px')
   } finally {
     unmount()
+    Object.assign(window, { innerHeight: originalHeight, scrollY: originalScrollY })
+  }
+})
+
+// https://github.com/cybersemics/em/pull/5400#issuecomment-6132884199
+it.each([
+  {
+    description: 'preserves release velocity when the last touchmove is delivered late',
+    moves: [
+      { y: 280, time: 20, delivered: 20 },
+      { y: 260, time: 40, delivered: 40 },
+      { y: 240, time: 60, delivered: 100 },
+    ],
+    releaseTime: 64,
+    releaseDelivered: 104,
+    minimumTravel: 75,
+    maximumTravel: 110,
+  },
+  {
+    description: 'preserves the latest velocity when the finger accelerates before release',
+    moves: [
+      { y: 292, time: 20, delivered: 20 },
+      { y: 278, time: 40, delivered: 40 },
+      { y: 258, time: 60, delivered: 60 },
+    ],
+    releaseTime: 64,
+    releaseDelivered: 64,
+    minimumTravel: 90,
+    maximumTravel: 110,
+  },
+  {
+    description: 'slows momentum when the finger decelerates before release',
+    moves: [
+      { y: 280, time: 20, delivered: 20 },
+      { y: 266, time: 40, delivered: 40 },
+      { y: 258, time: 60, delivered: 60 },
+    ],
+    releaseTime: 64,
+    releaseDelivered: 64,
+    minimumTravel: 15,
+    maximumTravel: 30,
+  },
+  {
+    description: 'preserves release velocity when touchend is delivered late',
+    moves: [
+      { y: 280, time: 20, delivered: 20 },
+      { y: 260, time: 40, delivered: 40 },
+      { y: 240, time: 60, delivered: 60 },
+    ],
+    releaseTime: 64,
+    releaseDelivered: 160,
+    minimumTravel: 75,
+    maximumTravel: 110,
+  },
+  {
+    description: 'stops momentum when the finger pauses before release',
+    moves: [
+      { y: 280, time: 20, delivered: 20 },
+      { y: 260, time: 40, delivered: 40 },
+      { y: 240, time: 60, delivered: 60 },
+    ],
+    releaseTime: 180,
+    releaseDelivered: 180,
+    minimumTravel: -1,
+    maximumTravel: 1,
+  },
+  {
+    description: 'does not reuse stale movement after a stationary touchmove',
+    moves: [
+      { y: 280, time: 20, delivered: 20 },
+      { y: 260, time: 40, delivered: 40 },
+      { y: 240, time: 60, delivered: 60 },
+      { y: 240, time: 120, delivered: 120 },
+    ],
+    releaseTime: 144,
+    releaseDelivered: 144,
+    minimumTravel: -1,
+    maximumTravel: 1,
+  },
+  {
+    description: 'follows the latest direction when a fast drag reverses before release',
+    moves: [
+      { y: 260, time: 20, delivered: 20 },
+      { y: 220, time: 40, delivered: 40 },
+      { y: 230, time: 60, delivered: 100 },
+    ],
+    releaseTime: 64,
+    releaseDelivered: 104,
+    minimumTravel: -60,
+    maximumTravel: -30,
+  },
+])('$description', async ({ moves, releaseTime, releaseDelivered, minimumTravel, maximumTravel }) => {
+  const originalScrollY = window.scrollY
+  const originalHeight = window.innerHeight
+  Object.assign(window, { innerHeight: 800, scrollY: 1300 })
+  viewportStore.update({ innerHeight: 800 })
+  vi.spyOn(document.documentElement, 'scrollHeight', 'get').mockReturnValue(5000)
+  vi.spyOn(window, 'scrollTo').mockImplementation((options: ScrollToOptions | number, y?: number) => {
+    Object.assign(window, { scrollY: typeof options === 'object' ? options.top : y })
+  })
+  vi.mocked(usePositionedThoughts).mockReturnValue({
+    treeThoughtsPositioned: [
+      { key: 'visible', y: 1600, x: 0, height: 1000, autofocus: 'show' } as TreeThoughtPositioned,
+    ],
+    indentCursorAncestorTables: 0,
+    hoverArrowVisibility: null,
+  })
+  const content = document.createElement('div')
+  content.id = 'content-wrapper'
+  document.body.append(content)
+  const { container, unmount } = render(createElement(Provider, { store, children: createElement(LayoutTree) }), {
+    container: content,
+  })
+  const tree = container.firstElementChild as HTMLElement
+
+  try {
+    const start = createEvent.touchStart(tree, { touches: [{ clientY: 300 }] })
+    Object.defineProperty(start, 'timeStamp', { value: 0 })
+    fireEvent(tree, start)
+    moves.forEach(({ y, time, delivered }, index) => {
+      vi.advanceTimersByTime(delivered - (moves[index - 1]?.delivered ?? 0))
+      const move = createEvent.touchMove(tree, { touches: [{ clientY: y }] })
+      Object.defineProperty(move, 'timeStamp', { value: time })
+      fireEvent(tree, move)
+    })
+    vi.advanceTimersByTime(releaseDelivered - moves[moves.length - 1].delivered)
+    const end = createEvent.touchEnd(tree, { touches: [] })
+    Object.defineProperty(end, 'timeStamp', { value: releaseTime })
+    fireEvent(tree, end)
+    const releasedScrollY = window.scrollY
+
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    const travel = window.scrollY - releasedScrollY
+    expect(travel).toBeGreaterThan(minimumTravel)
+    expect(travel).toBeLessThan(maximumTravel)
+  } finally {
+    unmount()
+    content.remove()
+    Object.assign(window, { innerHeight: originalHeight, scrollY: originalScrollY })
+  }
+})
+
+it('keeps a boundary return through a measurement update when the boundary is between pixels', async () => {
+  const originalScrollY = window.scrollY
+  const originalHeight = window.innerHeight
+  Object.assign(window, { innerHeight: 800, scrollY: 960 })
+  viewportStore.update({ innerHeight: 800 })
+  vi.spyOn(document.documentElement, 'scrollHeight', 'get').mockReturnValue(5000)
+  vi.spyOn(window, 'scrollTo').mockImplementation((options: ScrollToOptions | number, y?: number) => {
+    Object.assign(window, { scrollY: typeof options === 'object' ? options.top : y })
+  })
+  const thought = { key: 'visible', y: 1600.25, x: 0, height: 1000, autofocus: 'show' } as TreeThoughtPositioned
+  vi.mocked(usePositionedThoughts).mockReturnValue({
+    treeThoughtsPositioned: [thought],
+    indentCursorAncestorTables: 0,
+    hoverArrowVisibility: null,
+  })
+  const content = document.createElement('div')
+  content.id = 'content-wrapper'
+  document.body.append(content)
+  const { container, rerender, unmount } = render(
+    createElement(Provider, { store, children: createElement(LayoutTree) }),
+    { container: content },
+  )
+  const tree = container.firstElementChild as HTMLElement
+
+  try {
+    fireEvent.touchStart(tree, { touches: [{ clientY: 100 }] })
+    vi.advanceTimersByTime(16)
+    fireEvent.touchMove(tree, { touches: [{ clientY: 140 }] })
+    fireEvent.touchEnd(tree, { touches: [] })
+
+    vi.mocked(usePositionedThoughts).mockReturnValue({
+      treeThoughtsPositioned: [{ ...thought, height: 1001 }],
+      indentCursorAncestorTables: 0,
+      hoverArrowVisibility: null,
+    })
+    rerender(createElement(Provider, { store, children: createElement(LayoutTree) }))
+
+    expect(parseFloat(document.documentElement.style.getPropertyValue('--layout-tree-elastic-offset'))).toBeGreaterThan(
+      10,
+    )
+    await act(() => vi.advanceTimersByTimeAsync(2000))
+    expect(document.documentElement.style.getPropertyValue('--layout-tree-elastic-offset')).toBe('0px')
+  } finally {
+    unmount()
+    content.remove()
     Object.assign(window, { innerHeight: originalHeight, scrollY: originalScrollY })
   }
 })

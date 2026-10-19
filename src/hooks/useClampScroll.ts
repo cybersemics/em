@@ -13,6 +13,55 @@ const SPRING_DAMPING = 2 * SPRING_FREQUENCY
 // UIScrollView.DecelerationRate.normal decays velocity by 0.998 per millisecond.
 const DECELERATION_TIME_CONSTANT = -1 / Math.log(0.998)
 const LAYOUT_TREE_ELASTIC_OFFSET = '--layout-tree-elastic-offset'
+const LAYOUT_TREE_SCROLL_REMAINDER = '--layout-tree-scroll-remainder'
+const TOUCH_VELOCITY_WINDOW = 80
+
+interface TouchSample {
+  /** The finger's viewport coordinate. */
+  y: number
+  /** The input-event timestamp in milliseconds. */
+  time: number
+}
+
+/** Estimates release scroll velocity from recent input, including acceleration, independently of handler timing. */
+const getTouchVelocity = (samples: TouchSample[]) => {
+  const last = samples[samples.length - 1]
+  if (samples.length < 2) return 0
+
+  // Fit position = a + b*t + c*t² with the last input at t=0, so b is its release velocity.
+  // Normalizing time to the sampling window avoids poorly conditioned millisecond powers.
+  const sums = samples.reduce(
+    (sum, sample) => {
+      const t = (sample.time - last.time) / TOUCH_VELOCITY_WINDOW
+      const y = samples[0].y - sample.y
+      return {
+        t: sum.t + t,
+        t2: sum.t2 + t ** 2,
+        t3: sum.t3 + t ** 3,
+        t4: sum.t4 + t ** 4,
+        y: sum.y + y,
+        ty: sum.ty + t * y,
+        t2y: sum.t2y + t ** 2 * y,
+      }
+    },
+    { t: 0, t2: 0, t3: 0, t4: 0, y: 0, ty: 0, t2y: 0 },
+  )
+  const count = samples.length
+  const timeVariance = sums.t2 - (sums.t * sums.t) / count
+  if (timeVariance <= 0) return 0
+  const curveVariance = sums.t4 - (sums.t2 * sums.t2) / count
+  const timeCurveCovariance = sums.t3 - (sums.t * sums.t2) / count
+  const timePositionCovariance = sums.ty - (sums.t * sums.y) / count
+  const curvePositionCovariance = sums.t2y - (sums.t2 * sums.y) / count
+  const determinant = timeVariance * curveVariance - timeCurveCovariance ** 2
+  // With only two points or nearly coincident timestamps, use a stable linear fit.
+  const slope =
+    count >= 3 && determinant > 1e-8
+      ? (timePositionCovariance * curveVariance - curvePositionCovariance * timeCurveCovariance) / determinant
+      : timePositionCovariance / timeVariance
+  // Deceleration can reach zero, but must not extrapolate into an unobserved reversal.
+  return Math.sign(slope) === Math.sign(samples[0].y - last.y) ? (slope * 1000) / TOUCH_VELOCITY_WINDOW : 0
+}
 
 /** Clamps native window scrolling to the vertical band of visible content. */
 const useClampScroll = ({
@@ -36,6 +85,8 @@ const useClampScroll = ({
   const animationControls = useRef<AnimationPlaybackControls | null>(null)
   const animationScrollY = useRef(window.scrollY)
   const elasticOffset = useRef(0)
+  const scrollRemainder = useRef(0)
+  const touchSamples = useRef<TouchSample[]>([])
   const dragCarry = useRef(0)
   const momentumInProgress = useRef(false)
   const drag = useRef({
@@ -66,6 +117,38 @@ const useClampScroll = ({
       document.documentElement.style.setProperty(LAYOUT_TREE_ELASTIC_OFFSET, `${value}px`)
     }
 
+    /** Preserves the fraction of a controlled scroll that the browser cannot represent in scrollY. */
+    const setScrollRemainder = (value: number) => {
+      if (scrollRemainder.current === value) return
+      scrollRemainder.current = value
+      document.documentElement.style.setProperty(LAYOUT_TREE_SCROLL_REMAINDER, `${value}px`)
+    }
+
+    /** Renders precise controlled positions while keeping the native scroll on whole pixels. */
+    const setScrollPosition = (y: number) => {
+      // A nonpositive remainder cannot extend the document's scrollable overflow below the footer.
+      const rounded = Math.floor(y)
+      if (window.scrollY !== rounded) {
+        window.scrollTo({ left: window.scrollX, top: rounded, behavior: 'instant' })
+      }
+      const remainder = window.scrollY - y
+      // Only compensate pixel rounding, never a competing native pan or bounce.
+      setScrollRemainder(remainder > -1 && remainder <= 0 ? remainder : 0)
+    }
+
+    /** Keeps recent input positions, discarding the old direction when the finger reverses. */
+    const sampleTouch = (touch: Touch, time: number) => {
+      const samples = touchSamples.current
+      const previous = samples[samples.length - 1]
+      const beforeMoving = samples.reduce<typeof previous | undefined>(
+        (lastMoving, sample) => (sample.y !== previous?.y ? sample : lastMoving),
+        undefined,
+      )
+      const reversed = previous && beforeMoving && (touch.clientY - previous.y) * (previous.y - beforeMoving.y) < 0
+      const recent = reversed ? [previous] : samples.filter(sample => time - sample.time <= TOUCH_VELOCITY_WINDOW)
+      touchSamples.current = [...recent.filter(sample => sample.time < time), { y: touch.clientY, time }]
+    }
+
     /** Stops the animation at its current visible position. */
     const stopAnimation = () => {
       const controls = animationControls.current
@@ -87,10 +170,10 @@ const useClampScroll = ({
       if (visibleTop === undefined || visibleBottom === undefined) return null
       const y = touchInProgress.current
         ? (drag.current.panOffset === null
-            ? window.scrollY
+            ? window.scrollY - scrollRemainder.current
             : drag.current.startY + drag.current.startClientY - drag.current.clientY + drag.current.panOffset) +
           dragCarry.current
-        : window.scrollY
+        : window.scrollY - scrollRemainder.current
       const nativeMax = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
       const layoutTreeTop = ref.current?.offsetTop || 0
       const toolbarBottom = document.getElementById('toolbar')?.getBoundingClientRect().bottom || 0
@@ -106,7 +189,9 @@ const useClampScroll = ({
       const visibleContentBottom = Math.max(
         layoutTreeTop + visibleBottom,
         // The footer follows negative elastic displacement; bounds must use its untransformed position.
-        footerRect ? footerRect.bottom + window.scrollY - Math.min(0, elasticOffset.current) : 0,
+        footerRect
+          ? footerRect.bottom + window.scrollY - Math.min(0, elasticOffset.current) - scrollRemainder.current
+          : 0,
       )
       const maxScrollY = Math.min(
         nativeMax,
@@ -125,9 +210,13 @@ const useClampScroll = ({
     const springBack = ({ offset, velocity, boundary }: { offset: number; velocity: number; boundary: number }) => {
       stopAnimation()
       momentumInProgress.current = false
-      setElasticOffset(offset)
-      animationScrollY.current = boundary
-      animationControls.current = animate(offset, 0, {
+      const anchor = Math.round(boundary)
+      setScrollPosition(anchor)
+      const initialOffset = offset + window.scrollY - boundary
+      setScrollRemainder(0)
+      setElasticOffset(initialOffset)
+      animationScrollY.current = window.scrollY
+      animationControls.current = animate(initialOffset, 0, {
         type: 'spring',
         stiffness: SPRING_STIFFNESS,
         damping: SPRING_DAMPING,
@@ -140,7 +229,6 @@ const useClampScroll = ({
           setElasticOffset(0)
         },
       })
-      window.scrollTo({ left: window.scrollX, top: boundary, behavior: 'instant' })
     }
 
     /** Clamps desktop/Android immediately, and hands iOS native momentum to the boundary spring. */
@@ -159,9 +247,14 @@ const useClampScroll = ({
         }
         return
       }
-      if (touchInProgress.current && drag.current.panOffset === null && window.scrollY !== drag.current.startY) {
+      if (touchInProgress.current && drag.current.panOffset === null && window.scrollY !== touchStartScrollY.current) {
         // Preserve native pan-recognition slop, then use unresisted finger travel even past the physical page edge.
-        drag.current.panOffset = window.scrollY - drag.current.startY - drag.current.startClientY + drag.current.clientY
+        drag.current.panOffset =
+          window.scrollY -
+          scrollRemainder.current -
+          drag.current.startY -
+          drag.current.startClientY +
+          drag.current.clientY
       }
       const bounds = getBounds()
       if (!bounds) return
@@ -184,9 +277,7 @@ const useClampScroll = ({
         if (drag.current.controlled) {
           // The native pan was prevented from its first move, so there is no UIKit bounce to compensate for.
           // Keep native scrolling inside the band and let only the transform stretch beyond the boundary.
-          if (window.scrollY !== clampedScrollY) {
-            window.scrollTo({ left: window.scrollX, top: clampedScrollY, behavior: 'instant' })
-          }
+          setScrollPosition(clampedScrollY)
           setElasticOffset(resisted)
         } else {
           setElasticOffset(rawOffset === 0 && dragCarry.current === 0 ? 0 : window.scrollY - clampedScrollY + resisted)
@@ -235,7 +326,7 @@ const useClampScroll = ({
       touchStartScrollY.current = window.scrollY
       momentumInProgress.current = false
       drag.current = {
-        startY: window.scrollY,
+        startY: window.scrollY - scrollRemainder.current,
         startClientY: event.touches[0].clientY,
         clientY: event.touches[0].clientY,
         panOffset: controlled ? 0 : null,
@@ -249,7 +340,12 @@ const useClampScroll = ({
       dragCarry.current =
         (-Math.sign(elasticOffset.current) * distance * viewportHeight) /
         (RUBBER_BAND_COEFFICIENT * Math.max(1, viewportHeight - distance))
-      scrollSample.current = { y: window.scrollY + dragCarry.current, time: performance.now(), velocity: 0 }
+      scrollSample.current = {
+        y: window.scrollY - scrollRemainder.current + dragCarry.current,
+        time: performance.now(),
+        velocity: 0,
+      }
+      touchSamples.current = [{ y: event.touches[0].clientY, time: event.timeStamp }]
     }
 
     /** Handles finger movement, claiming bounded content swipes before native panning starts. */
@@ -263,6 +359,7 @@ const useClampScroll = ({
       if (drag.current.controlled) event.preventDefault()
       touchMoved.current = true
       drag.current.clientY = event.touches[0].clientY
+      sampleTouch(event.touches[0], event.timeStamp)
       // Wait for native pan recognition so touches consumed by editor gestures never become scrolling.
       if (drag.current.panOffset !== null) clampScroll()
     }
@@ -275,6 +372,7 @@ const useClampScroll = ({
       momentumInProgress.current = false
       dragCarry.current = 0
       setElasticOffset(0)
+      setScrollRemainder(0)
     }
 
     /** Releases a drag into native momentum or a velocity-preserving return spring. */
@@ -290,10 +388,22 @@ const useClampScroll = ({
       const rawOffset = clampedScrollY - y
       const carried = dragCarry.current !== 0
       const controlled = drag.current.controlled && touchMoved.current
+      // A final changed touch can contain movement not delivered by touchmove. A stationary release
+      // must not dilute the last moving velocity merely because the finger lifted between input frames.
+      const finalTouch = event.changedTouches[0]
+      if (finalTouch && finalTouch.clientY !== drag.current.clientY) sampleTouch(finalTouch, event.timeStamp)
+      const recentTouches = touchSamples.current.filter(
+        sample => event.timeStamp - sample.time <= TOUCH_VELOCITY_WINDOW,
+      )
+      const touchVelocity = getTouchVelocity(recentTouches)
+      const nativeVelocity =
+        performance.now() - scrollSample.current.time < TOUCH_VELOCITY_WINDOW ? scrollSample.current.velocity : 0
       const velocity =
-        event.type !== 'touchcancel' && !drag.current.suspended && performance.now() - scrollSample.current.time < 80
-          ? scrollSample.current.velocity
-          : 0
+        event.type === 'touchcancel' || drag.current.suspended
+          ? 0
+          : drag.current.panOffset !== null
+            ? touchVelocity
+            : nativeVelocity
       touchInProgress.current = false
       drag.current.controlled = false
       dragCarry.current = 0
@@ -310,8 +420,8 @@ const useClampScroll = ({
       } else if (carried || controlled) {
         // Continue a controlled or interrupted drag with the normal UIScrollView decay.
         setElasticOffset(0)
-        window.scrollTo({ left: window.scrollX, top: clampedScrollY, behavior: 'instant' })
-        animationScrollY.current = clampedScrollY
+        setScrollPosition(clampedScrollY)
+        animationScrollY.current = window.scrollY
         const target = clampedScrollY + (velocity * DECELERATION_TIME_CONSTANT) / 1000
         const controls = animate(clampedScrollY, target, {
           type: 'inertia',
@@ -335,8 +445,8 @@ const useClampScroll = ({
               })
               return
             }
-            animationScrollY.current = bounded
-            window.scrollTo({ left: window.scrollX, top: bounded, behavior: 'instant' })
+            setScrollPosition(bounded)
+            animationScrollY.current = window.scrollY
           },
           onComplete: () => {
             // A final inertia frame can start a spring; only the current animation may clear it.
@@ -354,12 +464,14 @@ const useClampScroll = ({
 
     updateBounds.current = () => {
       const bounds = getBounds()
-      // Inertia checks fresh bounds each frame. A return spring can also survive measurements while its anchor is valid.
+      // Inertia checks fresh bounds each frame. Compare a spring's native anchor on the same pixel
+      // grid as its bounds, so an unchanged fractional boundary cannot cancel a valid return.
       if (
         animationControls.current &&
         bounds &&
         (momentumInProgress.current ||
-          (animationScrollY.current >= bounds.minScrollY && animationScrollY.current <= bounds.maxScrollY))
+          (animationScrollY.current >= Math.round(bounds.minScrollY) &&
+            animationScrollY.current <= Math.round(bounds.maxScrollY)))
       )
         return
       // Measurements must not discard native coasting before it reaches a visible boundary.
@@ -395,10 +507,13 @@ const useClampScroll = ({
       dragCarry.current = 0
       momentumInProgress.current = false
       setElasticOffset(0)
+      setScrollRemainder(0)
     }
   }, [ref])
 
-  return { transform: `translateY(var(${LAYOUT_TREE_ELASTIC_OFFSET}, 0px))` }
+  return {
+    transform: `translateY(calc(var(${LAYOUT_TREE_ELASTIC_OFFSET}, 0px) + var(${LAYOUT_TREE_SCROLL_REMAINDER}, 0px)))`,
+  }
 }
 
 export default useClampScroll

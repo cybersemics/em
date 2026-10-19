@@ -17,6 +17,7 @@ import scrollTo from '../helpers/scrollTo'
 import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForSmoothScroll from '../helpers/waitForSmoothScroll'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 import { usePersistentTreecrdtStorage } from '../setup'
@@ -629,6 +630,34 @@ describe('iOS scroll continuity', () => {
 })
 
 describe('iOS momentum', () => {
+  // https://github.com/cybersemics/em/pull/5400#issuecomment-6132655766
+  it('slows smoothly between whole pixels while coasting inside the scroll limits', async () => {
+    await paste(OVERSCROLL_DOCUMENT)
+    await clickThought('m')
+    await scrollTo(200)
+    await clickThought('z')
+    await waitForCursor('z')
+    await press('ArrowDown')
+    await waitForCursor('1')
+    await press('ArrowDown')
+    await waitForCursor('2')
+    await press('ArrowDown')
+    await waitForCursor('3')
+    await waitForBrowserSettled()
+    const { minScrollY, maxScrollY } = await getVisibleThoughtBounds()
+    await scrollTo(minScrollY + 100)
+    await waitForBrowserSettled()
+
+    const swipe = await startGesture({ xStart: 350, yStart: 450 })
+    await swipe.move('u', { segmentLength: 80, stepSize: 5 })
+    const topAtRelease = await getThoughtTop('1')
+    await swipe.end()
+
+    await waitForSmoothScroll('1')
+    expect(await getThoughtTop('1')).toBeLessThan(topAtRelease)
+    expect(await page.evaluate(() => window.scrollY)).toBeLessThan(maxScrollY - 20)
+  })
+
   it('continues momentum when an interrupted stretch is dragged back inside the range', async () => {
     await paste(OVERSCROLL_DOCUMENT)
 
