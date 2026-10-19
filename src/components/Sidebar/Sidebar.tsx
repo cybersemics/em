@@ -301,12 +301,12 @@ const Sidebar = () => {
               onTouchEnd={() => setIsSwiping(false)}
             >
               {/* Non-scrolling header. Fades in with the sidebar; the 3.75rem top margin
-                  sits just below the safe-area inset. */}
+                  sits just below the safe-area inset. The horizontal padding is fixed, so that a larger font size leaves the width of the sidebar to the text. */}
               <FadeTransition type='medium' in={showSidebar}>
                 <div
                   className={css({
                     marginTop: '3.75rem',
-                    padding: '0 1em',
+                    padding: '0 16px',
                   })}
                 >
                   <SidebarHeader

@@ -2,6 +2,7 @@ import { ComponentType, useCallback, useMemo, useRef } from 'react'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import { isAndroid } from '../../browser'
+import useRemAsPx from '../../hooks/useRemAsPx'
 import fastClick from '../../util/fastClick'
 import ChevronImg from '../ChevronImg'
 import { MEDIUM_DURATION, cssEaseOut } from './constants'
@@ -11,39 +12,44 @@ import { SidebarSection, SidebarSectionId } from './sidebarSections'
 const SidebarSectionRow = ({
   icon: Icon,
   label,
-  iconSize = 28,
+  iconSizeRem = 1.75,
 }: {
   icon: ComponentType<{ size?: number; fill?: string }>
   label: string
-  iconSize?: number
-}) => (
-  <div className={css({ display: 'flex', alignItems: 'center', gap: '0.75rem' })}>
-    <div
-      className={css({
-        width: '36px',
-        height: '36px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      })}
-    >
-      <Icon size={iconSize} fill={token('colors.fgOverlay75')} />
+  /** The icon's size in rem. */
+  iconSizeRem?: number
+}) => {
+  // The icon is read with its label, so it grows with the font size as the label does.
+  const iconSize = useRemAsPx(iconSizeRem)
+  return (
+    <div className={css({ display: 'flex', alignItems: 'center', gap: '0.75rem' })}>
+      <div
+        className={css({
+          width: '2.25rem',
+          height: '2.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        })}
+      >
+        <Icon size={iconSize} fill={token('colors.fgOverlay75')} />
+      </div>
+      <div
+        className={css({
+          color: 'fgOverlay75',
+          fontSize: '1.4rem',
+          lineHeight: '1.4rem',
+          letterSpacing: '-0.25px',
+          marginTop: 4,
+          fontWeight: 300,
+        })}
+      >
+        {label}
+      </div>
     </div>
-    <div
-      className={css({
-        color: 'fgOverlay75',
-        fontSize: '1.4rem',
-        lineHeight: '1.4rem',
-        letterSpacing: '-0.25px',
-        marginTop: 4,
-        fontWeight: 300,
-      })}
-    >
-      {label}
-    </div>
-  </div>
-)
+  )
+}
 
 /** Props for the SidebarHeader component. */
 interface SidebarHeaderProps {
@@ -196,9 +202,9 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
                   willChange: isAndroid ? 'opacity' : undefined,
                 })}
               >
-                {/* All section icons render at the same size (28, the header size) so nothing
+                {/* All section icons render at the same size (1.75rem, the header size) so nothing
                     resizes when the dropdown opens or the selection changes. */}
-                <SidebarSectionRow icon={s.icon} label={s.label} iconSize={28} />
+                <SidebarSectionRow icon={s.icon} label={s.label} iconSizeRem={1.75} />
               </div>
             </div>
           )

@@ -10,6 +10,7 @@ import { toggleUserSettingActionCreator as toggleUserSetting } from '../actions/
 import { Settings } from '../constants'
 import useDragAndDropFavorites from '../hooks/useDragDropFavorites'
 import useDragHold from '../hooks/useDragHold'
+import useRemAsPx from '../hooks/useRemAsPx'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
@@ -118,7 +119,8 @@ const FavoritesOptions = ({
   return (
     <div className={css({ marginBottom: '0.5em', marginLeft: 2 })}>
       {/* Show Options toggle */}
-      <div className={css({ marginLeft: '1em' })}>
+      {/* Horizontal spacing is fixed, so that a larger font size leaves the width of the sidebar to the text. */}
+      <div className={css({ marginLeft: '16px' })}>
         <span
           {...fastClick(() => setShowOptions(!showOptions))}
           className={css({
@@ -153,7 +155,8 @@ const FavoritesOptions = ({
               backgroundColor: 'fgOverlay30',
               mixBlendMode: 'overlay',
               borderRadius: '0.5em',
-              padding: '1em',
+              // 12.8px is 1em at the form's 80% font size, at the default font size.
+              padding: '1em 12.8px',
             })}
           >
             <Checkbox
@@ -186,6 +189,8 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
   }, _.isEqual)
 
   const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))
+  // Sized with the sentence it sits in.
+  const iconSize = useRemAsPx(1.125)
 
   return (
     <div className='favorites' data-testid='favorites'>
@@ -205,7 +210,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
         ) : (
           <div className={css({ marginTop: '1em', maxWidth: 450 })}>
             To add a thought to your favorites list, set the cursor on a thought and tap{' '}
-            <FavoritesIcon className={css({ verticalAlign: 'text-bottom' })} /> in the toolbar.
+            <FavoritesIcon size={iconSize} className={css({ verticalAlign: 'text-bottom' })} /> in the toolbar.
           </div>
         )}
         <DropEnd disableDragAndDrop={disableDragAndDrop} />

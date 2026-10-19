@@ -122,7 +122,10 @@ const SidebarContent = ({
               display: 'none',
             },
             position: 'relative',
-            padding: '0 1em',
+            // Fixed, so that a larger font size leaves the width of the sidebar to the text.
+            padding: '0 16px',
+            // The sidebar is rendered into body, whose font size is fixed, so set the user's font size here for the text inside to follow it.
+            fontSize: '1rem',
           })}
         >
           {/* Render the active section's content component */}
