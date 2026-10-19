@@ -1,5 +1,5 @@
 import { head } from 'lodash'
-import { CSSProperties, useState } from 'react'
+import { CSSProperties, ComponentProps, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import FauxCaretType from '../@types/FauxCaretType'
@@ -27,7 +27,7 @@ import equalPath from '../util/equalPath'
  * Note.tsx to cover cases where the client rect is not available because the selection is
  * not a text node (see `isStartOfElementNode` in selection.ts for implementation details).
  */
-const FauxCaret = ({
+const FauxCaretContent = ({
   caretType,
   path,
   wrapperElement,
@@ -85,7 +85,6 @@ const FauxCaret = ({
     }
   }, [caretType, isEditingCursor, isTableCol1, path, wrapperElement])
 
-  if ((!isTouch || !isSafari()) && caretType !== 'multicursorStart') return null
   return (
     <span
       className={css({
@@ -111,5 +110,9 @@ const FauxCaret = ({
     </span>
   )
 }
+
+/** Avoids mounting caret hooks on platforms where the caret is hidden. */
+const FauxCaret = (props: ComponentProps<typeof FauxCaretContent>) =>
+  (!isTouch || !isSafari()) && props.caretType !== 'multicursorStart' ? null : <FauxCaretContent {...props} />
 
 export default FauxCaret

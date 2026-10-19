@@ -266,24 +266,20 @@ const ThoughtAnnotationContainer = React.memo(
       !hideSuperscriptsSetting &&
       (REGEX_PUNCTUATIONS.test(value.replace(REGEX_TAGS, '')) ? false : minContexts === 0 || numContexts > 1)
 
+    // link the thought if it contains a url, e.g. "Deep work https://calnewport.com/deep-work is a great book"
+    const directUrl = lastURL(value)
     const url = useEditorSelector(state => {
+      if (directUrl !== null) return directUrl
+      if (isExpanded || (state.cursor && equalPath(simplePath, parentOf(state.cursor)))) return null
+
+      // if the only subthought is a url and the thought is not expanded, link the thought
       const childrenUrls = filterAllChildren(state, head(simplePath), child => containsURL(child.value))
-      return (
-        // link the thought if it contains a url, e.g. "Deep work https://calnewport.com/deep-work is a great book"
-        lastURL(value) ??
-        // if the only subthought is a url and the thought is not expanded, link the thought
-        (!isExpanded && childrenUrls.length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
-          ? stripTags(childrenUrls[0].value)
-          : null)
-      )
+      return childrenUrls.length === 1 ? stripTags(childrenUrls[0].value) : null
     })
 
     // Strip formatting tags (e.g. the font/span tags added by foreColor and backColor) before testing for an email address, otherwise the annotation disappears as soon as the thought is colored.
     const emailValue = stripTags(value)
     const email = isEmail(emailValue) ? emailValue : undefined
-
-    // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
-    editingValueStore.useSelector((editingValue: string | null) => value === editingValue)
 
     useEffect(() => {
       setCalculateContexts(true)

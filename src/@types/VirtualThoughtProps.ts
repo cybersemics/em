@@ -9,7 +9,6 @@ interface VirtualThoughtProps {
   depth: number
   dropTarget?: ConnectDropTarget
   env?: LazyEnv
-  indexDescendant: number
   last?: boolean
   leaf: boolean
   path: Path

@@ -3,7 +3,6 @@ import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { GLOBAL_STYLE_ENV } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
@@ -34,14 +33,6 @@ const useStyleContainer = ({
     /** Returns thought-container style from env and self. */
     const styleContainerNew = () => {
       const styleContainerEnv = children
-        .filter(
-          child =>
-            child.value in GLOBAL_STYLE_ENV ||
-            // children that have an entry in the environment
-            (child.value in { ...env } &&
-              // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-              child.id !== env![child.value]),
-        )
         .map(child =>
           child.value in { ...env } ? getStyle(state, env![child.value], { attributeName: '=styleContainer' }) : {},
         )

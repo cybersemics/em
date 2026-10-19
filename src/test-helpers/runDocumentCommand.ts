@@ -80,6 +80,7 @@ const runDocumentCommand = (
     ...result.value,
     thoughts: {
       revision: view.revision,
+      layoutRevision: view.layoutRevision,
       getThought: id => rows.get(id)?.thought,
       getChildren: id => rows.get(id)?.children ?? [],
       getPosition: id => rows.get(id)?.position,

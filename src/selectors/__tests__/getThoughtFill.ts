@@ -8,6 +8,7 @@ import initialState from '../../util/initialState'
 
 beforeEach(initStore)
 afterEach(waitForThoughtspaceIdle)
+afterEach(() => vi.restoreAllMocks())
 
 /** Creates a single thought and returns its derived fill color. */
 const fillOf = (value: string) => {
@@ -16,6 +17,14 @@ const fillOf = (value: string) => {
 }
 
 describe('getThoughtFill', () => {
+  it.each(['plain text', '&lt;font color="red"&gt;text&lt;/font&gt;'])('does not parse unformatted text: %s', value => {
+    const state = runDocumentCommand(newThought({ value }), initialState())
+    const parse = vi.spyOn(DOMParser.prototype, 'parseFromString')
+
+    expect(getThoughtFill(state, head(state.cursor!))).toBeUndefined()
+    expect(parse).not.toHaveBeenCalled()
+  })
+
   it('gets the fill from a fully colored thought', () => {
     expect(fillOf('<font color="#ff573d">hello</font>')).toBe('#ff573d')
   })

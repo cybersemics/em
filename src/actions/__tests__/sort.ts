@@ -1,9 +1,10 @@
 import importText from '../../actions/importText'
 import newThought from '../../actions/newThought'
 import sort from '../../actions/sort'
-import { HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN, LongPressState } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import { getChildrenRanked, isVisible } from '../../selectors/getChildren'
+import linearizeTree from '../../selectors/linearizeTree'
 import contextToThought from '../../test-helpers/contextToThought'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
@@ -58,6 +59,15 @@ describe('sort', () => {
 
     // State reference should be the same (true no-op)
     expect(stateAfterSort).toBe(stateAfterDelete)
+
+    const getPosition = vi.fn(stateAfterSort.thoughts.getPosition)
+    const renderState = { ...stateAfterSort, thoughts: { ...stateAfterSort.thoughts, getPosition } }
+    expect(linearizeTree(renderState).map(node => node.thoughtId)).toEqual([a.id, b.id, c.id])
+    expect(getPosition).not.toHaveBeenCalled()
+
+    const dragging = linearizeTree({ ...renderState, longPress: LongPressState.DragInProgress })
+    expect(dragging.map(node => node.rank)).toEqual([1, 2, 3])
+    expect(getPosition.mock.calls).toEqual([[a.id], [b.id], [c.id]])
   })
 
   it('changes sibling order without recreating unchanged thoughts', () => {

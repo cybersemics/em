@@ -10,7 +10,6 @@ import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import virtualKeyboard from '../../device/virtual-keyboard'
-import useEditorSelector from '../../hooks/useEditorSelector'
 import useEditorStore from '../../hooks/useEditorStore'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
@@ -44,7 +43,7 @@ const useEditMode = ({
   // must re-render when noteFocus changes in order to set the selection
   const hasNoteFocus = useSelector(state => state.noteFocus && equalPath(state.cursor, path))
   const editing = useSelector(state => state.isKeyboardOpen)
-  const isMulticursor = useEditorSelector(hasMulticursor)
+  const isMulticursor = useSelector(hasMulticursor)
   const isCursorCleared = useSelector(state => state.cursorCleared)
   const wasCursorCleared = usePrevious(isCursorCleared)
   const noteFocus = useSelector(state => state.noteFocus)

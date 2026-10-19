@@ -1090,6 +1090,22 @@ describe('=done', () => {
 })
 
 describe('multicursor', () => {
+  it('does not repeat expansion when selected siblings share the cursor expansion path', () => {
+    const state = reducerFlow([
+      importText({ text: '- a\n  - b\n  - c' }),
+      setCursor(['a']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['a', 'c']),
+    ])(initialState())
+    const getChildren = vi.spyOn(state.thoughts, 'getChildren')
+    const expected = expandThoughts({ ...state, multicursors: {} }, state.cursor)
+    const reads = getChildren.mock.calls.length
+    getChildren.mockClear()
+
+    expect(expandThoughts(state, state.cursor)).toEqual(expected)
+    expect(getChildren).toHaveBeenCalledTimes(reads)
+  })
+
   it('ancestors of a multicursor path are expanded', () => {
     const text = `
       - a

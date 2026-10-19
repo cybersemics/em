@@ -266,6 +266,7 @@ describe('render', () => {
             - =bullet
               - Ordered
           - a
+          - =custom
           - b
           - c
       `,
@@ -281,6 +282,15 @@ describe('render', () => {
     // the ordered children should not render a leaf bullet glyph
     const leaves = document.querySelectorAll('[data-bullet="leaf"]')
     expect(leaves.length).toBe(0)
+
+    await dispatch(toggleHiddenThoughts())
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Visible attributes before and between ordinary siblings must not consume an ordinal.
+    expect(await findThoughtByText('=children')).toBeInTheDocument()
+    expect(await findThoughtByText('=custom')).toBeInTheDocument()
+    const orderedWithAttributes = document.querySelectorAll('[data-bullet="ordered"]')
+    expect(Array.from(orderedWithAttributes).map(el => el.textContent)).toEqual(['1.', '2.', '3.'])
   })
 
   it('render a lettered glyph instead of a bullet for =children/=bullet/Alpha', async () => {

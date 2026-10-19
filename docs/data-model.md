@@ -9,6 +9,7 @@ EM keeps a private membership index alongside the tree. `getLexeme(value)` retur
 ```ts
 state.thoughts: {
   readonly revision: number // cache invalidation token, not a historical version
+  readonly layoutRevision: number // normal outline metadata; combined with UI/expansion inputs
   getThought(id: ThoughtId): Thought | undefined
   getChildren(id: ThoughtId): readonly ThoughtId[]
   getPosition(id: ThoughtId): number | undefined
@@ -29,7 +30,7 @@ Topology comes from current TreeCRDT reads:
 - `state.thoughts.getChildren(id)` — payload-bearing children in canonical sibling order. Missing or payload-less parents return no EM children.
 - `state.thoughts.getPosition(id)` — the zero-based position in the raw sibling order, including payload-less siblings. It also works when a thought's parent has no EM payload.
 
-Meta-attribute lookup (values starting with `=`, e.g. `=pin`, `=note`) uses [`findDescendant`](../src/selectors/findDescendant.ts) to scan current children. It chooses the first matching sibling; traversal still includes every duplicate attribute. Child renames are visible immediately without rebuilding a parent child map or attribute cache.
+Meta-attribute lookup (values starting with `=`, e.g. `=pin`, `=note`) uses [`findDescendant`](../src/selectors/findDescendant.ts) to narrow current children by lexeme membership, then match exact text in sibling order. It chooses the first matching sibling; traversal still includes every duplicate attribute. Child renames are visible immediately without rebuilding a parent child map or attribute cache.
 
 Thoughts do not store child maps or numeric ranks. Unchanged decoded thoughts can retain identity when sibling order changes, but a held reader sees the new order. Retain returned values when earlier content or ordering is needed.
 
@@ -131,7 +132,7 @@ type Lexeme = readonly ThoughtId[]
 
 A `Lexeme` lists every `ThoughtId` whose value hashes to the same normalized key. It does **not** store the value text itself; read that from any of the listed `Thought`s.
 
-Lexemes are sorted membership lists derived from the complete memory document, not independently authored records or SQLite membership queries. Every id resolves through `getThought`; timestamps and author metadata belong to those thoughts, not to the list. Within a transaction, queries merge committed memberships with cumulative native changes. The committed index changes only after the native transaction succeeds; unchanged memberships retain their list identity.
+Lexemes are sorted membership lists derived from the complete memory document, not independently authored records or SQLite membership queries. Every id resolves through `getThought`; timestamps and author metadata belong to those thoughts, not to the list. Queries flush incremental materialization changes into the index, so composed commands read their preceding writes. Commit flushes remaining changes; an aborted transaction restores only touched memberships. Unchanged memberships retain their list identity.
 
 The hashing function [`hashThought`](../src/util/hashThought.ts) normalizes the value before hashing:
 

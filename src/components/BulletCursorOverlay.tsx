@@ -1,4 +1,4 @@
-import { shallowEqual } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -106,7 +106,7 @@ export default function BulletCursorOverlay({
     return thought?.value || ''
   })
 
-  const isMulticursorActive = useEditorSelector(hasMulticursor)
+  const isMulticursorActive = useSelector(hasMulticursor)
 
   const childrenAttributeId = useEditorSelector(
     state => (value !== '=children' && findAnyChild(state, parentId, child => child.value === '=children')?.id) || null,
@@ -118,7 +118,7 @@ export default function BulletCursorOverlay({
       (value !== '=style' && findAnyChild(state, grandparentId, child => child.value === '=grandchildren')?.id) || null,
   )
 
-  const isInContextView = useEditorSelector(state => isContextViewActive(state, parentOf(path)))
+  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
 
   const hideBulletProp = useEditorSelector(state => {
     // A context view entry is rendered in place of its context, so the =children/=bullet of its real parent must not hide its bullet.
@@ -149,7 +149,7 @@ export default function BulletCursorOverlay({
   })
 
   // Must match the breadcrumbs rendered by Thought so that the cursor overlay is aligned with the thought.
-  const contextBreadcrumbsAncestors = useEditorSelector(state => rootedParentOf(state, simplePath), shallowEqual)
+  const contextBreadcrumbsAncestors = useSelector(state => rootedParentOf(state, simplePath), shallowEqual)
 
   useScrollCursorIntoView(y, height)
 

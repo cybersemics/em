@@ -89,4 +89,9 @@ it('parents and children', () => {
   const contextsSorted = pathsSorted.map(path => pathToContext(stateNew, path))
 
   expect(contextsSorted).toEqual([['b'], ['b', 'b2'], ['b', 'b1'], ['a'], ['a', 'a1'], ['a', 'a2'], ['c']])
+
+  const getPosition = vi.fn(stateNew.thoughts.getPosition)
+  const readerState = { ...stateNew, thoughts: { ...stateNew.thoughts, getPosition } }
+  expect(documentSort(readerState, [a2, a, a1])).toEqual([a, a1, a2])
+  expect(getPosition.mock.calls.flat()).not.toContain(a[0])
 })

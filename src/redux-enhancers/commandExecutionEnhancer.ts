@@ -28,7 +28,8 @@ const projectThoughts = (state: State, transaction?: ThoughtspaceTransaction): S
   const sameUi = _.isEqual(thoughtUi, state.thoughtUi)
   if (thoughts === state.thoughts && sameUi) return state
   const projected = { ...state, thoughts, thoughtUi: sameUi ? state.thoughtUi : thoughtUi }
-  return { ...projected, expanded: expandThoughts(projected, projected.cursor) }
+  const expanded = expandThoughts(projected, projected.cursor)
+  return { ...projected, expanded: _.isEqual(expanded, state.expanded) ? state.expanded : expanded }
 }
 
 /** Caches first-paint settings only after a document transaction succeeds. */

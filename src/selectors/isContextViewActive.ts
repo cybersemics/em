@@ -3,7 +3,7 @@ import State from '../@types/State'
 import hashPath from '../util/hashPath'
 
 /** Return true if the context view is active for the given key, including selected subthoughts. */
-const isContextViewActive = (state: State, path: Path | null) => {
+const isContextViewActive = (state: Pick<State, 'contextViews'>, path: Path | null) => {
   if (!path || path.length === 0) return false
   return !!state.contextViews[hashPath(path)]
 

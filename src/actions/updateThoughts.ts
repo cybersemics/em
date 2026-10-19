@@ -59,7 +59,9 @@ const updateThoughts = (
     ...(cursorOffset != null ? { cursorOffset } : null),
     recentlyEdited: recentlyEdited || state.recentlyEdited,
   }
-  return preventExpandThoughts ? next : { ...next, expanded: expandThoughts(next, next.cursor) }
+  if (preventExpandThoughts) return next
+  const expanded = expandThoughts(next, next.cursor)
+  return { ...next, expanded: _.isEqual(expanded, state.expanded) ? state.expanded : expanded }
 }
 
 /** Action-creator for updateThoughts. */

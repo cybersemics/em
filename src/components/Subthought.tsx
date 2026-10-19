@@ -10,8 +10,8 @@ import useCachedThoughtHtml from '../hooks/useCachedThoughtHtml'
 import useChangeRef from '../hooks/useChangeRef'
 import useEditorSelector from '../hooks/useEditorSelector'
 import attributeEquals from '../selectors/attributeEquals'
+import findDescendant from '../selectors/findDescendant'
 import findFirstEnvContextWithZoom from '../selectors/findFirstEnvContextWithZoom'
-import { findAnyChild } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
@@ -47,7 +47,6 @@ const Subthought = ({
   depth: number
   dropUncle?: boolean
   env?: LazyEnv
-  indexDescendant: number
   isMultiColumnTable?: boolean
   leaf?: boolean
   updateSize?: () => void
@@ -69,28 +68,19 @@ const Subthought = ({
   const isVisible = autofocus === 'show' || autofocus === 'dim'
   const autofocusChanged = useChangeRef(autofocus)
 
-  const childrenAttributeId = useEditorSelector(
-    state =>
-      (thought &&
-        thought.value !== '=children' &&
-        findAnyChild(state, thought.parentId, child => child.value === '=children')?.id) ||
-      null,
-  )
-  const grandchildrenAttributeId = useEditorSelector(
-    state =>
-      (thought &&
-        thought.value !== '=style' &&
-        findAnyChild(state, grandparentId, child => child.value === '=grandchildren')?.id) ||
-      null,
-  )
   const isSplitThought = useSelector(
     state => state.lastUndoableActionType === 'splitThought' && state.cursor && head(state.cursor) === head(simplePath),
   )
   const hideBullet = useEditorSelector(state => {
     // A context view entry is rendered in place of its context, so the =children/=bullet of its real parent must not hide its bullet.
     if (isContextViewActive(state, parentOf(path))) return false
+    const thought = getThoughtById(state, head(simplePath))
+    const childrenAttributeId =
+      (thought && thought.value !== '=children' && findDescendant(state, thought.parentId, '=children')) || null
     const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')
     if (hideBulletsChildren) return true
+    const grandchildrenAttributeId =
+      (thought && thought.value !== '=style' && findDescendant(state, grandparentId, '=grandchildren')) || null
     const hideBulletsGrandchildren =
       thought && thought.value !== '=bullet' && attributeEquals(state, grandchildrenAttributeId, '=bullet', 'None')
     if (hideBulletsGrandchildren) return true

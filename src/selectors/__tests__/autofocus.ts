@@ -28,7 +28,7 @@ describe('normal view', () => {
     const steps = [importText({ text: 'a' })]
     const stateNew = reducerFlow(steps)(initialState())
     const path = contextToPath(stateNew, ['a'])!
-    expect(calculateAutofocus(stateNew, path)).toEqual('show')
+    expect(calculateAutofocus(stateNew)(path)).toEqual('show')
   })
 
   it('show root thoughts', () => {
@@ -39,8 +39,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text }), setCursor(['a'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toEqual({
       a: 'show',
@@ -56,8 +57,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toEqual({
       a: 'show',
@@ -73,8 +75,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toEqual({
       a: 'dim',
@@ -92,8 +95,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toEqual({
       a: 'dim',
@@ -111,8 +115,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toEqual({
       a: 'dim',
@@ -130,8 +135,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toEqual({
       a: 'hide-parent',
@@ -150,8 +156,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c', 'd'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toEqual({
       a: 'hide',
@@ -171,8 +178,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c', 'd', 'e'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toEqual({
       a: 'hide',
@@ -193,8 +201,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text })]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toEqual({
       a: 'show',
@@ -213,8 +222,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text }), setCursor(['a'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toEqual({
       a: 'show',
@@ -231,8 +241,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toEqual({
       a: 'show',
@@ -250,8 +261,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toEqual({
       a: 'dim',
@@ -271,8 +283,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c', 'd'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toEqual({
       a: 'hide',
@@ -294,8 +307,9 @@ describe('normal view', () => {
   `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
 
     expect(autofocusMap).toEqual({
@@ -319,8 +333,9 @@ describe('normal view', () => {
     `
     const steps = [importText({ text }), setCursor(['a', 'd'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toMatchObject({
       a: 'show',
@@ -342,8 +357,9 @@ describe('normal view', () => {
     `
     const steps = [importText({ text }), setCursor(['a', 'd', 'e'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toMatchObject({
       a: 'dim',
@@ -365,8 +381,9 @@ describe('normal view', () => {
     `
     const steps = [importText({ text }), setCursor(['c'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toMatchObject({
       a: 'dim',
@@ -389,8 +406,9 @@ describe('normal view', () => {
      `
     const steps = [importText({ text }), setCursor(['a', 'd', 'e'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toMatchObject({
       a: 'hide-parent',
@@ -419,8 +437,9 @@ describe('normal view', () => {
     `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c', 'd'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toMatchObject({
       a: 'hide',
@@ -452,8 +471,9 @@ describe('table view', () => {
 
     const steps = [importText({ text }), setCursor(['a', 'e', 'f'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
 
     expect(autofocusMap).toMatchObject({
@@ -473,8 +493,9 @@ describe('=focus/Zoom', () => {
     `
     const steps = [importText({ text }), setCursor(['b'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toMatchObject({
       a: 'hide',
@@ -494,8 +515,9 @@ describe('=focus/Zoom', () => {
     `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toMatchObject({
       a: 'hide-parent',
@@ -518,8 +540,9 @@ describe('=focus/Zoom', () => {
     `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toMatchObject({
       a: 'hide-parent',
@@ -539,8 +562,9 @@ describe('=focus/Zoom', () => {
     `
     const steps = [importText({ text }), setCursor(['a'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toMatchObject({
       a: 'show',
@@ -561,8 +585,9 @@ describe('=focus/Zoom', () => {
     `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toMatchObject({
       a: 'hide-parent',
@@ -585,8 +610,9 @@ describe('=focus/Zoom', () => {
     `
     const steps = [importText({ text }), setCursor(['a'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toMatchObject({
       a: 'show',
@@ -606,8 +632,9 @@ describe('=focus/Zoom', () => {
     `
     const steps = [importText({ text }), setCursor(['b'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toMatchObject({
       a: 'show',
@@ -630,8 +657,9 @@ describe('=focus/Zoom', () => {
     `
     const steps = [importText({ text }), setCursor(['d'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     // d names =foo but is outside a, where the binding is defined, so it is not zoomed and a stays visible
     expect(autofocusMap).toMatchObject({
@@ -653,8 +681,9 @@ describe('=focus/Zoom', () => {
     `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
     const stateNew = reducerFlow(steps)(initialState())
+    const autofocus = calculateAutofocus(stateNew)
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
-      [key]: calculateAutofocus(stateNew, simplePath),
+      [key]: autofocus(simplePath),
     }))
     expect(autofocusMap).toMatchObject({
       a: 'hide-parent',

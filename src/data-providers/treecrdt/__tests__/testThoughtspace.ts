@@ -75,16 +75,31 @@ it('finds the first duplicate attribute in canonical order without changing node
   await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent')], { [PARENT_ID]: SETTINGS_TOKEN })
   await persistThoughts(
     [
-      thought(PIN_ID, PARENT_ID, '=pin'),
+      thought(THOUGHT_B_ID, EM_TOKEN, '=pin'),
+      thought(THOUGHT_A_ID, PARENT_ID, '=PIN'),
       thought(PIN_DUPLICATE_ID, PARENT_ID, '=pin'),
+      thought(PIN_ID, PARENT_ID, '=pin'),
       thought(FALSE_ID, PARENT_ID, 'false'),
     ],
-    { [PIN_ID]: null, [PIN_DUPLICATE_ID]: PIN_ID, [FALSE_ID]: PIN_DUPLICATE_ID },
+    {
+      [THOUGHT_B_ID]: PARENT_ID,
+      [THOUGHT_A_ID]: null,
+      [PIN_DUPLICATE_ID]: THOUGHT_A_ID,
+      [PIN_ID]: PIN_DUPLICATE_ID,
+      [FALSE_ID]: PIN_ID,
+    },
   )
   const state = { ...initialState(), thoughts: treecrdt.project() }
-  expect(findDescendant(state, PARENT_ID, '=pin')).toBe(PIN_ID)
+  expect(findDescendant(state, PARENT_ID, '=pin')).toBe(PIN_DUPLICATE_ID)
+  expect(findDescendant(state, PARENT_ID, '=missing')).toBeNull()
   expect(findDescendant(state, PARENT_ID, 'false')).toBe(FALSE_ID)
-  expect(state.thoughts.getChildren(PARENT_ID)).toEqual([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID])
+  expect(state.thoughts.getChildren(PARENT_ID)).toEqual([THOUGHT_A_ID, PIN_DUPLICATE_ID, PIN_ID, FALSE_ID])
+  await treecrdt.transact(transaction => {
+    transaction.payload(PIN_DUPLICATE_ID, { value: '=note' })
+    const current = { ...state, thoughts: transaction.project() }
+    expect(findDescendant(current, PARENT_ID, '=pin')).toBe(PIN_ID)
+    expect(findDescendant(current, PARENT_ID, '=note')).toBe(PIN_DUPLICATE_ID)
+  }).persisted
 })
 
 it('captures cross-parent moves and shifted sibling positions as plain facts', async () => {

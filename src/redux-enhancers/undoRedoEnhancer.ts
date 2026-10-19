@@ -125,12 +125,26 @@ const diffState = (
   {
     mergeWith,
     actionType,
+    reuseUnchanged = false,
   }: {
     mergeWith?: Patch
     actionType?: string
+    reuseUnchanged?: boolean
   } = {},
 ): Operation[] => {
-  const mergeOps = mergeWith?.ops ?? []
+  // Normalized inverse patches for unchanged UI fields still restore the same values.
+  // Keep them instead of replaying and regenerating large expansion maps for each selection action.
+  // These patches only add, remove, or replace within one top-level field; none move values between fields.
+  const unchanged = new Set(
+    reuseUnchanged
+      ? (Object.keys(value) as (keyof State)[]).filter(
+          key => Object.hasOwn(newValue, key) && newValue[key] === value[key],
+        )
+      : [],
+  )
+  const [retainedOps, mergeOps] = _.partition(mergeWith?.ops ?? [], op =>
+    unchanged.has(op.path.split('/', 2)[1] as keyof State),
+  )
   let previous = value
   if (mergeOps.length) {
     // Normalize UI restoration against this group's earlier state, including UI-only merge steps.
@@ -149,19 +163,36 @@ const diffState = (
       throw new Error('Error applying patch')
     }
   }
-  const omitted = [...statePropertiesToOmit, 'undoPatches', 'redoPatches', 'thoughtUi', 'thoughts']
+  const pathKeys = Object.keys(pathProperties) as PathProperty[]
+  const omitted = [
+    ...statePropertiesToOmit,
+    'undoPatches',
+    'redoPatches',
+    'thoughtUi',
+    'thoughts',
+    ...pathKeys,
+    ...unchanged,
+  ]
   const ops = compare(_.omit(newValue, omitted), _.omit(previous, omitted))
   // Navigation and incoming changes may shorten or clear Paths without changing history.
-  // Restore the captured value, not array operations that assume the previous path still exists.
-  const pathKeys = new Set(
-    ops
-      .map(op => op.path.split('/'))
-      .filter(segments => segments.length > 2 && segments[1] in pathProperties)
-      .map(segments => segments[1] as PathProperty),
-  )
+  // Compare these fields directly: element patches would be discarded in favor of the whole captured Path.
   return [
-    ...ops.filter(op => !pathKeys.has(op.path.split('/')[1] as PathProperty)),
-    ...[...pathKeys].map(key => ({ op: 'replace' as const, path: `/${key}`, value: _.cloneDeep(previous[key]) })),
+    ...retainedOps,
+    ...ops,
+    // An optional field explicitly set to undefined still needs removal if it did not exist before.
+    ...pathKeys.flatMap<Operation>(key =>
+      _.isEqual(newValue[key], previous[key]) && (!Object.hasOwn(newValue, key) || Object.hasOwn(previous, key))
+        ? []
+        : previous[key] === undefined
+          ? [{ op: 'remove', path: `/${key}` }]
+          : [
+              {
+                op: Object.hasOwn(newValue, key) ? 'replace' : 'add',
+                path: `/${key}`,
+                value: _.cloneDeep(previous[key]),
+              },
+            ],
+    ),
     // A remote deletion may have pruned an entry since history was recorded. Restore each entry atomically.
     ...Object.keys({ ...newValue.thoughtUi, ...previous.thoughtUi }).flatMap<Operation>(id =>
       _.isEqual(newValue.thoughtUi[id], previous.thoughtUi[id])
@@ -183,8 +214,9 @@ const undoRedoEnhancer = <A extends Action<any>>(
   reducer: (state: State | undefined, action: A, transaction?: ThoughtspaceTransaction) => State,
   { project }: { project: (state: State, transaction?: ThoughtspaceTransaction) => State },
 ) => {
-  let committedGrouping: { lastAction?: A; direction: EditThoughtDirection } = {
+  let committedGrouping: { lastAction?: A; direction: EditThoughtDirection; historyIsCurrent: boolean } = {
     direction: EditThoughtDirection.None,
+    historyIsCurrent: false,
   }
 
   /** Reverts an engine receipt and UI state, returning the fresh receipt and actual diff for the opposite history stack. */
@@ -312,6 +344,7 @@ const undoRedoEnhancer = <A extends Action<any>>(
     if (actionType === 'clear' || actionType === 'replaceThoughts') {
       grouping.lastAction = undefined
       grouping.direction = EditThoughtDirection.None
+      grouping.historyIsCurrent = false
       return project(reducer(state, action, transaction), transaction)
     }
 
@@ -322,6 +355,7 @@ const undoRedoEnhancer = <A extends Action<any>>(
       // accidentally merge with whatever patch happens to be at the top of the stack.
       grouping.lastAction = undefined
       grouping.direction = EditThoughtDirection.None
+      grouping.historyIsCurrent = false
 
       // Native undo/redo (iOS three-finger swipe, shake-to-undo) sets cursorAtEnd to place the caret at the end of the restored thought.
       const cursorAtEnd = !!(action as UnknownAction).cursorAtEnd
@@ -366,6 +400,8 @@ const undoRedoEnhancer = <A extends Action<any>>(
       // ignore the first importText since it is part of app initialization and should not be undoable
       (actionType === 'importText' && !newState.undoPatches.length)
     ) {
+      // A non-undoable change may make earlier inverse operations redundant or invalid.
+      if (newState !== state) grouping.historyIsCurrent = false
       return newState
     }
 
@@ -400,8 +436,13 @@ const undoRedoEnhancer = <A extends Action<any>>(
 
     if (shouldMerge) {
       grouping.lastAction = action
-      const combinedUndoPatch = diffState(newState, state, { mergeWith: lastUndoPatch, actionType })
+      const combinedUndoPatch = diffState(newState, state, {
+        mergeWith: lastUndoPatch,
+        actionType,
+        reuseUnchanged: grouping.historyIsCurrent,
+      })
       const combinedOperationIds = [...(lastUndoPatch?.documentOperationIds ?? []), ...documentOperationIds]
+      grouping.historyIsCurrent = !!(combinedUndoPatch.length || combinedOperationIds.length)
 
       const actionTypes: [ActionType, ...ActionType[]] = lastUndoPatch
         ? lastUndoPatch.metadata.actionTypes.includes(actionType)
@@ -451,6 +492,7 @@ const undoRedoEnhancer = <A extends Action<any>>(
     const noteOffsetBeforeEdit = getNoteOffsetBeforeEdit(action)
     const stateBeforeAction = noteOffsetBeforeEdit == null ? state : { ...state, noteOffset: noteOffsetBeforeEdit }
     const undoPatch = diffState(newState, stateBeforeAction)
+    grouping.historyIsCurrent = !!(undoPatch.length || documentOperationIds.length)
     return undoPatch.length || documentOperationIds.length
       ? {
           ...newState,

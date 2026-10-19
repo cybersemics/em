@@ -28,6 +28,73 @@ const wrapper = ({ children }: { children: ReactNode }) => createElement(EditorP
 beforeEach(initStore)
 afterEach(waitForThoughtspaceIdle)
 
+it.each([
+  ['editor', store],
+  ['Redux UI', store.uiStore],
+] as const)('coalesces %s notifications without deferring intermediate state', (_, source) => {
+  const observed: State['error'][] = []
+  const unsubscribe = source.subscribe(() => observed.push(source.getState().error))
+  try {
+    store.dispatch((dispatch, getState) => {
+      dispatch(error({ value: 'First' }))
+      expect(getState().error).toBe('First')
+      dispatch([
+        error({ value: 'Second' }),
+        (dispatch, getState) => {
+          expect(getState().error).toBe('Second')
+          dispatch(error({ value: 'Final' }))
+        },
+      ])
+      expect(observed).toEqual([])
+    })
+    expect(observed).toEqual(['Final'])
+    store.dispatch(() => {})
+    expect(observed).toEqual(['Final'])
+  } finally {
+    unsubscribe()
+  }
+})
+
+it.each([
+  ['editor', store],
+  ['Redux UI', store.uiStore],
+] as const)('batches %s notifications separately before and after an await', async (_, source) => {
+  const observed: State['error'][] = []
+  const unsubscribe = source.subscribe(() => observed.push(source.getState().error))
+  try {
+    const completed = store.dispatch(async dispatch => {
+      dispatch(error({ value: 'Before await' }))
+      await Promise.resolve()
+      dispatch([error({ value: 'Intermediate' }), error({ value: 'After await' })])
+    })
+    expect(observed).toEqual(['Before await'])
+    await completed
+    expect(observed).toEqual(['Before await', 'After await'])
+  } finally {
+    unsubscribe()
+  }
+})
+
+it.each([
+  ['editor', store],
+  ['Redux UI', store.uiStore],
+] as const)('publishes completed %s actions when a later thunk step throws', (_, source) => {
+  const observed: State['error'][] = []
+  const unsubscribe = source.subscribe(() => observed.push(source.getState().error))
+  try {
+    expect(() =>
+      store.dispatch(dispatch => {
+        dispatch(error({ value: 'Committed' }))
+        throw new Error('Later step failed')
+      }),
+    ).toThrow('Later step failed')
+    store.dispatch(error({ value: 'Next action' }))
+    expect(observed).toEqual(['Committed', 'Next action'])
+  } finally {
+    unsubscribe()
+  }
+})
+
 it('updates document selectors and effects without notifying the UI-only Redux store', async () => {
   store.dispatch(importText({ text: '- a', preventSetCursor: true }))
   const a = contextToThought(store.getState(), ['a'])!
@@ -170,6 +237,7 @@ it('publishes coherent cursor and document selections for local creation and pro
 it.each([
   ['provider', db],
   ['Redux UI', store.uiStore],
+  ['editor', store],
 ] as const)('publishes a completed command before %s observers dispatch another action', (_, source) => {
   const unsubscribe = source.subscribe(() => {
     unsubscribe()

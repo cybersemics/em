@@ -6,6 +6,8 @@ import ThoughtId from './ThoughtId'
 interface ThoughtspaceView {
   /** Changes when current reads change; a cache invalidation token, not a historical read handle. */
   readonly revision: number
+  /** Normal outline invalidation, combined with UI/expansion inputs. Context and absolute views need full revision. */
+  readonly layoutRevision: number
   getThought: (id: ThoughtId) => Thought | undefined
   /** Payload-bearing children in canonical order. */
   getChildren: (id: ThoughtId) => readonly ThoughtId[]

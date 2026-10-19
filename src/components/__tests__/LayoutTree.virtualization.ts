@@ -1,7 +1,9 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import col1MaxWidthStore from '../../stores/col1MaxWidthStore'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
+import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import queryThoughtByText from '../../test-helpers/queries/queryThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
@@ -16,6 +18,23 @@ afterEach(async () => {
   document.documentElement.scrollTop = 0
   vi.restoreAllMocks()
   await cleanupTestApp()
+})
+
+it('does not commit when only the prepared table-alignment width changes', async () => {
+  await dispatch(importText({ text: '- a\n- b' }))
+  await act(vi.runAllTimersAsync)
+  expect(await queryThoughtByText('a')).not.toBeNull()
+  expect(await queryThoughtByText('b')).not.toBeNull()
+  profilerOnRender.mockClear()
+
+  await act(async () => {
+    col1MaxWidthStore.update(width => (width ?? 0) + 100)
+    await vi.runAllTimersAsync()
+  })
+
+  expect(profilerOnRender).not.toHaveBeenCalled()
+  expect(await queryThoughtByText('a')).not.toBeNull()
+  expect(await queryThoughtByText('b')).not.toBeNull()
 })
 
 it('does not commit when no thought crosses the viewport boundary while preserving boundary virtualization', async () => {
@@ -104,4 +123,27 @@ it('does not commit when no thought crosses the viewport boundary while preservi
   })
 
   expect(await queryThoughtByText('thought 60')).toBeNull()
+
+  // Reenter after an unmounted row changes; content must read the current thought, not its previous render.
+  await dispatch(editThought(['thought 60'], 'updated thought'))
+  await act(async () => {
+    document.documentElement.scrollTop = 1900
+    window.dispatchEvent(new Event('scroll'))
+    await vi.runOnlyPendingTimersAsync()
+  })
+
+  expect(await queryThoughtByText('updated thought')).not.toBeNull()
+
+  // The cursor remains mounted even when it is below the render window.
+  await dispatch(setCursor(['updated thought']))
+  await act(async () => {
+    document.documentElement.scrollTop = 0
+    window.dispatchEvent(new Event('scroll'))
+    await vi.runOnlyPendingTimersAsync()
+  })
+
+  expect(await queryThoughtByText('updated thought')).not.toBeNull()
+  await dispatch(setCursor(null))
+  await act(vi.runOnlyPendingTimersAsync)
+  expect(await queryThoughtByText('updated thought')).toBeNull()
 })

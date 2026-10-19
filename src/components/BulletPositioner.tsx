@@ -126,7 +126,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
 
     const dispatch = useDispatch()
 
-    const showContexts = useEditorSelector(state => isContextViewActive(state, path))
+    const showContexts = useSelector(state => isContextViewActive(state, path))
 
     const invalid = useSelector(state => isEditing && state.invalidState)
 
@@ -135,7 +135,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
     const fontSize = useSelector(state => state.fontSize)
 
     const dragHold = useSelector(state => state.longPress === LongPressState.DragHold)
-    const isMulticursor = useEditorSelector(state => isMulticursorPath(state, path))
+    const isMulticursor = useSelector(state => isMulticursorPath(state, path))
 
     const isHighlighted = useSelector(state => {
       const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)

@@ -186,7 +186,7 @@ const Editable = ({
 }: EditableProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
-  const parentId = useEditorSelector(state => head(rootedParentOf(state, simplePath)))
+  const parentId = useSelector(state => head(rootedParentOf(state, simplePath)))
   const readonly = useEditorSelector(state => findDescendant(state, thoughtId, '=readonly'))
   const uneditable = useEditorSelector(state => findDescendant(state, thoughtId, '=uneditable'))
   const optionsId = useEditorSelector(state => findDescendant(state, parentId, '=options'))
@@ -196,8 +196,8 @@ const Editable = ({
   }, shallowEqual)
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
   const value = useEditorSelector(state => getThoughtById(state, head(simplePath))?.value || '')
-  const generating = useEditorSelector(state => !!getThoughtById(state, head(simplePath))?.generating)
-  const isCursorCleared = useEditorSelector(
+  const generating = useSelector(state => !!state.thoughtUi[thoughtId]?.generating)
+  const isCursorCleared = useSelector(
     // A thought is displayed as cleared when clearThought is active and it is either the cursor thought (single clear)
     // or a member of a multiselection (multiselect clear).
     state => state.cursorCleared && (!!isEditing || isMulticursorPath(state, path)),
@@ -207,7 +207,7 @@ const Editable = ({
   // first/cursor thought). The cursor thought shows the real caret via useEditMode. This outlives the cleared state:
   // clearThought preserves the multicursors so that typed edits keep mirroring, and the faux carets must keep tracking
   // the real caret for as long as they do.
-  const isMulticursorFauxCaretPath = useEditorSelector(
+  const isMulticursorFauxCaretPath = useSelector(
     state =>
       isMulticursorPath(state, path) &&
       !equalPath(state.cursor, path) &&
@@ -219,7 +219,7 @@ const Editable = ({
   // the placeholder with it so that the empty thought previews the formatting the typed text will take. A cleared
   // thought keeps its own value's formatting, but only when it has a value to take it from — an empty thought that is
   // also cleared has none, so the held formatting is used instead.
-  const pendingFormat = useEditorSelector(state => getThoughtById(state, thoughtId)?.pendingFormat)
+  const pendingFormat = useSelector(state => state.thoughtUi[thoughtId]?.pendingFormat)
   const placeholderCommandState = useMemo(
     () => (isCursorCleared && value ? getCommandState(value) : pendingFormat ? getCommandState(pendingFormat) : null),
     [isCursorCleared, pendingFormat, value],
@@ -248,7 +248,7 @@ const Editable = ({
     [placeholderBackColor, placeholderForeColor, style],
   )
 
-  const hasMulticursor = useEditorSelector(hasMulticursorSelector)
+  const hasMulticursor = useSelector(hasMulticursorSelector)
   // A non-null caret rect means the multiselection is being edited (Clear Thought), where a click places the caret as
   // usual. It is the only reactive signal that distinguishes an edited multiselection from an idle one, since the
   // browser selection that isMultiEditing consults is not part of the Redux state (see caretRectStore).

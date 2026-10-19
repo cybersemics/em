@@ -15,7 +15,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { selectBetweenActionCreator as selectBetween } from '../actions/selectBetween'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isTouch } from '../browser'
-import { AlertType, REGEX_TAGS } from '../constants'
+import { AlertType, GLOBAL_STYLE_ENV, REGEX_TAGS } from '../constants'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
@@ -149,13 +149,11 @@ interface UseCol1AlignParams {
 const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
   const prevIsTableCol1 = useRef<boolean>(isTableCol1)
 
-  const col1MaxWidth = col1MaxWidthStore.useState()
-
   const fontSize = useSelector(state => state.fontSize)
 
   const isCursor = useSelector(state => equalPath(state.cursor, path))
 
-  const isSiblingOfCursor = useEditorSelector((state: State) => {
+  const isSiblingOfCursor = useSelector(state => {
     if (!state.cursor) return false
     const cursorParentId = head(rootedParentOf(state, state.cursor))
     const thisParentId = head(rootedParentOf(state, path))
@@ -200,6 +198,9 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
 
     if (prevIsTableCol1.current == isTableCol1) return
 
+    // Width changes do not animate by themselves; read the latest measurement only when alignment changes.
+    const col1MaxWidth = col1MaxWidthStore.getState()
+
     // Measure text width
     const width = getTextWidth(value || '', `${fontSize}px Helvetica`)
 
@@ -230,7 +231,7 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
     })
 
     prevIsTableCol1.current = isTableCol1
-  }, [isTableCol1, col1MaxWidth, fontSize, value, duration, isSiblingOfCursor])
+  }, [isTableCol1, fontSize, value, duration, isSiblingOfCursor])
 
   return alignmentTransition
 }
@@ -263,8 +264,15 @@ const ThoughtContainer = ({
 }: ThoughtContainerProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
+  // Only child expressions affect the parent's styling; ordinary children render in the layout list.
   const children = useEditorSelector<Thought[]>(
-    state => (childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath))),
+    state =>
+      (childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath))).filter(
+        child =>
+          child.value in GLOBAL_STYLE_ENV ||
+          // Do not apply a binding to its own =let definition.
+          (child.value in { ...env } && child.id !== env![child.value]),
+      ),
     // Only compare child ids, values, and order for re-renders.
     equalChildren,
   )
@@ -313,7 +321,7 @@ const ThoughtContainer = ({
   const isTableCol2 = useEditorSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
   )
-  const isInContextView = useEditorSelector(state => isContextViewActive(state, parentOf(path)))
+  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
 
   const hideBullet = useHideBullet({
     children,
@@ -349,7 +357,7 @@ const ThoughtContainer = ({
 
   // The ancestors of the context that are rendered as breadcrumbs in the context view.
   // A context that is a direct child of the home context has a simplePath of length 1, so rootedParentOf returns HOME_PATH and ContextBreadcrumbs renders the HomeLink.
-  const contextBreadcrumbsAncestors = useEditorSelector(state => rootedParentOf(state, simplePath), shallowEqual)
+  const contextBreadcrumbsAncestors = useSelector(state => rootedParentOf(state, simplePath), shallowEqual)
 
   // true if the thought has an invalid option
   const invalidOption = useEditorSelector(state => {

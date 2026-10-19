@@ -14,8 +14,8 @@ interface DataProvider {
     spans: readonly { from: number; to: number }[],
     visit: (
       history: {
-        before: Omit<ThoughtspaceView, 'getLexeme' | 'revision'>
-        after: Omit<ThoughtspaceView, 'getLexeme' | 'revision'>
+        before: Omit<ThoughtspaceView, 'getLexeme' | 'revision' | 'layoutRevision'>
+        after: Omit<ThoughtspaceView, 'getLexeme' | 'revision' | 'layoutRevision'>
         thoughtIds: readonly ThoughtId[]
         /** Parents whose raw child order changed, including payload-less children. */
         childrenChangedIds: readonly ThoughtId[]

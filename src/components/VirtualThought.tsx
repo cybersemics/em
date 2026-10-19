@@ -47,7 +47,8 @@ export type OnResize = (args: OnResizeParams) => void
 export type SetSize = (args: OnResizeParams & { cliff: number }) => void
 
 /** Selects whether the context view is active for this thought. */
-const selectShowContexts = (path: SimplePath) => (state: State) => isContextViewActive(state, path)
+const selectShowContexts = (path: SimplePath) => (state: Pick<State, 'contextViews'>) =>
+  isContextViewActive(state, path)
 
 /** Selects the cursor from the state. */
 const selectCursor = (state: State) => state.cursor
@@ -59,7 +60,6 @@ const VirtualThought = ({
   childIndexNonAttribute,
   dropUncle,
   env,
-  indexDescendant,
   isMultiColumnTable,
   leaf,
   onResize,
@@ -83,7 +83,6 @@ const VirtualThought = ({
   childIndexNonAttribute: number
   dropUncle?: boolean
   env?: LazyEnv
-  indexDescendant: number
   isMultiColumnTable?: boolean
   leaf: boolean
   path: Path
@@ -109,7 +108,7 @@ const VirtualThought = ({
   const id = head(simplePath)
   const isEditing = useSelector(state => equalPath(state.cursor, simplePath))
   const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
-  const isContextViewActive = useEditorSelector(selectShowContexts(simplePath))
+  const isContextViewActive = useSelector(selectShowContexts(simplePath))
   const cursorLeaf = useEditorSelector(state => !!state.cursor && !hasChildren(state, head(state.cursor)))
   const cursorDepth = useSelector(state => (state.cursor ? state.cursor.length : 0))
   const fontSize = useSelector(state => state.fontSize)
@@ -259,7 +258,6 @@ const VirtualThought = ({
           depth={depth + 1}
           dropUncle={dropUncle}
           env={env}
-          indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}
           leaf={leaf}
           updateSize={updateSize}

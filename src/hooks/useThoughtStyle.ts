@@ -39,14 +39,6 @@ const useThoughtStyle = ({
 
     /** Load styles from child expressions that are found in the environment. */
     const styleEnv = children
-      .filter(
-        child =>
-          child.value in GLOBAL_STYLE_ENV ||
-          // children that have an entry in the environment
-          (child.value in { ...env } &&
-            // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-            child.id !== env![child.value]),
-      )
       .map(child =>
         child.value in { ...env } ? getStyle(state, env![child.value]) : getGlobalStyle(child.value) || {},
       )

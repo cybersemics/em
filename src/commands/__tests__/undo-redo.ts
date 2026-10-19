@@ -32,6 +32,7 @@ import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import contextToThought from '../../test-helpers/contextToThought'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initStore from '../../test-helpers/initStore'
 import { moveThoughtAtFirstMatchActionCreator as moveThoughtAtFirstMatch } from '../../test-helpers/moveThoughtAtFirstMatch'
@@ -551,6 +552,30 @@ describe('undo', () => {
     - =note
       - hello
   - b`)
+  })
+
+  it('drops a note navigation patch already restored by a non-undoable action when navigation merges', () => {
+    store.dispatch([
+      importText({ text: '- a\n  - =note\n    - hello' }),
+      setCursor(['a']),
+      editThought(['a'], 'aa'),
+      toggleNote(),
+      toggleNote(),
+      toggleNote(),
+    ])
+    const beforeBlur = store.getState().undoPatches
+
+    store.dispatch(setNoteFocus({ value: false }))
+    expect(store.getState().undoPatches).toHaveLength(beforeBlur.length + 1)
+
+    // Reopening the note makes the blur's restoration redundant without changing history.
+    store.dispatch(toggleNote())
+    expect(store.getState().noteFocus).toBe(true)
+    expect(store.getState().noteOffset).toBe(5)
+
+    // The focus event only changes omitted device state, so the merged navigation entry must disappear.
+    store.dispatch(setNoteFocus({ value: true, offset: 5 }))
+    expect(store.getState().undoPatches).toEqual(beforeBlur)
   })
 
   // Broken when space-to-indent was added.
@@ -1562,6 +1587,11 @@ describe('operation receipts', () => {
   - a
     - b
     - c`)
+    expectPathToEqual(store.getState(), store.getState().cursor, ['a', 'b'])
+    expect(Object.values(store.getState().multicursors)).toEqual([
+      contextToPath(store.getState(), ['a', 'b']),
+      contextToPath(store.getState(), ['a', 'c']),
+    ])
     const original = store.getState().undoPatches.at(-1)!
     expect(original.metadata).toMatchObject({
       source: 'command',
@@ -1578,6 +1608,11 @@ describe('operation receipts', () => {
   - a
   - b
   - c`)
+    expectPathToEqual(store.getState(), store.getState().cursor, ['b'])
+    expect(Object.values(store.getState().multicursors)).toEqual([
+      contextToPath(store.getState(), ['b']),
+      contextToPath(store.getState(), ['c']),
+    ])
     const inverse = store.getState().redoPatches.at(-1)!
     expect(inverse.metadata).toEqual(original.metadata)
     expect(inverse.documentOperationIds.length).toBeGreaterThan(0)
@@ -1588,6 +1623,11 @@ describe('operation receipts', () => {
   - a
     - b
     - c`)
+    expectPathToEqual(store.getState(), store.getState().cursor, ['a', 'b'])
+    expect(Object.values(store.getState().multicursors)).toEqual([
+      contextToPath(store.getState(), ['a', 'b']),
+      contextToPath(store.getState(), ['a', 'c']),
+    ])
     const replayed = store.getState().undoPatches.at(-1)!
     expect(replayed.metadata).toEqual(original.metadata)
     expect(replayed.documentOperationIds).not.toEqual(inverse.documentOperationIds)

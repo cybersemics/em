@@ -22,9 +22,10 @@ import type ThoughtId from '../../@types/ThoughtId'
 import type ThoughtMove from '../../@types/ThoughtMove'
 import type ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import type ThoughtspaceView from '../../@types/ThoughtspaceView'
-import { GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID } from '../../constants'
+import { GLOBAL_ROOT_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../../constants'
 import createId from '../../util/createId'
 import hashThought from '../../util/hashThought'
+import isAttribute from '../../util/isAttribute'
 import stripTags from '../../util/stripTags'
 import type DataProvider from '../DataProvider'
 import { initPermissionsStore } from '../permissionsStore'
@@ -39,8 +40,9 @@ const ROOT_IDS = new Set<string>([GLOBAL_ROOT_TOKEN, ...SYSTEM_ROOT_THOUGHT_IDS]
 
 /** Decodes owned content; topology remains in TreeCRDT. */
 const readThought = (row: MemoryContent | undefined): Thought | undefined => {
-  if (!row?.payload) return undefined
-  const payload = decodeThoughtPayload(row.payload)
+  const bytes = row?.payload
+  if (!bytes) return undefined
+  const payload = decodeThoughtPayload(bytes)
   if (typeof payload?.value !== 'string') throw new TypeError('A thought payload requires a text value')
   return Object.freeze({
     ...payload,
@@ -113,7 +115,7 @@ const memoryReader = (
   reader: Pick<MemoryReader, 'getContent' | 'getChildren' | 'getPosition'>,
   nodeIds: () => Iterable<string>,
   check: () => void,
-): Omit<ThoughtspaceView, 'getLexeme' | 'revision'> => {
+): Omit<ThoughtspaceView, 'getLexeme' | 'revision' | 'layoutRevision'> => {
   let children: Map<string, readonly ThoughtId[]> | undefined
   /** Decodes content through the lifetime-checked reader. */
   const getThought = (id: ThoughtId) => readThought(reader.getContent(id))
@@ -169,7 +171,7 @@ const createMemoryThoughtspace = (
   let unsubscribeMemory: (() => void) | undefined
   let lexemes: ReturnType<typeof createLexemeLookup> | undefined
   let transacting = false
-  const reader: Omit<ThoughtspaceView, 'getLexeme' | 'revision'> = {
+  const reader: Omit<ThoughtspaceView, 'getLexeme' | 'revision' | 'layoutRevision'> = {
     getThought: id => (id ? projection?.get(id) : undefined),
     getChildren: id => (projection?.getChildren(id) ?? []) as readonly ThoughtId[],
     getPosition: id => (id ? memory?.getPosition(id) : undefined),
@@ -181,6 +183,8 @@ const createMemoryThoughtspace = (
     },
   }
   let viewRevision = 0
+  let layoutRevision = 0
+  let flushLayout: (() => void) | undefined
   let projectionRevision: number | undefined
   /** Creates a publication identity, not a historical copy of the tree. */
   const view = (): ThoughtspaceView => ({
@@ -188,6 +192,10 @@ const createMemoryThoughtspace = (
     getLexeme: value => lexemes?.get(hashThought(value)),
     get revision() {
       return viewRevision
+    },
+    get layoutRevision() {
+      flushLayout?.()
+      return layoutRevision
     },
   })
   let currentView = view()
@@ -471,6 +479,8 @@ const createMemoryThoughtspace = (
     memory?.close()
     memory = undefined
     projection = undefined
+    flushLayout = undefined
+    layoutRevision++
     const target = persistent
     try {
       if (deleteStorage) await target?.drop()
@@ -614,6 +624,50 @@ const createMemoryThoughtspace = (
         ready = !dropping
         projection = memory.createProjection<Thought>({ decode: readThought })
         lexemes = createLexemeLookup(memory)
+        const client = memory
+        flushLayout = client.observeMaterialization(() => ({
+          apply: ({ reset, changes }) => {
+            if (
+              reset ||
+              changes.some(({ before, after }) => {
+                if (
+                  !before ||
+                  !after ||
+                  before.parentId !== after.parentId ||
+                  !_.isEqual(before.children, after.children)
+                )
+                  return true
+                if (_.isEqual(before.payload, after.payload)) return false
+                const oldThought = readThought(before)
+                const thought = readThought(after)
+                if (
+                  !oldThought?.value ||
+                  !thought?.value ||
+                  isAttribute(oldThought.value) ||
+                  isAttribute(thought.value) ||
+                  oldThought.created !== thought.created ||
+                  oldThought.archived !== thought.archived
+                )
+                  return true
+                // Plain text beneath attributes is configuration (style, table, bindings, etc.).
+                // Only ordinary Home descendants can skip the outline traversal.
+                let parentId = after.parentId
+                while (parentId !== HOME_TOKEN) {
+                  if (!parentId || ROOT_IDS.has(parentId)) return true
+                  const parent = client.getContent(parentId)
+                  const parentThought = readThought(parent)
+                  if (!parentThought || isAttribute(parentThought.value)) return true
+                  parentId = parent?.parentId ?? null
+                }
+                return false
+              })
+            )
+              layoutRevision++
+          },
+          rollback: () => {
+            layoutRevision++
+          },
+        })).flush
         project()
         publishedRevision = undefined
         return { clientId, storage: persistent.storage }

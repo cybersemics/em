@@ -31,7 +31,8 @@ interface LinkProps {
 /** Renders a link to a thought. */
 const Link = React.memo(({ simplePath, label, placeholder, charLimit = 32, style, cssRaw, className }: LinkProps) => {
   const isEM = simplePath.length === 1 && head(simplePath) === EM_TOKEN
-  const value = useEditorSelector(state => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
+  const rawValue = useEditorSelector(state => label || getThoughtById(state, head(simplePath))?.value || '')
+  const value = strip(rawValue)
   const dispatch = useDispatch()
 
   return (

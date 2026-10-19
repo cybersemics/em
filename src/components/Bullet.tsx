@@ -280,13 +280,13 @@ const Bullet = ({
   // debugIndex,
 }: BulletProps) => {
   const svgElement = useRef<SVGSVGElement>(null)
-  const showContexts = useEditorSelector(state => isContextViewActive(state, path))
+  const showContexts = useSelector(state => isContextViewActive(state, path))
 
   const isTableCol1 = useEditorSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
   const isDone = useEditorSelector(state => !!findDescendant(state, thoughtId, '=done'))
-  const isMulticursor = useEditorSelector(state => isMulticursorPath(state, path))
+  const isMulticursor = useSelector(state => isMulticursorPath(state, path))
   const isHighlighted = useSelector(state => {
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
     return isHolding || isDragging || isMulticursor
@@ -298,7 +298,7 @@ const Bullet = ({
   )
 
   /** Shows the in-flight generation indicator without treating document reads as asynchronous. */
-  const pending = useEditorSelector(state => !!getThoughtById(state, thoughtId)?.generating)
+  const pending = useSelector(state => !!state.thoughtUi[thoughtId]?.generating)
 
   /** Returns true if the thought or its Lexeme is missing. */
   const missing = useEditorSelector(state => {

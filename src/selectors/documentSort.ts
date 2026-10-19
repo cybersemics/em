@@ -7,6 +7,7 @@ import sort from '../util/sort'
 const documentSort = (state: ThoughtReaderState, paths: Path[]) => {
   return sort(paths, (a, b) => {
     for (let i = 0; i < Math.min(a.length, b.length); i++) {
+      if (a[i] === b[i]) continue
       const aRank = state.thoughts.getPosition(a[i]) ?? 0
       const bRank = state.thoughts.getPosition(b[i]) ?? 0
       if (aRank !== bRank) return (aRank - bRank) as ComparatorValue

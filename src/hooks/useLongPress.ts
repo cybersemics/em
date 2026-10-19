@@ -41,10 +41,11 @@ const useLongPress = (
   const dragDropManager = useDragDropManager()
 
   useEffect(() => {
+    // An inactive thought cannot handle dragStart, so only subscribe while its press is in progress.
+    if (!pressing) return
+
     /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackend in react-dnd. */
     const onStart = () => {
-      if (!pressing) return
-
       // Reject long-press / drag initiation during a multi-touch gesture (e.g. two-finger trace or pinch-to-zoom).
       // The patched TouchBackend arms its drag timer from the primary touch and fires dragStart independently of
       // react-dnd's canDrag, so this second guard is required to stop a two-finger gesture from beginning a drag.
@@ -67,7 +68,7 @@ const useLongPress = (
       backend.options.rootElement.addEventListener('dragStart', onStart)
 
       return () => backend.options.rootElement.removeEventListener('dragStart', onStart)
-    } else if (pressing) {
+    } else {
       clearTimeout(timerIdRef.current)
       /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
       // cast Timeout to number for compatibility with clearTimeout

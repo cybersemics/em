@@ -1,6 +1,6 @@
 import { unescape as decodeCharacterEntities, isEqual } from 'lodash'
 import React, { createRef, useMemo } from 'react'
-import { shallowEqual } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
@@ -116,7 +116,7 @@ const BreadCrumb = React.memo(
       const simplePath = useEditorSelector(state => simplifyPath(state, path), shallowEqual)
       const value = useEditorSelector(state => getThoughtById(state, head(simplePath))?.value)
       const thoughtPlaceholder = usePlaceholder({ isEditing: false, path, simplePath })
-      const showContexts = useEditorSelector(state => isContextViewActive(state, parentOf(path)))
+      const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
       const delimiterStyle: React.CSSProperties = {
         fontSize: '0.8em',
         lineHeight: '16px',

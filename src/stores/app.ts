@@ -3,7 +3,7 @@
  */
 import { composeWithDevTools } from '@redux-devtools/extension'
 import _ from 'lodash'
-import { applyMiddleware, createStore } from 'redux'
+import { StoreEnhancer, applyMiddleware, createStore } from 'redux'
 import { thunk } from 'redux-thunk'
 import EditorStore from '../@types/EditorStore'
 import appReducer from '../actions/app'
@@ -31,7 +31,7 @@ if (!appReducer) {
   throw new Error('appReducer is undefined. This probably means there is a circular import.')
 }
 
-const middlewareEnhancer = applyMiddleware(
+const middleware = [
   // prevent accidentally passing a reducer to the dispatch function (dev and test only)
   // (must go before the thunk middleware so that it can throw an error before the thunk middleware tries to execute it)
   ...(import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [doNotDispatchReducer] : []),
@@ -44,18 +44,59 @@ const middlewareEnhancer = applyMiddleware(
   multicursorAlertMiddleware,
   multiselectCursorMiddleware,
   closeDropdownsWhenCursorNull,
-)
+]
 
 // only validate Redux state in dev and test environments
 const validateStateEnhancerDevOnly =
   import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [validateStateEnhancer] : null
+
+/** Coalesces editor notifications until a synchronous dispatch returns, without deferring state changes. */
+const batchEditorNotifications: StoreEnhancer =
+  createStore =>
+  (...args) => {
+    const listeners = new Set<() => void>()
+    let dispatching = false
+    let pending = false
+
+    /** Relays the latest state once the outer dispatch has finished, including when it throws. */
+    const notify = () => {
+      pending = dispatching
+      if (!dispatching) Array.from(listeners).forEach(listener => listener())
+    }
+    // Batch inside the middleware chain so a thunk's dispatch also enters it after an await.
+    const store = applyMiddleware(
+      () => next => action => {
+        const wasDispatching = dispatching
+        dispatching = true
+        try {
+          return next(action)
+        } finally {
+          // A returned Promise does not extend the synchronous batch across an await.
+          dispatching = wasDispatching
+          if (!dispatching && pending) notify()
+        }
+      },
+      ...middleware,
+    )(createStore)(...args)
+    store.subscribe(notify)
+
+    return {
+      ...store,
+      subscribe: listener => {
+        listeners.add(listener)
+        return () => {
+          listeners.delete(listener)
+        }
+      },
+    }
+  }
 
 const editorStore = createStore(
   appReducer,
   composeEnhancers(
     // validate state before production enhancers run
     ...(validateStateEnhancerDevOnly || []),
-    middlewareEnhancer,
+    batchEditorNotifications,
     storageCache,
     updateJumpHistory,
     // validate state again after production enhancers run
@@ -68,7 +109,20 @@ const editorStore = createStore(
 const store = {
   ...editorStore,
   // React Redux dispatch still enters the complete command/middleware pipeline.
-  uiStore: { ...editorStore.uiStore, dispatch: editorStore.dispatch },
+  uiStore: {
+    ...editorStore.uiStore,
+    dispatch: editorStore.dispatch,
+    /** Shares the editor's notification boundary without notifying on document-only changes. */
+    subscribe: (listener: () => void) => {
+      let previous = editorStore.uiStore.getState()
+      return editorStore.subscribe(() => {
+        const current = editorStore.uiStore.getState()
+        if (current === previous) return
+        previous = current
+        listener()
+      })
+    },
+  },
 }
 
 db.subscribe(getMoves => {
