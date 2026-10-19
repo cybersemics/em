@@ -68,6 +68,12 @@ const resumeSettleTimeoutStore = ministore<{ timer: Timer | null }>(
   { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
 )
 
+/** Timer for the viewport snapshot logged after repairViewport restores the viewport meta tag. A ministore whose dispose clears the timer, like passiveTimeoutStore. */
+const viewportRepairTimeoutStore = ministore<{ timer: Timer | null }>(
+  { timer: null },
+  { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
+)
+
 /** How long scrolling must pause before the scroll is considered finished and its end is logged. Covers the gaps between scroll events during momentum scrolling on iOS. */
 const SCROLL_END_DELAY = 150
 
@@ -419,7 +425,7 @@ const initEvents = (store: Store<State, any>) => {
   let lastViewportLogged = ''
 
   /** Logs the viewport geometry to the debug log. A resize entry is skipped when the geometry matches the last entry. Resume, settled, scrollStart and scrollEnd entries are always written, so the geometry at every resume and around every scroll is on record even when nothing changed. This makes a layout that was left at the wrong size visible in the log, such as the nav bar drawn mid-screen after returning to the app because iOS kept the keyboard-open viewport height. */
-  const logViewport = (reason: 'resize' | 'resume' | 'settled' | 'scrollStart' | 'scrollEnd') => {
+  const logViewport = (reason: 'resize' | 'resume' | 'settled' | 'scrollStart' | 'scrollEnd' | 'repaired') => {
     // skip the layout reads below when nothing will be logged
     if (!debugLog.isEnabled()) return
     const visualViewport = window.visualViewport
@@ -428,7 +434,10 @@ const initEvents = (store: Store<State, any>) => {
       innerHeight: window.innerHeight,
       // height of the layout viewport, which position: fixed and position: sticky elements are laid out against
       clientHeight: document.documentElement.clientHeight,
+      visualViewportWidth: visualViewport ? Math.round(visualViewport.width) : null,
       visualViewportHeight: visualViewport ? Math.round(visualViewport.height) : null,
+      // a scale other than 1 would mean the corrupt viewport after an app switch (#5972) is a zoom glitch rather than a stale inset
+      visualViewportScale: visualViewport ? Math.round(visualViewport.scale * 1000) / 1000 : null,
       visualViewportOffsetTop: visualViewport ? Math.round(visualViewport.offsetTop) : null,
       scrollY: Math.round(window.scrollY),
       isKeyboardOpen: store.getState().isKeyboardOpen,
@@ -439,12 +448,32 @@ const initEvents = (store: Store<State, any>) => {
     debugLog.log('viewport', { reason, ...geometry })
   }
 
+  /**
+   * Repairs the visual viewport when iOS has left it with a height of zero or less. After the app switcher takes its landscape snapshot, iOS can report a visualViewport.height of innerHeight minus the landscape width (-59 on a 393×852 iPhone) for the rest of the session. The visible area can then pan below the layout viewport, which leaves the background glow and the nav bar mid-screen with the footer scrolled into view below them (#5972).
+   *
+   * Rewrites the viewport meta tag with an extra argument and restores it on the next frame, so that WebKit recomputes the viewport. The repair is unproven: a viewport entry with reason 'repaired' is logged a second later to show whether it worked. Runs only at discrete moments (the settled snapshot after resume and the end of each scroll), because reading visualViewport.height can force a layout.
+   */
+  const repairViewport = () => {
+    const height = window.visualViewport?.height
+    const meta = document.querySelector<HTMLMetaElement>('meta[name=viewport]')
+    if (height === undefined || height > 0 || !meta) return
+
+    const content = meta.content
+    // shrink-to-fit is parsed by WebKit but does nothing with width=device-width, so the only effect of adding it is that the viewport arguments differ and must be recomputed
+    meta.content = `${content}, shrink-to-fit=no`
+    requestAnimationFrame(() => {
+      meta.content = content
+      if (!debugLog.isEnabled()) return
+      viewportRepairTimeoutStore.reset()
+      viewportRepairTimeoutStore.update({ timer: setTimeout(logViewport, RESUME_SETTLE_DELAY, 'repaired') })
+    })
+  }
+
   /** Logs the viewport geometry on resize. */
   const onResizeLog = () => logViewport('resize')
 
-  /** Logs the viewport geometry at the start and end of each scroll, rather than on every scroll event, which fires about once per frame and would flood the bounded log. */
-  const onScrollLog = () => {
-    if (!debugLog.isEnabled()) return
+  /** Detects the end of each scroll, to log the viewport geometry at the start and end of the scroll and to repair a corrupt visual viewport once it ends. Logging only at the start and end, rather than on every scroll event, which fires about once per frame, keeps the bounded log from flooding. */
+  const onScroll = () => {
     if (!scrollEndTimeoutStore.getState().timer) {
       logViewport('scrollStart')
     }
@@ -453,6 +482,7 @@ const initEvents = (store: Store<State, any>) => {
       timer: setTimeout(() => {
         scrollEndTimeoutStore.update({ timer: null })
         logViewport('scrollEnd')
+        repairViewport()
       }, SCROLL_END_DELAY),
     })
   }
@@ -464,11 +494,16 @@ const initEvents = (store: Store<State, any>) => {
     // Log lifecycle transitions so that events can be correlated with the app being backgrounded or foregrounded, e.g. a false Command Center open right before an app switch. More direct than inferring suspension from gaps in the log timeline.
     debugLog.log('lifecycle', { oldState, newState })
 
-    // Log the viewport geometry when the app resumes and again once it has had time to settle, so that a viewport left at the wrong size by the app switch shows up in the log.
+    // Log the viewport geometry when the app resumes and again once it has had time to settle, so that a viewport left at the wrong size by the app switch shows up in the log, and repair the viewport if the app switch corrupted it.
     resumeSettleTimeoutStore.reset()
     if (newState === 'active') {
       logViewport('resume')
-      resumeSettleTimeoutStore.update({ timer: setTimeout(logViewport, RESUME_SETTLE_DELAY, 'settled') })
+      resumeSettleTimeoutStore.update({
+        timer: setTimeout(() => {
+          logViewport('settled')
+          repairViewport()
+        }, RESUME_SETTLE_DELAY),
+      })
     }
 
     // dismiss the gesture alert on hide
@@ -582,7 +617,7 @@ const initEvents = (store: Store<State, any>) => {
   }
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener('scroll', updateScrollTop)
-  window.addEventListener('scroll', onScrollLog)
+  window.addEventListener('scroll', onScroll)
   window.addEventListener('dragenter', dragEnter)
   window.addEventListener('dragleave', dragLeave)
   window.addEventListener('drop', drop)
@@ -591,7 +626,7 @@ const initEvents = (store: Store<State, any>) => {
   resizeHost.addEventListener('resize', updateSize)
   resizeHost.addEventListener('resize', onResizeLog)
   // While the keyboard is open, iOS pans the visual viewport within the layout viewport, which fires scroll on the visual viewport rather than on the window. When there is no visualViewport, resizeHost is the window, and adding the same listener again is a no-op.
-  resizeHost.addEventListener('scroll', onScrollLog)
+  resizeHost.addEventListener('scroll', onScroll)
 
   // Initialize virtual keyboard handlers
   const unsubscribeKeyboardSelection = initKeyboardSelection()
@@ -627,15 +662,16 @@ const initEvents = (store: Store<State, any>) => {
     document.removeEventListener('gestureend', onSafariGesture)
     window.removeEventListener('beforeunload', onBeforeUnload)
     window.removeEventListener('scroll', updateScrollTop)
-    window.removeEventListener('scroll', onScrollLog)
+    window.removeEventListener('scroll', onScroll)
     window.removeEventListener('dragenter', dragEnter)
     window.removeEventListener('dragleave', dragLeave)
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
     resizeHost.removeEventListener('resize', onResizeLog)
-    resizeHost.removeEventListener('scroll', onScrollLog)
+    resizeHost.removeEventListener('scroll', onScroll)
     resumeSettleTimeoutStore.reset()
+    viewportRepairTimeoutStore.reset()
     scrollEndTimeoutStore.reset()
     unsubscribeKeyboardSelection()
     virtualKeyboardHandler.destroy()

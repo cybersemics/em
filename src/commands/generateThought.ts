@@ -312,14 +312,16 @@ const generateThought = {
       return generateAllWithDisclosure()
     },
   },
-  canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
+  // A thought already generating cannot be generated again. Checked here rather than in exec so that the invocation does not count as a success. Each multicursor thought already generating is skipped by generateThoughtAtPaths instead.
+  canExecute: state =>
+    isDocumentEditable() &&
+    (hasMulticursor(state) || (!!state.cursor && !getThoughtById(state, head(state.cursor))?.generating)),
   exec: async (dispatch, getState, e, commandContext) => {
     const state = getState()
     const cursor = state.cursor!
     const thought = getThoughtById(state, head(cursor))
 
-    // do nothing if generation is already in progress
-    if (!thought || thought.generating) return
+    if (!thought) return
 
     if (
       generatesWithAi(state, cursor) &&

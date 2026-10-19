@@ -237,6 +237,8 @@ Lead with the area where the issue belongs to one — `Note:`, `Context View:`, 
 
 `bug` for broken behaviour, `feature` for new user-facing behaviour, `refactor` for work no user could observe (a cleanup, or internal machinery only other code uses), `test` for test and CI work, `agent` for agent configuration and ops.
 
+An open-ended question handed to someone to drive until it exposes a decision is an investigation, not a bug or feature. Give it the `Investigation` issue type and the sections of [`.github/ISSUE_TEMPLATE/investigation.yml`](../../ISSUE_TEMPLATE/investigation.yml) — Question, Why it matters, Known so far, Ready for a decision when — instead of Steps to Reproduce.
+
 Leave priority and triage labels — `hold`, `low-priority`, `unable-to-reproduce`, `human` — to the maintainers.
 
 ## Sub-issues
