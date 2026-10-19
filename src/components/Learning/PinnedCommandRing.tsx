@@ -1,7 +1,8 @@
-import { MotionValue } from 'motion/react'
-import { PropsWithChildren, useId } from 'react'
+import { MotionValue, animate, motion, useReducedMotion } from 'motion/react'
+import { PropsWithChildren, useEffect, useId, useRef, useState } from 'react'
 import { css } from '../../../styled-system/css'
 import { PINNED_COMMAND_RING_SIZE } from '../../constants'
+import durations from '../../util/durations'
 
 /**
  * These values are derived directly from the original design in Figma, in a 73×73 box.
@@ -150,21 +151,64 @@ const BlurredProgressArc = ({ progress, stops }: { progress: number; stops: Stop
   )
 }
 
-/** Renders supplied progress and color without prescribing how either changes. */
+/**
+ * Animates the fill from its current angle to the supplied progress, while keeping color a presentation input.
+ *
+ * The arc's end angle is written into conic-gradient strings (see BlurredProgressArc and RingBlurBand). Browsers
+ * cannot transition between two gradient strings, so CSS cannot animate the fill. Instead, Motion's `animate` tweens
+ * the number from the old progress to the new one, and each frame stores the in-between value in state, which
+ * re-renders the gradients at that angle.
+ *
+ * `renderedProgress` is the value currently drawn. It drives the re-render on every frame.
+ *
+ * `currentProgress` holds the same value in a ref, so the effect can read where the fill is right now without
+ * depending on, or re-running for, every frame's state update. When a new rep arrives mid-animation, the next tween
+ * starts from that visible angle rather than from the previous target, so the fill never jumps.
+ *
+ * When `progress` changes before a tween finishes, the effect's cleanup stops it and a new tween takes over. With
+ * reduced motion, the effect skips the tween and the fill shows the new progress immediately.
+ */
 const RingProgress = ({ progress, activeOpacity }: RingProgressProps) => {
+  const prefersReducedMotion = useReducedMotion()
+  // The progress currently drawn, which trails `progress` while a tween is running.
+  const [renderedProgress, setRenderedProgress] = useState(progress)
+  // The latest tweened value, read when starting the next tween. A ref, so writing it each frame causes no extra render.
+  const currentProgress = useRef(progress)
+  // Reduced motion draws the target directly, even on the render before the effect has caught `renderedProgress` up.
+  const visibleProgress = prefersReducedMotion ? progress : renderedProgress
   const colorOpacity = activeOpacity?.get() ?? 0
-  const visibleProgress = progress
+  useEffect(() => {
+    // Nothing to animate: snap to the target when motion is reduced or the fill is already there.
+    if (prefersReducedMotion || currentProgress.current === progress) {
+      currentProgress.current = progress
+      setRenderedProgress(progress)
+      return
+    }
+    const animation = animate(currentProgress.current, progress, {
+      duration: durations.get('medium') / 1000,
+      onUpdate: value => {
+        currentProgress.current = value
+        setRenderedProgress(value)
+      },
+    })
+    return () => animation.stop()
+  }, [progress, prefersReducedMotion])
   return progress > 0 ? (
-    <div className={css({ position: 'absolute', inset: 0 })}>
-      <div className={css({ position: 'absolute', inset: 0 })} style={{ opacity: 1 - colorOpacity }}>
+    <motion.div className={css({ position: 'absolute', inset: 0 })}>
+      <motion.div
+        data-testid='pinned-command-ring-fill'
+        data-progress={visibleProgress}
+        className={css({ position: 'absolute', inset: 0 })}
+        style={{ opacity: 1 - colorOpacity }}
+      >
         <BlurredProgressArc progress={visibleProgress} stops={STOPS_MONO} />
-      </div>
+      </motion.div>
       {colorOpacity > 0 && (
-        <div className={css({ position: 'absolute', inset: 0 })} style={{ opacity: colorOpacity }}>
+        <motion.div className={css({ position: 'absolute', inset: 0 })} style={{ opacity: colorOpacity }}>
           <BlurredProgressArc progress={visibleProgress} stops={STOPS_COLORFUL} />
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   ) : null
 }
 
