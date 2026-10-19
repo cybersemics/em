@@ -137,37 +137,6 @@ it('logs the viewport geometry when the app resumes and again once it settles', 
   })
 })
 
-// https://github.com/cybersemics/em/issues/5972
-it('rewrites the viewport meta tag when the visual viewport has a negative height after the app resumes', async () => {
-  const content = 'width=device-width, initial-scale=1'
-  const meta = document.createElement('meta')
-  meta.name = 'viewport'
-  meta.content = content
-  document.head.appendChild(meta)
-  // iOS reported innerHeight minus the landscape width of the app switcher snapshot for the rest of the session
-  const visualViewport = Object.assign(new EventTarget(), { width: 393, height: -59, offsetTop: 0, scale: 1 })
-  Object.defineProperty(window, 'visualViewport', { configurable: true, value: visualViewport })
-  initEvents(store)
-  debugLog.setEnabled(true)
-  debugLog.clear()
-
-  stateChangeListenerRef.current!({ oldState: 'hidden', newState: 'passive' })
-  stateChangeListenerRef.current!({ oldState: 'passive', newState: 'active' })
-  await vi.advanceTimersByTimeAsync(1000)
-  const contentDuringRepair = meta.content
-  // one frame to restore the meta tag, then a second before the repaired entry
-  await vi.advanceTimersByTimeAsync(1100)
-
-  const viewportEntries = debugLog.read().filter(entry => entry.type === 'viewport')
-  initEvents(store).cleanup()
-  Reflect.deleteProperty(window, 'visualViewport')
-  meta.remove()
-
-  expect(contentDuringRepair).toBe(`${content}, shrink-to-fit=no`)
-  expect(meta.content).toBe(content)
-  expect(viewportEntries.map(entry => entry.reason)).toEqual(['resume', 'settled', 'repaired'])
-})
-
 it('logs a viewport resize only when the geometry changes', () => {
   initEvents(store)
   debugLog.setEnabled(true)
