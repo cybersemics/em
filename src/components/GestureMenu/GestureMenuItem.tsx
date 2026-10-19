@@ -12,6 +12,7 @@ import {
   SELECTED_ITEM_PADDING_BOTTOM_REM,
   SELECTED_ITEM_PADDING_TOP_REM,
 } from '../../hooks/useGestureMenuLayout'
+import useRemAsPx from '../../hooks/useRemAsPx'
 import store from '../../stores/app'
 import GestureDiagram from '../GestureDiagram'
 
@@ -32,6 +33,8 @@ const GestureMenuItem: FC<{
 }> = ({ command, selected, gestureInProgress, isFirstCommand, isLastCommand, autoScroll = true }) => {
   const ref = useRef<HTMLDivElement | null>(null)
   const disabled = useSelector((state: State) => !isExecutable(state, command))
+  // The diagram is read alongside its label, so it grows with the font size as the label does.
+  const diagramSize = useRemAsPx(1.125)
   const isActive = command.isActive?.(store.getState())
   const description = useSelector((state: State) => {
     const descFn = (isActive && command.descriptionInverse) || command.description
@@ -60,7 +63,7 @@ const GestureMenuItem: FC<{
         flexDirection: 'row',
         alignItems: selected ? 'stretch' : 'center',
         gap: '0.89rem',
-        // Allow the row to shrink within a grid cell so the label's nowrap text does not overflow the column.
+        // Allow the row to shrink within a grid cell so a long label wraps instead of overflowing the column.
         minWidth: 0,
       })}
       // paddingTop/paddingBottom are computed from GESTURE_MENU_ITEM_SELECTED_PADDING_*_REM (shared
@@ -92,8 +95,8 @@ const GestureMenuItem: FC<{
           color={token('colors.dim')}
           highlightColor={token('colors.fg')}
           strokeWidth={3}
-          maxHeight={18}
-          maxWidth={18}
+          maxHeight={diagramSize}
+          maxWidth={diagramSize}
         />
       </div>
 
@@ -101,14 +104,20 @@ const GestureMenuItem: FC<{
         className={css({
           display: 'flex',
           flexDirection: 'column',
+          // Lets the label shrink below its text width, so that a long label wraps rather than overflowing the column.
+          minWidth: 0,
         })}
         style={{ gap: `${SELECTED_ITEM_GAP_REM}rem` }}
       >
         <div
           className={css({
-            lineHeight: '1em',
+            // Long labels wrap onto as many lines as they need rather than overflowing the column or being cut short.
+            // The wrapped lines need more room than 1em, but the extra leading above the first line and below the
+            // last is trimmed, so a single-line label stays 1em tall and the row spacing (which the layout budgets
+            // in useGestureMenuLayout) is unchanged.
+            lineHeight: '1.15em',
+            marginBlock: '-0.075em',
             fontSize: '0.95rem',
-            whiteSpace: 'nowrap',
             // eslint-disable-next-line @pandacss/prefer-token -- white/60 is the white token with an opacity modifier
             color: disabled ? 'gray45' : selected ? 'white' : 'white/60',
             fontWeight: selected ? 600 : 400,
