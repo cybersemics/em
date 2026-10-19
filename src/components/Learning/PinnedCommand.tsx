@@ -1,8 +1,8 @@
+import { useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import { token } from '../../../styled-system/tokens'
 import { commandById } from '../../commands'
-import SettingsIcon from '../icons/SettingsIcon'
+import PinnedCommandIcon from './PinnedCommandIcon'
 import PinnedCommandRing from './PinnedCommandRing'
 
 /** Shows the selected command in a sticky corner slot alongside the NavBar. */
@@ -16,9 +16,23 @@ const PinnedCommand = () => {
   const targetReps = progressRecord?.targetReps ?? 0
   // Fraction of the ring to fill, from 0 to 1. Reps past the target keep the ring full.
   const progress = progressRecord ? Math.min(1, reps / targetReps) : 0
+  // Notices each rep as it lands for the current pin, so the icon and the ring can celebrate it. `newReps` counts every
+  // rep that lands and plays the icon's animation; `flourishes` counts those at or past the target and plays the ring's
+  // flourish. Only a rise in the current pin's reps counts, so reps already saved when the widget mounts, or when a
+  // command is pinned, never celebrate.
+  const [newReps, setNewReps] = useState(0)
+  const [flourishes, setFlourishes] = useState(0)
+  const previousReps = useRef({ pinnedCommandId, reps })
+  useEffect(() => {
+    const previous = previousReps.current
+    previousReps.current = { pinnedCommandId, reps }
+    if (previous.pinnedCommandId !== pinnedCommandId || reps <= previous.reps) return
+    setNewReps(count => count + 1)
+    if (reps >= targetReps) setFlourishes(count => count + 1)
+  }, [pinnedCommandId, reps, targetReps])
+
   const command = pinnedCommandId ? commandById(pinnedCommandId) : undefined
   if (!command) return null
-  const Icon = command.svg ?? SettingsIcon
   return (
     <div
       className={css({
@@ -40,8 +54,8 @@ const PinnedCommand = () => {
               : 'Practice progress unavailable'
           }
         >
-          <PinnedCommandRing key={pinnedCommandId} progress={progress}>
-            <Icon size={14} fill={token('colors.gray50')} className={css({ flex: 'none' })} />
+          <PinnedCommandRing key={pinnedCommandId} progress={progress} flourish={flourishes}>
+            <PinnedCommandIcon command={command} repCount={newReps} />
           </PinnedCommandRing>
         </div>
       </div>
