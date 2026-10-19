@@ -32,11 +32,9 @@ const useRevertCorrection = ({
       if (!selection.isCollapsed()) return
       const offset = selection.offsetFromNode(editable)
       if (offset === null) return
-      if (offset !== watch.before) {
-        if (!watch.moved) touchStore.update({ revertWatch: { ...watch, moved: true } })
-        return
-      }
-      if (!watch.moved) return
+
+      if (!watch.moved && offset !== watch.before) touchStore.update({ revertWatch: { ...watch, moved: true } })
+      if (!watch.moved || offset !== watch.before) return
 
       touchStore.update({ revertWatch: null })
       const tapped = getCaretOffset(editable, watch).offset
