@@ -450,7 +450,7 @@ const ThoughtContainer = ({
   // See: https://stackoverflow.com/a/46452396/480608
   // Use -webkit-text-stroke-width instead of font-weight:bold, as bold changes the width of the text and can cause the thought to become multiline during a drag. This can even create an oscillation effect as the increased Thought height triggers a different hoveringPath ad infinitum (often resulting in a Shaker cancel false positive).
   // Highlight the parent of the current drop target to make it easier to drop in the intended place.
-  const cssRawThought = css.raw({
+  const classNameThought = css({
     /** Animation to apply to a parent when one of its children is being hovered over. Disabled in puppeteer tests. */
     // Two mutually exclusive spreads rather than a nested ternary, because PandaCSS only extracts the first branch of a nested ternary.
     ...(isChildHovering
@@ -652,8 +652,8 @@ const ThoughtContainer = ({
             path={path}
             showContextBreadcrumbs={showContexts}
             simplePath={simplePath}
-            cssRaw={cssRawThought}
-            cssRawThought={cssRawThought}
+            className={classNameThought}
+            classNameThought={classNameThought}
             style={styleThought}
             styleAnnotation={styleAnnotation || undefined}
             styleThought={styleThought}

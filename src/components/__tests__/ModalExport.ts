@@ -2,6 +2,7 @@ import { screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import Thought from '../../@types/Thought'
+import { archiveThoughtActionCreator as archiveThought } from '../../actions/archiveThought'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { updateThoughtsActionCreator as updateThoughts } from '../../actions/updateThoughts'
@@ -143,4 +144,65 @@ it('exports document values without transient generation overlays', async () => 
     expect(entry).not.toHaveProperty('generatingPlaceholder')
     expect(entry).not.toHaveProperty('splitSource')
   }
+})
+
+// https://github.com/cybersemics/em/issues/4078
+it('Show a message instead of the root when all thoughts are archived', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - a
+      `,
+    }),
+    setCursor(['a']),
+    archiveThought({}),
+    setCursor(null),
+    showModal({ id: 'export' }),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(screen.getByRole('textbox')).toHaveValue('')
+  expect(
+    screen.getByText(
+      'There are no unarchived thoughts to download. Archived thoughts can be included in the Advanced settings.',
+    ),
+  ).toBeInTheDocument()
+})
+
+// https://github.com/cybersemics/em/issues/4078
+it('Disable the export button and hide Copy to clipboard when there is nothing to export', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - a
+      `,
+    }),
+    setCursor(['a']),
+    archiveThought({}),
+    setCursor(null),
+    showModal({ id: 'export' }),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(screen.getByRole('button', { name: 'Download' })).toBeDisabled()
+  expect(screen.queryByLabelText('copy-clipboard-btn')).not.toBeInTheDocument()
+})
+
+it('renders the thought in the export phrase as visible text', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - &lt;b&gt;a&lt;/b&gt; <b>b</b>
+      `,
+    }),
+  ])
+
+  await dispatch(showModal({ id: 'export' }))
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const exportPhraseElement = screen.getByTestId('export-phrase-container')
+  expect(exportPhraseElement.textContent).toEqual('Download "<b>a</b> b" as Plain Text')
 })

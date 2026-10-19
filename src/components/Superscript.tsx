@@ -1,6 +1,5 @@
 import React, { FC, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
-import { SystemStyleObject } from '../../styled-system/types'
 import Index from '../@types/IndexType'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
@@ -17,13 +16,13 @@ interface SuperscriptProps {
   showSingle?: boolean
   superscript?: boolean
   simplePath: SimplePath
-  cssRaw?: SystemStyleObject
+  className?: string
 }
 
 const NO_CONTEXTS: ThoughtId[] = []
 
 /** Renders superscript if there are other contexts. Optionally pass thoughts (used by ContextBreadcrumbs) or simplePath (used by Subthought). */
-const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, cssRaw }) => {
+const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, className }) => {
   const [numContexts, setNumContexts] = useState(0)
   const ref = useRef<HTMLElement>(null)
 
@@ -52,7 +51,7 @@ const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, cssRaw }) =
       ref={ref}
       show={!!(show && numContexts)}
       n={numContexts}
-      cssRaw={cssRaw}
+      className={className}
       thoughtId={head(simplePath)}
       hideZero
     />

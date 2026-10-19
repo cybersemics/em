@@ -1,12 +1,12 @@
 ---
 name: create-issue
 description: >-
-  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another. Triggers on "create issue", "write issue", "file an issue", "open an issue", "make an issue", "report a bug", and any request to draft or edit issue text.
+  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another. Also covers the description of a pull request with no linked issue, which carries Steps to Reproduce, Current Behavior and Expected Behavior itself. Triggers on "create issue", "write issue", "file an issue", "open an issue", "make an issue", "report a bug", and any request to draft or edit issue text.
 allowed-tools:
   - bash
 ---
 
-Issues reporting broken behaviour in this repo follow a fixed format.
+Issues reporting broken behaviour in this repo follow a fixed format. A pull request with no linked issue reports the behaviour it fixes in its own description, using the same three sections, and everything below about them applies there too. A pull request that links an issue leaves them to the issue.
 
 ## Ask before posting
 
@@ -72,6 +72,29 @@ Exactly these headings, at `##`, in this order:
 
 ```
 
+A brand new feature omits `## Current Behavior`. Nothing exists yet to observe, and a line saying so ("Settings has no such link") restates the title. Keep Steps to Reproduce and Expected Behavior: the steps are how the feature will be used, and Expected Behavior is what it should do.
+
+Every thought tree in these sections is a fenced code block in em's outline format: the starting state in Steps to Reproduce, and the result in Current and Expected Behavior. Never write one as Markdown bullets in the body. GitHub renders those as the issue's own list, where a thought cannot be told apart from a step, a requirement or a note, and the outline can no longer be pasted into em to reproduce it.
+
+````markdown
+## Current Behavior
+
+```
+- antelucan
+  - Occurring before dawn; relating to the period immediately preceding sunrise.
+```
+
+## Expected Behavior
+
+The definition should be split into one subthought per sentence:
+
+```
+- antelucan
+  - Occurring before dawn
+  - Relating to the period immediately preceding sunrise
+```
+````
+
 ### Steps to Reproduce
 
 Numbered, imperative, one action per line. Name settings by their exact label in the UI and give the exact value — "Increase the app font size to 32", not "make the font bigger". A step that leaves the reader a choice will be followed differently than it was meant.
@@ -95,6 +118,17 @@ Where the bug depends on a particular thought tree, give it as a fenced code blo
 The tree is the starting state, so it already says to create it. Do not add a step for that — "Create the thoughts above: `a`, `b`, and a `=note` on `a`" is the code block read back as prose, and the reader has to compare the two to find out they match. Number the steps from the first action taken on the tree.
 
 The same holds for anything the outline itself shows: which thoughts are children of which, that the last one is empty, that a thought carries a `=note`. A step is for what the outline cannot show — a caret position, a setting, a device width, a collapsed thought.
+
+The reverse holds too: a thought is content, never a step. A request often lists the content and leaves the action implied, as in "Steps: - antelucan" for a bug in Define Term. Read that as a tree and an action, not as a step named `antelucan`. The thought goes in the outline, and the steps say where the cursor is and which command runs on it:
+
+````markdown
+```
+- antelucan
+```
+
+1. Set the cursor on `antelucan`.
+2. Define Term (`↑→←`).
+````
 
 Every reproduction starts from a fresh app with no saved data, so that goes unsaid. "Open **em** with no saved data" is not a step. Number the steps from the first action taken in the app. Name a starting state only when it departs from a fresh app, such as a returning user or a setting already changed.
 
@@ -202,6 +236,8 @@ Lead with the area where the issue belongs to one — `Note:`, `Context View:`, 
 ## Labels
 
 `bug` for broken behaviour, `feature` for new user-facing behaviour, `refactor` for work no user could observe (a cleanup, or internal machinery only other code uses), `test` for test and CI work, `agent` for agent configuration and ops.
+
+An open-ended question handed to someone to drive until it exposes a decision is an investigation, not a bug or feature. Give it the `Investigation` issue type and the sections of [`.github/ISSUE_TEMPLATE/investigation.yml`](../../ISSUE_TEMPLATE/investigation.yml) — Question, Why it matters, Known so far, Ready for a decision when — instead of Steps to Reproduce.
 
 Leave priority and triage labels — `hold`, `low-priority`, `unable-to-reproduce`, `human` — to the maintainers.
 
@@ -338,9 +374,12 @@ New issues often originate in a comment thread on another issue or PR.
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
 - A step telling the reader to create the thoughts the outline above already gives.
+- A thought listed as a step, as in `- antelucan` under Steps to Reproduce, with no outline and no command named.
+- A thought tree in Steps to Reproduce, Current Behavior or Expected Behavior written as Markdown bullets rather than an outline in a fenced code block.
 - A first step telling the reader to open a fresh app, which every reproduction already assumes.
 - A gesture written as letters — `ldr` where `←↓→` is what the reader swipes.
 - A keyboard shortcut written as plain text — `(Shift + Alt + S)` where `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>` is what renders as keys.
+- A Current Behavior on a brand new feature, describing that the feature does not exist yet.
 - A Current Behavior carrying a qualifier about the reproduction — "No drag is needed" — where the condition belongs in the steps.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.

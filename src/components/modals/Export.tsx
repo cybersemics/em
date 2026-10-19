@@ -12,7 +12,7 @@ import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { errorActionCreator as error } from '../../actions/error'
 import { isIOS, isTouch } from '../../browser'
-import { HOME_PATH } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import share from '../../device/share'
@@ -77,7 +77,7 @@ const exportOptions: ExportOption[] = [
  * Styles
  *****************************************************************************/
 
-const rotate180Class = css.raw({ transform: 'rotate(180deg)' })
+const rotate180Class = css({ transform: 'rotate(180deg)' })
 
 /******************************************************************************
  * Components
@@ -104,7 +104,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
         {selected.label}
       </a>
       <span className={css({ display: 'inline-flex', verticalAlign: 'middle' })}>
-        <ChevronImg onClickHandle={() => setIsOpen(!isOpen)} cssRaw={isOpen ? rotate180Class : undefined} />
+        <ChevronImg onClickHandle={() => setIsOpen(!isOpen)} className={isOpen ? rotate180Class : undefined} />
         <span>
           <Dropdown
             isOpen={isOpen}
@@ -125,7 +125,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
 const ModalExport: FC = () => {
   const dispatch = useDispatch()
-  // Capture one immutable document and selection for the lifetime of the modal.
+  // Capture the editor context and selection; its document reader remains live.
   const [exportedState] = useState<State>(() => dispatch((_, getState) => getState()))
   const simplePaths = useMemo(() => {
     const paths = hasMulticursor(exportedState)
@@ -154,7 +154,7 @@ const ModalExport: FC = () => {
 
   const exportContent = useMemo(() => {
     if (selected.type === 'application/json') {
-      // Capture only the selected subtrees in JSON, even though the read snapshot contains the complete document.
+      // Capture only the selected subtrees in JSON, even though the reader covers the complete document.
       const selectedThoughtIds = [
         ...new Set(simplePaths.flatMap(path => [head(path), ...getDescendantThoughtIds(exportedState, head(path))])),
       ]
@@ -180,6 +180,16 @@ const ModalExport: FC = () => {
     }
 
     const sortedPaths = documentSort(exportedState, simplePaths)
+    // Do not export the bare root placeholder when all its children are excluded, e.g. archived.
+    if (
+      sortedPaths.length === 1 &&
+      isRoot(sortedPaths[0]) &&
+      !getChildrenRanked(exportedState, HOME_TOKEN).some(
+        exportFilter({ excludeArchived: !shouldIncludeArchived, excludeMeta: !shouldIncludeMetaAttributes }),
+      )
+    )
+      return ''
+
     const exportIds = !shouldExportFirstThought
       ? sortedPaths.flatMap(path => getChildrenRanked(exportedState, head(path)).map(child => child.id))
       : sortedPaths.map(path => head(path))
@@ -208,22 +218,24 @@ const ModalExport: FC = () => {
   ])
 
   const numDescendantsFinal =
-    selected.type === 'text/plain'
-      ? exportContent.split('\n').length - simplePaths.length
-      : !shouldExportSubthoughts
-        ? 0
-        : simplePaths.reduce(
-            (count, path) =>
-              count +
-              getDescendantThoughtIds(exportedState, head(path), {
-                filterAndTraverse: thought => shouldIncludeMetaAttributes || thought.value !== '=note',
-                filterFunction: exportFilter({
-                  excludeArchived: !shouldIncludeArchived,
-                  excludeMeta: !shouldIncludeMetaAttributes,
-                }),
-              }).length,
-            0,
-          )
+    exportContent === ''
+      ? 0
+      : selected.type === 'text/plain'
+        ? exportContent.split('\n').length - simplePaths.length
+        : !shouldExportSubthoughts
+          ? 0
+          : simplePaths.reduce(
+              (count, path) =>
+                count +
+                getDescendantThoughtIds(exportedState, head(path), {
+                  filterAndTraverse: thought => shouldIncludeMetaAttributes || thought.value !== '=note',
+                  filterFunction: exportFilter({
+                    excludeArchived: !shouldIncludeArchived,
+                    excludeMeta: !shouldIncludeMetaAttributes,
+                  }),
+                }).length,
+              0,
+            )
   const exportThoughtsPhraseFinal = exportPhrase(
     simplePaths.map(path => head(path)),
     numDescendantsFinal,
@@ -422,7 +434,7 @@ const ModalExport: FC = () => {
               ) : simplePaths.length === 1 && isRoot(simplePaths[0]) && numDescendantsFinal === 0 ? (
                 '1 thought'
               ) : (
-                <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhraseFinal }} />
+                <span>{exportThoughtsPhraseFinal}</span>
               )
             }
             <span>
@@ -435,6 +447,21 @@ const ModalExport: FC = () => {
 
       {/* Preview */}
       <div className={css({ position: 'relative' })}>
+        {exportContent === '' && isRoot(simplePaths[0]) && (
+          <div
+            className={css({
+              position: 'absolute',
+              top: '60px',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              textAlign: 'center',
+              width: '260px',
+            })}
+          >
+            There are no unarchived thoughts to {exportWord.toLowerCase()}. Archived thoughts can be included in the
+            Advanced settings.
+          </div>
+        )}
         <textarea
           aria-label='Export preview'
           ref={textareaRef}
@@ -479,6 +506,7 @@ const ModalExport: FC = () => {
             color: 'bg',
             backgroundColor: 'fg',
           })}
+          disabled={!exportContent}
           {...fastClick(onExportClick)}
         >
           {exportWord}
@@ -487,9 +515,11 @@ const ModalExport: FC = () => {
 
       {/* Copy to clipboard */}
       <div className={css({ marginBottom: '15px', textAlign: 'center' })}>
-        <a data-clipboard-text={exportContent} aria-label='copy-clipboard-btn' className={extendTapRecipe()}>
-          Copy to clipboard
-        </a>
+        {exportContent && (
+          <a data-clipboard-text={exportContent} aria-label='copy-clipboard-btn' className={extendTapRecipe()}>
+            Copy to clipboard
+          </a>
+        )}
       </div>
 
       {/* Advanced Settings */}
@@ -517,7 +547,7 @@ const ModalExport: FC = () => {
         >
           <ChevronImg
             onClickHandle={onAdvancedClick}
-            cssRaw={css.raw(advancedSettings && rotate180Class, { opacity: advancedSettings ? 1 : 0.5 })}
+            className={cx(advancedSettings && rotate180Class, css({ opacity: advancedSettings ? 1 : 0.5 }))}
           />
         </span>
       </div>

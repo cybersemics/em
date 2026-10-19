@@ -497,7 +497,9 @@ https://github.com/user-attachments/assets/4255766e-8c9d-4cdf-a140-573ab82399ae
 
 ### Uncategorize
 
-Deletes the current thought and moves all its subthoughts up a level. If the thought is a favorite, its `=favorite` attribute is deleted with it rather than moved up, so the parent does not become a favorite. A thought with no subthoughts other than meta attributes is left unchanged, and the alert "Unable to uncategorize thought with no children" is shown instead. In the context view, the selected context is uncategorized, with the same rules applied to its own children; the home context is left unchanged.
+Deletes the current thought and moves all its subthoughts up a level. If the thought is a favorite, its `=favorite` attribute is deleted with it rather than moved up, so the parent does not become a favorite. A thought with no subthoughts other than meta attributes is left unchanged, and the alert "Unable to uncategorize thought with no children" is shown instead.
+
+In the Context View, Uncategorize applies to the selected context, with the same rules applied to its own children: the thought moves up into the context's parent, which replaces the context in the Context View. The Context View stays open with the cursor on that parent, which is the home context when the uncategorized context was top-level. The home context itself is left unchanged.
 
 <kbd>Command + Option + c</kbd>
 
@@ -519,7 +521,7 @@ Extract selected part of a thought as its new parent. Where Extract Subthought d
 
 ### Define Term
 
-Adds a 10–20 word AI-generated dictionary entry as the first subthought of each selected thought. The selected thought's own value is not changed. The command is disabled when any selected thought is empty or has another AI request in progress.
+Adds a 10–20 word AI-generated dictionary entry as the first subthoughts of each selected thought. The entry is split on semicolons and periods into sibling subthoughts in reading order, each capitalized and stripped of trailing punctuation and whitespace. The selected thought's own value is not changed. The command is disabled when any selected thought is empty or has another AI request in progress.
 
 While the request is in flight, each selected thought is marked `generating` without changing its stored value. The thought keeps its text and gets the same shimmer highlight as Generate Thought until the request settles. The shimmer masks existing paint so colors, backgrounds and native emoji stay visible. Notes shimmer along with their owning thought, preserving their text and formatting.
 
@@ -902,3 +904,5 @@ Cancel the current gesture.
 The Command Universe grid mounts gesture diagrams within 180px of its inner scroll viewport using Motion’s `useInView` with `once: false`. Diagram boxes retain their size, and diagrams already rendered stay mounted while the page is hidden or transitioning so Back can animate the retained grid.
 
 Navigation accepts `transition: 'zoom' | 'none'`, defaulting to zoom. A visit without animation retains Back/Forward history and settles before focus moves into the destination. Zoom origins are measured relative to the page before navigation mounts the destination, avoiding a second layout-measurement render. Complete `transform: scale(...)` targets allow Motion to use native Web Animations. Opening the dialog can preserve an editor selection snapshot already captured by its caller.
+
+Top-level invocations trigger `commandEmitter`'s `commandSucceeded` event as soon as `exec` returns. The event identifies the invoked command and its input source, or `internal` when no source was provided. It is separate from the pre-execution `command` event that flushes pending edits. A command that fails `canExecute`, throws, or raises an app error during `exec` does not report success. Asynchronous work (AI requests, the AI disclosure prompt, clipboard writes) is not awaited: the user has completed the command once it starts, whatever the server or clipboard later returns. A guard that should stop an invocation from counting as a success therefore belongs in `canExecute`, not in an early return from `exec`.

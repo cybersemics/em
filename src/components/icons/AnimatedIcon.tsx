@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react'
-import { css, cx } from '../../../styled-system/css'
+import { cx } from '../../../styled-system/css'
 import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
@@ -20,7 +20,7 @@ const AnimatedIcon = ({
   fill,
   size = 18,
   style = {},
-  cssRaw,
+  className,
   animated,
   animationData,
   children,
@@ -33,7 +33,7 @@ const AnimatedIcon = ({
 
   return (
     <div
-      className={cx(iconRecipe(), css(cssRaw))}
+      className={cx(iconRecipe(), className)}
       style={{
         ...style,
         width: `${newSize}px`,

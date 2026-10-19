@@ -24,7 +24,7 @@ const PinnedCommand = () => {
       <div className={css({ position: 'absolute', right: 0, bottom: '-22.5px' })}>
         <div data-testid='pinned-command' role='img' aria-label={`Pinned command: ${command.label}`}>
           <PinnedCommandRing key={pinnedCommandId} progress={0}>
-            <Icon size={14} fill={token('colors.gray50')} cssRaw={css.raw({ flex: 'none' })} />
+            <Icon size={14} fill={token('colors.gray50')} className={css({ flex: 'none' })} />
           </PinnedCommandRing>
         </div>
       </div>

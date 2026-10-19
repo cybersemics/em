@@ -191,7 +191,7 @@ const CommandItem: FC<{
             })}
           >
             <GestureDiagram
-              cssRaw={css.raw({
+              className={css({
                 width: { sm: '80px', md: '130px' },
                 height: { sm: '80px', md: '130px' },
               })}
@@ -204,7 +204,7 @@ const CommandItem: FC<{
           </div>
         ) : Icon ? (
           <Icon
-            cssRaw={css.raw({
+            className={css({
               cursor: !disabled && onClick ? 'pointer' : 'default',
             })}
             fill={token(disabled ? 'colors.gray50' : 'colors.fg')}
@@ -295,7 +295,7 @@ const CommandItem: FC<{
             arrowSize={18 - strokeWidth * 0.3}
             strokeWidth={strokeWidth}
             rounded={command.rounded}
-            cssRaw={css.raw({ position: 'absolute' })}
+            className={css({ position: 'absolute' })}
           />
         </Cell>
       ) : (

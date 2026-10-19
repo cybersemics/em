@@ -417,6 +417,7 @@ const undoRedoEnhancer = <A extends Action<any>>(
     // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (None direction) are never merged with any other edits — each formatting change (bold, italic, color) gets its own separate undo step. Edits marked preventMerge (e.g. a generated thought) are likewise never merged on either side.
     // - All actions within an explicit command transaction are merged under that command's metadata.
     // - Direct action batches guarded by isMulticursorExecuting are merged into one action patch.
+    // - An action flagged mergeNext is merged with the action that follows it, e.g. the two edits of a text drag between thoughts.
     const lastUndoPatch = state.undoPatches.at(-1)
     // A resumed invocation may extend its latest patch, but never reach back across another edit or undo/redo.
     // Its identity survives await; only contiguous history is eligible for merging.

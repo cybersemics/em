@@ -6,9 +6,9 @@ import animationData from './animations/10-sort_4.json'
 import animationDataDesc from './animations/11-sort-descanding_7.json'
 
 /** Ascending Sort Icon Component with Conditional Lottie Animation. */
-const IconAsc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const IconAsc = ({ fill, size = 18, style = {}, className, animated, animationComplete }: IconType) => {
   return (
-    <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
+    <AnimatedIcon {...{ fill, size, style, className, animated, animationData, animationComplete }}>
       <svg
         xmlns='http://www.w3.org/2000/svg'
         viewBox='0 0 24 24'
@@ -74,14 +74,14 @@ const IconAsc = ({ fill, size = 18, style = {}, cssRaw, animated, animationCompl
 }
 
 /** Descending Sort Icon Component with Conditional Lottie Animation. */
-const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const IconDesc = ({ fill, size = 18, style = {}, className, animated, animationComplete }: IconType) => {
   return (
     <AnimatedIcon
       {...{
         fill,
         size,
         style,
-        cssRaw,
+        className,
         animated,
         animationData: animationDataDesc,
         animationComplete,
@@ -152,7 +152,7 @@ const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComp
 }
 
 /** Sort Icon Component with Conditional Lottie Animation. */
-const SortIcon = ({ size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+const SortIcon = ({ size = 18, style = {}, className, animated, animationComplete }: IconType) => {
   const direction = useEditorSelector(getCursorSortDirection)
 
   const Component = direction === 'Desc' ? IconDesc : IconAsc
@@ -162,7 +162,7 @@ const SortIcon = ({ size = 18, style = {}, cssRaw, animated, animationComplete }
       {...{
         size,
         style,
-        cssRaw,
+        className,
         animated,
         animationComplete,
       }}

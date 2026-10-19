@@ -7,6 +7,8 @@ import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
+import importDataAtFirstMatch from '../../test-helpers/importDataAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
 import findCursor from '../../test-helpers/queries/findCursor'
 import selectRange from '../../test-helpers/selectRange'
@@ -505,6 +507,252 @@ it('keeps children under each duplicate ancestor', async () => {
 - foo
   - baz
 `)
+})
+
+// https://github.com/cybersemics/em/issues/2712
+// importText and importFiles are two pipelines for the same import. They are being consolidated into one, so each
+// outline is imported into two identical destinations, once through each pipeline, and both must give the same outline.
+describe('importText and importFiles import the same outline', () => {
+  it.each([
+    {
+      name: 'duplicate siblings',
+      destination: '',
+      text: `
+- a
+- a`,
+      expected: `
+  - a
+  - a`,
+    },
+    {
+      name: 'duplicate nested thoughts',
+      destination: '',
+      text: `
+- a
+  - b
+    - c
+  - b
+- a
+  - b
+    - d`,
+      expected: `
+  - a
+    - b
+      - c
+    - b
+  - a
+    - b
+      - d`,
+    },
+    {
+      name: 'empty thoughts',
+      destination: '',
+      text: `
+- a
+- ${''}
+- b`,
+      expected: `
+  - a
+  - ${''}
+  - b`,
+    },
+    {
+      name: 'duplicates of the descendants of the destination',
+      destination: `
+- b
+  - c`,
+      text: `
+- b
+  - d
+- e`,
+      expected: `
+  - b
+    - c
+  - b
+    - d
+  - e`,
+    },
+    {
+      name: 'metaprogramming attributes',
+      destination: `
+- =sort
+  - Alphabetical
+- b`,
+      text: `
+- =sort
+  - Alphabetical
+- c
+  - =pin
+    - true
+  - d`,
+      expected: `
+  - =sort
+    - Alphabetical
+  - b
+  - c
+    - =pin
+      - true
+    - d`,
+    },
+  ])('$name', async ({ destination, text, expected }) => {
+    vi.useFakeTimers()
+    const { cleanup } = await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({ text: '- text\n- files' }),
+      (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['text'])!, text: destination })),
+      (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['files'])!, text: destination })),
+      (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['text'])!, text })),
+      (dispatch, getState) =>
+        dispatch(
+          importFiles({
+            path: contextToPath(getState(), ['files'])!,
+            files: [{ lastModified: 0, name: 'test', size: text.length, text: async () => text }],
+          }),
+        ),
+    ])
+
+    await vi.runOnlyPendingTimersAsync()
+
+    const exportedText = exportContext(store.getState(), ['text'], 'text/plain')
+    const exportedFiles = exportContext(store.getState(), ['files'], 'text/plain')
+
+    cleanup()
+
+    expect(exportedText).toBe(`- text${expected}`)
+    expect(exportedFiles).toBe(`- files${expected}`)
+  })
+
+  it('an empty destination thought with siblings', async () => {
+    vi.useFakeTimers()
+    const { cleanup } = await initialize({ storage: 'memory' })
+
+    const text = `
+- a
+- b`
+
+    store.dispatch([
+      importText({
+        text: `
+          - text
+            - x
+            - y
+          - files
+            - x
+            - y
+        `,
+      }),
+      setCursor(['text', 'x']),
+      newThought({}),
+      setCursor(['files', 'x']),
+      newThought({}),
+      (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['text', ''])!, text })),
+      (dispatch, getState) =>
+        dispatch(
+          importFiles({
+            path: contextToPath(getState(), ['files', ''])!,
+            files: [{ lastModified: 0, name: 'test', size: text.length, text: async () => text }],
+          }),
+        ),
+    ])
+
+    await vi.runOnlyPendingTimersAsync()
+
+    const exportedText = exportContext(store.getState(), ['text'], 'text/plain')
+    const exportedFiles = exportContext(store.getState(), ['files'], 'text/plain')
+
+    cleanup()
+
+    expect(exportedText).toBe(`- text
+  - x
+  - a
+  - b
+  - y`)
+    expect(exportedFiles).toBe(`- files
+  - x
+  - a
+  - b
+  - y`)
+  })
+})
+
+// https://github.com/cybersemics/em/issues/2712
+// A resumed import continues from the number of thoughts recorded in the resume manifest. Duplicates are not merged,
+// so a count that falls behind the thoughts actually imported would import them a second time. Recording the count
+// after every thought keeps it from falling behind.
+it('records the progress of an import after every imported thought', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+  const setItem = vi.spyOn(localStorage, 'setItem')
+  setItem.mockClear()
+
+  const text = `
+- a
+  - b
+- c`
+
+  store.dispatch(
+    importFiles({
+      path: HOME_PATH,
+      files: [{ lastModified: 0, name: 'test', size: text.length, text: async () => text }],
+    }),
+  )
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // the number of thoughts imported, recorded in each write of the resume manifest
+  const thoughtsImported = setItem.mock.calls
+    .filter(([key]) => key === 'resume-imports')
+    .map(([, value]) =>
+      Object.values(JSON.parse(value) as Record<string, { thoughtsImported: number }>).map(
+        file => file.thoughtsImported,
+      ),
+    )
+
+  cleanup()
+
+  // the manifest is deleted once the import is complete
+  expect(thoughtsImported).toEqual([[0], [1], [2], [3], []])
+})
+
+// https://github.com/cybersemics/em/issues/2712
+// The cursor is set on the first imported thought that is not a metaprogramming attribute. Duplicates are not merged,
+// so when it duplicates an existing sibling, the cursor belongs on the imported thought, not on the existing one.
+it('sets the cursor on the imported thought when it duplicates an existing sibling', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(
+    importText({
+      text: `
+        - a
+          - b
+      `,
+    }),
+  )
+  const bExistingId = getChildrenRankedByContext(store.getState(), ['a']).find(child => child.value === 'b')!.id
+
+  store.dispatch(
+    importDataAtFirstMatch(['a'], {
+      text: `
+- =sort
+  - Alphabetical
+- b
+- c`,
+    }),
+  )
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const state = store.getState()
+  const duplicates = getChildrenRankedByContext(state, ['a']).filter(child => child.value === 'b')
+  const bImported = duplicates.find(child => child.id !== bExistingId)!
+
+  cleanup()
+
+  expect(duplicates).toHaveLength(2)
+  expect(duplicates.map(child => child.id)).toContain(bExistingId)
+  expect(state.cursor && head(state.cursor)).toBe(bImported.id)
 })
 
 // https://github.com/cybersemics/em/issues/2712
@@ -1908,5 +2156,93 @@ describe('paste over a selection', () => {
 
     const state = store.getState()
     expect(getThoughtById(state, head(state.cursor!))!.value).toBe('one three three')
+  })
+
+  // https://github.com/cybersemics/em/issues/5232
+  it('trims the trailing space of single-line HTML pasted over the selection', async () => {
+    act(() => {
+      store.dispatch([importText({ text: '- One two' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findCursor()
+    expect(thought).toBeTruthy()
+    selectRange(thought!, 'One '.length, 'One two'.length)
+
+    // Copied within em, whose HTML is inserted as is, unlike external HTML or plain text, which importData trims itself.
+    await act(async () => {
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['One two'])!,
+            html: "<meta charset='utf-8'>One ",
+            isEmText: true,
+          }),
+        ),
+      )
+    })
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('One One')
+    expect(state.cursorOffset).toBe('One One'.length)
+  })
+
+  // The emoji space must survive the trim of the whitespace before the emoji (#5232).
+  it('separates an emoji from the thought after trimming the leading space of single-line HTML pasted before it', async () => {
+    act(() => {
+      store.dispatch([importText({ text: '- Hello' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findCursor()
+    expect(thought).toBeTruthy()
+    selectRange(thought!, 0, 0)
+
+    await act(async () => {
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['Hello'])!,
+            html: "<meta charset='utf-8'> 🧠",
+            isEmText: true,
+          }),
+        ),
+      )
+    })
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('🧠 Hello')
+    expect(state.cursorOffset).toBe('🧠 '.length)
+  })
+
+  // A leading no-break space is not trimmed, as when typing, so it must not shift the caret either.
+  it('places the caret after single-line HTML pasted with a leading no-break space', async () => {
+    act(() => {
+      store.dispatch([importText({ text: '- Baz' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findCursor()
+    expect(thought).toBeTruthy()
+    selectRange(thought!, 0, 0)
+
+    await act(async () => {
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['Baz'])!,
+            html: "<meta charset='utf-8'>&nbsp;Bar",
+            isEmText: true,
+          }),
+        ),
+      )
+    })
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('&nbsp;BarBaz')
+    expect(state.cursorOffset).toBe('\u00a0Bar'.length)
   })
 })

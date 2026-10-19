@@ -1,13 +1,13 @@
-import { css, cx } from '../../../styled-system/css'
+import { cx } from '../../../styled-system/css'
 import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 
 /** An icon for the Cursor Forward command. */
-const CursorForwardIcon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType) => (
+const CursorForwardIcon = ({ fill = token('colors.bg'), size = 20, style, className }: IconType) => (
   <svg
     version='1.1'
-    className={cx(iconRecipe(), css(cssRaw))}
+    className={cx(iconRecipe(), className)}
     xmlns='http://www.w3.org/2000/svg'
     width={size}
     height={size}

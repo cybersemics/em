@@ -86,9 +86,9 @@ const PinCommandRow = ({ command }: { command: Command }) => {
           })}
         >
           {isPinned ? (
-            <PinnedCommandUnpinIcon cssRaw={css.raw({ flex: 'none' })} size={48} fill={token('colors.fg')} />
+            <PinnedCommandUnpinIcon className={css({ flex: 'none' })} size={48} fill={token('colors.fg')} />
           ) : (
-            <PinnedCommandPinIcon cssRaw={css.raw({ flex: 'none' })} size={48} fill={token('colors.fg')} />
+            <PinnedCommandPinIcon className={css({ flex: 'none' })} size={48} fill={token('colors.fg')} />
           )}
         </div>
         <div className={css({ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 })}>
@@ -123,7 +123,7 @@ const PinCommandRow = ({ command }: { command: Command }) => {
           ) : null}
         </div>
         <div>
-          <ArrowRightIcon size={20} fill={token('colors.fgOverlay75')} cssRaw={css.raw({ flex: 'none' })} />
+          <ArrowRightIcon size={20} fill={token('colors.fgOverlay75')} className={css({ flex: 'none' })} />
         </div>
       </button>
     </div>
@@ -166,7 +166,7 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
               marginTop: '0.5rem',
             })}
           >
-            <Icon cssRaw={css.raw({ flex: 'none' })} size={36} fill={iconFill} />
+            <Icon className={css({ flex: 'none' })} size={36} fill={iconFill} />
           </div>
           <div className={css({ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 })}>
             <h3
@@ -236,7 +236,7 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
             <div className={css({ flex: 'none', width: '130px', aspectRatio: '1 / 1' })}>
               <GestureDiagram
                 path={gestureString(command)}
-                cssRaw={css.raw({ width: '100%', height: '100%' })}
+                className={css({ width: '100%', height: '100%' })}
                 size={150}
                 arrowSize={1}
                 strokeWidth={12}

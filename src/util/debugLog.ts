@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core'
+import { Device } from '@capacitor/device'
 import { isTauri } from '@tauri-apps/api/core'
 import pkg from '../../package.json'
 import State from '../@types/State'
@@ -323,6 +324,18 @@ const stopFrameHeartbeat = (): void => {
   frameId = null
 }
 
+/** The hardware model of the device the native app runs on, e.g. `iPhone15,4` (iPhone 15) or `Pixel 8`. A browser exposes only the device family through navigator.platform, so this stays null on the web, and in a native app built before the Device plugin was added. Read once at load, since format() is synchronous and the plugin is not. */
+let deviceModel: string | null = null
+if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('Device')) {
+  Device.getInfo()
+    .then(({ model }) => {
+      deviceModel = model
+    })
+    .catch(() => {
+      // The header falls back to navigator.platform.
+    })
+}
+
 /** Returns a copy of the current buffer, including any entries hydrated from a prior session. */
 const read = (): DebugLogEntry[] => [...entries]
 
@@ -335,12 +348,12 @@ const formatThought = (thought: { id: string; value: string; parentId: string },
 
 /** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, build commit, display and the URL the log was formatted on, and how many earlier entries the rolling buffer has evicted. Appends the last-frame marker and, when state is provided, the current editor view summary and a compact document dump grouped by parent and sibling position so entry ids can be resolved to values and current sibling order is visible. */
 const format = (state?: State): string => {
-  // The device: the navigator platform, the shell em is served through (web, ios, android, or tauri), the screen
+  // The device: the hardware model in the native app, or else the navigator platform, the shell em is served through (web, ios, android, or tauri), the screen
   // dimensions, and the pointer type. The shell is worth naming separately because it is not recoverable from the user
   // agent: a Capacitor WebView shares its user agent with the mobile browser it embeds, and the Tauri desktop shell
   // reports the web platform to Capacitor, so only the flag its runtime injects tells it apart from a browser.
   const device = [
-    `${(typeof navigator !== 'undefined' && navigator.platform) || 'unknown platform'} (${isTauri() ? 'tauri' : Capacitor.getPlatform()})`,
+    `${deviceModel ?? ((typeof navigator !== 'undefined' && navigator.platform) || 'unknown platform')} (${isTauri() ? 'tauri' : Capacitor.getPlatform()})`,
     typeof window !== 'undefined' && window.screen
       ? `${window.screen.width}x${window.screen.height}`
       : 'unknown screen',

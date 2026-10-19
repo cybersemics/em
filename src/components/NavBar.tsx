@@ -31,7 +31,7 @@ const CursorBreadcrumbs = ({ position }: { position: string }) => {
       <ContextBreadcrumbs
         variant='small'
         color='breadcrumbs'
-        linkCssRaw={css.raw({
+        linkClassName={css({
           '&:hover': {
             color: 'fg',
           },

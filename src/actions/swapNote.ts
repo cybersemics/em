@@ -48,17 +48,11 @@ const swapNote = (state: State, _payload: undefined = undefined, transaction?: T
   // cancel if parent is readonly or unextendable
   else if (findDescendant(state, head(parentOf(cursor)), '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
-        state,
-        cursor,
-      )}" cannot be converted to a note.`,
+      value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is read-only so "${ellipsize(headValue(state, cursor))}" cannot be converted to a note.`,
     })
   } else if (findDescendant(state, head(parentOf(cursor)), '=uneditable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
-        state,
-        cursor,
-      )}" cannot be converted to a note.`,
+      value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is unextendable so "${ellipsize(headValue(state, cursor))}" cannot be converted to a note.`,
     })
   } else if (isContextViewActive(state, parentOf(cursor))) {
     return alert(state, {

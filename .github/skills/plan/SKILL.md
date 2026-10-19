@@ -65,6 +65,8 @@ Given the surface area above, does this change **extend existing code** or **int
 
 Default to extending. A new path needs a defended reason.
 
+Extend the code that **owns the change**, not just code with a matching shape. For a bug where state ends up stale or invalid, find the action where it went wrong. That action still knows both the old and the new value, and it is where the fix belongs. A helper that recomputes the state afterwards from the result is downstream of the problem, however reusable it looks. See [code-standards → Architecture](../../instructions/code-standards.instructions.md#architecture) and [Stored Paths and moves](../../../docs/data-model.md#stored-paths-and-moves).
+
 ### 3. Adjacent behaviour surface _(mandatory)_
 
 What _other_ behaviours in this subsystem might this change affect? Enumerate them explicitly — even when you believe the answer is "none," list what you considered and why each is safe.
@@ -75,7 +77,7 @@ For each behaviour you touch or border: is there existing test coverage? If not,
 
 ### 4. Approaches considered _(at least two, kept brief)_
 
-Sketch at least two approaches and compare them on: reuse of existing code, complexity, and edge cases. This exists to break first-instinct lock-in — even a short comparison is enough. State which you chose and why.
+Sketch at least two approaches and compare them on: where the information the change needs is known, reuse of existing code, complexity, and edge cases. An approach that runs where the information is known beats one that reconstructs it later, even if the later one reuses more code. This exists to break first-instinct lock-in — even a short comparison is enough. State which you chose and why.
 
 ### 5. Diff sketch _(plain words, not code)_
 

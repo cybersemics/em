@@ -7,11 +7,10 @@ import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import deleteThought from '../actions/deleteThought'
 import moveThought from '../actions/moveThought'
-import newThought from '../actions/newThought'
 import setCursor from '../actions/setCursor'
+import setDescendant from '../actions/setDescendant'
 import { HOME_PATH } from '../constants'
 import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
-import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, getAllChildren } from '../selectors/getChildren'
 import getFirstChildPlacement from '../selectors/getFirstChildPlacement'
 import getThoughtById from '../selectors/getThoughtById'
@@ -35,12 +34,21 @@ import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
 import updateCursorAfterDelete from './updateCursorAfterDelete'
 
-/** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it.
- *
- * @param path     Defaults to cursor.
- */
-const archiveThought = (state: State, options: { path?: Path }, transaction?: ThoughtspaceTransaction): State => {
-  const path = options.path || state.cursor
+/** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it. */
+const archiveThought = (
+  state: State,
+  {
+    path: pathOption,
+    showAlert = true,
+  }: {
+    /** Defaults to cursor. */
+    path?: Path
+    /** Alerts the user that the thought was deleted. Default: true. */
+    showAlert?: boolean
+  },
+  transaction?: ThoughtspaceTransaction,
+): State => {
+  const path = pathOption || state.cursor
 
   if (!path) return state
 
@@ -52,7 +60,7 @@ const archiveThought = (state: State, options: { path?: Path }, transaction?: Th
   // rewrite context view operaton in terms of normal view and update cursor
   if (showContexts) {
     const repairCursor = updateCursorAfterDelete(state)
-    return reducerFlow([state => archiveThought(state, { path: simplePath }, transaction), repairCursor])(
+    return reducerFlow([state => archiveThought(state, { path: simplePath, showAlert }, transaction), repairCursor])(
       state,
       transaction,
     )
@@ -109,27 +117,17 @@ const archiveThought = (state: State, options: { path?: Path }, transaction?: Th
         ]
       : [
           // create =archive if it does not exist
-          (state: State) =>
-            !findDescendant(state, head(pathParent), '=archive')
-              ? newThought(
-                  state,
-                  {
-                    at: pathParent,
-                    insertNewSubthought: true,
-                    insertBefore: true,
-                    value: '=archive',
-                    preventSetCursor: true,
-                  },
-                  transaction,
-                )
-              : null,
+          // pathParent is a SimplePath, so =archive must be created as a child even if a context view is active on pathParent (#5858)
+          setDescendant({ path: pathParent, values: ['=archive'] }),
 
           // alert
-          alert({
-            value: deleteThoughtAlertText(state, path, { archive: true }),
-          }),
+          showAlert
+            ? alert({
+                value: deleteThoughtAlertText(state, path, { archive: true }),
+              })
+            : null,
 
-          // execute moveThought after newThought has updated the state
+          // execute moveThought after setDescendant has updated the state
           (state: State) => {
             const archive = findAnyChild(state, head(pathParent), equalThoughtValue('=archive'))!
             return moveThought(

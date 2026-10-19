@@ -21,8 +21,8 @@ import head from '../../util/head'
 import defineTerm from '../defineTerm'
 import generateThought from '../generateThought'
 
-const appleDefinition = 'A round, edible fruit with crisp flesh that grows on trees.'
-const chickenDefinition = 'A domesticated bird raised worldwide for eggs, meat, feathers, and companionship.'
+const appleDefinition = 'A round, edible fruit with crisp flesh that grows on trees'
+const chickenDefinition = 'A domesticated bird raised worldwide for eggs, meat, feathers, and companionship'
 const mockFetch = vi.fn()
 global.fetch = mockFetch
 
@@ -53,6 +53,26 @@ it('adds the generated dictionary entry as a subthought of the cursor thought', 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - apple
     - ${appleDefinition}`)
+})
+
+it('splits the definition into capitalized sibling sentences without trailing punctuation', async () => {
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({
+    json: () =>
+      Promise.resolve({
+        definitions: ['Occurring before dawn; relating to the period immediately preceding sunrise. '],
+      }),
+  })
+  await dispatch([importText({ text: '- antelucan\n  - existing' }), setCursor(['antelucan'])])
+
+  executeCommand(defineTerm)
+  await vi.runAllTimersAsync()
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - antelucan
+    - Occurring before dawn
+    - Relating to the period immediately preceding sunrise
+    - existing`)
 })
 
 it('inserts the definition before existing subthoughts', async () => {
@@ -86,7 +106,7 @@ it('sends visible text and preserves formatting while escaping the definition', 
   const cursor = store.getState().cursor!
   expect(getThoughtById(store.getState(), head(cursor))?.value).toBe('<b>Dog</b>')
   expect(getChildrenRanked(store.getState(), head(cursor)).map(child => child.value)).toEqual([
-    'A comparison where &lt;angle brackets&gt; and ampersands &amp; remain literal text.',
+    'A comparison where &lt;angle brackets&gt; and ampersands &amp; remain literal text',
   ])
 })
 

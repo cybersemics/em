@@ -4,10 +4,8 @@ import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import { EMPTY_THOUGHT_PLACEHOLDER } from '../constants'
 import useEditorSelector from '../hooks/useEditorSelector'
-import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
-import head from '../util/head'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Link from './Link'
 import Superscript from './Superscript'
@@ -33,10 +31,6 @@ const ThoughtLink = ({
 }) => {
   const simplePath = useEditorSelector(state => simplifyPath(state, path), shallowEqual)
   const parentPath = useSelector(state => rootedParentOf(state, path), shallowEqual)
-  const value = useEditorSelector(state => {
-    const thought = getThoughtById(state, head(simplePath))
-    return thought?.value
-  })
 
   return (
     <div>
@@ -51,14 +45,13 @@ const ThoughtLink = ({
             staticText={staticBreadcrumbs}
             charLimit={charLimit || 32}
             thoughtsLimit={thoughtsLimit || 10}
-            linkCssRaw={css.raw({ fontWeight: 'inherit' })}
+            linkClassName={css({ fontWeight: 'inherit' })}
           />
         </div>
       )}
       <Link
-        cssRaw={css.raw({ fontWeight: 'inherit', color: 'fg' })}
+        className={css({ fontWeight: 'inherit', color: 'fg' })}
         simplePath={simplePath}
-        label={value}
         placeholder={EMPTY_THOUGHT_PLACEHOLDER}
         style={styleLink}
       />

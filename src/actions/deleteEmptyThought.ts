@@ -71,8 +71,11 @@ const deleteEmptyThought = (
       // https://github.com/cybersemics/em/issues/864
       // https://github.com/cybersemics/em/issues/1282
       // Note: Move the achieved child up a level all at once in the next step.
+      // Do not alert, since the deleted thought is empty and its hidden children are not something the user deleted (#3491, #5883).
       ...allChildren.map(child => {
-        return !isThoughtArchived(state, [...cursor, child.id]) ? archiveThought({ path: [...cursor, child.id] }) : null
+        return !isThoughtArchived(state, [...cursor, child.id])
+          ? archiveThought({ path: [...cursor, child.id], showAlert: false })
+          : null
       }),
       // move the child archive up a level so it does not get permanently deleted
       state => {

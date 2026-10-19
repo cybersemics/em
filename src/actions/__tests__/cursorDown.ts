@@ -120,7 +120,9 @@ describe('normal view', () => {
           setCursorAction(['a', 'n']),
         ])
       })
-      act(() => executeCommand(toggleSortShortcut, { store }))
+      act(() => {
+        executeCommand(toggleSortShortcut, { store })
+      })
       act(() => {
         store.dispatch([setCursorAction(['a'])])
       })
@@ -144,7 +146,9 @@ describe('normal view', () => {
           setCursorAction(['x']),
         ])
       })
-      act(() => executeCommand(newSubthoughtTopShortcut, { store }))
+      act(() => {
+        executeCommand(newSubthoughtTopShortcut, { store })
+      })
       const stateNew = runDocumentCommand(cursorDown, store.getState())
       expectPathToEqual(stateNew, stateNew.cursor, ['x', 'b'])
     })

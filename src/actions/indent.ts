@@ -44,17 +44,11 @@ const indent = (
   // cancel if parent is readonly or unextendable
   else if (findDescendant(state, head(parentOf(cursor)), '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
-        state,
-        cursor,
-      )}" may not be indented.`,
+      value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is read-only so "${ellipsize(headValue(state, cursor))}" may not be indented.`,
     })
   } else if (findDescendant(state, head(parentOf(cursor)), '=uneditable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
-        state,
-        cursor,
-      )}" may not be indented.`,
+      value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is unextendable so "${ellipsize(headValue(state, cursor))}" may not be indented.`,
     })
   } else if (isContextViewActive(state, parentOf(cursor))) {
     return alert(state, {

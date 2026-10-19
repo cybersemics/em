@@ -199,11 +199,11 @@ const moveThought = (state: State, payload: MoveThoughtPayload, transaction?: Th
     !sameContext ? (state: State) => repositionUpdated(state, sourceParentThought.id, transaction) : null,
     !sameContext ? (state: State) => repositionUpdated(state, destinationThought.id, transaction) : null,
 
-    // Rebase every stored Path that runs through the moved thought onto the thought's new location: the cursor, the
-    // multiselect, and the Select Between range and anchor. This is the only point that knows both where the thought
-    // was and where it is now. A Path left behind names a parent that no longer contains the thought, so nothing below
-    // it renders, and a multiselect that is dropped somewhere else would otherwise land the cursor on such a Path when
-    // the selection ends (see multiselectCursorMiddleware).
+    // Rebase the selection Paths that run through the moved thought onto the thought's new location: the cursor, the
+    // multiselect, and the Select Between range and anchor. This knows both where the thought was and where it is now,
+    // which is lost once the move has happened. A Path left behind names a parent that no longer contains the thought,
+    // so nothing below it renders, and a multiselect that is dropped somewhere else would otherwise land the cursor on
+    // such a Path when the selection ends (see multiselectCursorMiddleware).
     state => {
       // Skipped when the thought no longer exists, i.e. it was merged into a duplicate in the destination.
       const isMovedThoughtLive = !!getThoughtById(state, sourceThought.id)

@@ -150,7 +150,7 @@ const CommandTableItem: FC<CommandTableItemProps> = ({
       >
         {Icon ? (
           <Icon
-            cssRaw={css.raw({
+            className={css({
               cursor: !disabled && onClick ? 'pointer' : 'default',
             })}
             fill={token(disabled ? 'colors.gray50' : 'colors.fg')}
@@ -217,7 +217,7 @@ const CommandTableItem: FC<CommandTableItemProps> = ({
             arrowSize={18 - strokeWidth * 0.3}
             strokeWidth={strokeWidth}
             rounded={command.rounded}
-            cssRaw={css.raw({ position: 'absolute' })}
+            className={css({ position: 'absolute' })}
           />
         </td>
       ) : (

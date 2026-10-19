@@ -3,7 +3,6 @@ import { ConnectDragSource } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { thoughtRecipe } from '../../styled-system/recipes'
-import { SystemStyleObject } from '../../styled-system/types'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -46,8 +45,8 @@ export interface ThoughtProps {
   showContextBreadcrumbs?: boolean
   showContexts?: boolean
   simplePath: SimplePath
-  cssRaw?: SystemStyleObject
-  cssRawThought?: SystemStyleObject
+  className?: string
+  classNameThought?: string
   style?: React.CSSProperties
   styleAnnotation?: React.CSSProperties
   styleContainer?: React.CSSProperties
@@ -96,8 +95,8 @@ const StaticThought = ({
   path,
   showContextBreadcrumbs,
   simplePath,
-  cssRaw,
-  cssRawThought,
+  className,
+  classNameThought,
   style,
   styleThought,
   styleAnnotation,
@@ -138,7 +137,7 @@ const StaticThought = ({
         path={path}
         showContextBreadcrumbs={showContextBreadcrumbs}
         simplePath={simplePath}
-        cssRaw={cssRawThought}
+        className={classNameThought}
         style={styleThought}
         styleAnnotation={styleAnnotation || undefined}
       />
@@ -173,8 +172,8 @@ const StaticThought = ({
             style={style}
             simplePath={simplePath}
             onEdit={onEdit}
-            className={css(
-              {
+            className={cx(
+              css({
                 ...(isTableCol1 && { maxWidth: '100%' }),
                 ...(isAttribute(value) && { fontFamily: 'monospace' }),
                 ...(ellipsizedUrl && {
@@ -189,8 +188,8 @@ const StaticThought = ({
                     */
                   verticalAlign: 'top',
                 }),
-              },
-              cssRaw,
+              }),
+              className,
             )}
           />
         )}

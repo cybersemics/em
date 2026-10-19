@@ -525,8 +525,11 @@ describe('auto-enable', () => {
 
   it('does not auto-enable in the native Capacitor shell', async () => {
     vi.stubEnv('MODE', 'production')
-    // getPlatform is part of the shell that src/browser.ts reads at module load, so the double implements it too
-    vi.doMock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => true, getPlatform: () => 'ios' } }))
+    // getPlatform and isPluginAvailable are read at module load by src/browser.ts and debugLog's device model lookup,
+    // so the double implements them too
+    vi.doMock('@capacitor/core', () => ({
+      Capacitor: { isNativePlatform: () => true, getPlatform: () => 'ios', isPluginAvailable: () => false },
+    }))
     vi.resetModules()
     const fresh = (await import('../debugLog')).default
     expect(fresh.autoEnabled).toBe(false)

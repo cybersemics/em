@@ -195,7 +195,9 @@ describe('normal view', () => {
         setCursorAction(['x']),
       ])
     })
-    act(() => executeCommand(newSubthoughtTopCommand, { store }))
+    act(() => {
+      executeCommand(newSubthoughtTopCommand, { store })
+    })
     const stateNew = runDocumentCommand(cursorUp, store.getState())
     expectPathToEqual(stateNew, stateNew.cursor, ['x'])
   })

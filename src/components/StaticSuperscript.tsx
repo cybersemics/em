@@ -1,7 +1,6 @@
 import React from 'react'
 import { shallowEqual } from 'react-redux'
-import { css } from '../../styled-system/css'
-import { SystemStyleObject } from '../../styled-system/types'
+import { css, cx } from '../../styled-system/css'
 import ThoughtId from '../@types/ThoughtId'
 import useEditorSelector from '../hooks/useEditorSelector'
 import getThoughtById from '../selectors/getThoughtById'
@@ -25,14 +24,14 @@ const StaticSuperscript = React.forwardRef<
   HTMLSpanElement,
   {
     n: number
-    cssRaw?: SystemStyleObject
+    className?: string
     style?: React.CSSProperties
     show?: boolean
     hideZero?: boolean
     absolute?: boolean
     thoughtId?: ThoughtId
   }
->(({ n, style, show = true, hideZero, absolute, cssRaw, thoughtId }, forwardRef) => {
+>(({ n, style, show = true, hideZero, absolute, className, thoughtId }, forwardRef) => {
   const isVisible = !!(show && (n || !hideZero))
   const fill = useEditorSelector(state =>
     // make sure fill is only calculated if the superscript is shown, since getThoughtFill is expensive
@@ -47,15 +46,15 @@ const StaticSuperscript = React.forwardRef<
   return (
     <span
       ref={forwardRef}
-      className={css(
-        {
+      className={cx(
+        css({
           /* prevent expanded click area from wrapping */
           whiteSpace: 'nowrap',
           zIndex: 'stack',
           pointerEvents: 'none',
           userSelect: 'none',
-        },
-        cssRaw,
+        }),
+        className,
       )}
       style={style}
     >
