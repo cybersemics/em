@@ -5,7 +5,7 @@ import ColorPicker from '../ColorPicker'
 import TextColorIcon from './TextColor'
 
 /** Text Color Icon with popup Picker. */
-const TextColorWithColorPicker = ({ size = 18, style, fill, cssRaw }: IconType) => {
+const TextColorWithColorPicker = ({ size = 18, style, fill, className }: IconType) => {
   const showColorPicker = useSelector(state => state.showColorPicker)
 
   return (
@@ -13,7 +13,7 @@ const TextColorWithColorPicker = ({ size = 18, style, fill, cssRaw }: IconType) 
       <TextColorIcon
         size={size}
         style={style}
-        cssRaw={cssRaw}
+        className={className}
         animated={showColorPicker}
         fill={style?.fill || fill || token('colors.fg')}
       />

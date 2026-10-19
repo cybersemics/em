@@ -22,15 +22,14 @@ import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import importJson from '../util/importJson'
 import insertHtmlAtTextOffset from '../util/insertHtmlAtTextOffset'
-import isMarkdown from '../util/isMarkdown'
 import isRoot from '../util/isRoot'
-import markdownToText from '../util/markdownToText'
 import mergeAdjacentTags from '../util/mergeAdjacentTags'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import roamJsonToBlocks, { RoamPage } from '../util/roamJsonToBlocks'
 import splitHtmlAtTextOffset from '../util/splitHtmlAtTextOffset'
 import textToHtml from '../util/textToHtml'
+import trimHtml from '../util/trimHtml'
 import unroot from '../util/unroot'
 import validateRoam from '../util/validateRoam'
 import editableRender from './editableRender'
@@ -159,7 +158,7 @@ const importText = (
 
   path = path || HOME_PATH
   const simplePath = simplifyPath(state, path)
-  const convertedText = isRoam ? text : isMarkdown(text) ? textToHtml(markdownToText(text)) : textToHtml(text)
+  const convertedText = isRoam ? text : textToHtml(text)
   const numLines = (convertedText.match(REGEX_LIST_ITEM) || []).length
   const thoughtId = head(path)
   const destThought = getThoughtById(state, thoughtId)
@@ -189,10 +188,19 @@ const importText = (
     const insertedText = isExternalHtml ? sanitizeExternalHtml(text) : text
     const insertOffset = replaceStart ?? caretPosition
     const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, insertedText)
-    const newValue = addEmojiSpace(combinedValue)
+    // A thought's value never holds leading or trailing whitespace, which a paste can carry in (#5232). Trim before
+    // adding the emoji space, as the change handler does, since the space is only added to a value starting with an emoji.
+    const trimmedValue = trimHtml(combinedValue)
+    const newValue = addEmojiSpace(trimmedValue)
+    const trimmedText = getTextContentFromHTML(trimmedValue)
+    // trimHtml keeps a no-break space, so measure the whitespace it removed rather than what trimStart would remove
+    const leadingWhitespaceLength = Math.max(getTextContentFromHTML(combinedValue).indexOf(trimmedText), 0)
     // the caret lands after the inserted text, which starts where the replaced range did rather than where it ended
-    const offsetBeforeEmojiSpace = insertOffset + getTextContentFromHTML(insertedText).length
-    const emojiSpaceInsertionOffset = newValue === combinedValue ? -1 : getTextContentFromHTML(newValue).indexOf(' ')
+    const offsetBeforeEmojiSpace = Math.min(
+      Math.max(insertOffset + getTextContentFromHTML(insertedText).length - leadingWhitespaceLength, 0),
+      trimmedText.length,
+    )
+    const emojiSpaceInsertionOffset = newValue === trimmedValue ? -1 : getTextContentFromHTML(newValue).indexOf(' ')
     const offset =
       emojiSpaceInsertionOffset >= 0 && offsetBeforeEmojiSpace >= emojiSpaceInsertionOffset
         ? offsetBeforeEmojiSpace + 1

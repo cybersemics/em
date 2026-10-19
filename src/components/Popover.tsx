@@ -65,7 +65,7 @@ const Popover: FC<PopoverProps> = ({ ariaLabel, children, show, size = 18 }) => 
             fill={token('colors.fgOverlay90')}
             size={fontSize}
             // the triangle is full width and overlaps the top of the popover's content, so it must not intercept taps aimed at the options underneath it (#4264)
-            cssRaw={{ pointerEvents: 'none', position: 'absolute', width: '100%' }}
+            className={css({ pointerEvents: 'none', position: 'absolute', width: '100%' })}
             style={{
               ...(overflow.left ? { left: -overflow.left } : { right: -overflow.right }),
               top: -fontSize / 2,

@@ -128,6 +128,17 @@ A `Path` always starts at the ROOT thought. The ROOT thought itself is *not* par
 
 The most important `Path` in the app is `state.cursor` — the path of the thought being viewed/edited. Clicking a thought sets `state.cursor` to its path; pressing `ArrowDown` extends the path with the child's id; etc.
 
+#### Stored Paths and moves
+
+A stored `Path` names a chain of parents, so it goes stale as soon as a thought on it moves. The `Path` still names the old parents, which no longer contain the thought, and nothing below the first of them renders. [`moveThought`](../src/actions/moveThought.ts) knows both where a moved thought was and where it is now. It therefore rebases the selection, every `Path` in the cursor and multiselect state that runs through the moved thought, from `oldPath` onto `newPath`:
+
+- `state.cursor`
+- `state.multicursors`
+- `state.multicursorRange`
+- `state.multicursorAnchor`
+
+A new piece of selection state that stores a `Path` must be rebased there too. Do not fix a stale `Path` by resolving it again from the thought's id in the code that later finds it. That gives up which instance of a thought the `Path` named and how it reached it, as through a [context view](#views). Fix it at the source instead: the move that did not rebase it.
+
 #### Circular Paths
 
 `Path`s **are allowed to contain cycles**. This is possible because of the Context View, which lets the cursor jump between contexts that share a value (and back). The fact that the cursor can be at `a/m~/b/m/a` even though `a` already appears earlier is not a bug — it's how the Context View works. See [Views](#views).
@@ -298,7 +309,7 @@ The predicate is [`childrenFilterPredicate`](../src/selectors/getChildren.ts). I
 - `Alphabetical` (Asc/Desc).
 - `Created` (Asc/Desc).
 - `Updated` (Asc/Desc).
-- `Note` (sort by the `=note` value of each child).
+- `Note` (sort by the `=note` value of each child). Children with a note come first in either direction, ordered by their notes, followed by the children without one. An empty note, such as the one the Note command creates before anything is typed into it, counts as no note, so the thought stays where it is until the note has a value.
 
 There is no global or default sort preference: a context without `=sort` is sorted manually. This is why fractional ranks matter: dragging a thought between two siblings is a single rank update, not a sibling-wide reshuffle.
 
@@ -307,7 +318,7 @@ There is no global or default sort preference: a context without `=sort` is sort
 - [`toggleSort`](../src/actions/toggleSort.ts) (cycles the preference) and [`setSortPreference`](../src/actions/setSortPreference.ts) (sets a specific one, from the Sort Picker) both end in the [`sort`](../src/actions/sort.ts) action, which renumbers the children to `0, 1, 2, …` in sorted order. [`uncategorize`](../src/actions/uncategorize.ts), [`swapParent`](../src/actions/swapParent.ts), and [`swapGrandparent`](../src/actions/swapGrandparent.ts) call it too, since they all move children into a context that may be sorted.
 - Thoughts created afterwards are given a rank that keeps the context sorted, via [`getSortedRank`](../src/selectors/getSortedRank.ts) — a fractional rank between the neighbors the new value sorts between. Under `Created` a thought created in the same millisecond as its siblings is still the newest of them, so an ascending context ranks it after them; this is what keeps the sentences of a split thought, which are all created within one millisecond, in order. A newly created thought needs no placement, since the insert path derives one from its rank.
 - A thought moved into a sorted context is ranked by the sort condition rather than by where it was dropped, via the same [`getSortedRank`](../src/selectors/getSortedRank.ts). [`moveThought`](../src/actions/moveThought.ts) passes the thought's `created` timestamp along with its value, since a moved thought keeps the timestamp it was created with and a `Created` context sorts it by that; without it the rank would come from the value and disagree with the sort condition. The placement it stores is derived from that rank rather than from the caller's, so the stored order matches the rendered one — see [persistence.md → Order and placement](persistence.md#order-and-placement).
-- An edit re-ranks the thought only when it changes the thought's sort key: under `Alphabetical`, where the key is the value, and under `Updated`, where the edit moves `lastUpdated` to now. A `Created` context leaves the edited thought's rank alone, since editing does not change when the thought was created. Under `Updated` a thought's sort key also moves when it is not itself edited: adding or removing a child moves the parent's `lastUpdated` to now, so [`createThought`](../src/actions/createThought.ts) and [`deleteThought`](../src/actions/deleteThought.ts) re-rank the parent among its siblings. A new rank alone reorders the thought on screen but not in storage, which keeps sibling order structurally, so [`editThought`](../src/actions/editThought.ts), `createThought`, and `deleteThought` also name the sibling to place it after — see [persistence.md → Order and placement](persistence.md#order-and-placement).
+- An edit re-ranks the thought only when it changes the thought's sort key: under `Alphabetical`, where the key is the value, and under `Updated`, where the edit moves `lastUpdated` to now. A `Created` context leaves the edited thought's rank alone, since editing does not change when the thought was created. Under `Note` the sort key belongs to a different thought: editing a note re-ranks the thought that owns it, among its own siblings. Under `Updated` a thought's sort key also moves when it is not itself edited: adding or removing a child moves the parent's `lastUpdated` to now, so [`createThought`](../src/actions/createThought.ts) and [`deleteThought`](../src/actions/deleteThought.ts) re-rank the parent among its siblings. A new rank alone reorders the thought on screen but not in storage, which keeps sibling order structurally, so [`editThought`](../src/actions/editThought.ts), `createThought`, and `deleteThought` also name the sibling to place it after — see [persistence.md → Order and placement](persistence.md#order-and-placement).
 - A cross-context move bumps `lastUpdated` on the source and destination parents as well as on the moved thought, since the children of each one changed. Under `Updated` that is their sort key, so [`moveThought`](../src/actions/moveThought.ts) re-ranks each bumped parent within its own context — the most recently updated sibling ranks last when ascending and first when descending — in addition to the sorted rank it gives the moved thought in its new context. No other sort condition is affected, since a move changes neither a value nor a creation timestamp.
 - Toggling sort back off restores the pre-sort manual order from `state.manualSortMap`, which records each child's rank at the moment the context was first sorted.
 

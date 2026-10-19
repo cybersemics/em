@@ -60,17 +60,11 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
   // cancel if parent is readonly
   else if (findDescendant(state, head(simpleParent), '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, simpleParent) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
-        state,
-        cursor,
-      )}" cannot be categorized.`,
+      value: `"${ellipsize(headValue(state, simpleParent) ?? 'MISSING_THOUGHT')}" is read-only so "${ellipsize(headValue(state, cursor))}" cannot be categorized.`,
     })
   } else if (findDescendant(state, head(simpleParent), '=unextendable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, simpleParent) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
-        state,
-        cursor,
-      )}" cannot be categorized.`,
+      value: `"${ellipsize(headValue(state, simpleParent) ?? 'MISSING_THOUGHT')}" is unextendable so "${ellipsize(headValue(state, cursor))}" cannot be categorized.`,
     })
   }
   // Check if all selected thoughts belong to the same parent

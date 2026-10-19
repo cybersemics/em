@@ -34,7 +34,7 @@ const calculateRank = (thoughts: { rank: number }[], index: number): number => {
  *
  * If the sort preference is Alphabetical, the old value will be represented in the list of children.
  * The staleId option can filter out that child so that the new value is not compared against the old value (#3983).
- * Under Updated it identifies the thought being re-placed, which is otherwise inferred from the cursor.
+ * Under Updated and Note it identifies the thought being re-placed, which under Updated is otherwise inferred from the cursor.
  */
 const getSortedRank = (
   state: State,
@@ -72,14 +72,21 @@ const getSortedRank = (
   }
 
   // Handle Note sorting
+  // The value is the note of the thought being placed. As in getSortComparator, thoughts with a note sort before
+  // thoughts without one in either direction, and an empty note counts as none. A thought without a note is therefore
+  // placed ahead of the first sibling without one, and a thought with a note ahead of the first sibling that has no note
+  // or whose note sorts at or after it (#3965).
   if (sortPreference.type === 'Note') {
-    const compareFn = isDescending ? compareReasonableDescending : compareReasonable
+    // Descending reverses compareReasonable exactly, as compareThoughtByNoteDescendingAndRank does, rather than using
+    // compareReasonableDescending, which keeps formatted text first and would disagree with the comparator.
+    const compareFn = isDescending ? (a: string, b: string) => compareReasonable(b, a) : compareReasonable
     // Only consider visible thoughts since attributes are always sorted to the beginning.
     // Otherwise this can result in incorrectly in the wrong place, inserting after =sort.
-    const thoughtsVisible = children.filter(isVisible(state))
-    const index = thoughtsVisible.findIndex(
-      thought => compareFn(noteValue(state, thoughtToPath(state, thought.id)) ?? '', value) !== -1,
-    )
+    const thoughtsVisible = children.filter(thought => thought.id !== options.staleId && isVisible(state, thought))
+    const index = thoughtsVisible.findIndex(thought => {
+      const note = noteValue(state, thoughtToPath(state, thought.id))
+      return !note || (!!value && compareFn(note, value) !== -1)
+    })
     return calculateRank(thoughtsVisible, index)
   }
 
