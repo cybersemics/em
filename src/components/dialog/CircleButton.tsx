@@ -19,10 +19,11 @@ const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({ onClick,
       aria-label={ariaLabel}
       disabled={disabled}
       className={css({
-        width: '36px',
-        height: '36px',
-        minWidth: '36px',
-        minHeight: '36px',
+        // Grows with the font size like the text it sits beside, up to 44px, the size of a comfortable touch target. 2.25rem is 36px at the default font size.
+        width: 'min(2.25rem, 44px)',
+        height: 'min(2.25rem, 44px)',
+        minWidth: 'min(2.25rem, 44px)',
+        minHeight: 'min(2.25rem, 44px)',
         borderRadius: '50%',
         border: 'none',
         // Subtle white sheen from upper-left to lower-right — softens the otherwise flat translucent fill into something glassy.

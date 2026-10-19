@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { css, cx } from '../../styled-system/css'
 import CommandSortType from '../@types/CommandSortType'
 import useOnClickOutside from '../hooks/useOnClickOutside'
+import useRemAsPx from '../hooks/useRemAsPx'
 import FadeTransition from './FadeTransition'
 import SortOption from './SortOption'
 import AToZIcon from './icons/AToZIcon'
@@ -20,6 +21,8 @@ interface CommandUniverseSortButtonProps {
  */
 const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonProps) => {
   const [isDropdownOpen, setDropdownOpen] = useState(false)
+  // Grows with the font size like the search glyph across the row from it, and stops where that does (see CommandUniverseSearch). 28px at the default font size.
+  const iconSize = Math.min(useRemAsPx(1.75), 36)
   const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
   const buttonRef = useRef<HTMLButtonElement>(null)
   const closeDropdown = useCallback(() => setDropdownOpen(false), [])
@@ -65,9 +68,8 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
         zIndex: 'dialog',
         color: 'fg',
         flex: 'none',
-        width: '28px',
-        height: '28px',
       })}
+      style={{ width: iconSize, height: iconSize }}
     >
       {/*
        * `flex: none` cancels iconRecipe's base `flex: 1`, which would otherwise let the
@@ -80,19 +82,18 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '28px',
-          height: '28px',
           opacity: 0.5,
           // Same plus-lighter blend as the search icon and gradient text so the row
           // reads as one continuous luminous element.
           mixBlendMode: 'plus-lighter',
         })}
+        style={{ width: iconSize, height: iconSize }}
       >
         {/* Reflect the active sort mode: A→Z glyph for alphabetical, list/group glyph for type. */}
         {selectedSort === 'alphabetical' ? (
-          <AToZIcon size={28} fill='#D9D3D5' strokeWidth={0} className={css({ flex: 'none' })} />
+          <AToZIcon size={iconSize} fill='#D9D3D5' strokeWidth={0} className={css({ flex: 'none' })} />
         ) : (
-          <CommandsListIcon size={28} fill='#D9D3D5' strokeWidth={0} className={css({ flex: 'none' })} />
+          <CommandsListIcon size={iconSize} fill='#D9D3D5' strokeWidth={0} className={css({ flex: 'none' })} />
         )}
       </div>
       <FadeTransition in={isDropdownOpen} type='fast' unmountOnExit>

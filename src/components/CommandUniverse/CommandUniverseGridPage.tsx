@@ -39,8 +39,9 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '0.5rem',
-          paddingInline: '1rem',
+          // Fits the width of the dialog, so the horizontal spacing is fixed. See DialogHeader.
+          gap: '8px',
+          paddingInline: '16px',
           paddingBlock: '0.5rem',
         })}
       >
@@ -97,7 +98,8 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
                         color: 'fg',
                         borderBottom: 'none',
                         margin: 0,
-                        whiteSpace: 'nowrap',
+                        // Wraps rather than overflowing when the font size outgrows the width of the dialog.
+                        textAlign: 'center',
                       })}
                     >
                       {section.title}

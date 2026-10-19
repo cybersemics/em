@@ -8,6 +8,8 @@ import State from '../@types/State'
 import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from '../actions/commandUniverseNavigate'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
+import { DEFAULT_FONT_SIZE } from '../constants'
+import useRemAsPx from '../hooks/useRemAsPx'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import CircleEllipsisIcon from './icons/CircleEllipsisIcon'
@@ -54,6 +56,10 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
   })
 
   const Icon = command.svg ?? SettingsIcon
+  const fontSize = useSelector(state => state.fontSize)
+  const iconSize = useRemAsPx(1.25)
+  // Gesture diagrams are read like text, so they grow with the font size. But they start out much larger than the text beside them, so they grow at half its rate and stop at 180px, which keeps them in proportion with the title rather than dwarfing it. 130px at the default font size.
+  const diagramSize = Math.min(130 * (1 + (fontSize / DEFAULT_FONT_SIZE - 1) * 0.5), 180)
 
   const isNearViewport = useInView(gestureBoxRef, { root: scrollRootRef, margin: '180px 0px', once: false })
   useEffect(() => {
@@ -121,7 +127,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
               zIndex: 1,
             })}
           >
-            <CircleEllipsisIcon size={20} fill={token(disabled ? 'colors.gray50' : 'colors.fg')} />
+            <CircleEllipsisIcon size={iconSize} fill={token(disabled ? 'colors.gray50' : 'colors.fg')} />
           </div>
 
           {/* Gesture diagram container. */}
@@ -139,9 +145,9 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
                 className={css({
                   width: '100%',
                   aspectRatio: '1 / 1',
-                  maxWidth: '130px',
                   margin: '0 auto',
                 })}
+                style={{ maxWidth: diagramSize }}
               >
                 {showGesture && (
                   <GestureDiagram
@@ -155,6 +161,8 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
                     rounded={command.rounded}
                     gradient={GESTURE_GRADIENT}
                     glow={false}
+                    // Fill the box, rather than stopping at the size the diagram is drawn at.
+                    style={{ width: '100%' }}
                   />
                 )}
               </div>
@@ -183,13 +191,14 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
               })}
             >
               {/* `flex: none` overrides iconRecipe's `flex: 1` default so width/height set the size. */}
+              {/* The icon is read with the command's title, so it grows with the font size as the title does. */}
               <div
                 className={css({ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' })}
-                style={{ width: 20, height: 20 }}
+                style={{ width: iconSize, height: iconSize }}
               >
                 <Icon
                   className={css({ flex: 'none' })}
-                  size={20}
+                  size={iconSize}
                   fill={token(disabled ? 'colors.gray50' : 'colors.fg')}
                 />
               </div>
