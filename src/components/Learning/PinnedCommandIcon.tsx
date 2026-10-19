@@ -26,7 +26,7 @@ const PinnedCommandIcon = ({ command, repCount }: { command: Command; repCount: 
       key={repCount}
       size={14}
       fill={token('colors.gray50')}
-      cssRaw={css.raw({ flex: 'none' })}
+      className={css({ flex: 'none' })}
       animated={isAnimated}
       animationComplete={() => setIsAnimated(false)}
     />
