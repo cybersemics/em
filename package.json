@@ -83,7 +83,7 @@
     "allowed-urls": [
       "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-interface-0.2.0.tgz",
       "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-wa-sqlite-0.4.2.tgz",
-      "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-78e46386ce01961876a08ea59bf55d2e764a7b60/treecrdt-wasm-0.0.1-preview.tgz",
+      "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-402a3975008e9ed5606de4974401417b833b7a0c/treecrdt-wasm-0.0.1-preview.tgz",
       "https://github.com/cybersemics/treecrdt/releases/download/sync-preview-d2857dc945af14c39015d12d2e5f4f7d19e25d18/treecrdt-sync-0.1.2.tgz",
       "https://github.com/cybersemics/treecrdt/releases/download/sync-preview-d2857dc945af14c39015d12d2e5f4f7d19e25d18/treecrdt-sync-protocol-0.1.2.tgz",
       "https://github.com/cybersemics/treecrdt/releases/download/sync-preview-d2857dc945af14c39015d12d2e5f4f7d19e25d18/treecrdt-sync-server-core-0.1.2.tgz"
@@ -134,7 +134,7 @@
     "@treecrdt/sync-server-core": "0.1.2",
     "@treecrdt/sync-sqlite": "0.1.2",
     "@treecrdt/wa-sqlite": "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-wa-sqlite-0.4.2.tgz",
-    "@treecrdt/wasm": "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-78e46386ce01961876a08ea59bf55d2e764a7b60/treecrdt-wasm-0.0.1-preview.tgz",
+    "@treecrdt/wasm": "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-402a3975008e9ed5606de4974401417b833b7a0c/treecrdt-wasm-0.0.1-preview.tgz",
     "axios": "^1.20.0",
     "clipboard": "^2.0.11",
     "dnd-core": "^16.0.1",

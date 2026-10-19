@@ -7276,13 +7276,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@treecrdt/wasm@https://github.com/cybersemics/treecrdt/releases/download/memory-preview-78e46386ce01961876a08ea59bf55d2e764a7b60/treecrdt-wasm-0.0.1-preview.tgz":
+"@treecrdt/wasm@https://github.com/cybersemics/treecrdt/releases/download/memory-preview-402a3975008e9ed5606de4974401417b833b7a0c/treecrdt-wasm-0.0.1-preview.tgz":
   version: 0.0.1
-  resolution: "@treecrdt/wasm@https://github.com/cybersemics/treecrdt/releases/download/memory-preview-78e46386ce01961876a08ea59bf55d2e764a7b60/treecrdt-wasm-0.0.1-preview.tgz"
+  resolution: "@treecrdt/wasm@https://github.com/cybersemics/treecrdt/releases/download/memory-preview-402a3975008e9ed5606de4974401417b833b7a0c/treecrdt-wasm-0.0.1-preview.tgz"
   dependencies:
     "@treecrdt/interface": "npm:0.2.0"
     "@treecrdt/sync-protocol": "npm:0.1.2"
-  checksum: 10c0/bee37f8912494e0a4e6bad9e68f6b7e9050dba8a3bfa3a0ba0b52c1d006206f5bc86bf724865fcc9588e676727683a20d68b876353e2a83cd7415016338a98da
+  checksum: 10c0/2e134510432897db23b11b0c24aaee9594380a71e9434297a56e8ac0a996aaaa2caf5727a6f026619f1f4a544b69b0691a982252eb6e1ca4093c7979723294d2
   languageName: node
   linkType: hard
 
@@ -12404,7 +12404,7 @@ __metadata:
     "@treecrdt/sync-server-core": "npm:0.1.2"
     "@treecrdt/sync-sqlite": "npm:0.1.2"
     "@treecrdt/wa-sqlite": "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-wa-sqlite-0.4.2.tgz"
-    "@treecrdt/wasm": "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-78e46386ce01961876a08ea59bf55d2e764a7b60/treecrdt-wasm-0.0.1-preview.tgz"
+    "@treecrdt/wasm": "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-402a3975008e9ed5606de4974401417b833b7a0c/treecrdt-wasm-0.0.1-preview.tgz"
     "@trivago/prettier-plugin-sort-imports": "npm:^6.0.2"
     "@types/clipboard": "npm:^2.0.10"
     "@types/dompurify": "npm:^3.2.0"
