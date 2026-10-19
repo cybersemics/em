@@ -17,6 +17,7 @@ import { HOME_TOKEN } from '../constants'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import simplifyPath from '../selectors/simplifyPath'
 import requestAiDisclosure from '../util/aiDisclosure'
 import head from '../util/head'
@@ -315,6 +316,7 @@ const generateThought = {
   // A thought already generating cannot be generated again. Checked here rather than in exec so that the invocation does not count as a success. Each multicursor thought already generating is skipped by generateThoughtAtPaths instead.
   canExecute: state =>
     isDocumentEditable() &&
+    !isAttributeSelected(state) &&
     (hasMulticursor(state) || (!!state.cursor && !getThoughtById(state, head(state.cursor))?.generating)),
   exec: async (dispatch, getState, e, commandContext) => {
     const state = getState()

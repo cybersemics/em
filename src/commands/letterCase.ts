@@ -2,6 +2,7 @@ import Command from '../@types/Command'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import Icon from '../components/icons/LetterCaseWithPicker'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggle the letter case picker. */
@@ -10,7 +11,7 @@ const letterCase = {
   label: 'Letter Case' as const,
   description: 'Changes the letter case of the current thought or selected text.',
   svg: Icon,
-  canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
+  canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state),
   multicursor: false,
   exec: (dispatch, _) => {
     dispatch(toggleDropdown({ dropDownType: 'letterCase' }))

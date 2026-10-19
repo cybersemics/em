@@ -2,6 +2,7 @@ import Command from '../@types/Command'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import Icon from '../components/icons/StrikethroughIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import isSelectionFormatted from '../selectors/isSelectionFormatted'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -15,7 +16,7 @@ const strikethrough = {
   keyboard: { key: 's', meta: true },
   multicursor: { toggle: true },
   canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
   },
   exec: (dispatch, getState, e) => {
     e.preventDefault()

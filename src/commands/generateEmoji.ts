@@ -4,6 +4,7 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import GenerateThoughtIcon from '../components/icons/GenerateThoughtIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import requestAiDisclosure from '../util/aiDisclosure'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -42,7 +43,7 @@ const generateEmoji = {
       return generateAllWithDisclosure()
     },
   },
-  canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
+  canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state),
   exec: async (dispatch, getState, event, commandContext) => {
     const cursor = getState().cursor
     if (!cursor) return

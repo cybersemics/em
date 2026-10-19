@@ -2,6 +2,7 @@ import Command from '../@types/Command'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import Icon from '../components/icons/UnderlineIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import isSelectionFormatted from '../selectors/isSelectionFormatted'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -13,12 +14,13 @@ const underline = {
   descriptionInverse: 'Removes the underline from the current thought or selected text.',
   svg: Icon,
   keyboard: { key: 'u', meta: true },
+  preventDefault: true,
   multicursor: {
     preventSetCursor: true,
     toggle: true,
   },
   canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
   },
   exec: dispatch => {
     dispatch(formatSelection('underline'))

@@ -4,6 +4,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { splitSentencesActionCreator as splitSentences } from '../actions/splitSentences'
 import SplitSentencesIcon from '../components/icons/SplitSentencesIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import selectionOffsets from '../selectors/selectionOffsets'
 import headValue from '../util/headValue'
 import splitSentence from '../util/splitSentence'
@@ -17,7 +18,7 @@ const splitSentencesCommand = {
   multicursor: true,
   svg: SplitSentencesIcon,
   canExecute: state => {
-    return !!state.cursor || hasMulticursor(state)
+    return (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
   },
   exec: (dispatch, getState) => {
     const state = getState()

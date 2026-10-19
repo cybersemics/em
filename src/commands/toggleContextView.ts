@@ -1,6 +1,7 @@
 import Command from '../@types/Command'
 import { toggleContextViewActionCreator as toggleContextView } from '../actions/toggleContextView'
 import ContextViewIcon from '../components/icons/ContextViewIcon'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import isContextViewActive from '../selectors/isContextViewActive'
 
 const toggleContextViewCommand = {
@@ -14,7 +15,7 @@ const toggleContextViewCommand = {
   keyboard: { key: 's', shift: true, alt: true },
   multicursor: true,
   svg: ContextViewIcon,
-  canExecute: state => !!state.cursor,
+  canExecute: state => !!state.cursor && !isAttributeSelected(state),
   isActive: state => {
     return !!state.cursor && isContextViewActive(state, state.cursor)
   },

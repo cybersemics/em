@@ -3,6 +3,7 @@ import { toggleAttributeActionCreator as toggleAttribute } from '../actions/togg
 import TableViewIcon from '../components/icons/TableViewIcon'
 import attributeEquals from '../selectors/attributeEquals'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -19,7 +20,7 @@ const toggleTableViewCommand = {
   },
   svg: TableViewIcon,
   canExecute: state => {
-    return !!state.cursor || hasMulticursor(state)
+    return (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state, 'first-sibling')
   },
   exec: (dispatch, getState) => {
     const state = getState()

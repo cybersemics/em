@@ -79,7 +79,7 @@ describe('multicursor', () => {
 
 describe('metaprogramming attributes', () => {
   // https://github.com/cybersemics/em/issues/6009
-  it.skip('does not bold a metaprogramming attribute', async () => {
+  it('does not bold a metaprogramming attribute', async () => {
     act(() => {
       store.dispatch([
         importText({

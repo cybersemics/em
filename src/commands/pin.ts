@@ -5,6 +5,7 @@ import { pinActionCreator as pin } from '../actions/pin'
 import PinIcon from '../components/icons/PinIcon'
 import { HOME_PATH } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import isPinned from '../selectors/isPinned'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -19,7 +20,7 @@ const pinCommand = {
   gesture: 'ud',
   svg: PinIcon,
   canExecute: state => {
-    return !!state.cursor || hasMulticursor(state)
+    return (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
   },
   multicursor: {
     onComplete(filteredCursors, dispatch) {

@@ -7,6 +7,7 @@ import Heading4Icon from '../components/icons/Heading4Icon'
 import Heading5Icon from '../components/icons/Heading5Icon'
 import NormalTextIcon from '../components/icons/NormalTextIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 export const headingLabels = {
@@ -63,7 +64,7 @@ const headingCommand = <L extends HeadingLevel>(level: L) =>
     multicursor: true,
     svg: iconMap[level], // Assign the icon based on the level
     canExecute: state => {
-      return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+      return isDocumentEditable() && (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
     },
     exec: dispatch => {
       dispatch(heading({ level }))

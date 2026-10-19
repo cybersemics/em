@@ -2,6 +2,7 @@ import Command from '../@types/Command'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import TextColorWithColorPicker from '../components/icons/TextColorWithColorPicker'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggle the built-in =done style to cross out an item. */
@@ -11,7 +12,7 @@ const textColor = {
   description: 'Change the text color or highlight color to your liking.',
   keyboard: { key: 'h', meta: true, shift: true },
   svg: TextColorWithColorPicker,
-  canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
+  canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state),
   preventDefault: true,
   multicursor: false,
   exec: (dispatch, _) => {

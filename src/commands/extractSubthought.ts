@@ -2,6 +2,7 @@ import Command from '../@types/Command'
 import { extractSubthoughtActionCreator as extract } from '../actions/extractSubthought'
 import ExtractSubthoughtIcon from '../components/icons/ExtractSubthoughtIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 
 const extractSubthought = {
   id: 'extractSubthought',
@@ -16,7 +17,7 @@ const extractSubthought = {
   multicursor: false,
   svg: ExtractSubthoughtIcon,
   canExecute: state => {
-    return !!state.cursor || hasMulticursor(state)
+    return (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
   },
   exec: dispatch => {
     dispatch(extract())

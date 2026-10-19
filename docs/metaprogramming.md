@@ -12,6 +12,8 @@ Generally, an attribute affects *only its parent thought*. Three special attribu
 
 Meta-attribute children are hidden in normal view. Toggle the **Show Hidden Thoughts** command (`Option + Shift + H`) — which flips `state.showHiddenThoughts` — to view and edit them.
 
+An attribute's value is the key it is stored and read under, so commands that format, lay out, or restructure a thought — text formatting, Text Color, Letter Case, the view and sort toggles, pinning, splitting and joining, Categorize, Swap Parent, Note, and the like — are disabled while the cursor or any multicursor is on an attribute. They test [`isAttributeSelected`](../src/selectors/isAttributeSelected.ts); see [commands.md](commands.md). Bold, Italic, and Underline also swallow their keyboard shortcuts while disabled, so that the browser's own formatting does not apply to the attribute instead.
+
 ## How attributes are stored and read
 
 `childrenMap` keys meta-attribute children by *value* rather than by `ThoughtId`. So a parent with three children `b`, `c`, and `=pin` looks like:
