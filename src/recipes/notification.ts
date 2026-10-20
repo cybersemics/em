@@ -26,9 +26,13 @@ const notificationRecipe = defineSlotRecipe({
         inset: 0,
         overflow: 'hidden',
       },
+      // At the bottom-right anchor the blur and scrim are a corner rather than a full-width band: a box sized to the
+      // content, feathered by one shared elliptical mask so the two layers fade out together to the left and upward.
       '& [data-notification-blur-desktop]': {
         left: 'auto',
-        width: 800,
+        top: 'auto',
+        width: 'min(80vw, 40rem)',
+        height: '100%',
       },
       '& [data-notification-gradient]': {
         position: 'absolute',
@@ -67,13 +71,12 @@ const notificationRecipe = defineSlotRecipe({
       'bottom-full': {
         container: {
           '& [data-notification-blur-mobile]': { display: 'block' },
+          // The rainbow glow's placement, read by the rainbow glow variant so it cannot override the pinned-command glow.
           '--notification-glow-flip': 'scaleX(-1)',
-        },
-        glow: {
-          width: '175vw',
-          bottom: -72,
-          left: -16,
-          right: 'auto',
+          '--notification-glow-width': '175vw',
+          '--notification-glow-bottom': '-72px',
+          '--notification-glow-left': '-16px',
+          '--notification-glow-right': 'auto',
         },
         content: {
           marginLeft: 0,
@@ -84,15 +87,26 @@ const notificationRecipe = defineSlotRecipe({
       },
       'bottom-right': {
         container: {
+          // The anchor is responsive, so the base bottom-full class is still applied here; hide its full-width blur
+          // explicitly or both blur boxes render and the corner treatment is buried under a full-width one.
+          '& [data-notification-blur-mobile]': { display: 'none' },
           '& [data-notification-blur-desktop]': { display: 'block' },
-          '--notification-blur-feather': 'linear-gradient(to right, transparent, black 60%)',
+          // The corner's elliptical feather, shared by the blur (through NotificationSurface's ProgressiveBlur mask) and
+          // the scrim below, so the two layers fade out together to the left and upward.
+          '--notification-blur-feather': 'radial-gradient(ellipse 100% 100% at 100% 100%, black 35%, transparent 100%)',
+          '& [data-notification-gradient]': {
+            left: 'auto',
+            top: 'auto',
+            width: 'min(80vw, 40rem)',
+            height: '100%',
+            maskImage: 'var(--notification-blur-feather)',
+            WebkitMaskImage: 'var(--notification-blur-feather)',
+          },
           '--notification-glow-flip': 'none',
-        },
-        glow: {
-          width: 'clamp(1000px, calc(100vw + 32px), 1500px)',
-          bottom: -64,
-          left: 'auto',
-          right: -16,
+          '--notification-glow-width': 'clamp(1000px, calc(100vw + 32px), 1500px)',
+          '--notification-glow-bottom': '-64px',
+          '--notification-glow-left': 'auto',
+          '--notification-glow-right': '-16px',
         },
         content: {
           marginLeft: 'auto',
@@ -105,10 +119,53 @@ const notificationRecipe = defineSlotRecipe({
     glow: {
       rainbow: {
         glow: {
-          // The rainbow glow is mirrored only at the full-width anchor, which depends on the anchor and the glow
+          // The rainbow glow is mirrored and placed differently at each anchor, which depends on the anchor and the glow
           // together. That would be a compound variant, but Panda rejects compound variants when a variant is passed
-          // responsively, as Tip passes its anchor. So each anchor sets this variable and the glow reads it.
+          // responsively, as Tip passes its anchor. So each anchor sets these variables and the glow reads them.
           transform: 'var(--notification-glow-flip)',
+          width: 'var(--notification-glow-width)',
+          bottom: 'var(--notification-glow-bottom)',
+          left: 'var(--notification-glow-left)',
+          right: 'var(--notification-glow-right)',
+        },
+      },
+      // The pinned command's glow does not follow the content height. Its consumer switches anchor at lg, so the
+      // per-anchor values are keyed by that breakpoint here; Panda rejects compound variants once a variant value is
+      // responsive.
+      //
+      // The glow element is the image's own footprint, so the image's constants live in the aspect ratio and every
+      // other value is a fraction of one viewport dimension. Portrait scales with viewport width and anchors left,
+      // matched to the design at 412×922; landscape scales with viewport height and anchors right, matched at 922×412.
+      // Sizing from a single dimension avoids iOS Safari's unstable vh in portrait, and the bottom anchor adds the
+      // safe-area inset so the bright band follows the text above the home indicator. Tablet and desktop share the lg
+      // branch, where the glow must stay localized in the corner at the phone size, so each height-relative value is
+      // capped at approximately its 412px-tall value so the proportions hold.
+      // The glow image is deliberately oversized and positioned mostly offscreen to frame its bright band:
+      // 329.7vw is about 1358px at the 412px portrait reference width; 242.7vh is about 1000px at the 412px
+      // landscape reference height. The matching -46.9vh bottom offset is about -193px at that height.
+      // These are image-placement ratios from visual tuning, not dimensions of the tooltip content.
+      pinnedCommand: {
+        glow: {
+          width: {
+            base: '329.7vw',
+            lg: 'min(242.7vh, 1000px)',
+          },
+          height: 'auto',
+          aspectRatio: '3166 / 1617',
+          bottom: {
+            base: 'calc(-53.5vw + env(safe-area-inset-bottom))',
+            lg: 'calc(max(-46.9vh, -193.2px) + env(safe-area-inset-bottom))',
+          },
+          left: { base: '-69.7vw', lg: 'auto' },
+          right: { base: 'auto', lg: 'max(-113.5vh, -467.6px)' },
+          opacity: '1',
+          filter: {
+            base: 'blur(0px)',
+            lg: 'blur(16px)',
+          },
+          backgroundSize: '100% 100%',
+          backgroundPosition: '0 0',
+          transform: 'none',
         },
       },
     },

@@ -530,6 +530,7 @@ export default defineConfig({
             'dialog',
             'dialogContainer',
             'popup',
+            'pinnedCommandExpanded',
             'notification',
             'cloneDroppedThought',
             'hoverArrow',
