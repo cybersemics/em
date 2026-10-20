@@ -1,7 +1,9 @@
 import { RefObject, useCallback, useEffect, useMemo, useRef } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
+import { toggleHelpGenieActionCreator as toggleHelpGenie } from '../../actions/toggleHelpGenie'
 import { isTouch } from '../../browser'
 import { formatKeyboardShortcut, gestureString } from '../../commands'
 import usePrefetchImages from '../../hooks/usePrefetchImages'
@@ -153,18 +155,30 @@ const PinnedCommandGestureDiagram = ({ gesture }: { gesture: string }) => (
   </div>
 )
 
-/** The learning genie: the same button as the Command Universe header's Help. The learning portal it opens does not exist yet, so it has no action. */
-const LearningGenieButton = () => (
-  <div className={css({ flex: 'none', translate: '0px 0px' })}>
-    <CircleButton ariaLabel='Help' size='1.7778rem'>
-      <InfoGenieIcon
-        size={24}
-        fill={token('colors.pinnedCommandGenieIcon')}
-        className={css({ width: '1.3333rem', height: '1.3333rem' })}
-      />
-    </CircleButton>
-  </div>
-)
+/** The learning genie: the same button as the Command Universe header's Help. It lets the help genie out, or puts it back. */
+const LearningGenieButton = () => {
+  const dispatch = useDispatch()
+  const genieVisible = useSelector(state => state.helpGenie.visible)
+  const genieUnavailable = useSelector(state => state.helpGenie.unavailable)
+
+  return (
+    <div className={css({ flex: 'none', translate: '0px 0px' })}>
+      <CircleButton
+        ariaLabel='Help'
+        size='1.7778rem'
+        pressed={genieVisible}
+        disabled={genieUnavailable}
+        onClick={() => dispatch(toggleHelpGenie({}))}
+      >
+        <InfoGenieIcon
+          size={24}
+          fill={token('colors.pinnedCommandGenieIcon')}
+          className={css({ width: '1.3333rem', height: '1.3333rem' })}
+        />
+      </CircleButton>
+    </div>
+  )
+}
 
 /**
  * The command's name, as a button that opens its Command Universe detail page, followed by a chevron.
