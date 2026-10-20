@@ -67,7 +67,7 @@ Clear, Escape, tapping the ring again, and tapping outside dismiss the tooltip. 
 
 The ring records the editor's selection offsets before pointer activation can move focus. When the command-name button opens the Command Universe, its open action preserves that snapshot rather than replacing it with the selection inside the tooltip. This lets commands that act on selected text continue to use the editor range.
 
-[`TestPinnedCommandTooltip`](../src/components/modals/TestPinnedCommandTooltip.tsx) renders the open tooltip for Context View so the [`pinned-command-tooltip`](../src/e2e/puppeteer/__tests__/pinned-command-tooltip.ts) snapshots can guard its layout at a portrait and a landscape viewport. The screenshot helper disables CSS filters, so the snapshots cover placement and extents, not the blur.
+The [`pinned-command-tooltip`](../src/e2e/puppeteer/__tests__/pinned-command-tooltip.ts) snapshots pin Context View, open its tooltip from the ring, hide the HUD, and guard the layout at a portrait and a landscape viewport, so they cover the expanded ring's real footprint beside the text. The screenshot helper disables CSS filters, so the snapshots cover placement and extents, not the blur.
 
 
 ## Not yet built
