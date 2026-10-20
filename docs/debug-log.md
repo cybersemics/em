@@ -41,7 +41,7 @@ The function only defers what is written inside it. Three kinds of work still ne
 
 | Who | How |
 | --- | --- |
-| A person | **Settings → Debug Logging → Download debug log** (or **Share** in the native apps, which have no download manager), or **Copy debug log**. |
+| A person | **Settings → Debug Logging → Download debug log** (or **Share** in the native apps, which have no download manager), or **Copy debug log**. On a touch screen, the secret gesture →↓←↓↑ does the same as **Download debug log** while Debug Logging is on. |
 | A script or agent | `window.em.debugLog` — `format(state)`, `read()`, `clear()`, `setEnabled()`, `setConsole()`. |
 | An agent reproducing a bug | [`scripts/debug-log-capture.ts`](../scripts/debug-log-capture.ts), which attaches through the e2e bridges and writes to a file. |
 

@@ -27,7 +27,7 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { undoActionCreator as undo } from './actions/undo'
-import { isMac } from './browser'
+import { isCapacitor, isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
@@ -57,6 +57,7 @@ import head from './util/head'
 import isAttribute from './util/isAttribute'
 import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
+import saveDebugLog from './util/saveDebugLog'
 
 export const globalCommands: Command[] = Object.values(commandsObject)
 
@@ -748,9 +749,40 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
   gestureMenuTimerStore.update({ timer })
 }
 
+/** Dismiss gesture hint that is shown by alert. */
+export const handleGestureCancel = () => {
+  clearGestureMenuTimer()
+  store.dispatch((dispatch, getState) => {
+    const state = getState()
+    if (state.showGestureMenu) {
+      dispatch(gestureMenu())
+    }
+    if (state.alert?.alertType === AlertType.GestureHint || state.showGestureMenu) {
+      dispatch(alert(null))
+    }
+  })
+}
+
+/** A secret gesture (→↓←↓↑) that downloads the debug log, or shares it in the native apps, while Debug Logging is on. A debugging backdoor rather than a command, so that it appears nowhere a command does: the Command Universe, the gesture menu, help, or the tutorial. */
+const DOWNLOAD_DEBUG_LOG_GESTURE: Gesture = 'rdldu'
+
 /** Executes a valid gesture and closes the gesture hint. Special handling for chainable commands. */
 export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e: GestureResponderEvent }) => {
   const state = store.getState()
+
+  // secret gesture
+  if (
+    sequence === DOWNLOAD_DEBUG_LOG_GESTURE &&
+    debugLog.isEnabled() &&
+    !state.showModal &&
+    !state.showMobileCommandUniverse &&
+    state.longPress !== LongPressState.DragInProgress
+  ) {
+    handleGestureCancel()
+    const entryCount = saveDebugLog(state)
+    store.dispatch(alert(`${isCapacitor() ? 'Shared' : 'Downloaded'} ${entryCount} debug log entries`))
+    return
+  }
 
   // Get the command from the command gesture index.
   // When the gesture menu  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
@@ -869,20 +901,6 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
         dispatch(alert(null))
       }
     })
-  })
-}
-
-/** Dismiss gesture hint that is shown by alert. */
-export const handleGestureCancel = () => {
-  clearGestureMenuTimer()
-  store.dispatch((dispatch, getState) => {
-    const state = getState()
-    if (state.showGestureMenu) {
-      dispatch(gestureMenu())
-    }
-    if (state.alert?.alertType === AlertType.GestureHint || state.showGestureMenu) {
-      dispatch(alert(null))
-    }
   })
 }
 
