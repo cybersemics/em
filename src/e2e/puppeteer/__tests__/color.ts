@@ -931,4 +931,33 @@ describe('mobile', () => {
       `<ul><li>${HOME_TOKEN}<ul><li><font color="#00c7e6">a</font></li><li><font color="#00c7e6">b</font></li><li><font color="#00c7e6">c</font></li></ul></li></ul>`,
     )
   })
+
+  // https://github.com/cybersemics/em/issues/6057
+  it.skip('scrolls the cursor thought out from under the Color Picker when it opens', async () => {
+    await paste('- Text on the first line is not visible when Color Swatch is open')
+    await clickThought('Text on the first line is not visible when Color Swatch is open')
+    await clickToolbar('Text Color')
+    await waitForSelector('[aria-label="Color Picker"]')
+
+    // The page scrolls after the Color Picker opens, so wait in the page for the cursor thought to come to rest below
+    // it. The wait is the assertion; catching it reports the geometry that was actually rendered.
+    try {
+      await page.waitForFunction(
+        () => {
+          const picker = document.querySelector('[aria-label="Color Picker"]')
+          const editable = document.querySelector('[data-editing=true] [data-editable]')
+          return !!picker && !!editable && editable.getBoundingClientRect().top >= picker.getBoundingClientRect().bottom
+        },
+        { timeout: 3000 },
+      )
+    } catch {
+      const geometry = await page.evaluate(() => ({
+        pickerBottom: document.querySelector('[aria-label="Color Picker"]')?.getBoundingClientRect().bottom,
+        thoughtTop: document.querySelector('[data-editing=true] [data-editable]')?.getBoundingClientRect().top,
+      }))
+      throw new Error(
+        `Expected the cursor thought to be below the Color Picker, but the thought starts at y=${geometry.thoughtTop} and the Color Picker ends at y=${geometry.pickerBottom}.`,
+      )
+    }
+  })
 })
