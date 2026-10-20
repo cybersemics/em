@@ -1,12 +1,12 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { showPinnedCommandTooltipActionCreator as showPinnedCommandTooltip } from '../../actions/showPinnedCommandTooltip'
 
 /**
- * The pinned command tooltip's open state, which lives in Redux, and the two ways it closes without the tooltip's own
- * controls: Escape, and the widget unmounting.
+ * The pinned command tooltip's open state, which lives in Redux, and the ways it closes without the tooltip's own
+ * controls: Escape, a rep landing, and the widget unmounting.
  */
-const usePinnedCommandTooltip = () => {
+const usePinnedCommandTooltip = ({ reps }: { reps: number }) => {
   const dispatch = useDispatch()
   // Changing the pinned command also closes the tooltip for any previous pinned command that might be open.
   const isOpen = useSelector(state => state.showPinnedCommandTooltip && !!state.learning.pinnedCommandId)
@@ -26,6 +26,15 @@ const usePinnedCommandTooltip = () => {
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [close, isOpen])
+
+  // A rep earned while the tooltip is open means the user traced the gesture it was showing. The tooltip has done its
+  // job, so it closes; the rep itself is already counted.
+  const previousReps = useRef(reps)
+  useEffect(() => {
+    const repLanded = reps > previousReps.current
+    previousReps.current = reps
+    if (repLanded && isOpen) close()
+  }, [close, isOpen, reps])
 
   return { isOpen, close, toggle }
 }

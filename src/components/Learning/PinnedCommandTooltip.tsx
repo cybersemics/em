@@ -5,6 +5,7 @@ import Command from '../../@types/Command'
 import { isTouch } from '../../browser'
 import { formatKeyboardShortcut, gestureString } from '../../commands'
 import usePrefetchImages from '../../hooks/usePrefetchImages'
+import gestureStore from '../../stores/gestureStore'
 import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
 import NotificationSurface from '../Notifications/NotificationSurface'
@@ -41,28 +42,62 @@ const GESTURE_GLOW_IMAGE = '/img/pinned-command/pinned-command-gesture-glow.avif
 /** Both glow images. Stable, so usePrefetchImages does not re-run every render. */
 const GLOW_IMAGES = [SURFACE_GLOW_IMAGE, GESTURE_GLOW_IMAGE]
 
-/** Dismisses the tooltip when a press lands outside it and outside the ring, while it is open. */
-const useDismissOnOutsidePress = (
-  isOpen: boolean,
-  insideRefs: RefObject<HTMLElement | null>[],
-  dismiss: () => void,
-) => {
+/**
+ * Dismisses the tooltip when the user taps outside it, while it is open.
+ *
+ * The tooltip lets pointer events through so its gesture can be traced on the page beneath, so a press that starts a
+ * trace looks like a tap when it goes down. Rather than classify the press itself, this waits for it to end and asks
+ * what MultiGesture made of it: a press during which the gesture store recorded a gesture was a trace, and leaves the
+ * tooltip open. A press the browser cancels was taken over as a scroll, and also leaves it open. Any other press that
+ * ends outside the tooltip and the ring was a tap, and dismisses it. The ring toggles the tooltip itself.
+ */
+const useDismissOnOutsideTap = (isOpen: boolean, insideRefs: RefObject<HTMLElement | null>[], dismiss: () => void) => {
+  // The press in progress outside the tooltip, and whether it has drawn a gesture yet. Null between presses.
+  const press = useRef<{ traced: boolean } | null>(null)
+
+  gestureStore.useEffect(
+    useCallback(({ gesture }: { gesture: string }) => {
+      if (press.current && gesture) press.current.traced = true
+    }, []),
+  )
+
   useEffect(() => {
     if (!isOpen) return
-    /** Dismisses unless the press landed on the tooltip or the ring. */
-    const onPointerDown = (event: PointerEvent) => {
+
+    /** Starts watching a press that went down outside the tooltip and the ring. */
+    const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Node | null
-      if (target && !insideRefs.some(ref => ref.current?.contains(target))) dismiss()
+      press.current = target && !insideRefs.some(ref => ref.current?.contains(target)) ? { traced: false } : null
     }
-    document.addEventListener('pointerdown', onPointerDown, true)
-    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+
+    /** Dismisses if the press ended without drawing a gesture. */
+    const handlePointerUp = () => {
+      if (press.current && !press.current.traced) dismiss()
+      press.current = null
+    }
+
+    /** A cancelled press was taken over by the browser or the OS, such as for a scroll. It is not a tap. */
+    const handlePointerCancel = () => {
+      press.current = null
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown, true)
+    document.addEventListener('pointerup', handlePointerUp, true)
+    document.addEventListener('pointercancel', handlePointerCancel, true)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true)
+      document.removeEventListener('pointerup', handlePointerUp, true)
+      document.removeEventListener('pointercancel', handlePointerCancel, true)
+    }
   }, [isOpen, insideRefs, dismiss])
 }
 
 /**
  * The command's gesture, drawn large with its own glow behind it. Portrait only: there is no landscape design for the
- * diagram yet. The glow is positioned relative to the diagram box so the two stay aligned on every device. Sizes were
- * tuned against the design at 393pt.
+ * diagram yet. It sits in the surface's content layer so the blur, gradient, fade, and inert state cover it, but the
+ * surface passes pointer events through, so a trace that starts over it reaches the thoughtspace instead of the
+ * swipe-to-dismiss handler. The glow is positioned relative to the diagram box so the two stay aligned on every device.
+ * Sizes were tuned against the design at 393pt.
  */
 const PinnedCommandGestureDiagram = ({ gesture }: { gesture: string }) => (
   <div
@@ -280,7 +315,10 @@ const PinnedCommandTooltip = ({
 
   /** Fades the surface out, then closes the tooltip. */
   const dismiss = useCallback(() => surfaceRef.current?.dismiss(), [])
-  useDismissOnOutsidePress(isOpen, insideRefs, dismiss)
+  useDismissOnOutsideTap(isOpen, insideRefs, dismiss)
+
+  // A gesture is in progress on the page beneath: the user is practicing. Dim everything but the diagram.
+  const isTracing = gestureStore.useSelector(state => state.gesture !== '')
 
   return (
     <NotificationSurface
@@ -291,6 +329,8 @@ const PinnedCommandTooltip = ({
       isVisible={isOpen}
       onDismiss={onClose}
       onOpacityChange={onOpacityChange}
+      dimmed={isTracing}
+      pointerEventsPassThrough
     >
       <section
         ref={tooltipRef}
@@ -317,11 +357,10 @@ const PinnedCommandTooltip = ({
       >
         {gesture ? <PinnedCommandGestureDiagram gesture={gesture} /> : null}
 
-        {/* One row, vertically centered, so the genie, the text, and the ring in the corner read as a single unit; Clear hangs below it in the surface's bottom padding. The ring lines its center up with this row's, and the right padding keeps the text clear of the enlarged ring. */}
+        {/* The only interactive region: the surface passes pointer events through elsewhere. One row, vertically centered, so the genie, the text, and the ring in the corner read as a single unit; Clear hangs below it in the surface's bottom padding. The ring lines its center up with this row's, and the right padding keeps the text clear of the enlarged ring. */}
         <div
           ref={rowRef}
           className={css({
-            pointerEvents: 'auto',
             display: 'flex',
             position: 'relative',
             alignItems: 'center',
@@ -332,9 +371,14 @@ const PinnedCommandTooltip = ({
             translate: '0 -0.3889rem',
             gap: '1rem',
           })}
-          // Reserve what the enlarged ring covers, plus a gap, less the surface's own 1.5rem side padding that already
-          // keeps the text off the edge of the screen.
-          style={{ paddingRight: `calc(${ringFootprint}px + 0.5rem - 1.5rem)` }}
+          style={{
+            // Reserve what the enlarged ring covers, plus a gap, less the surface's own 1.5rem side padding that already
+            // keeps the text off the edge of the screen.
+            paddingRight: `calc(${ringFootprint}px + 0.5rem - 1.5rem)`,
+            // Dims with the surface while the user traces, through the row's opacity transition.
+            opacity: isTracing ? 0.5 : 1,
+            pointerEvents: isOpen ? 'auto' : 'none',
+          }}
         >
           <LearningGenieButton />
           {/* Title and subtitle, tuned against the design; text metrics are rem so they follow the font size setting. */}
