@@ -1,5 +1,5 @@
 import { animate, motion, useMotionValue, useTransform } from 'motion/react'
-import { ReactNode, Ref, useCallback, useEffect, useImperativeHandle } from 'react'
+import { ReactNode, Ref, useEffect, useImperativeHandle } from 'react'
 import { notificationRecipe } from '../../../styled-system/recipes'
 import useSwipeToClear from '../../hooks/useSwipeToClear'
 import durations from '../../util/durations'
@@ -37,9 +37,8 @@ const NotificationSurface = ({
   swipeToDismiss = false,
   children,
 }: NotificationSurfaceProps) => {
-  /** Notifies the owner. The swipe hook calls this once per showing, however the surface was dismissed. */
-  const handleDismissed = useCallback(() => onDismiss?.(), [onDismiss])
-  const { completion, touchHandlers, dismiss, reset } = useSwipeToClear({ onDismissed: handleDismissed })
+  // The swipe hook calls onDismiss once per showing, however the surface was dismissed.
+  const { completion, touchHandlers, dismiss, reset } = useSwipeToClear({ onDismissed: onDismiss })
   const swipeOpacity = useTransform(completion, value => 1 - value)
   const visibilityOpacity = useMotionValue(0)
   const opacity = useTransform(
