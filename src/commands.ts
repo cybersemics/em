@@ -1,13 +1,13 @@
 /* eslint-disable import/prefer-default-export */
 /** Defines global keyboard shortcuts and gestures. */
 import { GestureResponderEvent } from 'react-native'
-import { Store } from 'redux'
 import { ArrowKey } from './@types/ArrowKey'
 import Command from './@types/Command'
 import CommandId from './@types/CommandId'
 import CommandSuccess from './@types/CommandSuccess'
 import CommandType from './@types/CommandType'
 import Direction from './@types/Direction'
+import EditorStore from './@types/EditorStore'
 import Gesture from './@types/Gesture'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
@@ -428,8 +428,7 @@ export const executeCommand = (
     event,
     keyboardIndex: keyboardIndexArg,
   }: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    store?: Store<State, any>
+    store?: Pick<EditorStore, 'getState' | 'dispatch'>
     type?: CommandType
     event?: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent
     /** The index of the keyboard shortcut that triggered the command, when it cannot be derived from the event. Set by executeCommandWithMulticursor, which resolves repeat before delegating here and so must carry the recorded index with it. */
@@ -477,8 +476,7 @@ export const executeCommandWithMulticursor = (
     type,
     event,
   }: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    store?: Store<State, any>
+    store?: Pick<EditorStore, 'getState' | 'dispatch'>
     type?: CommandType
     event?: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent
   } = {},

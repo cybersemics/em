@@ -1,0 +1,686 @@
+import type { Operation, OperationId } from '@treecrdt/interface'
+import { createOutboundSync } from '@treecrdt/sync'
+import type { SyncSubscription } from '@treecrdt/sync-protocol'
+import { createInMemoryConnectedPeers } from '@treecrdt/sync-protocol/in-memory'
+import { treecrdtSyncV0ProtobufCodec } from '@treecrdt/sync-protocol/protobuf'
+import { createTreecrdtSyncBackendFromClient } from '@treecrdt/sync-sqlite'
+import { type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
+import {
+  type MemoryChanges,
+  type MemoryClient,
+  type MemoryContent,
+  type MemoryProjection,
+  type MemoryReader,
+  type MemoryTransaction,
+  createMemoryClient,
+} from '@treecrdt/wasm/memory'
+import { createMemorySyncBackend } from '@treecrdt/wasm/sync'
+import _ from 'lodash'
+import type Lexeme from '../../@types/Lexeme'
+import type Thought from '../../@types/Thought'
+import type ThoughtId from '../../@types/ThoughtId'
+import type ThoughtMove from '../../@types/ThoughtMove'
+import type ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
+import type ThoughtspaceView from '../../@types/ThoughtspaceView'
+import { GLOBAL_ROOT_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../../constants'
+import createId from '../../util/createId'
+import hashThought from '../../util/hashThought'
+import isAttribute from '../../util/isAttribute'
+import stripTags from '../../util/stripTags'
+import type DataProvider from '../DataProvider'
+import { initPermissionsStore } from '../permissionsStore'
+import type { ThoughtspaceRuntime, ThoughtspaceRuntimeInitOptions } from '../thoughtspace'
+import { clientIdReady, tsid } from '../thoughtspaceSession'
+import initializeMemoryStorage from './initializeMemoryStorage'
+import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
+import acquireTreecrdtSessionLock from './sessionLock'
+import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
+
+const ROOT_IDS = new Set<string>([GLOBAL_ROOT_TOKEN, ...SYSTEM_ROOT_THOUGHT_IDS])
+
+/** Decodes owned content; topology remains in TreeCRDT. */
+const readThought = (row: MemoryContent | undefined): Thought | undefined => {
+  const bytes = row?.payload
+  if (!bytes) return undefined
+  const payload = decodeThoughtPayload(bytes)
+  if (typeof payload?.value !== 'string') throw new TypeError('A thought payload requires a text value')
+  return Object.freeze({
+    ...payload,
+    id: row.id as ThoughtId,
+    parentId: (row.parentId ?? ROOT_PARENT_ID) as ThoughtId,
+  }) as Thought
+}
+
+/** Maintains memberships from materialized changes, restoring touched buckets if a transaction aborts. */
+const createLexemeLookup = (client: MemoryClient) => {
+  const memberships = new Map<string, Lexeme>()
+  /** Derives keys from accepted content, excluding system roots and payload-less nodes. */
+  const keyOf = (row: MemoryContent | null | undefined) => {
+    const thought = row && !ROOT_IDS.has(row.id) ? readThought(row) : undefined
+    return thought ? hashThought(thought.value) : undefined
+  }
+  const { flush } = client.observeMaterialization(() => {
+    const originals = new Map<string, Lexeme | undefined>()
+    return {
+      apply: ({ reset, changes }) => {
+        const updates = new Map<string, Set<ThoughtId>>()
+        /** Collects each affected membership once per incremental batch. */
+        const bucket = (key: string) => {
+          if (!updates.has(key)) updates.set(key, new Set(reset ? undefined : memberships.get(key)))
+          return updates.get(key)!
+        }
+        if (reset) {
+          memberships.forEach((_, key) => bucket(key))
+          client.nodeIds().forEach(id => {
+            const key = keyOf(client.getContent(id))
+            if (key !== undefined) bucket(key).add(id as ThoughtId)
+          })
+        } else {
+          changes.forEach(({ id, before, after }) => {
+            if (before && after && _.isEqual(before.payload, after.payload)) return
+            const oldKey = keyOf(before)
+            const newKey = keyOf(after)
+            if (oldKey === newKey) return
+            if (oldKey !== undefined) bucket(oldKey).delete(id as ThoughtId)
+            if (newKey !== undefined) bucket(newKey).add(id as ThoughtId)
+          })
+        }
+        updates.forEach((ids, key) => {
+          const previous = memberships.get(key)
+          const next = ids.size ? Object.freeze([...ids].sort()) : undefined
+          if (_.isEqual(previous, next)) return
+          if (!originals.has(key)) originals.set(key, previous)
+          const original = originals.get(key)
+          // Canceling edits recover the original reference even before the transaction finishes.
+          const value = _.isEqual(original, next) ? original : next
+          if (value) memberships.set(key, value)
+          else memberships.delete(key)
+        })
+      },
+      rollback: () => {
+        originals.forEach((value, key) => (value ? memberships.set(key, value) : memberships.delete(key)))
+      },
+    }
+  })
+  return {
+    get: (key: string) => {
+      flush()
+      return memberships.get(key)
+    },
+  }
+}
+
+/** Adapts callback-scoped rows without copying the tree or deriving lexemes. */
+const memoryReader = (
+  reader: Pick<MemoryReader, 'getContent' | 'getChildren' | 'getPosition'>,
+  nodeIds: () => Iterable<string>,
+  check: () => void,
+): Omit<ThoughtspaceView, 'getLexeme' | 'revision' | 'layoutRevision'> => {
+  let children: Map<string, readonly ThoughtId[]> | undefined
+  /** Decodes content through the lifetime-checked reader. */
+  const getThought = (id: ThoughtId) => readThought(reader.getContent(id))
+  return {
+    getThought,
+    getChildren: id => {
+      // Scoped readers must expire even when EM's filtered child list is already cached.
+      check()
+      children ??= new Map()
+      if (!children.has(id))
+        children.set(
+          id,
+          Object.freeze(
+            getThought(id) ? reader.getChildren(id).filter(child => !!getThought(child as ThoughtId)) : [],
+          ) as readonly ThoughtId[],
+        )
+      return children.get(id)!
+    },
+    getPosition: reader.getPosition,
+    *values() {
+      for (const id of nodeIds()) {
+        const thought = getThought(id as ThoughtId)
+        if (thought) yield thought
+      }
+    },
+  }
+}
+
+/** Encodes canonical content separately from the engine-owned structure. */
+const thoughtPayload = ({ value, created, lastUpdated, updatedBy, archived }: Thought) =>
+  encodeThoughtPayload({ value, created, lastUpdated, updatedBy, ...(archived !== undefined && { archived }) })
+
+/** Owns the complete synchronous document and persists its exact operations to SQLite. */
+const createMemoryThoughtspace = (
+  openClient: typeof createTreecrdtClient = createTreecrdtClient,
+  openMemory: typeof createMemoryClient = createMemoryClient,
+): DataProvider & ThoughtspaceRuntime => {
+  const localWriteId = `em-memory:${createId()}`
+  const listeners = new Set<Parameters<DataProvider['subscribe']>[0]>()
+  let persistent: TreecrdtClient | undefined
+  let memory: Awaited<ReturnType<typeof createMemoryClient>> | undefined
+  let projection: MemoryProjection<Thought> | undefined
+  let peers: ReturnType<typeof createInMemoryConnectedPeers<Operation>> | undefined
+  let onError: ThoughtspaceRuntimeInitOptions['onError']
+  let failure: Error | undefined
+  let initPromise: Promise<{ clientId: string; storage: string }> | undefined
+  let dropping: Promise<void> | undefined
+  let ready = false
+  let outbound = createOutboundSync<Operation>()
+  let syncTail = Promise.resolve()
+  let subscription: SyncSubscription | undefined
+  let unsubscribe: (() => void) | undefined
+  let unsubscribeMemory: (() => void) | undefined
+  let lexemes: ReturnType<typeof createLexemeLookup> | undefined
+  let transacting = false
+  const reader: Omit<ThoughtspaceView, 'getLexeme' | 'revision' | 'layoutRevision'> = {
+    getThought: id => (id ? projection?.get(id) : undefined),
+    getChildren: id => (projection?.getChildren(id) ?? []) as readonly ThoughtId[],
+    getPosition: id => (id ? memory?.getPosition(id) : undefined),
+    *values() {
+      for (const id of memory?.nodeIds() ?? []) {
+        const thought = projection?.get(id)
+        if (thought) yield thought
+      }
+    },
+  }
+  let viewRevision = 0
+  let layoutRevision = 0
+  let flushLayout: (() => void) | undefined
+  let projectionRevision: number | undefined
+  /** Creates a publication identity, not a historical copy of the tree. */
+  const view = (): ThoughtspaceView => ({
+    ...reader,
+    getLexeme: value => lexemes?.get(hashThought(value)),
+    get revision() {
+      return viewRevision
+    },
+    get layoutRevision() {
+      flushLayout?.()
+      return layoutRevision
+    },
+  })
+  let currentView = view()
+  let publishedRevision: number | undefined
+  /** Preserves the first failure and prevents subsequent commands from authoring unsavable operations. */
+  const reportFailure = (error: unknown) => {
+    if (failure) return
+    failure = error instanceof Error ? error : new Error(String(error))
+    try {
+      if (onError) onError(failure)
+      else console.error('Memory TreeCRDT failed', failure)
+    } catch (callbackError) {
+      console.error('Memory TreeCRDT error reporting failed', callbackError)
+    }
+  }
+
+  /** Drains persistence and local loopback work without retrying failed writes. */
+  const waitForIdle = async () => {
+    await initPromise
+    let syncing: Promise<void>
+    do {
+      syncing = syncTail
+      // Incoming publication may author writes; those writes can schedule more loopback work.
+      await syncing.catch(reportFailure)
+      await outbound.whenIdle()
+    } while (syncing !== syncTail)
+    if (failure) throw failure
+  }
+
+  /** Publishes a new view identity when TreeCRDT's transaction-consistent projection changes. */
+  const project = (): ThoughtspaceView => {
+    if (!ready || !projection || projection.revision === projectionRevision) return currentView
+    projectionRevision = projection.revision
+    viewRevision++
+    currentView = view()
+    return currentView
+  }
+
+  /** Derives plain move facts from changed rows and sibling orders, without exposing a previous tree. */
+  const collectMoves = (batch: MemoryChanges): readonly ThoughtMove[] => {
+    if (batch.reset) return []
+    const rows = new Map(batch.changes.map(change => [change.id, change]))
+    const ids = new Set(rows.keys())
+    const oldPositions = new Map<string, Map<string, number>>()
+    batch.changes.forEach(({ id, before, after }) => {
+      if (_.isEqual(before?.children, after?.children)) return
+      oldPositions.set(id, new Map(before?.children.map((child, index) => [child, index])))
+      before?.children.forEach(child => ids.add(child))
+      after?.children.forEach(child => ids.add(child))
+    })
+    return Array.from(ids).flatMap(id => {
+      const change = rows.get(id)
+      const after = change ? change.after : memory!.getContent(id)
+      const before = change ? change.before : after
+      if (!before?.payload || !after?.payload) return []
+      const parent = before.parentId
+      const oldRank = parent
+        ? oldPositions.has(parent)
+          ? oldPositions.get(parent)!.get(id)
+          : memory!.getPosition(id)
+        : undefined
+      const newRank = memory!.getPosition(id)
+      if (oldRank === newRank && before.parentId === after.parentId) return []
+      const thought = readThought(after)!
+      return [
+        {
+          id: thought.id,
+          value: thought.value,
+          oldRank,
+          newRank,
+          oldParentId: (before.parentId ?? ROOT_PARENT_ID) as ThoughtId,
+          newParentId: thought.parentId,
+        },
+      ]
+    })
+  }
+
+  /** Shares lazy move diagnostics; subscribers otherwise read the latest document. */
+  const notify = (batch: MemoryChanges, onCommit?: (getMoves: () => readonly ThoughtMove[]) => void) => {
+    if (!listeners.size && !onCommit) return
+    const client = memory
+    let active = true
+    let moves: readonly ThoughtMove[] | undefined
+    /** Collects facts before reentrant writes can change the unchanged siblings read from memory. */
+    const getMoves = () => {
+      if (!active || transacting || client?.revision !== batch.revision)
+        throw new Error('Move diagnostics have expired')
+      return (moves ??= collectMoves(batch))
+    }
+    try {
+      try {
+        onCommit?.(getMoves)
+      } finally {
+        if (batch.reset || batch.changes.length)
+          Array.from(listeners).forEach(listener => {
+            try {
+              listener(getMoves)
+            } catch (error) {
+              // A subscriber cannot roll back a committed document or prevent its other consumers from updating.
+              console.error('Memory TreeCRDT subscriber failed', error)
+            }
+          })
+      }
+    } finally {
+      active = false
+    }
+  }
+
+  /** Publishes incoming memory changes; local transactions notify only after their persistence is queued. */
+  const publish = (batch: MemoryChanges) => {
+    // Reentrant commands are already projected when their queued native notifications arrive.
+    if (publishedRevision !== undefined && batch.revision <= publishedRevision) return
+    if (!ready || transacting) return
+    try {
+      publishedRevision = batch.revision
+      const old = currentView
+      const next = project()
+      if (next !== old) notify(batch)
+    } catch (error) {
+      reportFailure(error)
+    }
+  }
+
+  /** Runs a complete editor command atomically, with synchronous read-your-writes and asynchronous durability. */
+  const transact = <T>(
+    work: (transaction: ThoughtspaceTransaction) => T,
+    onCommit?: (value: T, persisted: Promise<void>, getMoves: () => readonly ThoughtMove[]) => void,
+  ): { value: T; persisted: Promise<void> } => {
+    if (failure) throw failure
+    if (!ready || !memory || !persistent || dropping) throw new Error('Memory TreeCRDT is not ready for editing')
+    if (transacting) throw new Error('Use the current document transaction to compose commands')
+    const callbacks: (() => void)[] = []
+    const operationIds: OperationId[] = []
+    const client = memory
+    const operationOffset = client.operationCount()
+    const previous = currentView
+    let active = true
+    /** Shares one native transaction across composed commands. */
+    const run = (engine: MemoryTransaction) => {
+      transacting = true
+      let textChange: ThoughtspaceTransaction['textChange']
+      /** Rejects invalid anchors before authoring an insert or move. */
+      const checkPlacement = (id: string, parentId: string, afterId: string | null) => {
+        if (!active) throw new Error('The document transaction has finished')
+        if (afterId && (afterId === id || engine.getContent(afterId)?.parentId !== parentId)) {
+          throw new Error('afterId must name another child of the destination parent')
+        }
+      }
+      /** Shares full-payload writes between field edits and imported/restored rows. */
+      const writePayload = (id: string, thought: Thought) => {
+        const payload = thoughtPayload(thought)
+        const current = engine.getContent(id)
+        if (_.isEqual(current?.payload, payload)) return
+        const oldValue =
+          textChange !== 'content' && current?.payload ? decodeThoughtPayload(current.payload).value : undefined
+        operationIds.push(engine.local.payload(id, payload).meta.id)
+        // Record successful edits, not a later net diff. Content dominates even if a subsequent edit cancels it.
+        if (textChange !== 'content' && oldValue !== thought.value)
+          textChange =
+            oldValue !== undefined && stripTags(oldValue).toLowerCase() === stripTags(thought.value).toLowerCase()
+              ? 'formatting'
+              : 'content'
+      }
+      const transaction: ThoughtspaceTransaction = {
+        get operationOffset() {
+          if (!active) throw new Error('The document transaction has finished')
+          return operationOffset + operationIds.length
+        },
+        get operationIds() {
+          if (!active) throw new Error('The document transaction has finished')
+          return operationIds.slice()
+        },
+        get textChange() {
+          if (!active) throw new Error('The document transaction has finished')
+          return textChange
+        },
+        revert: ids => {
+          if (!active) throw new Error('The document transaction has finished')
+          const reverted = engine.revert(ids).map(operation => operation.meta.id)
+          operationIds.push(...reverted)
+          project()
+          return reverted
+        },
+        project: () => {
+          if (!active) throw new Error('The document transaction has finished')
+          return project()
+        },
+        afterPersist: callback => {
+          if (!active) throw new Error('The document transaction has finished')
+          callbacks.push(callback)
+        },
+        insert: (thought, afterId) => {
+          checkPlacement(thought.id, thought.parentId, afterId)
+          if (engine.getContent(thought.id)) throw new Error('Cannot insert an existing thought')
+          operationIds.push(engine.local.insert(thought.parentId, thought.id, afterId, thoughtPayload(thought)).meta.id)
+          textChange = 'content'
+        },
+        payload: (id, fields) => {
+          if (!active) throw new Error('The document transaction has finished')
+          const current = reader.getThought(id)
+          if (!current) throw new Error('Cannot update a missing thought')
+          if (Object.entries(fields).some(([key, value]) => current[key as keyof Thought] !== value)) {
+            writePayload(id, { ...current, ...fields })
+          }
+        },
+        move: (id, { parentId, afterId }) => {
+          checkPlacement(id, parentId, afterId)
+          operationIds.push(engine.local.move(id, parentId, afterId).meta.id)
+        },
+        delete: id => {
+          if (!active) throw new Error('The document transaction has finished')
+          if (engine.getContent(id)) {
+            operationIds.push(engine.local.delete(id).meta.id)
+            textChange = 'content'
+          }
+        },
+        update: ({ thoughtIndexUpdates, movePlacements }) => {
+          if (!active) throw new Error('The document transaction has finished')
+          // Moves out of a deleted subtree must precede its delete; otherwise defensive deletion restores the parent.
+          const edits = Object.entries(thoughtIndexUpdates).filter((entry): entry is [string, Thought] => !!entry[1])
+          const deletes = Object.entries(thoughtIndexUpdates).filter(([, thought]) => !thought)
+          for (const [id, thought] of [...edits, ...deletes.reverse()]) {
+            if (!thought) {
+              transaction.delete(id as ThoughtId)
+              continue
+            }
+            const current = engine.getContent(id)
+            const exists = !!current
+            const hasPlacement = !!movePlacements && id in movePlacements
+            if ((!exists || current.parentId !== thought.parentId) && !hasPlacement) {
+              throw new Error('Inserts and parent changes require an explicit afterId placement')
+            }
+            const after = movePlacements?.[id] ?? null
+            if (!exists) {
+              transaction.insert(thought, after)
+            } else {
+              if (hasPlacement) transaction.move(id as ThoughtId, { parentId: thought.parentId, afterId: after })
+              writePayload(id, thought)
+            }
+          }
+          return project()
+        },
+      }
+      const value = work(transaction)
+      // A caught update error can leave earlier writes unprojected; refresh before committing them.
+      project()
+      return value
+    }
+    let result: { value: T; operations: Operation[]; changes: MemoryChanges }
+    try {
+      result = client.transact(run)
+      // Net-no-change commands do not notify subscribers, but their final batch still supersedes intermediate reads.
+      publishedRevision = result.changes.revision
+    } catch (error) {
+      viewRevision++
+      currentView = previous
+      projectionRevision = projection?.revision
+      throw error
+    } finally {
+      active = false
+      transacting = false
+    }
+    const written = outbound.push(result.operations)
+    void written.catch(reportFailure)
+    const persisted = callbacks.length ? written.then(() => callbacks.forEach(callback => callback())) : written
+    // Queue persistence first: a subscriber may author another command, whose operations must follow this one.
+    notify(result.changes, onCommit && (getMoves => onCommit(result.value, persisted, getMoves)))
+    return { value: result.value, persisted }
+  }
+
+  /** Stops the replica and closes its client, deleting storage only for an explicit drop. */
+  const releaseResources = async ({ deleteStorage }: { deleteStorage: boolean }) => {
+    ready = false
+    await outbound.close()
+    subscription?.stop()
+    await Promise.allSettled([subscription?.done])
+    subscription = undefined
+    peers?.detach()
+    unsubscribe?.()
+    unsubscribeMemory?.()
+    memory?.close()
+    memory = undefined
+    projection = undefined
+    flushLayout = undefined
+    layoutRevision++
+    const target = persistent
+    try {
+      if (deleteStorage) await target?.drop()
+      else await target?.close()
+    } catch (error) {
+      if (deleteStorage) await target?.close()
+      throw error
+    } finally {
+      persistent = undefined
+      peers = undefined
+      unsubscribe = undefined
+      lexemes = undefined
+      projectionRevision = undefined
+      viewRevision++
+      currentView = view()
+      publishedRevision = undefined
+      initPromise = undefined
+      outbound = createOutboundSync<Operation>()
+      syncTail = Promise.resolve()
+    }
+  }
+
+  /** Rejects new edits immediately and releases resources after all accepted work has settled. */
+  const drop = () => {
+    if (dropping) return dropping
+    ready = false
+    dropping = (async () => {
+      // A previous write failure must not prevent explicit cleanup from closing the database.
+      await Promise.allSettled([waitForIdle()])
+      await releaseResources({ deleteStorage: true })
+      failure = undefined
+      onError = undefined
+    })().finally(() => {
+      dropping = undefined
+    })
+    void dropping.catch(reportFailure)
+    return dropping
+  }
+
+  return {
+    transact,
+    get operationOffset() {
+      return memory?.operationCount() ?? 0
+    },
+    project: () => currentView,
+    readHistory: (spans, visit) => {
+      if (!ready || !memory || dropping) throw new Error('Memory TreeCRDT is not ready for historical reads')
+      return memory.readHistory(spans, ({ before, after, changes }, index) => {
+        let active = true
+        /** Checks callback lifetime even when a historical sibling order is already cached. */
+        const check = () => {
+          if (!active) throw new Error('The historical document read has expired')
+        }
+        try {
+          return visit(
+            {
+              before: memoryReader(before, before.nodeIds, check),
+              after: memoryReader(after, after.nodeIds, check),
+              thoughtIds: changes.map(change => change.id as ThoughtId),
+              childrenChangedIds: changes
+                .filter(change => !_.isEqual(change.before?.children, change.after?.children))
+                .map(change => change.id as ThoughtId),
+            },
+            index,
+          )
+        } finally {
+          active = false
+        }
+      })
+    },
+    subscribe: listener => {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
+    get ready() {
+      return ready
+    },
+    acquireAccess: async () => {
+      const status = await acquireTreecrdtSessionLock()
+      return status === 'acquired'
+        ? { status: 'acquired' }
+        : {
+            status: 'blocked',
+            reason: status === 'unavailable' ? 'already-open' : 'unsupported',
+          }
+    },
+    init: function initialize(options: ThoughtspaceRuntimeInitOptions): Promise<{ clientId: string; storage: string }> {
+      if (dropping) return dropping.then(() => initialize(options))
+      onError = options.onError ?? onError
+      if (initPromise) return initPromise
+      failure = undefined
+      initPromise = (async () => {
+        const clientId = await clientIdReady
+        await initPermissionsStore()
+        persistent = await openClient({
+          docId: tsid,
+          persistent: options.storage === 'persistent',
+          filename: `/treecrdt-em-memory-prototype-${tsid}.db`,
+        })
+        const target = persistent
+        outbound.setTarget(operations => target.ops.appendMany([...operations], { writeId: localWriteId }))
+        await initializeMemoryStorage(persistent, crypto.getRandomValues(new Uint8Array(32)))
+        memory = await openMemory()
+        unsubscribeMemory = memory.subscribe(publish)
+        const storageBackend = createTreecrdtSyncBackendFromClient(persistent, tsid)
+        /** Gates editing even when the protocol treats a failed subscription push as best-effort. */
+        const failSync = (error: unknown): never => {
+          reportFailure(error)
+          throw error
+        }
+        peers = createInMemoryConnectedPeers({
+          backendA: createMemorySyncBackend(memory, { docId: tsid }),
+          backendB: {
+            ...storageBackend,
+            listOpRefs: filter => storageBackend.listOpRefs(filter).catch(failSync),
+            getOpsByOpRefs: refs => storageBackend.getOpsByOpRefs(refs).catch(failSync),
+          },
+          codec: treecrdtSyncV0ProtobufCodec,
+        })
+        unsubscribe = persistent.onMaterialized(event => {
+          // Memory already owns these operations. Provenance, not append timing, distinguishes delayed local
+          // acknowledgements from incoming changes; mixed or unidentified events still notify the sync peer.
+          if (
+            event.changes.length &&
+            event.changes.every(change => {
+              const writeIds = change.source?.writeIds
+              return !!writeIds?.length && writeIds.every(id => id === localWriteId)
+            })
+          )
+            return
+          syncTail = syncTail.then(() => peers!.peerB.notifyLocalUpdate())
+          void syncTail.catch(reportFailure)
+        })
+        subscription = peers.peerA.subscribe(peers.transportA, { all: {} })
+        void subscription.done.catch(reportFailure)
+        await subscription.ready
+        // The subscription's best-effort initial push may fail even when reconciliation resolves readiness.
+        if (failure) throw failure
+        ready = !dropping
+        projection = memory.createProjection<Thought>({ decode: readThought })
+        lexemes = createLexemeLookup(memory)
+        const client = memory
+        flushLayout = client.observeMaterialization(() => ({
+          apply: ({ reset, changes }) => {
+            if (
+              reset ||
+              changes.some(({ before, after }) => {
+                if (
+                  !before ||
+                  !after ||
+                  before.parentId !== after.parentId ||
+                  !_.isEqual(before.children, after.children)
+                )
+                  return true
+                if (_.isEqual(before.payload, after.payload)) return false
+                const oldThought = readThought(before)
+                const thought = readThought(after)
+                if (
+                  !oldThought?.value ||
+                  !thought?.value ||
+                  isAttribute(oldThought.value) ||
+                  isAttribute(thought.value) ||
+                  oldThought.created !== thought.created ||
+                  oldThought.archived !== thought.archived
+                )
+                  return true
+                // Plain text beneath attributes is configuration (style, table, bindings, etc.).
+                // Only ordinary Home descendants can skip the outline traversal.
+                let parentId = after.parentId
+                while (parentId !== HOME_TOKEN) {
+                  if (!parentId || ROOT_IDS.has(parentId)) return true
+                  const parent = client.getContent(parentId)
+                  const parentThought = readThought(parent)
+                  if (!parentThought || isAttribute(parentThought.value)) return true
+                  parentId = parent?.parentId ?? null
+                }
+                return false
+              })
+            )
+              layoutRevision++
+          },
+          rollback: () => {
+            layoutRevision++
+          },
+        })).flush
+        project()
+        publishedRevision = undefined
+        return { clientId, storage: persistent.storage }
+      })().catch(async error => {
+        reportFailure(error)
+        await releaseResources({ deleteStorage: false })
+        throw error
+      })
+      return initPromise
+    },
+    drop,
+    waitForIdle,
+  }
+}
+
+export default createMemoryThoughtspace

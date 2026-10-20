@@ -3,6 +3,7 @@ import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -110,6 +111,27 @@ it('does not render the url annotation on a thought without a url', async () => 
 
   expect(screen.queryByLabelText('url-link')).toBeNull()
 })
+
+it.each(['parent', 'https://parent.com'])(
+  'updates direct and inherited URL annotations when expanding %s',
+  async value => {
+    await dispatch([
+      importText({ text: `- ${value}\n  - https://child.com\n- sibling`, preventSetCursor: true }),
+      setCursor(['sibling']),
+    ])
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(screen.getByLabelText('url-link')).toHaveAttribute('href', value === 'parent' ? 'https://child.com' : value)
+
+    await dispatch(setCursor([value]))
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(screen.getAllByLabelText('url-link').map(link => link.getAttribute('href'))).toEqual(
+      expect.arrayContaining(value === 'parent' ? ['https://child.com'] : [value, 'https://child.com']),
+    )
+    expect(screen.getAllByLabelText('url-link')).toHaveLength(value === 'parent' ? 1 : 2)
+  },
+)
 
 it('does not render the email annotation on a non-email thought', async () => {
   await dispatch([

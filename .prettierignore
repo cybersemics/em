@@ -1,4 +1,5 @@
 build
+.treecrdt-wasm
 docs
 LICENSE.md
 packages

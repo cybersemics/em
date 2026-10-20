@@ -1,11 +1,11 @@
 import React, { FC, useCallback, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { panelCommandRecipe } from '../../../styled-system/recipes'
 import Command from '../../@types/Command'
 import Icon from '../../@types/IconType'
 import { isTouch } from '../../browser'
 import { executeCommandWithMulticursor } from '../../commands'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
 import FadeTransition from '../FadeTransition'
@@ -57,8 +57,8 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
   const { svg, isActive, canExecute } = command
-  const isButtonExecutable = useSelector(state => !canExecute || canExecute(state))
-  const isButtonActive = useSelector(state => isActive?.(state))
+  const isButtonExecutable = useEditorSelector(state => !canExecute || canExecute(state))
+  const isButtonActive = useEditorSelector(state => isActive?.(state))
 
   /** Handles the onClick event. Executes the command when tapped. */
   const handleTap = useCallback(

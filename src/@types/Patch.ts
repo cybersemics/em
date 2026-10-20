@@ -1,3 +1,4 @@
+import type { OperationId } from '@treecrdt/interface'
 import { Operation } from 'fast-json-patch'
 import ActionType from './ActionType'
 import CommandId from './CommandId'
@@ -34,12 +35,19 @@ export type PatchMetadata = PatchMetadataInput & {
   actionTypes: [ActionType, ...ActionType[]]
   /** True when every recorded action only navigates state. */
   isNavigation: boolean
+  /** Authored text changes determine undo grouping/caret policy; content dominates formatting within a group. */
+  textChange?: 'formatting' | 'content'
 }
 
-/** An exact state diff and the user-level source that produced it. */
+/** Editor history with UI restoration, report boundaries, and engine-owned receipts. */
 interface Patch {
+  /** Restores UI state; document changes are reconstructed only when generating a report. */
   ops: Operation[]
   metadata: PatchMetadata
+  /** Ordered local operation ranges, including UI-only merge boundaries that normalize earlier changes. */
+  documentHistory: { from: number; to: number }[]
+  /** Exact operations to revert; the opposite entry receives the fresh inversion receipt. */
+  documentOperationIds: readonly OperationId[]
 }
 
 export default Patch

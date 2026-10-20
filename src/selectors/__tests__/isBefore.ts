@@ -1,11 +1,17 @@
 import SimplePath from '../../@types/SimplePath'
 import importText from '../../actions/importText'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import contextToPath from '../contextToPath'
 import isBefore from '../isBefore'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 it('top-level thought is before its next sibling', () => {
-  const stateNew = importText({ text: '- a\n- b' })(initialState())
+  const stateNew = runDocumentCommand(importText({ text: '- a\n- b' }), initialState())
   const a = contextToPath(stateNew, ['a']) as SimplePath
   const b = contextToPath(stateNew, ['b']) as SimplePath
 
@@ -14,7 +20,7 @@ it('top-level thought is before its next sibling', () => {
 })
 
 it('subthought is before its next sibling', () => {
-  const stateNew = importText({ text: '- a\n  - b\n  - c' })(initialState())
+  const stateNew = runDocumentCommand(importText({ text: '- a\n  - b\n  - c' }), initialState())
   const b = contextToPath(stateNew, ['a', 'b']) as SimplePath
   const c = contextToPath(stateNew, ['a', 'c']) as SimplePath
 
@@ -23,7 +29,7 @@ it('subthought is before its next sibling', () => {
 })
 
 it('thoughts in different contexts are not before each other', () => {
-  const stateNew = importText({ text: '- a\n  - b\n- c' })(initialState())
+  const stateNew = runDocumentCommand(importText({ text: '- a\n  - b\n- c' }), initialState())
   const b = contextToPath(stateNew, ['a', 'b']) as SimplePath
   const c = contextToPath(stateNew, ['c']) as SimplePath
 

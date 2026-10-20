@@ -1,4 +1,5 @@
 import { pick } from 'lodash'
+import moize from 'moize'
 import React from 'react'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -6,7 +7,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import TreeThought from '../@types/TreeThought'
-import { HOME_PATH } from '../constants'
+import { HOME_PATH, HOME_TOKEN, LongPressState } from '../constants'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
 import getChildren, { childrenFilterPredicate, getChildrenRanked, hasChildren } from '../selectors/getChildren'
@@ -25,6 +26,7 @@ import isAttribute from '../util/isAttribute'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
+import publishMode from '../util/publishMode'
 import safeRefMerge from '../util/safeRefMerge'
 import attributeEquals from './attributeEquals'
 
@@ -38,7 +40,7 @@ const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
   `${(contextChain || []).map(head).join('')}|${id}`
 
 /** Recursiveley calculates the tree of visible thoughts, in order, represented as a flat list of thoughts with tree layout information. */
-const linearizeTree = (
+const linearizeTreeRecursive = (
   state: State,
   {
     // Base path to start the traversal. Defaults to HOME_PATH.
@@ -54,7 +56,6 @@ const linearizeTree = (
     contextChain,
     depth,
     env,
-    indexDescendant,
     // ancestor styles that accmulate such as marginLeft are applied, merged, and passed to descendants
     styleAccum,
     // =grandparent styles must be passed separately since they skip a level
@@ -66,17 +67,17 @@ const linearizeTree = (
     contextChain?: SimplePath[]
     depth: number
     env?: LazyEnv
-    indexDescendant: number
     styleAccum?: React.CSSProperties | null
     styleFromGrandparent?: React.CSSProperties | null
   } = {
     depth: 0,
-    indexDescendant: 0,
   },
+  traversal = { thoughts: [] as TreeThought[], autofocus: calculateAutofocus(state) },
 ): TreeThought[] => {
+  const { thoughts } = traversal
   const path = basePath || HOME_PATH
   const hashedPath = hashPath(path)
-  if (!isRoot(path) && !state.expanded[hashedPath] && !equalPath(state.expandHoverDownPath, path)) return []
+  if (!isRoot(path) && !state.expanded[hashedPath] && !equalPath(state.expandHoverDownPath, path)) return thoughts
 
   const thoughtId = head(path)
   const thought = getThoughtById(state, thoughtId)
@@ -92,8 +93,13 @@ const linearizeTree = (
       getChildrenRanked(state, contextId || thoughtId)
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
 
-  // short circuit if the context view only has one context and the NoOtherContexts component will be displayed
-  if (contextViewActive && filteredChildren.length === 1) return []
+  // Skip empty lists and context views that display the NoOtherContexts placeholder.
+  if (filteredChildren.length === 0 || (contextViewActive && filteredChildren.length === 1)) return thoughts
+
+  const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
+  const isInSortedContext = attributeEquals(state, head(simplePath), '=sort', 'Alphabetical')
+  const isTableCol2 = attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
+  const isTableCol2Child = attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table')
 
   const childrenAttributeId = findDescendant(state, thoughtId, '=children')
   const grandchildrenAttributeId = findDescendant(state, thoughtId, '=grandchildren')
@@ -110,16 +116,21 @@ const linearizeTree = (
   let ordinal = 0
   const childIndexNonAttribute = filteredChildren.map(child => (isAttribute(child.value) ? -1 : ordinal++))
 
-  const thoughts = filteredChildren.reduce<TreeThought[]>((accum, filteredChild, i) => {
+  const styleGrandchildren = getStyle(state, grandchildrenAttributeId)
+  const styleDescendants = safeRefMerge(
+    styleAccum,
+    styleChildren && pick(styleChildren, ACCUM_STYLE_PROPERTIES),
+    styleGrandchildren && pick(styleGrandchildren, ACCUM_STYLE_PROPERTIES),
+  )
+
+  filteredChildren.forEach((filteredChild, i) => {
     // If the context view is active, render the context's parent instead of the context itself.
     // This allows the path to be accumulated correctly across the context view.
     // e.g. a/m~/b should render the children of b/m, not a/m
     const child = contextViewActive ? getThoughtById(state, filteredChild.parentId) : filteredChild
-    // Context thought may still be pending
-    if (!child) return accum
+    // Ignore stale context references rather than rendering a missing parent.
+    if (!child) return
     const childPath = appendToPathMemo(path, child.id)
-    const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
-    const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
 
     // As soon as the cursor is found, set belowCursor to true. It will be propagated to every subsequent thought.
     // See: TreeThought.belowCursor
@@ -130,11 +141,7 @@ const linearizeTree = (
 
     const isEmpty = child.value === ''
     const isTable = attributeEquals(state, child.id, '=view', 'Table')
-    const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
-    const isInSortedContext = attributeEquals(state, head(simplePath), '=sort', 'Alphabetical')
-    const isTableCol2 = attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
-    const isTableCol2Child = attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table')
-    const autofocus = calculateAutofocus(state, childPath)
+    const autofocus = traversal.autofocus(childPath)
 
     const node: TreeThought = {
       belowCursor: !!belowCursor,
@@ -142,7 +149,6 @@ const linearizeTree = (
       env: envNew,
       indexChild: i,
       childIndexNonAttribute: childIndexNonAttribute[i],
-      indexDescendant: virtualIndexNew,
       isCursor,
       isEmpty,
       isInSortedContext,
@@ -157,8 +163,12 @@ const linearizeTree = (
       // must filteredChild.id to work for both normal view and context view
       leaf: !hasChildren(state, filteredChild.id),
       path: childPath,
-      prevChild: filteredChildren[i - 1],
-      rank: child.rank,
+      prevChildId: filteredChildren[i - 1]?.id,
+      // Only sorted-context drag arrows consume this coordinate.
+      rank:
+        state.longPress === LongPressState.DragInProgress && isInSortedContext
+          ? (state.thoughts.getPosition(child.id) ?? 0)
+          : 0,
       showContexts: contextViewActive,
       simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
       style,
@@ -168,33 +178,58 @@ const linearizeTree = (
         : null),
     }
 
-    // RECURSION
-    const descendants = linearizeTree(state, {
-      basePath: childPath,
-      belowCursor,
-      contextId: contextViewActive ? filteredChild.id : undefined,
-      contextChain: contextChainNew,
-      depth: depth + 1,
-      env: envNew,
-      indexDescendant: virtualIndexNew,
-      // merge styleGrandchildren so it gets applied to this child's children
-      styleAccum: safeRefMerge(
-        styleAccum,
-        pick(styleChildren, ACCUM_STYLE_PROPERTIES),
-        pick(getStyle(state, grandchildrenAttributeId), ACCUM_STYLE_PROPERTIES),
-      ),
-      styleFromGrandparent: getStyle(state, grandchildrenAttributeId),
-    })
+    // Append each row once instead of copying descendant lists through every ancestor.
+    thoughts.push(node)
+    linearizeTreeRecursive(
+      state,
+      {
+        basePath: childPath,
+        belowCursor,
+        contextId: contextViewActive ? filteredChild.id : undefined,
+        contextChain: contextChainNew,
+        depth: depth + 1,
+        env: envNew,
+        // merge styleGrandchildren so it gets applied to this child's children
+        styleAccum: styleDescendants,
+        styleFromGrandparent: styleGrandchildren,
+      },
+      traversal,
+    )
 
     // In order to mark every thought after the cursor as belowCursor, we need to update belowCursor before the next sibling is processed. Otherwise, the recursive belowCursor will not be propagated up the call stack and will still be undefined on the next uncle.
-    if (!belowCursor && descendants[descendants.length - 1]?.belowCursor) {
+    if (!belowCursor && thoughts[thoughts.length - 1]?.belowCursor) {
       belowCursor = true
     }
-
-    return [...accum, node, ...descendants]
-  }, [])
+  })
 
   return thoughts
 }
 
-export default linearizeTree
+// Cache only the completed traversal. The live reader can change without changing its identity.
+export default moize(
+  (state: State, options?: Parameters<typeof linearizeTreeRecursive>[1]) => linearizeTreeRecursive(state, options),
+  {
+    maxSize: 1,
+    profileName: 'linearizeTree',
+    transformArgs: ([state, options]) => [
+      state.thoughts.getThought,
+      // Context membership/order and absolute visibility depend on ordinary text and timestamps too.
+      state.rootContext[0] !== HOME_TOKEN || Object.values(state.contextViews).some(Boolean)
+        ? state.thoughts.revision
+        : state.thoughts.layoutRevision,
+      state.thoughtUi,
+      state.expanded,
+      state.expandHoverDownPath,
+      state.expandHoverUpPath,
+      state.cursor,
+      state.contextViews,
+      state.showHiddenThoughts,
+      state.rootContext,
+      state.absoluteContextTime,
+      state.longPress === LongPressState.DragInProgress,
+      state.storageCache?.theme,
+      publishMode(),
+      options,
+    ],
+  },
+)

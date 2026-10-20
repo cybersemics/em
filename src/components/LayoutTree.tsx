@@ -6,8 +6,9 @@ import { css, cx } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
-import { CONTENT_BOX_PADDING_LEFT, LongPressState } from '../constants'
+import { LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
+import useEditorSelector from '../hooks/useEditorSelector'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
 import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
@@ -136,11 +137,11 @@ const useLayoutTreeTop = (
 const LayoutTree = () => {
   const editing = useSelector(state => state.isKeyboardOpen)
   const { sizes, setSize } = useSizeTracking()
-  const treeThoughts = useSelector(linearizeTree, isEqual)
+  const treeThoughts = useEditorSelector(linearizeTree, isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
   const ref = useRef<HTMLDivElement>(null)
-  const indentDepth = useSelector(state =>
+  const indentDepth = useEditorSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
         state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
@@ -165,7 +166,7 @@ const LayoutTree = () => {
   const singleLineHeight = useSingleLineHeight(sizes)
 
   // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
-  const autofocusDepth = useSelector(state => {
+  const autofocusDepth = useEditorSelector(state => {
     // only set during drag-and-drop to avoid re-renders
     if (
       (state.longPress !== LongPressState.DragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) ||
@@ -177,7 +178,7 @@ const LayoutTree = () => {
   })
 
   // first uncle of the cursor used for DropUncle
-  const cursorUncleId = useSelector(state => {
+  const cursorUncleId = useEditorSelector(state => {
     // only set during drag-and-drop to avoid re-renders
     if (
       (state.longPress !== LongPressState.DragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) ||
@@ -256,20 +257,6 @@ const LayoutTree = () => {
 
   useLayoutTreeTop(ref, autocrop)
 
-  const treeThoughtsMemoized = useMemo(
-    () =>
-      treeThoughtsPositioned.map(thought => ({
-        ...thought,
-        style: {
-          ...thought.style,
-          // Ensure that transforming the thought's position by its indent level cannot push it off-screen.
-          // The extra 17px is to make sure it doesn't get cut off under the scrollbar
-          maxWidth: `calc(${window.innerWidth > 560 ? '90' : '100'}vw - ${CONTENT_BOX_PADDING_LEFT + thought.x}px - ${1.5 - indent}em)`,
-        },
-      })),
-    [indent, treeThoughtsPositioned],
-  )
-
   return (
     <div
       className={cx(
@@ -314,19 +301,18 @@ const LayoutTree = () => {
           />
         )}
         <TransitionGroup>
-          {treeThoughtsMemoized.map((thought, index) => (
+          {treeThoughtsPositioned.map((thought, index) => (
             <TreeNode
-              {...thought}
+              thought={thought}
               index={index}
               // Pass unique key for the component
               key={thought.key}
-              // Pass the thought key as a thoughtKey and not key property as it will conflict with React's key
-              thoughtKey={thought.key}
               editing={editing || false}
               {...{
                 viewportHeight,
                 viewportBottomOffset,
                 treeThoughtsPositioned,
+                indent,
                 bulletWidth,
                 cursorUncleId,
                 setSize,

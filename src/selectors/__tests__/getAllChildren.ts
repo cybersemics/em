@@ -3,8 +3,13 @@ import newThought from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
 import expectThoughts from '../../test-helpers/expectThoughts'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('get root children', () => {
   const steps = [newThought('a'), newThought('b')]

@@ -9,6 +9,7 @@ import { ColorToken } from '../../styled-system/types'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
 import { HOME_TOKEN } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
@@ -50,7 +51,7 @@ const useEllipsizedThoughts = (
 
   // convert the path to a list of thought values
   // if editing, use the live editing value
-  const thoughtValuesLive = useSelector(
+  const thoughtValuesLive = useEditorSelector(
     state =>
       path.map(id =>
         editingValue && state.cursor && id === head(state.cursor)
@@ -110,8 +111,8 @@ const BreadCrumb = React.memo(
       { isOverflow, label, isDeleting, path, placeholder, showDivider, onClickEllipsis, staticText, linkClassName },
       ref,
     ) => {
-      const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
-      const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
+      const simplePath = useEditorSelector(state => simplifyPath(state, path), shallowEqual)
+      const value = useEditorSelector(state => getThoughtById(state, head(simplePath))?.value)
       const thoughtPlaceholder = usePlaceholder({ isEditing: false, path, simplePath })
       const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
       const delimiterStyle: React.CSSProperties = {
@@ -190,8 +191,8 @@ const ContextBreadcrumbs = ({
   color?: ColorToken
 }) => {
   const [disabled, setDisabled] = React.useState(false)
-  const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
-  const pathFiltered = useSelector(
+  const simplePath = useEditorSelector(state => simplifyPath(state, path), shallowEqual)
+  const pathFiltered = useEditorSelector(
     state => (hideArchive ? (path.filter(id => getThoughtById(state, id)?.value !== '=archive') as Path) : path),
     shallowEqual,
   )

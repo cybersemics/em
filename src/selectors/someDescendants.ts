@@ -6,8 +6,7 @@ import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 /** Returns true if any descendants of a thought fulfills the predicate. Short circuits once found. */
 const someDescendants = (state: State, id: ThoughtId, predicate: (thought: Thought) => boolean) => {
   let found = false
-  // ignore the return value of getDescendants
-  // we are just using its filterFunction to check pending
+  // Use the traversal predicate to stop descending once a match is found.
   getDescendantThoughtIds(state, id, {
     filterFunction: thought => {
       if (predicate(thought)) {

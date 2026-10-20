@@ -1,5 +1,4 @@
 import Autofocus from '../@types/Autofocus'
-import Thought from '../@types/Thought'
 import LazyEnv from './LazyEnv'
 import Path from './Path'
 import SimplePath from './SimplePath'
@@ -15,8 +14,6 @@ type TreeThought = {
   indexChild: number
   // index among visible non-attribute siblings at the same level, used to number =bullet/Ordered lists (-1 for attributes)
   childIndexNonAttribute: number
-  // index among all visible thoughts in the tree
-  indexDescendant: number
   isCursor: boolean
   isEmpty: boolean
   isInSortedContext: boolean
@@ -26,7 +23,7 @@ type TreeThought = {
   key: string
   leaf: boolean
   path: Path
-  prevChild: Thought
+  prevChildId?: ThoughtId
   rank: number
   showContexts?: boolean
   simplePath: SimplePath

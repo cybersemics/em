@@ -1,5 +1,4 @@
 import pluralize from 'pluralize'
-import { useSelector } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
 import newSubthoughtCommand from '../../commands/newSubthought'
 import {
@@ -10,6 +9,7 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import { getAllChildrenAsThoughts, getChildrenRanked } from '../../selectors/getChildren'
 import getContexts from '../../selectors/getContexts'
@@ -30,29 +30,31 @@ const numeralToWord = (n: number) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext2Subthought = () => {
-  const tutorialChoice = useSelector(selectTutorialChoice)
+  const tutorialChoice = useEditorSelector(selectTutorialChoice)
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
-  const caseSensitiveValue = useSelector(state => (getContexts(state, value).length > 0 ? value : value.toLowerCase()))
-  const numContexts = useSelector(state => getContexts(state, caseSensitiveValue).length)
-  const contextParentThoughts = useSelector(state => {
+  const caseSensitiveValue = useEditorSelector(state =>
+    getContexts(state, value).length > 0 ? value : value.toLowerCase(),
+  )
+  const numContexts = useEditorSelector(state => getContexts(state, caseSensitiveValue).length)
+  const contextParentThoughts = useEditorSelector(state => {
     const contexts = getContexts(state, caseSensitiveValue)
     return contexts.map(thoughtId => parentOfThought(state, thoughtId))
   })
-  const isContext2SubthoughtCreated = useSelector(state => context2SubthoughtCreated(state, { tutorialChoice }))
+  const isContext2SubthoughtCreated = useEditorSelector(state => context2SubthoughtCreated(state, { tutorialChoice }))
 
-  const hasChosen = useSelector(state => {
+  const hasChosen = useEditorSelector(state => {
     const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
     return !!getChildrenRanked(state, tutorialChoiceParentId).find(
       child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
     )
   })
 
-  const selectChoice = useSelector(
+  const selectChoice = useEditorSelector(
     state =>
       !state.cursor || headValue(state, state.cursor)?.toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
   )
 
-  const context2Exists = useSelector(state => {
+  const context2Exists = useEditorSelector(state => {
     const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
     return rootChildren.find(
       child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase(),

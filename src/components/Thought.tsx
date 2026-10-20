@@ -15,13 +15,14 @@ import ThoughtId from '../@types/ThoughtId'
 import { selectBetweenActionCreator as selectBetween } from '../actions/selectBetween'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isTouch } from '../browser'
-import { AlertType, REGEX_TAGS } from '../constants'
+import { AlertType, GLOBAL_STYLE_ENV, REGEX_TAGS } from '../constants'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
 import useDragLeave from '../hooks/useDragLeave'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useHideBullet from '../hooks/useHideBullet'
 import useThoughtStyle from '../hooks/useThoughtStyle'
 import useThoughtStyleContainer from '../hooks/useThoughtStyleContainer'
@@ -42,7 +43,6 @@ import containsURL from '../util/containsURL'
 import dndRef from '../util/dndRef'
 import durations from '../util/durations'
 import equalPath from '../util/equalPath'
-import equalThoughtRanked from '../util/equalThoughtRanked'
 import getBulletWidth from '../util/getBulletWidth'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -76,8 +76,6 @@ export interface ThoughtContainerProps {
   env?: LazyEnv
   expandedContextThought?: Path
   hideBullet?: boolean
-  // See: ThoughtProps['isContextPending']
-  isContextPending?: boolean
   isCursorParent?: boolean
   isDeepHovering?: boolean
   isDragging?: boolean
@@ -92,7 +90,6 @@ export interface ThoughtContainerProps {
   path: Path
   prevChildId?: ThoughtId
   publish?: boolean
-  rank: number
   showContexts?: boolean
   simplePath: SimplePath
   style?: React.CSSProperties
@@ -100,10 +97,9 @@ export interface ThoughtContainerProps {
   updateSize?: () => void
 }
 
-/** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
+/** Returns true if two lists contain the same child ids and values in the same order. */
 const equalChildren = (a: Thought[], b: Thought[]) =>
-  a === b ||
-  (a && b && a.length === b.length && a.every((thought, i) => equalThoughtRanked(a[i], b[i]) && a[i].id === b[i].id))
+  a === b || (a.length === b.length && a.every((thought, i) => thought.id === b[i].id && thought.value === b[i].value))
 
 /** Returns the width of a given text string using the specified font. */
 const getTextWidth = (text: string, font: string): number => {
@@ -153,13 +149,11 @@ interface UseCol1AlignParams {
 const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
   const prevIsTableCol1 = useRef<boolean>(isTableCol1)
 
-  const col1MaxWidth = col1MaxWidthStore.useState()
-
   const fontSize = useSelector(state => state.fontSize)
 
   const isCursor = useSelector(state => equalPath(state.cursor, path))
 
-  const isSiblingOfCursor = useSelector((state: State) => {
+  const isSiblingOfCursor = useSelector(state => {
     if (!state.cursor) return false
     const cursorParentId = head(rootedParentOf(state, state.cursor))
     const thisParentId = head(rootedParentOf(state, path))
@@ -167,7 +161,7 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
   })
 
   /** Sibling thoughts for the current cursor. */
-  const siblingThoughts = useSelector((state: State) => {
+  const siblingThoughts = useEditorSelector((state: State) => {
     if (!state.cursor || !isCursor) return []
     const cursorParentId = head(rootedParentOf(state, state.cursor))
     return cursorParentId ? getChildren(state, cursorParentId).map(t => t.value) : []
@@ -204,6 +198,9 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
 
     if (prevIsTableCol1.current == isTableCol1) return
 
+    // Width changes do not animate by themselves; read the latest measurement only when alignment changes.
+    const col1MaxWidth = col1MaxWidthStore.getState()
+
     // Measure text width
     const width = getTextWidth(value || '', `${fontSize}px Helvetica`)
 
@@ -234,7 +231,7 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
     })
 
     prevIsTableCol1.current = isTableCol1
-  }, [isTableCol1, col1MaxWidth, fontSize, value, duration, isSiblingOfCursor])
+  }, [isTableCol1, fontSize, value, duration, isSiblingOfCursor])
 
   return alignmentTransition
 }
@@ -255,12 +252,10 @@ const ThoughtContainer = ({
   depth = 0,
   env,
   hideBullet: hideBulletProp,
-  isContextPending,
   isVisible,
   leaf,
   path,
   prevChildId,
-  rank,
   showContexts,
   simplePath,
   style: styleProp,
@@ -269,16 +264,23 @@ const ThoughtContainer = ({
 }: ThoughtContainerProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
-  const children = useSelector<Thought[]>(
-    state => (childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath))),
-    // only compare id, value, and rank for re-renders
+  // Only child expressions affect the parent's styling; ordinary children render in the layout list.
+  const children = useEditorSelector<Thought[]>(
+    state =>
+      (childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath))).filter(
+        child =>
+          child.value in GLOBAL_STYLE_ENV ||
+          // Do not apply a binding to its own =let definition.
+          (child.value in { ...env } && child.id !== env![child.value]),
+      ),
+    // Only compare child ids, values, and order for re-renders.
     equalChildren,
   )
   // const contextBinding = useSelector(
   //   state => parseJsonSafe(attribute(state, head(simplePath), '=bindContext') ?? '') as SimplePath | undefined,
   // )
   // const parentView = useSelector(state => attribute(state, head(parentOf(simplePath)), '=view'))
-  const view = useSelector(state => attribute(state, head(simplePath), '=view'))
+  const view = useEditorSelector(state => attribute(state, head(simplePath), '=view'))
 
   // Note: If the thought is the active expand hover top path then it should be treated as a cursor parent. It is because the current implementation allows tree to unfold visually starting from cursor parent.
   const isCursorParent = useSelector(state => {
@@ -313,10 +315,10 @@ const ThoughtContainer = ({
 
   const isPublishChild = useSelector(state => !state.search && publishMode() && simplePath.length === 2)
   const publish = useSelector(state => !state.search && publishMode())
-  const isTableCol1 = useSelector(state =>
+  const isTableCol1 = useEditorSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
-  const isTableCol2 = useSelector(state =>
+  const isTableCol2 = useEditorSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
   )
   const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
@@ -332,7 +334,7 @@ const ThoughtContainer = ({
     thoughtId,
   })
   const style = useThoughtStyle({ children, env, styleProp, thoughtId })
-  const styleAnnotation = useSelector(
+  const styleAnnotation = useEditorSelector(
     state =>
       safeRefMerge(
         // apply normal style color to the annotation style
@@ -343,7 +345,7 @@ const ThoughtContainer = ({
     shallowEqual,
   )
   const styleContainer = useThoughtStyleContainer({ children, env, styleContainerProp, thoughtId, path })
-  const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
+  const value = useEditorSelector(state => getThoughtById(state, thoughtId)?.value)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
 
@@ -358,7 +360,7 @@ const ThoughtContainer = ({
   const contextBreadcrumbsAncestors = useSelector(state => rootedParentOf(state, simplePath), shallowEqual)
 
   // true if the thought has an invalid option
-  const invalidOption = useSelector(state => {
+  const invalidOption = useEditorSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     if (!thought || value === undefined) return false
 
@@ -377,7 +379,7 @@ const ThoughtContainer = ({
 
   /** True if a dragged thought is hovering over a visible child of the current thought (ThoughtDrop or SubthoughtsDrop). This determines if the parent should be highlighted. */
   // TODO: It would be nice if we could reuse canDrop.
-  const isChildHovering = useSelector(state => {
+  const isChildHovering = useEditorSelector(state => {
     // Early return if essential conditions are not met
     if (!isVisible || !state.hoveringPath || !state.draggingThoughts.length) {
       return false
@@ -490,7 +492,6 @@ const ThoughtContainer = ({
   //   isHeader,
   //   isHovering,
   //   isMultiColumnTable,
-  //   isContextPending,
   //   isPublishChild,
   //   isVisible,
   //   leaf,
@@ -498,7 +499,6 @@ const ThoughtContainer = ({
   //   path,
   //   prevChildId,
   //   publish,
-  //   rank,
   //   showContexts,
   //   simplePath,
   //   styleProp,
@@ -618,7 +618,6 @@ const ThoughtContainer = ({
             <Bullet
               dragSource={dragSourceBullet}
               longPressProps={dragHoldResult.props}
-              isContextPending={isContextPending}
               isDragging={isDragging}
               isEditing={isEditing}
               leaf={leaf}
@@ -645,15 +644,13 @@ const ThoughtContainer = ({
             // useDragAndDropThought that disables long press when there is a selection range.
             longPressProps={isTouch && !hasSelectionRange ? dragHoldResult.props : undefined}
             env={env}
-            isContextPending={isContextPending}
             isEditing={isEditing}
             ellipsizedUrl={!isEditing && containsURL(value)}
             isPublishChild={isPublishChild}
             isVisible={isVisible}
             onEdit={!isTouch ? onEdit : undefined}
             path={path}
-            rank={rank}
-            showContextBreadcrumbs={showContexts && value !== '__PENDING__'}
+            showContextBreadcrumbs={showContexts}
             simplePath={simplePath}
             className={classNameThought}
             classNameThought={classNameThought}

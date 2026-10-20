@@ -9,6 +9,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { getAutoscrollPadding } from '../device/preventAutoscroll'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useFreshCallback from '../hooks/useFreshCallback'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../hooks/useSelectorEffect'
@@ -46,7 +47,8 @@ export type OnResize = (args: OnResizeParams) => void
 export type SetSize = (args: OnResizeParams & { cliff: number }) => void
 
 /** Selects whether the context view is active for this thought. */
-const selectShowContexts = (path: SimplePath) => (state: State) => isContextViewActive(state, path)
+const selectShowContexts = (path: SimplePath) => (state: Pick<State, 'contextViews'>) =>
+  isContextViewActive(state, path)
 
 /** Selects the cursor from the state. */
 const selectCursor = (state: State) => state.cursor
@@ -58,7 +60,6 @@ const VirtualThought = ({
   childIndexNonAttribute,
   dropUncle,
   env,
-  indexDescendant,
   isMultiColumnTable,
   leaf,
   onResize,
@@ -82,7 +83,6 @@ const VirtualThought = ({
   childIndexNonAttribute: number
   dropUncle?: boolean
   env?: LazyEnv
-  indexDescendant: number
   isMultiColumnTable?: boolean
   leaf: boolean
   path: Path
@@ -109,10 +109,10 @@ const VirtualThought = ({
   const isEditing = useSelector(state => equalPath(state.cursor, simplePath))
   const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
   const isContextViewActive = useSelector(selectShowContexts(simplePath))
-  const cursorLeaf = useSelector(state => !!state.cursor && !hasChildren(state, head(state.cursor)))
+  const cursorLeaf = useEditorSelector(state => !!state.cursor && !hasChildren(state, head(state.cursor)))
   const cursorDepth = useSelector(state => (state.cursor ? state.cursor.length : 0))
   const fontSize = useSelector(state => state.fontSize)
-  const note = useSelector(state => noteValue(state, simplePath))
+  const note = useEditorSelector(state => noteValue(state, simplePath))
   const ref = useRef<HTMLDivElement>(null)
 
   /***************************
@@ -209,7 +209,7 @@ const VirtualThought = ({
   // Recalculate height after thought value changes.
   // Otherwise, the hight is not recalculated after splitThought.
   // TODO: useLayoutEffect does not work for some reason, causing the thought to briefly render at the incorrect height.
-  const value = useSelector(state => {
+  const value = useEditorSelector(state => {
     const thoughtId = head(simplePath)
     return thoughtId ? getThoughtById(state, thoughtId)?.value : null
   })
@@ -258,7 +258,6 @@ const VirtualThought = ({
           depth={depth + 1}
           dropUncle={dropUncle}
           env={env}
-          indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}
           leaf={leaf}
           updateSize={updateSize}

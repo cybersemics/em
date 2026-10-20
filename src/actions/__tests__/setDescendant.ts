@@ -1,24 +1,31 @@
 import { importText } from '..'
 import State from '../../@types/State'
+import ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setDescendant from '../setDescendant'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 it('set', () => {
   const steps = [
     newThought('a'),
-    (state: State) =>
-      setDescendant(state, {
+    (state: State, transaction?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         values: ['=test', 'hello'],
-      }),
+      })(state, transaction),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -33,16 +40,16 @@ it('set', () => {
 it('last value should override existing value', () => {
   const steps = [
     newThought('a'),
-    (state: State) =>
-      setDescendant(state, {
+    (state: State, transaction?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         values: ['=test', 'hello'],
-      }),
-    (state: State) =>
-      setDescendant(state, {
+      })(state, transaction),
+    (state: State, transaction?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         values: ['=test', 'goodbye'],
-      }),
+      })(state, transaction),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -59,16 +66,16 @@ it('add attribute if key has already been created', () => {
     newThought('a'),
     newSubthought('=test'),
     setCursor(['a']),
-    (state: State) =>
-      setDescendant(state, {
+    (state: State, transaction?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         values: ['=test', 'hello'],
-      }),
-    (state: State) =>
-      setDescendant(state, {
+      })(state, transaction),
+    (state: State, transaction?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         values: ['=test', 'goodbye'],
-      }),
+      })(state, transaction),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -81,14 +88,14 @@ it('add attribute if key has already been created', () => {
 })
 
 it('noop if no values are given', () => {
-  const stateStart = newThought(initialState(), 'a')
+  const stateStart = runDocumentCommand(newThought('a'), initialState())
 
   const steps = [
-    (state: State) =>
-      setDescendant(state, {
+    (state: State, transaction?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         values: [],
-      }),
+      })(state, transaction),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -100,11 +107,11 @@ it('noop if no values are given', () => {
 it('omit value to set only attribute', () => {
   const steps = [
     newThought('a'),
-    (state: State) =>
-      setDescendant(state, {
+    (state: State, transaction?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         value: '=test',
-      }),
+      })(state, transaction),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -124,11 +131,11 @@ it('preserve existing children when setting a nullary attribute', () => {
         - c
     `,
     }),
-    (state: State) =>
-      setDescendant(state, {
+    (state: State, transaction?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         value: '=test',
-      }),
+      })(state, transaction),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -144,11 +151,11 @@ it('preserve existing children when setting a nullary attribute', () => {
 it('set empty attribute', () => {
   const steps = [
     newThought('a'),
-    (state: State) =>
-      setDescendant(state, {
+    (state: State, transaction?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         values: ['=test', ''],
-      }),
+      })(state, transaction),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -163,11 +170,11 @@ it('set empty attribute', () => {
 it('set multiple levels', () => {
   const steps = [
     newThought('a'),
-    (state: State) =>
-      setDescendant(state, {
+    (state: State, transaction?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         values: ['w', 'x', 'y', 'z'],
-      }),
+      })(state, transaction),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -190,11 +197,11 @@ it('preserve unrelated siblings', () => {
         - m
     `,
     }),
-    (state: State) =>
-      setDescendant(state, {
+    (state: State, transaction?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         values: ['w', 'x', 'y', 'z'],
-      }),
+      })(state, transaction),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -219,11 +226,11 @@ it('preserve existing descendants', () => {
           - x
     `,
     }),
-    (state: State) =>
-      setDescendant(state, {
+    (state: State, transaction?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         values: ['w', 'x', 'y', 'z'],
-      }),
+      })(state, transaction),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -238,10 +245,10 @@ it('preserve existing descendants', () => {
           - z`)
 
   const lexemeW = getLexeme(stateNew, 'w')!
-  expect(lexemeW.contexts).toHaveLength(1)
+  expect(lexemeW).toHaveLength(1)
 
   const lexemeX = getLexeme(stateNew, 'x')!
-  expect(lexemeX.contexts).toHaveLength(1)
+  expect(lexemeX).toHaveLength(1)
 })
 
 it('preserve unrelated descendants', () => {
@@ -256,11 +263,11 @@ it('preserve unrelated descendants', () => {
             - o
     `,
     }),
-    (state: State) =>
-      setDescendant(state, {
+    (state: State, transaction?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         values: ['w', 'x', 'y', 'z'],
-      }),
+      })(state, transaction),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test

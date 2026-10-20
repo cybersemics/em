@@ -1,7 +1,8 @@
 import React from 'react'
-import { shallowEqual, useSelector } from 'react-redux'
+import { shallowEqual } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import ThoughtId from '../@types/ThoughtId'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
 import getCommandState from '../util/getCommandState'
@@ -32,11 +33,11 @@ const StaticSuperscript = React.forwardRef<
   }
 >(({ n, style, show = true, hideZero, absolute, className, thoughtId }, forwardRef) => {
   const isVisible = !!(show && (n || !hideZero))
-  const fill = useSelector(state =>
+  const fill = useEditorSelector(state =>
     // make sure fill is only calculated if the superscript is shown, since getThoughtFill is expensive
     isVisible && thoughtId ? getThoughtFill(state, thoughtId) : undefined,
   )
-  const formattingStyle = useSelector(state => {
+  const formattingStyle = useEditorSelector(state => {
     if (!isVisible || !thoughtId) return undefined
     const thought = getThoughtById(state, thoughtId)
     return thought ? getThoughtFormattingStyle(thought.value) : undefined

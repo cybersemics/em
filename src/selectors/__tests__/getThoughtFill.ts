@@ -1,15 +1,30 @@
 import newThought from '../../actions/newThought'
 import getThoughtFill from '../../selectors/getThoughtFill'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+afterEach(() => vi.restoreAllMocks())
+
 /** Creates a single thought and returns its derived fill color. */
 const fillOf = (value: string) => {
-  const state = newThought(initialState(), { value })
+  const state = runDocumentCommand(newThought({ value }), initialState())
   return getThoughtFill(state, head(state.cursor!))
 }
 
 describe('getThoughtFill', () => {
+  it.each(['plain text', '&lt;font color="red"&gt;text&lt;/font&gt;'])('does not parse unformatted text: %s', value => {
+    const state = runDocumentCommand(newThought({ value }), initialState())
+    const parse = vi.spyOn(DOMParser.prototype, 'parseFromString')
+
+    expect(getThoughtFill(state, head(state.cursor!))).toBeUndefined()
+    expect(parse).not.toHaveBeenCalled()
+  })
+
   it('gets the fill from a fully colored thought', () => {
     expect(fillOf('<font color="#ff573d">hello</font>')).toBe('#ff573d')
   })

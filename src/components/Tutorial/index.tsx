@@ -1,11 +1,12 @@
 import React, { FC, useRef } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../../styled-system/css'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { isTouch } from '../../browser'
 import newThoughtCommand from '../../commands/newThought'
 import { TUTORIAL2_STEP_SUCCESS, TUTORIAL_STEP_SUCCESS } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import useIsVisible from '../../hooks/useIsVisible'
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
@@ -37,7 +38,7 @@ if (!newThoughtCommand) {
 /** Tutorial component. */
 const Tutorial: FC = () => {
   const [isVisible, nextRef] = useIsVisible<HTMLAnchorElement>(true)
-  const tutorialStep = useSelector(state => {
+  const tutorialStep = useEditorSelector(state => {
     const step = +(getSetting(state, 'Tutorial Step') || 1)
     return isNaN(step) ? 1 : step
   })

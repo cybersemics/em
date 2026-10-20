@@ -8,12 +8,10 @@ import State from './@types/State'
 import ThoughtId from './@types/ThoughtId'
 import Thunk from './@types/Thunk'
 import { importFilesActionCreator as importFiles } from './actions/importFiles'
-import { initThoughtsActionCreator as initThoughts } from './actions/initThoughts'
-import { pullActionCreator as pull } from './actions/pull'
+import { replaceThoughtsActionCreator as replaceThoughts } from './actions/replaceThoughts'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
-import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
-import { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
+import db, { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
 import scrollTo from './device/scrollTo'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -35,16 +33,13 @@ import debugLog from './util/debugLog'
 import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
-import owner from './util/owner'
 
 /**
- * Decode cursor from url, pull and initialize the cursor.
+ * Decodes the URL cursor against the complete initialized document.
  *
- * The app is interactive while the thoughtspace is still initializing, so the user may already have set the cursor by
- * the time this runs. In that case the live cursor wins: setCursor marks cursorInitialized, and restoring the cursor
- * from the URL here would discard the cursor, note focus, and multiselection the user has since created.
+ * Preserve an already initialized live cursor, note focus, and multiselection rather than replacing them with the URL.
  */
-const initializeCursor = async () => {
+const initializeCursor = () => {
   const state = store.getState()
   if (state.cursorInitialized) return
 
@@ -53,12 +48,7 @@ const initializeCursor = async () => {
   if (!path || isRoot(path)) {
     store.dispatch(setCursor({ path: null }))
   } else {
-    // pull the path thoughts
-    await store.dispatch(pull(path, { maxDepth: 0 }))
-    const newState = store.getState()
-    // the user may have set the cursor while the path was being pulled
-    if (newState.cursorInitialized) return
-    const isCursorLoaded = path.every(thoughtId => getThoughtById(newState, thoughtId))
+    const isCursorLoaded = path.every(thoughtId => getThoughtById(state, thoughtId))
     store.dispatch(
       setCursor({
         path: isCursorLoaded ? path : null,
@@ -78,54 +68,24 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
     Device.getInfo().then(({ osVersion }) => osVersionStore.update(parseInt(osVersion)))
   }
 
-  const eventHandlers = initEvents(store)
-
-  const { clientId, storage: storageInUse } = await thoughtspaceRuntime.init({
+  const { storage: storageInUse } = await thoughtspaceRuntime.init({
     storage,
-    materialization: {
-      getSnapshot: () => {
-        const state = store.getState()
-        return {
-          thoughtIndex: state.thoughts.thoughtIndex,
-          lexemeIndex: state.thoughts.lexemeIndex,
-        }
-      },
-      apply: ({ thoughtIndex, lexemeIndex }) => {
-        store.dispatch(
-          updateThoughtsActionCreator({
-            thoughtIndexUpdates: thoughtIndex,
-            lexemeIndexUpdates: lexemeIndex,
-            local: false,
-            remote: false,
-            repairCursor: true,
-          }),
-        )
-      },
-    },
+    onError: error =>
+      store.dispatch({
+        type: 'error',
+        value: `Changes could not be saved: ${error.message}. Editing is paused; keep this tab open.`,
+      }),
   })
 
   storageStatusStore.update(storageInUse)
 
-  // load local state unless loading a public context
-  // await initDB()
+  // The interactive app and URL cursor must see the same complete document as the authoring engine.
+  store.dispatch(replaceThoughts({ thoughts: db.project() }))
+  initializeCursor()
+  const eventHandlers = initEvents(store)
 
-  const thoughtsLocalPromise =
-    owner() === '~'
-      ? // authenticated or offline user
-        Promise.resolve(store.dispatch(initThoughts(clientId)))
-      : // other user context
-        Promise.resolve()
-
-  thoughtsLocalPromise.then(() => {
-    // extra delay for good measure to not block rendering
-    setTimeout(() => {
-      store.dispatch(importFiles({ resume: true }))
-    }, 500)
-  })
-
-  await thoughtsLocalPromise
-
-  await initializeCursor()
+  // Resume incremental imports after the initial app has rendered.
+  setTimeout(() => store.dispatch(importFiles({ resume: true })), 500)
 
   return eventHandlers
 }
@@ -197,7 +157,7 @@ const windowEm = {
   getContexts: withState(getContexts),
   getLexeme: withState(getLexeme),
   getLexemeContexts: withState((state: State, value: string) => {
-    const contexts = getLexeme(state, value)?.contexts || []
+    const contexts = getLexeme(state, value) ?? []
     return contexts
       .map(id => getThoughtById(state, id))
       .filter(Boolean)

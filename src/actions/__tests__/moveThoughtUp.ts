@@ -1,14 +1,19 @@
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import moveThoughtUp from '../moveThoughtUp'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('move within root', () => {
   const steps = [newThought('a'), newThought('b'), moveThoughtUp]

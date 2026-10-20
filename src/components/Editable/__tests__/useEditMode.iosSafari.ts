@@ -1,11 +1,11 @@
 import { renderHook } from '@testing-library/react'
 import { act, createElement } from 'react'
-import { Provider } from 'react-redux'
 import { importTextActionCreator as importText } from '../../../actions/importText'
 import store from '../../../stores/app'
 import touchStore from '../../../stores/touchStore'
 import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
+import EditorProvider from '../../EditorProvider'
 import lastTouch from '../lastTouch'
 import useEditMode from '../useEditMode'
 
@@ -40,7 +40,7 @@ it('record the touchend of a tap on a thought', () => {
         style: undefined,
         transient: undefined,
       }),
-    { wrapper: ({ children }) => createElement(Provider, { store, children }) },
+    { wrapper: ({ children }) => createElement(EditorProvider, { store, children }) },
   )
 
   act(() => {
@@ -66,7 +66,7 @@ it('suppress the synthesized mousedown of a tap that already moved the cursor wi
         style: undefined,
         transient: undefined,
       }),
-    { wrapper: ({ children }) => createElement(Provider, { store, children }) },
+    { wrapper: ({ children }) => createElement(EditorProvider, { store, children }) },
   )
 
   // The touchend of a tap on a non-cursor thought moved the cursor here without entering edit mode and flagged
@@ -100,7 +100,7 @@ it('allow mousedown on the cursor thought when no cursor-moving tap preceded it'
         style: undefined,
         transient: undefined,
       }),
-    { wrapper: ({ children }) => createElement(Provider, { store, children }) },
+    { wrapper: ({ children }) => createElement(EditorProvider, { store, children }) },
   )
 
   const mousedown = new MouseEvent('mousedown', { bubbles: true, cancelable: true })

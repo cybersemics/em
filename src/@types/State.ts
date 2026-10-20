@@ -12,15 +12,16 @@ import LearningState from './LearningState'
 import Modal from './Modal'
 import Patch from './Patch'
 import Path from './Path'
-import PushBatch from './PushBatch'
 import RecentlyEditedTree from './RecentlyEditedTree'
 import SimplePath from './SimplePath'
 import StorageCache from './StorageCache'
+import Thought from './Thought'
 import ThoughtId from './ThoughtId'
-import ThoughtIndices from './ThoughtIndices'
+import ThoughtspaceView from './ThoughtspaceView'
 import Timestamp from './Timestamp'
 import Tip from './TipId'
 
+/** A captured editor read context: Redux UI state and an immutable TreeCRDT view. */
 interface State {
   absoluteContextTime?: Timestamp
   /** A dismissable informational popup. See actions/alert.ts and components/Alert.tsx. */
@@ -91,12 +92,10 @@ interface State {
   hoveringPath?: Path
   /** Type of thought drop target being hovered over. */
   hoverZone?: DropThoughtZone
-  /** The path where thoughts are being imported by importFiles. Prevents the path from being deallocated by freeThoughts. */
-  importThoughtPath: Path | null
   invalidState: boolean
   /**
    * Displays a loading screen when the app starts.
-   * This is disabled by updateThoughts once it detects that the root thought is loaded.
+   * This is disabled when initialization publishes the complete document.
    * Used by the Content component to determine if there are no root children and EmptyThoughtspace should be displayed.
    */
   isLoading: boolean
@@ -135,14 +134,8 @@ interface State {
   noteFocus: boolean
   /** NoteOffset can be used to position the caret within a note. Setting it to null disables programmatic selection using selection.set. */
   noteOffset: number | null
-  /**
-   * Temporarily stores updates that need to be persisted.
-   * Passed to the data provider and cleared on every action.
-   * See: /redux-enhancers/pushQueue.ts.
-   */
-  pushQueue: PushBatch[]
   recentlyEdited: RecentlyEditedTree
-  /** Redo history. Contains diffs that can be applied to State to restore actions that were reverted with undo. State.redoPatches[0] is the oldest action that was undone. */
+  /** Redo history. Contains UI/diagnostic diffs and the fresh document receipts authored by undo. State.redoPatches[0] is the oldest action that was undone. */
   redoPatches: Patch[]
   remoteSearch: boolean
   rootContext: Context
@@ -190,12 +183,14 @@ interface State {
    * See: /redux-enhancers/storageCache.ts.
    */
   storageCache?: StorageCache
-  thoughts: ThoughtIndices
+  thoughts: ThoughtspaceView
+  /** Temporary per-thought editor state, never persisted or synchronized. */
+  thoughtUi: Index<Pick<Thought, 'generating' | 'generatingPlaceholder' | 'pendingFormat' | 'splitSource'>>
   tip: Tip | null
   /** Command of a toolbar button that is being long pressed in the customize modal. */
   toolbarLongPress?: Command
   transientFocus?: boolean
-  /** Undo history. Contains diffs that can be applied to State to revert actions. State.undoPatches[0] is the oldest. */
+  /** Undo history. Contains UI/diagnostic diffs and engine-owned document receipts. State.undoPatches[0] is the oldest. */
   undoPatches: Patch[]
 }
 

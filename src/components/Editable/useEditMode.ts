@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { useStore } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
@@ -11,6 +10,7 @@ import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import virtualKeyboard from '../../device/virtual-keyboard'
+import useEditorStore from '../../hooks/useEditorStore'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
@@ -55,7 +55,7 @@ const useEditMode = ({
   const fontSize = useSelector(state => state.fontSize)
   const isCursor = useSelector(state => equalPath(path, state.cursor))
   const hadSidebar = usePrevious(showSidebar)
-  const store = useStore()
+  const store = useEditorStore()
   const dispatch = useDispatch()
   const pressingRef = useRef(false)
 

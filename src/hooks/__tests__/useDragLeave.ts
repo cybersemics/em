@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react'
 import { act, createElement } from 'react'
-import { Provider } from 'react-redux'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { updateHoveringPathActionCreator as updateHoveringPath } from '../../actions/updateHoveringPath'
+import EditorProvider from '../../components/EditorProvider'
 import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
@@ -12,7 +12,7 @@ import useDragLeave from '../useDragLeave'
 const renderDragLeave = (props: { isDeepHovering: boolean; canDropThought: boolean }) =>
   renderHook((propsNew: { isDeepHovering: boolean; canDropThought: boolean }) => useDragLeave(propsNew), {
     initialProps: props,
-    wrapper: ({ children }) => createElement(Provider, { store, children }),
+    wrapper: ({ children }) => createElement(EditorProvider, { store, children }),
   })
 
 /** Imports two thoughts and sets hoveringPath to the first, as if a drag were in progress over it. */

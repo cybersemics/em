@@ -17,6 +17,7 @@ import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { acceptAiDisclosure, acknowledgeAiDisclosure, clearAiDisclosureAcknowledgement } from '../../util/aiDisclosure'
 import head from '../../util/head'
+import generateThought from '../generateThought'
 import organizeThought from '../organizeThought'
 
 /** A valid reorganization that wraps apples and bananas in a Fruit category. */
@@ -372,6 +373,57 @@ it('does not apply a reorganization after an edit made while inference is pendin
   - oranges`)
 })
 
+it.each([
+  {
+    outcome: 'succeeds',
+    response: { outline: [{ id: '1', text: 'Stale organized value', children: [] }] },
+  },
+  { outcome: 'fails', response: { error: 'Model unavailable' } },
+])('preserves newer thought generation when a superseded organization $outcome', async ({ response }) => {
+  acknowledgeAiDisclosure()
+  /** Resolves the organization after the thought has been edited and a newer request started. */
+  let resolveOrganization!: (response: { json: () => Promise<unknown> }) => void
+  /** Resolves the newer generation after the superseded organization's cleanup has run. */
+  let resolveGeneration!: (response: { json: () => Promise<{ thoughts: string[] }> }) => void
+  mockFetch
+    .mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveOrganization = resolve
+        }),
+    )
+    .mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveGeneration = resolve
+        }),
+    )
+  await dispatch([importText({ text: '- apples' }), setCursor(['apples'])])
+  const thoughtId = head(store.getState().cursor!)
+
+  executeCommand(organizeThought)
+  await dispatch(editThoughtByContext(['apples'], 'oranges'))
+  await dispatch(editThoughtByContext(['oranges'], 'apples'))
+  executeCommand(generateThought)
+  expect(mockFetch).toHaveBeenCalledTimes(2)
+
+  resolveOrganization({ json: () => Promise.resolve(response) })
+  await vi.runAllTimersAsync()
+  const thoughtAfterOrganization = getThoughtById(store.getState(), thoughtId)
+
+  resolveGeneration({ json: () => Promise.resolve({ thoughts: ['Latest generated value'] }) })
+  await vi.runAllTimersAsync()
+  expect(thoughtAfterOrganization).toMatchObject({
+    value: 'apples',
+    generating: true,
+    generatingPlaceholder: 'Generating Thought',
+  })
+
+  expect(getThoughtById(store.getState(), thoughtId)?.generating).toBe(false)
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Latest generated value`)
+})
+
 it('marks a non-empty thought as generating without changing its value', async () => {
   acknowledgeAiDisclosure()
   mockFetch.mockReturnValueOnce(new Promise(() => {}))
@@ -405,15 +457,7 @@ it('marks an empty thought as generating without changing its value', async () =
 it('marks empty descendants as generating without changing their value', async () => {
   acknowledgeAiDisclosure()
   mockFetch.mockReturnValueOnce(new Promise(() => {}))
-  await dispatch([
-    importText({
-      text: `
-        - apples
-          - 
-      `,
-    }),
-    setCursor(['apples']),
-  ])
+  await dispatch([importText({ text: '- apples\n  - ' }), setCursor(['apples'])])
 
   executeCommand(organizeThought)
   await vi.runAllTimersAsync()

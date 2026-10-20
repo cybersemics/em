@@ -7,6 +7,7 @@ import { isTouch } from '../browser'
 import { gestureString } from '../commands'
 import newThoughtCommand from '../commands/newThought'
 import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getSetting from '../selectors/getSetting'
 import offlineStatusStore from '../stores/offlineStatusStore'
 import GestureDiagram from './GestureDiagram'
@@ -14,19 +15,11 @@ import LoadingEllipsis from './LoadingEllipsis'
 
 /** Display platform-specific instructions of how to create a thought when a context has no thoughts. */
 const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
-  /*
-    Determining when to show the loader is nontrivial due to many loading states of local and remote, connection and authentication status, and pending thoughts.
-
-    state.status and state.isLoading are very fragile. They are coupled to pull, updateThoughts, and EmptyThoughtspace.
-
-    Related:
-    - https://github.com/cybersemics/em/issues/1344
-    - https://github.com/cybersemics/em/pull/1345
-  */
+  // Document readiness is published once at startup; connection status is tracked independently.
   const isLoading = useSelector(state => state.isLoading)
   const status = offlineStatusStore.useState()
 
-  const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 0))
+  const tutorialStep = useEditorSelector(state => +(getSetting(state, 'Tutorial Step') || 0))
 
   return (
     <div

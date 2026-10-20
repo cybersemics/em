@@ -1,12 +1,12 @@
 import _ from 'lodash'
 import { useLayoutEffect, useMemo } from 'react'
-import { useStore } from 'react-redux'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { chainCommand, gestureString, globalCommands, hashCommand, parseCommandShortcut } from '../commands'
 import gestureStore from '../stores/gestureStore'
+import useEditorStore from './useEditorStore'
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
@@ -33,7 +33,7 @@ const useFilteredCommands = (
   const chainableCommandInProgressInclusive: Command | undefined = globalCommands.find(
     command => command.isChainable && gestureInProgress.startsWith(gestureString(command)),
   )
-  const store = useStore()
+  const store = useEditorStore()
 
   const possibleCommandsSorted = useMemo(() => {
     // if the search query looks like a keyboard shortcut (e.g. "cmd option k"), match commands by their shortcut

@@ -3,7 +3,7 @@ import ThoughtId from '../@types/ThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, isVisible } from './getChildren'
 
-/** Returns the value of a visible child attribute of a thought. Returns null if the attribute does not exist or has no child. Use a combination of findDescendant and attribute to distinguish these cases, i.e. .to check if an attribute exists but has no children. If attributeName is a meta attribute, performs in O(1) due to special childrenMap keys of attributes. */
+/** Returns the value of a visible child attribute, or null if the attribute is absent or has no visible child. Use findDescendant to distinguish those cases. Meta-attribute lookups are cached within the immutable document view. */
 const attribute = (state: State, thoughtId: ThoughtId | null, attributeName: string): string | null => {
   const attributeId = findDescendant(state, thoughtId, attributeName)
   if (!attributeId) return null

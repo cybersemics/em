@@ -1,12 +1,12 @@
 import { renderHook } from '@testing-library/react'
 import { act, createElement } from 'react'
-import { Provider } from 'react-redux'
 import { importTextActionCreator as importText } from '../../../actions/importText'
 import { executeCommandWithMulticursor } from '../../../commands'
 import clearThoughtCommand from '../../../commands/clearThought'
 import store from '../../../stores/app'
 import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
+import EditorProvider from '../../EditorProvider'
 import useEditMode from '../useEditMode'
 
 /** Captures the native keyboard plugin calls made by the app. */
@@ -55,7 +55,7 @@ it('opens the virtual keyboard when Clear Thought activates edit mode', async ()
         style: undefined,
         transient: undefined,
       }),
-    { wrapper: ({ children }) => createElement(Provider, { store, children }) },
+    { wrapper: ({ children }) => createElement(EditorProvider, { store, children }) },
   )
 
   // the cursor is on the thought with the keyboard closed

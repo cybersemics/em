@@ -48,7 +48,7 @@ const usePositionedThoughts = (
     }
   }, [dragInProgress])
 
-  const { isHoveringSorted, newRank } = useSortedContext()
+  const { isHoveringSorted, placementRank } = useSortedContext()
 
   /** The value of scrollTop. Only enabled when there is a drag in progress for performance reasons. */
   const scrollTopIfDragging = scrollTopStore.useSelector(scrollTop => (dragInProgress ? scrollTop : null))
@@ -160,11 +160,13 @@ const usePositionedThoughts = (
       // sum ancestor table widths
       // ignore thought and parent since horizontal shift should begin with col 2, and tableCol1Widths is keyed by the thought with =table
       // Prepend HOME_TOKEN so that a table on the root context (which is never rendered as a node and thus never appears in a Path) is treated as a virtual ancestor and still shifts its col2 descendants right.
-      const pathWithHome = [HOME_TOKEN, ...node.path]
-      const ancestorTableWidths = pathWithHome.reduce(
-        (accum, id, i) => accum + (tableCol1Widths.get(pathWithHome[i - 2]) || 0),
-        0,
-      )
+      const ancestorTableWidths =
+        tableCol1Widths.size === 0
+          ? 0
+          : [HOME_TOKEN, ...node.path].reduce(
+              (accum, id, i, path) => accum + (tableCol1Widths.get(path[i - 2]) || 0),
+              0,
+            )
 
       // set the width of table col1 to the minimum width of all visible thoughts in the column
       if (node.visibleChildrenKeys) {
@@ -290,11 +292,11 @@ const usePositionedThoughts = (
       }
     })
 
-    // Determine hoverArrowVisibility based on newRank and the visible thoughts
+    // Determine hoverArrowVisibility based on the projected insertion gap and the visible thoughts.
     if (isHoveringSorted) {
-      if (newRank > lastVisibleThoughtRank && lastVisibleThoughtRank !== lastThoughtRank) {
+      if (placementRank > lastVisibleThoughtRank && lastVisibleThoughtRank !== lastThoughtRank) {
         hoverArrowVisibility = 'below'
-      } else if (newRank < firstVisibleThoughtRank && firstVisibleThoughtRank !== firstThoughtRank) {
+      } else if (placementRank < firstVisibleThoughtRank && firstVisibleThoughtRank !== firstThoughtRank) {
         hoverArrowVisibility = 'above'
       } else {
         hoverArrowVisibility = null
@@ -308,7 +310,7 @@ const usePositionedThoughts = (
     innerWidth,
     isHoveringSorted,
     maxVisibleY,
-    newRank,
+    placementRank,
     scrollTopIfDragging,
     singleLineHeight,
     sizes,

@@ -287,6 +287,7 @@ describe('render', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     // Visible attributes before and between ordinary siblings must not consume an ordinal.
+    expect(await findThoughtByText('=children')).toBeInTheDocument()
     expect(await findThoughtByText('=custom')).toBeInTheDocument()
     const orderedWithAttributes = document.querySelectorAll('[data-bullet="ordered"]')
     expect(Array.from(orderedWithAttributes).map(el => el.textContent)).toEqual(['1.', '2.', '3.'])

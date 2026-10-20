@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import useLayoutAnimationFrameEffect from '../../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../../hooks/useSelectorEffect'
 import getStyle from '../../selectors/getStyle'
@@ -55,7 +56,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement | null>, simplePat
   // Recalculate height after thought value changes.
   // Otherwise, the hight is not recalculated after splitThought.
   // TODO: useLayoutEffect does not work for some reason, causing the thought to briefly render at the incorrect height.
-  const splitThoughtValue = useSelector(state => {
+  const splitThoughtValue = useEditorSelector(state => {
     const thoughtId = head(simplePath)
     return thoughtId ? getThoughtById(state, thoughtId)?.value : null
   })

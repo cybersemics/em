@@ -147,21 +147,20 @@ const generateThoughtAtPathsActionCreator =
     // the original text rather than a pending placeholder, and so empty thoughts can show a display-only placeholder.
     dispatch(
       updateThoughts({
-        thoughtIndexUpdates: Object.fromEntries(
+        thoughtUiUpdates: Object.fromEntries(
           activeTargets.map(target => [
             target.thought.id,
             {
-              ...target.thought,
+              ...state.thoughtUi[target.thought.id],
+              generatingPlaceholder: 'Generating Thought',
               generating: true,
             },
           ]),
         ),
-        lexemeIndexUpdates: {},
-        local: false,
-        remote: false,
-        overwritePending: true,
       }),
     )
+    // Each immutable overlay belongs to this request, even if a later generation starts from the same text.
+    const pendingThoughtUi = getState().thoughtUi
 
     /** Fetches the webpage title for a target, or an empty string when it cannot be fetched. */
     const generateTitle = async (target: GenerationTarget & { url: string }): Promise<string> => {
@@ -225,42 +224,39 @@ const generateThoughtAtPathsActionCreator =
     return targets.map(target => {
       if (!target) return null
       const { simplePath, thought } = target
-      const valueNew = valuesNew.get(thought.id)!
 
-      const thoughtPending = getThoughtById(getState(), thought.id)
-      // bail if the thought was deleted while its value was being generated
-      if (!thoughtPending) return null
+      const statePending = getState()
+      const thoughtPending = getThoughtById(statePending, thought.id)
+      // A deletion, local edit, or newer generation releases this request's ownership.
+      if (!thoughtPending || statePending.thoughtUi[thought.id] !== pendingThoughtUi[thought.id]) return null
+      // Incoming edits preserve overlays. Release ours without overwriting the new canonical value.
+      const valueNew = thoughtPending.value === thought.value ? valuesNew.get(thought.id)! : null
 
       dispatch([
-        // Restore the snapshot value and clear generating before applying the generated one. updateThoughts is not
-        // undoable. An interleaved edit of this thought must be rolled back to the snapshot so editThought's oldValue
-        // matches the lexeme, and generating must be cleared here because editThought no-ops when the generated value
-        // equals the original. Both updates are dispatched in the same batch, so the restored snapshot is never
-        // rendered.
+        // Clear the transient overlay before recording the generated edit in undo history.
         updateThoughts({
-          thoughtIndexUpdates: {
+          thoughtUiUpdates: {
             [thought.id]: {
-              ...thoughtPending,
-              value: thought.value,
+              ...statePending.thoughtUi[thought.id],
+              generatingPlaceholder: undefined,
               generating: false,
             },
           },
-          lexemeIndexUpdates: {},
-          local: false,
-          remote: false,
-          overwritePending: true,
         }),
-        // editThought automatically sets Thought.generating to false
-        editThought({
-          cursorOffset: getState().isMulticursorExecuting ? undefined : valueNew.length,
-          force: true,
-          oldValue: thought.value,
-          newValue: valueNew,
-          path: simplePath,
-          // The generation completes whenever the request returns, not as part of a typing stream, so it must never
-          // merge with a user edit that happens to be contiguous in the same direction.
-          preventMerge: true,
-        }),
+        ...(valueNew === null
+          ? []
+          : [
+              editThought({
+                cursorOffset: statePending.isMulticursorExecuting ? undefined : valueNew.length,
+                force: true,
+                oldValue: thought.value,
+                newValue: valueNew,
+                path: simplePath,
+                // The generation completes whenever the request returns, not as part of a typing stream, so it must never
+                // merge with a user edit that happens to be contiguous in the same direction.
+                preventMerge: true,
+              }),
+            ]),
       ])
 
       return valueNew

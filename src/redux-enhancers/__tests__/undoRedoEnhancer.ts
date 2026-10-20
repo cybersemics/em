@@ -8,6 +8,7 @@ import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { toggleMulticursorAtFirstMatchActionCreator as toggleMulticursor } from '../../test-helpers/toggleMulticursorAtFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 
 // The cursor is only parked at the selected thoughts' common ancestor on touch devices (see multiselectCursorMiddleware).
 vi.mock('../../browser', async importOriginal => {
@@ -16,6 +17,7 @@ vi.mock('../../browser', async importOriginal => {
 })
 
 beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('ending a multiselect after reselecting a different anchor does not throw (Error applying patch)', async () => {
   await initialize({ storage: 'memory' })

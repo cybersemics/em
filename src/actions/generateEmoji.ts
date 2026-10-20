@@ -118,20 +118,16 @@ const generateEmoji =
 
     dispatch(
       updateThoughts({
-        thoughtIndexUpdates: Object.fromEntries(
+        thoughtUiUpdates: Object.fromEntries(
           requests.map(request => [
             request.thought.id,
             {
-              ...request.thought,
+              ...getState().thoughtUi[request.thought.id],
               generating: true,
               generatingPlaceholder: 'Generating Emoji',
             },
           ]),
         ),
-        lexemeIndexUpdates: {},
-        local: false,
-        overwritePending: true,
-        remote: false,
       }),
     )
 
@@ -174,7 +170,8 @@ const generateEmoji =
 
     requests.forEach((request, index) => {
       const { baseValue, cachedPrefix, isCursor, simplePath, thought } = request
-      const thoughtPending = getThoughtById(getState(), thought.id)
+      const statePending = getState()
+      const thoughtPending = getThoughtById(statePending, thought.id)
       // bail if the thought was deleted while its emoji were being generated
       if (!thoughtPending) return
 
@@ -183,17 +180,13 @@ const generateEmoji =
         if (thoughtPending.generating) {
           dispatch(
             updateThoughts({
-              thoughtIndexUpdates: {
+              thoughtUiUpdates: {
                 [thought.id]: {
-                  ...thoughtPending,
+                  ...statePending.thoughtUi[thought.id],
                   generating: false,
                   generatingPlaceholder: undefined,
                 },
               },
-              lexemeIndexUpdates: {},
-              local: false,
-              overwritePending: true,
-              remote: false,
             }),
           )
         }
@@ -207,20 +200,15 @@ const generateEmoji =
       const cursorOffsetDelta = emoji ? newPrefixLength - cachedPrefix.length : 0
 
       dispatch([
-        // Clear generating before applying the generated prefix. updateThoughts is not undoable. Both updates are
-        // dispatched in the same batch, so the thought is never rendered without the shimmer and without the emoji.
+        // Clear the transient overlay before recording the generated edit in undo history.
         updateThoughts({
-          thoughtIndexUpdates: {
+          thoughtUiUpdates: {
             [thought.id]: {
-              ...thoughtPending,
+              ...statePending.thoughtUi[thought.id],
               generating: false,
               generatingPlaceholder: undefined,
             },
           },
-          lexemeIndexUpdates: {},
-          local: false,
-          overwritePending: true,
-          remote: false,
         }),
         ...(emoji
           ? [

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useDispatch, useStore } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
 import ThoughtId from '../@types/ThoughtId'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isAndroid } from '../browser'
 import * as selection from '../device/selection'
+import useEditorStore from '../hooks/useEditorStore'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -20,7 +21,7 @@ const NATIVE_TEXT_DRAG_CARET_OFFSET = 40
  * null when no drop point is targeted. See #4225.
  */
 const useNativeTextDrag = () => {
-  const store = useStore()
+  const store = useEditorStore()
   const dispatch = useDispatch()
   const [caret, setCaret] = useState<{ x: number; y: number; height: number } | null>(null)
 

@@ -130,6 +130,7 @@ export default [
   {
     ignores: [
       'node_modules/**',
+      '.treecrdt-wasm/**',
       '.claude/worktrees/**',
       'packages/**/dist/**/*',
       'packages/**/.build/**/*',

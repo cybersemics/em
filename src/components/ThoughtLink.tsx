@@ -3,6 +3,7 @@ import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import { EMPTY_THOUGHT_PLACEHOLDER } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
@@ -28,7 +29,7 @@ const ThoughtLink = ({
   styleLink?: React.CSSProperties
   thoughtsLimit?: number
 }) => {
-  const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
+  const simplePath = useEditorSelector(state => simplifyPath(state, path), shallowEqual)
   const parentPath = useSelector(state => rootedParentOf(state, path), shallowEqual)
 
   return (

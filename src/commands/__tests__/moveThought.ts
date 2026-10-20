@@ -57,7 +57,7 @@ it.skip('merge up to pending destination descendant', async () => {
     moveThoughtAtFirstMatchActionCreator({
       from: ['a', 'b'],
       to: ['d', 'b'],
-      newRank: 1,
+      after: ['d', 'b'],
     }),
   ])
 

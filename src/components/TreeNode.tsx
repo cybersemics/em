@@ -1,9 +1,10 @@
-import { useCallback, useRef, useState } from 'react'
+import { ComponentProps, useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
+import { CONTENT_BOX_PADDING_LEFT } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -15,37 +16,12 @@ import FauxCaret from './FauxCaret'
 import TreeNodePositioner from './TreeNodePositioner'
 import VirtualThought, { OnResize, SetSize } from './VirtualThought'
 
-/** Renders a thought component for mapped treeThoughtsPositioned. */
-const TreeNode = ({
-  belowCursor,
-  cliff,
-  depth,
-  env,
-  indexChild,
-  childIndexNonAttribute,
-  indexDescendant,
-  isCursor,
-  isEmpty,
-  isTableCol1,
-  isTableCol2,
-  thoughtKey,
-  leaf,
-  path,
-  prevChild,
-  showContexts,
-  isLastVisible,
-  simplePath,
-  singleLineHeightWithCliff,
-  style,
-  thoughtId,
-  width,
-  autofocus,
-  x,
-  y,
+/** Renders a thought's content while it is inside the render window. */
+const TreeNodeContent = ({
+  thought,
   index,
-  viewportHeight,
-  viewportBottomOffset,
   treeThoughtsPositioned,
+  indent,
   bulletWidth,
   cursorUncleId,
   setSize,
@@ -54,13 +30,14 @@ const TreeNode = ({
   autofocusDepth,
   editing,
   ...transitionGroupsProps
-}: TreeThoughtPositioned & {
-  thoughtKey: string
+}: {
+  thought: TreeThoughtPositioned
   index: number
   viewportHeight: number
   /** The hidden space and overscan added to the bottom of the viewport for list virtualization. */
   viewportBottomOffset: number
   treeThoughtsPositioned: TreeThoughtPositioned[]
+  indent: number
   bulletWidth: number
   cursorUncleId: string | null
   setSize: SetSize
@@ -68,7 +45,32 @@ const TreeNode = ({
   dragInProgress: boolean
   autofocusDepth: number
   editing: boolean
-} & Pick<CSSTransitionProps, 'in'>) => {
+} & Pick<CSSTransitionProps<HTMLElement>, 'in' | 'onExited'>) => {
+  const {
+    cliff,
+    depth,
+    env,
+    indexChild,
+    childIndexNonAttribute,
+    isCursor,
+    isEmpty,
+    isTableCol1,
+    isTableCol2,
+    leaf,
+    path,
+    prevChildId,
+    showContexts,
+    isLastVisible,
+    simplePath,
+    singleLineHeightWithCliff,
+    style,
+    thoughtId,
+    width,
+    autofocus,
+    x,
+    y,
+  } = thought
+
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
@@ -121,37 +123,18 @@ const TreeNode = ({
 
   const onResize: OnResize = useCallback(props => setSize({ ...props, cliff }), [cliff, setSize])
 
-  // Subscribe to the virtualization result rather than scrollTop itself. Most scroll frames leave this boolean
-  // unchanged, so only thoughts that cross the viewport boundary rerender. Keeping the scroll subscription out of
-  // LayoutTree also avoids rerendering TransitionGroup and every TreeNode on each scroll frame.
-  const isBelowViewport = scrollTopStore.useSelector(
-    scrollTop =>
-      belowCursor &&
-      !isCursor &&
-      y > Math.max(scrollTop, 0) + viewportHeight + viewportBottomOffset + singleLineHeightWithCliff,
-  )
-
-  // List Virtualization
-  // Do not render thoughts that are below the viewport.
-  // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
-  // Render virtualized thoughts with their estimated height so that document height is relatively stable.
-  // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
-  // Use the stable estimated height (singleLineHeightWithCliff) rather than the measured height. Otherwise the cutoff depends on whether the thought is currently mounted: a thought at the fold mounts with the estimate, measures a (smaller) height, flips the cutoff to unmount, which removes its measured size and restores the estimate, re-mounting it. That feedback loop runs entirely within passive effects and triggers "Maximum update depth exceeded" (React error #185). See: https://github.com/cybersemics/em/issues/4270.
-  if (isBelowViewport) {
-    return null
-  }
-
   const type = isEmpty ? 'nodeFadeIn' : isLastActionDelete ? 'nodeDissolve' : (contextAnimation ?? 'nodeFadeOut')
 
   return (
     <FadeTransition
-      id={thoughtKey}
+      id={thought.key}
       // The FadeTransition is only responsible for fade in on new thought and fade out on unmount. See autofocusChanged for autofocus opacity transition during navigation.
       // Archive, delete, and uncategorize get a special dissolve animation.
       // Context view children get special disappearing text animations
       type={type}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
+      onExited={transitionGroupsProps.onExited}
       onEnter={() => setIsMounted(true)}
       onExit={() => setIsMounted(false)}
       unmountOnExit
@@ -167,6 +150,8 @@ const TreeNode = ({
         isMounted={isMounted}
         style={{
           ...style,
+          // Keep transformed thoughts within the viewport, including the scrollbar allowance.
+          maxWidth: `calc(${window.innerWidth > 560 ? '90' : '100'}vw - ${CONTENT_BOX_PADDING_LEFT + x}px - ${1.5 - indent}em)`,
           ...fauxCaretNodeProviderStyles,
         }}
       >
@@ -182,12 +167,12 @@ const TreeNode = ({
             childIndexNonAttribute={childIndexNonAttribute}
             dropUncle={thoughtId === cursorUncleId}
             env={env}
-            indexDescendant={indexDescendant}
             isMultiColumnTable={false}
             leaf={leaf}
             onResize={onResize}
             path={path}
-            prevChildId={prevChild?.id}
+            // Only drag hovers need the previous sibling. Keep it for exiting rows, whose parent props stop updating.
+            prevChildId={dragInProgress || transitionGroupsProps.in === false ? prevChildId : undefined}
             showContexts={showContexts}
             simplePath={simplePath}
             singleLineHeight={singleLineHeightWithCliff}
@@ -195,7 +180,7 @@ const TreeNode = ({
             // Do this as padding instead of y, otherwise there will be a gap between drop targets.
             // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
             style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
-            crossContextualKey={thoughtKey}
+            crossContextualKey={thought.key}
             cliff={cliff}
             prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
             isLastVisible={isLastVisible}
@@ -227,6 +212,44 @@ const TreeNode = ({
       </TreeNodePositioner>
     </FadeTransition>
   )
+}
+
+/** Keeps offscreen rows subscribed only to visibility, without mounting their content hooks. */
+const TreeNode = (props: ComponentProps<typeof TreeNodeContent>) => {
+  const {
+    thought: { belowCursor, isCursor, y, singleLineHeightWithCliff },
+    viewportHeight,
+    viewportBottomOffset,
+    in: isIn,
+    onExited,
+  } = props
+
+  // Subscribe to the virtualization result rather than scrollTop itself. Most scroll frames leave this boolean
+  // unchanged, so only thoughts that cross the viewport boundary rerender. Keeping the scroll subscription out of
+  // LayoutTree also avoids rerendering TransitionGroup and every TreeNode on each scroll frame.
+  const isBelowViewport = scrollTopStore.useSelector(
+    scrollTop =>
+      belowCursor &&
+      !isCursor &&
+      y > Math.max(scrollTop, 0) + viewportHeight + viewportBottomOffset + singleLineHeightWithCliff,
+  )
+
+  const wasBelowViewport = useRef(isBelowViewport)
+  const completeExit = isIn === false ? onExited : undefined
+
+  // Virtualized rows have no transition to finish, even if scrolling reveals one in the same update that removes it.
+  useEffect(() => {
+    if (isBelowViewport || wasBelowViewport.current) completeExit?.()
+    wasBelowViewport.current = isBelowViewport
+  }, [isBelowViewport, completeExit])
+
+  // List Virtualization
+  // Do not render thoughts that are below the viewport.
+  // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
+  // Render virtualized thoughts with their estimated height so that document height is relatively stable.
+  // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
+  // Use the stable estimated height (singleLineHeightWithCliff) rather than the measured height. Otherwise the cutoff depends on whether the thought is currently mounted: a thought at the fold mounts with the estimate, measures a (smaller) height, flips the cutoff to unmount, which removes its measured size and restores the estimate, re-mounting it. That feedback loop runs entirely within passive effects and triggers "Maximum update depth exceeded" (React error #185). See: https://github.com/cybersemics/em/issues/4270.
+  return isBelowViewport ? null : <TreeNodeContent {...props} />
 }
 
 export default TreeNode

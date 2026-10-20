@@ -1,11 +1,12 @@
 import { head } from 'lodash'
-import { CSSProperties, useState } from 'react'
+import { CSSProperties, ComponentProps, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import FauxCaretType from '../@types/FauxCaretType'
 import Path from '../@types/Path'
 import { isSafari, isTouch } from '../browser'
 import { getBoundingClientRect } from '../device/selection'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import attributeEquals from '../selectors/attributeEquals'
 import editingValueStore from '../stores/editingValueStore'
@@ -26,7 +27,7 @@ import equalPath from '../util/equalPath'
  * Note.tsx to cover cases where the client rect is not available because the selection is
  * not a text node (see `isStartOfElementNode` in selection.ts for implementation details).
  */
-const FauxCaret = ({
+const FauxCaretContent = ({
   caretType,
   path,
   wrapperElement,
@@ -46,7 +47,7 @@ const FauxCaret = ({
   }>(() => (isTouch && isSafari() && caretType === 'positioned' ? { display: 'none' } : {}))
 
   const isEditingCursor = useSelector(state => state.isKeyboardOpen && equalPath(path, state.cursor))
-  const isTableCol1 = useSelector(state => path && attributeEquals(state, head(path), '=view', 'Table'))
+  const isTableCol1 = useEditorSelector(state => path && attributeEquals(state, head(path), '=view', 'Table'))
 
   // Hide the positioned faux caret when typing occurs.
   editingValueStore.useEffect(() => {
@@ -84,7 +85,6 @@ const FauxCaret = ({
     }
   }, [caretType, isEditingCursor, isTableCol1, path, wrapperElement])
 
-  if ((!isTouch || !isSafari()) && caretType !== 'multicursorStart') return null
   return (
     <span
       className={css({
@@ -110,5 +110,9 @@ const FauxCaret = ({
     </span>
   )
 }
+
+/** Avoids mounting caret hooks on platforms where the caret is hidden. */
+const FauxCaret = (props: ComponentProps<typeof FauxCaretContent>) =>
+  (!isTouch || !isSafari()) && props.caretType !== 'multicursorStart' ? null : <FauxCaretContent {...props} />
 
 export default FauxCaret

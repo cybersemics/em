@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
@@ -7,6 +6,7 @@ import { GLOBAL_STYLE_ENV } from '../constants'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import safeRefMerge from '../util/safeRefMerge'
+import useEditorSelector from './useEditorSelector'
 
 const EMPTY_OBJECT = {}
 
@@ -25,7 +25,7 @@ const useThoughtStyle = ({
   styleProp: React.CSSProperties | undefined
   thoughtId: ThoughtId
 }) => {
-  const style = useSelector(state => {
+  const style = useEditorSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     if (!thought) return undefined
 
@@ -39,14 +39,6 @@ const useThoughtStyle = ({
 
     /** Load styles from child expressions that are found in the environment. */
     const styleEnv = children
-      .filter(
-        child =>
-          child.value in GLOBAL_STYLE_ENV ||
-          // children that have an entry in the environment
-          (child.value in { ...env } &&
-            // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-            child.id !== env![child.value]),
-      )
       .map(child =>
         child.value in { ...env } ? getStyle(state, env![child.value]) : getGlobalStyle(child.value) || {},
       )

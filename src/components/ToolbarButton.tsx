@@ -11,6 +11,7 @@ import { commandById, formatKeyboardShortcut } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
 import { TOOLBAR_BUTTON_PADDING, TOOLBAR_SWIPE_THRESHOLD } from '../constants'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useLongPress from '../hooks/useLongPress'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
@@ -73,13 +74,13 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const commandState = commandStateStore.useSelector(
     state => state[commandId as keyof typeof state] as boolean | undefined,
   )
-  const isCommandActive = useSelector(state => !isActive || isActive(state))
+  const isCommandActive = useEditorSelector(state => !isActive || isActive(state))
   const isButtonActive = customize ? selected : commandState !== undefined ? commandState : isCommandActive
 
   const dragCommandZone = useSelector(state => state.dragCommandZone)
   const isDraggingAny = useSelector(state => !!state.dragCommand)
-  const buttonError = useSelector(state => (!customize && command.error ? command.error(state) : null))
-  const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(state))
+  const buttonError = useEditorSelector(state => (!customize && command.error ? command.error(state) : null))
+  const isButtonExecutable = useEditorSelector(state => customize || !canExecute || canExecute(state))
 
   const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({
     commandId,
@@ -109,7 +110,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   }
 
   // Get the direction if the command is 'toggleSort'
-  const direction = useSelector((state: State) => {
+  const direction = useEditorSelector((state: State) => {
     if (commandId !== 'toggleSort') return null
     return getCursorSortDirection(state)
   })

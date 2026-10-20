@@ -1,13 +1,13 @@
-import { useSelector } from 'react-redux'
 import { isTouch } from '../../browser'
 import { TUTORIAL_CONTEXT } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import getContexts from '../../selectors/getContexts'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewSelect = () => {
-  const tutorialChoice = useSelector(selectTutorialChoice)
-  const caseSensitiveValue = useSelector(state =>
+  const tutorialChoice = useEditorSelector(selectTutorialChoice)
+  const caseSensitiveValue = useEditorSelector(state =>
     getContexts(state, TUTORIAL_CONTEXT[tutorialChoice]).length > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase(),

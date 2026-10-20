@@ -20,7 +20,7 @@ describe('initializeCursor', () => {
   })
 
   it('keeps a cursor the user set while the thoughtspace was still initializing', async () => {
-    // the app is interactive before initialization finishes, so interact before awaiting it
+    // initStore has already readied the provider; preserve interaction during this repeat initialization
     const initialized = initialize({ storage: 'memory' })
     store.dispatch([importText({ text: '- a\n- b' }), setCursor(['b'])])
     const cursor = store.getState().cursor

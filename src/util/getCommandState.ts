@@ -49,8 +49,8 @@ const extractColors = (savedValue: string): { foreColor: string | undefined; bac
  * apply to an entire thought string.
  */
 const getCommandState = (value: string): CommandState => {
-  // Special case to return early for empty values, treated as having no commands applied
-  if (value.length === 0) {
+  // Text without markup cannot have formatting applied.
+  if (!value.includes('<')) {
     return {
       bold: false,
       italic: false,

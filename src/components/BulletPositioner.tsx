@@ -12,6 +12,7 @@ import { setDescendantActionCreator as setDescendant } from '../actions/setDesce
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isTouch } from '../browser'
 import { LongPressState } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import { LongPressProps } from '../hooks/useLongPress'
 import findDescendant from '../selectors/findDescendant'
 import getChildren from '../selectors/getChildren'
@@ -127,7 +128,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
 
     const invalid = useSelector(state => isEditing && state.invalidState)
 
-    const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, head(path))?.value))
+    const bulletIsDivider = useEditorSelector(state => isDivider(getThoughtById(state, head(path))?.value))
 
     const fontSize = useSelector(state => state.fontSize)
 
@@ -199,7 +200,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
     )
 
     // check if the thought is pinned
-    const isThoughtPinned = useSelector(state => !!isPinned(state, thoughtId))
+    const isThoughtPinned = useEditorSelector(state => !!isPinned(state, thoughtId))
 
     const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
     // A selected thought stays collapsed even when it is the cursor, so state.expanded alone determines

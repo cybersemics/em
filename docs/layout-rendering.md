@@ -20,7 +20,7 @@ The estimate is rarely far enough off to be visible, so the user almost never se
 
 Each render produces two parallel lists, both indexed by the same key:
 
-- **`treeThoughts: TreeThought[]`** — produced by the [`linearizeTree`](../src/selectors/linearizeTree.ts) selector. An in-order traversal of all currently visible thoughts. Each entry carries depth, table-cell flags, autofocus state, the `Path` and `SimplePath`, accumulated styles, etc. Recalculated whenever Redux state changes.
+- **`treeThoughts: TreeThought[]`** — produced by the [`linearizeTree`](../src/selectors/linearizeTree.ts) selector. An in-order traversal of all currently visible thoughts. Each entry carries depth, table-cell flags, autofocus state, the `Path` and `SimplePath`, accumulated styles, etc. Reused when outline metadata and relevant UI inputs are unchanged; individual rows subscribe to their text separately.
 - **`treeThoughtsPositioned: TreeThoughtPositioned[]`** — produced by `usePositionedThoughts`. Same shape but with `x`, `y`, `width`, `height`, `cliff`, `isLastVisible`. Recalculated when widths or heights change in the `sizes` map.
 
 The render walks `treeThoughtsPositioned`, wrapping each entry in a `TreeNode` (which mounts a `VirtualThought` plus the appropriate drop targets) inside a `TransitionGroup` so removed thoughts can fade out.
@@ -44,7 +44,7 @@ So the key is the concatenation of every context-view boundary's `id` plus the t
 
 Important behaviors:
 
-- **Sibling order comes from `rank`.** Children are read with [`getChildrenRanked`](../src/selectors/getChildren.ts), never re-sorted during the walk. A context's `=sort` preference is materialized into its children's ranks when the preference is set — see [data-model.md → Visibility and sorting](data-model.md#visibility-and-sorting).
+- **Sibling order comes from the current memory tree.** [`getChildrenRanked`](../src/selectors/getChildren.ts) reads canonical child order without sorting during the walk. A context's `=sort` preference changes that order through explicit placements; numeric positions are read only for sorted-context drag arrows. See [data-model.md → Visibility and sorting](data-model.md#visibility-and-sorting).
 - **Visibility gating.** A subtree is skipped entirely unless `state.expanded[hashPath(path)]` is set, so collapsed branches don't appear in `treeThoughts` at all. (The expansion model itself lives in [`expandThoughts`](../src/selectors/expandThoughts.ts).)
 - **Context-view pivot.** When a thought has its context view active, the recursion pivots from "render this thought's children" to "render the *contexts* in which this thought appears" via [`getContextsSortedAndRanked`](../src/selectors/getContextsSortedAndRanked.ts). The `contextChain` accumulator is updated, which feeds `crossContextualKey`. A special early-return: if the context view has only one context, the `NoOtherContexts` placeholder is rendered instead. [`Subthought`](../src/components/Subthought.tsx) renders the placeholder outside of `linearizeTree`, so it applies the same visibility gating itself: a collapsed thought with its context view active shows nothing beneath it, like any other collapsed thought.
 - **`belowCursor` propagation.** Once the cursor's `Path` is encountered during the walk, every subsequent `TreeThought` gets `belowCursor: true`. `LayoutTree` later uses this flag to exclude hidden-below-cursor thoughts from `totalHeight` so the document doesn't have a giant trailing dead zone.
@@ -53,6 +53,8 @@ Important behaviors:
 - **Table cell flags.** Each thought is tagged with `isTableCol1` / `isTableCol2` / `isTableCol2Child` based on `=view/Table` on its parent / grandparent / great-grandparent, plus `visibleChildrenKeys` is populated on table parents so col1 width can later be computed from the children's measured widths.
 
 The result is a flat array, in document order, with one entry per visible thought.
+
+The provider's `layoutRevision` advances for topology, empty text, attributes and configuration changes, but not ordinary nonempty text edits beneath Home. The traversal combines it with expansion and UI inputs; context views and non-Home roots use the full document revision because text and timestamps affect membership, ordering or visibility. Expansion is still recalculated after edits, retaining its reference when equal. Row text changes still trigger `VirtualThought` measurement and repositioning when wrapping changes.
 
 ## `usePositionedThoughts` (x and y)
 
@@ -137,6 +139,8 @@ viewportBottom = max(scrollTop, 0)
 
 Each `TreeNode` subscribes to `scrollTopStore` with a selector that returns only whether that thought is beyond the boundary. Most scroll updates leave this boolean unchanged, so they do not rerender `LayoutTree`, `TransitionGroup`, or the full thought list. A `TreeNode` returns `null` only when it is below the cursor, is not the cursor itself, and its `y` is more than one estimated thought height beyond `viewportBottom`. It remains in `treeThoughtsPositioned` so crossing the boundary can render it without rebuilding the list, while the fixed container height keeps the document height stable. (Above the cursor, autocrop already handles the blank space.)
 
+Rows inside that boundary mount `TreeNodeContent` in the same module. Its caret hooks and document/UI subscriptions unmount with the content; virtualized rows retain only their visibility subscription.
+
 ## `useSizeTracking` and the `sizes` map
 
 [`useSizeTracking`](../src/hooks/useSizeTracking.ts) keeps a state map of `{ height, width, isVisible, cliff }` keyed by `crossContextualKey`. `setSize` is the entry point — it's passed into every `VirtualThought` as `onResize`.
@@ -170,9 +174,10 @@ div                                              (outer; translateY for autocrop
     BulletCursorOverlay                          (rendered separately so cursor moves don't re-render every thought)
     TransitionGroup
       for each thought in treeThoughtsPositioned
-        TreeNode                                 (absolute positioning via inline style)
-          VirtualThought                         (measures height, calls onResize)
-          DropChild | DropEnd | DropCliff | DropUncle  (drag-only)
+        TreeNode                                 (visibility subscription)
+          TreeNodeContent                        (mounted inside the render window)
+            VirtualThought                       (measures height, calls onResize)
+            DropChild | DropEnd | DropCliff | DropUncle  (drag-only)
 ```
 
 ## Table view
@@ -211,7 +216,7 @@ A small effect that writes the LayoutTree's top y (offset + autocrop) into `view
 
 ## Scrolling the cursor into view
 
-[`scrollCursorIntoView`](../src/device/scrollCursorIntoView.ts) scrolls the minimum amount needed to clear the toolbar above and the navbar (or virtual keyboard) below. [`useScrollCursorIntoView`](../src/hooks/useScrollCursorIntoView.ts) calls it two ways: directly when the cursor's `y` or `height` changes, and through [`scheduleScrollCursorIntoView`](../src/device/scheduleScrollCursorIntoView.ts) when the editing value changes — the cursor's rank can move as it is edited, e.g. toggling bold in a long, sorted context.
+[`scrollCursorIntoView`](../src/device/scrollCursorIntoView.ts) scrolls the minimum amount needed to clear the toolbar above and the navbar (or virtual keyboard) below. [`useScrollCursorIntoView`](../src/hooks/useScrollCursorIntoView.ts) calls it two ways: directly when the cursor's `y` or `height` changes, and through [`scheduleScrollCursorIntoView`](../src/device/scheduleScrollCursorIntoView.ts) when the editing value changes — the cursor's sibling position can move as it is edited, e.g. toggling bold in a long, sorted context.
 
 The scheduled path defers to the next tick before reading the cursor's size, because `editingValueStore` subscribers run synchronously and would otherwise close over a size from before the render ([#3083](https://github.com/cybersemics/em/issues/3083)), and then throttles to 400 ms. A cursor scroll can therefore be waiting in three places at once: the tick before it reaches the throttle, the throttle's trailing call, and the 10 ms retry that `scrollIntoViewIfNeeded` arms while `preventAutoscroll` is in progress (see [cursor-and-caret.md → `preventAutoscroll.ts`](cursor-and-caret.md#preventautoscrollts)). `scheduleScrollCursorIntoView.cancel()` clears all three; cancelling the throttle alone leaves a timer that has not fired yet free to re-arm it.
 

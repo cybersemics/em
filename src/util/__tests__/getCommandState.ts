@@ -1,16 +1,24 @@
 import getCommandState from '../getCommandState'
 
-it('empty thought', () => {
-  expect(getCommandState('')).toStrictEqual({
-    bold: false,
-    italic: false,
-    underline: false,
-    strikethrough: false,
-    code: false,
-    foreColor: undefined,
-    backColor: undefined,
-  })
-})
+afterEach(() => vi.restoreAllMocks())
+
+it.each(['', 'plain text', '&lt;font color="red"&gt;text&lt;/font&gt;'])(
+  'does not parse unformatted text: %s',
+  value => {
+    const parse = vi.spyOn(DOMParser.prototype, 'parseFromString')
+
+    expect(getCommandState(value)).toStrictEqual({
+      bold: false,
+      italic: false,
+      underline: false,
+      strikethrough: false,
+      code: false,
+      foreColor: undefined,
+      backColor: undefined,
+    })
+    expect(parse).not.toHaveBeenCalled()
+  },
+)
 
 it('bold thought', () => {
   expect(getCommandState('<b>text</b>')).toStrictEqual({

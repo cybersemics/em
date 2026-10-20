@@ -1,26 +1,23 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { findAnyChild } from '../selectors/getChildren'
-import getThoughtById from '../selectors/getThoughtById'
+import { getAllChildren } from '../selectors/getChildren'
 import isAttribute from '../util/isAttribute'
+import getThoughtById from './getThoughtById'
 
-/** Calls getThoughtById with a nullable ThoughtId. Returns null if id is null. */
-const getThoughtByIdGuarded = (state: State, id?: ThoughtId | null) => id && getThoughtById(state, id)
-
-/** Finds a descendant from the given thought, or returns null if it does not exist. If there are multiple siblings with the same value, which one is reterned is non-deterministic. */
+/** Finds a descendant by value, choosing the first matching sibling in canonical order. */
 const findDescendant = (state: State, thoughtId: ThoughtId | null, values: string | string[]): ThoughtId | null => {
   if (!thoughtId || values.length === 0) return thoughtId
   if (!Array.isArray(values)) values = [values]
-  // if the value is a meta attribute, use childrenMap for O(1) lookup
-
-  const currentThought = getThoughtById(state, thoughtId)
-
-  const child =
-    isAttribute(values[0]) && currentThought
-      ? getThoughtByIdGuarded(state, currentThought.childrenMap[values[0]])
-      : findAnyChild(state, thoughtId, child => child.value === values[0])
-
-  return child ? findDescendant(state, child.id, values.slice(1)) : null
+  // Reuse the transaction-consistent membership index for attributes instead of reading every sibling.
+  // Memberships are normalized, so exact text and canonical sibling order still decide the match.
+  const memberships = isAttribute(values[0]) ? (state.thoughts.getLexeme(values[0]) ?? []) : null
+  if (memberships?.length === 0) return null
+  const children = getAllChildren(state, thoughtId)
+  const candidates = memberships && memberships.length < children.length ? new Set(memberships) : null
+  const child = children.find(
+    id => (!candidates || candidates.has(id)) && getThoughtById(state, id)?.value === values[0],
+  )
+  return child ? findDescendant(state, child, values.slice(1)) : null
 }
 
 export default findDescendant
