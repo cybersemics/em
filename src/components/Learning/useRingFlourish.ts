@@ -38,7 +38,7 @@ const useRingFlourish = (
     const from = fill.get()
     setIsFlourishing(true)
     const controls = animate(t, [0, 1], {
-      duration: durations.get('pinnedCommandFlourish') / 1000,
+      duration: durations.get('slow') / 1000,
       ease: 'easeInOut',
       onUpdate: value => fill.set(from + (1 - from) * Math.min(1, value * 2)),
       onComplete: () => setIsFlourishing(false),
