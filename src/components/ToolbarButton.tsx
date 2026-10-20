@@ -12,6 +12,7 @@ import { executeCommandWithMulticursor } from '../commands'
 import { TOOLBAR_BUTTON_PADDING, TOOLBAR_SWIPE_THRESHOLD } from '../constants'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useLongPress from '../hooks/useLongPress'
+import canExecuteCommand from '../selectors/canExecuteCommand'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
 import dndRef from '../util/dndRef'
@@ -64,7 +65,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   if (!command) {
     console.error('Missing command: ' + commandId)
   }
-  const { svg: SVG, isActive, canExecute } = command
+  const { svg: SVG, isActive } = command
 
   // Determine if the button should be shown in an active state. Precedence is as follows:
   // 1. If customize toolbar, use selected state.
@@ -79,7 +80,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const dragCommandZone = useSelector(state => state.dragCommandZone)
   const isDraggingAny = useSelector(state => !!state.dragCommand)
   const buttonError = useSelector(state => (!customize && command.error ? command.error(state) : null))
-  const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(state))
+  const isButtonExecutable = useSelector(state => customize || canExecuteCommand(state, command))
 
   const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({
     commandId,

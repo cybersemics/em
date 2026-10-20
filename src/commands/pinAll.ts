@@ -11,7 +11,6 @@ import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import isPinned from '../selectors/isPinned'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -47,7 +46,7 @@ const pinAllCommand = {
   multicursor: false,
   svg: PinAllIcon,
   canExecute: state => {
-    return (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
+    return !!state.cursor || hasMulticursor(state)
   },
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()

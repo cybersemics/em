@@ -5,6 +5,7 @@ import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 const cursorPrevCommand = {
   id: 'cursorPrev',
+  allowOnAttribute: true,
   label: 'Previous Thought' as const,
   description: 'Move the cursor to the previous thought.',
   multicursor: false,

@@ -105,7 +105,8 @@ describe('archive', () => {
       expect(exported).toEqual(expectedOutput)
     })
 
-    it('permanently deletes thoughts that are already archived', async () => {
+    // The archive is a metaprogramming attribute, so the thoughts inside it are read-only. See docs/metaprogramming.md.
+    it('does not delete thoughts that are already archived', async () => {
       store.dispatch([
         importText({
           text: `
@@ -128,7 +129,9 @@ describe('archive', () => {
       const expectedOutput = `- ${HOME_TOKEN}
   - a
   - b
-  - =archive`
+  - =archive
+    - x
+    - y`
 
       expect(exported).toEqual(expectedOutput)
     })

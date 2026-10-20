@@ -5,6 +5,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import Timestamp from '../@types/Timestamp'
 import editThought from '../actions/editThought'
+import error from '../actions/error'
 import setCursor from '../actions/setCursor'
 import updateThoughts from '../actions/updateThoughts'
 import { EXTERNAL_FORMATTING_TAGS, HOME_PATH } from '../constants'
@@ -22,6 +23,7 @@ import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import importJson from '../util/importJson'
 import insertHtmlAtTextOffset from '../util/insertHtmlAtTextOffset'
+import isAttribute from '../util/isAttribute'
 import isRoot from '../util/isRoot'
 import mergeAdjacentTags from '../util/mergeAdjacentTags'
 import parentOf from '../util/parentOf'
@@ -205,6 +207,12 @@ const importText = (
       emojiSpaceInsertionOffset >= 0 && offsetBeforeEmojiSpace >= emojiSpaceInsertionOffset
         ? offsetBeforeEmojiSpace + 1
         : offsetBeforeEmojiSpace
+
+    // A thought cannot be turned into a metaprogramming attribute by pasting into it, just as it cannot by typing, since an
+    // attribute is changed only through the commands on the thought it configures. See docs/metaprogramming.md.
+    if (isAttribute(newValue) && !isAttribute(destThought.value)) {
+      return error(state, { value: 'Metaprogramming attributes can only be set with commands.' })
+    }
 
     return reducerFlow([
       // Force the editable to re-render in order to trigger setSelectionToCursorOffset in useEditMode and restore the caret.

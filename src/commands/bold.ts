@@ -2,7 +2,6 @@ import Command from '../@types/Command'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import Icon from '../components/icons/BoldTextIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import isSelectionFormatted from '../selectors/isSelectionFormatted'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -15,9 +14,8 @@ const bold = {
   multicursor: { toggle: true },
   svg: Icon,
   keyboard: { key: 'b', meta: true },
-  preventDefault: true,
   canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => {
     dispatch(formatSelection('bold'))

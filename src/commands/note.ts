@@ -6,7 +6,6 @@ import PencilIcon from '../components/icons/PencilIcon'
 import { HOME_PATH } from '../constants'
 import asyncFocus from '../device/asyncFocus'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import noteValue from '../selectors/noteValue'
 import simplifyPath from '../selectors/simplifyPath'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -26,7 +25,7 @@ const noteCommand = {
     },
   },
   svg: PencilIcon,
-  canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state),
+  canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

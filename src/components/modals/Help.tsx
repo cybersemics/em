@@ -93,6 +93,11 @@ const Metaprogramming = () => {
         <i>Metaprogramming attributes</i> are hidden thoughts with superpowers. Customize the appearance and behavior of
         thoughts, define style templates, and more.
       </p>
+      <p className={css({ color: 'dim', marginBottom: '2em' })}>
+        Attributes are set with the commands on the thought they configure, such as Pin, Table View, Sort, and Text
+        Color. Show Hidden Thoughts to view them. They are read-only and cannot be typed, though attributes in an
+        imported outline take effect.
+      </p>
 
       <code>=bullets</code>
       <p>

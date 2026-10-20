@@ -1,7 +1,6 @@
 import Command from '../@types/Command'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import BindContextIcon from '../components/icons/BindContextIcon'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import isContextViewActive from '../selectors/isContextViewActive'
 import lastThoughtsFromContextChain from '../selectors/lastThoughtsFromContextChain'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -21,7 +20,7 @@ const bindContextCommand = {
   multicursor: true,
   keyboard: { key: 'b', shift: true, alt: true },
   hideFromHelp: true,
-  canExecute: state => isDocumentEditable() && !!state.cursor && !isAttributeSelected(state),
+  canExecute: state => isDocumentEditable() && !!state.cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

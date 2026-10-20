@@ -6,6 +6,7 @@ import HomeToolbarIcon from '../components/icons/HomeToolbarIcon'
 
 const homeCommand = {
   id: 'home',
+  allowOnAttribute: true,
   label: 'Home' as const,
   description: 'Navigate to Home.',
   keyboard: { key: 'h', meta: true, alt: true },

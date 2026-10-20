@@ -22,6 +22,7 @@ import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isInAttribute from '../selectors/isInAttribute'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
@@ -91,7 +92,9 @@ const canDrop = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTarget
     // do not drop on dividers
     !isDivider(getThoughtById(state, head(thoughtsTo))?.value) &&
     // do not drop on context view
-    !isContextViewActive(state, thoughtsTo)
+    !isContextViewActive(state, thoughtsTo) &&
+    // do not drop into a metaprogramming attribute, which is read-only
+    !isInAttribute(state, thoughtsTo)
   )
 }
 

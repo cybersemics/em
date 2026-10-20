@@ -4,6 +4,7 @@ import Icon from '../components/icons/CategorizeIcon'
 
 const toggleUndoSlider = {
   id: 'toggleUndoSlider',
+  allowOnAttribute: true,
   label: 'Toggle Undo Slider' as const,
   description: 'Toggle a handy slider that lets you rewind edits.',
   multicursor: false,

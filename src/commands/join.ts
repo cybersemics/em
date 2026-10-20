@@ -1,7 +1,6 @@
 import Command from '../@types/Command'
 import { joinActionCreator as join } from '../actions/join'
 import JoinThoughtsIcon from '../components/icons/JoinThoughtsIcon'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 
 const joinThoughts = {
   id: 'join',
@@ -15,7 +14,7 @@ const joinThoughts = {
     },
   },
   svg: JoinThoughtsIcon,
-  canExecute: state => !!state.cursor && !isAttributeSelected(state),
+  canExecute: state => !!state.cursor,
   exec: dispatch => {
     dispatch(join({}))
   },

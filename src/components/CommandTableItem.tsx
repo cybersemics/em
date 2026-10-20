@@ -13,6 +13,7 @@ import { isTouch } from '../browser'
 import { gestureString } from '../commands'
 import { noop } from '../constants'
 import useLottieIntervalAnimation from '../hooks/useLottieIntervalAnimation'
+import canExecuteCommand from '../selectors/canExecuteCommand'
 import store from '../stores/app'
 import CommandKeyboardShortcut from './CommandKeyboardShortcut'
 import GestureDiagram from './GestureDiagram'
@@ -22,7 +23,7 @@ const strokeWidth = 4
 
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
-  (!command.canExecute || command.canExecute(state)) &&
+  canExecuteCommand(state, command) &&
   (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
 
 interface CommandTableItemProps {

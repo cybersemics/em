@@ -14,7 +14,6 @@ import { updateThoughtsActionCreator as updateThoughts } from '../actions/update
 import GenerateThoughtIcon from '../components/icons/GenerateThoughtIcon'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import selectedPaths from '../selectors/selectedPaths'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -232,12 +231,7 @@ const defineTerm = {
   },
   canExecute: state => {
     const paths = selectedPaths(state)
-    return (
-      isDocumentEditable() &&
-      paths.length > 0 &&
-      !isAttributeSelected(state) &&
-      paths.every(path => canDefineTermAtPath(state, path))
-    )
+    return isDocumentEditable() && paths.length > 0 && paths.every(path => canDefineTermAtPath(state, path))
   },
   exec: async (dispatch, getState, event, commandContext) => {
     const cursor = getState().cursor

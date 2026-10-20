@@ -205,4 +205,25 @@ describe('clearThought', () => {
     const state = store.getState()
     expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<font color="#00d688">H</font>')
   })
+
+  // https://github.com/cybersemics/em/pull/6056#issuecomment-6283428719
+  it('does not clear a metaprogramming attribute', () => {
+    act(() => {
+      store.dispatch([
+        importText({
+          text: `
+            - aaa
+              - =favorite
+          `,
+        }),
+        setCursorFirstMatchActionCreator(['aaa', '=favorite']),
+      ])
+    })
+
+    act(() => {
+      executeCommandWithMulticursor(clearThoughtCommand, { store })
+    })
+
+    expect(store.getState().cursorCleared).toBe(false)
+  })
 })

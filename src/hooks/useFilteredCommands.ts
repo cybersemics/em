@@ -6,11 +6,12 @@ import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { chainCommand, gestureString, globalCommands, hashCommand, parseCommandShortcut } from '../commands'
+import canExecuteCommand from '../selectors/canExecuteCommand'
 import gestureStore from '../stores/gestureStore'
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
-  (!command.canExecute || command.canExecute(state)) &&
+  canExecuteCommand(state, command) &&
   (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
 
 /** A hook that filters and sorts commands based on a search or the current gesture or keyboard input. */

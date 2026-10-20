@@ -3,6 +3,7 @@ import { toggleSidebarActionCreator as toggleSidebar } from '../actions/toggleSi
 
 const toggleSidebarCommand = {
   id: 'toggleSidebar',
+  allowOnAttribute: true,
   label: 'Toggle Recently Edited' as const,
   keyboard: { key: 'r', alt: true },
   multicursor: false,

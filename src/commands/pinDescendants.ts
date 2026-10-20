@@ -13,7 +13,6 @@ import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import isPinned from '../selectors/isPinned'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
@@ -47,7 +46,7 @@ const pinDescendantsCommand = {
   keyboard: { key: 'p', meta: true, alt: true, shift: true },
   svg: PinDescendantsIcon,
   canExecute: state => {
-    return (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
+    return !!state.cursor || hasMulticursor(state)
   },
   multicursor: {
     onComplete(filteredCursors, dispatch) {

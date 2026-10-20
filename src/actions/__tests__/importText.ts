@@ -514,6 +514,22 @@ it('allow formatting tags', () => {
   expect(exported).toBe(expectedOutput)
 })
 
+// https://github.com/cybersemics/em/pull/6056#issuecomment-6283713458
+it('does not turn a thought into a metaprogramming attribute with a single-line paste', () => {
+  const stateNew = reducerFlow([
+    importText({ text: '- a' }),
+    editThought(['a'], ''),
+    importTextAtFirstMatch({
+      at: [''],
+      text: '=favorite',
+    }),
+  ])(initialState())
+
+  expect(stateNew.error).toBe('Metaprogramming attributes can only be set with commands.')
+  expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - `)
+})
+
 it('import single thought into empty home context', () => {
   const text = 'a'
 

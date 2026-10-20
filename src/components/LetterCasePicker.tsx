@@ -5,6 +5,7 @@ import LetterCaseType from '../@types/LetterCaseType'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../actions/formatLetterCase'
 import { isTouch } from '../browser'
 import getThoughtById from '../selectors/getThoughtById'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import selectedPaths from '../selectors/selectedPaths'
 import applyLetterCase from '../util/applyLetterCase'
 import fastClick from '../util/fastClick'
@@ -20,7 +21,8 @@ const casingTypes: LetterCaseType[] = ['LowerCase', 'UpperCase', 'SentenceCase',
 /** Letter Case Picker component. */
 const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
-  const showLetterCase = useSelector(state => state.showLetterCase)
+  // hidden while a metaprogramming attribute is selected, since attributes are read-only
+  const showLetterCase = useSelector(state => state.showLetterCase && !isAttributeSelected(state))
 
   /** Toggles the Letter Case to the clicked swatch. */
   const toggleLetterCase = (command: LetterCaseType, e: React.MouseEvent | React.TouchEvent) => {

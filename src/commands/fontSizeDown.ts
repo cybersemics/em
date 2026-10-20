@@ -4,6 +4,7 @@ import SettingsIcon from '../components/icons/SettingsIcon'
 
 const fontSizeDownCommand = {
   id: 'fontSizeDown',
+  allowOnAttribute: true,
   label: 'Decrease Font Size' as const,
   description: 'Decrease the font size. Get your reading glasses.',
   multicursor: false,

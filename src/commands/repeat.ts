@@ -3,6 +3,7 @@ import { noop } from '../constants'
 
 const repeatCommand = {
   id: 'repeat',
+  allowOnAttribute: true,
   label: 'Repeat' as const,
   description: 'Repeats the last command. Repeats the last command.',
   keyboard: { key: '.', meta: true },

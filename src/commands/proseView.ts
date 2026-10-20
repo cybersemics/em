@@ -4,7 +4,6 @@ import ProseViewIcon from '../components/icons/ProseViewIcon'
 import { HOME_PATH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -18,7 +17,7 @@ const proseViewCommand = {
   multicursor: true,
   svg: ProseViewIcon,
   canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: (dispatch, getState) => {
     const state = getState()

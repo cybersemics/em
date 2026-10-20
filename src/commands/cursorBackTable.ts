@@ -10,6 +10,7 @@ import parentOf from '../util/parentOf'
 /** Moves the cursor from a table column-two thought to its parent (column one) when ArrowLeft is pressed with the caret at the beginning of the thought. The caret lands at the end of the column-one thought, continuing the leftward motion. Otherwise permits the default browser caret movement within the thought. */
 const cursorBackTableCommand = {
   id: 'cursorBackTable',
+  allowOnAttribute: true,
   label: 'Cursor Back (Table Column)' as const,
   description: 'In table view, move the cursor from a column-two thought back to its column-one parent.',
   keyboard: { key: 'ArrowLeft' },

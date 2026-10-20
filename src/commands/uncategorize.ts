@@ -2,7 +2,6 @@ import Command from '../@types/Command'
 import { uncategorizeActionCreator as uncategorize } from '../actions/uncategorize'
 import UncategorizeIcon from '../components/icons/UncategorizeIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 
 const uncategorizeCommand = {
   id: 'uncategorize',
@@ -16,7 +15,7 @@ const uncategorizeCommand = {
   svg: UncategorizeIcon,
   keyboard: { key: 'c', meta: true, alt: true },
   canExecute: state => {
-    return (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
+    return !!state.cursor || hasMulticursor(state)
   },
   exec: dispatch => {
     dispatch(uncategorize({}))

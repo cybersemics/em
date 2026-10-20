@@ -2,7 +2,6 @@ import Command from '../@types/Command'
 import { categorizeActionCreator as categorize } from '../actions/categorize'
 import CategorizeIcon from '../components/icons/CategorizeIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const categorizeCommand = {
@@ -17,7 +16,7 @@ const categorizeCommand = {
   multicursor: false,
   svg: CategorizeIcon,
   canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => dispatch(categorize()),
 } satisfies Command

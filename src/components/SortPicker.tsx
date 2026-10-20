@@ -7,6 +7,7 @@ import { setSortPreferenceActionCreator as setSortPreference } from '../actions/
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
 import getSortPreference from '../selectors/getSortPreference'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import fastClick from '../util/fastClick'
@@ -71,7 +72,8 @@ const SortOption: FC<SortOptionProps> = ({ type, supportsDirection, label, sortP
 /** Sort Picker component. */
 const SortPicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
-  const showSortPicker = useSelector(state => state.showSortPicker)
+  // hidden while a metaprogramming attribute is selected, since attributes are read-only
+  const showSortPicker = useSelector(state => state.showSortPicker && !isAttributeSelected(state))
 
   const sortPreference = useSelector(state => {
     if (!state.cursor || isRoot(state.cursor)) return { type: 'None', direction: null }

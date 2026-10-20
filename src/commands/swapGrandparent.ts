@@ -2,7 +2,6 @@ import Command from '../@types/Command'
 import { swapGrandparentActionCreator } from '../actions/swapGrandparent'
 import SwapGrandparentIcon from '../components/icons/SwapGrandparentIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const swapGrandparent = {
@@ -13,9 +12,7 @@ const swapGrandparent = {
   multicursor: true,
   svg: SwapGrandparentIcon,
   canExecute: state => {
-    return (
-      isDocumentEditable() && ((state.cursor?.length ?? 0) >= 3 || hasMulticursor(state)) && !isAttributeSelected(state)
-    )
+    return isDocumentEditable() && ((state.cursor?.length ?? 0) >= 3 || hasMulticursor(state))
   },
   exec: dispatch => {
     dispatch(swapGrandparentActionCreator())

@@ -3,7 +3,6 @@ import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggle
 import Icon from '../components/icons/SortWithPicker'
 import { getChildrenRanked, getSortComparator, isVisible } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -18,7 +17,6 @@ const toggleSortCommand = {
   hideFromHelp: true,
   hideFromDesktopCommandUniverse: true,
   svg: Icon,
-  canExecute: state => !isAttributeSelected(state),
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()
     if (!state.cursor || isRoot(state.cursor)) return

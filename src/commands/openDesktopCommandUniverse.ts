@@ -4,6 +4,7 @@ import CommandUniverseIcon from '../components/icons/CommandUniverseIcon'
 
 const openDesktopCommandUniverseCommand = {
   id: 'openDesktopCommandUniverse',
+  allowOnAttribute: true,
   label: 'Command Universe' as const,
   description: 'Opens the Command Universe.',
   hideFromDesktopCommandUniverse: true,

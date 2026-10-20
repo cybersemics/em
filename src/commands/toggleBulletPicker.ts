@@ -2,7 +2,6 @@ import Command from '../@types/Command'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import BulletStyleWithPicker from '../components/icons/BulletStyleWithPicker'
 import getBulletStyle from '../selectors/getBulletStyle'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -16,7 +15,6 @@ const toggleBulletPickerCommand = {
   hideFromHelp: true,
   hideFromDesktopCommandUniverse: true,
   svg: BulletStyleWithPicker,
-  canExecute: state => !isAttributeSelected(state),
   exec: (dispatch, getState) => {
     const state = getState()
     if (!state.cursor || isRoot(state.cursor)) return

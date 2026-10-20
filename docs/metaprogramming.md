@@ -10,9 +10,19 @@ Three things make this work:
 
 Generally, an attribute affects *only its parent thought*. Three special attributes broadcast settings to descendants: `=children` and `=grandchildren` apply attributes one and two levels down, and `=descendants` applies recursively to the entire subtree (currently only `=pin`).
 
-Meta-attribute children are hidden in normal view. Toggle the **Show Hidden Thoughts** command (`Option + Shift + H`) — which flips `state.showHiddenThoughts` — to view and edit them.
+Meta-attribute children are hidden in normal view. Toggle the **Show Hidden Thoughts** command (`Option + Shift + H`) — which flips `state.showHiddenThoughts` — to view them.
 
-An attribute's value is the key it is stored and read under, so commands that format, lay out, or restructure a thought — text formatting, Text Color, Letter Case, the view and sort toggles, pinning, splitting and joining, Categorize, Swap Parent, Note, and the like — are disabled while the cursor or any multicursor is on an attribute. They test [`isAttributeSelected`](../src/selectors/isAttributeSelected.ts); see [commands.md](commands.md). Bold, Italic, and Underline also swallow their keyboard shortcuts while disabled, so that the browser's own formatting does not apply to the attribute instead.
+## Attributes are read-only
+
+An attribute's value is the key it is stored and read under, so an attribute changes only through the commands on the thought it configures: Pin, Add to Favorites, Table View, Sort, Bullet Style, Text Color, and the like. An attribute and every thought inside it (e.g. `=style`, `color` and `tomato` in `=style/color/tomato`) can be navigated to and viewed with Show Hidden Thoughts, but not edited, formatted, moved, deleted or extended:
+
+- **Commands are denied by default.** [`canExecuteCommand`](../src/selectors/canExecuteCommand.ts) disables every command while any selected path is inside an attribute, as reported by [`isAttributeSelected`](../src/selectors/isAttributeSelected.ts), unless the command sets `allowOnAttribute`. Only navigation, Show Hidden Thoughts, app-level commands such as Help and Settings, and Undo, Redo and Repeat set it. A blocked keyboard shortcut is swallowed, so that the browser's own formatting (e.g. Cmd + B) does not apply to the attribute instead. See [commands.md](commands.md).
+- **The text is not editable.** [`Editable`](../src/components/Editable.tsx) renders a thought inside an attribute without `contenteditable`, so there is no caret, native formatting, paste or virtual keyboard, while the cursor highlight and keyboard navigation still work. Its change handler also rejects an edit to such a thought should one reach it.
+- **A thought cannot become an attribute by typing or pasting.** The change handler rejects an edit that turns a value into an attribute, and so does the single-line branch of [`importText`](../src/actions/importText.ts), which a single-line paste goes through. Both report "Metaprogramming attributes can only be set with commands." A multi-line paste or import still creates attributes, so that an exported thoughtspace round-trips.
+- **Drag-and-drop.** A thought inside an attribute cannot be dragged, and nothing can be dropped into an attribute. See [drag-and-drop.md](drag-and-drop.md).
+- **Pickers.** The Text Color, Letter Case, Sort and Bullet Style pickers close while an attribute is selected.
+
+Attributes without a command on their parent, such as `=readonly`, `=immovable`, `=uneditable` and `=options`, therefore cannot be created or removed from the UI. They still take effect when they are imported.
 
 ## How attributes are stored and read
 

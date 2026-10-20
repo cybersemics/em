@@ -3,6 +3,7 @@ import ArrowRightIcon from '../components/icons/ArrowRightIcon'
 
 const navigateForwardCommand = {
   id: 'navigateForward',
+  allowOnAttribute: true,
   label: 'Navigate Forward' as const,
   description: 'Navigate to the next page in the browser history.',
   keyboard: { key: ']', meta: true },

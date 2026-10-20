@@ -4,7 +4,6 @@ import Icon from '../components/icons/Check'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -20,7 +19,6 @@ const toggleDone = {
   canExecute: state => {
     if (!isDocumentEditable()) return false
     if (!state.cursor && !hasMulticursor(state)) return false
-    if (isAttributeSelected(state)) return false
     // do not allow marking empty thoughts as done
     if (state.cursor && getThoughtById(state, head(state.cursor))?.value === '') return false
     return true

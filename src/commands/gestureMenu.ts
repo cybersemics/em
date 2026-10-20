@@ -4,6 +4,7 @@ import CommandUniverseIcon from '../components/icons/CommandUniverseIcon'
 
 const gestureMenuCommand = {
   id: 'gestureMenu',
+  allowOnAttribute: true,
   label: 'Gesture Menu' as const,
   description: 'Opens the gesture menu where commands can be executed by gesture.',
   hideFromDesktopCommandUniverse: true,

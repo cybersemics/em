@@ -45,6 +45,7 @@ import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
+import isInAttribute from '../selectors/isInAttribute'
 import isMultiEditing from '../selectors/isMultiEditing'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -66,6 +67,7 @@ import equalPath from '../util/equalPath'
 import getCommandState from '../util/getCommandState'
 import haptics from '../util/haptics'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import isCommandKey from '../util/isCommandKey'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -270,6 +272,11 @@ const Editable = ({
   // On desktop Chrome, disabled is used to allow dragover events to avoid disrupting drag-and-drop behavior.
   // https://github.com/cybersemics/em/pull/3703
   const disabled = useSelector(state => !isDocumentEditable || state.longPress === LongPressState.DragInProgress)
+
+  // Metaprogramming attributes and everything inside them are read-only. They can be navigated to and viewed, but their
+  // text is not editable, so the caret, native formatting, paste, and the virtual keyboard are all unavailable. They are
+  // changed only through the commands on the thought they configure. See docs/metaprogramming.md.
+  const inAttribute = useSelector(state => isInAttribute(state, path))
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -713,6 +720,8 @@ const Editable = ({
           5. onChangeHandler short circuits since throttledChangeRef has not resolved and newValue === oldValue
           6. editingValueStore must be updated, otherwise it will retain the stale value aa
       */
+        // the value the editable showed before this input, which a rejected edit restores
+        const previousEditingValue = editingValueStore.getState()
         editingValueStore.update(newValue)
 
         const cursorOffset = selection.offsetThought()
@@ -760,6 +769,44 @@ const Editable = ({
 
         if (contentRef.current) {
           contentRef.current.style.opacity = '1.0'
+        }
+
+        /** Rejects the edit with an error and restores the editable to the value it showed before this input, keeping the caret where it was relative to the text around it. */
+        const rejectEdit = (branch: string, message: string) => {
+          debugLog.log('change', {
+            branch,
+            isClipboardInsert,
+            oldValue,
+            newValue,
+            cursorOffset: cursorOffsetWithEmojiSpace,
+          })
+          const restoredValue = previousEditingValue ?? oldValue
+          // Commit the edit that is still pending from earlier input, which was valid and is what the editable is restored to.
+          throttledChangeRef.current.flush()
+          dispatch(error({ value: message }))
+          editingValueStore.update(restoredValue)
+          if (contentRef.current) {
+            const restoredLength = stripTags(restoredValue).length
+            contentRef.current.innerHTML = restoredValue
+            selection.set(contentRef.current, {
+              offset: Math.min(
+                restoredLength,
+                Math.max(0, (cursorOffset ?? restoredLength) - (stripTags(newValue).length - restoredLength)),
+              ),
+            })
+          }
+        }
+
+        // The editable is disabled inside an attribute, so this only catches an edit that reaches it some other way.
+        if (isInAttribute(state, path)) {
+          rejectEdit('attribute', `"${oldValueClean}" is a metaprogramming attribute and cannot be edited.`)
+          return
+        }
+        // A thought cannot be turned into an attribute by typing, since an attribute is changed only through the
+        // commands on the thought it configures.
+        else if (isAttribute(newValue) && !isAttribute(oldValue)) {
+          rejectEdit('attributeValue', 'Metaprogramming attributes can only be set with commands.')
+          return
         }
 
         if (readonly) {
@@ -1267,7 +1314,7 @@ const Editable = ({
 
   const contentEditable = (
     <ContentEditable
-      disabled={disabled}
+      disabled={disabled || inAttribute}
       stopDragOver={stopDragOver}
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}

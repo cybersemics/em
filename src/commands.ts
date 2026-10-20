@@ -31,12 +31,14 @@ import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
+import canExecuteCommand from './selectors/canExecuteCommand'
 import documentSort from './selectors/documentSort'
 import filterCursors from './selectors/filterCursors'
 import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
+import isAttributeSelected from './selectors/isAttributeSelected'
 import isRedoEnabled from './selectors/isRedoEnabled'
 import isUndoEnabled from './selectors/isUndoEnabled'
 import splitChain from './selectors/splitChain'
@@ -445,9 +447,8 @@ export const executeCommand = (
   if (!resolved) return false
   const command = resolved.command
 
-  const canExecute = !command.canExecute || command.canExecute(commandStore.getState())
   // Exit early if the command cannot execute
-  if (!canExecute) return false
+  if (!canExecuteCommand(commandStore.getState(), command)) return false
 
   // A repeated command takes the keyboardIndex that was recorded with it, since the repeat keypress matches none of its own keyboard shortcuts. Otherwise it is derived from the event.
   const keyboardIndex = keyboardIndexArg ?? resolved.keyboardIndex
@@ -535,7 +536,7 @@ export const executeCommandWithMulticursor = (
   const filteredPaths = filterCursors(state, paths, multicursor.filter)
 
   // Exit early if the command cannot execute on any of the filtered paths
-  const canExecute = filteredPaths.every(path => !command.canExecute || command.canExecute({ ...state, cursor: path }))
+  const canExecute = filteredPaths.every(path => canExecuteCommand({ ...state, cursor: path }, command))
   if (!canExecute) return
 
   /** Whether the command is active on the thought alone, i.e. in the state that exec will see after setCursor clears the multicursors. */
@@ -974,6 +975,18 @@ export const keyDown = (e: KeyboardEvent) => {
 
   // execute the command
   commandEmitter.trigger('command', command)
+
+  // Attributes are read-only, so a shortcut that is blocked on one is swallowed rather than falling through to the browser, which would otherwise apply its own formatting (e.g. Cmd + B) to the attribute.
+  if (
+    !command.allowOnAttribute &&
+    isAttributeSelected(
+      store.getState(),
+      typeof command.multicursor === 'object' ? command.multicursor.filter : undefined,
+    )
+  ) {
+    e.preventDefault()
+    return
+  }
 
   if (!command.canExecute || command.preventDefault || command.canExecute(store.getState())) {
     if (!command.permitDefault) {

@@ -3,7 +3,6 @@ import { formatSelectionActionCreator as formatSelection } from '../actions/form
 // TODO: Needs icon
 import Icon from '../components/icons/BoldTextIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Removes formatting of the current browser selection. If there is no selection, clears formatting of the entire thought. */
@@ -15,7 +14,7 @@ const removeFormat = {
   svg: Icon,
   keyboard: { key: '0', meta: true },
   canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => {
     dispatch(formatSelection('removeFormat'))

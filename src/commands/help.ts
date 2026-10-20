@@ -6,6 +6,7 @@ import scrollTo from '../device/scrollTo'
 
 const openHelpCommand = {
   id: 'help',
+  allowOnAttribute: true,
   label: 'Help' as const,
   description: `Opens the Help screen, which contains the tutorials and a list of all ${
     isTouch ? 'gestures' : 'keyboard shortcuts'

@@ -15,6 +15,7 @@ import { gestureString } from '../commands'
 import { noop } from '../constants'
 import useGestureHighlight from '../hooks/useGestureHighlight'
 import useLottieIntervalAnimation from '../hooks/useLottieIntervalAnimation'
+import canExecuteCommand from '../selectors/canExecuteCommand'
 import store from '../stores/app'
 import CommandKeyboardShortcut from './CommandKeyboardShortcut'
 import GestureDiagram from './GestureDiagram'
@@ -26,7 +27,7 @@ import HighlightedText from './HighlightedText'
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
-  (!command.canExecute || command.canExecute(state)) &&
+  canExecuteCommand(state, command) &&
   (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
 
 const strokeWidth = 4

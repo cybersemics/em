@@ -5,6 +5,7 @@ import { token } from '../../styled-system/tokens'
 import { formatSelectionColorActionCreator as formatSelectionColor } from '../actions/formatSelectionColor'
 import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
+import isAttributeSelected from '../selectors/isAttributeSelected'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
 import haptics from '../util/haptics'
@@ -117,7 +118,8 @@ const ColorSwatch: FC<{
 
 /** Text Color Picker component. */
 const ColorPicker: FC<{ size?: number }> = ({ size }) => {
-  const showColorPicker = useSelector(state => state.showColorPicker)
+  // hidden while a metaprogramming attribute is selected, since attributes are read-only
+  const showColorPicker = useSelector(state => state.showColorPicker && !isAttributeSelected(state))
 
   return (
     <Popover ariaLabel='Color Picker' show={showColorPicker} size={size}>

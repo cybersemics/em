@@ -2,7 +2,6 @@ import Command from '../@types/Command'
 import { swapNoteActionCreator } from '../actions/swapNote'
 import SwapNoteIcon from '../components/icons/SwapNoteIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const swapNote = {
@@ -13,7 +12,7 @@ const swapNote = {
   gesture: 'ulr',
   multicursor: true,
   canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   svg: SwapNoteIcon,
   exec: dispatch => {

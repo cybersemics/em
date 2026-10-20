@@ -6,6 +6,7 @@ import Command from '../../@types/Command'
 import Icon from '../../@types/IconType'
 import { isTouch } from '../../browser'
 import { executeCommandWithMulticursor } from '../../commands'
+import canExecuteCommand from '../../selectors/canExecuteCommand'
 import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
 import FadeTransition from '../FadeTransition'
@@ -56,8 +57,8 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive }) => 
 const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   const [isAnimated, setIsAnimated] = useState(false)
 
-  const { svg, isActive, canExecute } = command
-  const isButtonExecutable = useSelector(state => !canExecute || canExecute(state))
+  const { svg, isActive } = command
+  const isButtonExecutable = useSelector(state => canExecuteCommand(state, command))
   const isButtonActive = useSelector(state => isActive?.(state))
 
   /** Handles the onClick event. Executes the command when tapped. */

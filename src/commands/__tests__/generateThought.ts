@@ -416,34 +416,6 @@ test('omit metaprogramming attributes from the context when hidden thoughts are 
   vi.unstubAllEnvs()
 })
 
-test('send an attribute ancestor as context when the cursor is inside a metaprogramming attribute', async () => {
-  const text = `
-      - Grocery list
-        - =note
-          - Buy organic
-    `
-
-  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
-  acknowledgeAiDisclosure()
-  mockFetch.mockResolvedValueOnce({
-    json: () => Promise.resolve({ thoughts: ['Buy organic produce'] }),
-  })
-
-  await dispatch([importText({ text }), toggleHiddenThoughts(), setCursor(['Grocery list', '=note', 'Buy organic'])])
-
-  await act(async () => {
-    executeCommand(generateThought)
-  })
-
-  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/generateThought', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ inputs: ['[] Grocery list\n  [] =note\n    [x] Buy organic'] }),
-  })
-
-  vi.unstubAllEnvs()
-})
-
 test('restore the original thought and allow retry when the AI request fails', async () => {
   vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
   acknowledgeAiDisclosure()

@@ -3,7 +3,6 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { toggleSortActionCreator as toggleSort } from '../actions/toggleSort'
 import Icon from '../components/icons/Sort'
 import getSortPreference from '../selectors/getSortPreference'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -20,7 +19,6 @@ const toggleSortCommand = {
     filter: 'first-sibling',
   },
   svg: Icon,
-  canExecute: state => !isAttributeSelected(state, 'first-sibling'),
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()
     if (!state.cursor || isRoot(state.cursor)) return

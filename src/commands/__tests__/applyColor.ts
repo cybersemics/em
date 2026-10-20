@@ -1,6 +1,7 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -307,4 +308,26 @@ describe('multicursor', () => {
   </li>
 </ul>`)
   })
+})
+
+// https://github.com/cybersemics/em/pull/6056#issuecomment-6283026463
+it('does not color a metaprogramming attribute', async () => {
+  act(() => {
+    store.dispatch([
+      importText({
+        text: `
+          - aaa
+            - =favorite
+        `,
+      }),
+      toggleHiddenThoughts(),
+      setCursor(['aaa', '=favorite']),
+    ])
+  })
+  await act(vi.runOnlyPendingTimersAsync)
+
+  // Command + Option + 3 is the fourth swatch, yellow
+  await keyDown('3', { meta: true, alt: true })
+
+  expect(cursorValue()).toBe('=favorite')
 })

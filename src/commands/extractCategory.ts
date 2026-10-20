@@ -2,7 +2,6 @@ import Command from '../@types/Command'
 import { extractCategoryActionCreator as extractCategory } from '../actions/extractCategory'
 import ExtractCategoryIcon from '../components/icons/ExtractCategoryIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const extractCategoryCommand = {
@@ -17,7 +16,7 @@ const extractCategoryCommand = {
   multicursor: false,
   svg: ExtractCategoryIcon,
   canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state)) && !isAttributeSelected(state)
+    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => {
     dispatch(extractCategory())
