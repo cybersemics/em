@@ -1,14 +1,16 @@
-import { MotionValue } from 'motion/react'
-import { PropsWithChildren, useId } from 'react'
+import { MotionValue, motion, useMotionValue, useMotionValueEvent, useTransform } from 'motion/react'
+import { PropsWithChildren, useId, useState } from 'react'
 import { css } from '../../../styled-system/css'
 import { PINNED_COMMAND_RING_SIZE } from '../../constants'
+import useRingFill from './useRingFill'
+import useRingFlourish from './useRingFlourish'
 
 /**
  * These values are derived directly from the original design in Figma, in a 73×73 box.
  *
  * PinnedCommandRing
  * ├─ RingTrack: dim background circle with its gradient, blur, and shadow.
- * ├─ RingProgress: supplied fill and color.
+ * ├─ RingProgress: the fill, colored and spun; useRingFill and useRingFlourish animate it.
  * │  └─ BlurredProgressArc: the gradient arc, split into overlapping blur bands.
  * │     └─ RingBlurBand: the mask and blur for one band of the arc.
  * └─ RingIcon: the command icon centered inside the ring.
@@ -53,6 +55,8 @@ const ANNULUS_MASK = `radial-gradient(circle at ${CENTER_X}px ${CENTER_Y}px, tra
 interface RingProgressProps {
   /** Practice progress from 0 (unstarted) to 1 (target reached). */
   progress: number
+  /** Increment to play the flourish. Only changes matter; the initial value plays nothing. */
+  flourish?: number
   /** Visibility of the colorful fill, from 0 (mono) to 1 (fully colorful). */
   activeOpacity?: MotionValue<number>
 }
@@ -150,21 +154,52 @@ const BlurredProgressArc = ({ progress, stops }: { progress: number; stops: Stop
   )
 }
 
-/** Renders supplied progress and color without prescribing how either changes. */
-const RingProgress = ({ progress, activeOpacity }: RingProgressProps) => {
-  const colorOpacity = activeOpacity?.get() ?? 0
-  const visibleProgress = progress
+/**
+ * Draws the fill, and colors and spins it. The fill and the flourish are animated by their own hooks: useRingFill
+ * tweens the fill to the supplied progress, and useRingFlourish plays the spin and color pulse. The two meet in two
+ * places, each visible below: the flourish closes the fill it receives, and the flourish's pulse and the tooltip's
+ * `activeOpacity` both color the ring. Remains mounted when progress is zero, so the fill's animation state survives.
+ */
+const RingProgress = ({ progress, flourish = 0, activeOpacity }: RingProgressProps) => {
+  const { fill, drawnProgress } = useRingFill(progress)
+  // Called after useRingFill, so the flourish can take over a fill tween started by the same rep.
+  const { spin, colorPulse, isFlourishing } = useRingFlourish(flourish, fill)
+
+  // The flourish and the tooltip both color the ring. Whichever is stronger at the moment sets the color.
+  const noTooltipColor = useMotionValue(0)
+  const tooltipColor = activeOpacity ?? noTooltipColor
+  const colorOpacity = useTransform([colorPulse, tooltipColor], ([pulse, tooltip]) =>
+    Math.max(pulse as number, tooltip as number),
+  )
+  const monoOpacity = useTransform(colorOpacity, value => 1 - value)
+  // The colorful layers are mounted only while something colors the ring, since each is five blurred bands.
+  const [isTooltipColoring, setIsTooltipColoring] = useState(tooltipColor.get() > 0)
+  useMotionValueEvent(tooltipColor, 'change', value => setIsTooltipColoring(value > 0))
+
   return progress > 0 ? (
-    <div className={css({ position: 'absolute', inset: 0 })}>
-      <div className={css({ position: 'absolute', inset: 0 })} style={{ opacity: 1 - colorOpacity }}>
-        <BlurredProgressArc progress={visibleProgress} stops={STOPS_MONO} />
-      </div>
-      {colorOpacity > 0 && (
-        <div className={css({ position: 'absolute', inset: 0 })} style={{ opacity: colorOpacity }}>
-          <BlurredProgressArc progress={visibleProgress} stops={STOPS_COLORFUL} />
-        </div>
+    // The spin rotates the arcs about the ring center, which is not the box center.
+    <motion.div
+      className={css({ position: 'absolute', inset: 0, transformOrigin: '36.42px 36.16px' })}
+      style={{ rotate: spin }}
+    >
+      <motion.div
+        data-testid='pinned-command-ring-fill'
+        data-progress={drawnProgress}
+        className={css({ position: 'absolute', inset: 0 })}
+        style={{ opacity: monoOpacity }}
+      >
+        <BlurredProgressArc progress={drawnProgress} stops={STOPS_MONO} />
+      </motion.div>
+      {(isFlourishing || isTooltipColoring) && (
+        <motion.div
+          data-testid='pinned-command-ring-colorful-fill'
+          className={css({ position: 'absolute', inset: 0 })}
+          style={{ opacity: colorOpacity }}
+        >
+          <BlurredProgressArc progress={drawnProgress} stops={STOPS_COLORFUL} />
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   ) : null
 }
 
@@ -183,7 +218,7 @@ const RingIcon = ({ children }: PropsWithChildren) => (
   </div>
 )
 
-/** Composes the background track, progress, and centered command icon. */
+/** Composes the background track, animated progress, and centered command icon. */
 const PinnedCommandRing = ({ children, ...progressProps }: PropsWithChildren<RingProgressProps>) => (
   <div
     className={css({ position: 'relative', flex: 'none' })}

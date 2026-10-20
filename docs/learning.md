@@ -6,7 +6,7 @@ The learning journey is tracked in [#5481](https://github.com/cybersemics/em/iss
 
 `storageModel` stores this state under `learning`. `initialState` restores it alongside font size and jump history. Decoding validates the stored shape and drops malformed records without importing the command registry. Consumers must ignore IDs no longer available in the current command registry.
 
-Practice records are local for now. User-wide learning progress and synchronization remain deferred. Practice counting is introduced in a subsequent layer.
+Practice records are local for now. User-wide learning progress and synchronization remain deferred. As soon as `exec` returns from a top-level keyboard or gesture invocation, the command runner dispatches `pinnedCommandAddRep`. A command that fails `canExecute`, throws, or raises an app error during `exec` earns no rep. Asynchronous work (AI requests, the AI disclosure prompt, Copy Cursor loading thoughts) is not awaited: the user has completed the command once it starts, whatever the server or clipboard later returns. A guard that should stop an invocation from earning a rep therefore belongs in `canExecute`, not in an early return from `exec`. The action creator dispatches nothing unless the command matches the current pin and its progress record. That action updates Redux and persists the rep locally. Clicks and programmatic calls earn none, and commands without an eligible pin add no Redux action.
 
 Command Universe detail pages offer Pin and Unpin controls. Pinning another command replaces the selection; the row describes which command will be replaced. These controls do not execute commands.
 
@@ -14,4 +14,10 @@ Command Universe detail pages offer Pin and Unpin controls. Pinning another comm
 
 The selected command appears in a sticky bottom-right slot alongside the NavBar. The row reserves room for the ring and respects the bottom safe area. Unknown saved commands render no widget.
 
-`PinnedCommandRing` composes same-file components for its track, gradient/blur bands, progress arc, and centered icon. It accepts supplied progress and color opacity; the live widget currently displays an empty ring. The snapshot fixture covers empty, partial, full, and colorful states with filters enabled.
+`PinnedCommandRing` composes same-file components for its track, gradient/blur bands, progress arc, and centered icon. It accepts supplied progress and color opacity; the live widget displays its saved reps divided by the captured target. The snapshot fixture covers empty, partial, full, and colorful states with filters enabled.
+
+Each new rep animates the fill from its current visible angle. Reduced motion renders the new fill immediately. Reps continue beyond the target while the visible fill and accessible count cap at the target. No command is marked learned and no history is retained after switching pins.
+
+Locally earned reps at or past the target request a flourish: one spin and a color pulse, with the completing fill finishing during the first half. Rendering restored full progress does not celebrate. Reduced motion retains the color pulse but skips the spin. Each rep also animates the command icon unless a toggle has just switched off.
+
+Each animation has one owner. [`useRingFill`](../src/components/Learning/useRingFill.ts) tweens the fill, [`useRingFlourish`](../src/components/Learning/useRingFlourish.ts) plays the flourish and closes the fill while it does, and [`PinnedCommandIcon`](../src/components/Learning/PinnedCommandIcon.tsx) plays the icon animation. `RingProgress` combines the flourish's color pulse with the supplied color opacity, taking whichever is stronger. `PinnedCommand` notices reps as they land and passes the counts to the ring and the icon.
