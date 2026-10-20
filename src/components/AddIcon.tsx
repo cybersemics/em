@@ -1,8 +1,7 @@
 import { FC } from 'react'
-import { css, cx } from '../../styled-system/css'
+import { cx } from '../../styled-system/css'
 import { iconRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
-import { SystemStyleObject } from '../../styled-system/types'
 import Index from '../@types/IndexType'
 
 interface SearchIconProps {
@@ -10,18 +9,17 @@ interface SearchIconProps {
   size: number
   style?: Index<string>
   className?: string
-  cssRaw?: SystemStyleObject
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const AddIcon: FC<SearchIconProps> = ({ cssRaw, fill, size = 20, style }) => {
+const AddIcon: FC<SearchIconProps> = ({ className, fill, size = 20, style }) => {
   return (
     <svg
       version='1.1'
       x='0px'
       y='0px'
       viewBox='1 2 97 96'
-      className={cx(iconRecipe(), css(cssRaw))}
+      className={cx(iconRecipe(), className)}
       width={size}
       height={size}
       fill={fill || token('colors.fg')}

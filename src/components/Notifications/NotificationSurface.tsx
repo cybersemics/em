@@ -98,11 +98,7 @@ const NotificationSurface = ({
         <motion.div data-notification-gradient='' style={{ opacity }} />
       </div>
       <motion.div data-notification-opacity-wrapper='' style={{ opacity }}>
-        <motion.div
-          className={slots.glow}
-          data-notification-glow={glow}
-          style={{ backgroundImage: `url(${glowImage})` }}
-        />
+        <div className={slots.glow} style={{ backgroundImage: `url(${glowImage})` }} />
         <div
           className={slots.content}
           style={{ pointerEvents: isVisible ? 'auto' : 'none' }}
