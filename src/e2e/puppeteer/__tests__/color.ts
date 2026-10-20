@@ -933,7 +933,7 @@ describe('mobile', () => {
   })
 
   // https://github.com/cybersemics/em/issues/6057
-  it.skip('scrolls the cursor thought out from under the Color Picker when it opens', async () => {
+  it('scrolls the cursor thought out from under the Color Picker when it opens', async () => {
     await paste('- Text on the first line is not visible when Color Swatch is open')
     await clickThought('Text on the first line is not visible when Color Swatch is open')
     await clickToolbar('Text Color')
@@ -957,6 +957,47 @@ describe('mobile', () => {
       }))
       throw new Error(
         `Expected the cursor thought to be below the Color Picker, but the thought starts at y=${geometry.thoughtTop} and the Color Picker ends at y=${geometry.pickerBottom}.`,
+      )
+    }
+  })
+
+  // https://github.com/cybersemics/em/issues/6057
+  it('does not move the thoughts when the Color Picker closes', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+      - d
+      - e
+      - f
+      - g
+      - h
+    `)
+    await clickThought('h')
+
+    const cursorTop = await page.$eval('[data-editing=true] [data-editable]', el => el.getBoundingClientRect().top)
+
+    await clickToolbar('Text Color')
+    await waitForSelector('[aria-label="Color Picker"]')
+    await command('textColor')
+    await waitForSelector('[aria-label="Color Picker"]', { hidden: true })
+
+    // The room made for the Color Picker is removed after it closes, so wait in the page for the cursor thought to come
+    // to rest where it was. The wait is the assertion; catching it reports where the thought actually is.
+    try {
+      await page.waitForFunction(
+        (cursorTop: number) =>
+          document.querySelector('[data-editing=true] [data-editable]')?.getBoundingClientRect().top === cursorTop,
+        { timeout: 3000 },
+        cursorTop,
+      )
+    } catch {
+      const cursorTopAfterClose = await page.$eval(
+        '[data-editing=true] [data-editable]',
+        el => el.getBoundingClientRect().top,
+      )
+      throw new Error(
+        `Expected the cursor thought to stay at y=${cursorTop} when the Color Picker closes, but it moved to y=${cursorTopAfterClose}.`,
       )
     }
   })

@@ -108,6 +108,8 @@ When the cursor is deep, many ancestors and ancestor-siblings are hidden by auto
 
 Net effect: the outer container is shifted up off-screen by exactly enough that one viewport's worth of empty space sits above the cursor. The user can scroll into that empty space; visible thoughts don't jump.
 
+The open [`ColorPicker`](../src/components/ColorPicker.tsx) reuses the same shift. It is rendered inside the toolbar and extends it down over the thoughts, below the fixed top padding of the content, so without extra room the first thought could never be scrolled out from under it ([#6057](https://github.com/cybersemics/em/issues/6057)). [`Toolbar`](../src/components/Toolbar.tsx) publishes the picker's height as `viewportStore.colorPickerHeight` while it is open (0 when closed or when the toolbar unmounts), and `useAutocrop` adds it to `autocrop`. Opening and closing the picker therefore shift the thoughts down and back up with the same counter-scroll, so they stay where they are, except that on close the counter-scroll cannot go above the top of the page: thoughts within the picker's height of the top return to their usual position.
+
 History: the original autocrop work is [issue #1751](https://github.com/cybersemics/em/issues/1751); the uncle-handling refinement is [issue #3055](https://github.com/cybersemics/em/issues/3055).
 
 ## Indent (horizontal autocrop)
@@ -212,6 +214,8 @@ A small effect that writes the LayoutTree's top y (offset + autocrop) into `view
 ## Scrolling the cursor into view
 
 [`scrollCursorIntoView`](../src/device/scrollCursorIntoView.ts) scrolls the minimum amount needed to clear the toolbar above and the navbar (or virtual keyboard) below. [`useScrollCursorIntoView`](../src/hooks/useScrollCursorIntoView.ts) calls it two ways: directly when the cursor's `y` or `height` changes, and through [`scheduleScrollCursorIntoView`](../src/device/scheduleScrollCursorIntoView.ts) when the editing value changes — the cursor's rank can move as it is edited, e.g. toggling bold in a long, sorted context.
+
+Because the open Color Picker is part of the toolbar's rect, `scrollCursorIntoView` already clears it. Opening the picker does not change the cursor's `y` or `height`, though, so `LayoutTree` calls `scrollCursorIntoView` itself when `viewportStore.colorPickerHeight` becomes nonzero. The effect is declared after `useAutocrop` and `useLayoutTreeTop`, so it runs after the shift has been compensated and `layoutTreeTop` includes it.
 
 The scheduled path defers to the next tick before reading the cursor's size, because `editingValueStore` subscribers run synchronously and would otherwise close over a size from before the render ([#3083](https://github.com/cybersemics/em/issues/3083)), and then throttles to 400 ms. A cursor scroll can therefore be waiting in three places at once: the tick before it reaches the throttle, the throttle's trailing call, and the 10 ms retry that `scrollIntoViewIfNeeded` arms while `preventAutoscroll` is in progress (see [cursor-and-caret.md → `preventAutoscroll.ts`](cursor-and-caret.md#preventautoscrollts)). `scheduleScrollCursorIntoView.cancel()` clears all three; cancelling the throttle alone leaves a timer that has not fired yet free to re-arm it.
 

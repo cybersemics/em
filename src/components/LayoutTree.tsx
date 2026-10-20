@@ -7,6 +7,7 @@ import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { CONTENT_BOX_PADDING_LEFT, LongPressState } from '../constants'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
@@ -79,8 +80,16 @@ const useNavAndFooterHeight = () => {
   }
 }
 
-/** When navigating deep within the hierarchy, many ancestors and siblings of ancestors are hidden, resulting in a large blank space above the cursor. If the user scrolls up, the entire screen will be blank. To avoid this, crop the space above and simultaneously scroll up by the same amount so that the thoughts do not appear to move (relative to the viewport), but the empty space above is eliminated. Returns the number of pixels that all thoughts should be shifted off. */
-const useAutocrop = (spaceAbove: number): number => {
+/** When navigating deep within the hierarchy, many ancestors and siblings of ancestors are hidden, resulting in a large blank space above the cursor. If the user scrolls up, the entire screen will be blank. To avoid this, crop the space above and simultaneously scroll up by the same amount so that the thoughts do not appear to move (relative to the viewport), but the empty space above is eliminated. While the Color Picker is open, the thoughts are shifted down by its height in the same way, which adds room above the first thought to scroll it out from under the Color Picker. Returns the number of pixels that all thoughts should be shifted off. */
+const useAutocrop = (
+  spaceAbove: number,
+  {
+    colorPickerHeight,
+  }: {
+    /** The height of the open Color Picker, or 0 when it is closed. See: viewportStore. */
+    colorPickerHeight: number
+  },
+): number => {
   // get the scroll position before the render so it can be preserved
   const scrollY = window.scrollY
 
@@ -90,7 +99,7 @@ const useAutocrop = (spaceAbove: number): number => {
   const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
 
   // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
-  const autocrop = -spaceAboveExtended + viewportHeight
+  const autocrop = -spaceAboveExtended + viewportHeight + colorPickerHeight
 
   const autocropLast = useRef(autocrop)
 
@@ -248,13 +257,29 @@ const LayoutTree = () => {
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
   const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
 
-  const autocrop = useAutocrop(spaceAbove)
+  const colorPickerHeight = viewportStore.useSelector(viewport => viewport.colorPickerHeight)
+  const autocrop = useAutocrop(spaceAbove, { colorPickerHeight })
 
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
   useLayoutTreeTop(ref, autocrop)
+
+  // Scroll the cursor out from under the Color Picker when it opens. useScrollCursorIntoView does not, since opening the
+  // Color Picker changes neither the y nor the height of the cursor. The open Color Picker is part of the toolbar, so
+  // scrollCursorIntoView already clears it. This effect is declared after useAutocrop and useLayoutTreeTop so that it
+  // runs after the thoughts have been shifted down to make room for the Color Picker and layoutTreeTop includes the shift.
+  useEffect(
+    () => {
+      if (colorPickerHeight > 0 && cursorThoughtPositioned) {
+        scrollCursorIntoView(cursorThoughtPositioned.y, cursorThoughtPositioned.height)
+      }
+    },
+    // only scroll when the Color Picker opens, not every time the cursor moves while it is open
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [colorPickerHeight],
+  )
 
   const treeThoughtsMemoized = useMemo(
     () =>
