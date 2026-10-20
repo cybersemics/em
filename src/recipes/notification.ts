@@ -71,14 +71,12 @@ const notificationRecipe = defineSlotRecipe({
       'bottom-full': {
         container: {
           '& [data-notification-blur-mobile]': { display: 'block' },
-          // Scope anchor geometry to the rainbow glow so it cannot override the pinned-command variant.
-          '& [data-notification-glow="rainbow"]': {
-            transform: 'scaleX(-1)',
-            width: '175vw',
-            bottom: '-72px',
-            left: '-16px',
-            right: 'auto',
-          },
+          // The rainbow glow's placement, read by the rainbow glow variant so it cannot override the pinned-command glow.
+          '--notification-glow-flip': 'scaleX(-1)',
+          '--notification-glow-width': '175vw',
+          '--notification-glow-bottom': '-72px',
+          '--notification-glow-left': '-16px',
+          '--notification-glow-right': 'auto',
         },
         content: {
           marginLeft: 0,
@@ -104,13 +102,11 @@ const notificationRecipe = defineSlotRecipe({
             maskImage: 'var(--notification-blur-feather)',
             WebkitMaskImage: 'var(--notification-blur-feather)',
           },
-          '& [data-notification-glow="rainbow"]': {
-            transform: 'none',
-            width: 'clamp(1000px, calc(100vw + 32px), 1500px)',
-            bottom: '-64px',
-            left: 'auto',
-            right: '-16px',
-          },
+          '--notification-glow-flip': 'none',
+          '--notification-glow-width': 'clamp(1000px, calc(100vw + 32px), 1500px)',
+          '--notification-glow-bottom': '-64px',
+          '--notification-glow-left': 'auto',
+          '--notification-glow-right': '-16px',
         },
         content: {
           marginLeft: 'auto',
@@ -121,7 +117,18 @@ const notificationRecipe = defineSlotRecipe({
       },
     },
     glow: {
-      rainbow: {},
+      rainbow: {
+        glow: {
+          // The rainbow glow is mirrored and placed differently at each anchor, which depends on the anchor and the glow
+          // together. That would be a compound variant, but Panda rejects compound variants when a variant is passed
+          // responsively, as Tip passes its anchor. So each anchor sets these variables and the glow reads them.
+          transform: 'var(--notification-glow-flip)',
+          width: 'var(--notification-glow-width)',
+          bottom: 'var(--notification-glow-bottom)',
+          left: 'var(--notification-glow-left)',
+          right: 'var(--notification-glow-right)',
+        },
+      },
       // The pinned command's glow does not follow the content height. Its consumer switches anchor at lg, so the
       // per-anchor values are keyed by that breakpoint here; Panda rejects compound variants once a variant value is
       // responsive.

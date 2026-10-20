@@ -1,7 +1,6 @@
 import { FC, PropsWithChildren } from 'react'
 import { css, cx } from '../../styled-system/css'
 import { editableRecipe } from '../../styled-system/recipes'
-import { SystemStyleObject } from '../../styled-system/types'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import isAttribute from '../util/isAttribute'
 import FauxCaret from './FauxCaret'
@@ -18,7 +17,7 @@ const ThoughtAnnotationWrapper: FC<
     multiline?: boolean
     value?: string
     styleAnnotation?: React.CSSProperties
-    cssRaw?: SystemStyleObject
+    className?: string
     style?: React.CSSProperties
     isTableCol1?: boolean
     textMarkup?: string
@@ -29,7 +28,7 @@ const ThoughtAnnotationWrapper: FC<
   ellipsizedUrl,
   value,
   styleAnnotation,
-  cssRaw,
+  className,
   style,
   children,
   isTableCol1,
@@ -94,8 +93,8 @@ const ThoughtAnnotationWrapper: FC<
           {!cursorOverlay && <FauxCaret caretType='thoughtStart' />}
         </span>
         <span
-          className={css(
-            {
+          className={cx(
+            css({
               visibility: 'hidden',
               position: 'relative',
               clipPath: 'inset(0.001px 0 0.1em 0)',
@@ -113,8 +112,8 @@ const ThoughtAnnotationWrapper: FC<
                 */
                 verticalAlign: 'top',
               }),
-            },
-            cssRaw,
+            }),
+            className,
           )}
           style={style}
           dangerouslySetInnerHTML={{ __html: textMarkup || placeholder || '&ZeroWidthSpace;' }}

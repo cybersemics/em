@@ -1,9 +1,8 @@
-import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import IconType from '../@types/IconType'
 
 /** A right-facing triangle component. */
-const TriangleRight = ({ fill = token('colors.bg'), size = 20, width, height, style, cssRaw }: IconType) => (
+const TriangleRight = ({ fill = token('colors.bg'), size = 20, width, height, style, className }: IconType) => (
   <svg
     xmlns=''
     version='1.1'
@@ -12,7 +11,7 @@ const TriangleRight = ({ fill = token('colors.bg'), size = 20, width, height, st
     fill={fill}
     style={style}
     viewBox='0 0 5 10'
-    className={css(cssRaw)}
+    className={className}
   >
     <polygon points='0,0 5,5 0,10' />
   </svg>

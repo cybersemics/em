@@ -14,6 +14,9 @@ export const NOTIFICATION_EASING = {
   close: [0.4, 0, 0.6, 1],
 } as const
 
+// Placeholder for an empty thought. Shown in the outline once an empty thought has gone untouched for a few seconds, and in place of the text of an empty thought, or of an empty ancestor in its breadcrumbs, listed in Favorites, Recently Edited, or Recently Deleted.
+export const EMPTY_THOUGHT_PLACEHOLDER = 'This is an empty thought'
+
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
