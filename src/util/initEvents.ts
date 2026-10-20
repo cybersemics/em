@@ -14,6 +14,7 @@ import { isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, DEFAULT_FONT_SIZE, LongPressState } from '../constants'
 import initKeyboardSelection from '../device/initKeyboardSelection'
+import initTouchLiftProbe from '../device/initTouchLiftProbe'
 import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
@@ -630,6 +631,8 @@ const initEvents = (store: Store<State, any>) => {
 
   // Initialize virtual keyboard handlers
   const unsubscribeKeyboardSelection = initKeyboardSelection()
+  // Record what the page can observe of a held touch whose touchend iOS 27 withholds (#5895)
+  const stopTouchLiftProbe = initTouchLiftProbe()
   virtualKeyboardHandler.init()
 
   // Route iOS native undo/redo gestures through em's undo/redo in the Capacitor app
@@ -674,6 +677,7 @@ const initEvents = (store: Store<State, any>) => {
     viewportRepairTimeoutStore.reset()
     scrollEndTimeoutStore.reset()
     unsubscribeKeyboardSelection()
+    stopTouchLiftProbe()
     virtualKeyboardHandler.destroy()
     nativeHistory.destroy()
     untrackHistoryState()
