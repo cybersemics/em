@@ -117,7 +117,9 @@ A gesture is also always a **single finger**. `MultiGesture` latches as soon as 
 
 `handleGestureSegment` is called incrementally as the user swipes; it triggers a haptic for each new segment and, after `COMMAND_PALETTE_TIMEOUT`, opens the gesture menu so the user can see all commands reachable from the current sequence.
 
-`handleGestureEnd` runs when the gesture finishes. It looks up the final sequence in `commandGestureIndex`, with two special cases:
+`handleGestureEnd` runs when the gesture finishes. It looks up the final sequence in `commandGestureIndex`, with three special cases:
+
+- **Download Debug Log.** While Debug Logging is on, the secret gesture →↓←↓↑ saves the [debug log](debug-log.md) instead of running a command. It is not a command, so it appears nowhere a command does — Command Universe, gesture menu, help, or tutorial.
 
 - **Mobile Command Universe.** If the sequence ends with the `openMobileCommandUniverse` gesture, that command runs.
 - **Chained commands.** If the sequence *starts* with a gesture for an `isChainable` command and continues with another command's gesture, the two are chained and executed together. The canonical example: `selectAll` is chainable, so `<selectAll-gesture><archive-gesture>` archives all selected thoughts in one motion. `chainCommand(c1, c2)` synthesizes a `Command` whose gesture and label combine both. Both commands execute inside one command transaction whose metadata identifies the combined command, so they produce one undo patch.
