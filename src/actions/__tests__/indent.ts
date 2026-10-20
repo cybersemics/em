@@ -99,3 +99,27 @@ it('names formatted thoughts as visible text in the read-only alert', () => {
 
   expect(stateNew.alert?.value).toBe('"parent" is read-only so "<b>" may not be indented.')
 })
+
+it('indent empty thought to the end of a sorted context', () => {
+  const text = `
+    - a
+      - =sort
+        - Alphabetical
+      - b
+      - c
+      - d
+  `
+  const steps = [importText({ text }), setCursor(['a']), newThought({ value: '' }), indent]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =sort
+      - Alphabetical
+    - b
+    - c
+    - d
+    - ${''}`)
+})
