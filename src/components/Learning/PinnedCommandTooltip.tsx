@@ -96,7 +96,9 @@ const PinnedCommandGestureDiagram = ({ gesture }: { gesture: string }) => (
     />
     <GestureDiagram
       path={gesture}
-      className={css({ width: '100%', height: '100%' })}
+      // Inline rather than a className: GestureDiagram sets height: auto in its own class, and cx cannot make a
+      // second class that sets height win over it.
+      style={{ width: '100%', height: '100%' }}
       // Each gesture has its own bounds, so anchor the drawing to the box's bottom-left rather than centering
       // it; the left edge and the gap to the text then hold for every command.
       preserveAspectRatio='xMinYMax meet'
