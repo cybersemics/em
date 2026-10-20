@@ -154,13 +154,16 @@ function punctuationSubSentenceDelimiter(plainValue: string): { split: RegExp; l
 
 /**
  * Returns the delimiter to split a single sentence into sub-sentences, as a regex that matches the delimiter anywhere and a regex that matches it at the beginning of the remaining text.
- * Comma takes priority over the symbols ↑↓←→+, which take priority over "and". Each is only used when the value contains none of the delimiters above it.
- * "and" is matched with word boundaries so that it does not split within a word, e.g. "Standard" (#4810).
+ * Comma takes priority over the symbols ↑↓←→+, which take priority over "and", which takes priority over "vs". Each is only used when the value contains none of the delimiters above it, e.g. "A and B vs C" splits at "and" only.
+ * "and" and "vs" are matched with word boundaries so that they do not split within a word, e.g. "Standard" (#4810) or "canvas".
  *
  * @param plainValue The plain text thought value.
  */
 function subSentenceDelimiter(plainValue: string): { split: RegExp; leading: RegExp } {
-  return punctuationSubSentenceDelimiter(plainValue) ?? { split: /\band\b/i, leading: /^and\b/i }
+  return (
+    punctuationSubSentenceDelimiter(plainValue) ??
+    (/\band\b/i.test(plainValue) ? { split: /\band\b/i, leading: /^and\b/i } : { split: /\bvs\b/i, leading: /^vs\b/i })
+  )
 }
 
 /**
@@ -359,7 +362,8 @@ const splitSentenceByDelimiters = (value: string): SplitResult[] => {
   // 4. a comma or one of the symbols ↑↓←→+ splits into siblings, e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
   // 5. a hyphenated "and" compound at the end of the value splits into a child per word, e.g. "Implies set-and-forget" -> "- Implies   - set   - forget"
   // 6. the word "and" splits into siblings, e.g. "Alice and the Lion" -> "- Alice - the Lion"
-  // 7. a dash without surrounding whitespace splits into a child, e.g. "one-1" -> "- one   - 1"
+  // 7. the word "vs" splits into siblings, e.g. "A vs B vs C" -> "- A - B - C"
+  // 8. a dash without surrounding whitespace splits into a child, e.g. "one-1" -> "- one   - 1"
   // A dash without surrounding whitespace is usually part of a compound word, e.g. "Jean-Michel", so it has the lowest precedence of all: it only splits when the value contains no other delimiter (#3525).
   // e.g. "Jeff Koons, Jean-Michel Basquiat" splits at the comma and "a → b-c" splits at the arrow.
   if (!sentenceSplitters || hasOnlyPeriodAtEnd()) {
@@ -406,9 +410,10 @@ const splitSentenceByDelimiters = (value: string): SplitResult[] => {
       : splitHyphenatedAndCompound(value, plainValue)
     if (compoundValues) return compoundValues
 
-    // split by comma, or by the symbols ↑↓←→+ if there is no comma, or by the word "and" if there is neither
+    // split by comma, or by the symbols ↑↓←→+ if there is no comma, or by the word "and" if there is neither, or by the word "vs" if there is not even "and"
     // e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
     // e.g. "Alice and the Lion" -> "- Alice - the Lion"
+    // e.g. "A vs B vs C" -> "- A - B - C"
     const splitValues = plainValue
       .split(subSentenceDelimiter(plainValue).split)
       .map(s => s.trim())

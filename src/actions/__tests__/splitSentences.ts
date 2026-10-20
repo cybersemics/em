@@ -1340,6 +1340,44 @@ describe('copula splitting', () => {
   })
 })
 
+describe('vs splitting', () => {
+  it('splits by "vs" into siblings', () => {
+    const value = 'A vs B vs C'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+  - B
+  - C`)
+  })
+
+  it('splits by "and" rather than by "vs"', () => {
+    const value = 'Cats and dogs vs birds'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Cats
+  - dogs vs birds`)
+  })
+
+  it('splits by comma rather than by "vs"', () => {
+    const value = 'Cats vs dogs, birds'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Cats vs dogs
+  - birds`)
+  })
+
+  it('does not split within a word', () => {
+    const value = 'Canvas versus paper'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Canvas versus paper`)
+  })
+})
+
 describe('formatting', () => {
   // https://github.com/cybersemics/em/issues/4229
   it('preserves formatting on every comma-delimited segment, including segments in the middle', () => {
