@@ -20,6 +20,7 @@ import { clearMulticursorsActionCreator as clearMulticursors } from './actions/c
 import { cursorClearedActionCreator as cursorCleared } from './actions/cursorCleared'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
 import { indentActionCreator as indent } from './actions/indent'
+import { pinnedCommandAddRepActionCreator as pinnedCommandAddRep } from './actions/pinnedCommandAddRep'
 import { redoActionCreator as redo } from './actions/redo'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './actions/setIsMulticursorExecuting'
@@ -505,13 +506,15 @@ export const executeCommandWithMulticursor = (
 
   const state = commandStore.getState()
 
-  /** Reports a successful invocation once exec has returned, unless it raised an app error. Asynchronous work is not awaited: the user has completed the command once it starts, whatever a server or the clipboard later returns. */
+  /** Reports a successful invocation once exec has returned, unless it raised an app error, and adds a rep to the pinned command when the user performed it by keyboard or gesture. Asynchronous work is not awaited: the user has completed the command once it starts, whatever a server or the clipboard later returns. */
   const reportSuccess = () => {
     if (commandStore.getState().error !== state.error) return
     commandEmitter.trigger('commandSucceeded', {
       commandId: commandArg.id,
       source: type ?? 'internal',
     } satisfies CommandSuccess)
+    if (type === 'keyboard' || type === 'gesture')
+      commandStore.dispatch(pinnedCommandAddRep({ commandId: commandArg.id }))
   }
 
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.

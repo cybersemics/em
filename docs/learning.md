@@ -24,7 +24,7 @@ The learning journey helps early users learn commands gradually through normal u
 - [`pinCommand`](../src/actions/pinCommand.ts) — selects the command and starts a fresh progress record, erasing any other command's record. Pinning the already pinned command keeps its record. Pinning a different command closes the tooltip.
 - [`unpinCommand`](../src/actions/unpinCommand.ts) — clears the selection and erases its reps, and closes the tooltip.
 - [`showPinnedCommandTooltip`](../src/actions/showPinnedCommandTooltip.ts) — opens or closes the pinned command's tooltip. It does nothing when asked to open while no command is pinned.
-- [`pinnedCommandAddRep`](../src/actions/pinnedCommandAddRep.ts) — adds one rep to the pinned command. [`pinnedCommandRepsMiddleware`](../src/redux-middleware/pinnedCommandReps.ts) listens for a successful keyboard shortcut or gesture through `commandEmitter` and dispatches this action only when the command is pinned. Reps keep counting past the target, and each rep at or past it plays the ring's flourish.
+- [`pinnedCommandAddRep`](../src/actions/pinnedCommandAddRep.ts) — adds one rep to the pinned command. The command runner dispatches it after a successful keyboard shortcut or gesture, and the action creator dispatches nothing unless the command is the current pin and has its progress record, so other commands add no Redux action. Reps keep counting past the target, and each rep at or past it plays the ring's flourish.
 
 These actions are registered `undoable: false`, and `learning` is listed in `statePropertiesToOmit` in [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts), so pinning and practice never add an undo step or get reverted by undoing an edit.
 
