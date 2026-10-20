@@ -34,7 +34,7 @@ const useSwipeToClear = ({
   /** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the surface. */
   threshold?: number
   /** Called when the dismiss completes — either immediately (swipe distance reached threshold) or after the dismiss animation finishes. */
-  onDismissed: () => void
+  onDismissed?: () => void
 }) => {
   const swipeDistance = useMotionValue(0)
   const completion = useTransform(swipeDistance, [0, threshold], [0, 1], { clamp: true })
@@ -51,7 +51,7 @@ const useSwipeToClear = ({
     if (dismissed.current) return
     dismissed.current = true
     dismissing.current = false
-    onDismissed()
+    onDismissed?.()
     // Reset so the next showing of the surface starts with completion = 0.
     swipeDistance.set(0)
   }, [swipeDistance, onDismissed])

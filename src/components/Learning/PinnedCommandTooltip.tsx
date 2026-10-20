@@ -133,7 +133,9 @@ const PinnedCommandGestureDiagram = ({ gesture }: { gesture: string }) => (
     />
     <GestureDiagram
       path={gesture}
-      cssRaw={css.raw({ width: '100%', height: '100%' })}
+      // Inline rather than a className: GestureDiagram sets height: auto in its own class, and cx cannot make a
+      // second class that sets height win over it.
+      style={{ width: '100%', height: '100%' }}
       // Each gesture has its own bounds, so anchor the drawing to the box's bottom-left rather than centering
       // it; the left edge and the gap to the text then hold for every command.
       preserveAspectRatio='xMinYMax meet'
@@ -171,7 +173,7 @@ const LearningGenieButton = () => {
         <InfoGenieIcon
           size={24}
           fill={token('colors.pinnedCommandGenieIcon')}
-          cssRaw={css.raw({ width: '1.3333rem', height: '1.3333rem' })}
+          className={css({ width: '1.3333rem', height: '1.3333rem' })}
         />
       </CircleButton>
     </div>
@@ -226,7 +228,7 @@ const PinnedCommandTooltipTitle = ({ label, onClick }: { label: string; onClick:
           size={20}
           strokeWidth={2}
           fill='currentColor'
-          cssRaw={css.raw({
+          className={css({
             display: 'inline-block',
             width: '1.111em',
             height: '1.111em',
@@ -301,7 +303,7 @@ const ClearButton = ({ onClear }: { onClear: () => void }) => (
     })}
     {...fastClick(onClear)}
   >
-    <CloseIcon size={10} cssRaw={css.raw({ width: '0.5556rem', height: '0.5556rem' })} />
+    <CloseIcon size={10} className={css({ width: '0.5556rem', height: '0.5556rem' })} />
     <span>Clear</span>
   </div>
 )

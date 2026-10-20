@@ -6,7 +6,9 @@ import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
 import uncategorize from '../../actions/uncategorize'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import isContextViewActive from '../../selectors/isContextViewActive'
 import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
@@ -24,6 +26,25 @@ describe('normal view', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
+  })
+
+  // https://github.com/cybersemics/em/issues/5833
+  it('do nothing on a favorited thought with no other children', () => {
+    const text = `
+      - a
+        - =favorite
+      - b
+    `
+    const steps = [importText({ text }), setCursor(['a']), uncategorize({})]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =favorite
+  - b`)
+    expect(stateNew.alert?.value).toBe('Unable to uncategorize thought with no children')
   })
 
   it('uncategorize context with single child', () => {
@@ -150,12 +171,18 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
   })
 
-  it('after uncategorize context set cursor to the parent if there are no visible children.', () => {
+  it('do nothing on a thought with only meta attributes', () => {
     const steps = [newThought('a'), newSubthought('b'), newSubthought('=x'), cursorBack, uncategorize({})]
 
     const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-    expectPathToEqual(stateNew, stateNew.cursor, ['a'])
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+      - =x`)
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
+    expect(stateNew.alert?.value).toBe('Unable to uncategorize thought with no children')
   })
 
   it('collapse empty thought with empty child', () => {
@@ -380,6 +407,94 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
 
+  it('remove =favorite from a favorited context', () => {
+    const text = `
+      - a
+        - m
+          - x
+      - b
+        - test
+          - =favorite
+          - m
+            - y
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'test']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+  - b
+    - m
+      - y`)
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
+  })
+
+  it('remove =favorite from a favorited context whose instance of the thought is a leaf', () => {
+    const text = `
+      - a
+        - m
+      - b
+        - test
+          - =favorite
+          - m
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'test']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+  - b
+    - m`)
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
+  })
+
+  it('do nothing on the home context', () => {
+    const text = `
+      - m
+        - x
+      - a
+        - m
+          - y
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', HOME_TOKEN]),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - m
+    - x
+  - a
+    - m
+      - y`)
+    expect(stateNew.alert?.value).toBe('The "home context" may not be uncategorized.')
+  })
+
   it('uncategorize context subthought in context view', () => {
     const text = `
       - a
@@ -408,6 +523,40 @@ describe('context view', () => {
   - b
     - m
       - z`)
+  })
+
+  // https://github.com/cybersemics/em/issues/5847
+  it('uncategorize top-level context', () => {
+    const text = `
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['b', 'm']),
+      toggleContextView,
+      setCursor(['b', 'm', 'a']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - m
+    - x
+  - b
+    - m
+      - y`)
+
+    // the Context View on b/m stays open with the cursor on the home context, which is now a context of m
+    const contextViewPath = contextToPath(stateNew, ['b', 'm'])
+    expect(isContextViewActive(stateNew, contextViewPath)).toBe(true)
+    expect(stateNew.cursor).toEqual([...contextViewPath!, HOME_TOKEN])
   })
 })
 
@@ -526,6 +675,52 @@ describe('uncategorizing contexts with meta attributes', () => {
     - c
     - d
   - e`)
+  })
+
+  it('should remove =favorite when uncategorizing a context', () => {
+    const steps = [
+      importText({
+        text: `
+          - p
+            - a
+              - =favorite
+              - x
+        `,
+      }),
+      setCursor(['p', 'a']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - p
+    - x`)
+  })
+
+  it('should remove =favorite when uncategorizing a top-level context', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - =favorite
+            - x
+          - b
+        `,
+      }),
+      setCursor(['a']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - x
+  - b`)
   })
 
   it('should move meta attributes to the top when uncategorizing a context', () => {

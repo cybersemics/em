@@ -14,10 +14,11 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 - [Debug Log](debug-log.md) — The on-device rolling log that survives a freeze, how to get it off a device, and how to compare two of them.
 - [Learning Journey](learning.md) — Pinning a command to the corner widget, its gesture tooltip and practice-progress ring, reps, local learning state, and the help genie.
 - [Help Genie Architecture](help-genie.md) — Diagrams of how the help genie's modules fit together: its place in the app, its module dependencies, and one frame of its animation.
+- [iOS Safari Viewport](ios-safari-viewport.md) — How mobile Safari places fixed elements while the keyboard is open, what it reports to the page, overscroll and stale-rendering bugs, and the approaches that failed.
 
 ## Agents
 
-- [Agent Infrastructure](agents/readme.md) — How coding agents work on this repo: what the Copilot cloud agent reads, the skills they run, the environment and MCP servers behind them, the TDD workflow, and how Codex and Claude Code share the same suite.
+- [Agent Infrastructure](agents/readme.md) — How coding agents work on this repo: what the Copilot cloud agent reads, the skills they run, the environment and MCP servers behind them, the TDD workflow, how Codex and Claude Code share the same suite, and commit attribution hooks.
 
 ## Reference
 
