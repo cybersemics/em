@@ -20,6 +20,12 @@ export const isAndroid =
 /** Returns true if the navigator platform contains 'MacIntel'. */
 export const isMac = typeof navigator !== 'undefined' && navigator.platform === 'MacIntel'
 
+/** Returns true on iOS, including iPadOS identifying itself as a Mac in Safari's desktop browsing mode. */
+export const hasElasticOverscroll =
+  isIOS ||
+  (typeof navigator !== 'undefined' &&
+    (/iP(ad|hone|od)/.test(navigator.userAgent) || (isMac && navigator.maxTouchPoints > 1)))
+
 /** Returns true if the navigator platform contains 'iPhone'. */
 export const isiPhone = typeof navigator !== 'undefined' && navigator.platform === 'iPhone'
 
