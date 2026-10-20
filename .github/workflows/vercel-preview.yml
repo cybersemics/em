@@ -7,7 +7,7 @@ run-name: Vercel Preview
 # sandbox: approving a run allows the checked-out PR code to execute with the secrets listed below.
 # Review fork changes for secret-exfiltration paths before approving them.
 #
-# The Vercel builds are the web app and AI service, so documentation, agent/editor configuration,
+# The Vercel builds are the web app, AI service, and feedback service, so documentation, agent/editor configuration,
 # the native platform projects, and CI workflows and scripts cannot change the preview. A PR confined to them gets no
 # deployment and no preview comment, which is the intended outcome — there is nothing to look at.
 #
@@ -165,6 +165,33 @@ jobs:
       - name: Reset Vercel project state
         run: rm -rf .vercel
 
+      - name: Pull em-feedback Vercel environment
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM_FEEDBACK }}
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+
+      - name: Build em-feedback
+        env:
+          VERCEL_EXPERIMENTAL_BACKENDS: '1'
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM_FEEDBACK }}
+        run: vercel build --token="$VERCEL_TOKEN"
+
+      - name: Deploy em-feedback
+        id: deploy-feedback
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM_FEEDBACK }}
+        run: |
+          url="$(vercel deploy --prebuilt --token="$VERCEL_TOKEN" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
+          test -n "$url"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "- em-feedback preview: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check em-feedback health
+        run: curl --fail --retry 5 --retry-all-errors --retry-delay 2 "${{ steps.deploy-feedback.outputs.url }}/"
+
+      - name: Reset feedback Vercel project state
+        run: rm -rf .vercel
+
       - name: Pull em Vercel environment
         env:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM }}
@@ -175,6 +202,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM }}
           # Vite gives an existing process variable precedence over .env.production.
           VITE_AI_URL: ${{ steps.deploy-ai.outputs.url }}/ai
+          VITE_FEEDBACK_URL: ${{ steps.deploy-feedback.outputs.url }}/feedback
         run: vercel build --token="$VERCEL_TOKEN"
 
       - name: Deploy em

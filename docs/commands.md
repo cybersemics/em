@@ -896,3 +896,21 @@ The Command Universe grid mounts gesture diagrams within 180px of its inner scro
 Navigation accepts `transition: 'zoom' | 'none'`, defaulting to zoom. A visit without animation retains Back/Forward history and settles before focus moves into the destination. Zoom origins are measured relative to the page before navigation mounts the destination, avoiding a second layout-measurement render. Complete `transform: scale(...)` targets allow Motion to use native Web Animations. Opening the dialog can preserve an editor selection snapshot already captured by its caller.
 
 Top-level invocations trigger `commandEmitter`'s `commandSucceeded` event as soon as `exec` returns. The event identifies the invoked command and its input source, or `internal` when no source was provided. It is separate from the pre-execution `command` event that flushes pending edits. A command that fails `canExecute`, throws, or raises an app error during `exec` does not report success. Asynchronous work (AI requests, the AI disclosure prompt, Copy Cursor loading thoughts) is not awaited: the user has completed the command once it starts, whatever the server or clipboard later returns. A guard that should stop an invocation from counting as a success therefore belongs in `canExecute`, not in an early return from `exec`.
+
+## Send Feedback
+
+**Send Feedback** opens the feedback glass dialog from Command Universe or with the `rdldr` gesture. A link in Help
+opens the same form. The command preserves the cursor and multiselection. Name and email are optional and remembered
+only on the current device; clearing a field removes its saved value. Cancel, outside click, or Escape discards the
+unsent draft. While sending, dismissal and repeated submissions are disabled; a failed send preserves the draft for retry.
+
+Thoughts, display resolution, and debug logs each require an unchecked-by-default opt-in. The thought attachment is
+an indented plain-text export of the selected subtrees in document order, including notes, attributes, and archived
+descendants. Overlapping selections are deduplicated and descendants are read from persistence before a preview is
+shown. With no selection, thought attachment is disabled. The debug-log preview omits the page URL header and the
+full thoughtspace dump, but event entries can contain thought text. Attaching it does not enable logging.
+
+The form also accepts private image, text/log, JSON, and PDF uploads (five files, 10 MiB each, 25 MiB combined).
+The server receives app version, build commit, browser user agent, and platform with each submission. Collection,
+protected read-only maintainer access, setup, and deployment are documented in
+[the feedback service README](../packages/feedback/README.md).

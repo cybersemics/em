@@ -1,18 +1,10 @@
-import { FC } from 'react'
 import { cx } from '../../../styled-system/css'
 import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
-import Index from '../../@types/IndexType'
-
-interface IconProps {
-  fill?: string
-  size: number
-  style?: Index<string>
-  className?: string
-}
+import IconType from '../../@types/IconType'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const FeedbackIcon: FC<IconProps> = ({ fill, size = 20, style, className }) => {
+const FeedbackIcon = ({ fill, size = 20, style, className }: IconType) => {
   return (
     <svg
       className={cx(iconRecipe(), className)}

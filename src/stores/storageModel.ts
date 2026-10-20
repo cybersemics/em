@@ -9,6 +9,8 @@ type BackgroundGlowStorageType = { image: string | null; opacity: number }
 type CursorStorageType = { path: Path | null; offset: number | null }
 
 const storageModel = storage.model({
+  feedbackName: { default: '' },
+  feedbackEmail: { default: '' },
   // debug background glow overlay behind the thoughtspace (see BackgroundGlow)
   backgroundGlow: {
     default: { image: null, opacity: 0.6 } as BackgroundGlowStorageType,

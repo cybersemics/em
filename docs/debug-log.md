@@ -6,7 +6,7 @@ Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of i
 
 ## What it is
 
-A bounded buffer of 5000 entries, sharded across ten rotating `localStorage` keys so appending one entry rewrites 500 entries rather than all of them. Writes are **synchronous**, which is the whole point: an entry survives the freeze that happens on the next line. Nothing is ever transmitted — the log leaves the device only when a person exports it.
+A bounded buffer of 5000 entries, sharded across ten rotating `localStorage` keys so appending one entry rewrites 500 entries rather than all of them. Writes are **synchronous**, which is the whole point: an entry survives the freeze that happens on the next line. The log stays on the device until a person exports it or explicitly opts to attach it to feedback.
 
 Every entry shares an envelope and adds its own fields. As `format()` exports it:
 
@@ -119,3 +119,11 @@ Some shapes worth recognizing:
 - **A `caret` entry** is a programmatic caret placement — on Enter, a gesture, undo, or a tap — naming the thought, the `offset`, whether focus was routed through `asyncFocus`, and whether the editable was `hidden` (in which case the selection is cleared instead). Programmatic focus is what makes iOS scroll an editable into view.
 - **`keyboard` entries** (iOS app only) are the keyboard as iOS reports it: `willShow` with the `rawHeight`, and `willHide`. A `willShow` marked `ignored` arrived during a drag and changed nothing. Compare them with the `keyboardOpen` actions that set `isKeyboardOpen` to see which side moved first when edit mode disagrees with the screen.
 - **`viewport` entries** record the window, layout viewport (`clientHeight`) and visual viewport sizes, the visual viewport's `scale`, the scroll position, and whether the keyboard is open. One is written on every resize that changes them, one when the app becomes active (`resume`), one a second later (`settled`), since iOS can finish resizing after the page is active without firing a resize event, and one at the start and end of every scroll (`scrollStart`, `scrollEnd`) — not on each scroll event, which would flood the buffer. One more (`repaired`) is written a second after the viewport meta tag is rewritten to repair a visual viewport with a height of zero or less, which shows whether the repair took. A `clientHeight` or `visualViewportHeight` well below `innerHeight` while `isKeyboardOpen` is false means the page is still laid out for a keyboard that is gone: fixed and sticky elements such as the nav bar are then pinned mid-screen.
+
+## Attaching a log to feedback
+
+Send Feedback has an unchecked **Attach debug log** option with a warning and preview. It captures the existing log
+without enabling logging, omits the page URL header, and calls `format()` without Redux state, so no whole-thoughtspace
+dump is added. Event entries can still include thought text and device details. The previewed snapshot is what is
+submitted; subsequent events are not added automatically. Settings download/copy exports retain their full diagnostic
+format. See [Send Feedback](commands.md#send-feedback) and [the service setup](../packages/feedback/README.md).
