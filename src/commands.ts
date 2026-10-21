@@ -731,6 +731,10 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
     haptics.light()
   }
 
+  // While the pinned command tooltip is open the user is practicing the gesture it shows, so the gesture menu would
+  // only cover it. Haptics still confirm each segment.
+  if (state.showPinnedCommandTooltip) return
+
   // gesture menu
   // alert after a delay of COMMAND_PALETTE_TIMEOUT
   clearGestureMenuTimer()

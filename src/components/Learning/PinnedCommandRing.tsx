@@ -2,6 +2,7 @@ import { MotionValue, motion, useMotionValue, useMotionValueEvent, useTransform 
 import { PropsWithChildren, useId, useState } from 'react'
 import { css } from '../../../styled-system/css'
 import { PINNED_COMMAND_RING_SIZE } from '../../constants'
+import ringGeometry from './ringGeometry'
 import useRingFill from './useRingFill'
 import useRingFlourish from './useRingFlourish'
 
@@ -20,11 +21,13 @@ import useRingFlourish from './useRingFlourish'
  * The mask belongs inside the blur wrapper so both the inner and outer edges soften. See docs/learning.md.
  */
 
-const CENTER_X = 36.42
-const CENTER_Y = 36.16
-const TRACK_RADIUS = 17.95
-const FILL_RADIUS = 19.71
-const STROKE_WIDTH = 6
+const {
+  centerX: CENTER_X,
+  centerY: CENTER_Y,
+  trackRadius: TRACK_RADIUS,
+  fillRadius: FILL_RADIUS,
+  strokeWidth: STROKE_WIDTH,
+} = ringGeometry
 /** Number of blurred bands the fill arc is split into. Five is visually smooth; fewer shows steps in the blur. */
 const BLUR_LAYERS = 5
 const BLUR_SIGMA_TAIL = 7
