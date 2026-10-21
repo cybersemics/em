@@ -42,7 +42,7 @@ In every capture so far, the corruption followed a large autocrop shift. Autocro
 - **Remounting the element to force a repaint**, such as by bumping its `key`. It does repaint, but it also lays the element out again.
 - **Rewriting the viewport meta tag to clear the corrupt viewport after an app switch.** Adding `shrink-to-fit=no` and restoring it on the next frame, at the settled snapshot after resume and at the end of each scroll ([#6024](https://github.com/cybersemics/em/pull/6024)), ran five times in one session on a device and left `visualViewport.height` at -59 each time. `visualViewport.scale` stayed 1, so the corruption is not a zoom glitch.
 - **Hooking a repair to `visualViewport` resize.** It fires dozens of times a second while scrolling with the keyboard up.
-- **A taller background image instead of the mirror.** Each glow is about 1.25 MB at 1179×2556; hanging 200pt more off the bottom adds roughly 290 KB to download and 2.8 MB decoded per image, and every artwork has to be redrawn to continue the glow. The mirror costs neither.
+- **A taller background image instead of the mirror.** Each glow is drawn at 1179×2556; hanging 200pt more off the bottom adds roughly 8% to every image's download and 2.8 MB decoded at that size, and every artwork has to be redrawn to continue the glow. The mirror costs neither.
 
 ## Techniques
 
