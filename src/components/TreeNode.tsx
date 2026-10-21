@@ -17,31 +17,7 @@ import VirtualThought, { OnResize, SetSize } from './VirtualThought'
 
 /** Renders a thought component for mapped treeThoughtsPositioned. */
 const TreeNode = ({
-  belowCursor,
-  cliff,
-  depth,
-  env,
-  indexChild,
-  childIndexNonAttribute,
-  indexDescendant,
-  isCursor,
-  isEmpty,
-  isTableCol1,
-  isTableCol2,
-  thoughtKey,
-  leaf,
-  path,
-  prevChild,
-  showContexts,
-  isLastVisible,
-  simplePath,
-  singleLineHeightWithCliff,
-  style,
-  thoughtId,
-  width,
-  autofocus,
-  x,
-  y,
+  thought,
   index,
   viewportHeight,
   viewportBottomOffset,
@@ -54,8 +30,8 @@ const TreeNode = ({
   autofocusDepth,
   editing,
   ...transitionGroupsProps
-}: TreeThoughtPositioned & {
-  thoughtKey: string
+}: {
+  thought: TreeThoughtPositioned
   index: number
   viewportHeight: number
   /** The hidden space and overscan added to the bottom of the viewport for list virtualization. */
@@ -69,6 +45,33 @@ const TreeNode = ({
   autofocusDepth: number
   editing: boolean
 } & Pick<CSSTransitionProps, 'in'>) => {
+  const {
+    belowCursor,
+    cliff,
+    depth,
+    env,
+    indexChild,
+    childIndexNonAttribute,
+    indexDescendant,
+    isCursor,
+    isEmpty,
+    isTableCol1,
+    isTableCol2,
+    leaf,
+    path,
+    prevChild,
+    showContexts,
+    isLastVisible,
+    simplePath,
+    singleLineHeightWithCliff,
+    style,
+    thoughtId,
+    width,
+    autofocus,
+    x,
+    y,
+  } = thought
+
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
@@ -145,7 +148,7 @@ const TreeNode = ({
 
   return (
     <FadeTransition
-      id={thoughtKey}
+      id={thought.key}
       // The FadeTransition is only responsible for fade in on new thought and fade out on unmount. See autofocusChanged for autofocus opacity transition during navigation.
       // Archive, delete, and uncategorize get a special dissolve animation.
       // Context view children get special disappearing text animations
@@ -195,7 +198,7 @@ const TreeNode = ({
             // Do this as padding instead of y, otherwise there will be a gap between drop targets.
             // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
             style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
-            crossContextualKey={thoughtKey}
+            crossContextualKey={thought.key}
             cliff={cliff}
             prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
             isLastVisible={isLastVisible}
