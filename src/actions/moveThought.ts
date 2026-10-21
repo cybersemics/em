@@ -24,6 +24,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
+import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import keyValueBy from '../util/keyValueBy'
 import normalizeThought from '../util/normalizeThought'
 import pathToContext from '../util/pathToContext'
@@ -214,7 +215,15 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
       }
 
       // Moving within this context may have disabled sorting above.
-      const isSorted = getSortPreference(state, destinationThoughtId).type !== 'None'
+      const sortPreference = getSortPreference(state, destinationThoughtId)
+
+      // An empty or emoji-only thought has no meaningful sort key, so it keeps the rank the caller asked for, as
+      // newThought does when it inserts one into a sorted context. Otherwise indenting an empty thought into a sorted
+      // context would sort it to the top rather than to the end (#6066). Created is the exception, since there the
+      // point of creation is the sort key.
+      const isSorted =
+        sortPreference.type !== 'None' &&
+        (sortPreference.type === 'Created' || !isEmptyOrEmojiOnly(sourceThought.value))
 
       // A moved thought keeps its created timestamp, so a Created context sorts it by that rather than by its value.
       // Without it getSortedRank falls through to the alphabetical branch and ranks the thought against siblings it
@@ -275,11 +284,11 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
     !sameContext ? (state: State) => rerankUpdated(state, sourceParentThought.id) : null,
     !sameContext ? (state: State) => rerankUpdated(state, destinationThought.id) : null,
 
-    // Rebase every stored Path that runs through the moved thought onto the thought's new location: the cursor, the
-    // multiselect, and the Select Between range and anchor. This is the only point that knows both where the thought
-    // was and where it is now. A Path left behind names a parent that no longer contains the thought, so nothing below
-    // it renders, and a multiselect that is dropped somewhere else would otherwise land the cursor on such a Path when
-    // the selection ends (see multiselectCursorMiddleware).
+    // Rebase the selection Paths that run through the moved thought onto the thought's new location: the cursor, the
+    // multiselect, and the Select Between range and anchor. This knows both where the thought was and where it is now,
+    // which is lost once the move has happened. A Path left behind names a parent that no longer contains the thought,
+    // so nothing below it renders, and a multiselect that is dropped somewhere else would otherwise land the cursor on
+    // such a Path when the selection ends (see multiselectCursorMiddleware).
     state => {
       // Skipped when the thought no longer exists, i.e. it was merged into a duplicate in the destination.
       const isMovedThoughtLive = !!getThoughtById(state, sourceThought.id)

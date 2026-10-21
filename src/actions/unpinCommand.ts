@@ -6,6 +6,8 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 /** Clears the pinned command and erases its practice reps. Progress exists only while a command is pinned. */
 const unpinCommand = (state: State): State => ({
   ...state,
+  // Changing the pin closes its tooltip.
+  showPinnedCommandTooltip: false,
   learning: {
     pinnedCommandId: null,
     progress: {},

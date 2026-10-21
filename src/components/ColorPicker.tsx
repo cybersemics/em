@@ -22,6 +22,7 @@ const ColorSwatch: FC<{
   size?: number
 }> = ({ backgroundColor, color, label, shape, size }) => {
   const dispatch = useDispatch()
+  const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
   const commandStateForeColor = commandStateStore.useSelector(state => state.foreColor)
   const commandStateBackColor = commandStateStore.useSelector(state => state.backColor)
@@ -84,7 +85,7 @@ const ColorSwatch: FC<{
             textAlign: 'center',
           })}
           style={{
-            color: color && token(`colors.${color}` as const),
+            color: color && colors[color],
             fontSize: size,
             width: size - 1,
             height: size - 1,
@@ -94,7 +95,7 @@ const ColorSwatch: FC<{
         </span>
       ) : (
         <TextColorIcon
-          cssRaw={css.raw({
+          className={css({
             // TODO: Why does border crash the browser?
             // Even hardcoding 'solid 1px white' crashes the browser.
             // See: https://github.com/cybersemics/em/issues/2508
@@ -103,8 +104,8 @@ const ColorSwatch: FC<{
           })}
           size={size}
           style={{
-            color: backgroundColor ? token('colors.bg') : color && token(`colors.${color}` as const),
-            backgroundColor: backgroundColor && token(`colors.${backgroundColor}` as const),
+            color: backgroundColor ? colors.bg : color && colors[color],
+            backgroundColor: backgroundColor && colors[backgroundColor],
             fontWeight: selected ? 'bold' : 'normal',
           }}
           fill={selected ? token('colors.fg') : 'none'}
