@@ -188,7 +188,7 @@ const RingBurst = ({ burst }: { burst: number }) => {
     setIsPlaying(true)
     t.set(0)
     const animation = animate(t, [0, 1], {
-      duration: durations.get('pinnedCommandFlourish') / 1000,
+      duration: durations.get('slow') / 1000,
       ease: 'easeOut',
       onComplete: () => setIsPlaying(false),
     })
