@@ -17,6 +17,7 @@ import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
 import viewportStore from '../stores/viewportStore'
 import debugLog from '../util/debugLog'
+import durations from '../util/durations'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import BulletCursorOverlay from './BulletCursorOverlay'
@@ -85,9 +86,12 @@ const useAutocrop = (
   spaceAbove: number,
   {
     colorPickerHeight,
+    ref,
   }: {
     /** The height of the open Color Picker, or 0 when it is closed. See: viewportStore. */
     colorPickerHeight: number
+    /** The element that is shifted by autocrop. Animated when the Color Picker closes near the top of the page. */
+    ref: RefObject<HTMLElement | null>
   },
 ): number => {
   // get the scroll position before the render so it can be preserved
@@ -102,6 +106,8 @@ const useAutocrop = (
   const autocrop = -spaceAboveExtended + viewportHeight + colorPickerHeight
 
   const autocropLast = useRef(autocrop)
+  const colorPickerHeightLast = useRef(colorPickerHeight)
+  const closeAnimation = useRef<Animation | null>(null)
 
   // When the thoughts are shifted, scroll by the same amount so that they appear to stay in the same place.
   // Track the shift itself rather than spaceAboveExtended, which also changes with the viewport height, e.g. on rotation (#3990).
@@ -116,8 +122,23 @@ const useAutocrop = (
         autocropLast: autocropLast.current,
         top: Math.round(scrollY + autocrop - autocropLast.current),
       }))
-      window.scrollTo({ top: scrollY + autocrop - autocropLast.current })
+      const top = scrollY + autocrop - autocropLast.current
+      window.scrollTo({ top: Math.max(0, top) })
+
+      // The page cannot scroll above the top, so when the Color Picker closes with less than its height scrolled, the
+      // thoughts move up by the part of the shift that the scroll could not take. Slide them up instead of jumping, by
+      // animating the transform from where they were. Only the compositor has to handle it. (#6057)
+      closeAnimation.current?.cancel()
+      closeAnimation.current =
+        top < 0 && colorPickerHeight < colorPickerHeightLast.current && ref.current
+          ? ref.current.animate(
+              [{ transform: `translateY(${autocrop - top}px)` }, { transform: `translateY(${autocrop}px)` }],
+              { duration: durations.get('medium'), easing: 'ease-out' },
+            )
+          : null
+
       autocropLast.current = autocrop
+      colorPickerHeightLast.current = colorPickerHeight
     },
     // do not trigger effect on scrollY change
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -127,6 +148,10 @@ const useAutocrop = (
   return autocrop
 }
 
+/** Returns the distance from the top of the document to an element, summing offsetTop up the chain of offset parents. Unlike getBoundingClientRect, it ignores transforms, such as the autocrop shift. */
+const documentOffsetTop = (el: Element | null): number =>
+  el instanceof HTMLElement ? el.offsetTop + documentOffsetTop(el.offsetParent) : 0
+
 /** A hook that returns a ref to the content div and updates the viewport store's layoutTreeTop property on mount. */
 const useLayoutTreeTop = (
   ref: RefObject<HTMLElement | null>,
@@ -135,7 +160,8 @@ const useLayoutTreeTop = (
 ) => {
   useEffect(() => {
     if (!ref.current) return
-    viewportStore.update({ layoutTreeTop: (ref.current?.offsetTop || 0) + autocrop })
+    // offsetTop alone is relative to the offset parent, which starts below the safe-area inset at the top on iOS Capacitor (#6057)
+    viewportStore.update({ layoutTreeTop: documentOffsetTop(ref.current) + autocrop })
   }, [ref, autocrop])
 
   return ref
@@ -258,7 +284,7 @@ const LayoutTree = () => {
   const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
 
   const colorPickerHeight = viewportStore.useSelector(viewport => viewport.colorPickerHeight)
-  const autocrop = useAutocrop(spaceAbove, { colorPickerHeight })
+  const autocrop = useAutocrop(spaceAbove, { colorPickerHeight, ref })
 
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
@@ -270,6 +296,8 @@ const LayoutTree = () => {
   // Color Picker changes neither the y nor the height of the cursor. The open Color Picker is part of the toolbar, so
   // scrollCursorIntoView already clears it. This effect is declared after useAutocrop and useLayoutTreeTop so that it
   // runs after the thoughts have been shifted down to make room for the Color Picker and layoutTreeTop includes the shift.
+  // The cursor is kept two lines below the Color Picker, so that a thought just below it is moved down as well, rather
+  // than being left touching it.
   // The scroll waits two frames, until the counter-scroll in useAutocrop has been painted. WebKit applies a scroll on a
   // separate thread, and a smooth scroll requested in the same frame as an instant one jumps straight to its target
   // instead of animating.
@@ -279,7 +307,9 @@ const LayoutTree = () => {
       const { y, height } = cursorThoughtPositioned
       const frameRef = { current: 0 }
       frameRef.current = requestAnimationFrame(() => {
-        frameRef.current = requestAnimationFrame(() => scrollCursorIntoView(y, height))
+        frameRef.current = requestAnimationFrame(() =>
+          scrollCursorIntoView(y, height, { marginAbove: singleLineHeight * 2 }),
+        )
       })
       return () => cancelAnimationFrame(frameRef.current)
     },

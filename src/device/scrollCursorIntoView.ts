@@ -8,14 +8,20 @@ import debugLog from '../util/debugLog'
 // A scroll that is waiting for preventAutoscroll to finish. Held so that it can be cancelled, since it is a scroll that has been decided on but not yet performed.
 let preventAutoscrollTimer: ReturnType<typeof setTimeout> | undefined
 
+/** Options for scrollCursorIntoView. */
+interface ScrollCursorIntoViewOptions {
+  /** Extra space to keep between the element and the bottom of the toolbar. Defaults to 0. */
+  marginAbove?: number
+}
+
 /** Scrolls the minimum amount necessary to move the viewport so that it includes the element. */
-const scrollIntoViewIfNeeded = (y: number, height: number) => {
+const scrollIntoViewIfNeeded = (y: number, height: number, { marginAbove = 0 }: ScrollCursorIntoViewOptions = {}) => {
   // preventAutoscroll works by briefly increasing the element's height, which breaks isElementInViewport.
   // Therefore, we need to wait until preventAutoscroll is done.
   // See: preventAutoscroll.ts
   if (isPreventAutoscrollInProgress()) {
     preventAutoscrollTimer = setTimeout(() => {
-      scrollIntoViewIfNeeded(y, height)
+      scrollIntoViewIfNeeded(y, height, { marginAbove })
     }, PREVENT_AUTOSCROLL_TIMEOUT)
     return
   }
@@ -72,7 +78,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const navbarObstruction = isIOSCapacitor && keyboardOpen ? 0 : (navbarRect?.height ?? 0)
   const bottomBoundary = effectiveViewportHeight - navbarObstruction
 
-  const isAboveViewport = yViewport < toolbarBottom
+  const isAboveViewport = yViewport < toolbarBottom + marginAbove
   const isBelowViewport = yViewport + height > bottomBoundary
 
   if (!isAboveViewport && !isBelowViewport) return
@@ -87,7 +93,9 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // toolbarBottom (which includes the inset) rather than the toolbar height; otherwise the element is scrolled
   // behind the toolbar, which causes the cursor to be pinned near the top and the list to scroll up repeatedly. (#4326)
   const aboveOffset = isIOSCapacitor ? toolbarBottom : (toolbarRect?.height ?? 0)
-  const scrollYNew = isAboveViewport ? yDocument - aboveOffset - height / 2 : yDocument - bottomBoundary + height * 1.5
+  const scrollYNew = isAboveViewport
+    ? yDocument - aboveOffset - marginAbove - height / 2
+    : yDocument - bottomBoundary + height * 1.5
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
@@ -110,6 +118,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
     scrollY: Math.round(window.scrollY),
     yViewport: Math.round(yViewport),
     toolbarBottom: Math.round(toolbarBottom),
+    marginAbove,
     // which of the two viewport heights bounded the cursor: the iOS Capacitor keyboard branch or visualViewport
     keyboardOpen,
     visualViewportHeight: Math.round(visualViewportHeight),
@@ -128,7 +137,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
 }
 
 /** Scrolls the cursor into view if needed. */
-const scrollCursorIntoView = (y: number, height: number) => {
+const scrollCursorIntoView = (y: number, height: number, options?: ScrollCursorIntoViewOptions) => {
   // bump scroll on Mobile Safari
   // otherwise Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
@@ -136,7 +145,7 @@ const scrollCursorIntoView = (y: number, height: number) => {
     window.scrollBy(0, 1)
   }
 
-  scrollIntoViewIfNeeded(y, height)
+  scrollIntoViewIfNeeded(y, height, options)
 }
 
 /** Cancels a scroll that is waiting for preventAutoscroll to finish. Does not affect a scroll that has already been performed. */
