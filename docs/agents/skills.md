@@ -76,7 +76,7 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`end-session`](#end-session) | Work through the exit checklist before stopping for any reason | [SKILL.md](../../.github/skills/end-session/SKILL.md) |
 | [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
 | [`bisect`](#bisect) | Find whether a bug is a recent regression, and the commit and pull request that introduced it | [SKILL.md](../../.github/skills/bisect/SKILL.md) |
-| `create-issue` | Write a GitHub issue in the format this repo uses | [SKILL.md](../../.github/skills/create-issue/SKILL.md) |
+| `create-issue` | Write a GitHub issue, or the reproduction sections of a pull request with no linked issue, in the format this repo uses | [SKILL.md](../../.github/skills/create-issue/SKILL.md) |
 | [`liminal`](#liminal) | Style a static artifact, such as a report page, like em's Liminal UI | [SKILL.md](../../.github/skills/liminal/SKILL.md) |
 | [`report-review-gaps`](#report-review-gaps) | Report the feedback a final reviewer gave after the first review, as review principles | [SKILL.md](../../.github/skills/report-review-gaps/SKILL.md) |
 
@@ -321,7 +321,7 @@ The escalation rule is the interesting one. If a change contradicts **design int
 
 **Source: [`.github/skills/liminal/SKILL.md`](../../.github/skills/liminal/SKILL.md)**
 
-Runs on demand — when someone asks for a static artifact, such as a report page built outside the app, in em's look. It is never used to change the app's own UI. It gives the colour tokens, base CSS and conventions for em's Liminal UI: white on pure black, translucent surfaces, and the background glow from `public/img/glow/`, published next to the page. It has a single dark theme, and it keeps long links and code blocks wrapped so nothing scrolls sideways on a phone.
+Runs on demand — when someone asks for a static artifact, such as a report page built outside the app, in em's look. It is never used to change the app's own UI. It gives the colour tokens, base CSS and conventions for em's Liminal UI: white on pure black, translucent surfaces, and a small copy of the background glow, embedded in the page so the Artifact stays a single file that can be shared. It has a single dark theme, and it keeps long links and code blocks wrapped so nothing scrolls sideways on a phone.
 
 ### report-review-gaps
 

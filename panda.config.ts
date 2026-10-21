@@ -1,5 +1,6 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
+import breakpointsConfig from './src/breakpoints.config'
 import durationsConfig from './src/durations.config'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
@@ -17,6 +18,7 @@ import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
 import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
+import notificationRecipe from './src/recipes/notification'
 import panelCommandGroupRecipe from './src/recipes/panelCommandGroupRecipe'
 import panelCommandRecipe from './src/recipes/panelCommandRecipe'
 import slideTransitionRecipe from './src/recipes/slideTransition'
@@ -476,14 +478,7 @@ export default defineConfig({
   theme: {
     extend: {
       keyframes,
-      breakpoints: {
-        sm: '320px', // approx size of iPhone SE
-        md: '400px', // approx size of iPhone 12 Pro
-        lg: '600px', // landscape mobile devices and larger
-        xl: '800px', // approx size of a laptop
-        '2xl': '1000px', // approx size of a desktop
-        '3xl': '1200px', // approx size of a large desktop
-      },
+      breakpoints: breakpointsConfig,
       tokens: {
         colors: colorTokens,
         easings: {
@@ -532,10 +527,15 @@ export default defineConfig({
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
         zIndex: {
           ...zIndexDescending([
+            // The help genie flies over everything, including the Command Universe dialog it is let out from. Its
+            // canvas ignores pointer events, so it never blocks what is beneath it.
+            'helpGenie',
+            // Above dialogs so the pinned command stays visible over the Mobile Command Universe. See docs/learning.md.
+            'pinnedCommandExpanded',
             'dialog',
             'dialogContainer',
             'popup',
-            'tip',
+            'notification',
             'cloneDroppedThought',
             'hoverArrow',
             'gestureTrace',
@@ -592,6 +592,7 @@ export default defineConfig({
         dialogRecipe,
         modalRecipe,
         modalTextRecipe,
+        notificationRecipe,
         fadeTransitionRecipe,
         slideTransitionRecipe,
       },

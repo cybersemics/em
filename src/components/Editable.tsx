@@ -546,7 +546,7 @@ const Editable = ({
         // Neither focus may scroll: on iOS 27, focusing the dummy input and then the editable again scrolls the cursor
         // thought to the center of the screen, even though it was already visible (#5676).
         editableSyncStore.update({ suppressBlurSync: true })
-        asyncFocus({ force: true, preventScroll: true })
+        asyncFocus({ force: true })
         editableSyncStore.update({ suppressBlurSync: false })
 
         debugLog.log('retarget', { step: 'preventAutoscroll', savedOffset: savedCharOffset })

@@ -1,7 +1,6 @@
 import { CSSProperties } from 'react'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
-import { SystemStyleObject } from '../../../styled-system/types'
 import fastClick from '../../util/fastClick'
 
 const PATHS = {
@@ -23,7 +22,7 @@ const roundedPath = (direction: 'up' | 'down', width: number, height: number, st
 interface ChevronIconProps {
   /** Makes the chevron itself clickable. Omit when an ancestor already handles the click, so that the svg does not become a nested role='button'. */
   onClickHandle?: () => void
-  cssRaw?: SystemStyleObject
+  className?: string
   additonalStyle?: CSSProperties
   /** Which way the chevron points. Defaults to 'down'. */
   direction?: 'up' | 'down'
@@ -42,7 +41,7 @@ interface ChevronIconProps {
 /** A downward facing chevron. */
 const ChevronIcon = ({
   onClickHandle,
-  cssRaw,
+  className,
   additonalStyle,
   direction = 'down',
   fill,
@@ -63,7 +62,7 @@ const ChevronIcon = ({
       width={width}
       style={additonalStyle}
       {...(onClickHandle ? fastClick(onClickHandle, { enableHaptics: false }) : null)}
-      className={css({ cursor: 'pointer' }, cssRaw)}
+      className={cx(css({ cursor: 'pointer' }), className)}
     >
       {rounded ? (
         <path
