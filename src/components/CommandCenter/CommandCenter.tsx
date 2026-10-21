@@ -16,6 +16,7 @@ import { Sheet, SheetRef, SheetTweenConfig, useScrollPosition } from 'react-moda
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
+import VirtualKeyboardState from '../../@types/VirtualKeyboardState'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../../actions/clearMulticursors'
 import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
 import { isTouch } from '../../browser'
@@ -28,8 +29,11 @@ import note from '../../commands/note'
 import outdent from '../../commands/outdent'
 import swapParent from '../../commands/swapParent'
 import uncategorize from '../../commands/uncategorize'
+import useSafeArea from '../../hooks/useSafeArea'
 import isTutorial from '../../selectors/isTutorial'
 import backgroundGlowStore from '../../stores/backgroundGlowStore'
+import viewportStore from '../../stores/viewportStore'
+import virtualKeyboardStore from '../../stores/virtualKeyboardStore'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import CommandTable from '../CommandTable'
@@ -165,7 +169,7 @@ const HiddenOverlay = () => {
  * calculated from `y` alone, and so is every animation. That way, the drawer can follow the finger
  * movement.
  */
-const useSheetTransforms = (ref: React.RefObject<SheetRef | null>, bounceY: MotionValue<number>) => {
+const useSheetTransforms = (ref: React.RefObject<SheetRef | null>, drawerY: MotionValue<number>) => {
   /*
    * Force a re-render once the Sheet ref is attached so that the motion transforms below re-run
    * their compute functions while ref.current is set, allowing them to subscribe to the sheet's
@@ -179,9 +183,10 @@ const useSheetTransforms = (ref: React.RefObject<SheetRef | null>, bounceY: Moti
     if (ref.current) setSheetReady(true)
   }, [ref])
 
-  // Keep the falloff gradient and blur attached to the drawer while it bounces upward.
+  // Keep the falloff gradient and blur attached to the drawer while the expand bounce or the keyboard
+  // lifts it above its stage.
   const height = useTransform(() => {
-    return (ref.current?.yInverted.get() ?? 0) - bounceY.get()
+    return (ref.current?.yInverted.get() ?? 0) - drawerY.get()
   })
   /**
    * Controls the blur height, and the overlay opacity outside a collapse.
@@ -385,6 +390,46 @@ const useExpandBounce = ({
 }
 
 /**
+ * Lifts the drawer above the virtual keyboard. Capacitor disables viewport resizing, so `avoidKeyboard`
+ * cannot detect the keyboard on iOS; its padding also targets a scroller we don't use.
+ *
+ * Caps the offset to keep the header onscreen in short viewports.
+ *
+ * Freezes the offset during close so the Note command opening the keyboard doesn't lift the drawer mid-dismiss.
+ */
+const useSheetKeyboardOffset = (sheetRef: React.RefObject<SheetRef | null>) => {
+  /** The virtual keyboard's live height. A MotionValue, not React state: the drawer follows the keyboard on the compositor, so the command list does not re-render on every frame. */
+  const keyboardHeight = useMotionValue(0)
+  virtualKeyboardStore.useEffect(
+    useCallback((state: VirtualKeyboardState) => keyboardHeight.set(state.height), [keyboardHeight]),
+  )
+
+  /** The offset as it was when a close began, or null while the drawer is open. */
+  const keyboardOffsetSnapshot = useRef<number | null>(null)
+
+  const { top: safeAreaTop } = useSafeArea()
+  const innerHeight = viewportStore.useSelector(state => state.innerHeight)
+
+  const keyboardOffset = useTransform(() => {
+    const headroom = Math.max(innerHeight - safeAreaTop - (sheetRef.current?.yInverted.get() ?? 0), 0)
+    const offset = Math.min(keyboardHeight.get(), headroom)
+    return keyboardOffsetSnapshot.current ?? offset
+  })
+
+  /** Saves the current offset so the drawer stays in place while it closes. */
+  const hold = useCallback(() => {
+    keyboardOffsetSnapshot.current = keyboardOffset.get()
+  }, [keyboardOffset])
+
+  /** Discards the close-time snapshot so the offset follows the keyboard again. */
+  const release = useCallback(() => {
+    keyboardOffsetSnapshot.current = null
+  }, [])
+
+  return { keyboardOffset, hold, release }
+}
+
+/**
  * A panel that displays the Command Center.
  */
 const CommandCenter = () => {
@@ -395,11 +440,18 @@ const CommandCenter = () => {
   const isTutorialOn = useSelector(isTutorial)
   const fontSize = useSelector(state => state.fontSize)
   const sheetRef = useRef<SheetRef>(null)
+
   /** Lift above the expanded stage, driven by the bounce. Owned here because the falloff gradient derives from it as well. */
   const bounceY = useMotionValue(0)
+
+  const { keyboardOffset, hold: holdKeyboardOffset, release: releaseKeyboardOffset } = useSheetKeyboardOffset(sheetRef)
+
+  /** The y applied to the drawer: the expand bounce plus the keyboard offset. The falloff, glow and blur read this, so they stay attached to the drawer's top edge. */
+  const drawerY = useTransform(() => bounceY.get() - keyboardOffset.get())
+
   const { height, opacity, blurHeight, stageProgress, onDragStart, clearExpandedSnap } = useSheetTransforms(
     sheetRef,
-    bounceY,
+    drawerY,
   )
 
   const backgroundGlow = backgroundGlowStore.useState()
@@ -528,11 +580,18 @@ const CommandCenter = () => {
     if (sheet && sheet.snapPoints.length > 0 && sheet.y.get() < stageOffset / 2) sheet.snapTo(SNAP_STANDARD)
   }, [stageOffset])
 
+  /** Freezes the keyboard offset and releases the overlay hold as the drawer starts to slide out. */
+  const onCloseStart = useCallback(() => {
+    holdKeyboardOffset()
+    clearExpandedSnap()
+  }, [clearExpandedSnap, holdKeyboardOffset])
+
   const onCloseEnd = useCallback(() => {
+    releaseKeyboardOffset()
     setIsCommandTableMounted(false)
     setStage('standard')
     resetBounce()
-  }, [resetBounce])
+  }, [resetBounce, releaseKeyboardOffset])
 
   useEffect(() => {
     if (isTouch && showCommandCenter && showSidebar) onClose()
@@ -589,11 +648,12 @@ const CommandCenter = () => {
           onCloseEnd={onCloseEnd}
           onDragStart={onSheetDragStart}
           onDrag={onBounceDrag}
-          /** Must be onCloseStart rather than onClose: the Done button and the swipe-down gesture dismiss the drawer by clearing the multicursors in Redux and never call onClose, so releasing the hold there would leave the overlay at full opacity for the whole dismiss animation. */
-          onCloseStart={clearExpandedSnap}
+          /**
+           * Runs as the drawer starts to slide out. It clears `isSnappingFromExpandedRef` so the overlay fades with the drawer, and freezes the keyboard offset so a late keyboard does not lift the drawer back up.
+           * Should not put on `onClose`, because the Done button and swipe-down close the drawer through Redux and never call it.
+           */
+          onCloseStart={onCloseStart}
           disableDismiss={stage === 'expanded'}
-          /** The expanded stage's search field would otherwise auto-snap the sheet and disable dragging while the keyboard is open. Em manages the virtual keyboard itself. */
-          avoidKeyboard={false}
           tweenConfig={tweenConfig}
           style={{
             /** Override default Sheet zIndex. */
@@ -691,14 +751,21 @@ const CommandCenter = () => {
             }}
           >
             <motion.div
-              /** Carries the expand bounce. Sheet.Container cannot: the Sheet overwrites its transform. Repeats the container's flex column so the layout is unchanged, and keeps its own compositor layer, since this subtree has blanked for a frame on Android WebView when animated beside a backdrop-filter. */
+              /**
+               * This wrapper handles the expand bounce animation and shifts the content to account for the keyboard.
+               * These transforms cannot go on Sheet.Container because the Sheet overwrites its transform.
+               * The wrapper uses the same flex-column layout as the container to preserve the content's layout.
+               *
+               * A separate compositor layer prevents the content from briefly disappearing on Android WebView
+               * when it animates next to an element with backdrop-filter.
+               */
               className={css({
                 display: 'flex',
                 flexDirection: 'column',
                 minHeight: 0,
                 width: '100%',
               })}
-              style={{ y: bounceY, willChange: 'transform' }}
+              style={{ y: drawerY, willChange: 'transform' }}
             >
               <Sheet.Header
                 className={css({
