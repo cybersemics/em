@@ -1,6 +1,7 @@
 import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
@@ -12,6 +13,7 @@ import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
+import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForNoteFocus from '../helpers/waitForNoteFocus'
 import waitForSelector from '../helpers/waitForSelector'
@@ -332,5 +334,38 @@ describe('mobile only', () => {
     const highlightedCount = await page.evaluate(() => document.querySelectorAll('[data-highlighted=true]').length)
 
     expect(highlightedCount).toBe(0)
+  })
+
+  // https://github.com/cybersemics/em/issues/5994
+  it.skip('does not animate the greyed-out Undo button when there is nothing to undo', async () => {
+    // Puppeteer seeks a Lottie animation to its last frame and unmounts it as soon as it is ready, so count every time the Undo button's animation mounts rather than reading the DOM after the tap.
+    await page.evaluate(() => {
+      const undoWindow = window as unknown as { undoAnimations: number }
+      undoWindow.undoAnimations = 0
+      new MutationObserver(mutations => {
+        mutations.forEach(mutation =>
+          mutation.addedNodes.forEach(node => {
+            if (
+              node instanceof Element &&
+              node.closest('[data-testid="toolbar-icon"][aria-label="Undo"]') &&
+              (node.matches('.lottie-display') || node.querySelector('.lottie-display'))
+            ) {
+              undoWindow.undoAnimations++
+            }
+          }),
+        )
+      }).observe(document.body, { childList: true, subtree: true })
+    })
+
+    await clickToolbar('Undo')
+    await waitForBrowserSettled()
+
+    expect(await page.evaluate(() => (window as unknown as { undoAnimations: number }).undoAnimations)).toBe(0)
+
+    // the same tap animates the Undo button once there is something to undo, so the tap above reached the button
+    await gesture(newThoughtCommand)
+    await keyboard.type('a')
+    await clickToolbar('Undo')
+    await page.waitForFunction(() => (window as unknown as { undoAnimations: number }).undoAnimations === 1)
   })
 })
