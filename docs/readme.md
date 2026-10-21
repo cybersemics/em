@@ -16,6 +16,10 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 - [Help Genie Architecture](help-genie.md) — Diagrams of how the help genie's modules fit together: its place in the app, its module dependencies, and one frame of its animation.
 - [iOS Safari Viewport](ios-safari-viewport.md) — How mobile Safari places fixed elements while the keyboard is open, what it reports to the page, overscroll and stale-rendering bugs, and the approaches that failed.
 
+## Solutions
+
+- [Solutions](solutions/readme.md) — Durable learnings recovered from closed issues and merged pull requests: the non-obvious cause, the approach that failed, the guardrail. Where the docs above say how a subsystem works, these say how it went wrong. Grep here when you are standing in front of a symptom.
+
 ## Agents
 
 - [Agent Infrastructure](agents/readme.md) — How coding agents work on this repo: what the Copilot cloud agent reads, the skills they run, the environment and MCP servers behind them, the TDD workflow, how Codex and Claude Code share the same suite, and commit attribution hooks.
