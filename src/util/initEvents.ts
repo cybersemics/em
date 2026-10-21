@@ -41,6 +41,9 @@ import durations from './durations'
 import equalPath from './equalPath'
 import head from './head'
 
+// TEMPORARY (#5895 experiment)
+const WITHHOLDING_KEY = 'em-withholding-tab'
+
 // the width of the scroll-at-edge zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
 const TOOLBAR_SCROLLATEDGE_SIZE = 50
 const WINDOW_SCROLLATEDGE_UP_SIZE = 120
@@ -253,6 +256,16 @@ const initEvents = (store: Store<State, any>) => {
     () => {
       // editables are not long-pressable on desktop, so the range will only be a concern on mobile
       if (isTouch) selectionRangeStore.update(!selection.isCollapsed())
+      // TEMPORARY (#5895 experiment): WebKit 27 withholds near the caret for the rest of the tab once handles are shown.
+      if (
+        isTouch &&
+        !selection.isCollapsed() &&
+        (osVersionStore.getState() ?? 0) >= 27 &&
+        !sessionStorage.getItem(WITHHOLDING_KEY)
+      ) {
+        sessionStorage.setItem(WITHHOLDING_KEY, '1')
+        debugLog.log('withholdingTab')
+      }
       storageModel.set('cursor', value => ({
         path: value?.path || store.getState().cursor,
         offset: selection.offsetThought(),
@@ -367,9 +380,27 @@ const initEvents = (store: Store<State, any>) => {
     const touch = e.changedTouches[0]
     const state = store.getState()
     const isEmptyThought = !!state.cursor && getThoughtById(state, head(state.cursor))?.value === ''
+    // TEMPORARY (#5895 experiment): treat WebKit 27's 44pt withholding zone around the caret as on the caret.
+    const caret =
+      (osVersionStore.getState() ?? 0) >= 27 &&
+      !!sessionStorage.getItem(WITHHOLDING_KEY) &&
+      !!touch &&
+      selection.isCollapsed() &&
+      selection.caretRectViewport()
+    const inWithheldZone =
+      !!caret &&
+      touch.clientX >= caret.x - 44 &&
+      touch.clientX <= caret.x + 44 &&
+      touch.clientY >= caret.y - 44 &&
+      touch.clientY <= caret.y + caret.height + 44
+    if (inWithheldZone)
+      debugLog.log('pressInWithheldZone', () => ({ x: Math.round(touch.clientX), y: Math.round(touch.clientY) }))
     touchStore.update({
       pressOnCaret:
-        isTouch && (isSafari() || isEmptyThought) && !!touch && selection.isCaretNear(touch.clientX, touch.clientY),
+        isTouch &&
+        (isSafari() || isEmptyThought) &&
+        !!touch &&
+        (inWithheldZone || selection.isCaretNear(touch.clientX, touch.clientY)),
       pressInEmptyThought:
         isTouch &&
         isEmptyThought &&

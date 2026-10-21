@@ -13,7 +13,7 @@ import waitUntil from '../helpers/waitUntil'
 
 describe('Gestures', () => {
   // https://github.com/cybersemics/em/issues/6077
-  it.skip('does not scroll the document when a drag starts near a selection', async () => {
+  it('does not scroll the document when a drag starts near a selection', async () => {
     /** Generates n sibling thoughts named prefix0, prefix1, …. */
     const filler = (prefix: string, n: number) => Array.from({ length: n }, (_, i) => `- ${prefix}${i}`).join('\n')
     await disableTransitions()

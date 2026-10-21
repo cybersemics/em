@@ -3,3 +3,19 @@
   See: https://panda-css.com/docs/concepts/writing-styles
 */
 @layer reset, base, tokens, recipes, utilities;
+
+/* TEMPORARY (#6077 experiment): no native panning from the thought being edited or just to the right of its text */
+[data-editing='true'] [aria-label='thought'],
+[data-editing='true'] [aria-label='thought-annotation'] > div {
+  touch-action: pinch-zoom;
+}
+/* the annotation, unlike the thought, has no long press handlers */
+[data-editing='true'] [aria-label='thought-annotation'] > div::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 100%;
+  width: 44px;
+  touch-action: pinch-zoom;
+}
