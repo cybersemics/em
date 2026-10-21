@@ -117,7 +117,7 @@ it('rejects a chained gesture that ends in the pinned gesture', async () => {
   ).toBe('false')
 })
 
-it('does nothing for a gesture that matches no command while the tooltip is open', async () => {
+it('rejects a gesture that matches no command while the tooltip is open', async () => {
   await paste(`
     - a
     - b

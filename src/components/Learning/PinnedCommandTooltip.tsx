@@ -104,7 +104,7 @@ const useDismissOnOutsideTap = (isOpen: boolean, insideRefs: RefObject<HTMLEleme
  * swipe-to-dismiss handler. The glow is positioned relative to the diagram box so the two stay aligned on every device.
  * Sizes were tuned against the design at 393pt.
  *
- * When the gesture of another command is rejected while the tooltip is open, the diagram blinks twice to point at the
+ * When any other gesture is rejected while the tooltip is open, the diagram blinks twice to point at the
  * gesture it is waiting for. The diagram dips to 30% opacity and its glow, more gently, to 75%. Opacity is not motion,
  * so the blink plays under reduced motion too.
  */
