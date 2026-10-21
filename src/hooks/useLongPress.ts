@@ -138,19 +138,6 @@ const useLongPress = (
     return () => window.removeEventListener('mouseup', stop, { capture: true })
   }, [pressing, stop])
 
-  // When iOS 27 takes over a withheld touch, e.g. for a native scroll, it cancels the pointer but sends neither touchcancel
-  // nor touchend (#5895).
-  useEffect(() => {
-    if (!pressing || (osVersionStore.getState() ?? 0) < 27) return
-
-    /** Ends the press if a touch was cancelled. */
-    const onPointerCancel = (e: PointerEvent) => {
-      if (e.pointerType === 'touch') stop(e)
-    }
-    window.addEventListener('pointercancel', onPointerCancel, { capture: true })
-    return () => window.removeEventListener('pointercancel', onPointerCancel, { capture: true })
-  }, [pressing, stop])
-
   // A withheld tap can get no mouseup either, but iOS still moves the caret when it lifts (#5660). A finger still down
   // does not move the caret before the long press delay, and once DragHold begins em blurs the editable itself.
   useEffect(() => {
