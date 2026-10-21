@@ -321,7 +321,7 @@ The escalation rule is the interesting one. If a change contradicts **design int
 
 **Source: [`.github/skills/liminal/SKILL.md`](../../.github/skills/liminal/SKILL.md)**
 
-Runs on demand — when someone asks for a static artifact, such as a report page built outside the app, in em's look. It is never used to change the app's own UI. It gives the colour tokens, base CSS and conventions for em's Liminal UI: white on pure black, translucent surfaces, and the background glow from `public/img/glow/`, published next to the page. It has a single dark theme, and it keeps long links and code blocks wrapped so nothing scrolls sideways on a phone.
+Runs on demand — when someone asks for a static artifact, such as a report page built outside the app, in em's look. It is never used to change the app's own UI. It gives the colour tokens, base CSS and conventions for em's Liminal UI: white on pure black, translucent surfaces, and a small copy of the background glow, embedded in the page so the Artifact stays a single file that can be shared. It has a single dark theme, and it keeps long links and code blocks wrapped so nothing scrolls sideways on a phone.
 
 ### report-review-gaps
 
