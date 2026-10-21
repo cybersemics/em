@@ -270,11 +270,18 @@ const LayoutTree = () => {
   // Color Picker changes neither the y nor the height of the cursor. The open Color Picker is part of the toolbar, so
   // scrollCursorIntoView already clears it. This effect is declared after useAutocrop and useLayoutTreeTop so that it
   // runs after the thoughts have been shifted down to make room for the Color Picker and layoutTreeTop includes the shift.
+  // The scroll waits two frames, until the counter-scroll in useAutocrop has been painted. WebKit applies a scroll on a
+  // separate thread, and a smooth scroll requested in the same frame as an instant one jumps straight to its target
+  // instead of animating.
   useEffect(
     () => {
-      if (colorPickerHeight > 0 && cursorThoughtPositioned) {
-        scrollCursorIntoView(cursorThoughtPositioned.y, cursorThoughtPositioned.height)
-      }
+      if (colorPickerHeight === 0 || !cursorThoughtPositioned) return
+      const { y, height } = cursorThoughtPositioned
+      const frameRef = { current: 0 }
+      frameRef.current = requestAnimationFrame(() => {
+        frameRef.current = requestAnimationFrame(() => scrollCursorIntoView(y, height))
+      })
+      return () => cancelAnimationFrame(frameRef.current)
     },
     // only scroll when the Color Picker opens, not every time the cursor moves while it is open
     // eslint-disable-next-line react-hooks/exhaustive-deps

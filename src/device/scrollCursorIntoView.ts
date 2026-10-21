@@ -56,7 +56,13 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const yViewport = yDocument - window.scrollY
 
   const toolbarRect = document.getElementById('toolbar')?.getBoundingClientRect()
-  const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
+  // In Mobile Safari with the keyboard open, usePositionFixed emulates the toolbar's fixed position and only moves it
+  // back to the top of the viewport on the scroll event after a scroll. A scroll just made, such as the autocrop
+  // counter-scroll when the Color Picker opens, leaves the toolbar's rect above the viewport, so a thought beneath the
+  // Color Picker would appear uncovered (#6057). Use the height of the toolbar instead, which is its bottom once it is
+  // pinned to the top, since Mobile Safari has no safe-area inset at the top.
+  const isPositionFixedEmulated = keyboardOpen && isSafari() && !isCapacitor()
+  const toolbarBottom = toolbarRect ? (isPositionFixedEmulated ? toolbarRect.height : toolbarRect.bottom) : 0
   const navbarRect = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect()
 
   // The y position (in viewport coordinates) below which content is obstructed.
