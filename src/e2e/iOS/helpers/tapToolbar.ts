@@ -7,10 +7,9 @@ import waitForElement from './waitForElement.js'
  * ToolbarButton binds onTouchStart/onTouchEnd when isTouch and onMouseDown/onClick otherwise, so the toolbar is only
  * reachable with a touch pointer on a device; tap's 'mouse' default never fires the command. A touch pointer also keeps
  * the caret where it is, since ToolbarButton preventDefaults touchend to suppress the blur (a mouse tap blurs the
- * editable, which for a note clears `noteFocus` before the command runs). The y offset is the Safari chrome offset used
- * throughout this suite, since tap reads page coordinates but taps in screen coordinates.
+ * editable, which for a note clears `noteFocus` before the command runs).
  */
-export const toolbarTapOptions = { y: 60, pointerType: 'touch' } as const
+export const toolbarTapOptions = { pointerType: 'touch' } as const
 
 /**
  * Tap a toolbar button by its label, and optionally a value in the dropdown that it opens, e.g. `tapToolbar('Bold')` or `tapToolbar('Text Color', 'background color swatches', 'blue')`.
@@ -34,8 +33,9 @@ const tapToolbar = async (label: CommandLabel, ...values: string[]) => {
 
   // A picker is rendered inside the button that opens it, so an open picker expands the button's rect down over the
   // swatches and a tap aimed at the button's center lands on a swatch instead. Aim at the button's icon, which is its
-  // first svg in document order for both a plain icon and an icon wrapped alongside a picker.
-  const icon = await waitForElement(`${toolbarSelector} svg`)
+  // first svg in document order for both a plain icon and an icon wrapped alongside a picker. An open picker's swatches
+  // are svgs too, so take the first match explicitly rather than with WebdriverIO's strict `$`.
+  const icon = await browser.$$(`${toolbarSelector} svg`)[0].getElement()
 
   await tap(icon, toolbarTapOptions)
 

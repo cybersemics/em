@@ -13,6 +13,8 @@ Two queues bridge Redux and the local TreeCRDT store:
 
 The single point of integration with persistence is the [`DataProvider`](../src/data-providers/DataProvider.ts) interface, implemented by the active thoughtspace backend. [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exports both the active provider (`db`) and the `ThoughtspaceRuntime` that owns its lifecycle; today both are the TreeCRDT implementation.
 
+Learning state uses the same [`storageModel`](../src/stores/storageModel.ts) as font size and jump history. It stores the pinned command and its practice progress in `localStorage` under `learning`, and [`initialState`](../src/util/initialState.ts) restores it when Redux initializes. The pinned selection is intentionally device-specific. Practice progress is also local for now; user-wide progress synchronization is deferred. Neither is currently replicated by TreeCRDT. Local storage is scoped to the browser profile and app origin, so separate installations on the same device do not share this state.
+
 ## In-memory state (Redux)
 
 Thoughts live in `state.thoughts.thoughtIndex` (keyed by `ThoughtId`) and `state.thoughts.lexemeIndex` (keyed by hashed value). Only thoughts that are *visible* — the cursor, its ancestors, `state.expanded` paths, and any context-view contexts and their ancestors — are held in memory. Everything else has either never been pulled or was freed after going off-screen.
@@ -30,7 +32,7 @@ Thoughts that are known to exist but haven't been loaded yet are flagged with `p
 | `'persistent'` (app default) | OPFS file `/treecrdt-em-${tsid}.db`, falling back to memory if OPFS is unavailable | `dedicated-worker` |
 | `'memory'` (unit tests, most e2e) | in-memory | `direct` |
 
-[`index.tsx`](../src/index.tsx) passes `testFlags.thoughtspaceStorage ?? 'persistent'`. If persistent storage was requested but the client came back with `storage === 'memory'`, the runtime logs a warning that changes will not survive a reload. `init` returns the storage the client actually opened, which [`initialize.ts`](../src/initialize.ts) puts in [`storageStatusStore`](../src/stores/storageStatus.ts); the Storage Diagnostics control in [`modals/Settings.tsx`](../src/components/modals/Settings.tsx) reports it alongside a live OPFS probe, so a browser that discards storage can be identified on a device with no reachable console. The wa-sqlite WASM assets are emitted into `public/wa-sqlite` by the `treecrdt` Vite plugin (see [`vite.config.ts`](../vite.config.ts)).
+[`index.tsx`](../src/index.tsx) passes `testFlags.thoughtspaceStorage ?? 'persistent'`. If persistent storage was requested but the client came back with `storage === 'memory'`, the runtime logs a warning that changes will not survive a reload. `init` returns the storage the client actually opened, which [`initialize.ts`](../src/initialize.ts) puts in [`storageStatusStore`](../src/stores/storageStatusStore.ts); the Storage Diagnostics control in [`modals/Settings.tsx`](../src/components/modals/Settings.tsx) reports it alongside a live OPFS probe, so a browser that discards storage can be identified on a device with no reachable console. The wa-sqlite WASM assets are emitted into `public/wa-sqlite` by the `treecrdt` Vite plugin (see [`vite.config.ts`](../vite.config.ts)).
 
 The client surface em uses:
 
@@ -91,7 +93,7 @@ The function returns the `readonly Operation[]` it minted. That array is what th
 
 TreeCRDT stores sibling order directly, so a reorder is a `move` with an explicit placement (`first`, `last`, or `after: <siblingId>`) rather than a new rank number.
 
-`PushBatch.movePlacements: Index<ThoughtId | null>` carries that intent from the action layer: the key is the moved thought, the value is the sibling to place it after (`null` means first). It is produced by [`moveThought`](../src/actions/moveThought.ts), [`sort`](../src/actions/sort.ts), [`editThought`](../src/actions/editThought.ts), and the [undo/redo enhancer](../src/redux-enhancers/undoRedoEnhancer.ts). `moveThought` and `editThought` derive theirs from the rank they are about to write with [`getMovePlacement`](../src/selectors/getMovePlacement.ts), which names the last sibling ranked before it. `editThought` needs one because editing a value re-ranks the thought within a sorted context, and a rank that arrives without a placement leaves the stored order untouched.
+`PushBatch.movePlacements: Index<ThoughtId | null>` carries that intent from the action layer: the key is the moved thought, the value is the sibling to place it after (`null` means first). It is produced by [`moveThought`](../src/actions/moveThought.ts), [`sort`](../src/actions/sort.ts), [`editThought`](../src/actions/editThought.ts), [`createThought`](../src/actions/createThought.ts), [`deleteThought`](../src/actions/deleteThought.ts), and the [undo/redo enhancer](../src/redux-enhancers/undoRedoEnhancer.ts). All but `sort` and the enhancer derive theirs from the rank they are about to write with [`getMovePlacement`](../src/selectors/getMovePlacement.ts), which names the last sibling ranked before it. A caller of `moveThought` may name the placement itself with `afterId` — a drag names the thought it was dropped after — but a sorted destination overrides it, because there the sort condition decides the rank that is written and a placement that disagreed with it would bring the context back out of sorted order. `editThought` needs one because editing a value re-ranks the thought within a sorted context; `createThought` and `deleteThought` need one because adding or removing a child re-ranks the parent within a context sorted by `Updated`. A rank that arrives without a placement leaves the stored order untouched.
 
 `getTreecrdtPlacement` resolves it:
 
@@ -103,6 +105,8 @@ The rank fallback is a compatibility bridge while the app still treats `rank` as
 ### Write barrier
 
 [`writeBarrier.ts`](../src/data-providers/treecrdt/writeBarrier.ts) serializes em → TreeCRDT persistence and exposes an idle barrier. It is a local ordering guard, not a CRDT requirement: it keeps app-state refreshes from racing local persistence, so a materialization refresh can't reapply stale rows over newer optimistic state.
+
+A failed write is recorded and thrown at the next wait for idle. Between tests, a failure that nothing waited for is discarded instead, along with any failure still to come from a write queued before the test boundary, so that it is not thrown at the next test. The materialization queue does the same for failed refreshes. See [testing.md → Isolation and cleanup](testing.md#isolation-and-cleanup).
 
 It also stamps every local write with a `writeId` of the form `em-local:${sourceId}:${n}`, where `sourceId` is unique per page load. `isTreecrdtLocalMaterialization` recognizes this tab's own writes, so publication refreshes memberships without reading back already-optimistic local thoughts.
 
@@ -121,7 +125,7 @@ The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot`
 
 ### Memory management
 
-`freeThought` / `freeLexeme` are **no-ops** in the TreeCRDT provider. The whole thoughtspace is a single SQLite database, so there is no per-document cache to release — freeing memory only means dropping entries from the Redux indexes, which the `freeQueue` half of the push queue already does. [`redux-middleware/freeThoughts.ts`](../src/redux-middleware/freeThoughts.ts) dispatches `freeThoughts` once `thoughtIndex` exceeds the [`freeThoughtsThreshold`](../src/stores/freeThoughtsThreshold.ts) store's value.
+`freeThought` / `freeLexeme` are **no-ops** in the TreeCRDT provider. The whole thoughtspace is a single SQLite database, so there is no per-document cache to release — freeing memory only means dropping entries from the Redux indexes, which the `freeQueue` half of the push queue already does. [`redux-middleware/freeThoughts.ts`](../src/redux-middleware/freeThoughts.ts) dispatches `freeThoughts` once `thoughtIndex` exceeds the [`freeThoughtsThresholdStore`](../src/stores/freeThoughtsThresholdStore.ts) store's value.
 
 Deleting a thought is not a separate provider call: it is a `null` entry in `thoughtIndexUpdates`, handled by the write path above.
 
@@ -197,7 +201,7 @@ Three tokens are bootstrapped in [`data-providers/thoughtspaceSession.ts`](../sr
 
 - **`accessToken`** — a per-device 21-char nanoid stored in `localStorage`. It is the device's secret: `clientId` is derived from it, and it keys the device's permissions entry. Nothing currently transmits it — the sync client connects without auth. Can be overridden by `?auth=<token>` in the URL.
 - **`tsid`** — the thoughtspace ID. Also a 21-char nanoid in `localStorage`. It is the TreeCRDT `docId`, the OPFS filename (`/treecrdt-em-${tsid}.db`), the Web Lock name, and the permissions storage key. Can be overridden by `?share=<tsid>` to switch the app onto a shared thoughtspace.
-- **`clientId`** — a public key derived as `SHA-256(accessToken)`, base64-encoded. Available asynchronously via the exported `clientIdReady` promise. Stamped on every Thought and Lexeme write as `updatedBy`, and converted by `clientIdToReplicaId` into the 32-byte replica id TreeCRDT mints local operations under.
+- **`clientId`** — a public key derived as `SHA-256(accessToken)`, base64-encoded. Available asynchronously via the exported `clientIdReady` promise. Stored in Thought payloads as `updatedBy` (persisted Lexemes derive it from their members), and converted by `clientIdToReplicaId` into the 32-byte replica id TreeCRDT mints local operations under.
 
 Device permissions live in [`permissionsStore.ts`](../src/data-providers/permissionsStore.ts): a [ministore](glossary.md#m) holding `Index<Share>` keyed by access token (one entry per device with access), persisted with `idb-keyval` under `em-permissions:${tsid}`. It is loaded during runtime initialization and skipped entirely in unit tests. CRUD lives in [`permissionsModel.ts`](../src/data-providers/permissionsModel.ts):
 

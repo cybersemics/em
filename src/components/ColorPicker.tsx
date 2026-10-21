@@ -7,6 +7,7 @@ import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
+import haptics from '../util/haptics'
 import isColorSelected from '../util/isColorSelected'
 import Popover from './Popover'
 import TextColorIcon from './icons/TextColor'
@@ -21,6 +22,7 @@ const ColorSwatch: FC<{
   size?: number
 }> = ({ backgroundColor, color, label, shape, size }) => {
   const dispatch = useDispatch()
+  const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
   const commandStateForeColor = commandStateStore.useSelector(state => state.foreColor)
   const commandStateBackColor = commandStateStore.useSelector(state => state.backColor)
@@ -40,12 +42,22 @@ const ColorSwatch: FC<{
     dispatch(formatSelectionColor({ color, backgroundColor }))
   }
 
+  /** Suppresses the Text Color toolbar button's press, which starts on tap down. The picker is rendered inside that button, so a tap that reaches it dips the button by 0.25em, and the tap up that would undo the dip is stopped below. On desktop it also preserves the browser selection, which the toolbar button's own tap down was preventing default to do. */
+  const tapDown = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation()
+    // Only on desktop, since preventing default on touchstart would stop the toolbar from being scrolled by a swipe that starts on a swatch.
+    if (!isTouch) {
+      e.preventDefault()
+    }
+  }
+
   /** Toggles the text color onTouchEnd or onClick on desktop. */
   const tapUp = (e: React.MouseEvent | React.TouchEvent) => {
-    // stop toolbar button dip and click empty space
+    // stop toolbar button command and click empty space
     e.stopPropagation()
     e.preventDefault()
 
+    haptics.light()
     toggleTextColor()
   }
 
@@ -53,6 +65,8 @@ const ColorSwatch: FC<{
     <span
       aria-label={label || color || backgroundColor}
       data-selected={selected ? 'true' : 'false'}
+      onMouseDown={isTouch ? undefined : tapDown}
+      onTouchStart={isTouch ? tapDown : undefined}
       onClick={isTouch ? undefined : tapUp}
       onTouchEnd={isTouch ? tapUp : undefined}
       className={css({
@@ -71,7 +85,7 @@ const ColorSwatch: FC<{
             textAlign: 'center',
           })}
           style={{
-            color: color && token(`colors.${color}` as const),
+            color: color && colors[color],
             fontSize: size,
             width: size - 1,
             height: size - 1,
@@ -81,7 +95,7 @@ const ColorSwatch: FC<{
         </span>
       ) : (
         <TextColorIcon
-          cssRaw={css.raw({
+          className={css({
             // TODO: Why does border crash the browser?
             // Even hardcoding 'solid 1px white' crashes the browser.
             // See: https://github.com/cybersemics/em/issues/2508
@@ -90,8 +104,8 @@ const ColorSwatch: FC<{
           })}
           size={size}
           style={{
-            color: backgroundColor ? token('colors.bg') : color && token(`colors.${color}` as const),
-            backgroundColor: backgroundColor && token(`colors.${backgroundColor}` as const),
+            color: backgroundColor ? colors.bg : color && colors[color],
+            backgroundColor: backgroundColor && colors[backgroundColor],
             fontWeight: selected ? 'bold' : 'normal',
           }}
           fill={selected ? token('colors.fg') : 'none'}

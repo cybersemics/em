@@ -4,9 +4,12 @@ import ActionType from './ActionType'
 import Alert from './Alert'
 import Command from './Command'
 import CommandId from './CommandId'
+import CommandUniverseNavigation from './CommandUniverseNavigation'
 import Context from './Context'
 import DragCommandZone from './DragCommandZone'
+import HelpGenieState from './HelpGenieState'
 import Index from './IndexType'
+import LearningState from './LearningState'
 import Modal from './Modal'
 import Patch from './Patch'
 import Path from './Path'
@@ -26,6 +29,8 @@ interface State {
   archived?: boolean
   authenticated: boolean
   autologin: boolean
+  /** Page history for the current Command Universe session. */
+  commandUniverseNavigation: CommandUniverseNavigation
   /** Key: hashPath(path). */
   contextViews: Index<boolean>
   cursor: Path | null
@@ -104,7 +109,7 @@ interface State {
   /**
    * History of edit points that can be navigated with the jump command.
    * New edit points are added to the beginning of the list.
-   * Cannot use undoHistory because it omits the cursor from some edits.
+   * Cannot use the undo history because it omits the cursor from some edits.
    * i.e. It causes the 'jump after new subthought' to fail.
    */
   jumpHistory: (Path | null)[]
@@ -112,9 +117,13 @@ interface State {
    * Increments on each activation of Jump Back, and determines where the cursor is moved on Jump Forward.
    */
   jumpIndex: number
-  /** The last undoable action that was executed. Usually this is the same as undoPatches.at(-1).actions[0]. However, on undo this will equal redoPatches.at(-1).actions[0]. This is important for special case animatons, like swapParent, that should be enabled not just when the action is originally executed, but also when it is reversed via undo. */
+  /** The underlying action type of the last undoable change. On undo this is the first action type of the corresponding redo patch. Used by special-case animations that also run when a change is reversed. */
   lastUndoableActionType?: ActionType
   latestCommands: Command[]
+  /** The learning journey: pinned command and per-command practice progress. See actions/pinCommand.ts and docs/learning.md. */
+  learning: LearningState
+  /** Whether the help genie is out, where it has been sent, and whether it can run here. See actions/toggleHelpGenie.ts and docs/learning.md. */
+  helpGenie: HelpGenieState
   /** Tracks the state of long press and drag-and-drop. */
   longPress: LongPressState
   /** When a context is sorted, the manual sort order is saved so that it can be recovered when they cycle back through the sort options. If new thoughts have been added, their order relative to the original thoughts will be indeterminate, but both the old thoughts and the new thoughts will be sorted relative to themselves. The outer Index is keyed by parent ThoughtId, and the inner Index stores the manual ranks of each child at the time the context is sorted. This is stored in memory only and is lost when the app refreshes. */
@@ -167,6 +176,8 @@ interface State {
    * See: /src/actions/closeModal.ts.
    */
   showModal?: Modal | null
+  /** Whether the pinned command's tooltip is expanded. Only ever true while a command is pinned: changing the pin closes it. */
+  showPinnedCommandTooltip: boolean
   showSidebar: boolean
   showMobileCommandUniverse?: boolean
   showUndoSlider: boolean

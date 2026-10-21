@@ -42,7 +42,6 @@ it('surfaces TreeCRDT write failures when waiting for idle', async () => {
   ).rejects.toThrow('write failed')
 
   await expect(waitForTreecrdtWriteBarrier()).rejects.toThrow('write failed')
-  await expect(waitForTreecrdtWriteBarrier()).resolves.toBeUndefined()
 })
 
 it('identifies only this tab local TreeCRDT materialization events', () => {
@@ -83,4 +82,39 @@ it('identifies only this tab local TreeCRDT materialization events', () => {
       changes: [{ kind: 'payload', node: 'remote-a', payload: null }],
     }),
   ).toBe(false)
+})
+
+// These pairs depend on their order: the first test leaves a write failure behind without waiting for idle, and the
+// second waits for idle as initStore does before its next test. Only the reset that setupTests runs after every test
+// stands between the two.
+// https://github.com/cybersemics/em/issues/5253
+describe('isolation between tests', () => {
+  /** Rejects the write left running by the previous test. */
+  let failRunningWrite: (err: Error) => void
+
+  it('leave a failed write that nothing waited for', async () => {
+    await expect(
+      withTreecrdtWriteBarrier(async () => {
+        throw new Error('write failed in the previous test')
+      }),
+    ).rejects.toThrow()
+  })
+
+  it('do not throw the previous test failure when waiting for idle', async () => {
+    await expect(waitForTreecrdtWriteBarrier()).resolves.toBeUndefined()
+  })
+
+  it('leave a write running that will fail', () => {
+    withTreecrdtWriteBarrier(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          failRunningWrite = reject
+        }),
+    ).catch(() => {})
+  })
+
+  it('do not throw a failure of a write queued by the previous test', async () => {
+    failRunningWrite(new Error('write queued in the previous test failed'))
+    await expect(waitForTreecrdtWriteBarrier()).resolves.toBeUndefined()
+  })
 })

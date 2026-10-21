@@ -76,6 +76,24 @@ it('seeds fixed system thoughts in the TreeCRDT provider', async () => {
   expect(settingsLexeme?.contexts).toEqual([SETTINGS_TOKEN])
 })
 
+it('preserves requested order, duplicates, and missing entries when reading persisted thoughts and lexemes', async () => {
+  await initTestThoughtspace()
+  await treecrdtThoughtspace.updateThoughts({
+    thoughtIndexUpdates: { [PARENT_ID]: thought(PARENT_ID, EM_TOKEN, 'parent', 0) },
+  })
+
+  await expect(treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID)).resolves.toBeUndefined()
+  await expect(treecrdtThoughtspace.getLexemeById(hashThought('missing'))).resolves.toBeUndefined()
+
+  const thoughts = await treecrdtThoughtspace.getThoughtsByIds([PARENT_ID, OTHER_PARENT_ID, SETTINGS_TOKEN, PARENT_ID])
+  expect(thoughts.map(thought => thought?.id)).toEqual([PARENT_ID, undefined, SETTINGS_TOKEN, PARENT_ID])
+
+  const lexemes = await treecrdtThoughtspace.getLexemesByIds(
+    ['parent', 'missing', SETTINGS_VALUE, 'parent'].map(hashThought),
+  )
+  expect(lexemes.map(lexeme => lexeme?.contexts)).toEqual([[PARENT_ID], undefined, [SETTINGS_TOKEN], [PARENT_ID]])
+})
+
 it('does not delete persisted lexemes when freeing cache', async () => {
   await initTestThoughtspace()
 

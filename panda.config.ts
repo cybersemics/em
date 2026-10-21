@@ -1,5 +1,6 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
+import breakpointsConfig from './src/breakpoints.config'
 import durationsConfig from './src/durations.config'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
@@ -17,6 +18,7 @@ import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
 import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
+import notificationRecipe from './src/recipes/notification'
 import panelCommandGroupRecipe from './src/recipes/panelCommandGroupRecipe'
 import panelCommandRecipe from './src/recipes/panelCommandRecipe'
 import slideTransitionRecipe from './src/recipes/slideTransition'
@@ -92,6 +94,44 @@ const hideCaret = {
   },
 }
 
+// the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
+// See: recipes/hideCaret.ts
+// TODO: FauxCaret will break if hideCaretAnimationNames is imported from hideCaret.config.ts into hideCaret.ts, and vice versa into panda.config.ts, so we are stuck with duplicate definitions in two files.
+const hideCaretAnimationNames = [
+  'hideCaret0',
+  'hideCaret1',
+  'hideCaret2',
+  'hideCaret3',
+  'hideCaret4',
+  'hideCaret5',
+  'hideCaret6',
+  'hideCaret7',
+  'hideCaret8',
+  'hideCaret9',
+  'hideCaretA',
+  'hideCaretB',
+  'hideCaretC',
+  'hideCaretD',
+  'hideCaretE',
+  'hideCaretF',
+  'hideCaretG',
+  'hideCaretH',
+  'hideCaretI',
+  'hideCaretJ',
+  'hideCaretK',
+  'hideCaretL',
+  'hideCaretM',
+  'hideCaretN',
+  'hideCaretO',
+  'hideCaretP',
+  'hideCaretQ',
+  'hideCaretR',
+  'hideCaretS',
+  'hideCaretT',
+  'hideCaretU',
+  'hideCaretV',
+]
+
 const keyframes = defineKeyframes({
   fademostlyin: {
     from: {
@@ -152,6 +192,14 @@ const keyframes = defineKeyframes({
   ellipsis: {
     to: {
       width: '1.25em',
+    },
+  },
+  shimmerText: {
+    from: {
+      maskPosition: '200% 0',
+    },
+    to: {
+      maskPosition: '-200% 0',
     },
   },
   tofg: {
@@ -218,43 +266,7 @@ const keyframes = defineKeyframes({
       '--dialog-content-mask-fade-bottom': '0.25rem',
     },
   },
-  // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
-  // See: recipes/hideCaret.ts
-  // TODO: FauxCaret will break if hideCaretAnimationNames is imported from hideCaret.config.ts into hideCaret.ts, and vice versa into panda.config.ts, so we are stuck with duplicate definitions in two files.
-  ...[
-    'hideCaret0',
-    'hideCaret1',
-    'hideCaret2',
-    'hideCaret3',
-    'hideCaret4',
-    'hideCaret5',
-    'hideCaret6',
-    'hideCaret7',
-    'hideCaret8',
-    'hideCaret9',
-    'hideCaretA',
-    'hideCaretB',
-    'hideCaretC',
-    'hideCaretD',
-    'hideCaretE',
-    'hideCaretF',
-    'hideCaretG',
-    'hideCaretH',
-    'hideCaretI',
-    'hideCaretJ',
-    'hideCaretK',
-    'hideCaretL',
-    'hideCaretM',
-    'hideCaretN',
-    'hideCaretO',
-    'hideCaretP',
-    'hideCaretQ',
-    'hideCaretR',
-    'hideCaretS',
-    'hideCaretT',
-    'hideCaretU',
-    'hideCaretV',
-  ].reduce((accum, name) => ({ ...accum, [name]: hideCaret }), {}),
+  ...hideCaretAnimationNames.reduce((accum, name) => ({ ...accum, [name]: hideCaret }), {}),
 })
 
 const globalCss = defineGlobalStyles({
@@ -263,6 +275,11 @@ const globalCss = defineGlobalStyles({
       _dragInProgress: {
         userSelect: 'none',
       },
+    },
+    // Hide the caret of the collapsed selection during a native text drag on Android, leaving the single drop
+    // caret rendered by NativeTextDragCaret. See onAndroidDragOver in NativeTextDragCaret.tsx.
+    _nativeTextDrag: {
+      caretColor: 'transparent',
     },
     _test: {
       // Caret should be invisible in puppeteer tests as the blink timing differs between runs and will fail the screenshot tests.
@@ -282,6 +299,20 @@ const globalCss = defineGlobalStyles({
   },
   /* Disables pull-to-refresh but allows overscroll glow effects. */
   body: { overscrollBehaviorY: 'contain', color: 'fg', backgroundColor: 'bg' },
+  // In the dark theme, matches the caret to the Android app's native selection handles, which the Android theme tints with selectionHandle (android/app/src/main/res/values/styles.xml). On iOS, caret-color also tints the selection handles and selection highlight.
+  // Set on the body rather than on the editable so that the hideCaret animation on the LayoutTree can still hide the caret through inheritance.
+  'body[data-device=mobile][data-color-mode=dark]': { caretColor: 'selectionHandle' },
+  // Matches mobile Chromium's selection to the iOS highlight, a 0.2 alpha tint that iOS draws over the text, so the text shows through tinted. iOS ignores ::selection, and Desktop Chrome, Safari and Firefox keep their native highlight.
+  'body[data-device=mobile][data-browser=chrome] ::selection': { backgroundColor: 'selectionHighlight' },
+  'body[data-device=mobile][data-browser=chrome] [data-editable]::selection, body[data-device=mobile][data-browser=chrome] [data-editable] ::selection':
+    {
+      color: 'selectionHighlightText',
+    },
+  'body[data-device=mobile][data-browser=chrome] [aria-label=note-editable]::selection, body[data-device=mobile][data-browser=chrome] [aria-label=note-editable] ::selection':
+    { color: 'selectionHighlightDimText' },
+  // Colored text keeps its own color, since currentColor in a highlight resolves to the parent highlight's color and cannot be blended with the tint per element.
+  'body[data-device=mobile][data-browser=chrome] :is(font[color], [data-editable][style*=color], [data-editable] [style*=color], [aria-label=note-editable] [style*=color])::selection, body[data-device=mobile][data-browser=chrome] :is(font[color], [data-editable][style*=color], [data-editable] [style*=color], [aria-label=note-editable] [style*=color]) ::selection':
+    { color: 'currentColor' },
   button: { fontSize: '1.2em' },
   a: {
     cursor: 'pointer',
@@ -374,6 +405,7 @@ const globalCss = defineGlobalStyles({
     fontStyle: 'italic',
     color: 'var(--placeholder-color, {colors.dim})',
     backgroundColor: 'var(--placeholder-background-color, transparent)',
+    filter: 'opacity(var(--placeholder-opacity))',
     content: 'attr(placeholder)',
     cursor: 'text',
   },
@@ -414,8 +446,18 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'var(--placeholder-background-color, {colors.codeBg})',
     fontFamily: 'monospace',
   },
+  /* Sweep a highlight across existing paint, preserving rich-text colors, backgrounds and native emoji. */
+  '[data-generating], [data-generating-note] [aria-label="note-editable"]': {
+    maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0%, black 50%, rgba(0, 0, 0, 0.5) 100%)',
+    maskSize: '250% 100%',
+    animation: 'shimmerText 4s linear infinite',
+  },
+  '[placeholder][data-generating]:empty::before': {
+    color: 'var(--placeholder-color, {colors.fg})',
+  },
   ':root': {
     '--safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
+    '--placeholder-opacity': '1',
   },
 })
 
@@ -436,14 +478,7 @@ export default defineConfig({
   theme: {
     extend: {
       keyframes,
-      breakpoints: {
-        sm: '320px', // approx size of iPhone SE
-        md: '400px', // approx size of iPhone 12 Pro
-        lg: '600px', // landscape mobile devices and larger
-        xl: '800px', // approx size of a laptop
-        '2xl': '1000px', // approx size of a desktop
-        '3xl': '1200px', // approx size of a large desktop
-      },
+      breakpoints: breakpointsConfig,
       tokens: {
         colors: colorTokens,
         easings: {
@@ -492,10 +527,15 @@ export default defineConfig({
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
         zIndex: {
           ...zIndexDescending([
+            // The help genie flies over everything, including the Command Universe dialog it is let out from. Its
+            // canvas ignores pointer events, so it never blocks what is beneath it.
+            'helpGenie',
+            // Above dialogs so the pinned command stays visible over the Mobile Command Universe. See docs/learning.md.
+            'pinnedCommandExpanded',
             'dialog',
             'dialogContainer',
             'popup',
-            'tip',
+            'notification',
             'cloneDroppedThought',
             'hoverArrow',
             'gestureTrace',
@@ -510,6 +550,7 @@ export default defineConfig({
             'toolbarOverlay',
             'toolbarArrow',
             'toolbar',
+            'pinnedCommand',
             'navbar',
             'backgroundGlowFalloff',
             'latestCommands',
@@ -551,6 +592,7 @@ export default defineConfig({
         dialogRecipe,
         modalRecipe,
         modalTextRecipe,
+        notificationRecipe,
         fadeTransitionRecipe,
         slideTransitionRecipe,
       },
@@ -567,6 +609,12 @@ export default defineConfig({
   },
 
   globalCss,
+
+  // recipes/fauxCaretTreeProvider.ts builds its animation variants at runtime, which PandaCSS cannot extract statically,
+  // so the animationName utility is generated for each hideCaret animation here.
+  staticCss: {
+    css: [{ properties: { animationName: hideCaretAnimationNames } }],
+  },
 
   /* Registering `--dialog-content-mask-fade-top` as a `<length>`
   is what makes the scroll-driven mask animation in dialogRecipe.ts
@@ -603,9 +651,10 @@ export default defineConfig({
     iphone: '[data-platform=iphone] &',
     dragHold: '[data-drag-hold=true] &',
     dragInProgress: '[data-drag-in-progress=true] &',
+    nativeTextDrag: '[data-native-text-drag=true] &',
   },
 
   // The output directory for your css system
   outdir: 'styled-system',
-  presets: [],
+  presets: ['@pandacss/preset-base'],
 })

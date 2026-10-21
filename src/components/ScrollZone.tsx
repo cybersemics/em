@@ -4,8 +4,8 @@ import { css } from '../../styled-system/css'
 import { AlertType, Settings } from '../constants'
 import useScrollTop from '../hooks/useScrollTop'
 import getUserSetting from '../selectors/getUserSetting'
-import touchStore from '../stores/touch'
-import viewportStore from '../stores/viewport'
+import touchStore from '../stores/touchStore'
+import viewportStore from '../stores/viewportStore'
 import haptics from '../util/haptics'
 import FadeTransition from './FadeTransition'
 
@@ -99,6 +99,7 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   return (
     <div
       ref={scrollZoneRef}
+      data-testid='scroll-zone'
       className={css({
         backgroundImage: `url('/img/scroll-zone/stardust.png')`,
         backgroundRepeat: 'repeat',

@@ -20,9 +20,11 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
+import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import keyValueBy from '../util/keyValueBy'
 import normalizeThought from '../util/normalizeThought'
 import pathToContext from '../util/pathToContext'
@@ -45,8 +47,36 @@ export interface MoveThoughtPayload {
    * ID of sibling after which to place in TreeCRDT.
    * Explicit null means first child.
    * Undefined means derive placement from newRank for legacy em rank-based callers.
+   * If the destination remains sorted, its sort order determines placement instead.
    */
   afterId?: ThoughtId | null
+}
+
+/** Re-ranks a thought whose lastUpdated was just bumped so that its rank still matches its context's sort condition. Only a context sorted by Updated is affected, since lastUpdated is its sort key; the bumped thought becomes the most recently updated of its siblings, which is last in rank order when ascending and first when descending. Other sort conditions compare values or immutable timestamps, so a bump cannot invalidate their ranks. */
+const rerankUpdated = (state: State, id: ThoughtId): State => {
+  const thought = getThoughtById(state, id)
+  if (!thought) return state
+
+  const sortPreference = getSortPreference(state, thought.parentId)
+  if (sortPreference.type !== 'Updated') return state
+
+  const siblings = getChildrenRanked(state, thought.parentId).filter(child => child.id !== id)
+  if (siblings.length === 0) return state
+
+  const rank = sortPreference.direction === 'Desc' ? siblings[0].rank - 1 : siblings[siblings.length - 1].rank + 1
+  if (rank === thought.rank) return state
+
+  return updateThoughts(state, {
+    thoughtIndexUpdates: {
+      [id]: {
+        ...thought,
+        rank,
+      },
+    },
+    lexemeIndexUpdates: {},
+    movePlacements: { [id]: getMovePlacement(state, thought.parentId, { id, rank }) },
+    preventExpandThoughts: true,
+  })
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
@@ -100,7 +130,11 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
   const effectiveAfterId =
     afterId !== undefined
       ? afterId
-      : getMovePlacement(state, destinationThoughtId, { id: sourceThought.id, rank: newRank })
+      : getMovePlacement(state, destinationThoughtId, {
+          id: sourceThought.id,
+          rank: newRank,
+          rankedChildren: childrenOfDestination,
+        })
 
   if (
     effectiveAfterId === sourceThought.id ||
@@ -180,6 +214,24 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         [isAttribute(sourceThought.value) ? sourceThought.value : sourceThought.id]: sourceThought.id,
       }
 
+      // Moving within this context may have disabled sorting above.
+      const sortPreference = getSortPreference(state, destinationThoughtId)
+
+      // An empty or emoji-only thought has no meaningful sort key, so it keeps the rank the caller asked for, as
+      // newThought does when it inserts one into a sorted context. Otherwise indenting an empty thought into a sorted
+      // context would sort it to the top rather than to the end (#6066). Created is the exception, since there the
+      // point of creation is the sort key.
+      const isSorted =
+        sortPreference.type !== 'None' &&
+        (sortPreference.type === 'Created' || !isEmptyOrEmojiOnly(sourceThought.value))
+
+      // A moved thought keeps its created timestamp, so a Created context sorts it by that rather than by its value.
+      // Without it getSortedRank falls through to the alphabetical branch and ranks the thought against siblings it
+      // does not sort by, inverting the rank order against the sort condition (#4096).
+      const rank = isSorted
+        ? getSortedRank(state, destinationThoughtId, sourceThought.value, { created: sourceThought.created })
+        : newRank
+
       const thoughtIndexUpdates: Index<Thought> = {
         ...(!sameContext
           ? {
@@ -201,11 +253,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         [sourceThought.id]: {
           ...sourceThought,
           parentId: destinationThought.id,
-          rank:
-            // get updated sort preference since the context may have been unsorted
-            getSortPreference(state, destinationThoughtId).type !== 'None'
-              ? getSortedRank(state, destinationThoughtId, sourceThought.value)
-              : newRank,
+          rank,
           ...(archived ? { archived } : null),
           lastUpdated: timestamp(),
           updatedBy: clientId,
@@ -217,37 +265,63 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         lexemeIndexUpdates: {},
         recentlyEdited,
         preventExpandThoughts: true,
-        movePlacements: { [sourceThought.id]: effectiveAfterId },
+        // A sorted context ranks the thought by the sort condition rather than where the caller asked for it, so the
+        // caller's placement would store an order that disagrees with the rendered one and bring the context back
+        // unsorted after a refresh. Derive the placement from the rank that is actually written.
+        movePlacements: {
+          [sourceThought.id]: isSorted
+            ? getMovePlacement(state, destinationThoughtId, {
+                id: sourceThought.id,
+                rank,
+                rankedChildren: childrenOfDestination,
+              })
+            : effectiveAfterId,
+        },
       })
     },
-    // update cursor if moved path is on the cursor
+    // A cross-context move bumps lastUpdated on both parents. In a context sorted by Updated that is the sort key, so
+    // each parent's own rank no longer matches the sort condition and has to be restored (#4097).
+    !sameContext ? (state: State) => rerankUpdated(state, sourceParentThought.id) : null,
+    !sameContext ? (state: State) => rerankUpdated(state, destinationThought.id) : null,
+
+    // Rebase the selection Paths that run through the moved thought onto the thought's new location: the cursor, the
+    // multiselect, and the Select Between range and anchor. This knows both where the thought was and where it is now,
+    // which is lost once the move has happened. A Path left behind names a parent that no longer contains the thought,
+    // so nothing below it renders, and a multiselect that is dropped somewhere else would otherwise land the cursor on
+    // such a Path when the selection ends (see multiselectCursorMiddleware).
     state => {
-      if (!state.cursor) return state
-
-      const isPathInCursor = isDescendantPath(state.cursor, oldPath)
-      const isCursorAtOldPath = state.cursor.length === oldPath.length
-
-      // In the context view the cursor is on the nominal context (the m of a/m~), while the dragged context row is
-      // the deeper Path a/m~/a that resolves to the same thought. oldPath is then not an ancestor of the cursor even
-      // though the moved thought is, so the cursor has to be rebased onto the thought's new location. Otherwise it
-      // keeps naming a parent that no longer contains the thought: expandThoughts can no longer reach the cursor,
-      // freeThoughts deallocates it as no longer visible, and the next expandThoughts throws "Invalid path".
       // Skipped when the thought no longer exists, i.e. it was merged into a duplicate in the destination.
-      const isMovedThoughtInCursor =
-        !isPathInCursor && isDescendantPath(state.cursor, oldPathSimple) && !!getThoughtById(state, sourceThought.id)
+      const isMovedThoughtLive = !!getThoughtById(state, sourceThought.id)
 
-      const newCursorPath = isPathInCursor
-        ? isCursorAtOldPath
-          ? newPath
-          : ([...newPath, ...state.cursor.slice(newPath.length)] as Path)
-        : isMovedThoughtInCursor
-          ? ([...destinationThoughtPath, sourceThought.id, ...state.cursor.slice(oldPathSimple.length)] as Path)
-          : state.cursor
+      /** Returns the given Path rebased onto the moved thought's new location, or the Path itself if it does not run through the moved thought. */
+      const rebase = (path: Path): Path =>
+        isDescendantPath(path, oldPath)
+          ? ([...newPath, ...path.slice(oldPath.length)] as Path)
+          : // In the context view the cursor is on the nominal context (the m of a/m~), while the dragged context row is
+            // the deeper Path a/m~/a that resolves to the same thought. oldPath is then not an ancestor of the Path even
+            // though the moved thought is, so the Path has to be rebased onto the thought's new location. Otherwise it
+            // keeps naming a parent that no longer contains the thought: expandThoughts can no longer reach the cursor,
+            // freeThoughts deallocates it as no longer visible, and the next expandThoughts throws "Invalid path".
+            isMovedThoughtLive && isDescendantPath(path, oldPathSimple)
+            ? ([...destinationThoughtPath, sourceThought.id, ...path.slice(oldPathSimple.length)] as Path)
+            : path
+
+      /** Rebases each Path in an index keyed by hashPath, re-keying the ones that moved. Returns the same index if none of them did. */
+      const rebaseIndex = (paths: Index<Path>): Index<Path> =>
+        Object.values(paths).some(path => rebase(path) !== path)
+          ? keyValueBy(Object.values(paths), path => {
+              const rebased = rebase(path)
+              return { [hashPath(rebased)]: rebased }
+            })
+          : paths
 
       return {
         ...state,
-        cursor: newCursorPath,
-        ...(offset != null ? { cursorOffset: offset } : null),
+        cursor: state.cursor && rebase(state.cursor),
+        multicursors: rebaseIndex(state.multicursors),
+        multicursorRange: rebaseIndex(state.multicursorRange),
+        multicursorAnchor: state.multicursorAnchor && rebase(state.multicursorAnchor),
+        ...(state.cursor && offset != null ? { cursorOffset: offset } : null),
       }
     },
     // expand thoughts after cursor has been updated

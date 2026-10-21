@@ -65,11 +65,9 @@ describe('multiline', () => {
     expect(image).toMatchImageSnapshot()
   }
 
-  it('Font Size: 18 (default)', multilineTest)
+  it('Font Size: 16 (default)', multilineTest)
 
   it('Font Size: 13', async () => {
-    await click('[data-testid=decrease-font]') // 17
-    await click('[data-testid=decrease-font]') // 16
     await click('[data-testid=decrease-font]') // 15
     await click('[data-testid=decrease-font]') // 14
     await click('[data-testid=decrease-font]') // 13

@@ -8,7 +8,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const letterCase = {
   id: 'letterCase',
   label: 'Letter Case' as const,
-  description: 'Change the Letter case.',
+  description: 'Changes the letter case of the current thought or selected text.',
   svg: Icon,
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
   multicursor: false,

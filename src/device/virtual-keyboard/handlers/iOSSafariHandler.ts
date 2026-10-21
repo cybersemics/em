@@ -1,10 +1,13 @@
 import { AnimationPlaybackControls, animate } from 'framer-motion'
 import _ from 'lodash'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
+import { dismissKeyboardActionCreator as dismissKeyboard } from '../../../actions/dismissKeyboard'
 import { isSafari, isTouch } from '../../../browser'
 import store from '../../../stores/app'
-import viewportStore, { updateSize } from '../../../stores/viewport'
+import { registerReset } from '../../../stores/ministore'
+import viewportStore, { updateSize } from '../../../stores/viewportStore'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
+import * as selection from '../../selection'
 import getSafeAreaBottom from '../getSafeAreaBottom'
 
 /** Provides control over the spring animation. */
@@ -56,6 +59,15 @@ const updateIOSSafariKeyboardState = () => {
     } else if (virtualKeyboardStore.getState().open) {
       if (currentTargetHeight === 0) return
 
+      // Since iOS 27, Safari keeps the selection alive across the blur that closes the keyboard, as Android does, so
+      // the edit menu stays on screen after the keyboard is gone. Take the selection with the keyboard. Earlier
+      // versions of iOS dropped the selection on blur themselves, which makes this a no-op there.
+      store.dispatch(dismissKeyboard())
+      // Unlike Android, iOS also shows the edit menu (Paste | Select | Select All) for a caret that was tapped, which
+      // dismissKeyboard leaves alone. Remove the caret too, but only once no thought or note has focus, so that one
+      // that has already taken the caret back keeps it.
+      if (!selection.isThought()) selection.removeRanges()
+
       controls?.stop()
 
       // Keep open: true during the closing animation so consumers still account for the keyboard
@@ -101,5 +113,14 @@ const iOSSafariHandler: VirtualKeyboardHandler = {
     currentTargetHeight = null
   },
 }
+
+// Stop a running spring and forget its target at every test boundary. The listeners are left alone: they belong to
+// initEvents, whose cleanup calls destroy, and removing them here would leave its cached handlers believing they are
+// still registered.
+registerReset(() => {
+  controls?.stop()
+  controls = null
+  currentTargetHeight = null
+})
 
 export default iOSSafariHandler

@@ -14,6 +14,63 @@ import noteCommand from '../note'
 beforeEach(initStore)
 
 describe('note', () => {
+  // https://github.com/cybersemics/em/issues/5303
+  it.each(['Names', '*Names*'])('focuses the existing path target %s without creating a duplicate', target => {
+    store.dispatch([
+      importText({
+        text: `
+          - Reify
+            - =note
+              - =path
+                - names
+            - ${target}
+              - Bind Thought
+              - Canonize`,
+      }),
+      setCursor(['Reify']),
+    ])
+
+    executeCommandWithMulticursor(noteCommand, { store })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Reify
+    - =note
+      - =path
+        - names
+    - ${target}
+      - Bind Thought
+      - Canonize`)
+    expect(store.getState().noteFocus).toBe(true)
+  })
+
+  it.each(['Names', '*Names*'])(
+    'initializes the existing empty path target %s without creating a duplicate',
+    target => {
+      store.dispatch([
+        importText({
+          text: `
+          - Reify
+            - =note
+              - =path
+                - names
+            - ${target}`,
+        }),
+        setCursor(['Reify']),
+      ])
+
+      executeCommandWithMulticursor(noteCommand, { store })
+
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Reify
+    - =note
+      - =path
+        - names
+    - ${target}
+      - `)
+      expect(store.getState().noteFocus).toBe(true)
+    },
+  )
+
   it('creates an empty note on the cursor thought and focuses it', () => {
     store.dispatch([
       importText({
@@ -34,6 +91,114 @@ describe('note', () => {
       - `)
 
     expect(store.getState().noteFocus).toBe(true)
+  })
+
+  it.each(['Names', 'names'])('preserves later children when entering and leaving the path note %s', key => {
+    store.dispatch([
+      importText({
+        text: `
+          - Reify
+            - =note
+              - =path
+                - ${key}
+            - Names
+              - ${''}
+              - Keep`,
+      }),
+      setCursor(['Reify']),
+    ])
+
+    executeCommandWithMulticursor(noteCommand, { store })
+    expect(store.getState().noteFocus).toBe(true)
+    executeCommandWithMulticursor(noteCommand, { store })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Reify
+    - =note
+      - =path
+        - ${key}
+    - Names
+      - ${''}
+      - Keep`)
+    expect(store.getState().noteFocus).toBe(false)
+  })
+
+  it('preserves descendants of an empty child when leaving a path note', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - Reify
+            - =note
+              - =path
+                - names
+            - Names
+              - ${''}
+                - Keep`,
+      }),
+      setCursor(['Reify']),
+    ])
+
+    executeCommandWithMulticursor(noteCommand, { store })
+    expect(store.getState().noteFocus).toBe(true)
+    executeCommandWithMulticursor(noteCommand, { store })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Reify
+    - =note
+      - =path
+        - names
+    - Names
+      - ${''}
+        - Keep`)
+    expect(store.getState().noteFocus).toBe(false)
+  })
+
+  it('still removes an empty path target when leaving the note', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - Reify
+            - =note
+              - =path
+                - names
+            - Names`,
+      }),
+      setCursor(['Reify']),
+    ])
+
+    executeCommandWithMulticursor(noteCommand, { store })
+    expect(store.getState().noteFocus).toBe(true)
+    executeCommandWithMulticursor(noteCommand, { store })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Reify
+    - =note
+      - =path
+        - names`)
+    expect(store.getState().noteFocus).toBe(false)
+  })
+
+  it('creates a local note when an inherited literal note is empty', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - Group
+            - =children
+              - =note
+            - Reify`,
+      }),
+      setCursor(['Group', 'Reify']),
+    ])
+
+    executeCommandWithMulticursor(noteCommand, { store })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Group
+    - =children
+      - =note
+    - Reify
+      - =note
+        - `)
   })
 
   it('removes an empty note when the note is focused', () => {

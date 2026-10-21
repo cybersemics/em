@@ -1,5 +1,5 @@
 import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
-import syncStatusStore from '../stores/syncStatus'
+import syncStatusStore from '../stores/syncStatusStore'
 
 /** True when all thoughtspace pulls visible to app tests have drained. */
 const isThoughtspacePullingSettled = (): boolean => {

@@ -1,8 +1,7 @@
 /* eslint-disable import/prefer-default-export */
-import { startCase } from 'lodash'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
-import getLatestActionType from '../util/getLastActionType'
+import getLatestActionLabel from '../util/getLatestActionLabel'
 import { alertActionCreator as alert } from './alert'
 
 /** Action-creator for redo.
@@ -13,14 +12,14 @@ import { alertActionCreator as alert } from './alert'
 export const redoActionCreator =
   ({ cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {}): Thunk =>
   (dispatch, getState) => {
-    const lastActionType = getLatestActionType(getState().redoPatches)
+    const lastActionLabel = getLatestActionLabel(getState().redoPatches)
 
     dispatch({ type: 'redo', cursorAtEnd, count })
 
-    if (!lastActionType) return
+    if (!lastActionLabel) return
 
     dispatch(
-      alert(`Redo: ${startCase(lastActionType)}`, {
+      alert(`Redo: ${lastActionLabel}`, {
         alertType: AlertType.Redo,
       }),
     )

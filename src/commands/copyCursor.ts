@@ -6,7 +6,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { alertActionCreator as alert } from '../actions/alert'
 import { pullActionCreator as pull } from '../actions/pull'
 import SettingsIcon from '../components/icons/SettingsIcon'
-import copy from '../device/copy'
+import { copyDeferred } from '../device/copy'
 import * as selection from '../device/selection'
 import exportContext from '../selectors/exportContext'
 import getMulticursorThoughtIds from '../selectors/getMulticursorThoughtIds'
@@ -23,6 +23,16 @@ import trimBullet from '../util/trimBullet'
 
 /** Pulls any pending descendants for the given thought IDs, exports them to plain text, copies to clipboard, and returns data for constructing the alert message. */
 const copyThoughts = async (ids: ThoughtId[], dispatch: Dispatch, getState: () => State): Promise<string> => {
+  // Registered before the pull below, because the iOS Capacitor WebView refuses a clipboard write issued after
+  // an await, and the export is not known until the pull resolves (#3960). Mobile Safari accepts it, and the
+  // iOS e2e suite runs Safari, so inlining this back into a plain copy() call would keep CI green without a Capacitor-specific test.
+  let provideContent: (content: { text: string; html: string }) => void
+  copyDeferred(
+    new Promise<{ text: string; html: string }>(resolve => {
+      provideContent = resolve
+    }),
+  )
+
   const state = getState()
   const needsPull = ids.some(id =>
     someDescendants(state, id, child => isPending(state, getThoughtById(state, child.id))),
@@ -41,9 +51,7 @@ const copyThoughts = async (ids: ThoughtId[], dispatch: Dispatch, getState: () =
     .map(id => exportContext(stateAfterPull, id, 'text/plain', { excludeMeta: true }))
     .join('\n')
 
-  // Write text/html and the text/em marker alongside the plain text so structured paste works even when
-  // the browser does not fire a native copy event for the collapsed selection (e.g. Safari) (#3993).
-  copy(trimBullet(exported), { html: exportedHtml })
+  provideContent!({ text: trimBullet(exported), html: exportedHtml })
 
   return exportedVisible
 }

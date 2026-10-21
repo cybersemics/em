@@ -1,17 +1,17 @@
 /* eslint-disable import/prefer-default-export */
 /** Defines global keyboard shortcuts and gestures. */
-import Emitter from 'emitter20'
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
 import { ArrowKey } from './@types/ArrowKey'
 import Command from './@types/Command'
 import CommandId from './@types/CommandId'
+import CommandSuccess from './@types/CommandSuccess'
 import CommandType from './@types/CommandType'
 import Direction from './@types/Direction'
 import Gesture from './@types/Gesture'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
-import Patch from './@types/Patch'
+import { CommandPatchMetadata } from './@types/Patch'
 import Path from './@types/Path'
 import State from './@types/State'
 import { addMulticursorActionCreator as addMulticursor } from './actions/addMulticursor'
@@ -20,13 +20,14 @@ import { clearMulticursorsActionCreator as clearMulticursors } from './actions/c
 import { cursorClearedActionCreator as cursorCleared } from './actions/cursorCleared'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
 import { indentActionCreator as indent } from './actions/indent'
+import { pinnedCommandAddRepActionCreator as pinnedCommandAddRep } from './actions/pinnedCommandAddRep'
 import { redoActionCreator as redo } from './actions/redo'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './actions/setIsMulticursorExecuting'
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { undoActionCreator as undo } from './actions/undo'
-import { isMac } from './browser'
+import { isCapacitor, isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
@@ -42,10 +43,13 @@ import isUndoEnabled from './selectors/isUndoEnabled'
 import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
-import editingValueStore from './stores/editingValue'
-import gestureStore from './stores/gesture'
-import heldKeysStore from './stores/heldKeys'
-import { isNavigation } from './util/actionMetadata.registry'
+import commandEmitter from './stores/commandEmitter'
+import editingValueStore from './stores/editingValueStore'
+import gestureStore from './stores/gestureStore'
+import heldKeysStore from './stores/heldKeysStore'
+import ministore from './stores/ministore'
+import commandTransaction from './util/commandTransaction'
+import createId from './util/createId'
 import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
@@ -53,12 +57,14 @@ import head from './util/head'
 import isAttribute from './util/isAttribute'
 import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
+import saveDebugLog from './util/saveDebugLog'
 
 export const globalCommands: Command[] = Object.values(commandsObject)
 
-export const commandEmitter = new Emitter()
+export { commandEmitter }
 
-let keyCommandId: string | null = null
+/** The id of the command matched by the key that is down, read by beforeInput. Set on keyDown and cleared on keyUp. A ministore rather than a module variable so that resetStores clears it between tests, including after a keydown that no keyup followed. Nothing subscribes, so a keystroke never renders. */
+const keyCommandIdStore = ministore<{ id: string | null }>({ id: null })
 
 /* A mapping of key codes to uppercase letters.
  * {
@@ -101,16 +107,25 @@ export const hashCommand = (keyboard: string | Key): string => {
   )
 }
 
+/**
+ * The letter or digit of the physical key an Option chord was struck on, e.g. 'KeyN' -> 'N'. Option + N, E, I, U, and `
+ * compose as dead keys on macOS, which mangles e.key ('Dead' in Chrome, '~' in Safari) and e.keyCode (192, the tilde
+ * key) alike, leaving e.code as the only faithful source. Restricted to Option so that unmodified typing — including
+ * IME composition, where keyCode is the 229 sentinel and e.code is still the physical key — resolves as it otherwise
+ * would.
+ */
+const optionChordKey = (e: KeyboardEvent): string | undefined =>
+  e.altKey ? /^(?:Key|Digit)(.)$/.exec(e.code)?.[1] : undefined
+
 /** Hash all the properties of a keydown event into a string that can be compared with the result of hashCommand. */
 export const hashKeyDown = (e: KeyboardEvent): string =>
   (e.metaKey || e.ctrlKey ? 'META_' : '') +
   (e.altKey ? 'ALT_' : '') +
   (isMac && e.ctrlKey ? 'CONTROL_' : '') +
   (e.shiftKey ? 'SHIFT_' : '') +
-  // for some reason, e.key returns 'Dead' in some cases, perhaps because of alternate keyboard settings
-  // e.g. alt + meta + n
-  // use e.keyCode if available instead
-  (letters[e.keyCode] || digits[e.keyCode] || e.key || '').toUpperCase()
+  // keyCode is tried before e.code so that a layout which reports a letter's keyCode faithfully keeps resolving through
+  // it, e.g. AZERTY reports keyCode 65 for the physical KeyQ.
+  (letters[e.keyCode] || digits[e.keyCode] || optionChordKey(e) || e.key || '').toUpperCase()
 
 /* A map of typed modifier tokens to the corresponding Key modifier property.
  * Command and Ctrl are the same modifier on their respective platforms, so they both map to meta. Literal Control is
@@ -283,7 +298,17 @@ const index = (): {
   }
 }
 
-let gestureMenuTimeout: number | undefined
+/** The pending gesture menu, which handleGestureSegment shows after COMMAND_PALETTE_TIMEOUT. A ministore whose dispose clears the timer, so that resetStores cancels it between tests rather than letting it dispatch into the next test's store. */
+const gestureMenuTimerStore = ministore<{ timer: number | null }>(
+  { timer: null },
+  { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
+)
+
+/** Cancels the pending gesture menu. */
+const clearGestureMenuTimer = () => {
+  clearTimeout(gestureMenuTimerStore.getState().timer ?? undefined)
+  gestureMenuTimerStore.update({ timer: null })
+}
 
 const { commandKeyIndex, commandIdIndex, commandGestureIndex } = index()
 
@@ -335,23 +360,20 @@ const nearestNonAttributeAncestor = (state: State, path: Path): Path | null => {
 }
 
 /**
- * The last command that was executed, tracked so that it can be executed again by the repeat command. Not reactive — nothing subscribes to it — so it is a plain module variable rather than a ministore.
+ * The last command that was executed, tracked so that it can be executed again by the repeat command. A ministore so that resetStores clears it between tests. Nothing subscribes to it, so recording a command never renders.
  *
  * Repeat has no behavior of its own. Both executeCommand and executeCommandWithMulticursor swap it out for lastCommand before executing, rather than executing from within its exec, so that the repeated command runs through the same path as any other command and gets its own canExecute and multicursor handling. Since repeat is repeatable: false, it is never recorded here, so the swap never resolves to repeat itself and cannot recurse.
  *
  * The keyboardIndex that triggered the command is recorded alongside it, since it cannot be recovered from the repeat keypress. Without it, a command bound to an array of shortcuts (applyColor) would have no shortcut to repeat.
  */
-let lastCommand: { command: Command; keyboardIndex?: number } | null = null
-
-/** Resets the last command. For testing only, since lastCommand persists across tests within a file. */
-export const resetLastCommand = () => {
-  lastCommand = null
-}
+const lastCommandStore = ministore<{ lastCommand: { command: Command; keyboardIndex?: number } | null }>({
+  lastCommand: null,
+})
 
 /** Returns the index of the command's keyboard shortcut that was pressed, so that it can be read in exec (e.g. to select a color based on the pressed shortcut). Returns undefined if the command was not activated by one of its own keyboard shortcuts. */
 const keyboardIndexOf = (
   command: Command,
-  type: CommandType,
+  type: CommandType | undefined,
   event: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
 ): number | undefined => {
   if (type !== 'keyboard' || !(event instanceof KeyboardEvent) || !command.keyboard) return undefined
@@ -360,31 +382,45 @@ const keyboardIndexOf = (
   return index === -1 ? undefined : index
 }
 
-/** Returns the last undo patch that is not a navigation action, i.e. the patch that Undo would revert. Mirrors getLatestActionType, but returns the patch itself so that patches can be compared by identity. */
-const lastUndoablePatch = (state: State): Patch | undefined => {
-  for (let i = state.undoPatches.length - 1; i >= 0; i--) {
-    if (!isNavigation(state.undoPatches[i][0]?.actions[0])) return state.undoPatches[i]
-  }
-  return undefined
-}
-
 /**
  * Records the last command so that it can be executed again by the repeat command, but only if it made an undoable, non-navigational change to the thoughtspace. Otherwise repeat would repeat cursor movements and commands that dispatch no undoable actions (e.g. Cursor Down, Export) rather than the last edit, no matter how many of them occurred since.
  *
- * Patches are compared by identity rather than by action type, since the same command may be executed repeatedly (e.g. Bold twice in a row). A command that only dispatches asynchronously (e.g. Generate Thought) is not recorded, as its patch does not exist yet.
+ * The newest patch records the command directly, so no patch-identity comparison or action inference is needed.
  */
-const recordLastCommand = (
-  command: Command,
-  keyboardIndex: number | undefined,
-  stateAfter: State,
-  undoablePatchPrev: Patch | undefined,
-) => {
-  if (command.repeatable !== false && lastUndoablePatch(stateAfter) !== undoablePatchPrev) {
-    lastCommand = { command, keyboardIndex }
+const recordLastCommand = (command: Command, metadata: CommandPatchMetadata, stateAfter: State) => {
+  const latest = [...stateAfter.undoPatches].reverse().find(patch => !patch.metadata.isNavigation)
+  if (
+    command.repeatable !== false &&
+    latest?.metadata.source === 'command' &&
+    latest.metadata.invocationId === metadata.invocationId &&
+    !latest.metadata.isNavigation
+  ) {
+    lastCommandStore.update({ lastCommand: { command, keyboardIndex: metadata.keyboardIndex } })
   }
 }
 
-/** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
+/** Records the resolved command and input once per invocation, including the shortcut used by Repeat. */
+const createCommandMetadata = (
+  command: Command,
+  {
+    type,
+    event,
+    keyboardIndex,
+  }: {
+    type?: CommandType
+    event: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent
+    keyboardIndex?: number
+  },
+): CommandPatchMetadata => ({
+  source: 'command',
+  invocationId: createId(),
+  commandId: command.id,
+  label: command.label,
+  type,
+  keyboardIndex: keyboardIndex ?? keyboardIndexOf(command, type, event),
+})
+
+/** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. Returns false if there is nothing to repeat or the command cannot execute. */
 export const executeCommand = (
   commandArg: Command,
   {
@@ -402,29 +438,36 @@ export const executeCommand = (
   } = {},
 ) => {
   const commandStore = storeArg ?? store
-  type = type ?? 'keyboard'
+  const inputMethod = type
+  const commandType = type ?? 'keyboard'
   event = event ?? eventNoop
 
   // resolve repeat to the last command that was executed and the keyboardIndex it was triggered with, and exit early if there is none
-  const resolved = commandArg.id === 'repeat' ? lastCommand : { command: commandArg }
-  if (!resolved) return
+  const resolved = commandArg.id === 'repeat' ? lastCommandStore.getState().lastCommand : { command: commandArg }
+  if (!resolved) return false
   const command = resolved.command
 
   const canExecute = !command.canExecute || command.canExecute(commandStore.getState())
   // Exit early if the command cannot execute
-  if (!canExecute) return
+  if (!canExecute) return false
 
   // A repeated command takes the keyboardIndex that was recorded with it, since the repeat keypress matches none of its own keyboard shortcuts. Otherwise it is derived from the event.
-  const keyboardIndex = keyboardIndexArg ?? resolved.keyboardIndex ?? keyboardIndexOf(command, type, event)
+  const keyboardIndex = keyboardIndexArg ?? resolved.keyboardIndex
+  const commandMetadata = createCommandMetadata(command, { type: inputMethod, event, keyboardIndex })
+  debugLog.log('command', { id: command.id, commandType })
 
-  debugLog.log('command', { id: command.id, commandType: type })
-
-  const undoablePatchPrev = lastUndoablePatch(commandStore.getState())
-
-  // execute single command
-  command.exec(commandStore.dispatch, commandStore.getState, event, { type, keyboardIndex })
-
-  recordLastCommand(command, keyboardIndex, commandStore.getState(), undoablePatchPrev)
+  return commandStore.dispatch(
+    commandTransaction(commandMetadata, (dispatch, metadata) => {
+      const result = command.exec(dispatch, commandStore.getState, event, {
+        type: commandType,
+        keyboardIndex: commandMetadata.keyboardIndex,
+      })
+      if (result instanceof Promise) {
+        return result.then(() => recordLastCommand(command, metadata, commandStore.getState()))
+      }
+      recordLastCommand(command, metadata, commandStore.getState())
+    }),
+  )
 }
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */
@@ -442,11 +485,12 @@ export const executeCommandWithMulticursor = (
   } = {},
 ) => {
   const commandStore = storeArg ?? store
-  type = type ?? 'keyboard'
+  const inputMethod = type
+  const commandType = type ?? 'keyboard'
   event = event ?? eventNoop
 
   // resolve repeat to the last command that was executed and the keyboardIndex it was triggered with, and exit early if there is none
-  const resolved = commandArg.id === 'repeat' ? lastCommand : { command: commandArg }
+  const resolved = commandArg.id === 'repeat' ? lastCommandStore.getState().lastCommand : { command: commandArg }
   if (!resolved) return
   const command = resolved.command
   // Every executeCommand call below is given the already resolved command, so it cannot resolve repeat itself. Forward the recorded keyboardIndex explicitly, otherwise it would be derived from the repeat keypress and lost.
@@ -456,15 +500,34 @@ export const executeCommandWithMulticursor = (
   // read the pre-edit value and the trailing edit would then commit over the command's own result (#4774). Keyboard and
   // gesture already flushed in keyDown and handleGestureEnd; every other entry point (toolbar, Command Center, Command
   // Universe) flushes here, before the state read below.
-  if (type !== 'keyboard' && type !== 'gesture') {
+  if (commandType !== 'keyboard' && commandType !== 'gesture') {
     commandEmitter.trigger('command', command)
   }
 
   const state = commandStore.getState()
 
+  /** Reports a successful invocation once exec has returned, unless it raised an app error, and adds a rep to the pinned command when the user performed it by keyboard or gesture. Asynchronous work is not awaited: the user has completed the command once it starts, whatever a server or the clipboard later returns. */
+  const reportSuccess = () => {
+    if (commandStore.getState().error !== state.error) return
+    commandEmitter.trigger('commandSucceeded', {
+      commandId: commandArg.id,
+      source: type ?? 'internal',
+    } satisfies CommandSuccess)
+    if (type === 'keyboard' || type === 'gesture')
+      commandStore.dispatch(pinnedCommandAddRep({ commandId: commandArg.id }))
+  }
+
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.
   if (!command.multicursor || !hasMulticursor(state)) {
-    return executeCommand(command, { store: commandStore, type, event, keyboardIndex })
+    const result = executeCommand(command, {
+      store: commandStore,
+      type: inputMethod,
+      event,
+      keyboardIndex,
+    })
+    if (result === false) return
+    reportSuccess()
+    return result
   }
 
   /** The value of Command['multicursor'] resolved to an object. That is, bare false has already short circuited, and bare true resolves to an empty object so that we don't need to make existential checks everywhere. */
@@ -479,116 +542,164 @@ export const executeCommandWithMulticursor = (
   const canExecute = filteredPaths.every(path => !command.canExecute || command.canExecute({ ...state, cursor: path }))
   if (!canExecute) return
 
-  // Reverse the order of the cursors if the command has reverse multicursor mode enabled.
-  if (multicursor.reverse) {
-    filteredPaths.reverse()
-  }
+  /** Whether the command is active on the thought alone, i.e. in the state that exec will see after setCursor clears the multicursors. */
+  const isActiveOnPath = (path: Path) => !!command.isActive?.({ ...state, cursor: path, multicursors: {} })
 
-  // Set isMulticursorExecuting before executing commands
-  // Include the command type to ensure proper undo labeling
-  commandStore.dispatch(
-    setIsMulticursorExecuting({
-      value: true,
-      undoLabel: command.id,
+  // Toggle all selected thoughts in the same direction by skipping the ones that are already in the target state.
+  const execPaths =
+    multicursor.toggle && !filteredPaths.every(isActiveOnPath)
+      ? filteredPaths.filter(path => !isActiveOnPath(path))
+      : filteredPaths
+
+  const commandMetadata = createCommandMetadata(command, { type: inputMethod, event, keyboardIndex })
+  // Whether exec ran on at least one cursor, i.e. the invocation counts as a success.
+  let didExecute = false
+  const result = commandStore.dispatch(
+    commandTransaction(commandMetadata, (dispatch, metadata) => {
+      // Pass the attributed dispatch through the existing executor API so nested asynchronous work retains its parent.
+      const scopedStore = { ...commandStore, dispatch }
+
+      // Reverse the order of the cursors if the command has reverse multicursor mode enabled.
+      if (multicursor.reverse) {
+        execPaths.reverse()
+      }
+
+      // Keep direct multicursor action-creators grouped while command metadata identifies this transaction.
+      dispatch(setIsMulticursorExecuting({ value: true }))
+
+      // The thoughts created by the executions, collected for selectNewCursors.
+      const newCursors: Path[] = []
+
+      /** Restores selection state and closes the synchronous multicursor bracket. */
+      const completeMulticursorExecution = () => {
+        // Restore the cursor to its original value if not prevented.
+        // Note that state.cursor is the old cursor, before any commands were executed.
+        // If the cursor thought was moved into a metaprogramming attribute (e.g. swapNote moves it into =note),
+        // restore it to the nearest non-attribute ancestor instead.
+        if (!multicursor.preventSetCursor && state.cursor) {
+          const restoreState = commandStore.getState()
+          const recomputedPath = recomputePath(restoreState, state.cursor)
+          dispatch(setCursor({ path: recomputedPath && nearestNonAttributeAncestor(restoreState, recomputedPath) }))
+        }
+
+        // Restore multicursors, or select the thoughts created by commands that opt into selectNewCursors.
+        if (multicursor.selectNewCursors) {
+          // Setting the cursor to each selected thought emptied the multicursors, so the thoughts that were created can
+          // simply be selected. A single new thought is not a selection, so clear it and end as the command does without a
+          // multiselect, with the caret in the new thought.
+          dispatch(
+            newCursors.length < 2
+              ? [clearMulticursors()]
+              : [
+                  ...newCursors.map(path => addMulticursor({ path })),
+                  // state.expanded is recalculated on setCursor, so set the cursor to the last new thought to expand the
+                  // ancestors of the new selection. The cursor is already there, so this does not move it.
+                  // The new thoughts are selected rather than edited — there is no typing into several of them at once — so
+                  // close the keyboard that each exec opened. Otherwise multicursorAlertMiddleware reads the selection as a
+                  // multiselection being edited (Clear Thought) and leaves the Command Center closed over it on mobile.
+                  setCursor({
+                    path: newCursors[newCursors.length - 1],
+                    isKeyboardOpen: false,
+                    preserveMulticursor: true,
+                  }),
+                ],
+          )
+        } else if (!multicursor.clearMulticursor) {
+          dispatch(
+            paths.map(path => (dispatch, getState) => {
+              const state = getState()
+              const recomputedPath = recomputePath(state, path)
+              // If a multicursor thought was moved into a metaprogramming attribute (e.g. swapNote moves it into
+              // =note), restore it to the nearest non-attribute ancestor instead.
+              const restoredPath = recomputedPath && nearestNonAttributeAncestor(state, recomputedPath)
+              if (!restoredPath) return
+              dispatch(addMulticursor({ path: restoredPath }))
+            }),
+          )
+        }
+
+        // A command tapped in the Command Center that ends with an empty selection (e.g. delete, whose thoughts no
+        // longer exist to be restored above) would dismiss the Command Center, since multicursorAlertMiddleware
+        // closes it when nothing is selected. Select the thought the cursor landed on instead, the same way the
+        // Command Center is opened in the first place, so that it stays open and can be used again. When the last
+        // thought was deleted there is no cursor left to select and it closes as usual.
+        if (commandType === 'commandCenter') {
+          const state = commandStore.getState()
+          if (!hasMulticursor(state) && state.cursor) {
+            dispatch(addMulticursor({ path: state.cursor }))
+          }
+        }
+
+        multicursor.onComplete?.(execPaths, dispatch, commandStore.getState)
+
+        // The cleared state is preserved while the cursor is set to each selected thought (see setCursor), so reset it now
+        // that the command has completed, just as setCursor resets it when a command moves the cursor off a single cleared
+        // thought. Only reset it if it was set before the command, otherwise clearThought's own multiselect clear is undone.
+        if (state.cursorCleared) {
+          dispatch(cursorCleared({ value: false }))
+        }
+
+        dispatch(setIsMulticursorExecuting({ value: false }))
+      }
+
+      // If there is a custom execMulticursor function, call it with the filtered multicursors.
+      // Otherwise, execute the command once for each of the filtered multicursors.
+      if (multicursor.execMulticursor) {
+        // Custom execution may settle asynchronously; record Repeat once its attributed work is complete.
+        let result: void | Promise<void>
+        try {
+          result = multicursor.execMulticursor(execPaths, dispatch, commandStore.getState)
+          didExecute = true
+        } catch (error) {
+          completeMulticursorExecution()
+          throw error
+        }
+
+        if (result instanceof Promise) {
+          // Restore the selection and close the synchronous command bracket now. The custom command owns any asynchronous
+          // multicursor bracket; its supplied dispatch automatically attributes the completed edits.
+          completeMulticursorExecution()
+          return result.then(() => recordLastCommand(command, metadata, commandStore.getState()))
+        }
+      } else {
+        try {
+          for (const path of execPaths) {
+            // Make sure we have the correct path to the thought in case it was moved during execution.
+            const recomputedPath = recomputePath(commandStore.getState(), path)
+            if (!recomputedPath) continue
+
+            dispatch(setCursor({ path: recomputedPath }))
+            if (
+              executeCommand(command, {
+                store: scopedStore,
+                type: inputMethod,
+                event,
+                keyboardIndex,
+              }) !== false
+            ) {
+              didExecute = true
+            }
+
+            // The command sets the cursor to the thought it created, so a cursor on a different thought than the one that was
+            // just set is the new thought. A command that could not act on the selected thought leaves the cursor where it
+            // was and contributes nothing (e.g. newUncle on a thought at the root).
+            const cursorAfter = commandStore.getState().cursor
+            if (multicursor.selectNewCursors && cursorAfter && !equalPath(cursorAfter, recomputedPath)) {
+              newCursors.push(cursorAfter)
+            }
+          }
+        } catch (error) {
+          completeMulticursorExecution()
+          throw error
+        }
+      }
+
+      completeMulticursorExecution()
+      recordLastCommand(command, metadata, commandStore.getState())
     }),
   )
-
-  // The thoughts created by the executions, collected for selectNewCursors.
-  const newCursors: Path[] = []
-
-  // If there is a custom execMulticursor function, call it with the filtered multicursors.
-  // Otherwise, execute the command once for each of the filtered multicursors.
-  if (multicursor.execMulticursor) {
-    // execMulticursor bypasses executeCommand, which is what records the last command for the repeat command, so record it here. The patch is captured after setIsMulticursorExecuting, the same point the per-cursor loop below captures it from, so that both branches judge a change by the same measure.
-    const undoablePatchPrev = lastUndoablePatch(commandStore.getState())
-    multicursor.execMulticursor(filteredPaths, commandStore.dispatch, commandStore.getState)
-    recordLastCommand(command, keyboardIndex, commandStore.getState(), undoablePatchPrev)
-  } else {
-    for (const path of filteredPaths) {
-      // Make sure we have the correct path to the thought in case it was moved during execution.
-      const recomputedPath = recomputePath(commandStore.getState(), path)
-      if (!recomputedPath) continue
-
-      commandStore.dispatch(setCursor({ path: recomputedPath }))
-      executeCommand(command, { store: commandStore, type, event, keyboardIndex })
-
-      // The command sets the cursor to the thought it created, so a cursor on a different thought than the one that was
-      // just set is the new thought. A command that could not act on the selected thought leaves the cursor where it
-      // was and contributes nothing (e.g. newUncle on a thought at the root).
-      const cursorAfter = commandStore.getState().cursor
-      if (multicursor.selectNewCursors && cursorAfter && !equalPath(cursorAfter, recomputedPath)) {
-        newCursors.push(cursorAfter)
-      }
-    }
-  }
-
-  // Restore the cursor to its original value if not prevented.
-  // Note that state.cursor is the old cursor, before any commands were executed.
-  // If the cursor thought was moved into a metaprogramming attribute (e.g. swapNote moves it into =note),
-  // restore it to the nearest non-attribute ancestor instead.
-  if (!multicursor.preventSetCursor && state.cursor) {
-    const restoreState = commandStore.getState()
-    const recomputedPath = recomputePath(restoreState, state.cursor)
-    commandStore.dispatch(
-      setCursor({ path: recomputedPath && nearestNonAttributeAncestor(restoreState, recomputedPath) }),
-    )
-  }
-
-  // Restore multicursors
-  if (multicursor.selectNewCursors) {
-    // Setting the cursor to each selected thought emptied the multicursors, so the thoughts that were created can
-    // simply be selected. A single new thought is not a selection, so clear it and end as the command does without a
-    // multiselect, with the caret in the new thought.
-    commandStore.dispatch(
-      newCursors.length < 2
-        ? clearMulticursors()
-        : [
-            ...newCursors.map(path => addMulticursor({ path })),
-            // state.expanded is recalculated on setCursor, so set the cursor to the last new thought to expand the
-            // ancestors of the new selection. The cursor is already there, so this does not move it.
-            // The new thoughts are selected rather than edited — there is no typing into several of them at once — so
-            // close the keyboard that each exec opened. Otherwise multicursorAlertMiddleware reads the selection as a
-            // multiselection being edited (Clear Thought) and leaves the Command Center closed over it on mobile.
-            setCursor({ path: newCursors[newCursors.length - 1], isKeyboardOpen: false, preserveMulticursor: true }),
-          ],
-    )
-  } else if (!multicursor.clearMulticursor) {
-    commandStore.dispatch(
-      paths.map(path => (dispatch, getState) => {
-        const state = getState()
-        const recomputedPath = recomputePath(state, path)
-        // If a multicursor thought was moved into a metaprogramming attribute (e.g. swapNote moves it into
-        // =note), restore it to the nearest non-attribute ancestor instead.
-        const restoredPath = recomputedPath && nearestNonAttributeAncestor(state, recomputedPath)
-        if (!restoredPath) return
-        dispatch(addMulticursor({ path: restoredPath }))
-      }),
-    )
-  }
-
-  // A command tapped in the Command Center that ends with an empty selection (e.g. delete, whose thoughts no
-  // longer exist to be restored above) would dismiss the Command Center, since multicursorAlertMiddleware
-  // closes it when nothing is selected. Select the thought the cursor landed on instead, the same way the
-  // Command Center is opened in the first place, so that it stays open and can be used again. When the last
-  // thought was deleted there is no cursor left to select and it closes as usual.
-  if (type === 'commandCenter') {
-    const state = commandStore.getState()
-    if (!hasMulticursor(state) && state.cursor) {
-      commandStore.dispatch(addMulticursor({ path: state.cursor }))
-    }
-  }
-
-  multicursor.onComplete?.(filteredPaths, commandStore.dispatch, commandStore.getState)
-
-  // The cleared state is preserved while the cursor is set to each selected thought (see setCursor), so reset it now
-  // that the command has completed, just as setCursor resets it when a command moves the cursor off a single cleared
-  // thought. Only reset it if it was set before the command, otherwise clearThought's own multiselect clear is undone.
-  if (state.cursorCleared) {
-    commandStore.dispatch(cursorCleared({ value: false }))
-  }
-
-  // Reset isMulticursorExecuting after all operations
-  commandStore.dispatch(setIsMulticursorExecuting({ value: false }))
+  if (didExecute) reportSuccess()
+  return result
 }
 
 /**
@@ -596,7 +707,7 @@ export const executeCommandWithMulticursor = (
  *
  * There are two alert types for gesture hints:
  * - GestureHint - The basic gesture hint that is shown immediately on swipe.
- * - gestureMenuTimeout - The gesture menu that shows all possible gestures from the current sequence after a delay.
+ * - Gesture menu - The gesture menu that shows all possible gestures from the current sequence after a delay.
  *
  * There is no automated test coverage since timers are so messed up in the current Jest version. It may be possible to write tests if Jest is upgraded. Manual test cases.
  * - Basic gesture hint.
@@ -619,11 +730,16 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
     haptics.light()
   }
 
+  // While the pinned command tooltip is open the user is practicing the gesture it shows, so the gesture menu would
+  // only cover it. Haptics still confirm each segment.
+  if (state.showPinnedCommandTooltip) return
+
   // gesture menu
   // alert after a delay of COMMAND_PALETTE_TIMEOUT
-  clearTimeout(gestureMenuTimeout)
-  gestureMenuTimeout = window.setTimeout(
+  clearGestureMenuTimer()
+  const timer = window.setTimeout(
     () => {
+      gestureMenuTimerStore.update({ timer: null })
       store.dispatch((dispatch, getState) => {
         // do not show "Cancel gesture" if already being shown by basic gesture hint
         const state = getState()
@@ -634,11 +750,43 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
     // if the hint is already being shown, do not wait to change the value
     COMMAND_PALETTE_TIMEOUT,
   )
+  gestureMenuTimerStore.update({ timer })
 }
+
+/** Dismiss gesture hint that is shown by alert. */
+export const handleGestureCancel = () => {
+  clearGestureMenuTimer()
+  store.dispatch((dispatch, getState) => {
+    const state = getState()
+    if (state.showGestureMenu) {
+      dispatch(gestureMenu())
+    }
+    if (state.alert?.alertType === AlertType.GestureHint || state.showGestureMenu) {
+      dispatch(alert(null))
+    }
+  })
+}
+
+/** A secret gesture (→↓←↓↑) that downloads the debug log, or shares it in the native apps, while Debug Logging is on. A debugging backdoor rather than a command, so that it appears nowhere a command does: the Command Universe, the gesture menu, help, or the tutorial. */
+const DOWNLOAD_DEBUG_LOG_GESTURE: Gesture = 'rdldu'
 
 /** Executes a valid gesture and closes the gesture hint. Special handling for chainable commands. */
 export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e: GestureResponderEvent }) => {
   const state = store.getState()
+
+  // secret gesture
+  if (
+    sequence === DOWNLOAD_DEBUG_LOG_GESTURE &&
+    debugLog.isEnabled() &&
+    !state.showModal &&
+    !state.showMobileCommandUniverse &&
+    state.longPress !== LongPressState.DragInProgress
+  ) {
+    handleGestureCancel()
+    const entryCount = saveDebugLog(state)
+    store.dispatch(alert(`${isCapacitor() ? 'Shared' : 'Downloaded'} ${entryCount} debug log entries`))
+    return
+  }
 
   // Get the command from the command gesture index.
   // When the gesture menu  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
@@ -684,6 +832,13 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     }
   }
 
+  // In training mode, show the command's label as a gesture hint.
+  // Dispatch it before the command executes so that an alert raised by the command itself (e.g. an error explaining why it cannot be executed) replaces the label rather than being replaced by it.
+  const showLabel = !getUserSetting(state, Settings.experienceMode) && !!command && !command.hideAlert
+  if (command && showLabel) {
+    store.dispatch(alert(command.label, { alertType: AlertType.GestureHint }))
+  }
+
   // execute command
   // do not execute when modal is displayed or a drag is in progress
   if (
@@ -693,21 +848,29 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     state.longPress !== LongPressState.DragInProgress
   ) {
     commandEmitter.trigger('command', command)
-    if (chainableCommandInProgressExclusive && !isAllSelected(state)) {
-      executeCommandWithMulticursor(chainableCommandInProgressExclusive, {
-        event: {
-          ...e,
-          // Hacky magic value, but it's the easiest way to tell the command that this is a chained gesture so that it can adjust the undo behavior.
-          // Both commands need to be undone together, and this is not a property of the Command object but of the way it is invoked, so is somewhat appropriately stored on the event object, albeit ad hoc.
-          type: 'chainedGesture',
-        },
-        type: 'gesture',
-        store,
-      })
-    }
-    executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
-    if (chainableCommandInProgressExclusive?.id === 'selectAll') {
-      store.dispatch(clearMulticursors())
+    if (chainableCommandInProgressExclusive) {
+      const commandMetadata = createCommandMetadata(command, { type: 'gesture', event: e })
+      store.dispatch(
+        commandTransaction(commandMetadata, dispatch => {
+          const scopedStore = { ...store, dispatch }
+          if (!isAllSelected(state)) {
+            executeCommandWithMulticursor(chainableCommandInProgressExclusive, {
+              event: e,
+              type: 'gesture',
+              store: scopedStore,
+            })
+          }
+          executeCommandWithMulticursor(command, {
+            event: e,
+            type: 'gesture',
+            store: scopedStore,
+          })
+          if (chainableCommandInProgressExclusive.id === 'selectAll') dispatch(clearMulticursors())
+        }),
+      )
+      recordLastCommand(command, commandMetadata, store.getState())
+    } else {
+      executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
     }
     if (store.getState().enableLatestCommandsDiagram) store.dispatch(showLatestCommands(command))
   }
@@ -715,10 +878,8 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
   // if no command was found, execute the cancel command
 
   // clear gesture hint
-  clearTimeout(gestureMenuTimeout)
-  gestureMenuTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
+  clearGestureMenuTimer()
 
-  // In training mode, show alert for any valid command (except forward/back)
   // In experience mode, clear any existing gesture hint
   setTimeout(() => {
     store.dispatch((dispatch, getState) => {
@@ -730,21 +891,16 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
         dispatch(gestureMenu())
       }
 
-      // Show alert for valid commands in training mode
-      if (!experienceMode && command && !command.hideAlert) {
-        dispatch(
-          alert(command.label, {
-            alertType: AlertType.GestureHint,
-          }),
-        )
-      } else if (
+      // Do not clear the label shown above, nor the alert that the command raised in its place
+      if (
+        !showLabel &&
         // Clear alert if gesture is cancelled (no command)
-        !command ||
-        // Clear alert if back/forward
-        command?.id === 'cursorForward' ||
-        command?.id === 'cursorBack' ||
-        // In experience mode, clear any existing gesture hint
-        (experienceMode && alertType === AlertType.GestureHint)
+        (!command ||
+          // Clear alert if back/forward
+          command?.id === 'cursorForward' ||
+          command?.id === 'cursorBack' ||
+          // In experience mode, clear any existing gesture hint
+          (experienceMode && alertType === AlertType.GestureHint))
       ) {
         dispatch(alert(null))
       }
@@ -752,21 +908,7 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
   })
 }
 
-/** Dismiss gesture hint that is shown by alert. */
-export const handleGestureCancel = () => {
-  clearTimeout(gestureMenuTimeout)
-  store.dispatch((dispatch, getState) => {
-    const state = getState()
-    if (state.showGestureMenu) {
-      dispatch(gestureMenu())
-    }
-    if (state.alert?.alertType === AlertType.GestureHint || state.showGestureMenu) {
-      dispatch(alert(null))
-    }
-  })
-}
-
-/** Performs a native undo/redo gesture (iOS shake-to-undo, three-finger swipe, or the Edit menu) as em's own undo/redo, so that Redux remains the single source of truth. Called from both routes a native gesture can arrive by: the `historyUndo`/`historyRedo` `beforeinput` event in the browser, and the `nativeHistory` event from the Capacitor plugin. */
+/** Performs a native undo/redo gesture (iOS shake-to-undo, three-finger swipe, or the Edit menu) as em's own undo/redo, so that Redux remains the single source of truth. Called by `device/nativeHistory.ts` from every route a native gesture can arrive by. */
 export const handleNativeHistory = (type: 'undo' | 'redo') => {
   // Flush any pending throttled edit before reading the state, mirroring keyDown. Editing dispatches editThought on a
   // throttle, so a native undo triggered mid-edit (e.g. immediately after an autocorrect) would otherwise undo the
@@ -790,21 +932,7 @@ export const handleNativeHistory = (type: 'undo' | 'redo') => {
  * a `beforeinput` insertText of a single space over an empty thought indents it instead of inserting the
  * space, mirroring the keyDown-matched path on desktop/iOS (#4178). */
 export const beforeInput = (e: InputEvent) => {
-  // Native undo/redo (iOS shake-to-undo or three-finger swipe) fires a cancelable beforeinput with inputType
-  // historyUndo/historyRedo. Left unhandled, it mutates the contenteditable DOM directly, bypassing em's undo and
-  // leaving stale formatting markup (e.g. a black font color from a removed background highlight) that renders the
-  // thought invisible (#3954). Block the native undo before it touches the DOM and route it through em's undo/redo,
-  // which reverts to the correct Redux state and re-renders the editable. Each formatSelection registers exactly one
-  // native undo step (#4637), so one native gesture maps to one em undo/redo — no dedupe is needed. The cancelable check
-  // gates on the case we can actually prevent; native browser undo is intentionally superseded by em's undo (#3879).
-  // In the Capacitor app the gesture never reaches WebKit at all and arrives via nativeHistory instead, so the two
-  // routes cannot both fire for a single gesture.
-  if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
-    e.preventDefault()
-    handleNativeHistory(e.inputType === 'historyUndo' ? 'undo' : 'redo')
-    return
-  }
-
+  const keyCommandId = keyCommandIdStore.getState().id
   if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
     e.preventDefault()
     return
@@ -833,7 +961,7 @@ export const keyUp = (e: KeyboardEvent) => {
     heldKeysStore.update({ arrowKeyBoundaryCross: null })
   }
 
-  keyCommandId = null
+  keyCommandIdStore.update({ id: null })
 }
 
 /** Global keyDown handler. */
@@ -864,7 +992,7 @@ export const keyDown = (e: KeyboardEvent) => {
   if (state.showDesktopCommandUniverse) return
 
   const command = commandKeyIndex[hashKeyDown(e)]
-  keyCommandId = command?.id
+  keyCommandIdStore.update({ id: command?.id ?? null })
 
   // disable if modal is shown, except for navigation commands
   if (!command || state.showMobileCommandUniverse || (state.showModal && !command.allowExecuteFromModal)) return

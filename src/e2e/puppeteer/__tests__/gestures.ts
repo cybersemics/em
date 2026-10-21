@@ -1,6 +1,7 @@
 import { type ConsoleMessage, ElementHandle, KnownDevices } from 'puppeteer'
 import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
+import swapNoteCommand from '../../../commands/swapNote'
 import $ from '../helpers/$'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
@@ -13,6 +14,7 @@ import scrollTo from '../helpers/scrollTo'
 import setConnectionStatus from '../helpers/setConnectionStatus'
 import setSelection from '../helpers/setSelection'
 import waitForAlert from '../helpers/waitForAlert'
+import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
@@ -68,6 +70,25 @@ describe('alerts', () => {
     // Verify alert content contains gesture hint text
     const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
     expect(alertText).toBeTruthy()
+  })
+
+  // https://github.com/cybersemics/em/issues/5735
+  it('shows the error alert when Swap Note is swiped on a thought in the home context', async () => {
+    await paste(`
+      - aaa
+        - bbb
+    `)
+    await clickThought('aaa')
+    await waitForCursor('aaa')
+
+    await gesture(swapNoteCommand)
+
+    // Let the task deferred from the end of the gesture run before asserting which alert remains, so that an error
+    // alert that is shown only momentarily before the gesture hint replaces it does not pass the test.
+    await waitForBrowserSettled()
+
+    const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
+    expect(alertText).toBe('Thoughts in the home context cannot be converted to a note.')
   })
 })
 
@@ -136,7 +157,7 @@ describe('gestures', () => {
     await paste(outline)
 
     // Scroll partway down so the swipe has room to scroll further and a baseline to measure from.
-    await scrollTo(0, 100)
+    await scrollTo(100)
 
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
     const viewport = page.viewport()!
@@ -305,7 +326,7 @@ describe('drag to Home with duplicate thought', () => {
     expect(await exportThoughts()).toBe(`
 - A
 - C
-- 
+- ${''}
 - B
 - C
 `)

@@ -44,7 +44,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **cliff** — A drop in visible depth between consecutive thoughts. `cliff = next.depth - node.depth` when negative; `cliff = -3` means three levels shallower. Drives extra padding (`cliffPadding`) and the number of `DropEnd` zones rendered. See [`DropCliff.tsx`](../src/components/DropCliff.tsx) and [layout-rendering.md → usePositionedThoughts](layout-rendering.md#usepositionedthoughts-x-and-y).
 
-**clientId** — Public key of the writer, derived as base64(SHA-256(accessToken)). Stamped on every Thought/Lexeme write as `updatedBy`. Available asynchronously via the `clientIdReady` promise. See [persistence.md → Identity & sharing](persistence.md#identity--sharing).
+**clientId** — Public key of the writer, derived as base64(SHA-256(accessToken)). Stored in Thought payloads as `updatedBy`; persisted Lexemes derive it from their members. Available asynchronously via the `clientIdReady` promise. See [persistence.md → Identity & sharing](persistence.md#identity--sharing).
 
 **command** — A user-triggered operation (keyboard shortcut, gesture, toolbar button, or Command Universe entry). Single-file definition under [`/src/commands`](../src/commands) implementing the [`Command`](../src/@types/Command.ts) interface; auto-registered via the barrel import in [`commands.ts`](../src/commands.ts). The legacy name *shortcut* still appears in some places. See [commands.md](commands.md).
 
@@ -92,13 +92,15 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## G
 
-**generating** — Flag on `Thought` set while content is being produced by AI. Distinct from `pending` (loading from storage).
+**generating** — Flag on `Thought` set while content is being produced by AI. Distinct from `pending` (loading from storage). Generate Thought, Generate Emoji, Organize Thoughts, and Define Term use it as a display-only signal: empty thoughts show a command-specific placeholder ("Generating Thought", "Generating Emoji", or "Reorganizing Thought") and all generating thoughts and their notes shimmer in their own text color, preserving background highlights, without writing a pending value. The shimmer animates a gradient mask over the existing rendering so colors, backgrounds, native emoji and editable HTML stay intact. Emoji wrappers exist only in the displayed HTML and are not stored. **generatingPlaceholder** is the in-memory label for that empty-thought placeholder and is not persisted.
 
 **GLOBAL_ROOT_TOKEN** — The root node of the TreeCRDT tree, and the value `ROOT_PARENT_ID` aliases. `HOME_TOKEN`, `EM_TOKEN`, and `ABSOLUTE_TOKEN` are inserted as its children during initialization. See [`constants.ts`](../src/constants.ts).
 
 **gesture** — Swipe pattern for command activation on touch. Defined per command via the `gesture` field on [`Command`](../src/@types/Command.ts). See [commands.md → Gesture activation](commands.md#gesture-activation).
 
 ## H
+
+**help genie** — A glowing orb with a tapering, sparkling trail that flies over the app. The Help button in the Command Universe header and the learning genie button in the pinned command tooltip let it out and put it back. For now it follows the pointer or a finger, and can be sent to a point with `moveHelpGenie`. See [learning.md → Help genie](learning.md#help-genie).
 
 **HOME_TOKEN** — Sentinel `ThoughtId` for the home root. The path `[HOME_TOKEN]` represents the root thought itself; every regular `Path` starts with a child of HOME (or ABSOLUTE) and the root token is implied. See [data-model.md → Path](data-model.md#path).
 
@@ -126,7 +128,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **meta-attribute** — See *attribute*.
 
-**ministore** — Lightweight non-Redux store for ephemeral UI state, in [`/src/stores`](../src/stores). Used when the value doesn't need to participate in undo/redo, persistence, or selectors (e.g. `editingValue`, `viewport`, `scrollTop`).
+**ministore** — Lightweight non-Redux store for ephemeral UI state, in [`/src/stores`](../src/stores). Used when the value doesn't need to participate in undo/redo, persistence, or selectors (e.g. `editingValueStore`, `viewportStore`, `scrollTopStore`). A module may also create one for its own bookkeeping that must reset between tests — the pull queue's once-per-session favorites flag, the URL middleware's last path and cursor, the multiselect middleware's parked cursor — since every store the factory creates is restored by `resetStores`, while a module-level `let` would carry its value from one test into the next.
 
 **movePlacements** — `Index<ThoughtId | null>` on `PushBatch`. Keyed by moved thought; the value is the sibling to place it after (`null` = first). Carries reorder intent from the action layer to TreeCRDT, which stores sibling order directly instead of by rank. See [persistence.md → Order and placement](persistence.md#order-and-placement).
 
@@ -165,6 +167,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 **replicaId** — The 32-byte id TreeCRDT mints local operations under, derived from *clientId* by `clientIdToReplicaId`. A low-level CRDT identity, not an auth identity.
 
 **replication** — Loading thoughts out of local storage and into memory. [`replicateTree`](../src/data-providers/data-helpers/replicateTree.ts) walks a subtree in the background without populating Redux; the pull queue is the foreground path. `syncStatusStore.replicationProgress` tracks it for the UI.
+
+**resetStores** — The one test boundary for module-level state, in [`stores/ministore.ts`](../src/stores/ministore.ts). Restores every *ministore* to its initial value, after running any reset a module registered through `registerReset` — for state whose restoration is an action rather than a value, such as the [debug log](debug-log.md#in-tests)'s buffer and animation-frame heartbeat. Called by `initStore` and `createTestApp` at setup, by `cleanupTestApp` before it drains timers, and after every unit test by `setupTests.ts`. See [testing.md](testing.md#isolation-and-cleanup).
 
 **ROOT_CONTEXTS** — `[HOME_TOKEN, ABSOLUTE_TOKEN]`. The two top-level contexts.
 
@@ -206,7 +210,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## U
 
-**undo step** — What one Undo reverts: a single patch on `state.undoPatches`, or two when a navigation action follows an undoable action or an edit follows a `newThought`. The undo slider moves by undo steps. See [commands.md → Undo history and the undo slider](commands.md#undo-history-and-the-undo-slider).
+**undo step** — What one Undo reverts: one patch, or a directional pair when trailing navigation belongs with the preceding change or an edit gives a newly created thought its value. A command transaction may collect several underlying actions into one patch. The undo slider uses the same grouping. See [commands.md → Undo history and the undo slider](commands.md#undo-history-and-the-undo-slider).
 
 **updatedBy** — `clientId` of the writer, stored in each thought's payload. Persisted Lexemes derive it from their most recently updated member. Local materialization is identified by *writeId*, not by this field.
 

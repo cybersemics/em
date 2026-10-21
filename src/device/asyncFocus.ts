@@ -36,7 +36,10 @@ export const AsyncFocus: () => (options?: { force?: boolean }) => void = () => {
     // provide the option to force the focus in order to retarget focus and prevent an iOS Safari bug (#4222)
     if (options.force || !selection.isThought()) {
       hiddenInput.disabled = false
-      hiddenInput.focus()
+      // The dummy input sits at the top of the page and the caller moves the caret onto a thought right after, so
+      // the page should never scroll to it. On iOS 27, a focus that is allowed to scroll moves the cursor thought to
+      // the center of the screen (#5676).
+      hiddenInput.focus({ preventScroll: true })
       // the hidden input should not be a valid focus target unless this function was invoked
       hiddenInput.disabled = true
     }

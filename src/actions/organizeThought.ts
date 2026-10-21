@@ -202,7 +202,15 @@ const setGenerating =
     const state = getState()
     const thoughtIndexUpdates = keyValueBy(thoughtIds, (thoughtId: ThoughtId) => {
       const thought = getThoughtById(state, thoughtId)
-      return thought && thought.generating !== generating ? { [thoughtId]: { ...thought, generating } } : null
+      return thought && thought.generating !== generating
+        ? {
+            [thoughtId]: {
+              ...thought,
+              generating,
+              generatingPlaceholder: generating ? 'Reorganizing Thought' : undefined,
+            },
+          }
+        : null
     })
     if (Object.keys(thoughtIndexUpdates).length === 0) return
     dispatch(

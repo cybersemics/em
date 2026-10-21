@@ -1,0 +1,134 @@
+import Command from '../@types/Command'
+import Dispatch from '../@types/Dispatch'
+import State from '../@types/State'
+import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
+import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
+import { removeMulticursorActionCreator as removeMulticursor } from '../actions/removeMulticursor'
+import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import CursorDownIcon from '../components/icons/CursorDownIcon'
+import { HOME_PATH, HOME_TOKEN } from '../constants'
+import * as selection from '../device/selection'
+import attributeEquals from '../selectors/attributeEquals'
+import documentSort from '../selectors/documentSort'
+import { getChildrenSorted } from '../selectors/getChildren'
+import hasMulticursor from '../selectors/hasMulticursor'
+import isMulticursorPath from '../selectors/isMulticursorPath'
+import isTableCol2 from '../selectors/isTableCol2'
+import nextSibling from '../selectors/nextSibling'
+import nextTableCousin from '../selectors/nextTableCousin'
+import nextThought from '../selectors/nextThought'
+import rootedParentOf from '../selectors/rootedParentOf'
+import appendToPath from '../util/appendToPath'
+import head from '../util/head'
+import headValue from '../util/headValue'
+import parentOf from '../util/parentOf'
+import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
+
+const cursorDownCommand = {
+  id: 'cursorDown',
+  label: 'Cursor Down' as const,
+  longDescription: (
+    <>
+      <p>Move the cursor to the next thought at the same level.</p>
+      <p>Use Cursor Down to step through siblings in order — the natural way to read or process a list.</p>
+      <p>Hold shift while pressing Down to extend the selection across the thoughts you pass over.</p>
+    </>
+  ),
+  keyboard: [{ key: 'ArrowDown' }, { key: 'ArrowDown', shift: true }],
+  hideFromHelp: true,
+  multicursor: false,
+  svg: CursorDownIcon,
+  canExecute: state => {
+    const { cursor } = state
+
+    if (!cursor) return true
+
+    // use default browser behavior in prose mode
+    const parentId = head(rootedParentOf(state, cursor))
+    const isProseView = attributeEquals(state, parentId, '=view', 'Prose')
+    const cursorValue = headValue(state, cursor)
+    const isProseMode =
+      isProseView && selection.isThought() && cursorValue !== undefined && cursorValue.length - 1 > selection.offset()!
+    if (isProseMode) return false
+
+    // use default browser behavior (i.e. caret down) if there is a valid selection and it's not on the last line of a multi-line editable
+    return selection.isOnLastLine()
+  },
+  exec: throttleByAnimationFrame((dispatch: Dispatch, getState: () => State, e: KeyboardEvent) => {
+    if (e.shiftKey) {
+      const state = getState()
+      const { cursor } = state
+      const path = cursor || HOME_PATH
+      const isMulticursorEmpty = !hasMulticursor(state)
+      const isCurrentCursorMulticursor = cursor && isMulticursorPath(state, cursor)
+
+      const nextSiblingThought = cursor
+        ? // if cursor exists, get the next sibling
+          nextSibling(state, cursor)
+        : // otherwise, get the first thought in the home context
+          getChildrenSorted(state, HOME_TOKEN)[0]
+
+      const nextPath =
+        // in the second column of a table view, extend to the next thought at the same depth (the next cousin), crossing col1 row boundaries instead of falling through to the next col1 row (uncle)
+        cursor && isTableCol2(state, cursor)
+          ? nextTableCousin(state, cursor)
+          : nextSiblingThought
+            ? // non-first child path
+              appendToPath(parentOf(path), nextSiblingThought.id)
+            : nextThought(state)
+
+      // if there is no next path, do nothing
+      if (!nextPath) return
+
+      const isNextPathMulticursor = nextPath && isMulticursorPath(state, nextPath)
+
+      dispatch([
+        // Update the multicursor before moving the cursor, since setCursor computes state.expanded and a
+        // selected thought must not expand its own children.
+        // https://github.com/cybersemics/em/issues/4738
+        dispatch => {
+          // New multicursor set
+          if (isMulticursorEmpty) {
+            // Add the current cursor to the multicursor, if it exists
+            if (cursor) {
+              dispatch(addMulticursor({ path: cursor }))
+            }
+
+            // Add the next cursor to the multicursor, if it exists
+            if (nextPath) {
+              dispatch(addMulticursor({ path: nextPath }))
+            }
+
+            return
+          }
+
+          // Extend the multicursor set to the next cursor
+          if (isCurrentCursorMulticursor && !isNextPathMulticursor && nextPath) {
+            dispatch(addMulticursor({ path: nextPath }))
+            return
+          }
+
+          // Remove the next cursor from the multicursor set
+          if (isCurrentCursorMulticursor && isNextPathMulticursor && cursor) {
+            dispatch(removeMulticursor({ path: cursor }))
+            return
+          }
+        },
+        setCursor({ path: nextPath, preserveMulticursor: true }),
+      ])
+
+      requestAnimationFrame(() => {
+        selection.clear()
+      })
+    } else {
+      const state = getState()
+      const sortedPaths = hasMulticursor(state) ? documentSort(state, Object.values(state.multicursors)) : []
+      const lastPath = sortedPaths[sortedPaths.length - 1]
+
+      // when a multiselect is active, collapse it and move the cursor to the last selected thought in document order
+      dispatch(lastPath ? setCursor({ path: lastPath }) : cursorDown())
+    }
+  }),
+} satisfies Command
+
+export default cursorDownCommand

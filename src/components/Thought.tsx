@@ -36,7 +36,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import isMultiEditing from '../selectors/isMultiEditing'
 import rootedParentOf from '../selectors/rootedParentOf'
 import col1MaxWidthStore from '../stores/col1MaxWidthStore'
-import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import containsURL from '../util/containsURL'
 import dndRef from '../util/dndRef'
@@ -448,22 +448,24 @@ const ThoughtContainer = ({
   // See: https://stackoverflow.com/a/46452396/480608
   // Use -webkit-text-stroke-width instead of font-weight:bold, as bold changes the width of the text and can cause the thought to become multiline during a drag. This can even create an oscillation effect as the increased Thought height triggers a different hoveringPath ad infinitum (often resulting in a Shaker cancel false positive).
   // Highlight the parent of the current drop target to make it easier to drop in the intended place.
-  const cssRawThought = css.raw({
+  const classNameThought = css({
     /** Animation to apply to a parent when one of its children is being hovered over. Disabled in puppeteer tests. */
+    // Two mutually exclusive spreads rather than a nested ternary, because PandaCSS only extracts the first branch of a nested ternary.
     ...(isChildHovering
       ? {
           WebkitTextStrokeWidth: '0.05em',
           animation: `pulseLight {durations.slowPulse} linear infinite alternate`,
           color: 'highlight',
         }
-      : isDropGutterDeleteHovering
-        ? {
-            WebkitTextStrokeWidth: '0.05em',
-            animation: `pulseLight {durations.mediumPulse} linear infinite alternate`,
-            color: 'gray',
-            textDecoration: 'line-through',
-          }
-        : null),
+      : null),
+    ...(!isChildHovering && isDropGutterDeleteHovering
+      ? {
+          WebkitTextStrokeWidth: '0.05em',
+          animation: `pulseLight {durations.mediumPulse} linear infinite alternate`,
+          color: 'gray',
+          textDecoration: 'line-through',
+        }
+      : null),
   })
 
   // useWhyDidYouUpdate('<Thought> ' + prettyPath(store.getState(), simplePath), {
@@ -653,8 +655,8 @@ const ThoughtContainer = ({
             rank={rank}
             showContextBreadcrumbs={showContexts && value !== '__PENDING__'}
             simplePath={simplePath}
-            cssRaw={cssRawThought}
-            cssRawThought={cssRawThought}
+            className={classNameThought}
+            classNameThought={classNameThought}
             style={styleThought}
             styleAnnotation={styleAnnotation || undefined}
             styleThought={styleThought}

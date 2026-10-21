@@ -6,11 +6,13 @@
  * rather than filing a second one, so every occurrence and every attempted fix stay on one issue.
  *
  * Resolves the tracking issue for every failing test — the one just created, the one just reopened,
- * or the open one that already existed — and writes them to flaky-results/flaky-issues.json so the
- * steps that run after this one can use them: `Notify Discord` links each offender in its alert, and
- * `Start Copilot tasks` dispatches an agent at each entry whose `status` is `created` or `reopened`.
- * Consistent failures are never filed, but are still linked when a tracking issue for them is
- * already open.
+ * or the open one that already existed — and writes them to flaky-results/flaky-issues.json for
+ * `Start Copilot tasks`, which dispatches an agent at each entry whose `status` is `created`,
+ * `reopened` or `stalled`. An open issue is `stalled` when its test failed intermittently again and
+ * nobody is working on it — no assignee and no open pull request referencing it — which is how a
+ * flake whose last dispatch failed, overflowed the task cap, or ended in a closed pull request gets
+ * an agent again. Consistent failures are never filed, but are still listed when a tracking issue
+ * for them is already open.
  *
  * Loaded by the `File tracking issues` step of .github/workflows/puppeteer-flaky.yml through
  * actions/github-script. Reads flaky-results/flaky-summary.json (written by
@@ -53,12 +55,32 @@ const failureReport = (leadIn, t) =>
     ...(t.firstError ? ['', '**First error**:', '', '```', t.firstError, '```'] : []),
   ].join('\n')
 
+/**
+ * Whether anyone is working on an open tracking issue: it has an assignee, or an open pull request
+ * references it. The pull request a Copilot task opens starts with a description quoting its prompt,
+ * which names the issue, and the cross-reference that leaves on the issue survives the agent
+ * rewriting the description — so a task still running counts as working on it, and one whose pull
+ * request was closed unmerged does not.
+ */
+const isAttended = async ({ github, owner, repo, issue }) => {
+  if (issue.assignees?.length > 0) return true
+  const events = await github.paginate(github.rest.issues.listEventsForTimeline, {
+    owner,
+    repo,
+    issue_number: issue.number,
+    per_page: 100,
+  })
+  return events.some(
+    e => e.event === 'cross-referenced' && e.source?.issue?.pull_request && e.source.issue.state === 'open',
+  )
+}
+
 /** Files a deduplicated tracking issue for each intermittently failing test in the run summary. */
 const fileFlakyIssues = async ({ github, context, core }) => {
   const { owner, repo } = context.repo
 
   if (!fs.existsSync(SUMMARY_FILE)) {
-    // Aggregator crashed before writing a summary; the Discord step already reports that case and
+    // Aggregator crashed before writing a summary; the job summary already reports that case and
     // there is no per-test data to file.
     core.info('No flaky-summary.json; skipping issue filing.')
     return
@@ -100,20 +122,28 @@ const fileFlakyIssues = async ({ github, context, core }) => {
       .map(i => [i.title, i]),
   )
 
-  /** Tracking issue per failing test, in summary order, for the Discord alert to link. */
+  /** Tracking issue per failing test, in summary order, for the Copilot dispatch to read. */
   const issues = []
   let opened = 0
   for (const t of failedTests) {
     const title = issueTitle(t)
     const open = openByTitle.get(title)
     if (open) {
-      core.info(`Open issue already exists, skipping: ${title}`)
-      issues.push({ file: t.file, fullName: t.fullName, number: open.number, url: open.html_url, status: 'tracked' })
+      // A consistent failure is not a flake, so it never gets a flake-fixing agent, attended or not.
+      const stalled = t.failed < t.of && !(await isAttended({ github, owner, repo, issue: open }))
+      core.info(`Open issue already exists${stalled ? ' with nobody working on it' : ''}: ${title}`)
+      issues.push({
+        file: t.file,
+        fullName: t.fullName,
+        number: open.number,
+        url: open.html_url,
+        status: stalled ? 'stalled' : 'tracked',
+      })
       continue
     }
     // Only intermittent failures are flakes. A test that failed every iteration is a consistent
-    // failure (i.e. a regression) and is reported to Discord and the job summary, but is neither
-    // filed nor reopened as a flake.
+    // failure (i.e. a regression) and is reported in the job summary, but is neither filed nor
+    // reopened as a flake.
     if (t.failed === t.of) {
       core.info(`Consistent failure, not filing: ${title}`)
       continue
@@ -175,7 +205,10 @@ const fileFlakyIssues = async ({ github, context, core }) => {
 
   fs.writeFileSync(ISSUES_FILE, JSON.stringify(issues, null, 2))
   const created = issues.filter(i => i.status === 'created').length
-  core.info(`Filed ${created} new issue(s); reopened ${opened - created}; ${issues.length - opened} already tracked.`)
+  const stalled = issues.filter(i => i.status === 'stalled').length
+  core.info(
+    `Filed ${created} new issue(s); reopened ${opened - created}; ${issues.length - opened} already open, ${stalled} of them with nobody working on it.`,
+  )
 }
 
 module.exports = fileFlakyIssues

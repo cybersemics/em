@@ -8,16 +8,19 @@ import { AlertType, EXPAND_HOVER_DELAY, LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import expandThoughts from '../selectors/expandThoughts'
 import rootedParentOf from '../selectors/rootedParentOf'
+import ministore from '../stores/ministore'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
-let expandDownTimer: Timer | null = null
+/** The pending delayed dispatch of expandHoverDown. A ministore whose dispose clears the timer, so that resetStores cancels it between tests. The timer is null whenever none is armed. */
+const expandDownTimerStore = ministore<{ timer: Timer | null }>(
+  { timer: null },
+  { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
+)
 
 /** Clears active delayed dispatch. */
 const clearTimer = () => {
-  if (expandDownTimer) {
-    clearTimeout(expandDownTimer)
-    expandDownTimer = null
-  }
+  clearTimeout(expandDownTimerStore.getState().timer ?? undefined)
+  expandDownTimerStore.update({ timer: null })
 }
 
 /** Delays dispatch of expandHoverDown. */
@@ -25,13 +28,14 @@ const expandHoverDownDebounced =
   (path: Path): Thunk =>
   (dispatch, getState) => {
     clearTimer()
-    expandDownTimer = setTimeout(() => {
+    const timer = setTimeout(() => {
+      expandDownTimerStore.update({ timer: null })
       const state = getState()
       // abort if dragging over DropGutter component
       if (state.alert?.alertType === AlertType.DeleteDropHint) return
       dispatch({ type: 'expandHoverDown', path })
-      expandDownTimer = null
     }, testFlags.expandHoverDelay ?? EXPAND_HOVER_DELAY)
+    expandDownTimerStore.update({ timer })
   }
 
 /** Calculates the expanded context due to hover expansion on empty child drop. */

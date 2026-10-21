@@ -1,7 +1,6 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
-import { SystemStyleObject } from '../../styled-system/types'
+import { css, cx } from '../../styled-system/css'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
@@ -10,8 +9,8 @@ import { DIVIDER_MIN_WIDTH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
-import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
-import viewportStore, { ViewportState } from '../stores/viewport'
+import editingValueUntrimmedStore from '../stores/editingValueUntrimmedStore'
+import viewportStore, { ViewportState } from '../stores/viewportStore'
 import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
@@ -60,7 +59,7 @@ const getThoughtWidths = (ids: ThoughtId[]): number[] => {
 }
 
 /** A custom horizontal rule. */
-const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) => {
+const Divider = ({ path, className }: { path: Path; className?: string }) => {
   const dispatch = useDispatch()
   const dividerRef = useRef<HTMLDivElement>(null)
   const [dividerWidth, setDividerWidth] = useState<number>(DIVIDER_MIN_WIDTH)
@@ -107,14 +106,13 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
     >
       <div
         aria-label={'editable-' + head(path)}
-        className={css(
-          {
+        className={cx(
+          css({
             border: 'solid 1px {colors.divider}',
             // Remove highlight styling when cursor is not this divider
             ...(!isCursorOnDivider && { borderColor: 'bgMuted' }),
-          },
-
-          cssRaw,
+          }),
+          className,
         )}
       />
     </div>

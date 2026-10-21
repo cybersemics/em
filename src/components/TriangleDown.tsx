@@ -1,9 +1,8 @@
-import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens/index.mjs'
+import { token } from '../../styled-system/tokens'
 import Icon from '../@types/IconType'
 
 /** A down-facing triangle component. */
-const TriangleDown = ({ fill = token('colors.bg'), size = 20, width, height, style, cssRaw }: Icon) => (
+const TriangleDown = ({ fill = token('colors.bg'), size = 20, width, height, style, className }: Icon) => (
   <svg
     xmlns=''
     version='1.1'
@@ -11,7 +10,7 @@ const TriangleDown = ({ fill = token('colors.bg'), size = 20, width, height, sty
     height={height || (width ? width * 2 : size)}
     fill={fill}
     style={style}
-    className={css(cssRaw)}
+    className={className}
     viewBox='0 0 10 10'
   >
     <polygon points='0,5 5,0 10,5' />

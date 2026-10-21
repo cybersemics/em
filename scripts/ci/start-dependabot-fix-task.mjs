@@ -2,7 +2,7 @@
 /**
  * Starts a GitHub Copilot cloud agent task against a Dependabot pull request whose checks
  * failed, then records it in a single comment on that pull request.
- * Used by the `Start Opus 5 task` step of .github/workflows/dependabot-fix.yml.
+ * Used by the `Start Copilot task` step of .github/workflows/dependabot-fix.yml.
  *
  * ```sh
  * node scripts/ci/start-dependabot-fix-task.mjs <report.json>
@@ -36,12 +36,11 @@ import taskComment from './task-comment.cjs'
 /**
  * A dependency bump that broke a check is read-the-changelog work across an unfamiliar package, so
  * these tasks pin the strongest model rather than leaving Copilot to auto-select one. Same
- * reasoning, and the same model, as scripts/ci/start-copilot-tasks.mjs.
+ * reasoning as scripts/ci/start-copilot-tasks.mjs, and the same COPILOT_MODEL repository variable,
+ * unless COPILOT_MODEL_DEPENDABOT gives these tasks their own. Either holds the ID the agent tasks
+ * API expects, e.g. `claude-opus-5.5`.
  */
-const MODEL = 'claude-opus-5'
-
-/** How that model is named to a human, as opposed to MODEL, which is what the API expects. */
-const MODEL_NAME = 'Opus 5'
+const MODEL = process.env.COPILOT_MODEL_DEPENDABOT || process.env.COPILOT_MODEL
 
 /** The workflow as the comment names it, and as `gh workflow run` takes it. */
 const WORKFLOW = 'Dependabot Fix'
@@ -69,6 +68,11 @@ const token = process.env.COPILOT_TASKS_TOKEN
 if (!token) {
   console.error('COPILOT_TASKS_TOKEN secret not set; skipping Copilot task dispatch.')
   process.exit(0)
+}
+
+if (!MODEL) {
+  console.error('Neither COPILOT_MODEL_DEPENDABOT nor COPILOT_MODEL is set; set the COPILOT_MODEL repository variable.')
+  process.exit(1)
 }
 
 const { pr, failures, tasks, maxTasks, commentId } = JSON.parse(readFileSync(reportFile, 'utf8'))
@@ -151,7 +155,7 @@ const comment = async taskUrl => {
     markers: [MARKER, `<!-- head: ${pr.headSha} -->`, `<!-- tasks: ${taskNumber} -->`],
     heading: 'Dependabot fix',
     body: [
-      `${failures.length === 1 ? 'A check' : `${failures.length} checks`} failed on \`${pr.headSha.slice(0, 7)}\`, so an ${MODEL_NAME} task is fixing ${failures.length === 1 ? 'it' : 'them'} on this branch: [task](${taskUrl}).`,
+      `${failures.length === 1 ? 'A check' : `${failures.length} checks`} failed on \`${pr.headSha.slice(0, 7)}\`, so a Copilot task (\`${MODEL}\`) is fixing ${failures.length === 1 ? 'it' : 'them'} on this branch: [task](${taskUrl}).`,
       '',
       ...failures.map(failureLine),
     ],
@@ -188,7 +192,7 @@ process.stdout.write(
   [
     '## Dependabot fix task',
     '',
-    `- [#${pr.number}](${pr.url}) \`${pr.headRef}\` — [${MODEL_NAME} task](${task.html_url}) (task ${taskNumber} of ${maxTasks})`,
+    `- [#${pr.number}](${pr.url}) \`${pr.headRef}\` — [Copilot task](${task.html_url}) \`${MODEL}\` (task ${taskNumber} of ${maxTasks})`,
     ...failures.map(failureLine),
     '',
   ].join('\n'),

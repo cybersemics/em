@@ -1,8 +1,8 @@
 import React from 'react'
-import { SystemStyleObject } from '../../styled-system/types'
 
 interface IconType {
-  cssRaw?: SystemStyleObject
+  /** Class name for style overrides. Generate it at the call site with `css({ … })`, which PandaCSS extracts statically. */
+  className?: string
   fill?: string
   height?: number
   size?: number
