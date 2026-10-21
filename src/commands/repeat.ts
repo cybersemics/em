@@ -4,7 +4,7 @@ import { noop } from '../constants'
 const repeatCommand = {
   id: 'repeat',
   label: 'Repeat' as const,
-  description: 'Repeats the last command. Repeats the last command.',
+  description: 'Repeats the last command.',
   keyboard: { key: '.', meta: true },
   // Repeat has no multicursor behavior of its own. It is resolved to the last command before multicursor handling, so the repeated command's own multicursor behavior is applied.
   multicursor: false,

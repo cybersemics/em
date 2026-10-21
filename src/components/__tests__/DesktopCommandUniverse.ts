@@ -7,7 +7,7 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 // https://github.com/cybersemics/em/issues/6080
-it.skip('shows the Repeat description once', async () => {
+it('shows the Repeat description once', async () => {
   await dispatch(desktopCommandUniverse())
 
   const description = screen.getByText(/^Repeats the last command\./)

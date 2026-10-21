@@ -869,7 +869,7 @@ Redo the last undone action.
 
 ### Repeat
 
-Repeats the last command. Repeats the last command.
+Repeats the last command.
 
 Navigation and non-undoable commands are ignored, so Repeat always repeats the last command that changed the thoughtspace.
 
