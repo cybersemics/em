@@ -10,6 +10,9 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import exportContextCommand from '../exportContext'
+import indentCommand from '../indent'
+import moveThoughtDownCommand from '../moveThoughtDown'
+import moveThoughtUpCommand from '../moveThoughtUp'
 
 beforeEach(initStore)
 
@@ -121,4 +124,75 @@ it('leaves a metaprogramming attribute unchanged when a blocked command is execu
         - color
           - tomato
       - bbb`)
+})
+
+// https://github.com/cybersemics/em/pull/6056#issuecomment-6306520702
+it('does not indent a thought into a sibling metaprogramming attribute', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - aaa
+          - =favorite
+          - bbb
+      `,
+    }),
+    toggleHiddenThoughts(),
+    setCursor(['aaa', 'bbb']),
+  ])
+
+  expect(canExecuteCommand(store.getState(), indentCommand)).toBe(false)
+  executeCommandWithMulticursor(indentCommand, { store })
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - aaa
+    - =favorite
+    - bbb`)
+})
+
+it('does not move a thought down into a metaprogramming attribute', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - x
+          - a
+            - b
+          - =favorite
+      `,
+    }),
+    toggleHiddenThoughts(),
+    setCursor(['x', 'a', 'b']),
+  ])
+
+  expect(canExecuteCommand(store.getState(), moveThoughtDownCommand)).toBe(false)
+  executeCommandWithMulticursor(moveThoughtDownCommand, { store })
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - x
+    - a
+      - b
+    - =favorite`)
+})
+
+it('does not move a thought up into a metaprogramming attribute', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - x
+          - =favorite
+          - a
+            - b
+      `,
+    }),
+    toggleHiddenThoughts(),
+    setCursor(['x', 'a', 'b']),
+  ])
+
+  expect(canExecuteCommand(store.getState(), moveThoughtUpCommand)).toBe(false)
+  executeCommandWithMulticursor(moveThoughtUpCommand, { store })
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - x
+    - =favorite
+    - a
+      - b`)
 })

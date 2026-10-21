@@ -5,6 +5,7 @@ import IndentIcon from '../components/icons/IndentIcon'
 import prevSibling from '../selectors/prevSibling'
 import selectedPaths from '../selectors/selectedPaths'
 import editingValueStore from '../stores/editingValueStore'
+import isAttribute from '../util/isAttribute'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorForward from './moveCursorForward'
 
@@ -28,8 +29,16 @@ const indentCommand = {
   canExecute: state => {
     // indent is a no-op on the first thought in a context, so the command is only executable if every selected thought has a previous sibling to be indented into
     // descendants of another selected thought are indented along with their ancestor, so they are excluded by the multicursor filter
+    // a metaprogramming attribute is read-only, so a thought cannot be indented into it
     const paths = selectedPaths(state, 'prefer-ancestor')
-    return isDocumentEditable() && paths.length > 0 && paths.every(path => !!prevSibling(state, path))
+    return (
+      isDocumentEditable() &&
+      paths.length > 0 &&
+      paths.every(path => {
+        const prev = prevSibling(state, path)
+        return !!prev && !isAttribute(prev.value)
+      })
+    )
   },
   exec: (dispatch, getState, e, { type }) => {
     // Allow space-to-indent on empty thought.
