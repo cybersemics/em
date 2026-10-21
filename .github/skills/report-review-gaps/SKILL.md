@@ -53,4 +53,4 @@ Check the page at 375px for horizontal overflow. Long URLs and code blocks are t
 
 ## 5. Publish
 
-Publish the page as an artifact, with `public/img/glow/glow-3a.avif` as `glow.avif`. Give the user the link, and remind them that the first reviewer can't open it until they share it.
+Embed the glow with the `liminal` skill's `embed-glow.mjs`, then publish the page as an artifact on its own, with no other files. Give the user the link, and remind them that the first reviewer can't open it until they share it.
