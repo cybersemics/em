@@ -1,5 +1,5 @@
 import { FC } from 'react'
-import { css, cx } from '../../../styled-system/css'
+import { cx } from '../../../styled-system/css'
 import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
@@ -10,7 +10,7 @@ interface ChevronRightIconProps extends IconType {
 }
 
 /** Chevron-right icon used to mark a link. */
-const ChevronRightIcon: FC<ChevronRightIconProps> = ({ size = 24, fill, cssRaw, strokeWidth = 1 }) => {
+const ChevronRightIcon: FC<ChevronRightIconProps> = ({ size = 24, fill, className, strokeWidth = 1 }) => {
   const strokeColor = fill || token('colors.fg')
 
   return (
@@ -20,7 +20,7 @@ const ChevronRightIcon: FC<ChevronRightIconProps> = ({ size = 24, fill, cssRaw, 
       height={size}
       viewBox='0 0 24 24'
       fill='none'
-      className={cx(iconRecipe(), css(cssRaw))}
+      className={cx(iconRecipe(), className)}
     >
       <path d='M9 6L15.5 12.5L9 19' stroke={strokeColor} strokeWidth={strokeWidth} />
     </svg>

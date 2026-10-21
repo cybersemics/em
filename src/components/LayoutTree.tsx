@@ -15,6 +15,7 @@ import { hasChildren } from '../selectors/getChildren'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
 import viewportStore from '../stores/viewportStore'
+import debugLog from '../util/debugLog'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import BulletCursorOverlay from './BulletCursorOverlay'
@@ -83,7 +84,10 @@ const useAutocrop = (spaceAbove: number): number => {
   // get the scroll position before the render so it can be preserved
   const scrollY = window.scrollY
 
-  const viewportHeight = viewportStore.useSelector(viewport => viewport.innerHeight)
+  const innerHeight = viewportStore.useSelector(viewport => viewport.innerHeight)
+
+  // On a touch screen, measure the extension against the long edge of the screen rather than the viewport height, so that it is the same in either orientation. When the PWA is backgrounded, iOS briefly lays the page out in landscape for the app switcher snapshot. If the extension followed the viewport height, autocrop would change and scroll the page twice, once into the snapshot and once back on return. A large scroll on return has been followed by iOS reporting a visualViewport.height of innerHeight minus the landscape width for the rest of the session, which leaves the nav bar mid-screen (#5972).
+  const viewportHeight = isTouch ? Math.max(innerHeight, window.screen.width, window.screen.height) : innerHeight
 
   // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
   const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
@@ -97,6 +101,15 @@ const useAutocrop = (spaceAbove: number): number => {
   // Track the shift itself rather than spaceAboveExtended, which also changes with the viewport height, e.g. on rotation (#3990).
   useEffect(
     () => {
+      // scrollY is the position read during render, before this effect, so a scroll that happens in between is
+      // overwritten. Logging it beside the target makes that visible.
+      debugLog.log('scroll', () => ({
+        source: 'autocrop',
+        scrollY: Math.round(scrollY),
+        autocrop,
+        autocropLast: autocropLast.current,
+        top: Math.round(scrollY + autocrop - autocropLast.current),
+      }))
       window.scrollTo({ top: scrollY + autocrop - autocropLast.current })
       autocropLast.current = autocrop
     },
