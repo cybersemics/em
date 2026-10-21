@@ -6,6 +6,7 @@
 
 /* TEMPORARY (#6077 experiment): no native panning from the thought being edited or just to the right of its text */
 [data-editing='true'] [aria-label='thought'],
+[data-editing='true'] [aria-label='bullet'],
 [data-editing='true'] [aria-label='thought-annotation'] > div {
   touch-action: pinch-zoom;
 }
