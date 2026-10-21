@@ -2,7 +2,7 @@
 /**
  * Replaces every `url("glow.avif")` in an HTML file with the skill's glow.avif as a data URI, in place.
  *
- * Usage: embed-glow.mjs page.html
+ * Usage: `embed-glow.mjs page.html`.
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 
