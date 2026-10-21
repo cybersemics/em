@@ -337,7 +337,7 @@ describe('mobile only', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5994
-  it.skip('does not animate the greyed-out Undo button when there is nothing to undo', async () => {
+  it('does not animate the greyed-out Undo button when there is nothing to undo', async () => {
     // Puppeteer seeks a Lottie animation to its last frame and unmounts it as soon as it is ready, so count every time the Undo button's animation mounts rather than reading the DOM after the tap.
     await page.evaluate(() => {
       const undoWindow = window as unknown as { undoAnimations: number }
