@@ -7,7 +7,15 @@ import storage from '../../util/storage'
 import { DROPDOWN_Z_INDEX } from './Dropdown'
 import MotionStepperControls from './DropdownMotionStepper'
 import { DIALS_EVENT } from './dials'
-import { isDialsSyncAvailable, publishDials, pullDials, subscribeDials } from './dialsSync'
+import {
+  announceDials,
+  isDialsSyncAvailable,
+  publishDials,
+  pullDials,
+  subscribeDials,
+  subscribeDialsPeers,
+  subscribeDialsState,
+} from './dialsSync'
 import useMotionStepper, { DIALS_ROOT_ATTRIBUTE } from './useMotionStepper'
 
 /*
@@ -303,6 +311,8 @@ const ALL_CONTROLS = SECTIONS.flatMap(section => section.controls)
 const OPEN_SECTIONS_KEY = 'sortDropdownDials.openSections'
 const VALUES_KEY = 'sortDropdownDials.values'
 const AUTO_SYNC_KEY = 'sortDropdownDials.autoSync'
+/** When this device's values last changed (ms since epoch), by a local edit or one received from another device. */
+const EDITED_AT_KEY = 'sortDropdownDials.editedAt'
 const FAB_KEY = 'sortDropdownDials.fab'
 
 /** Diameter of the floating button (px). */
@@ -1037,8 +1047,17 @@ const DropdownDebugPanel = () => {
   const panelResize = useRef<{ startY: number; height: number } | null>(null)
   // Device sync over the dev server (dialsSync). Unavailable, and hidden, in production builds and previews.
   const syncAvailable = isDialsSyncAvailable()
-  // Auto-sync: send every change to the other devices, and pull the latest values on load.
+  // Auto-sync, the link button: join the dev server's live session. Joining takes the session's values (or seeds an
+  // empty session with this device's), then every local change is sent to every other device.
   const [autoSync, setAutoSyncState] = useState(() => storage.getItem(AUTO_SYNC_KEY) === 'true')
+  // Read by the send effect, so turning auto-sync on joins the session without also sending this device's values.
+  const autoSyncRef = useRef(autoSync)
+  autoSyncRef.current = autoSync
+  // The current values, for the join handler, which subscribes once.
+  const valuesRef = useRef(values)
+  valuesRef.current = values
+  // How many dials panels are connected to this dev server, this one included. 1 means no other device is here.
+  const [peers, setPeers] = useState<number | null>(null)
   // A short note on the last sync, shown under the toolbar.
   const [syncStatus, setSyncStatus] = useState('')
   // True while applying values received from another device, so they aren't sent straight back out.
@@ -1072,17 +1091,51 @@ const DropdownDebugPanel = () => {
     if (!syncAvailable) return
     return subscribeDials((remote, meta) => {
       applyingRemote.current = true
+      storage.setItem(EDITED_AT_KEY, String(meta.at))
       setValues(remote)
       setSyncStatus(`Received from another device · ${new Date(meta.at).toLocaleTimeString()}`)
     })
   }, [syncAvailable])
 
-  // Auto-sync: pull the latest values once on load, then send every local change.
+  // Presence: register with the server and follow how many panels share the session.
+  useEffect(() => {
+    if (!syncAvailable) return
+    const unsubscribe = subscribeDialsPeers(setPeers)
+    announceDials()
+    return unsubscribe
+  }, [syncAvailable])
+
+  // Joining: the server answers a pull with the session's latest values, or null when nobody has sent any. The newer
+  // of the session's values and this device's last change wins, so joining never discards fresher local tuning.
+  useEffect(() => {
+    if (!syncAvailable) return
+    return subscribeDialsState(latest => {
+      if (!autoSyncRef.current) return
+      const editedAt = Number(storage.getItem(EDITED_AT_KEY) ?? 0)
+      if (latest && latest.at >= editedAt) {
+        applyingRemote.current = true
+        storage.setItem(EDITED_AT_KEY, String(latest.at))
+        setValues(latest.values)
+        setSyncStatus(`Joined: took the session's values · ${new Date(latest.at).toLocaleTimeString()}`)
+      } else {
+        publishDials(valuesRef.current)
+        setSyncStatus(
+          latest
+            ? 'Joined: this device’s values were newer, sent them'
+            : 'Joined an empty session: sent this device’s values',
+        )
+      }
+    })
+  }, [syncAvailable])
+
+  // Join on load when auto-sync was left on, and whenever it is turned on.
   useEffect(() => {
     if (syncAvailable && autoSync) pullDials()
   }, [syncAvailable, autoSync])
+
+  // While auto-syncing, send every local change. Skips the first render (joining pulls instead) and values that just
+  // arrived from another device (sending them back would echo).
   useEffect(() => {
-    // On load, pull rather than send: this device's stored values may be older than what is on the server.
     if (!hasLoaded.current) {
       hasLoaded.current = true
       return
@@ -1091,14 +1144,15 @@ const DropdownDebugPanel = () => {
       applyingRemote.current = false
       return
     }
-    if (syncAvailable && autoSync) publishDials(values)
-  }, [values, syncAvailable, autoSync])
+    storage.setItem(EDITED_AT_KEY, String(Date.now()))
+    if (syncAvailable && autoSyncRef.current) publishDials(values)
+  }, [values, syncAvailable])
 
-  /** Turns auto-sync on or off, and remembers the choice for the next reload. */
+  /** Turns auto-sync on (joining the session) or off, and remembers the choice for the next reload. */
   const setAutoSync = (on: boolean) => {
     storage.setItem(AUTO_SYNC_KEY, String(on))
     setAutoSyncState(on)
-    setSyncStatus(on ? 'Auto-sync on: changes go to every device on this dev server' : 'Auto-sync off')
+    setSyncStatus(on ? 'Joining the session…' : 'Auto-sync off')
   }
 
   /** Sends this device's values to every device on the dev server, once. */
@@ -1218,7 +1272,16 @@ const DropdownDebugPanel = () => {
           />
         </>
       ) : null}
-      {syncStatus ? <p className={css({ flexBasis: '100%', margin: 0, opacity: 0.6 })}>{syncStatus}</p> : null}
+      {syncAvailable ? (
+        <p className={css({ flexBasis: '100%', margin: 0, opacity: 0.6 })}>
+          {peers === null
+            ? 'Connecting to the dev server…'
+            : peers <= 1
+              ? `No other device on ${location.host}. Open the same address on your other device.`
+              : `${peers} devices on ${location.host}`}
+          {syncStatus ? ` · ${syncStatus}` : ''}
+        </p>
+      ) : null}
     </div>
   )
 

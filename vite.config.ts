@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 import { execSync } from 'child_process'
 import { randomBytes } from 'crypto'
 import path from 'path'
-import { type Plugin, defineConfig } from 'vite'
+import { type Plugin, type WebSocketClient, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -69,18 +69,32 @@ function tunnelTokenGate(): Plugin {
  * them. Dev server only; remove with the dials panel.
  */
 function dialsSync(): Plugin {
-  /** The most recent publish, replayed to devices that ask for it. */
+  /** The most recent publish, replayed to devices that join. */
   let latest: { values: Record<string, string>; from: string; at: number } | null = null
+  /** Dials panels currently connected, keyed by their raw HMR socket so a closed socket can be dropped. */
+  const panels = new Map<unknown, string>()
   return {
     name: 'dials-sync',
     apply: 'serve',
     configureServer(server) {
+      /** Tells every client how many dials panels are connected, so a device on another server shows up as alone. */
+      const broadcastPeers = () => server.ws.send('dials:peers', { count: panels.size })
+      server.ws.on('dials:hello', (data: { from: string }, client) => {
+        panels.set((client as WebSocketClient).socket, data.from)
+        broadcastPeers()
+      })
+      server.ws.on('connection', socket => {
+        socket.on('close', () => {
+          if (panels.delete(socket)) broadcastPeers()
+        })
+      })
       server.ws.on('dials:publish', (data: { values: Record<string, string>; from: string; at: number }) => {
         latest = data
         server.ws.send('dials:update', data)
       })
+      // Always answers, with null when nobody has published yet, so a joining device knows the session is empty.
       server.ws.on('dials:pull', (_data, client) => {
-        if (latest) client.send('dials:update', latest)
+        client.send('dials:state', { latest })
       })
     },
   }

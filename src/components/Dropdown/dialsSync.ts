@@ -31,9 +31,37 @@ export const publishDials = (values: DialValues): void => {
   import.meta.hot?.send('dials:publish', message)
 }
 
-/** Asks the server for the most recent values; they arrive through subscribeDials, if anyone has published yet. */
+/**
+ * Asks the server for the session's latest values. The server always answers, through subscribeDialsState, with null
+ * when nobody has published yet.
+ */
 export const pullDials = (): void => {
   import.meta.hot?.send('dials:pull', {})
+}
+
+/** Calls back with the server's answer to pullDials: the latest publish, or null for an empty session. */
+export const subscribeDialsState = (callback: (latest: (DialsSyncMeta & { values: DialValues }) | null) => void) => {
+  const hot = import.meta.hot
+  if (!hot) return () => {}
+  /** Forwards the server's answer. */
+  const onState = (message: { latest: DialsMessage | null }) => callback(message.latest)
+  hot.on('dials:state', onState)
+  return () => hot.off('dials:state', onState)
+}
+
+/** Registers this panel with the server, so every device can see how many panels share the session. */
+export const announceDials = (): void => {
+  import.meta.hot?.send('dials:hello', { from: dialsClientId })
+}
+
+/** Calls back with how many dials panels are connected to this dev server, this one included. */
+export const subscribeDialsPeers = (callback: (count: number) => void): (() => void) => {
+  const hot = import.meta.hot
+  if (!hot) return () => {}
+  /** Forwards the server's count. */
+  const onPeers = (message: { count: number }) => callback(message.count)
+  hot.on('dials:peers', onPeers)
+  return () => hot.off('dials:peers', onPeers)
 }
 
 /**
