@@ -23,6 +23,28 @@ import waitForEditable from '../helpers/waitForEditable'
 import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
 
+/**
+ * Waits for the caret to come to rest at the given offset in the thought being edited. A caret that iOS places at a
+ * tap can be moved back within about 70ms, so the offset must match on two samples taken further apart than that.
+ */
+const waitForCaretOffset = async (offset: number): Promise<void> => {
+  let matchedPreviousSample = false
+  try {
+    await browser.waitUntil(
+      async () => {
+        const matched = await browser.execute(o => window.getSelection()?.focusOffset === o, offset)
+        const settled = matched && matchedPreviousSample
+        matchedPreviousSample = matched
+        return settled
+      },
+      { timeout: 5000, interval: 250 },
+    )
+  } catch {
+    const actual = await browser.execute(() => window.getSelection()?.focusOffset ?? null)
+    throw new Error(`Expected the caret to come to rest at offset ${offset}, but it was at ${actual}.`)
+  }
+}
+
 // tests succeeds individually, but fails when there are too many tests running in parallel
 // https://github.com/cybersemics/em/issues/1475
 // https://github.com/cybersemics/em/issues/1523
@@ -403,5 +425,23 @@ describe('Caret', () => {
 
     // A non-cursor thought must not open the virtual keyboard.
     expect(keyboard).toBe(false)
+  })
+
+  // https://github.com/cybersemics/em/issues/4220
+  it('Tap moves the caret to a word a few characters away', async () => {
+    const value = 'Hello beautiful people in the world'
+    await newThought(value)
+    const editable = await waitForEditable(value)
+    await waitUntil(isKeyboardShown)
+
+    // place the caret before "the"
+    const offsetBeforeThe = 'Hello beautiful people in '.length
+    await tap(editable, { offset: offsetBeforeThe, pointerType: 'touch' })
+    await waitForCaretOffset(offsetBeforeThe)
+
+    // tap the "i" of "in", four characters to the left of the caret
+    const offsetBeforeIn = 'Hello beautiful people '.length
+    await tap(editable, { offset: offsetBeforeIn, pointerType: 'touch' })
+    await waitForCaretOffset(offsetBeforeIn)
   })
 })
