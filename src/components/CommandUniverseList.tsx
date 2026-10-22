@@ -213,11 +213,14 @@ const CommandUniverseList = forwardRef<CommandUniverseListHandle, CommandUnivers
       // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-seed on filter changes
     }, [groups, search])
 
+    // Also re-reported when the groups change: re-sorting or filtering renders a new element for the focused row
+    // while its key stays the same, and the selection glow would otherwise keep measuring the old, detached element
+    // (whose offsets read as 0, so the glow jumps to the top). PROTOTYPE: belongs in #6018, which added the glow.
     useEffect(() => {
       const key = state.selectionManager.focusedKey
       onFocusedRowChange?.(key == null ? null : (rowRefs.current.get(String(key)) ?? null))
       return () => onFocusedRowChange?.(null)
-    }, [onFocusedRowChange, state.selectionManager.focusedKey])
+    }, [onFocusedRowChange, state.selectionManager.focusedKey, groups])
 
     // Neutralize react-aria's secondary "center the whole listbox" scroll. After the row's
     // own scroll-into-view, if the row moved at all, react-aria additionally calls
