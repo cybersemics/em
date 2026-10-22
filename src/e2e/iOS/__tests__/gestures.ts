@@ -103,12 +103,9 @@ describe('Gestures', () => {
 
   // https://github.com/cybersemics/em/issues/5844
   it('does not scroll the document when a drag starts on the caret', async () => {
-    /** Generates n sibling thoughts named prefix0, prefix1, …. */
-    const filler = (prefix: string, n: number) => Array.from({ length: n }, (_, i) => `- ${prefix}${i}`).join('\n')
-    // keep b below the toolbar after the keyboard scrolls the page, so the drag starts in the gesture zone
-    await paste(`${filler('x', 8)}\n- a\n- b\n- c\n${filler('y', 25)}`)
-    // paste scrolls to the last imported thought
-    await browser.execute(() => window.em.testHelpers.scrollTo(0))
+    const filler = Array.from({ length: 8 }, (_, i) => `- x${i}`).join('\n')
+    // keeps b low enough that the keyboard does not shift the visual viewport on iOS 17, which puts the drag off the caret
+    await paste(`${filler}\n- a\n- b\n- c`)
 
     await clickThought('b')
     await tap(await waitForEditable('b'), { pointerType: 'touch' })
