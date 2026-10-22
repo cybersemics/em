@@ -12,9 +12,12 @@ import Dropdown from './Dropdown/Dropdown'
 import DropdownLight from './Dropdown/DropdownLight'
 import DropdownRows, { DropdownAction, DropdownItem } from './Dropdown/DropdownRows'
 import AToZIcon from './icons/AToZIcon'
+import ClockIcon from './icons/ClockIcon'
 import CommandsListIcon from './icons/CommandsListIcon'
 
 interface CommandUniverseSortButtonProps {
+  /** Currently selected sort. Controlled — the parent (`useCommandList`) owns the value. */
+  sortOrder: CommandSortType
   onSortChange: (sortOrder: CommandSortType) => void
 }
 
@@ -55,24 +58,29 @@ const UndockIcon = ({ size }: { size: number }) => (
 
 /** Type glyph, white so the menu's plus-lighter blend can tint it. */
 const TypeIcon = ({ size }: { size: number }) => (
-  <CommandsListIcon size={size} fill='white' strokeWidth={0} className={css({ flex: 'none' })} />
+  <CommandsListIcon size={size} fill='white' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
 )
 
 /** Alphabetical glyph, white so the menu's plus-lighter blend can tint it. */
 const AlphabeticalIcon = ({ size }: { size: number }) => (
-  <AToZIcon size={size} fill='white' strokeWidth={0} className={css({ flex: 'none' })} />
+  <AToZIcon size={size} fill='white' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
+)
+
+/** Recently used glyph, white so the menu's plus-lighter blend can tint it. */
+const RecentIcon = ({ size }: { size: number }) => (
+  <ClockIcon size={size} fill='white' strokeWidth={1.5} cssRaw={css.raw({ flex: 'none' })} />
 )
 
 const ITEMS: DropdownItem<CommandSortType>[] = [
   { id: 'type', label: 'Type', icon: TypeIcon },
   { id: 'alphabetical', label: 'Alphabetical', icon: AlphabeticalIcon },
+  { id: 'recent', label: 'Recently used', icon: RecentIcon },
 ]
 
-const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonProps) => {
+const CommandUniverseSortButton = ({ sortOrder: selectedSort, onSortChange }: CommandUniverseSortButtonProps) => {
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
   const iconSize = Math.min((28 * fontSize) / DEFAULT_FONT_SIZE, 36)
-  const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
   const [open, setOpen] = useState(false)
   // True from opening until the close animation finishes, while the menu's copy of the glyph is on screen.
   const [menuShown, setMenuShown] = useState(false)
@@ -82,7 +90,7 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
 
   useLayoutEffect(() => {
     setAnchor(buttonRef.current)
-    setSurface(buttonRef.current?.closest<HTMLElement>('[data-glass-sheet]') ?? null)
+    setSurface(buttonRef.current?.closest<HTMLElement>('[data-cu-glass-sheet]') ?? null)
   }, [])
 
   const actions: DropdownAction[] = [
@@ -99,7 +107,8 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
     { id: 'undock', label: 'Undock', icon: UndockIcon, onAction: () => {} },
   ]
 
-  const SelectedIcon = selectedSort === 'alphabetical' ? AToZIcon : CommandsListIcon
+  const SelectedIcon =
+    selectedSort === 'alphabetical' ? AToZIcon : selectedSort === 'recent' ? ClockIcon : CommandsListIcon
 
   return (
     <div
@@ -122,14 +131,18 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
     >
       {/* The button's own glyph, hidden while the menu's copy of it is on screen. */}
       <div className={css({ display: 'flex', mixBlendMode: 'plus-lighter' })} style={{ opacity: menuShown ? 0 : 0.5 }}>
-        <SelectedIcon size={iconSize} fill={ICON_COLOR} strokeWidth={0} className={css({ flex: 'none' })} />
+        <SelectedIcon
+          size={iconSize}
+          fill={ICON_COLOR}
+          strokeWidth={selectedSort === 'recent' ? 1.5 : 0}
+          cssRaw={css.raw({ flex: 'none' })}
+        />
       </div>
       <Dropdown
         open={open}
         onClose={() => setOpen(false)}
         onClosed={() => setMenuShown(false)}
         onSelect={id => {
-          setSelectedSort(id)
           onSortChange(id)
           setOpen(false)
         }}
