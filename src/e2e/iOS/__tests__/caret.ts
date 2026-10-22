@@ -435,11 +435,13 @@ describe('Caret', () => {
     await waitUntil(isKeyboardShown)
 
     // place the caret before "the"
-    await tap(editable, { offset: 26, pointerType: 'touch' })
-    await waitForCaretOffset(26)
+    const offsetBeforeThe = 'Hello beautiful people in '.length
+    await tap(editable, { offset: offsetBeforeThe, pointerType: 'touch' })
+    await waitForCaretOffset(offsetBeforeThe)
 
     // tap the "i" of "in", four characters to the left of the caret
-    await tap(editable, { offset: 23, pointerType: 'touch' })
-    await waitForCaretOffset(23)
+    const offsetBeforeIn = 'Hello beautiful people '.length
+    await tap(editable, { offset: offsetBeforeIn, pointerType: 'touch' })
+    await waitForCaretOffset(offsetBeforeIn)
   })
 })
