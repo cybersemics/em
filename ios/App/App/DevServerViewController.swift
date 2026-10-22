@@ -1,5 +1,6 @@
 import Capacitor
 import Foundation
+import UIKit
 import WebKit
 import WebviewBackground
 
@@ -7,7 +8,8 @@ import WebviewBackground
 ///
 /// It supplies the app's web view: a `NativeHistoryWebView`, which routes iOS native undo/redo gestures
 /// (three-finger swipe, shake-to-undo, and the Edit menu) to the web layer as a `nativeHistory` event
-/// rather than letting them run against WebKit's own undo stack.
+/// rather than letting them run against WebKit's own undo stack. On iOS 27 it also disables the web view's
+/// double-tap recognizers, which otherwise leave later touches without `touchmove` (#6104).
 ///
 /// In debug (development) builds it also registers `DevServerCertPlugin`, which trusts the
 /// development server's self-signed certificate. Registration happens in
@@ -21,6 +23,41 @@ class DevServerViewController: CAPBridgeViewController {
 
     override func webView(with frame: CGRect, configuration: WKWebViewConfiguration) -> WKWebView {
         return NativeHistoryWebView(frame: frame, configuration: configuration)
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        disableDoubleTapRecognizers()
+        // Text interaction installs its recognizers on the content view when editing begins, after the web view
+        // has loaded, so they are disabled again whenever the keyboard comes up.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillShow),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil
+        )
+    }
+
+    @objc private func keyboardWillShow() {
+        disableDoubleTapRecognizers()
+    }
+
+    /// Disables WebKit's one-finger double-tap recognizers on iOS 27.
+    ///
+    /// On iOS 27 a double tap on the caret of a focused editable leaves WebKit withholding `touchmove`, `touchend`
+    /// and `pointerup` from later touches on or near the thought until the app is quit, so no gesture can be
+    /// recognized there (#6104, #5660, WebKit bug 322561). Calling `preventDefault` on the double tap's touches
+    /// does not stop it, since the double tap is recognized natively, before the page sees it. Double tapping a
+    /// word no longer selects it, while a long press and the selection handles still do.
+    private func disableDoubleTapRecognizers() {
+        guard #available(iOS 27, *) else { return }
+        guard let scrollView = webView?.scrollView else { return }
+        for view in [scrollView] + scrollView.subviews {
+            for case let tap as UITapGestureRecognizer in view.gestureRecognizers ?? []
+            where tap.numberOfTapsRequired == 2 && tap.numberOfTouchesRequired == 1 {
+                tap.isEnabled = false
+            }
+        }
     }
 
     #if DEBUG
