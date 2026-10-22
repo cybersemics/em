@@ -12,12 +12,15 @@ import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import refresh from '../helpers/refresh'
 import setSelection from '../helpers/setSelection'
 import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForCursor from '../helpers/waitForCursor'
+import waitForEditable from '../helpers/waitForEditable'
 import waitForNoteFocus from '../helpers/waitForNoteFocus'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
+import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -288,6 +291,28 @@ it('Native undo places the caret at the end of the restored thought', async () =
   await dispatchNativeHistory('historyUndo')
   expect(await getEditingText()).toBe('correct')
   expect(await getCaretOffset()).toBe('correct'.length)
+})
+
+describe('persistent storage', () => {
+  usePersistentTreecrdtStorage()
+
+  // https://github.com/cybersemics/em/pull/6082#discussion_r4344114144
+  it.skip('undoes the first edit after a reload as soon as it is typed', async () => {
+    await paste('Hello')
+    await waitForEditable('Hello')
+    await clickThought('Hello')
+
+    // a reload starts with an empty undo history
+    await refresh()
+    await waitForEditable('Hello')
+    await clickThought('Hello')
+    await press('End')
+    await keyboard.type('W')
+    await clickToolbar('Undo')
+    await waitForBrowserSettled()
+
+    expect(await getEditingText()).toBe('Hello')
+  })
 })
 
 describe('mobile only', () => {
