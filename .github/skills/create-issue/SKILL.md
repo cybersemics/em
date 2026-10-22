@@ -52,7 +52,9 @@ A feature whose design is still being decided is asked about one question at a t
 - Show each option's result: the resulting tree in outline format when the question is about structure, and a rendered Markdown table (not ASCII) when it is about layout. Keep the two separate, since the tree is the data and the table only its rendering.
 - When an option refers back to a step, name the step as well as its number: "After step 4, Insert Header Row, ...". The reader should not have to scroll back to learn what step 4 was.
 
-The answers to these questions are revised often, including ones given several rounds earlier. Do not post or rewrite the issue until the reporter says the design is settled, and treat a declined or interrupted question as a question still open, not as the end of the design.
+The answers to these questions are revised often, including ones given several rounds earlier. Do not post or rewrite the issue while any design question is still open, and treat a declined or interrupted question as a question still open, not as the end of the design. Once the last open question is answered, the design is settled: post.
+
+Every design question names a specific decision. Never ask whether to proceed, whether the design is settled, or whether the reporter has anything else to add. The reporter shared everything they had in mind when they invoked this skill, and by the time you are asking design questions you are past the point where an open-ended prompt could surface anything new. An "anything else?" or "ready to post?" question spends a round on nothing, and when the reporter does want to add or revise something, they will say so unprompted.
 
 ## The template
 
@@ -397,6 +399,7 @@ New issues often originate in a comment thread on another issue or PR.
 - An issue posted after one round of questions, with a detail the answers themselves left undecided and nobody went back to ask about.
 - A question to the reporter about the shape of the issue rather than the behaviour — whether to split Expected Behavior, which heading something belongs under, how to word a title — where this skill already says.
 - A question asked because a round had room for it, with both answers already drafted and one marked recommended.
+- A question asking whether to proceed, whether the design is settled, or whether the reporter has anything else to share, rather than one naming a specific decision.
 
 ## When something is unknown
 
