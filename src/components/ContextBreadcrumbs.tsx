@@ -2,11 +2,10 @@ import { isEqual } from 'lodash'
 import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import { ColorToken } from '../../styled-system/types'
-import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
 import { HOME_TOKEN } from '../constants'
@@ -104,11 +103,11 @@ const BreadCrumb = React.memo(
       placeholder?: string
       showDivider?: boolean
       staticText?: boolean
-      linkCssRaw?: SystemStyleObject
+      linkClassName?: string
     }
   >(
     (
-      { isOverflow, label, isDeleting, path, placeholder, showDivider, onClickEllipsis, staticText, linkCssRaw },
+      { isOverflow, label, isDeleting, path, placeholder, showDivider, onClickEllipsis, staticText, linkClassName },
       ref,
     ) => {
       const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
@@ -133,8 +132,7 @@ const BreadCrumb = React.memo(
               <HomeLink color={token('colors.gray50')} size={16} className={css({ position: 'static' })} />
             ) : (
               <Link
-                cssRaw={css.raw(linkCssRaw)}
-                className={extendTapRecipe({ size: 'small' })}
+                className={cx(extendTapRecipe({ size: 'small' }), linkClassName)}
                 simplePath={simplePath}
                 label={label}
                 // usePlaceholder returns the value of a non-empty thought, so only an empty thought gets the placeholder
@@ -142,10 +140,7 @@ const BreadCrumb = React.memo(
               />
             ))}
           {!isDeleting && (
-            <Superscript
-              simplePath={simplePath}
-              cssRaw={css.raw({ position: 'relative', left: '-2px', top: '-3px' })}
-            />
+            <Superscript simplePath={simplePath} className={css({ position: 'relative', left: '-2px', top: '-3px' })} />
           )}
         </span>
       ) : (
@@ -172,7 +167,7 @@ const ContextBreadcrumbs = ({
   placeholder,
   staticText,
   thoughtsLimit,
-  linkCssRaw,
+  linkClassName,
   variant = 'default',
   color,
 }: {
@@ -190,7 +185,7 @@ const ContextBreadcrumbs = ({
   /** Disables click on breadcrumb fragments. */
   staticText?: boolean
   thoughtsLimit?: number
-  linkCssRaw?: SystemStyleObject
+  linkClassName?: string
   variant?: ContextBreadcrumbsVariant
   color?: ColorToken
 }) => {
@@ -275,13 +270,13 @@ const ContextBreadcrumbs = ({
                   placeholder={placeholder}
                   showDivider={i > 0}
                   staticText={staticText}
-                  linkCssRaw={css.raw(
-                    {
+                  linkClassName={cx(
+                    css({
                       color: 'inherit',
                       textDecoration: 'none',
                       '&:active': { color: 'activeBreadCrumb', WebkitTextStrokeWidth: '0.05em' },
-                    },
-                    linkCssRaw,
+                    }),
+                    linkClassName,
                   )}
                 />
               </FadeTransition>

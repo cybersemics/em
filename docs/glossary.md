@@ -100,6 +100,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## H
 
+**help genie** — A glowing orb with a tapering, sparkling trail that flies over the app. The Help button in the Command Universe header and the learning genie button in the pinned command tooltip let it out and put it back. For now it follows the pointer or a finger, and can be sent to a point with `moveHelpGenie`. See [learning.md → Help genie](learning.md#help-genie).
+
 **HOME_TOKEN** — Sentinel `ThoughtId` for the home root. The path `[HOME_TOKEN]` represents the root thought itself; every regular `Path` starts with a child of HOME (or ABSOLUTE) and the root token is implied. See [data-model.md → Path](data-model.md#path).
 
 ## I

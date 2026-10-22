@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
@@ -16,6 +16,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
 import { compareReasonable } from '../util/compareThought'
+import debugLog from '../util/debugLog'
 import dndRef from '../util/dndRef'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -97,6 +98,11 @@ const DropEnd = ({
       draggingThoughtValues.some(draggingValue => compareReasonable(draggingValue, lastChildValue) > 0)
     )
   })
+
+  // Records each drop hover that is actually shown, so that a hovered drop target that renders no drop hover can be told apart in the debug log from one that does.
+  useEffect(() => {
+    if (showDropHover) debugLog.log('dropHover', { zone: 'end', thoughtId })
+  }, [showDropHover, thoughtId])
 
   // Allocate extra more space (1.4 em) to last drop target panel
   const dropTargetHeight = isLastVisible ? calculateCliffDropTargetHeight({ cliff, depth }) + 1.4 : 0

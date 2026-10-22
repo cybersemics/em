@@ -1,11 +1,11 @@
 /* eslint-disable import/prefer-default-export */
 /** Defines global keyboard shortcuts and gestures. */
-import Emitter from 'emitter20'
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
 import { ArrowKey } from './@types/ArrowKey'
 import Command from './@types/Command'
 import CommandId from './@types/CommandId'
+import CommandSuccess from './@types/CommandSuccess'
 import CommandType from './@types/CommandType'
 import Direction from './@types/Direction'
 import Gesture from './@types/Gesture'
@@ -20,13 +20,14 @@ import { clearMulticursorsActionCreator as clearMulticursors } from './actions/c
 import { cursorClearedActionCreator as cursorCleared } from './actions/cursorCleared'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
 import { indentActionCreator as indent } from './actions/indent'
+import { pinnedCommandAddRepActionCreator as pinnedCommandAddRep } from './actions/pinnedCommandAddRep'
 import { redoActionCreator as redo } from './actions/redo'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './actions/setIsMulticursorExecuting'
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { undoActionCreator as undo } from './actions/undo'
-import { isMac } from './browser'
+import { isCapacitor, isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
@@ -42,6 +43,7 @@ import isUndoEnabled from './selectors/isUndoEnabled'
 import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
+import commandEmitter from './stores/commandEmitter'
 import editingValueStore from './stores/editingValueStore'
 import gestureStore from './stores/gestureStore'
 import heldKeysStore from './stores/heldKeysStore'
@@ -55,10 +57,11 @@ import head from './util/head'
 import isAttribute from './util/isAttribute'
 import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
+import saveDebugLog from './util/saveDebugLog'
 
 export const globalCommands: Command[] = Object.values(commandsObject)
 
-export const commandEmitter = new Emitter()
+export { commandEmitter }
 
 /** The id of the command matched by the key that is down, read by beforeInput. Set on keyDown and cleared on keyUp. A ministore rather than a module variable so that resetStores clears it between tests, including after a keydown that no keyup followed. Nothing subscribes, so a keystroke never renders. */
 const keyCommandIdStore = ministore<{ id: string | null }>({ id: null })
@@ -417,7 +420,7 @@ const createCommandMetadata = (
   keyboardIndex: keyboardIndex ?? keyboardIndexOf(command, type, event),
 })
 
-/** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
+/** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. Returns false if there is nothing to repeat or the command cannot execute. */
 export const executeCommand = (
   commandArg: Command,
   {
@@ -441,12 +444,12 @@ export const executeCommand = (
 
   // resolve repeat to the last command that was executed and the keyboardIndex it was triggered with, and exit early if there is none
   const resolved = commandArg.id === 'repeat' ? lastCommandStore.getState().lastCommand : { command: commandArg }
-  if (!resolved) return
+  if (!resolved) return false
   const command = resolved.command
 
   const canExecute = !command.canExecute || command.canExecute(commandStore.getState())
   // Exit early if the command cannot execute
-  if (!canExecute) return
+  if (!canExecute) return false
 
   // A repeated command takes the keyboardIndex that was recorded with it, since the repeat keypress matches none of its own keyboard shortcuts. Otherwise it is derived from the event.
   const keyboardIndex = keyboardIndexArg ?? resolved.keyboardIndex
@@ -503,14 +506,28 @@ export const executeCommandWithMulticursor = (
 
   const state = commandStore.getState()
 
+  /** Reports a successful invocation once exec has returned, unless it raised an app error, and adds a rep to the pinned command when the user performed it by keyboard or gesture. Asynchronous work is not awaited: the user has completed the command once it starts, whatever a server or the clipboard later returns. */
+  const reportSuccess = () => {
+    if (commandStore.getState().error !== state.error) return
+    commandEmitter.trigger('commandSucceeded', {
+      commandId: commandArg.id,
+      source: type ?? 'internal',
+    } satisfies CommandSuccess)
+    if (type === 'keyboard' || type === 'gesture')
+      commandStore.dispatch(pinnedCommandAddRep({ commandId: commandArg.id }))
+  }
+
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.
   if (!command.multicursor || !hasMulticursor(state)) {
-    return executeCommand(command, {
+    const result = executeCommand(command, {
       store: commandStore,
       type: inputMethod,
       event,
       keyboardIndex,
     })
+    if (result === false) return
+    reportSuccess()
+    return result
   }
 
   /** The value of Command['multicursor'] resolved to an object. That is, bare false has already short circuited, and bare true resolves to an empty object so that we don't need to make existential checks everywhere. */
@@ -535,7 +552,9 @@ export const executeCommandWithMulticursor = (
       : filteredPaths
 
   const commandMetadata = createCommandMetadata(command, { type: inputMethod, event, keyboardIndex })
-  return commandStore.dispatch(
+  // Whether exec ran on at least one cursor, i.e. the invocation counts as a success.
+  let didExecute = false
+  const result = commandStore.dispatch(
     commandTransaction(commandMetadata, (dispatch, metadata) => {
       // Pass the attributed dispatch through the existing executor API so nested asynchronous work retains its parent.
       const scopedStore = { ...commandStore, dispatch }
@@ -630,6 +649,7 @@ export const executeCommandWithMulticursor = (
         let result: void | Promise<void>
         try {
           result = multicursor.execMulticursor(execPaths, dispatch, commandStore.getState)
+          didExecute = true
         } catch (error) {
           completeMulticursorExecution()
           throw error
@@ -649,12 +669,16 @@ export const executeCommandWithMulticursor = (
             if (!recomputedPath) continue
 
             dispatch(setCursor({ path: recomputedPath }))
-            executeCommand(command, {
-              store: scopedStore,
-              type: inputMethod,
-              event,
-              keyboardIndex,
-            })
+            if (
+              executeCommand(command, {
+                store: scopedStore,
+                type: inputMethod,
+                event,
+                keyboardIndex,
+              }) !== false
+            ) {
+              didExecute = true
+            }
 
             // The command sets the cursor to the thought it created, so a cursor on a different thought than the one that was
             // just set is the new thought. A command that could not act on the selected thought leaves the cursor where it
@@ -674,6 +698,8 @@ export const executeCommandWithMulticursor = (
       recordLastCommand(command, metadata, commandStore.getState())
     }),
   )
+  if (didExecute) reportSuccess()
+  return result
 }
 
 /**
@@ -704,6 +730,10 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
     haptics.light()
   }
 
+  // While the pinned command tooltip is open the user is practicing the gesture it shows, so the gesture menu would
+  // only cover it. Haptics still confirm each segment.
+  if (state.showPinnedCommandTooltip) return
+
   // gesture menu
   // alert after a delay of COMMAND_PALETTE_TIMEOUT
   clearGestureMenuTimer()
@@ -723,9 +753,40 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
   gestureMenuTimerStore.update({ timer })
 }
 
+/** Dismiss gesture hint that is shown by alert. */
+export const handleGestureCancel = () => {
+  clearGestureMenuTimer()
+  store.dispatch((dispatch, getState) => {
+    const state = getState()
+    if (state.showGestureMenu) {
+      dispatch(gestureMenu())
+    }
+    if (state.alert?.alertType === AlertType.GestureHint || state.showGestureMenu) {
+      dispatch(alert(null))
+    }
+  })
+}
+
+/** A secret gesture (→↓←↓↑) that downloads the debug log, or shares it in the native apps, while Debug Logging is on. A debugging backdoor rather than a command, so that it appears nowhere a command does: the Command Universe, the gesture menu, help, or the tutorial. */
+const DOWNLOAD_DEBUG_LOG_GESTURE: Gesture = 'rdldu'
+
 /** Executes a valid gesture and closes the gesture hint. Special handling for chainable commands. */
 export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e: GestureResponderEvent }) => {
   const state = store.getState()
+
+  // secret gesture
+  if (
+    sequence === DOWNLOAD_DEBUG_LOG_GESTURE &&
+    debugLog.isEnabled() &&
+    !state.showModal &&
+    !state.showMobileCommandUniverse &&
+    state.longPress !== LongPressState.DragInProgress
+  ) {
+    handleGestureCancel()
+    const entryCount = saveDebugLog(state)
+    store.dispatch(alert(`${isCapacitor() ? 'Shared' : 'Downloaded'} ${entryCount} debug log entries`))
+    return
+  }
 
   // Get the command from the command gesture index.
   // When the gesture menu  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
@@ -844,20 +905,6 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
         dispatch(alert(null))
       }
     })
-  })
-}
-
-/** Dismiss gesture hint that is shown by alert. */
-export const handleGestureCancel = () => {
-  clearGestureMenuTimer()
-  store.dispatch((dispatch, getState) => {
-    const state = getState()
-    if (state.showGestureMenu) {
-      dispatch(gestureMenu())
-    }
-    if (state.alert?.alertType === AlertType.GestureHint || state.showGestureMenu) {
-      dispatch(alert(null))
-    }
   })
 }
 
