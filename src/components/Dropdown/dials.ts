@@ -9,6 +9,9 @@ import { useEffect, useState } from 'react'
 /** Fired on window by the panel after it writes the custom properties. */
 export const DIALS_EVENT = 'sort-dropdown-dials'
 
+/** Fired on window by a Dropdown when it starts opening, just before its layers mount; the frame stepper freezes on it. */
+export const DROPDOWN_OPENING_EVENT = 'sort-dropdown-opening'
+
 /** The current value of a custom property set on <html>, or the fallback when the panel has not set it. */
 export const readDial = (name: string, fallback: string): string =>
   getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback

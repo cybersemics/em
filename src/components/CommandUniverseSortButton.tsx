@@ -90,7 +90,9 @@ const CommandUniverseSortButton = ({ sortOrder: selectedSort, onSortChange }: Co
   const [surface, setSurface] = useState<HTMLElement | null>(null)
   // Design dial: whether the menu opens around the selection or drops down from the button.
   useDialsVersion()
-  const placement: DropdownPlacement = readDial('--sort-dropdown-placement', 'down') === 'around' ? 'around' : 'down'
+  // 'down-fade': drops down, and only the selected item moves; the others fade in where they are.
+  const opening = readDial('--sort-dropdown-placement', 'down')
+  const placement: DropdownPlacement = opening === 'around' ? 'around' : 'down'
 
   useLayoutEffect(() => {
     setAnchor(buttonRef.current)
@@ -153,6 +155,7 @@ const CommandUniverseSortButton = ({ sortOrder: selectedSort, onSortChange }: Co
         anchor={anchor}
         selectedId={selectedSort}
         placement={placement}
+        rowEntrance={opening === 'down-fade' ? 'fade' : 'settle'}
       >
         {/* Light first, so the rows paint over it. */}
         <DropdownLight surface={surface} />

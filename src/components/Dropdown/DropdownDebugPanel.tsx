@@ -50,9 +50,10 @@ const OPENING_CONTROLS: Control[] = [
     options: [
       { value: 'around', label: 'around the selection' },
       { value: 'down', label: 'drops down from the button' },
+      { value: 'down-fade', label: 'drops down, others fade in place' },
     ],
     fallback: 'down',
-    hint: 'Around: the selected item stays on the button. Down: every item opens in the same place.',
+    hint: 'Around: the selected item stays on the button. Down: every item opens in the same place, the others spreading out from the button. Fade in place: only the selected item moves.',
   },
 ]
 

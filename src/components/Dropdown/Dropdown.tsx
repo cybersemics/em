@@ -21,7 +21,7 @@ import {
 import { createPortal } from 'react-dom'
 import { token } from '../../../styled-system/tokens'
 import durations from '../../util/durations'
-import useDialsVersion from './dials'
+import useDialsVersion, { DROPDOWN_OPENING_EVENT } from './dials'
 
 /** Above the dialog: the layers are later in <body>, so the same z-index paints over it. */
 export const DROPDOWN_Z_INDEX = Number(token('zIndex.dialog'))
@@ -131,6 +131,13 @@ interface DropdownProps<T extends string> {
   placement?: DropdownPlacement
   align?: DropdownAlign
   /**
+   * How the rows other than the selected one appear.
+   * - 'settle': they gather toward the row on the anchor while closed, blurred, and spread out to their places as
+   *   they sharpen and fade in.
+   * - 'fade': they fade in and out where they are, without moving or blurring; only the selected row travels.
+   */
+  rowEntrance?: 'settle' | 'fade'
+  /**
    * Keep the children mounted while closed, with no entering frame. For menus whose selected row is
    * always on screen (the sidebar's header), rather than layers that appear only while open.
    */
@@ -157,6 +164,7 @@ const Dropdown = <T extends string>({
   anchor,
   selectedId: ownerSelectedId,
   placement = 'around',
+  rowEntrance = 'settle',
   persistent = false,
   catcher = true,
   children,
@@ -205,6 +213,7 @@ const Dropdown = <T extends string>({
     window.clearTimeout(closeTimer.current)
     if (anchor) setAnchorRect(anchor.getBoundingClientRect())
     if (persistent) return
+    window.dispatchEvent(new Event(DROPDOWN_OPENING_EVENT))
     setMounted(true)
     let frame = requestAnimationFrame(() => {
       frame = requestAnimationFrame(() => setEntered(true))
@@ -310,6 +319,7 @@ const Dropdown = <T extends string>({
       transition: transition(['opacity', 'transform']),
     },
     rowMotion: key => {
+      if (rowEntrance === 'fade') return { opacity: isOpen ? 1 : 0, transition: transition(['opacity']) }
       const row = rows[key] ?? { left: 0, top: 0, width: 0, height: 0 }
       const d = row.top + row.height / 2 - homeCenter
       return {
