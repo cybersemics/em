@@ -90,7 +90,7 @@ it('the first gesture after a toolbar dropdown is closed is executed', async () 
 })
 
 // https://github.com/cybersemics/em/issues/3625
-it.skip('tapping another toolbar button closes the open toolbar dropdown', async () => {
+it('tapping another toolbar button closes the open toolbar dropdown', async () => {
   await newThought('hello')
 
   await clickToolbar('Text Color')
