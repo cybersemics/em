@@ -95,16 +95,6 @@ const MASK_CONTROLS: Control[] = [
 
 const SURFACE_LIGHT_CONTROLS: Control[] = [
   {
-    name: '--sort-dropdown-glass',
-    label: 'glass',
-    kind: 'number',
-    min: 0,
-    max: 1,
-    step: 0.01,
-    fallback: '1',
-    hint: 'The glass sheet’s fill, highlights and edge while the menu is open. 0 = the dialog loses its outline.',
-  },
-  {
     name: '--sort-dropdown-room-light',
     label: 'Command Universe light',
     kind: 'number',

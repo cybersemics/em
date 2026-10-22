@@ -1,12 +1,10 @@
 // PROTOTYPE — visual experiment only, not for merge.
 //
 // useSurfaceMask: dims the surface a Dropdown belongs to and clears a radial space under the menu,
-// on the Dropdown's clock. It sorts the layers it touches into three kinds:
-//   - the glass itself (fill, clipped highlights, stroke, inside the sheet): kept, dimmed, or faded out so no edge
-//     is drawn around the menu;
-//   - the backdrop blur beside the sheet: kept, or it would show the editor behind the glass unblurred;
-//   - the surface's own light beside the sheet (the Command Universe's room light, top light, selection glow):
-//     kept, dimmed or turned off.
+// on the Dropdown's clock. Dimming the content and masking it are the only ways it attenuates what the menu
+// overlaps: the glass itself (fill, trapped highlights, stroke) is never touched. Beside the sheet, two optional
+// dials can also reach the backdrop blur and the surface's own light (the Command Universe's room light, top light
+// and selection glow); both default to leaving them as they are.
 //
 // Design dials: the dimming, the cleared space, the blur and the room light read --sort-dropdown-* custom
 // properties set by DropdownDebugPanel, with the current design values as fallbacks.
@@ -55,13 +53,6 @@ const useSurfaceMask = (surface: HTMLElement | null, radius: number) => {
       el.style.transition = transition(['opacity', '--dropdown-surface-mask'])
       el.style.opacity = isOpen ? 'var(--sort-dropdown-content-opacity, 1)' : '1'
       el.style.setProperty('--dropdown-surface-mask', isOpen ? 'var(--sort-dropdown-clear-strength, 1)' : '1')
-    })
-
-    // The glass itself, inside the sheet: its fill, trapped highlights and stroke.
-    surface.querySelectorAll(':scope > *').forEach(el => {
-      if (!isAbsolute(el)) return
-      el.style.transition = transition(['opacity'])
-      el.style.opacity = isOpen ? 'var(--sort-dropdown-glass, 1)' : ''
     })
 
     // Beside the sheet: the backdrop blur, and the surface's own light.
