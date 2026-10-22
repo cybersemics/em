@@ -397,12 +397,6 @@ https://github.com/user-attachments/assets/0ca1a77b-e174-4884-9606-739a94cde039
 
 Swap the current thought with its grandparent, leaving the parent in between where it is. The two thoughts exchange places in the tree and each adopts the other's children.
 
-### Bind Context
-
-Bind two different contexts of a thought so that they always have the same children.
-
-<kbd>Option + Shift + B</kbd>
-
 ### Command Universe
 
 Opens the Command Universe, where commands can be executed by name.
