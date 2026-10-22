@@ -7,6 +7,7 @@ import getSelection from '../helpers/getSelection'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import isKeyboardShown from '../helpers/isKeyboardShown'
 import newThought from '../helpers/newThought'
+import recordCaretOffsetsFromNextTouch from '../helpers/recordCaretOffsetsFromNextTouch'
 import setSelection from '../helpers/setSelection'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
@@ -66,7 +67,7 @@ describe('Double tap', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5981
-  it('a tap within the thought being edited after a double tap leaves the caret in the tapped word', async () => {
+  it('a tap within the thought being edited after a double tap is not undone', async () => {
     await newThought('Existentialism eternally')
     await hideKeyboardByTappingDone()
     const editable = await waitForEditable('Existentialism eternally')
@@ -81,10 +82,24 @@ describe('Double tap', () => {
     await waitUntil(async () => (await getSelection().toString()) === 'Existentialism')
     await setSelection('Existentialism'.length, 'Existentialism'.length)
 
+    const caretOffsets = await recordCaretOffsetsFromNextTouch()
     // the middle of "eternally"
     await tap(editable, { offset: 'Existentialism eter'.length, pointerType: 'touch' })
-    // iOS moves the caret back within about 300ms of the tap
-    await browser.pause(1000)
+    // iOS places the caret at the tap and moves it back within about 300ms, after which em should put it back again
+    const before = 'Existentialism'.length
+    /** True once the offsets show the caret leaving, returning to before, and leaving again. */
+    const reverted = (offsets: number[]) => {
+      const left = offsets.findIndex(offset => offset > before)
+      const returned = offsets.findIndex((offset, i) => i > left && offset === before)
+      return left !== -1 && returned !== -1 && offsets.slice(returned + 1).some(offset => offset > before)
+    }
+    try {
+      await browser.waitUntil(async () => reverted(await caretOffsets()), { timeout: 3000 })
+    } catch {
+      throw new Error(
+        `Expected the caret to leave offset ${before}, return to it, and leave it again, but it went through ${JSON.stringify(await caretOffsets())}.`,
+      )
+    }
 
     const offset = await browser.execute(() => document.getSelection()?.focusOffset ?? null)
     expect(offset).toBeGreaterThanOrEqual('Existentialism '.length)
