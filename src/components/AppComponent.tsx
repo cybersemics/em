@@ -26,6 +26,7 @@ import CommandCenter from './CommandCenter/CommandCenter'
 import Content from './Content'
 import DesktopCommandUniverse from './DesktopCommandUniverse'
 import DropGutter from './DropGutter'
+import DropdownDebugPanel from './Dropdown/DropdownDebugPanel'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
@@ -212,6 +213,8 @@ const AppComponent: FC = () => {
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
       <MobileCommandUniverse />
+      {/* TEMPORARY: sort dropdown design dials. Remove with DropdownDebugPanel once its values are baked. */}
+      {!navigator.webdriver && <DropdownDebugPanel />}
 
       {isDocumentEditable() && !tutorial && !showModal && (
         <>

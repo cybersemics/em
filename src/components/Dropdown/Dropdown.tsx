@@ -21,6 +21,7 @@ import {
 import { createPortal } from 'react-dom'
 import { token } from '../../../styled-system/tokens'
 import durations from '../../util/durations'
+import useDialsVersion from './dials'
 
 /** Above the dialog: the layers are later in <body>, so the same z-index paints over it. */
 export const DROPDOWN_Z_INDEX = Number(token('zIndex.dialog'))
@@ -34,8 +35,11 @@ const EASE = 'cubic-bezier(0.16, 0.6, 0.2, 1)'
  *   The selected row never moves; the menu does (and glides when a new item is picked).
  * - 'below': the menu hangs from the top of its container; the selected row slides up to the top when closing and
  *   back to its place when opening (the sidebar's section picker).
+ * - 'down': the menu drops down from the anchor, so the first item lands on the anchor and every item opens in the
+ *   same place whichever is selected. The selected row slides down to its place when opening and back up onto the
+ *   anchor when closing.
  */
-export type DropdownPlacement = 'around' | 'below'
+export type DropdownPlacement = 'around' | 'below' | 'down'
 
 /** Which edge of the anchor the menu lines up with. 'end': right edges (icons on the right). */
 export type DropdownAlign = 'end'
@@ -66,6 +70,9 @@ interface DropdownContextValue {
   /** Builds a transition string on the shared clock. dur defaults to timing.content. */
   transition: (props: string[], opts?: { dur?: number; delay?: number }) => string
   anchorRect: DOMRect | null
+  placement: DropdownPlacement
+  /** Vertical centre of the selected item's anchor point, in viewport coordinates (px). */
+  selectedY: number
   /** The menu's rect in viewport coordinates (zero-sized until measured). */
   menuRect: Rect
   selectedId: string
@@ -73,7 +80,7 @@ interface DropdownContextValue {
   menuStyle: CSSProperties
   /** Motion for a non-selected row (or heading/separator/action): wakes with the light, settles out of the selection. */
   rowMotion: (key: string) => CSSProperties
-  /** For 'below': motion for the selected row, which slides up onto the trigger when closed and back when open. */
+  /** For 'below' and 'down': motion for the selected row, which slides onto the trigger when closed and back when open. */
   selectedTravel: CSSProperties
   /** For 'below': how far the selected item's anchor point sits from the top of the menu (px). */
   selectedOffset: number
@@ -172,6 +179,9 @@ const Dropdown = <T extends string>({
   const onClosedRef = useRef(onClosed)
   onClosedRef.current = onClosed
 
+  // Dials can change the menu's size (row padding, font size); re-render so it is re-measured.
+  useDialsVersion()
+
   const timing: Timing = { content: durations.get('medium') / 1000, light: durations.get('slow') / 1000, ease: EASE }
   const isOpen = persistent ? open : open && entered
 
@@ -233,8 +243,19 @@ const Dropdown = <T extends string>({
     props.map(p => `${p} ${dur}s ${timing.ease} ${delay}s`).join(', ')
 
   // 'around' + 'end': the selected item's anchor point sits exactly on the anchor; right edges line up.
+  // 'down': the first item's anchor point sits on the anchor instead.
   const selectedPoint = anchorPoints[selectedId]?.top ?? 0
-  const menuTop = anchorRect && placement === 'around' ? anchorRect.top - selectedPoint : 0
+  const firstId = Object.keys(anchorPoints).reduce<string | undefined>(
+    (first, id) => (first === undefined || anchorPoints[id].top < anchorPoints[first].top ? id : first),
+    undefined,
+  )
+  const firstPoint = firstId ? anchorPoints[firstId].top : 0
+  const menuTop =
+    anchorRect && placement === 'around'
+      ? anchorRect.top - selectedPoint
+      : anchorRect && placement === 'down'
+        ? anchorRect.top - firstPoint
+        : 0
   const menuRight = anchorRect ? window.innerWidth - anchorRect.right : 0
   const menuRect: Rect = {
     left: window.innerWidth - menuRight - menuSize.width,
@@ -244,7 +265,11 @@ const Dropdown = <T extends string>({
   }
 
   const selectedRow = rows[selectedId] ?? { left: 0, top: 0, width: 0, height: 0 }
-  const selectedCenter = selectedRow.top + selectedRow.height / 2
+  // Where closed rows gather: the row that sits on the anchor while closed (the first row for 'down').
+  const homeRow = (placement === 'down' && firstId ? rows[firstId] : undefined) ?? selectedRow
+  const homeCenter = homeRow.top + homeRow.height / 2
+  // How far the selected row travels to reach the anchor while closed.
+  const travel = placement === 'below' ? -selectedPoint : placement === 'down' ? firstPoint - selectedPoint : 0
 
   const value: DropdownContextValue = {
     open,
@@ -253,6 +278,8 @@ const Dropdown = <T extends string>({
     timing,
     transition,
     anchorRect,
+    placement,
+    selectedY: menuTop + selectedPoint + (anchorPoints[selectedId]?.height ?? 0) / 2,
     menuRect,
     selectedId,
     menuStyle: {
@@ -266,12 +293,12 @@ const Dropdown = <T extends string>({
     },
     selectedOffset: selectedPoint,
     selectedTravel: {
-      transform: `translateY(${!isOpen && placement === 'below' ? -selectedPoint : 0}px)`,
+      transform: `translateY(${isOpen ? 0 : travel}px)`,
       transition: transition(['opacity', 'transform']),
     },
     rowMotion: key => {
       const row = rows[key] ?? { left: 0, top: 0, width: 0, height: 0 }
-      const d = row.top + row.height / 2 - selectedCenter
+      const d = row.top + row.height / 2 - homeCenter
       return {
         opacity: isOpen ? 1 : 0,
         transform: isOpen ? 'none' : `translateY(${-d * 0.5}px)`,

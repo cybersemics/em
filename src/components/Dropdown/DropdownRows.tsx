@@ -3,6 +3,9 @@
 // DropdownRows: the menu itself — an optional heading, the selectable items, then a separator and
 // one-shot actions. Typography and opacities from the em design file (Figma node 14593:170852).
 // Position, timing and motion all come from the enclosing Dropdown.
+//
+// Design dials: type and spacing read --sort-dropdown-* custom properties set by DropdownDebugPanel, with the
+// current design values as fallbacks. Bake a tuned value by editing its fallback.
 import { ComponentType } from 'react'
 import { createPortal } from 'react-dom'
 import { css } from '../../../styled-system/css'
@@ -31,17 +34,17 @@ interface DropdownRowsProps<T extends string> {
   iconSize: number
 }
 
-/** Vertical padding of each row (px). With a 28px icon this gives the design's 36px row pitch. */
-const ROW_PAD = 4
+/** Vertical padding of each row. With a 28px icon, 4px gives the design's 36px row pitch. */
+const ROW_PAD = 'var(--sort-dropdown-row-padding, 4px)'
 
 const rowClass = css({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'flex-end',
-  gap: '12px',
+  gap: 'var(--sort-dropdown-label-icon-gap, 12px)',
   cursor: 'pointer',
   fontFamily: 'radioCanada',
-  fontSize: '17.75px',
+  fontSize: 'var(--sort-dropdown-font-size, 17.75px)',
   lineHeight: '1.5',
   letterSpacing: '-0.011em',
   color: 'white',
@@ -52,7 +55,9 @@ const iconBoxClass = css({ flex: 'none', display: 'flex', alignItems: 'center', 
 const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize }: DropdownRowsProps<T>) => {
   const {
     isOpen,
+    placement,
     selectedId,
+    selectedTravel,
     menuStyle,
     rowMotion,
     transition,
@@ -82,13 +87,13 @@ const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize
             alignItems: 'center',
             gap: '11px',
             fontFamily: 'radioCanada',
-            fontSize: '18px',
+            fontSize: 'var(--sort-dropdown-heading-font-size, 18px)',
             fontWeight: 500,
             lineHeight: '1.5',
             letterSpacing: '-0.011em',
             color: 'white',
           })}
-          style={{ paddingBottom: 6, ...rowMotion('heading') }}
+          style={{ paddingBottom: 'var(--sort-dropdown-heading-gap, 6px)', ...rowMotion('heading') }}
         >
           {/* Figma Line 47: 99px, white fading out to the left, 32%. */}
           <div
@@ -113,8 +118,13 @@ const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize
             className={rowClass}
             style={{
               paddingBlock: ROW_PAD,
-              // The selected row never moves within the menu; the menu's position carries it onto the anchor.
-              ...(isSelected ? { transition: transition(['opacity']) } : rowMotion(id)),
+              // 'around': the selected row never moves within the menu; the menu's position carries it onto the anchor.
+              // 'down': the menu stays put and the selected row travels between its place and the anchor.
+              ...(isSelected
+                ? placement === 'down'
+                  ? selectedTravel
+                  : { transition: transition(['opacity']) }
+                : rowMotion(id)),
             }}
           >
             {/* Selected 60%, others 34% (Figma row opacities). */}
@@ -145,7 +155,7 @@ const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize
             style={{
               width: '100%',
               height: 1,
-              marginBlock: 6,
+              marginBlock: 'var(--sort-dropdown-separator-space, 6px)',
               background: 'linear-gradient(to left, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0))',
               ...rowMotion('separator'),
             }}

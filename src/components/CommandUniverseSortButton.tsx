@@ -8,9 +8,10 @@ import CommandSortType from '../@types/CommandSortType'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../actions/toggleMobileCommandUniverse'
 import { DEFAULT_FONT_SIZE } from '../constants'
-import Dropdown from './Dropdown/Dropdown'
+import Dropdown, { DropdownPlacement } from './Dropdown/Dropdown'
 import DropdownLight from './Dropdown/DropdownLight'
 import DropdownRows, { DropdownAction, DropdownItem } from './Dropdown/DropdownRows'
+import useDialsVersion, { readDial } from './Dropdown/dials'
 import AToZIcon from './icons/AToZIcon'
 import ClockIcon from './icons/ClockIcon'
 import CommandsListIcon from './icons/CommandsListIcon'
@@ -87,6 +88,9 @@ const CommandUniverseSortButton = ({ sortOrder: selectedSort, onSortChange }: Co
   const buttonRef = useRef<HTMLDivElement>(null)
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const [surface, setSurface] = useState<HTMLElement | null>(null)
+  // Design dial: whether the menu opens around the selection or drops down from the button.
+  useDialsVersion()
+  const placement: DropdownPlacement = readDial('--sort-dropdown-placement', 'around') === 'down' ? 'down' : 'around'
 
   useLayoutEffect(() => {
     setAnchor(buttonRef.current)
@@ -148,6 +152,7 @@ const CommandUniverseSortButton = ({ sortOrder: selectedSort, onSortChange }: Co
         }}
         anchor={anchor}
         selectedId={selectedSort}
+        placement={placement}
       >
         {/* Light first, so the rows paint over it. */}
         <DropdownLight surface={surface} />
