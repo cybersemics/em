@@ -371,8 +371,9 @@ it('colors uncolored dragged text dropped into colored text', async () => {
   ])
 })
 
-// https://github.com/cybersemics/em/pull/5967#discussion_r4308776291
-it('keeps the source colors that enclose a dragged color', async () => {
+// Text has a single color, a text color or a background, never both (#3877, #3930).
+// https://github.com/cybersemics/em/pull/5967#discussion_r4314432805
+it('keeps only the nearest source color of dragged text', async () => {
   await importOutline(`- <span style="background-color: #ffff00;">Left <span style="color: #0000ff;">Blue</span>Right</span>
 - Plain`)
   const source = getEditable('Left BlueRight')
@@ -385,12 +386,12 @@ it('keeps the source colors that enclose a dragged color', async () => {
 
   expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
     '<span style="background-color: #ffff00;">Left Right</span>',
-    'Plain<span style="background-color: #ffff00;"><span style="color: #0000ff;">Blue</span></span>',
+    'Plain<span style="color: #0000ff;">Blue</span>',
   ])
 })
 
-// https://github.com/cybersemics/em/pull/5967#discussion_r4308776291
-it('keeps the source colors that enclose a dragged color dropped into another color', async () => {
+// https://github.com/cybersemics/em/pull/5967#discussion_r4314432805
+it('keeps only the nearest source color of dragged text dropped into another color', async () => {
   await importOutline(`- <span style="background-color: #ffff00;">Left <span style="color: #0000ff;">Blue</span>Right</span>
 - <span style="color: #ff0000;">One Two</span>`)
   const source = getEditable('Left BlueRight')
@@ -403,7 +404,7 @@ it('keeps the source colors that enclose a dragged color dropped into another co
 
   expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
     '<span style="background-color: #ffff00;">Left Right</span>',
-    '<span style="color: #ff0000;">One </span><span style="background-color: #ffff00;"><span style="color: #0000ff;">Blue</span></span><span style="color: #ff0000;">Two</span>',
+    '<span style="color: #ff0000;">One </span><span style="color: #0000ff;">Blue</span><span style="color: #ff0000;">Two</span>',
   ])
 })
 
