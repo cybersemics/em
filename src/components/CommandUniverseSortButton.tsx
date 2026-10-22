@@ -78,10 +78,13 @@ const ITEMS: DropdownItem<CommandSortType>[] = [
   { id: 'recent', label: 'Recently used', icon: RecentIcon },
 ]
 
-const CommandUniverseSortButton = ({ sortOrder: selectedSort, onSortChange }: CommandUniverseSortButtonProps) => {
+const CommandUniverseSortButton = ({ sortOrder }: CommandUniverseSortButtonProps) => {
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
   const iconSize = Math.min((28 * fontSize) / DEFAULT_FONT_SIZE, 36)
+  // PROTOTYPE: the pick stays inside the dropdown and the Command Universe list isn't re-sorted (onSortChange is not
+  // called). The prototype is about the dropdown; re-sorting the list is a 100ms+ render that disturbed its animation.
+  const [selectedSort, setSelectedSort] = useState<CommandSortType>(sortOrder)
   const [open, setOpen] = useState(false)
   // True from opening until the close animation finishes, while the menu's copy of the glyph is on screen.
   const [menuShown, setMenuShown] = useState(false)
@@ -149,7 +152,7 @@ const CommandUniverseSortButton = ({ sortOrder: selectedSort, onSortChange }: Co
         onClose={() => setOpen(false)}
         onClosed={() => setMenuShown(false)}
         // The Dropdown closes itself after a pick.
-        onSelect={onSortChange}
+        onSelect={setSelectedSort}
         anchor={anchor}
         selectedId={selectedSort}
         placement={placement}
