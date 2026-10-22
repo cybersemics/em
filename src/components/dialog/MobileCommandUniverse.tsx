@@ -218,7 +218,11 @@ const SelectionGlow = ({
     return () => fade.stop()
   }, [activeOpacity, disabled, isActive, row])
 
-  const mask = `linear-gradient(to right, transparent 0%, black 8%, black ${rightFade.start}px, transparent ${rightFade.end}px)`
+  // PROTOTYPE: belongs in #6018. The right fade eases out (smoothstep stops) instead of ramping linearly, so its end
+  // doesn't read as a vertical cut where it meets the dark beyond the dialog.
+  /** The x position (px) a fraction t of the way through the right fade. */
+  const fadeAt = (t: number) => rightFade.start + (rightFade.end - rightFade.start) * t
+  const mask = `linear-gradient(to right, transparent 0%, black 8%, black ${rightFade.start}px, rgba(0, 0, 0, 0.84) ${fadeAt(0.25)}px, rgba(0, 0, 0, 0.5) ${fadeAt(0.5)}px, rgba(0, 0, 0, 0.16) ${fadeAt(0.75)}px, transparent ${rightFade.end}px)`
   return (
     <div
       aria-hidden
@@ -230,6 +234,9 @@ const SelectionGlow = ({
         right: '-62px',
         overflow: 'clip',
         borderRadius: '0 32px 32px 0',
+        // PROTOTYPE: belongs in #6018. Feathers the clip's top edge, which the glow reaches when the first row is
+        // selected, so it fades out at the top of the dialog instead of stopping there.
+        maskImage: 'linear-gradient(to bottom, transparent, black 1.5rem)',
         pointerEvents: 'none',
       })}
     >
@@ -247,8 +254,10 @@ const SelectionGlow = ({
           position: 'absolute',
           top: '-0.2rem',
           left: '-3.3rem',
-          width: 'auto',
-          height: '13.8rem',
+          // PROTOTYPE: belongs in #6018. Stretched taller than the asset's aspect (13.8rem × 50.3rem) so the glow falls
+          // off gently below the row; at 13.8rem the falloff was steep enough to read as a hard line under it.
+          width: '50.3rem',
+          height: '20rem',
           maxWidth: 'none',
           pointerEvents: 'none',
           userSelect: 'none',

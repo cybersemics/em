@@ -19,9 +19,6 @@ import useSurfaceMask from './useSurfaceMask'
 /** Where the light is laid out. 'menu': hugs the options. 'surface': the whole surface, bloom on the anchor. */
 type LightScope = 'surface' | 'menu'
 
-/** Surface mask radius for each scope (px). Tuned for 'menu'; 'surface' keeps Figma's ~545×605 ellipse on a 384px frame. */
-const MASK_RADIUS: Record<LightScope, number> = { menu: 1200, surface: 575 }
-
 /** Figma Rectangle 752: transparent on the left to #434378 on the right. */
 const SURFACE_TINT = 'linear-gradient(90deg, rgba(10, 10, 18, 0) 0%, rgba(67, 67, 120, 1) 100%)'
 
@@ -36,7 +33,14 @@ const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
   const { isOpen, anchorRect, menuRect, selectedY, timing, transition, lightMotion } = useDropdown()
   // Re-read on every render; the Dropdown re-renders its layers when a dial changes.
   const scope: LightScope = readDial('--sort-dropdown-glow-scope', 'menu') === 'surface' ? 'surface' : 'menu'
-  useSurfaceMask(surface, MASK_RADIUS[scope])
+  // The light's centre, where the surface mask sits: the same point as the bloom's centre below.
+  const lightCentre =
+    scope === 'menu'
+      ? { x: menuRect.left + menuRect.width * 0.6, y: menuRect.top + menuRect.height / 2 }
+      : anchorRect
+        ? { x: anchorRect.left + anchorRect.width / 2, y: anchorRect.top + anchorRect.height / 2 }
+        : { x: 0, y: 0 }
+  useSurfaceMask(surface, lightCentre)
 
   if (!anchorRect) return null
 
@@ -123,7 +127,8 @@ const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
           height: box.height,
           background: SURFACE_TINT,
           maskImage:
-            'linear-gradient(to right, transparent, black 45%, black 80%, transparent), linear-gradient(to bottom, transparent, black 35%, black 55%, transparent)',
+            // Eased (smoothstep) ramps: linear ones end in a sudden change of slope that reads as a hard line.
+            'linear-gradient(to right, transparent, rgba(0, 0, 0, 0.16) 11.25%, rgba(0, 0, 0, 0.5) 22.5%, rgba(0, 0, 0, 0.84) 33.75%, black 45%, black 80%, rgba(0, 0, 0, 0.84) 85%, rgba(0, 0, 0, 0.5) 90%, rgba(0, 0, 0, 0.16) 95%, transparent), linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.16) 8.75%, rgba(0, 0, 0, 0.5) 17.5%, rgba(0, 0, 0, 0.84) 26.25%, black 35%, black 55%, rgba(0, 0, 0, 0.84) 66.25%, rgba(0, 0, 0, 0.5) 77.5%, rgba(0, 0, 0, 0.16) 88.75%, transparent)',
           maskComposite: 'intersect',
           WebkitMaskComposite: 'source-in',
           mixBlendMode: 'screen',
