@@ -16,6 +16,7 @@ import {
   subscribeDialsPeers,
   subscribeDialsState,
 } from './dialsSync'
+import useBlurEditing, { DIAL_SET_EVENT, setBlurEditing } from './radialBlurEditing'
 import useMotionStepper, { DIALS_ROOT_ATTRIBUTE } from './useMotionStepper'
 
 /*
@@ -220,6 +221,104 @@ const GLOW_CONTROLS: Control[] = [
   },
 ]
 
+const BLUR_CONTROLS: Control[] = [
+  {
+    name: '--sort-dropdown-blur-enabled',
+    label: 'radial blur',
+    kind: 'select',
+    options: [
+      { value: 'off', label: 'off' },
+      { value: 'on', label: 'on' },
+    ],
+    fallback: 'off',
+    hint: 'A progressive blur behind the light: strongest at its core, easing off outward.',
+  },
+  {
+    name: '--sort-dropdown-blur-core',
+    label: 'core blur',
+    kind: 'number',
+    min: 0,
+    max: 40,
+    step: 0.5,
+    unit: 'px',
+    fallback: '16px',
+    hint: 'Blur inside the inner ellipse.',
+  },
+  {
+    name: '--sort-dropdown-blur-edge',
+    label: 'edge blur',
+    kind: 'number',
+    min: 0,
+    max: 20,
+    step: 0.5,
+    unit: 'px',
+    fallback: '0px',
+    hint: 'Blur at the outer ellipse; beyond it there is none.',
+  },
+  {
+    name: '--sort-dropdown-blur-inner',
+    label: 'inner radius',
+    kind: 'number',
+    min: 0,
+    max: 600,
+    step: 5,
+    unit: 'px',
+    fallback: '120px',
+    hint: 'Horizontal radius of the fully blurred core.',
+  },
+  {
+    name: '--sort-dropdown-blur-outer',
+    label: 'outer radius',
+    kind: 'number',
+    min: 40,
+    max: 1200,
+    step: 5,
+    unit: 'px',
+    fallback: '360px',
+    hint: 'Horizontal radius where the blur has eased off to the edge blur.',
+  },
+  {
+    name: '--sort-dropdown-blur-aspect',
+    label: 'aspect (height ÷ width)',
+    kind: 'number',
+    min: 0.3,
+    max: 3,
+    step: 0.01,
+    fallback: '1.1',
+  },
+  {
+    name: '--sort-dropdown-blur-offset-x',
+    label: 'offset, horizontal',
+    kind: 'number',
+    min: -400,
+    max: 400,
+    step: 1,
+    unit: 'px',
+    fallback: '0px',
+    hint: 'From the light’s centre.',
+  },
+  {
+    name: '--sort-dropdown-blur-offset-y',
+    label: 'offset, vertical',
+    kind: 'number',
+    min: -400,
+    max: 400,
+    step: 1,
+    unit: 'px',
+    fallback: '0px',
+  },
+  {
+    name: '--sort-dropdown-blur-layers',
+    label: 'layers',
+    kind: 'number',
+    min: 3,
+    max: 8,
+    step: 1,
+    fallback: '5',
+    hint: 'More layers give a smoother falloff and cost more to draw.',
+  },
+]
+
 const ROWS_CONTROLS: Control[] = [
   {
     name: '--sort-dropdown-font-size',
@@ -302,6 +401,7 @@ const SECTIONS: Section[] = [
   { id: 'surfaceLight', title: 'Command Universe lighting', controls: SURFACE_LIGHT_CONTROLS },
   { id: 'glow', title: 'Menu glow', controls: GLOW_CONTROLS },
   { id: 'rows', title: 'Type and spacing', controls: ROWS_CONTROLS },
+  { id: 'blur', title: 'Radial blur', note: 'off by default', controls: BLUR_CONTROLS },
   { id: 'motion', title: 'Motion', note: 'freeze & step frames', controls: [] },
   { id: 'paste', title: 'Overrides to paste back', note: 'for baking in', controls: [] },
 ]
@@ -1033,6 +1133,19 @@ const DropdownDebugPanel = () => {
   // The frame stepper's state lives here, in the component that stays mounted, so freezing works while collapsed.
   const motion = useMotionStepper()
   const [values, setValues] = useState<Record<string, string>>(readValues)
+  // The radial blur's canvas editor: shown over the screen while the menu is open.
+  const blurEditing = useBlurEditing()
+
+  // The canvas editor sets dials through an event; apply them like control changes, so copy and sync see them.
+  useEffect(() => {
+    /** Applies one dial set from the canvas. */
+    const onDialSet = (event: Event) => {
+      const { name, value } = (event as CustomEvent<{ name: string; value: string }>).detail
+      setValues(previous => ({ ...previous, [name]: value }))
+    }
+    window.addEventListener(DIAL_SET_EVENT, onDialSet)
+    return () => window.removeEventListener(DIAL_SET_EVENT, onDialSet)
+  }, [])
   const [openSections, setOpenSections] = useState<string[]>(readOpenSections)
   const [popup, setPopup] = useState<Window | null>(null)
   // The sort dropdown lives in the Command Universe, so the button and panel only show while it is open. The popup
@@ -1303,6 +1416,33 @@ const DropdownDebugPanel = () => {
           isDesktop={isDesktop}
         >
           {section.id === 'motion' ? <MotionStepperControls motion={motion} Slider={ScrubSlider} /> : null}
+          {section.id === 'blur' ? (
+            <button
+              type='button'
+              aria-pressed={blurEditing}
+              onClick={() => {
+                // Editing a blur that is off would show nothing on screen, so editing turns it on.
+                if (!blurEditing && values['--sort-dropdown-blur-enabled'] !== 'on') {
+                  setValues(previous => ({ ...previous, '--sort-dropdown-blur-enabled': 'on' }))
+                }
+                setBlurEditing(!blurEditing)
+              }}
+              className={css({
+                width: '100%',
+                minHeight: '40px',
+                marginBottom: '8px',
+                fontFamily: 'monospace',
+                fontSize: '13px',
+                color: 'fg',
+                borderRadius: '8px',
+                border: '1px solid {colors.fgOverlay20}',
+                cursor: 'pointer',
+              })}
+              style={{ backgroundColor: blurEditing ? 'rgba(120, 105, 225, 0.45)' : 'rgba(255, 255, 255, 0.06)' }}
+            >
+              {blurEditing ? 'Editing on canvas: drag the handles (tap to stop)' : 'Edit on canvas'}
+            </button>
+          ) : null}
           {section.id === 'paste' ? (
             <>
               <pre

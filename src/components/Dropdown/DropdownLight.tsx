@@ -13,6 +13,7 @@
 import { CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { DROPDOWN_Z_INDEX, useDropdown } from './Dropdown'
+import DropdownRadialBlur, { DropdownRadialBlurEditor } from './DropdownRadialBlur'
 import { readDial } from './dials'
 import useSurfaceMask from './useSurfaceMask'
 
@@ -82,6 +83,9 @@ const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
 
   return (
     <>
+      {/* Radial progressive blur (off by default): first, so the dim, the light and the rows paint above it. */}
+      <DropdownRadialBlur centre={lightCentre} />
+
       {/* Even dim: a plain dark fill over the viewport (no backdrop filter, so it's cheap). Darkens inside and
           outside the surface alike, which flattens its edge, and keeps what's behind the glass from glaring. */}
       <Layer
@@ -171,6 +175,9 @@ const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
           ...fade(0.14),
         }}
       />
+
+      {/* The blur's canvas editor, shown while editing it from the dials panel. */}
+      <DropdownRadialBlurEditor centre={lightCentre} />
     </>
   )
 }
