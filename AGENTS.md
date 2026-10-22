@@ -28,3 +28,5 @@ The repo's `commit-msg` hook adds this automatically for Claude Code, Codex, Ope
 Read [`.github/instructions/code-standards.instructions.md`](.github/instructions/code-standards.instructions.md) before writing code, and [`.github/instructions/testing.instructions.md`](.github/instructions/testing.instructions.md) before writing tests. These describe the conventions the codebase follows. Read them even when an existing file already shows you a pattern to copy — the pattern may predate the convention, and a convention you have not read loses to one you can see.
 
 Testing guidance lives in [`docs/testing.md`](docs/testing.md) — read it in full before writing tests.
+
+When searching source, match both `.ts` and `.tsx` files. Code is not split by extension the way the names suggest: `src/commands/newThought.tsx` is a command, so a search of `src/commands/*.ts` silently misses it. Narrow a search to `.ts` only when you mean to exclude components.
