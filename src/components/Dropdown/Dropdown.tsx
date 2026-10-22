@@ -195,7 +195,7 @@ const Dropdown = <T extends string>({
   // A pick, held locally until the owner is told about it. Picking closes the menu, and the owner's response can be
   // expensive (the Command Universe re-sorts its whole list in a ~100ms task); landing on the first frames of the
   // close would stall the rows' fade and blur. So the menu animates to the picked item straight away and reports it
-  // once the rows have settled. Persistent menus (the sidebar's section picker) report at once, as before.
+  // once the close has finished. Persistent menus (the sidebar's section picker) report at once, as before.
   const [pendingId, setPendingId] = useState<T | null>(null)
   const selectTimer = useRef<number>(undefined)
   const selectedId = pendingId ?? ownerSelectedId
@@ -348,7 +348,10 @@ const Dropdown = <T extends string>({
       window.clearTimeout(selectTimer.current)
       setPendingId(id as T)
       onClose()
-      selectTimer.current = window.setTimeout(() => onSelect(id as T), timing.content * 1000)
+      // Report once the whole close has played out (the light runs longest) and the layers are gone, so the owner's
+      // expensive response can't land on any frame of it. Reporting after the rows alone (timing.content) still put
+      // the Command Universe's 120-150ms re-sort in the middle of the light's fade on desktop.
+      selectTimer.current = window.setTimeout(() => onSelect(id as T), timing.light * 1000 + 50)
     },
     close: onClose,
     stopPress,
