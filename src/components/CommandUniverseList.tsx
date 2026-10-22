@@ -3,6 +3,7 @@ import {
   Fragment,
   KeyboardEvent,
   forwardRef,
+  memo,
   startTransition,
   useCallback,
   useEffect,
@@ -490,4 +491,5 @@ const CommandUniverseList = forwardRef<CommandUniverseListHandle, CommandUnivers
 
 CommandUniverseList.displayName = 'CommandUniverseList'
 
-export default CommandUniverseList
+// PROTOTYPE: memoized, so a sort change re-renders the list only in the page's deferred render, not in the urgent one.
+export default memo(CommandUniverseList)

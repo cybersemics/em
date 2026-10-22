@@ -162,7 +162,7 @@ const Dropdown = <T extends string>({
   onClosed,
   onSelect,
   anchor,
-  selectedId: ownerSelectedId,
+  selectedId,
   placement = 'around',
   rowEntrance = 'settle',
   persistent = false,
@@ -192,18 +192,6 @@ const Dropdown = <T extends string>({
 
   const timing: Timing = { content: durations.get('medium') / 1000, light: durations.get('slow') / 1000, ease: EASE }
 
-  // A pick, held locally until the owner is told about it. Picking closes the menu, and the owner's response can be
-  // expensive (the Command Universe re-sorts its whole list in a ~100ms task); landing on the first frames of the
-  // close would stall the rows' fade and blur. So the menu animates to the picked item straight away and reports it
-  // once the close has finished. Persistent menus (the sidebar's section picker) report at once, as before.
-  const [pendingId, setPendingId] = useState<T | null>(null)
-  const selectTimer = useRef<number>(undefined)
-  const selectedId = pendingId ?? ownerSelectedId
-  // Drop the local pick once the owner has caught up with it.
-  useEffect(() => {
-    if (pendingId !== null && ownerSelectedId === pendingId) setPendingId(null)
-  }, [ownerSelectedId, pendingId])
-  useEffect(() => () => window.clearTimeout(selectTimer.current), [])
   const isOpen = persistent ? open : open && entered
 
   // Measure the anchor and mount the layers each time the menu opens, then wait two frames (one to paint the
@@ -343,15 +331,12 @@ const Dropdown = <T extends string>({
     registerAnchorPoint: id => el => {
       anchorPointEls.current[id] = el
     },
+    // Reports the pick at once, and closes the menu here: owners must not close it themselves, or a pick reported
+    // late could close a menu the user has since reopened. Owners with expensive responses should render them as
+    // deferred work (the Command Universe defers its list re-sort) rather than have the menu delay the pick.
     select: id => {
-      if (persistent) return onSelect(id as T)
-      window.clearTimeout(selectTimer.current)
-      setPendingId(id as T)
-      onClose()
-      // Report once the whole close has played out (the light runs longest) and the layers are gone, so the owner's
-      // expensive response can't land on any frame of it. Reporting after the rows alone (timing.content) still put
-      // the Command Universe's 120-150ms re-sort in the middle of the light's fade on desktop.
-      selectTimer.current = window.setTimeout(() => onSelect(id as T), timing.light * 1000 + 50)
+      onSelect(id as T)
+      if (!persistent) onClose()
     },
     close: onClose,
     stopPress,

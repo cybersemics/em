@@ -148,10 +148,8 @@ const CommandUniverseSortButton = ({ sortOrder: selectedSort, onSortChange }: Co
         open={open}
         onClose={() => setOpen(false)}
         onClosed={() => setMenuShown(false)}
-        onSelect={id => {
-          onSortChange(id)
-          setOpen(false)
-        }}
+        // The Dropdown closes itself after a pick.
+        onSelect={onSortChange}
         anchor={anchor}
         selectedId={selectedSort}
         placement={placement}

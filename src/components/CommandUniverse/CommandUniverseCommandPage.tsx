@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback, useDeferredValue } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { SwitchTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
@@ -41,22 +41,43 @@ const CommandUniverseCommandPageComponent = ({
   const isDesktop = useBreakpoint('md')
   const search = useSelector(state => state.commandUniverseBrowsing.search)
   const sortOrder = useSelector(state => state.commandUniverseBrowsing.sortOrder)
-  const { sections } = useCommandList({ search: search.trim(), sortOrder, sortActiveCommandsFirst: true })
+  // PROTOTYPE: re-sorting renders the whole command list, a 120-170ms task on desktop that froze the sort menu's close
+  // animation. The list renders from a deferred copy of the sort order, so React renders it in the background between
+  // frames while the sort button (given the live value) updates at once. Belongs in the Command Universe stack.
+  const listSortOrder = useDeferredValue(sortOrder)
+  const { sections } = useCommandList({
+    search: search.trim(),
+    sortOrder: listSortOrder,
+    sortActiveCommandsFirst: true,
+  })
+
+  // Stable callbacks, so the memoized list skips the urgent render when only the sort order changes (PROTOTYPE).
+  /** Opens a command's detail page. */
+  const onItemTap = useCallback(
+    (command: Command, origin: Pick<DOMRectReadOnly, 'x' | 'y' | 'width' | 'height'>) =>
+      dispatch(commandUniverseNavigate('detail', { command }, { origin })),
+    [dispatch],
+  )
+  /** Returns to the previous page. */
+  const onNavigateBack = useCallback(() => dispatch(commandUniverseBack()), [dispatch])
 
   /** Executes through the shared command pipeline after validating current editor state. */
-  const activate = (command: Command) => {
-    dispatch((dispatch, getState) => {
-      if (!isCommandExecutable(getState(), command)) {
-        dispatch(alert(`${command.label} isn't available right now`))
-        return
-      }
-      onBeforeExecute?.()
-      dispatch(toggleMobileCommandUniverseActionCreator({ value: false }))
-      executeCommandWithMulticursor(command, { store: commandStore, type: 'commandUniverse' })
-      const recent = storageModel.get('recentCommands')
-      storageModel.set('recentCommands', [command.id, ...recent.filter(id => id !== command.id)].slice(0, 5))
-    })
-  }
+  const activate = useCallback(
+    (command: Command) => {
+      dispatch((dispatch, getState) => {
+        if (!isCommandExecutable(getState(), command)) {
+          dispatch(alert(`${command.label} isn't available right now`))
+          return
+        }
+        onBeforeExecute?.()
+        dispatch(toggleMobileCommandUniverseActionCreator({ value: false }))
+        executeCommandWithMulticursor(command, { store: commandStore, type: 'commandUniverse' })
+        const recent = storageModel.get('recentCommands')
+        storageModel.set('recentCommands', [command.id, ...recent.filter(id => id !== command.id)].slice(0, 5))
+      })
+    },
+    [commandStore, dispatch, onBeforeExecute],
+  )
 
   // Pass this ref to `DialogContent`, which owns the scrollable element, so that we can reset
   // the scroll position to the top as results crossfade.
@@ -108,16 +129,16 @@ const CommandUniverseCommandPageComponent = ({
               onFocusedRowChange={onFocusedRowChange}
               groups={sections}
               search={search}
-              onItemTap={(command, origin) => dispatch(commandUniverseNavigate('detail', { command }, { origin }))}
+              onItemTap={onItemTap}
               onItemActivate={activate}
-              onNavigateBack={() => dispatch(commandUniverseBack())}
+              onNavigateBack={onNavigateBack}
             />
           )
         ) : (
           <SwitchTransition>
             {/* Use a key here composed of the sort order and search query to crossfade when search results change. */}
             <FadeTransition
-              key={`${sortOrder}-${search}`}
+              key={`${listSortOrder}-${search}`}
               in={true}
               type='medium'
               unmountOnExit
