@@ -1,13 +1,17 @@
 /** Native iOS gesture regression tests. */
 import gestures from '../../../test-helpers/gestures'
 import $ from '../helpers/$'
+import clickThought from '../helpers/clickThought'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import getSelectionEndHandlePosition from '../helpers/getSelectionEndHandlePosition'
+import isKeyboardShown from '../helpers/isKeyboardShown'
 import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
+import paste from '../helpers/paste'
 import setSelection from '../helpers/setSelection'
+import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 
@@ -95,5 +99,39 @@ describe('Gestures', () => {
     // Back clears the cursor when the thoughtspace holds a single thought, so no thought is being edited afterwards.
     const cursorCleared = await waitUntil(async () => (await getEditingText()) === undefined)
     expect(cursorCleared).toBeTruthy()
+  })
+
+  // https://github.com/cybersemics/em/issues/5844
+  it('does not scroll the document when a drag starts on the caret', async () => {
+    const filler = Array.from({ length: 8 }, (_, i) => `- x${i}`).join('\n')
+    // keeps b low enough that the keyboard does not shift the visual viewport on iOS 17, which puts the drag off the caret
+    await paste(`${filler}\n- a\n- b\n- c`)
+
+    await clickThought('b')
+    await tap(await waitForEditable('b'), { pointerType: 'touch' })
+    await waitUntil(isKeyboardShown)
+    expect(await setSelection(1, 1)).toMatchObject({ type: 'Caret' })
+
+    // Safari may still be scrolling the focused thought into view after the keyboard appears
+    let lastScrollY: number | undefined
+    await waitUntil(async () => {
+      const scrollY = await browser.execute(() => window.scrollY)
+      const settled = scrollY === lastScrollY
+      lastScrollY = scrollY
+      return settled
+    })
+    // an upward drag scrolls down, so there must be room below
+    expect(
+      await browser.execute(() => window.scrollY + window.innerHeight < document.documentElement.scrollHeight),
+    ).toBe(true)
+
+    const scrollBefore = await browser.execute(() => window.scrollY)
+    const caret = await getCaretPosition()
+    // a quick drag, since BrowserStack does not reproduce the scroll after a press held long enough for the magnifier
+    await gesture('u', { xStart: caret.x, yStart: caret.y, segmentLength: 150, waitMs: 50 })
+
+    // scrollY drifts by a pixel even when the drag is blocked
+    const scrollAfter = await browser.execute(() => window.scrollY)
+    expect(Math.abs(scrollAfter - scrollBefore)).toBeLessThanOrEqual(1)
   })
 })
