@@ -12,6 +12,7 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
+import stubCommands from '../helpers/stubCommands'
 import waitForBackgroundImage from '../helpers/waitForBackgroundImage'
 import waitForSelector from '../helpers/waitForSelector'
 
@@ -82,6 +83,9 @@ describe('GestureMenu', () => {
 
       // When cursor is on the thought, gesture menu is rendered with two new options. When cursor is null, those options are not shown. Hence always be consistent and set cursor to the thought.
       await clickThought('Hello')
+
+      // replace the registered commands with a fixed list so that the snapshot does not need to be updated every time a command is added, removed, or renamed
+      await stubCommands()
 
       // swipe and hold r gesture so that the snapshot shows the gesture menu commands in multiple columns
       await gesture('r', { hold: true })
