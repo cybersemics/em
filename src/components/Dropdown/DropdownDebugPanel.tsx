@@ -75,7 +75,7 @@ const MASK_CONTROLS: Control[] = [
     min: 0,
     max: 1,
     step: 0.01,
-    fallback: '0',
+    fallback: '0.525',
     hint: 'A dark fill over the whole screen. 0 = none, 1 = black.',
   },
   {
@@ -95,7 +95,7 @@ const MASK_CONTROLS: Control[] = [
     min: 0,
     max: 1,
     step: 0.01,
-    fallback: '0.9',
+    fallback: '1',
     hint: 'How hidden the content is at the centre of the light. 0 = mask off, 1 = fully hidden.',
   },
   {
@@ -106,7 +106,7 @@ const MASK_CONTROLS: Control[] = [
     max: 600,
     step: 1,
     unit: 'px',
-    fallback: '287px',
+    fallback: '226px',
     hint: 'The ellipse’s width at a glow spread of 1; it also grows with the spread (Figma: ~545px at 1.9).',
   },
   {
@@ -127,7 +127,7 @@ const MASK_CONTROLS: Control[] = [
     max: 90,
     step: 1,
     unit: '%',
-    fallback: '40%',
+    fallback: '44%',
     hint: 'How much of the ellipse, from the centre, stays at full strength before fading.',
   },
   {
@@ -138,7 +138,7 @@ const MASK_CONTROLS: Control[] = [
     max: 150,
     step: 1,
     unit: '%',
-    fallback: '100%',
+    fallback: '109%',
     hint: 'Where the content is fully visible again, as % of the ellipse. Lower = a tighter, harder edge.',
   },
   {

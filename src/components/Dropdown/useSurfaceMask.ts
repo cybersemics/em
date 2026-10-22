@@ -28,9 +28,9 @@ const MASK_PROPERTY_CSS = `@property --dropdown-surface-mask { syntax: '<number>
  * width at a glow spread of 1, so at the default spread of 1.9 it comes to Figma's ~545px. Height is width × aspect.
  * Both are radii here (half the ellipse), which is what radial-gradient takes.
  */
-const MASK_RADIUS_X = 'calc(var(--sort-dropdown-mask-size, 287px) * var(--sort-dropdown-glow-spread, 1.9) / 2)'
+const MASK_RADIUS_X = 'calc(var(--sort-dropdown-mask-size, 226px) * var(--sort-dropdown-glow-spread, 1.9) / 2)'
 const MASK_RADIUS_Y =
-  'calc(var(--sort-dropdown-mask-size, 287px) * var(--sort-dropdown-glow-spread, 1.9) * var(--sort-dropdown-mask-aspect, 1.11) / 2)'
+  'calc(var(--sort-dropdown-mask-size, 226px) * var(--sort-dropdown-glow-spread, 1.9) * var(--sort-dropdown-mask-aspect, 1.11) / 2)'
 
 /**
  * Applies the surface mask while the enclosing Dropdown is visible. The light is the centre of the dropdown's light
@@ -60,15 +60,12 @@ const useSurfaceMask = (surface: HTMLElement | null, light: { x: number; y: numb
       const r = el.getBoundingClientRect()
       const x = `calc(${light.x - r.left}px + var(--sort-dropdown-mask-offset-x, 0px))`
       const y = `calc(${light.y - r.top}px + var(--sort-dropdown-mask-offset-y, 0px))`
-      const mask = `radial-gradient(${MASK_RADIUS_X} ${MASK_RADIUS_Y} at ${x} ${y}, rgba(0, 0, 0, var(--dropdown-surface-mask)) var(--sort-dropdown-mask-core, 40%), black var(--sort-dropdown-mask-falloff, 100%))`
+      const mask = `radial-gradient(${MASK_RADIUS_X} ${MASK_RADIUS_Y} at ${x} ${y}, rgba(0, 0, 0, var(--dropdown-surface-mask)) var(--sort-dropdown-mask-core, 44%), black var(--sort-dropdown-mask-falloff, 109%))`
       el.style.maskImage = mask
       el.style.webkitMaskImage = mask
       el.style.transition = transition(['opacity', '--dropdown-surface-mask'])
       el.style.opacity = isOpen ? 'var(--sort-dropdown-content-opacity, 1)' : '1'
-      el.style.setProperty(
-        '--dropdown-surface-mask',
-        isOpen ? 'calc(1 - var(--sort-dropdown-mask-strength, 0.9))' : '1',
-      )
+      el.style.setProperty('--dropdown-surface-mask', isOpen ? 'calc(1 - var(--sort-dropdown-mask-strength, 1))' : '1')
     })
 
     // Beside the sheet: the backdrop blur, and the surface's own light.

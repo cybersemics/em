@@ -88,7 +88,7 @@ const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
         style={{
           inset: 0,
           background: 'rgb(8, 8, 16)',
-          opacity: isOpen ? 'var(--sort-dropdown-scrim-opacity, 0)' : 0,
+          opacity: isOpen ? 'var(--sort-dropdown-scrim-opacity, 0.525)' : 0,
           transition: transition(['opacity'], { dur: timing.light }),
         }}
       />
@@ -126,11 +126,12 @@ const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
           width: box.width * 0.83 + 40,
           height: box.height,
           background: SURFACE_TINT,
+          // One elliptical falloff centred where the old ramps' full-strength core was (62.5% across, 45% down).
+          // Two linear ramps multiplied together have rectangular contours, and their flat core was a lit rectangle:
+          // that read as a rectangular cut-off rather than light. closest-side keeps the ellipse inside the layer, so
+          // it reaches zero before any of its edges.
           maskImage:
-            // Eased (smoothstep) ramps: linear ones end in a sudden change of slope that reads as a hard line.
-            'linear-gradient(to right, transparent, rgba(0, 0, 0, 0.16) 11.25%, rgba(0, 0, 0, 0.5) 22.5%, rgba(0, 0, 0, 0.84) 33.75%, black 45%, black 80%, rgba(0, 0, 0, 0.84) 85%, rgba(0, 0, 0, 0.5) 90%, rgba(0, 0, 0, 0.16) 95%, transparent), linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.16) 8.75%, rgba(0, 0, 0, 0.5) 17.5%, rgba(0, 0, 0, 0.84) 26.25%, black 35%, black 55%, rgba(0, 0, 0, 0.84) 66.25%, rgba(0, 0, 0, 0.5) 77.5%, rgba(0, 0, 0, 0.16) 88.75%, transparent)',
-          maskComposite: 'intersect',
-          WebkitMaskComposite: 'source-in',
+            'radial-gradient(closest-side at 62.5% 45%, black 0%, rgba(0, 0, 0, 0.9) 20%, rgba(0, 0, 0, 0.62) 45%, rgba(0, 0, 0, 0.3) 70%, rgba(0, 0, 0, 0.08) 88%, transparent 100%)',
           mixBlendMode: 'screen',
           ...fade(0.5),
           ...spread(box.left + box.width * 0.17, box.top),
