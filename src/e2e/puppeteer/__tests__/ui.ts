@@ -12,12 +12,37 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
+import stubCommands from '../helpers/stubCommands'
 import waitForBackgroundImage from '../helpers/waitForBackgroundImage'
 import waitForSelector from '../helpers/waitForSelector'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
+
+/** A fixed list of commands, enough to fill multiple columns of the Gesture Menu at a wide viewport. */
+const STUB_COMMANDS = [
+  'r',
+  'rd',
+  'ru',
+  'rl',
+  'rdr',
+  'rdl',
+  'rur',
+  'rul',
+  'rdu',
+  'rud',
+  'rld',
+  'rlu',
+  'rdrd',
+  'rurd',
+  'rldr',
+  'rulu',
+].map((gesture, i) => ({
+  label: `Command ${i + 1}`,
+  gesture,
+  description: `Description of command ${i + 1}.`,
+}))
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -74,6 +99,9 @@ describe('GestureMenu', () => {
   describe('wider viewport (>= 400px)', () => {
     // Use iPad Mini landscape to test a viewport wide enough for multiple columns
     deviceEmulation.useForSuite(KnownDevices['iPad Mini landscape'])
+
+    // replace the registered commands with a fixed list so that the snapshot does not need to be updated every time a command is added, removed, or renamed
+    stubCommands(STUB_COMMANDS)
 
     it('render possible commands in multiple columns', async () => {
       await hideHUD()
