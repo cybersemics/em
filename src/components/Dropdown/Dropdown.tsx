@@ -155,7 +155,7 @@ const Dropdown = <T extends string>({
   onClosed,
   onSelect,
   anchor,
-  selectedId,
+  selectedId: ownerSelectedId,
   placement = 'around',
   persistent = false,
   catcher = true,
@@ -183,6 +183,19 @@ const Dropdown = <T extends string>({
   useDialsVersion()
 
   const timing: Timing = { content: durations.get('medium') / 1000, light: durations.get('slow') / 1000, ease: EASE }
+
+  // A pick, held locally until the owner is told about it. Picking closes the menu, and the owner's response can be
+  // expensive (the Command Universe re-sorts its whole list in a ~100ms task); landing on the first frames of the
+  // close would stall the rows' fade and blur. So the menu animates to the picked item straight away and reports it
+  // once the rows have settled. Persistent menus (the sidebar's section picker) report at once, as before.
+  const [pendingId, setPendingId] = useState<T | null>(null)
+  const selectTimer = useRef<number>(undefined)
+  const selectedId = pendingId ?? ownerSelectedId
+  // Drop the local pick once the owner has caught up with it.
+  useEffect(() => {
+    if (pendingId !== null && ownerSelectedId === pendingId) setPendingId(null)
+  }, [ownerSelectedId, pendingId])
+  useEffect(() => () => window.clearTimeout(selectTimer.current), [])
   const isOpen = persistent ? open : open && entered
 
   // Measure the anchor and mount the layers each time the menu opens, then wait two frames (one to paint the
@@ -320,7 +333,13 @@ const Dropdown = <T extends string>({
     registerAnchorPoint: id => el => {
       anchorPointEls.current[id] = el
     },
-    select: id => onSelect(id as T),
+    select: id => {
+      if (persistent) return onSelect(id as T)
+      window.clearTimeout(selectTimer.current)
+      setPendingId(id as T)
+      onClose()
+      selectTimer.current = window.setTimeout(() => onSelect(id as T), timing.content * 1000)
+    },
     close: onClose,
     stopPress,
   }

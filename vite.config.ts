@@ -62,6 +62,30 @@ function tunnelTokenGate(): Plugin {
   }
 }
 
+/**
+ * TEMPORARY prototype aid for the sort dropdown's design dials (src/components/Dropdown/dialsSync.ts). Relays dial
+ * values between every browser connected to this dev server over Vite's own HMR websocket, so a value tuned on the
+ * desktop shows up on a phone on the LAN. Keeps the latest values in memory so a device that connects later can pull
+ * them. Dev server only; remove with the dials panel.
+ */
+function dialsSync(): Plugin {
+  /** The most recent publish, replayed to devices that ask for it. */
+  let latest: { values: Record<string, string>; from: string; at: number } | null = null
+  return {
+    name: 'dials-sync',
+    apply: 'serve',
+    configureServer(server) {
+      server.ws.on('dials:publish', (data: { values: Record<string, string>; from: string; at: number }) => {
+        latest = data
+        server.ws.send('dials:update', data)
+      })
+      server.ws.on('dials:pull', (_data, client) => {
+        if (latest) client.send('dials:update', latest)
+      })
+    },
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   resolve: {
@@ -129,6 +153,8 @@ export default defineConfig({
     ...(useHttps ? [basicSsl()] : []),
     // Gate the cloudflared tunnel hostnames behind a token; all other authorities pass ungated.
     tunnelTokenGate(),
+    // TEMPORARY: relays the sort dropdown's design-dial values between devices. Remove with the dials panel.
+    dialsSync(),
   ],
   server: {
     // Allow bs-local.com for BrowserStack local testing, and the Cloudflare tunnel pool's

@@ -9,6 +9,7 @@
 import { ComponentType } from 'react'
 import { createPortal } from 'react-dom'
 import { css } from '../../../styled-system/css'
+import useBreakpoint from '../../hooks/useBreakpoint'
 import { useDropdown } from './Dropdown'
 
 /** A selectable option. The selected one sits on the anchor. */
@@ -36,6 +37,8 @@ interface DropdownRowsProps<T extends string> {
 
 /** Vertical padding of each row. With a 28px icon, 4px gives the design's 36px row pitch. */
 const ROW_PAD = 'var(--sort-dropdown-row-padding, 4px)'
+/** Row padding below md (the Command Universe's mobile layout), tuned on a 393px phone. */
+const ROW_PAD_MOBILE = 'var(--sort-dropdown-row-padding, 2.5px)'
 
 const rowClass = css({
   display: 'flex',
@@ -44,7 +47,8 @@ const rowClass = css({
   gap: 'var(--sort-dropdown-label-icon-gap, 10px)',
   cursor: 'pointer',
   fontFamily: 'radioCanada',
-  fontSize: 'var(--sort-dropdown-font-size, 17px)',
+  // Tuned separately per layout: 15.5px on a 393px phone, 17px on desktop.
+  fontSize: { base: 'var(--sort-dropdown-font-size, 15.5px)', md: 'var(--sort-dropdown-font-size, 17px)' },
   lineHeight: '1.5',
   letterSpacing: '-0.011em',
   color: 'white',
@@ -68,6 +72,7 @@ const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize
     close,
     stopPress,
   } = useDropdown()
+  const rowPad = useBreakpoint('md') ? ROW_PAD : ROW_PAD_MOBILE
 
   return createPortal(
     // plus-lighter on the whole column adds its white text onto the light below (Figma "linear dodge"), so the
@@ -117,7 +122,7 @@ const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize
             onClick={() => select(id)}
             className={rowClass}
             style={{
-              paddingBlock: ROW_PAD,
+              paddingBlock: rowPad,
               // 'around': the selected row never moves within the menu; the menu's position carries it onto the anchor.
               // 'down': the menu stays put and the selected row travels between its place and the anchor.
               ...(isSelected
@@ -169,7 +174,7 @@ const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize
                 onAction()
               }}
               className={rowClass}
-              style={{ paddingBlock: ROW_PAD, ...rowMotion(id) }}
+              style={{ paddingBlock: rowPad, ...rowMotion(id) }}
             >
               <span style={{ opacity: 0.34 }}>{label}</span>
               <div className={iconBoxClass} style={{ width: iconSize, height: iconSize, opacity: 0.4 }}>
