@@ -1,5 +1,5 @@
 import path from 'path'
-import { KnownDevices } from 'puppeteer'
+import { ElementHandle, KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../../constants'
 import sleep from '../../../util/sleep'
@@ -752,6 +752,14 @@ describe('mobile only', () => {
   // Android, where the caret exemption is limited to an empty thought. On iOS Safari it covers every caret (#3763).
   deviceEmulation.useForSuite(KnownDevices['Pixel 5'])
 
+  /** Returns the x just inside an editable's left edge, past its thought's bullet, which overlaps the editable at font sizes below 18. */
+  const leftInsideEdge = (editable: ElementHandle<Node>) =>
+    editable.evaluate(node => {
+      const el = node as Element
+      const bullet = el.closest('[aria-label="thought-container"]')?.querySelector('[aria-label="bullet"]')
+      return Math.max(el.getBoundingClientRect().left, bullet?.getBoundingClientRect().right ?? -Infinity) + 1
+    })
+
   it('does not start a long press when the press lands on the caret of an empty thought', async () => {
     // Records the Debug Log to diagnose an intermittent CI failure (#5762). Remove once the flake is fixed.
     await withDebugLog(async () => {
@@ -764,20 +772,29 @@ describe('mobile only', () => {
       const boundingBox = await emptyEditable.boundingBox()
       if (!boundingBox) throw new Error('Editable has no bounding box.')
 
-      // An empty thought renders its caret at the start of its content, so the left inside edge is a press on it.
-      await page.touchscreen.touchStart(boundingBox.x + 1, boundingBox.y + boundingBox.height / 2)
+      // An empty thought renders its caret at the start of its content, so the left inside edge is a press on it. The
+      // bullet overlaps the editable's left edge at font sizes below 18, so step past it, as the click helper does.
+      const press = { x: await leftInsideEdge(emptyEditable), y: boundingBox.y + boundingBox.height / 2 }
+
+      // The assertion below is negative, so a press that missed the empty thought would pass it without testing
+      // anything. Confirm the press point is on the empty editable before pressing.
+      const pressTarget = await emptyEditable.evaluate((el, { x, y }) => {
+        const hit = document.elementFromPoint(x, y)
+        return el.contains(hit) ? null : (hit?.getAttribute('aria-label') ?? hit?.tagName ?? 'nothing')
+      }, press)
+      if (pressTarget) throw new Error(`The press point is not on the empty editable but on ${pressTarget}.`)
+
+      await page.touchscreen.touchStart(press.x, press.y)
       // A long press that must NOT happen offers nothing to wait for, so hold well past the delay that would start one.
       await sleep(TIMEOUT_LONG_PRESS_THOUGHT * 2)
-      // Read the highlight while the finger is still down; releasing clears it and would pass either way.
-      const highlighted = await emptyEditable.evaluate(el =>
-        el.parentElement
-          ?.closest('[aria-label="thought-container"]')
-          ?.querySelector('[aria-label="bullet"]')
-          ?.getAttribute('data-highlighted'),
+      // Read the highlights while the finger is still down; releasing clears them and would pass either way. Count every
+      // highlighted bullet, not only the empty thought's, so that a long press started on another thought fails here.
+      const highlighted = await page.evaluate(
+        () => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length,
       )
       await page.touchscreen.touchEnd()
 
-      expect(highlighted).not.toBe('true')
+      expect(highlighted).toBe(0)
 
       // The same press on the caret of a thought with text still starts a long press, since a long press there selects
       // a word and the menu is reachable that way. longPressThought throws if the bullet never highlights.
@@ -788,7 +805,13 @@ describe('mobile only', () => {
         (document.querySelector('[data-editing=true] [data-editable]') as HTMLElement | null)?.focus(),
       )
       await setSelection(0, 0)
-      await longPressThought(textEditable, { edge: 'left' })
+      const textBox = await textEditable.asElement()!.boundingBox()
+      if (!textBox) throw new Error('Editable has no bounding box.')
+      // longPressThought presses 1px inside the left edge, which is on the bullet, so offset the press past it.
+      await longPressThought(textEditable, {
+        edge: 'left',
+        x: (await leftInsideEdge(textEditable.asElement()!)) - (textBox.x + 1),
+      })
     })
   })
 })
