@@ -64,6 +64,9 @@ const CommandUniverseHeader: React.FC<PropsWithChildren<CommandUniverseHeaderPro
             backgroundSize: 'cover',
             opacity: 0.14,
             mixBlendMode: 'overlay',
+            // PROTOTYPE: fade out toward the header's bottom edge, which otherwise draws a seam above the command
+            // list. Belongs in #5939, which added this layer.
+            maskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
           })}
         />
       )}

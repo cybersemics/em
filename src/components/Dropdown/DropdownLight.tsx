@@ -19,8 +19,8 @@ import useSurfaceMask from './useSurfaceMask'
 /** Where the light is laid out. 'menu': hugs the options. 'surface': the whole surface, bloom on the anchor. */
 type LightScope = 'surface' | 'menu'
 
-/** Surface mask radius for each scope (px). Figma's mask ellipse is ~545×605 on a 384px-wide frame. */
-const MASK_RADIUS: Record<LightScope, number> = { menu: 360, surface: 575 }
+/** Surface mask radius for each scope (px). Tuned for 'menu'; 'surface' keeps Figma's ~545×605 ellipse on a 384px frame. */
+const MASK_RADIUS: Record<LightScope, number> = { menu: 1200, surface: 575 }
 
 /** Figma Rectangle 752: transparent on the left to #434378 on the right. */
 const SURFACE_TINT = 'linear-gradient(90deg, rgba(10, 10, 18, 0) 0%, rgba(67, 67, 120, 1) 100%)'
@@ -42,7 +42,7 @@ const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
 
   /** Fades a light layer in to its design opacity, scaled by the intensity dial. */
   const fade = (opacity: number): CSSProperties => ({
-    opacity: isOpen ? `calc(${opacity} * var(--sort-dropdown-glow-intensity, 1))` : 0,
+    opacity: isOpen ? `calc(${opacity} * var(--sort-dropdown-glow-intensity, 1.2))` : 0,
     transition: transition(['opacity'], { dur: timing.light }),
   })
 
@@ -72,7 +72,7 @@ const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
    * spreads together. Uses the scale property, which composes with the transform that lightMotion animates.
    */
   const spread = (left: number, top: number): CSSProperties => ({
-    scale: 'var(--sort-dropdown-glow-spread, 1)',
+    scale: 'var(--sort-dropdown-glow-spread, 1.9)',
     transformOrigin: `${bloom.x - left}px ${bloom.y - top}px`,
   })
 
@@ -84,7 +84,7 @@ const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
         style={{
           inset: 0,
           background: 'rgb(8, 8, 16)',
-          opacity: isOpen ? 'var(--sort-dropdown-scrim-opacity, 0.55)' : 0,
+          opacity: isOpen ? 'var(--sort-dropdown-scrim-opacity, 0)' : 0,
           transition: transition(['opacity'], { dur: timing.light }),
         }}
       />

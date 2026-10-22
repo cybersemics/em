@@ -90,7 +90,7 @@ const CommandUniverseSortButton = ({ sortOrder: selectedSort, onSortChange }: Co
   const [surface, setSurface] = useState<HTMLElement | null>(null)
   // Design dial: whether the menu opens around the selection or drops down from the button.
   useDialsVersion()
-  const placement: DropdownPlacement = readDial('--sort-dropdown-placement', 'around') === 'down' ? 'down' : 'around'
+  const placement: DropdownPlacement = readDial('--sort-dropdown-placement', 'down') === 'around' ? 'around' : 'down'
 
   useLayoutEffect(() => {
     setAnchor(buttonRef.current)

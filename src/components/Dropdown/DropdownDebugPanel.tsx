@@ -44,7 +44,7 @@ const OPENING_CONTROLS: Control[] = [
       { value: 'around', label: 'around the selection' },
       { value: 'down', label: 'drops down from the button' },
     ],
-    fallback: 'around',
+    fallback: 'down',
     hint: 'Around: the selected item stays on the button. Down: every item opens in the same place.',
   },
 ]
@@ -57,7 +57,7 @@ const MASK_CONTROLS: Control[] = [
     min: 0,
     max: 1,
     step: 0.01,
-    fallback: '0.55',
+    fallback: '0',
     hint: 'A dark fill over the whole screen. 0 = none, 1 = black.',
   },
   {
@@ -67,7 +67,7 @@ const MASK_CONTROLS: Control[] = [
     min: 0,
     max: 1,
     step: 0.01,
-    fallback: '0.2',
+    fallback: '1',
     hint: 'How visible the commands behind the menu stay. 1 = untouched.',
   },
   {
@@ -78,7 +78,7 @@ const MASK_CONTROLS: Control[] = [
     max: 1200,
     step: 5,
     unit: 'px',
-    fallback: '360px | 575px across the surface',
+    fallback: '1200px | 575px across the surface',
     hint: 'How far the content fades out around the menu.',
   },
   {
@@ -88,12 +88,22 @@ const MASK_CONTROLS: Control[] = [
     min: 0,
     max: 1,
     step: 0.01,
-    fallback: '0.06',
+    fallback: '1',
     hint: '0 clears the space under the menu completely; 1 leaves the content there.',
   },
 ]
 
 const SURFACE_LIGHT_CONTROLS: Control[] = [
+  {
+    name: '--sort-dropdown-glass',
+    label: 'glass',
+    kind: 'number',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    fallback: '1',
+    hint: 'The glass sheet’s fill, highlights and edge while the menu is open. 0 = the dialog loses its outline.',
+  },
   {
     name: '--sort-dropdown-room-light',
     label: 'Command Universe light',
@@ -134,7 +144,7 @@ const GLOW_CONTROLS: Control[] = [
     min: 0.3,
     max: 3,
     step: 0.05,
-    fallback: '1',
+    fallback: '1.9',
     hint: 'Scales the whole glow about its centre. Below 1 = tight, above 1 = diffuse.',
   },
   {
@@ -144,7 +154,7 @@ const GLOW_CONTROLS: Control[] = [
     min: 0,
     max: 2,
     step: 0.05,
-    fallback: '1',
+    fallback: '1.2',
   },
 ]
 
@@ -157,7 +167,7 @@ const ROWS_CONTROLS: Control[] = [
     max: 28,
     step: 0.25,
     unit: 'px',
-    fallback: '17.75px',
+    fallback: '17px',
   },
   {
     name: '--sort-dropdown-heading-font-size',
@@ -167,7 +177,7 @@ const ROWS_CONTROLS: Control[] = [
     max: 28,
     step: 0.25,
     unit: 'px',
-    fallback: '18px',
+    fallback: '17.5px',
   },
   {
     name: '--sort-dropdown-row-padding',
@@ -198,7 +208,7 @@ const ROWS_CONTROLS: Control[] = [
     max: 40,
     step: 0.5,
     unit: 'px',
-    fallback: '6px',
+    fallback: '8px',
     hint: 'Between the sort options and the actions, above and below the line.',
   },
   {
@@ -209,7 +219,7 @@ const ROWS_CONTROLS: Control[] = [
     max: 40,
     step: 0.5,
     unit: 'px',
-    fallback: '12px',
+    fallback: '10px',
   },
 ]
 
