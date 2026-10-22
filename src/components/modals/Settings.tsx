@@ -10,6 +10,7 @@ import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../..
 import copy from '../../device/copy'
 import getUserSetting from '../../selectors/getUserSetting'
 import abandonImportStore from '../../stores/abandonImportStore'
+import showTouchesStore from '../../stores/showTouchesStore'
 import storageStatusStore from '../../stores/storageStatusStore'
 import { clearAiDisclosureAcknowledgement, hasAcknowledgedAiDisclosure } from '../../util/aiDisclosure'
 import debugLog from '../../util/debugLog'
@@ -229,6 +230,18 @@ const AiAcknowledgement = () => {
   )
 }
 
+/** The Show Touches setting. Device-local rather than an /EM/Settings thought, so that turning it on to record one device does not start drawing on the account's other devices. */
+const ShowTouchesSetting = () => {
+  const showTouches = showTouchesStore.useState()
+  return (
+    <Checkbox checked={showTouches} title='Show Touches' onChange={() => showTouchesStore.update(!showTouches)}>
+      Draws a dot where a finger first touches the screen and as it moves, and a ring where it lifts, so that a screen
+      recording or screenshot shows exactly where each touch landed. Only the first finger of a touch is drawn. Applies
+      to this device only. Useful when reporting a touch or gesture issue.
+    </Checkbox>
+  )
+}
+
 /** Reports whether this browser can persist thoughts. Private browsing modes vary: Safari disallows the Origin Private File System outright, so the thoughtspace silently falls back to in-memory storage, while Chrome incognito allows it and discards it when the session ends. The report names which case applies on a device whose console is not reachable. */
 const StorageDiagnostics = () => {
   const clientStorage = storageStatusStore.useState()
@@ -342,6 +355,8 @@ const ModalSettings = () => {
         </Setting>
 
         <AiAcknowledgement />
+
+        <ShowTouchesSetting />
 
         <DebugLogging />
 

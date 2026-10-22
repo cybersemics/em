@@ -36,6 +36,7 @@ import MultiGesture from './MultiGesture'
 import NativeTextDragCaret from './NativeTextDragCaret'
 import NavBar from './NavBar'
 import SelectionStems from './SelectionStems'
+import ShowTouches from './ShowTouches'
 import Sidebar from './Sidebar/Sidebar'
 import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
@@ -263,6 +264,8 @@ const AppComponent: FC = () => {
 
       {/* Outside the modal condition so the genie keeps flying over dialogs and modals once it is out. */}
       <HelpGenie />
+      {/* Outside the modal condition so touches are drawn over dialogs and modals too. */}
+      <ShowTouches />
     </div>
   )
 }
