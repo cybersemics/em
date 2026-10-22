@@ -95,7 +95,7 @@ Not every attribute is propagable. Currently the `=children`/`=grandchildren` in
 
 ### Linking & cross-references
 
-- **`=bindContext`** — binds the current context to another so edits propagate between them. Created via the `bindContext` command, which is currently disabled and unregistered. It stored the destination under a paired internal key `=bindContextCommand`.
+- **`=bindContext`** — binds the current context to another so edits propagate between them. Created via the `bindContext` command, which is currently disabled. It stores the destination under a paired internal key `=bindContextCommand`.
 - **`=label`** — display alternative text for the thought (the *label*) while continuing to use the thought's real value for any context lookups. The real value remains hidden unless the user is editing. Consumed by [`Editable`](../src/components/Editable.tsx) and [`ThoughtAnnotation`](../src/components/ThoughtAnnotation.tsx).
 - **`=note`** — render a small note in lighter type underneath the thought. The first child of a literal `=note` is the note's text. See [`Note`](../src/components/Note.tsx).
 - **`=path`** — used under a `=note` to redirect the note's content to another thought, instead of rendering the literal child of `=note`. Its target name matches a child of the annotated thought by visible text, ignoring case and formatting while preserving punctuation, accents, whitespace, and singular/plural distinctions. If several children match, the first in the context's configured sort order is used. The target's visible children are rendered in their configured sort order, separated by commas, and editing the note updates the corresponding children. See [`resolveNotePath`](../src/selectors/resolveNotePath.ts).

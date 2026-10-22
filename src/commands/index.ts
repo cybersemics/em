@@ -2,8 +2,7 @@
 
 export { default as applyColor } from './applyColor'
 export { default as archive } from './archive'
-// Bind Context is disabled because it does not work. Its file and tests are kept so it can be restored.
-// export { default as bindContext } from './bindContext'
+export { default as bindContext } from './bindContext'
 export { default as bold } from './bold'
 export { default as bumpThoughtDown } from './bumpThoughtDown'
 export { default as cancel } from './cancel'

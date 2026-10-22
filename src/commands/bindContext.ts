@@ -17,8 +17,9 @@ const bindContextCommand = {
   // Selected contexts of the same context view overwrite each other, since =bindContextCommand holds a single
   // context, so the last one in document order wins — exactly as if the command were invoked on each in turn.
   multicursor: true,
-  keyboard: { key: 'b', shift: true, alt: true },
+  // Disabled because it does not work: no gesture or keyboard shortcut, and hidden everywhere a command can be invoked by name.
   hideFromHelp: true,
+  hideFromGestureMenu: true,
   canExecute: state => isDocumentEditable() && !!state.cursor,
   exec: (dispatch, getState) => {
     const state = getState()
