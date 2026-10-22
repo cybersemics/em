@@ -97,22 +97,20 @@ const testSuite = () => {
     await press('Escape')
 
     // scroll to top
-    await scrollTo(0, 0)
+    await scrollTo(0)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
 }
 
-describe('Font Size: 18 (default)', () => {
-  // run the snapshot tests at font size 18 (default)
+describe('Font Size: 16 (default)', () => {
+  // run the snapshot tests at font size 16 (default)
   testSuite()
 })
 
 describe('Font Size: 13', () => {
   beforeEach(async () => {
-    await click('[data-testid=decrease-font]') // 17
-    await click('[data-testid=decrease-font]') // 16
     await click('[data-testid=decrease-font]') // 15
     await click('[data-testid=decrease-font]') // 14
     await click('[data-testid=decrease-font]') // 13
@@ -130,6 +128,8 @@ describe('Font Size: 13', () => {
 
 describe('Font Size: 22', () => {
   beforeEach(async () => {
+    await click('[data-testid=increase-font]') // 17
+    await click('[data-testid=increase-font]') // 18
     await click('[data-testid=increase-font]') // 19
     await click('[data-testid=increase-font]') // 20
     await click('[data-testid=increase-font]') // 21

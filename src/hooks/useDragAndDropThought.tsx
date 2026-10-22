@@ -24,7 +24,6 @@ import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType, LongPressState } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
@@ -39,7 +38,9 @@ import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
+import multitouchStore from '../stores/multitouchStore'
 import selectionRangeStore from '../stores/selectionRangeStore'
+import touchStore from '../stores/touchStore'
 import appendToPath from '../util/appendToPath'
 import debugLog from '../util/debugLog'
 import equalPath from '../util/equalPath'
@@ -65,7 +66,24 @@ const canDrag = (props: ThoughtContainerProps) => {
   const hasSelectionRange = selectionRangeStore.getState()
   if (isTouch && hasSelectionRange) return false
 
+  // Reject multi-touch input so that two-finger tracing is not interpreted as a drag-and-drop.
+  // react-dnd's TouchBackend initiates a drag from the primary touch and has no multi-touch rejection
+  // of its own, so a two-finger trace over a thought would otherwise begin a drag. The multitouch store
+  // latches while more than one finger is down and stays set until every finger lifts, so a finger lifting
+  // mid-gesture cannot re-open the drag. See #4233.
+  if (isTouch && multitouchStore.getState()) return false
+
   const state = store.getState()
+
+  // A press that landed on the caret belongs to native caret repositioning, so it must not become a drag when it moves
+  // past the touch slop (#3763). This reads the flag latched by the capture-phase touchstart listener in initEvents
+  // rather than state.longPress, because react-dnd's timer can begin a drag before DragHold is dispatched (see the
+  // longPress reducer).
+  if (touchStore.getState().pressOnCaret) return false
+
+  // On iOS 27 a withheld tap on an empty thought gives no sign that it lifted (#5660).
+  if (touchStore.getState().pressInEmptyThought) return false
+
   const thoughtId = head(props.simplePath)
   const pathParentId = head(parentOf(props.simplePath))
   const isDraggable = props.isVisible || props.isCursorParent
@@ -120,12 +138,12 @@ const canDropPath = moize((from: Path, to: Path) => !isDescendantPath(to, from, 
   profileName: 'canDropPath',
 })
 
-/** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
-const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
+/** Returns the reason the ThoughtContainer cannot be dropped at the given DropTarget, or null if it can. The reason is recorded in the debug log when the drop target is hovered. */
+const dropRejection = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
-  if (state.longPress !== LongPressState.DragInProgress) return false
+  if (state.longPress !== LongPressState.DragInProgress) return 'dragInactive'
 
   const item = monitor.getItem() as DragThoughtOrFiles
   const draggedItems = isDraggedFile(item) ? [] : item
@@ -135,7 +153,9 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   // Disallow dropping on context view.
   // This condition must be matched in isChildHovering to correctly highlight the hovering parent.
-  return !showContexts && draggedItems.every(thoughtItem => canDropPath(thoughtItem.path, thoughtsTo))
+  if (showContexts) return 'contextView'
+  if (!draggedItems.every(thoughtItem => canDropPath(thoughtItem.path, thoughtsTo))) return 'descendant'
+  return null
 }
 
 /** Handles dropping a thought on a DropTarget. */
@@ -216,13 +236,13 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   // Attribute the upcoming moveThought/createThought actions to a drag-and-drop drop, since drops have no `command`
   // entry in the debug log (commands.ts only logs keyboard/gesture/toolbar commands).
-  debugLog.log('drop', {
+  debugLog.log('drop', () => ({
     zone: 'thought',
     targetId: head(props.simplePath),
     targetValue: pathToThought(state, props.simplePath)?.value,
     items: draggedItems.length,
     showContexts: !!props.showContexts,
-  })
+  }))
 
   store.dispatch((dispatch, getState) => {
     // set multicursor executing to true if there are multiple thoughts being dragged
@@ -304,7 +324,10 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 }
 
 /** Handles drag end. Resets longPress to Inactive so that gestures, alerts, and the multicursor are restored once the drag concludes, and re-enables native scrolling. This react-dnd callback is guaranteed to fire whenever a drag ends (dropped or not), which is more reliable than the touchend-based reset in useDragHold that may not fire (e.g. multicursor drop onto a subthought). Scrolling is re-enabled here because useLongPress disables it via allowTouchToScroll(false) on long-press start and only restores it on touchend, which does not fire once a drag has begun (see useLongPress.stop). */
-const endDrag = () => {
+const endDrag = (monitor: DragSourceMonitor) => {
+  // Distinguishes a release over a drop target that accepted the drop from one that rejected it or was over no drop target at all.
+  debugLog.log('dragEnd', () => ({ didDrop: monitor.didDrop() }))
+
   // Re-enable native scrolling. allowTouchToScroll(false) attaches an unconditional preventDefault touchmove listener on
   // long-press start that blocks all scrolling; it is only removed on touchend, which does not fire after a drag (e.g. a
   // multiselect drop onto a subthought), leaving scrolling frozen until it is explicitly re-enabled here.
@@ -312,7 +335,7 @@ const endDrag = () => {
 
   // A browser may dispatch the release's compatibility click or focus after drag cleanup. Keep only cursor events
   // suppressed until the next real touchstart; do not hold longPress open and block unrelated gesture state.
-  if (isTouch) globals.suppressCursorAfterTouch = true
+  if (isTouch) touchStore.update({ suppressCursorAfterTouch: true })
 
   store.dispatch([
     longPress({ value: LongPressState.Inactive }),
@@ -345,7 +368,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     type: DragAndDropType.Thought,
     item: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
-    end: () => endDrag(),
+    end: (item, monitor) => endDrag(monitor),
     collect: dragCollect,
   })
 
@@ -353,13 +376,13 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     type: DragAndDropType.Thought,
     item: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
-    end: () => endDrag(),
+    end: (item, monitor) => endDrag(monitor),
     collect: dragCollect,
   })
 
   const [{ isHovering, isDeepHovering, canDropThought }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
-    canDrop: (item, monitor) => canDrop(propsTypes, monitor),
+    canDrop: (item, monitor) => !dropRejection(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
     collect: dropCollect,
     hover: (_, monitor) =>
@@ -376,6 +399,18 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
             (state.hoveringPath === props.path && state.hoverZone === props.hoverZone)
           )
             return
+
+          // Records whether the newly hovered drop target accepts the drop, since a rejected target is hovered without showing a drop hover.
+          debugLog.log('dropTarget', () => {
+            const offset = monitor.getClientOffset()
+            const reason = dropRejection(propsTypes, monitor)
+            return {
+              zone: props.hoverZone,
+              targetId: props.path && head(props.path),
+              ...(offset ? { x: Math.round(offset.x), y: Math.round(offset.y) } : null),
+              ...(reason ? { canDrop: false, reason } : { canDrop: true }),
+            }
+          })
 
           dispatch(
             longPress({

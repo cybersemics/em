@@ -152,20 +152,50 @@ const removeEmptyFormatting = (container: HTMLElement) => {
   }
 }
 
-/** Inserts a node at the (collapsed) range, lifting out of any empty formatting ancestors that extractContents left
- * behind. Without this, re-coloring content that already fills a single wrapper (e.g. the second dispatch of a
- * foreColor + backColor pair) would nest the new <font> inside the emptied one instead of replacing it. */
-const insertAtRange = (container: HTMLElement, range: Range, node: Node) => {
-  // Climb from the insertion point to the outermost formatting ancestor that extractContents left empty, and replace
-  // it with the node. (The collapsed range often sits on an empty text node inside the emptied wrapper.)
-  let emptyAncestor: HTMLElement | null = null
-  for (let n: Node | null = range.startContainer; n && n !== container; n = n.parentNode) {
-    if (isFormattingElement(n) && (n.textContent ?? '') === '') emptyAncestor = n
+/** Returns the nearest ancestor element within container that carries a text color or background color and contains the
+ * node, or null if the node is not inside one. A color is carried by a <font color> or an inline color/background-color
+ * style, as in getCommandState's extractColors. */
+const enclosingColorElement = (node: Node, container: Node): HTMLElement | null => {
+  for (let n: Node | null = node; n && n !== container; n = n.parentNode) {
+    if (
+      n.nodeType === Node.ELEMENT_NODE &&
+      ((n as HTMLElement).getAttribute('color') ||
+        (n as HTMLElement).style.color ||
+        (n as HTMLElement).style.backgroundColor)
+    ) {
+      return n as HTMLElement
+    }
   }
-  if (emptyAncestor) {
-    emptyAncestor.replaceWith(node)
-  } else {
-    range.insertNode(node)
+  return null
+}
+
+/** Moves whatever of el follows the collapsed range into a copy of el placed directly after it, so that the range
+ * becomes a boundary between two siblings rather than a point inside one. */
+const splitAtRange = (el: HTMLElement, range: Range) => {
+  const tail = document.createRange()
+  tail.setStart(range.startContainer, range.startOffset)
+  tail.setEnd(el, el.childNodes.length)
+  const contents = tail.extractContents()
+  if ((contents.textContent ?? '') === '') return
+  const clone = el.cloneNode(false) as HTMLElement
+  clone.appendChild(contents)
+  el.after(clone)
+}
+
+/** Expands the range outward over every formatting element whose entire text it already covers, so that the element
+ * travels with the extracted content instead of being left behind empty. Without this, coloring text that fills a
+ * formatting element strips that formatting whenever the range sits wholly within one text node — which is what happens
+ * when the formatted text starts at the beginning of the thought (#5507). Expanding also puts the color outside the
+ * element rather than inside it, which <u> and <strike> require in order to draw their line in it (#4018). */
+const expandOverCoveredFormatting = (container: HTMLElement, range: Range) => {
+  const { commonAncestorContainer } = range
+  let el: Node | null =
+    commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+      ? commonAncestorContainer
+      : commonAncestorContainer.parentNode
+  while (el && el !== container && isFormattingElement(el) && range.toString() === (el.textContent ?? '')) {
+    range.selectNode(el)
+    el = el.parentNode
   }
 }
 
@@ -181,6 +211,8 @@ const applyColor = (
   defaultColor: string | undefined,
   defaultBackgroundColor: string | undefined,
 ) => {
+  expandOverCoveredFormatting(container, range)
+
   // extract the range into a temp container so existing color/background wrappers can be stripped
   const temp = document.createElement('div')
   temp.appendChild(range.extractContents())
@@ -202,7 +234,16 @@ const applyColor = (
     insertNode = font
   }
 
-  insertAtRange(container, range, insertNode)
+  // A color command redetermines the color of its entire range, so the node must not come to rest inside an element
+  // still carrying the old one. Split that element at the insertion point and insert between the two halves (#5505).
+  const colorElement = enclosingColorElement(range.startContainer, container)
+  if (colorElement) {
+    splitAtRange(colorElement, range)
+    colorElement.after(insertNode)
+  } else {
+    range.insertNode(insertNode)
+  }
+
   // remove any now-empty formatting element left behind where the range was extracted
   removeEmptyFormatting(container)
 }

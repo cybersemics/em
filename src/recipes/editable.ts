@@ -20,6 +20,12 @@ const editableRecipe = defineRecipe({
     // Re-enable text selection that was disabled on the LayoutTree.
     // https://github.com/cybersemics/em/pull/2962
     userSelect: 'text',
+    // Chrome Android's swipe-to-move-cursor activates on a horizontal scroll gesture that begins on an editable, and
+    // then drags the caret of whichever thought is focused — even a different one — raising the magnifier. em never
+    // pans horizontally (the thoughtspace is overflow: hidden), so disallowing horizontal panning here costs nothing
+    // and stops the browser from generating that gesture. Gestures are unaffected, as they are driven by raw touch
+    // events rather than browser-recognized pans.
+    touchAction: 'pan-y',
   },
 })
 

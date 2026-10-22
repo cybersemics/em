@@ -1,5 +1,5 @@
 import { keyDown, keyUp } from '../../commands'
-import globals from '../../globals'
+import heldKeysStore from '../../stores/heldKeysStore'
 
 /** Builds a minimal synthetic KeyboardEvent with a spyable preventDefault. */
 const makeEvent = (key: string, repeat: boolean): KeyboardEvent => {
@@ -7,13 +7,9 @@ const makeEvent = (key: string, repeat: boolean): KeyboardEvent => {
   return { key, repeat, altKey: false, metaKey: false, ctrlKey: false, preventDefault } as unknown as KeyboardEvent
 }
 
-beforeEach(() => {
-  globals.arrowKeyBoundaryCross = null
-})
-
 describe('table column boundary hold suppression', () => {
   it('hard-stops auto-repeat of the arrow key that just crossed a column boundary', () => {
-    globals.arrowKeyBoundaryCross = 'ArrowRight'
+    heldKeysStore.update({ arrowKeyBoundaryCross: 'ArrowRight' })
 
     const event = makeEvent('ArrowRight', true)
     keyDown(event)
@@ -22,7 +18,7 @@ describe('table column boundary hold suppression', () => {
   })
 
   it('does not suppress a discrete (non-repeat) press of the crossing key', () => {
-    globals.arrowKeyBoundaryCross = 'ArrowRight'
+    heldKeysStore.update({ arrowKeyBoundaryCross: 'ArrowRight' })
 
     const event = makeEvent('ArrowRight', false)
     keyDown(event)
@@ -32,7 +28,7 @@ describe('table column boundary hold suppression', () => {
   })
 
   it('does not suppress auto-repeat of a different key', () => {
-    globals.arrowKeyBoundaryCross = 'ArrowRight'
+    heldKeysStore.update({ arrowKeyBoundaryCross: 'ArrowRight' })
 
     const event = makeEvent('ArrowDown', true)
     keyDown(event)
@@ -41,18 +37,18 @@ describe('table column boundary hold suppression', () => {
   })
 
   it('clears the flag when the crossing key is released', () => {
-    globals.arrowKeyBoundaryCross = 'ArrowRight'
+    heldKeysStore.update({ arrowKeyBoundaryCross: 'ArrowRight' })
 
     keyUp(makeEvent('ArrowRight', false))
 
-    expect(globals.arrowKeyBoundaryCross).toBeNull()
+    expect(heldKeysStore.getState().arrowKeyBoundaryCross).toBeNull()
   })
 
   it('keeps the flag when a different key is released', () => {
-    globals.arrowKeyBoundaryCross = 'ArrowRight'
+    heldKeysStore.update({ arrowKeyBoundaryCross: 'ArrowRight' })
 
     keyUp(makeEvent('ArrowLeft', false))
 
-    expect(globals.arrowKeyBoundaryCross).toBe('ArrowRight')
+    expect(heldKeysStore.getState().arrowKeyBoundaryCross).toBe('ArrowRight')
   })
 })

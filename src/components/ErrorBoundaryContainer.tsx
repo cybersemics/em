@@ -3,6 +3,7 @@ import { ErrorBoundary, FallbackProps, getErrorMessage } from 'react-error-bound
 import { css, cx } from '../../styled-system/css'
 import { anchorButtonRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
+import debugLog from '../util/debugLog'
 import fastClick from '../util/fastClick'
 
 /** A triangular toggle component. */
@@ -60,7 +61,14 @@ const ErrorFallback: FC<FallbackProps> = ({ error }) => (
 
 /** A higher-order component that catches errors of all descendant components. When an error is caught, a fallback component will be rendered. */
 const ErrorBoundaryContainer: FC<PropsWithChildren> = ({ children }) => (
-  <ErrorBoundary FallbackComponent={ErrorFallback}>{children}</ErrorBoundary>
+  <ErrorBoundary
+    FallbackComponent={ErrorFallback}
+    // A render error replaces the app with the fallback and never reaches the window error handler, so it is
+    // recorded here, with the component stack that locates it in the tree.
+    onError={(error, info) => debugLog.logError('render', error, { componentStack: info.componentStack })}
+  >
+    {children}
+  </ErrorBoundary>
 )
 
 export default ErrorBoundaryContainer

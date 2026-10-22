@@ -1,6 +1,6 @@
 import type { Element } from 'webdriverio'
-
-// import getNativeElementRect from './getNativeElementRect'
+import getScreenOffsetY from './getScreenOffsetY.js'
+import getTextOffsetCoordinates from './getTextOffsetCoordinates.js'
 
 interface Options {
   // Where in the horizontal line (inside) of the target node should be tapped. Defaults to center, which
@@ -14,10 +14,13 @@ interface Options {
   offset?: number
   // Number of pixels of x offset to add to the tap coordinates
   x?: number
-  // Number of pixels of y offset to add to the tap coordinates
+  // Number of pixels of y offset to add to the tap coordinates, on top of the page-to-screen conversion applied
+  // automatically. Use it to aim somewhere other than the element, e.g. the empty space below it.
   y?: number
   // Milliseconds to delay the release of the tap.
   releaseDelayMs?: number
+  // Number of taps, e.g. 2 for a double tap.
+  count?: number
 }
 
 /**
@@ -26,7 +29,15 @@ interface Options {
  */
 const tap = async (
   nodeHandle: Element,
-  { horizontalTapLine = 'center', offset, x = 0, y = 0, pointerType = 'mouse', releaseDelayMs = 100 }: Options = {},
+  {
+    horizontalTapLine = 'center',
+    offset,
+    x = 0,
+    y = 0,
+    pointerType = 'mouse',
+    releaseDelayMs = 100,
+    count = 1,
+  }: Options = {},
 ) => {
   // Ensure element exists and has an elementId
   const exists = await nodeHandle.isExisting()
@@ -45,27 +56,6 @@ const tap = async (
   const boundingBox = await browser.getElementRect(elementId)
   if (!boundingBox) throw new Error('Bounding box of editable not found.')
 
-  /** Get cordinates for specific text node if the given node has text child. */
-  const offsetCoordinates = () =>
-    browser.execute(
-      function (ele, offset) {
-        // Element does not contain native properties like nodeName, textContent, etc
-        // Not sure what the actual WebDriverIO type that is returned by findElement
-        // Node does not contain property elementId; it is only a Node inside browser.execute, so we cannot change the typeo of the nodeHandle argument
-        const textNode = (ele as unknown as Node).firstChild
-        if (!textNode || textNode.nodeName !== '#text') return
-        const range = document.createRange()
-        range.setStart(textNode, offset ?? 0)
-        const { right, top, height } = range.getBoundingClientRect()
-        return {
-          x: right,
-          y: top + height / 2,
-        }
-      },
-      nodeHandle,
-      offset,
-    )
-
   const coordinate = !offset
     ? {
         x:
@@ -77,12 +67,9 @@ const tap = async (
               : boundingBox.width / 2),
         y: boundingBox.y + boundingBox.height / 2,
       }
-    : await offsetCoordinates()
+    : await getTextOffsetCoordinates(nodeHandle, offset)
 
   if (!coordinate) throw new Error('Coordinate not found.')
-
-  // const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="topBrowserBar"]')
-  // console.log('topbarrect', topBarRect)
 
   console.info(
     `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} bb-x ${boundingBox.x} bby ${boundingBox.y}`,
@@ -90,7 +77,8 @@ const tap = async (
 
   const finalCoords = {
     x: coordinate.x + x,
-    y: coordinate.y + y,
+    // element rects are viewport-relative while touches are delivered in screen coordinates
+    y: coordinate.y + y + (await getScreenOffsetY()),
   }
 
   console.info(`Tapping at coordinates {x: ${finalCoords.x}, y: ${finalCoords.y}}`)
@@ -112,9 +100,13 @@ const tap = async (
           y: Math.round(finalCoords.y),
           origin: 'viewport',
         },
-        { type: 'pointerDown', button: 0 },
-        { type: 'pause', duration: releaseDelayMs },
-        { type: 'pointerUp', button: 0 },
+        ...Array.from({ length: count }, (_, i) => [
+          // without a pause between them, the taps overlap
+          ...(i > 0 ? [{ type: 'pause', duration: 100 }] : []),
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: releaseDelayMs },
+          { type: 'pointerUp', button: 0 },
+        ]).flat(),
       ],
     },
   ])

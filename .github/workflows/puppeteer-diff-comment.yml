@@ -160,7 +160,8 @@ jobs:
               echo "No branch changes to publish."
               return 0
             fi
-            git commit -q -m "chore(snapshot-diffs): PR #$PR run $RUN_ID"
+            # No '#' before the number: GitHub would list every diff commit in the pull request's timeline.
+            git commit -q -m "chore(snapshot-diffs): pr-$PR run $RUN_ID"
             git push -q origin "HEAD:refs/heads/$BRANCH"
           }
 

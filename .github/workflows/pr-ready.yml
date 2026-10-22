@@ -1,4 +1,5 @@
-# Takes a finished Copilot pull request out of draft once every check on it has passed.
+# Takes a finished Copilot pull request out of draft once every check on it has passed, and merges
+# one that fixes CI on main (see main-fix.yml).
 #
 # Copilot opens its pull requests as a draft and never takes them out of one: when a session ends
 # it requests a review and stops. Nothing else moves it either, so the pull request sits in draft
@@ -19,7 +20,7 @@
 # has ever undrafted its own pull request. An instruction that silently fails is worse than none.
 # Here the permission is declared below and the trigger is a signal this repository owns outright.
 #
-# GITHUB_TOKEN is sufficient; no PAT is involved. `markPullRequestReadyForReview` needs
+# GITHUB_TOKEN is sufficient for the undraft; only the merge step uses a PAT, for the reason it gives. `markPullRequestReadyForReview` needs
 # `contents: write` alongside `pull-requests: write` (cli/cli#6924), both granted below. The usual
 # reason to reach for a PAT does not apply: a GITHUB_TOKEN mutation raises no further workflow runs,
 # and nothing in this repository triggers on `ready_for_review`.
@@ -31,7 +32,18 @@ name: PR Ready
 
 on:
   workflow_run:
-    workflows: ['Lint', 'Test', 'Puppeteer', 'BrowserStack', 'Vercel Preview', 'TDD', 'Agent Scripts']
+    workflows:
+      [
+        'Lint',
+        'Test',
+        'Puppeteer',
+        'BrowserStack',
+        'BrowserStack Android',
+        'Vercel Preview',
+        'TDD',
+        'Agent Scripts',
+        'Tauri Check',
+      ]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -55,12 +67,17 @@ jobs:
   ready:
     name: Mark ready for review
     runs-on: ubuntu-latest
-    # Cheap gate so the six other completions on a normal pull request cost nothing. Author,
+    # Cheap gate so the seven other completions on a normal pull request cost nothing. Author,
     # draft status, session state, and the checks themselves are verified in the step below.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (startsWith(github.event.workflow_run.head_branch, 'copilot/') &&
       github.event.workflow_run.head_repository.full_name == github.repository)
+
+    env:
+      # A step's `if` cannot read secrets, so the merge step is gated on this instead. Without the
+      # secret nothing merges; main-fix.yml reports the omission.
+      HAS_MAIN_FIX_TOKEN: ${{ secrets.MAIN_FIX_TOKEN != '' }}
 
     steps:
       # `workflow_run` resolves `github.ref` to the default branch, so this checks out the base
@@ -71,6 +88,7 @@ jobs:
           persist-credentials: false
 
       - name: Mark ready for review
+        id: ready
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           # Empty on workflow_dispatch, where PR_NUMBER identifies the pull request instead.
@@ -79,3 +97,19 @@ jobs:
         with:
           script: |
             await require('./scripts/ci/mark-copilot-pr-ready.cjs')({ github, context, core })
+
+      # Merges a pull request fixing CI on main (see main-fix.yml) on the same finished-and-green
+      # verdict. The script re-checks everything else itself: that the pull request says it fixes an
+      # open `main-fix` issue, and that every check and status passed rather than merely finished.
+      # Uses a PAT, not GITHUB_TOKEN: a merge pushed with GITHUB_TOKEN would start no CI on main.
+      - name: Merge main fix
+        if: steps.ready.outputs.ready == 'true' && env.HAS_MAIN_FIX_TOKEN == 'true'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          PR_NUMBER: ${{ steps.ready.outputs.pr }}
+          HEAD_SHA: ${{ steps.ready.outputs.sha }}
+          UNDRAFTED: ${{ steps.ready.outputs.undrafted }}
+        with:
+          github-token: ${{ secrets.MAIN_FIX_TOKEN }}
+          script: |
+            await require('./scripts/ci/merge-main-fix.cjs')({ github, context, core })

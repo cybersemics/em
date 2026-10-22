@@ -61,9 +61,30 @@ const click = async (
       offset || 0,
     )
 
+  /** Returns the x just inside the editable's left edge, stepping past the thought's bullet, which is absolutely
+   * positioned and overlaps the editable by 18 - fontSize px at font sizes below 18. */
+  const leftEdgeX = async (): Promise<number> => {
+    const result = await page.evaluate(
+      (node: HTMLElement, y: number) => {
+        const bullet = node.closest('[aria-label="thought-container"]')?.querySelector('[aria-label="bullet"]')
+        const x = Math.max(node.getBoundingClientRect().left, bullet?.getBoundingClientRect().right ?? -Infinity) + 1
+        const hit = document.elementFromPoint(x, y)
+        return { x, hit: node.contains(hit) ? null : (hit?.getAttribute('aria-label') ?? hit?.tagName ?? 'nothing') }
+      },
+      nodeHandle as unknown as HTMLElement,
+      boundingBox.y + boundingBox.height / 2,
+    )
+    if (result.hit) {
+      throw new Error(
+        `The left edge of the element is covered by ${result.hit} at x ${result.x}, so the click would miss it.`,
+      )
+    }
+    return result.x
+  }
+
   const coordinate = !offset
     ? {
-        x: boundingBox.x + (edge === 'left' ? 1 : boundingBox.width - 1),
+        x: edge === 'left' ? await leftEdgeX() : boundingBox.x + boundingBox.width - 1,
         y: boundingBox.y + boundingBox.height / 2,
       }
     : await offsetCoordinates()

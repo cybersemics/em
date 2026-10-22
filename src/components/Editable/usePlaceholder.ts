@@ -2,7 +2,7 @@ import { unescape as unescapeHtml } from 'html-escaper'
 import { useSelector } from 'react-redux'
 import Path from '../../@types/Path'
 import SimplePath from '../../@types/SimplePath'
-import { Settings } from '../../constants'
+import { EMPTY_THOUGHT_PLACEHOLDER, Settings } from '../../constants'
 import attributeEquals from '../../selectors/attributeEquals'
 import getThoughtById from '../../selectors/getThoughtById'
 import getUserSetting from '../../selectors/getUserSetting'
@@ -14,7 +14,7 @@ import strip from '../../util/strip'
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
-/** Generates the placeholder text for the thought. Automatically changes from 'Add a thought' to 'This is an empty thought' after a short delay. Handles the special case where the cursor is in a clear state due to the clearThought command. */
+/** Generates the placeholder text for the thought. Automatically changes from 'Add a thought' to 'This is an empty thought' after a short delay. Handles the special case where the cursor is in a clear state due to the clearThought command. Empty thoughts show a command-specific placeholder while an AI request is in flight. */
 const usePlaceholder = ({ isEditing, path, simplePath }: { isEditing: boolean; path: Path; simplePath: SimplePath }) =>
   useSelector(state => {
     // A thought is displayed as cleared when clearThought is active and it is either the cursor thought (single clear)
@@ -24,6 +24,8 @@ const usePlaceholder = ({ isEditing, path, simplePath }: { isEditing: boolean; p
     if (!thought) return ''
 
     const { value } = thought
+    // Display-only: the stored value stays empty while an AI request is in flight.
+    if (thought.generating && !value) return thought.generatingPlaceholder || 'Generating Thought'
     if (!isCursorCleared && value) return value
 
     // strip formatting tags for clearThought placeholder
@@ -39,7 +41,7 @@ const usePlaceholder = ({ isEditing, path, simplePath }: { isEditing: boolean; p
         ? ''
         : // only check the time if value is non-empty, otherwise the result will change for non-empty thoughts and cause the ContentEditable to re-render even when the placeholder is not displayed.
           Date.now() - thought.lastUpdated > EMPTY_THOUGHT_TIMEOUT
-          ? 'This is an empty thought'
+          ? EMPTY_THOUGHT_PLACEHOLDER
           : 'Add a thought'
 
     return emptyValue

@@ -14,15 +14,7 @@ const addAllMulticursor = (state: State): State => {
 }
 
 /** Action-creator for addAllMulticursor. */
-export const addAllMulticursorActionCreator =
-  ({
-    mergeNext,
-  }: {
-    /** Forces the next command to be merged into this during chained gestures. Note that mergeNext is not referenced by the reducer at all; it is read directly from the action object by undoRedoEnhancer. */
-    mergeNext?: boolean
-  }): Thunk =>
-  dispatch =>
-    dispatch({ type: 'addAllMulticursor', mergeNext })
+export const addAllMulticursorActionCreator = (): Thunk => dispatch => dispatch({ type: 'addAllMulticursor' })
 
 export default _.curryRight(addAllMulticursor)
 

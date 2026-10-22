@@ -36,7 +36,7 @@ const ModalTestGestureDiagram = () => {
       {/* Custom Cancel gesture */}
       <GestureDiagram
         path={null}
-        cssRaw={css.raw({
+        className={css({
           marginBottom: '12px !important',
           marginLeft: '2px !important',
         })}
@@ -77,7 +77,7 @@ const ModalTestGestureDiagram = () => {
       <div className={css({ display: 'inline-block', width: '48px', verticalAlign: 'middle' })}>
         <GestureDiagram
           path='rdrd'
-          cssRaw={css.raw({ display: 'block' })}
+          display='block'
           size={48}
           arrowSize={4}
           strokeWidth={4}

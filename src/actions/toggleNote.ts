@@ -1,7 +1,7 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import setNoteFocus from '../actions/setNoteFocus'
-import { anyChild } from '../selectors/getChildren'
+import { anyChild, getAllChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import resolveNoteKey from '../selectors/resolveNoteKey'
 import resolveNotePath from '../selectors/resolveNotePath'
@@ -28,15 +28,21 @@ export const toggleNoteActionCreator = (): Thunk => (dispatch, getState) => {
 
   const targetPath = resolveNotePath(state, path)
   const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
-  const { noteKey } = resolveNoteKey(state, head(path))
-  const offset = anyChild(state, targetThought?.id)?.value.length ?? 0
+  const { noteKey, notePathId } = resolveNoteKey(state, head(path))
+  const children = targetThought ? getAllChildren(state, targetThought.id) : []
+  // Only a childless target or a single empty leaf can be removed when leaving the note.
+  const isEmpty =
+    children.length <= 1 &&
+    children.every(id => getThoughtById(state, id)?.value === '' && getAllChildren(state, id).length === 0)
 
   dispatch([
-    offset
+    !isEmpty
       ? null
       : state.noteFocus && targetThought
         ? deleteThought({ pathParent: path, thoughtId: targetThought.id })
-        : setDescendant({ path, values: [noteKey, ''] }),
+        : setDescendant(
+            notePathId && targetPath ? { path: targetPath, values: [''] } : { path, values: [noteKey, ''] },
+          ),
     { type: 'toggleNote' },
   ])
 }

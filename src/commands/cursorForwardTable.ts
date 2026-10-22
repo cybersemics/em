@@ -2,11 +2,11 @@ import Command from '../@types/Command'
 import { cursorForwardActionCreator as cursorForward } from '../actions/cursorForward'
 import CursorForwardIcon from '../components/icons/CursorForwardIcon'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import attributeEquals from '../selectors/attributeEquals'
 import { firstVisibleChild } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import heldKeysStore from '../stores/heldKeysStore'
 import head from '../util/head'
 import headValue from '../util/headValue'
 
@@ -43,7 +43,7 @@ const cursorForwardTableCommand = {
     dispatch(cursorForward())
 
     // suppress auto-repeat of this key until it is released so that holding it does not race the caret through the child thought
-    if (type === 'keyboard') globals.arrowKeyBoundaryCross = event.key
+    if (type === 'keyboard') heldKeysStore.update({ arrowKeyBoundaryCross: event.key })
   },
 } satisfies Command
 

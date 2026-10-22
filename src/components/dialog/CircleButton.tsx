@@ -5,19 +5,32 @@ interface CircleButtonProps {
   onClick?: () => void
   ariaLabel: string
   disabled?: boolean
+  /** Makes the button a toggle and reports whether it is on. Leave undefined for an ordinary button. */
+  pressed?: boolean
+  /** Diameter as a CSS length. Defaults to the 36px header size. */
+  size?: string
 }
 
 /**
- * Reusable circular modal-header button. Used four times in the Command Universe header
- * (Back, Forward, Help, Close). The caller supplies the icon as children.
+ * Reusable circular glassy button. Used in the Command Universe header (Back, Forward, Help, Close) and as the
+ * learning genie beside the pinned command overlay. The caller supplies the icon as children.
  */
-const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({ onClick, ariaLabel, disabled, children }) => {
+const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({
+  onClick,
+  ariaLabel,
+  disabled,
+  pressed,
+  size,
+  children,
+}) => {
   return (
     <button
       type='button'
       onClick={onClick}
       aria-label={ariaLabel}
+      aria-pressed={pressed}
       disabled={disabled}
+      style={size ? { width: size, height: size, minWidth: size, minHeight: size } : undefined}
       className={css({
         width: '36px',
         height: '36px',
@@ -26,6 +39,7 @@ const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({ onClick,
         borderRadius: '50%',
         border: 'none',
         // Subtle white sheen from upper-left to lower-right — softens the otherwise flat translucent fill into something glassy.
+        // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
         background:
           'linear-gradient(191.32deg, {colors.dialogHeaderButtonBg} 5.64%, {colors.dialogHeaderButtonBgFade} 83.21%)',
         // Soft lavender outer glow.
@@ -40,6 +54,7 @@ const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({ onClick,
           inset: 0,
           borderRadius: 'inherit',
           padding: '1px',
+          // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
           background:
             'linear-gradient(180deg, {colors.dialogHeaderButtonBorder} 0%, {colors.dialogHeaderButtonBorderFade} 100%)',
           WebkitMask: 'linear-gradient(white 0 0) content-box, linear-gradient(white 0 0)',
@@ -67,6 +82,7 @@ const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({ onClick,
           position: 'absolute',
           inset: 0,
           borderRadius: 'inherit',
+          // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
           background:
             'linear-gradient(191.32deg, {colors.dialogHeaderButtonBgHover} 5.64%, {colors.dialogHeaderButtonBgFade} 83.21%)',
           opacity: 0,

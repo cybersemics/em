@@ -1,24 +1,25 @@
-import { unescape as decodeCharacterEntities, isEqual } from 'lodash'
+import { isEqual } from 'lodash'
 import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
-import { ColorToken, token } from '../../styled-system/tokens'
-import { SystemStyleObject } from '../../styled-system/types'
+import { token } from '../../styled-system/tokens'
+import { ColorToken } from '../../styled-system/types'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
 import { HOME_TOKEN } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
-import editingValueStore from '../stores/editingValue'
+import editingValueStore from '../stores/editingValueStore'
 import ellipsize from '../util/ellipsize'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import stripTags from '../util/stripTags'
+import toVisibleText from '../util/toVisibleText'
+import usePlaceholder from './Editable/usePlaceholder'
 import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
 import Link from './Link'
@@ -61,7 +62,7 @@ const useEllipsizedThoughts = (
 
   // if charLimit is exceeded then replace the remaining characters with an ellipsis
   const charLimitedThoughts: OverflowPath = path.map((id, i) => {
-    const value = thoughtValuesLive[i] ? stripTags(thoughtValuesLive[i]) : null
+    const value = thoughtValuesLive[i] ? toVisibleText(thoughtValuesLive[i]) : null
 
     return {
       // It is possible that the thought is no longer in state, in which case value will be null.
@@ -72,8 +73,7 @@ const useEllipsizedThoughts = (
       // add ellipsized label
       ...(!disabled && value != null
         ? {
-            // subtract 2 so that additional '...' is still within the char limit
-            label: value.length > charLimit! - 2 ? value.slice(0, charLimit! - 2) + '...' : value,
+            label: ellipsize(thoughtValuesLive[i]!, charLimit),
           }
         : {}),
     }
@@ -100,52 +100,60 @@ const BreadCrumb = React.memo(
       label?: string
       onClickEllipsis: () => void
       path: Path
+      placeholder?: string
       showDivider?: boolean
       staticText?: boolean
-      linkCssRaw?: SystemStyleObject
+      linkClassName?: string
     }
-  >(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText, linkCssRaw }, ref) => {
-    const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
-    const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
-    const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
-    const delimiterStyle: React.CSSProperties = {
-      fontSize: '0.8em',
-      lineHeight: '16px',
-      margin: '0 3px',
-      verticalAlign: 1,
-      userSelect: 'none',
-    }
-    return !isOverflow ? (
-      <span ref={ref} className={css({ fontSize: staticText ? '0.8em' : undefined })}>
-        {/* possible delimiter symbols: ⇢ */}
-        {showDivider ? <span style={delimiterStyle}> {showContexts ? '⇢' : '•'} </span> : null}
-        {!isDeleting &&
-          (staticText ? (
-            ellipsize(decodeCharacterEntities(value))
-          ) : label === HOME_TOKEN ? (
-            <HomeLink color={token('colors.gray50')} size={16} className={css({ position: 'static' })} />
-          ) : (
-            <Link
-              cssRaw={css.raw(linkCssRaw)}
-              className={extendTapRecipe({ size: 'small' })}
-              simplePath={simplePath}
-              label={label}
-            />
-          ))}
-        {!isDeleting && (
-          <Superscript simplePath={simplePath} cssRaw={css.raw({ position: 'relative', left: '-2px', top: '-3px' })} />
-        )}
-      </span>
-    ) : (
-      <span ref={ref}>
-        <span style={delimiterStyle}> • </span>
-        <span {...fastClick(onClickEllipsis)} className={css({ cursor: 'pointer' })}>
-          {' '}
-          ...{' '}
+  >(
+    (
+      { isOverflow, label, isDeleting, path, placeholder, showDivider, onClickEllipsis, staticText, linkClassName },
+      ref,
+    ) => {
+      const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
+      const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
+      const thoughtPlaceholder = usePlaceholder({ isEditing: false, path, simplePath })
+      const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
+      const delimiterStyle: React.CSSProperties = {
+        fontSize: '0.8em',
+        lineHeight: '16px',
+        margin: '0 3px',
+        verticalAlign: 1,
+        userSelect: 'none',
+      }
+      return !isOverflow ? (
+        <span ref={ref} className={css({ fontSize: staticText ? '0.8em' : undefined })}>
+          {/* possible delimiter symbols: ⇢ */}
+          {showDivider ? <span style={delimiterStyle}> {showContexts ? '⇢' : '•'} </span> : null}
+          {!isDeleting &&
+            (staticText ? (
+              ellipsize(value)
+            ) : label === HOME_TOKEN ? (
+              <HomeLink color={token('colors.gray50')} size={16} className={css({ position: 'static' })} />
+            ) : (
+              <Link
+                className={cx(extendTapRecipe({ size: 'small' }), linkClassName)}
+                simplePath={simplePath}
+                label={label}
+                // usePlaceholder returns the value of a non-empty thought, so only an empty thought gets the placeholder
+                placeholder={value ? undefined : (placeholder ?? thoughtPlaceholder)}
+              />
+            ))}
+          {!isDeleting && (
+            <Superscript simplePath={simplePath} className={css({ position: 'relative', left: '-2px', top: '-3px' })} />
+          )}
         </span>
-      </span>
-    )
-  }),
+      ) : (
+        <span ref={ref}>
+          <span style={delimiterStyle}> • </span>
+          <span {...fastClick(onClickEllipsis)} className={css({ cursor: 'pointer' })}>
+            {' '}
+            ...{' '}
+          </span>
+        </span>
+      )
+    },
+  ),
 )
 
 BreadCrumb.displayName = 'BreadCrumb'
@@ -156,9 +164,10 @@ const ContextBreadcrumbs = ({
   hideArchive,
   hidden,
   path,
+  placeholder,
   staticText,
   thoughtsLimit,
-  linkCssRaw,
+  linkClassName,
   variant = 'default',
   color,
 }: {
@@ -171,10 +180,12 @@ const ContextBreadcrumbs = ({
    */
   hidden?: boolean
   path: Path
+  /** Text shown in place of an empty ancestor. Defaults to the empty-thought placeholder if omitted. */
+  placeholder?: string
   /** Disables click on breadcrumb fragments. */
   staticText?: boolean
   thoughtsLimit?: number
-  linkCssRaw?: SystemStyleObject
+  linkClassName?: string
   variant?: ContextBreadcrumbsVariant
   color?: ColorToken
 }) => {
@@ -256,15 +267,16 @@ const ContextBreadcrumbs = ({
                   label={label}
                   onClickEllipsis={() => setDisabled(true)}
                   path={ancestors[i]}
+                  placeholder={placeholder}
                   showDivider={i > 0}
                   staticText={staticText}
-                  linkCssRaw={css.raw(
-                    {
+                  linkClassName={cx(
+                    css({
                       color: 'inherit',
                       textDecoration: 'none',
                       '&:active': { color: 'activeBreadCrumb', WebkitTextStrokeWidth: '0.05em' },
-                    },
-                    linkCssRaw,
+                    }),
+                    linkClassName,
                   )}
                 />
               </FadeTransition>

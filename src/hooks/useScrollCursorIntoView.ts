@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import scheduleScrollCursorIntoView from '../device/scheduleScrollCursorIntoView'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
-import editingValueStore from '../stores/editingValue'
+import editingValueStore from '../stores/editingValueStore'
 
 /** Call scrollCursorIntoView when the y position of its container changes, or when the editing value changes. */
 const useScrollCursorIntoView = (y: number, height: number) => {

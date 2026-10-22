@@ -6,6 +6,7 @@ import Timer from '../@types/Timer'
 import { AlertType, EXPAND_HOVER_DELAY, LongPressState } from '../constants'
 import rootedParentOf from '../selectors/rootedParentOf'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
+import ministore from '../stores/ministore'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPath from '../util/equalPath'
 import isDescendantPath from '../util/isDescendantPath'
@@ -17,14 +18,16 @@ const expandHoverUp = (state: State, { path }: { path?: Path | null }): State =>
   expandHoverUpPath: path,
 })
 
-let expandTopTimer: Timer | null = null
+/** The pending delayed dispatch of expandHoverUp. A ministore whose dispose clears the timer, so that resetStores cancels it between tests. The timer is null whenever none is armed. */
+const expandTopTimerStore = ministore<{ timer: Timer | null }>(
+  { timer: null },
+  { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
+)
 
 /** Clears an active delayed dispatch. */
 const clearTimer = () => {
-  if (expandTopTimer) {
-    clearTimeout(expandTopTimer)
-    expandTopTimer = null
-  }
+  clearTimeout(expandTopTimerStore.getState().timer ?? undefined)
+  expandTopTimerStore.update({ timer: null })
 }
 
 /** Delays dispatch of expandHoverUp. */
@@ -32,13 +35,14 @@ const expandHoverUpDebounced =
   (path: Path): Thunk =>
   (dispatch, getState) => {
     clearTimer()
-    expandTopTimer = setTimeout(() => {
+    const timer = setTimeout(() => {
+      expandTopTimerStore.update({ timer: null })
       const state = getState()
       // abort if dragging over DropGutter component
       if (state.alert?.alertType === AlertType.DeleteDropHint) return
       dispatch({ type: 'expandHoverUp', path })
-      expandTopTimer = null
     }, EXPAND_HOVER_DELAY)
+    expandTopTimerStore.update({ timer })
   }
 
 /** Checks if the current hovering thought's parent should expand its context. */

@@ -29,7 +29,6 @@ import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import share from '../../device/share'
-import globals from '../../globals'
 import useOnClickOutside from '../../hooks/useOnClickOutside'
 import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
@@ -220,7 +219,7 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
  * Styles
  *****************************************************************************/
 
-const rotate180Class = css.raw({ transform: 'rotate(180deg)' })
+const rotate180Class = css({ transform: 'rotate(180deg)' })
 
 /******************************************************************************
  * Components
@@ -253,7 +252,7 @@ const ExportThoughtsPhrase = ({
         ? '1 thought'
         : 'thoughts'
 
-  return <span dangerouslySetInnerHTML={{ __html: phrase }} />
+  return <span>{phrase}</span>
 }
 
 /** A dropdown menu to select an export type. */
@@ -277,7 +276,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
         {selected.label}
       </a>
       <span className={css({ display: 'inline-flex', verticalAlign: 'middle' })}>
-        <ChevronImg onClickHandle={() => setIsOpen(!isOpen)} cssRaw={isOpen ? rotate180Class : undefined} />
+        <ChevronImg onClickHandle={() => setIsOpen(!isOpen)} className={isOpen ? rotate180Class : undefined} />
         <span>
           <Dropdown
             isOpen={isOpen}
@@ -299,6 +298,8 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   const dispatch = useDispatch()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  // Clears the alert ERROR_TIMEOUT after a clipboard error; cancelled by a successful copy. Scoped to this modal instance rather than a global, so it needs no reset between tests.
+  const errorTimer = useRef(0)
   const id = head(simplePaths[0])
   const title = useSelector(state => (isRoot(simplePaths[0]) ? 'home' : headValue(state, simplePaths[0]))) ?? ''
   const titleShort = ellipsize(title)
@@ -321,11 +322,14 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   // calculate the final number of descendants
   // uses a different method for text/plain and text/html
   // does not update in real-time (See: ExportThoughtsPhrase component)
-  const numDescendantsFinal = exportContent
-    ? selected.type === 'text/plain'
-      ? exportContent.split('\n').length - simplePaths.length
-      : (numDescendantsInState ?? 0)
-    : null
+  const numDescendantsFinal =
+    exportContent === null
+      ? null
+      : exportContent === ''
+        ? 0
+        : selected.type === 'text/plain'
+          ? exportContent.split('\n').length - simplePaths.length
+          : (numDescendantsInState ?? 0)
 
   const exportThoughtsPhraseFinal = useSelector(() =>
     exportPhrase(
@@ -361,6 +365,18 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     } else {
       // Sort in document order. At this point, all thoughts are pulled and in state.
       const sortedPaths = documentSort(exportedState, simplePaths)
+
+      // The root has nothing to export when none of its children pass the export filter, e.g. when they are all archived. Otherwise the bare root would be rendered as the HOME_DISPLAY_VALUE placeholder.
+      if (
+        sortedPaths.length === 1 &&
+        isRoot(sortedPaths[0]) &&
+        !getChildrenRanked(exportedState, HOME_TOKEN).some(
+          exportFilter({ excludeArchived: !shouldIncludeArchived, excludeMeta: !shouldIncludeMetaAttributes }),
+        )
+      ) {
+        setExportContent('')
+        return
+      }
 
       // When shouldExportFirstThought is false, expand each selected path to its children's IDs.
       // For single selection this skips the root thought; for multiple selection it skips the entire first level.
@@ -400,7 +416,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
     dispatch([closeModal(), alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`)])
 
-    clearTimeout(globals.errorTimer)
+    clearTimeout(errorTimer.current)
   }, [dispatch, exportThoughtsPhraseFinal])
 
   // Sets export content when pull is complete by useDescendants
@@ -456,8 +472,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         console.error(e)
         dispatch(error({ value: 'Error copying thoughts' }))
 
-        clearTimeout(globals.errorTimer)
-        globals.errorTimer = window.setTimeout(() => dispatch(alert(null)), 10000)
+        clearTimeout(errorTimer.current)
+        errorTimer.current = window.setTimeout(() => dispatch(alert(null)), 10000)
       })
 
       return () => {
@@ -647,6 +663,21 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
             <LoadingEllipsis />
           </div>
         )}
+        {exportContent === '' && isRoot(simplePaths[0]) && (
+          <div
+            className={css({
+              position: 'absolute',
+              top: '60px',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              textAlign: 'center',
+              width: '260px',
+            })}
+          >
+            There are no unarchived thoughts to {exportWord.toLowerCase()}. Archived thoughts can be included in the
+            Advanced settings.
+          </div>
+        )}
         <textarea
           ref={textareaRef}
           readOnly
@@ -690,7 +721,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
             color: 'bg',
             backgroundColor: 'fg',
           })}
-          disabled={exportContent === null}
+          disabled={!exportContent}
           {...fastClick(onExportClick)}
         >
           {exportWord}
@@ -699,7 +730,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
       {/* Copy to clipboard */}
       <div className={css({ marginBottom: '15px', textAlign: 'center' })}>
-        {exportContent !== null && (
+        {exportContent && (
           <a data-clipboard-text={exportContent} aria-label='copy-clipboard-btn' className={extendTapRecipe()}>
             Copy to clipboard
           </a>
@@ -731,7 +762,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         >
           <ChevronImg
             onClickHandle={onAdvancedClick}
-            cssRaw={css.raw(advancedSettings && rotate180Class, { opacity: advancedSettings ? 1 : 0.5 })}
+            className={cx(advancedSettings && rotate180Class, css({ opacity: advancedSettings ? 1 : 0.5 }))}
           />
         </span>
       </div>

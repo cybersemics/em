@@ -1,9 +1,22 @@
 import type { LocalWriteOptions, MaterializationEvent } from '@treecrdt/interface/engine'
+import { registerReset } from '../../stores/ministore'
 
 let pendingTreecrdtWrite = Promise.resolve()
 let pendingTreecrdtWriteError: unknown = null
 let pendingTreecrdtWriteVersion = 0
 let localWriteCounter = 0
+
+/** Incremented at every test boundary, so that a failure is recorded only if its write was queued since the last one. Constant outside tests. */
+let pendingTreecrdtWriteGeneration = 0
+
+// Discard a failure that no one waited for at the test boundary, and any failure still in flight from work queued
+// before it, so that it is not thrown at whichever later test waits for idle next. The chain itself is left alone:
+// replacing it would detach work that is still running, and initStore's wait for idle must still await it. The
+// version counter and localWriteCounter are left alone too, since writeIds must stay unique for the page load.
+registerReset(() => {
+  pendingTreecrdtWriteError = null
+  pendingTreecrdtWriteGeneration += 1
+})
 
 const localWriteSourceId =
   typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -18,11 +31,12 @@ const localWriteIdPrefix = `em-local:${localWriteSourceId}:`
  */
 export function withTreecrdtWriteBarrier<T>(work: () => Promise<T>): Promise<T> {
   pendingTreecrdtWriteVersion += 1
+  const generation = pendingTreecrdtWriteGeneration
   const run = pendingTreecrdtWrite.then(work, work)
   pendingTreecrdtWrite = run.then(
     () => undefined,
     err => {
-      pendingTreecrdtWriteError = err
+      if (generation === pendingTreecrdtWriteGeneration) pendingTreecrdtWriteError = err
     },
   )
   return run

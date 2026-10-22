@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/dom'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -33,11 +34,22 @@ describe('delete', () => {
 
       await act(vi.runOnlyPendingTimersAsync)
 
-      act(() => executeCommand(deleteCommand, { store }))
+      act(() => {
+        executeCommand(deleteCommand, { store })
+      })
 
       const popupValue = await screen.findByTestId('alert-content')!
       expect(popupValue.textContent).toBe('Permanently deleted test')
     })
+  })
+
+  // https://github.com/cybersemics/em/issues/5856
+  it('names an empty thought as empty thought in the alert', () => {
+    store.dispatch(newThought({ value: '' }))
+
+    executeCommand(deleteCommand, { store })
+
+    expect(store.getState().alert?.value).toBe('Permanently deleted empty thought')
   })
 
   describe('multicursor', () => {

@@ -67,6 +67,11 @@ const createTestApp = async ({
 /** Clear store, localStorage, local db, and window event handlers. */
 export const cleanupTestApp = async () => {
   await act(async () => {
+    // Restore module state before anything below drains timers. A test that left debug logging enabled leaves its
+    // requestAnimationFrame heartbeat running, and fake timers fake requestAnimationFrame, so vi.runAllTimersAsync
+    // would otherwise spin on it until it aborts with "Aborting after running 100000 timers".
+    resetStores()
+
     // clear localStorage before dispatching clear action, since initialState reads from localStorage
     storage.clear()
 

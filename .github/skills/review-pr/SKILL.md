@@ -71,7 +71,7 @@ GitHub renders `<details>` in every comment, so the evidence can be there withou
 
 ```markdown
 <details>
-<summary>Evidence</summary>
+<summary>Details</summary>
 
 20k randomized sequences through the enhancer: `hasPatch && !continuesCommand` came up zero
 times. A variant with the field and both reset loops removed produces byte-identical stacks
@@ -82,7 +82,7 @@ and passes the suite.
 
 The blank line after `</summary>` is required, or a fenced block or list inside will not render.
 
-Put it at the end of the comment, after the finding and any recommended action. One block per comment, headed `Evidence`. What earns a place in it:
+Put it at the end of the comment, after the finding and any recommended action. One block per comment, headed `Details`. What earns a place in it:
 
 - **Measurements.** Counts, timings, sample sizes, the numbers you compared.
 - **Reproduction.** The command, the sequence of steps, the branch each was run on.
@@ -95,7 +95,7 @@ What still gets deleted rather than collapsed, because collapsing it only moves 
 - Mechanism the author already knows.
 - The narrative of how you got there. Present the evidence as findings, not as a chronology of what you tried.
 
-A finding whose whole support is "I read the code and it looks subsumed" has no block. An empty or padded `Evidence` teaches the author to stop opening them.
+A finding whose whole support is "I read the code and it looks subsumed" has no block. An empty or padded `Details` teaches the author to stop opening them.
 
 ## The summary comment
 

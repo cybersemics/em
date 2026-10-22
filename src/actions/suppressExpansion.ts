@@ -1,11 +1,23 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
+import Timer from '../@types/Timer'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import globals from '../globals'
+import heldKeysStore from '../stores/heldKeysStore'
+import ministore from '../stores/ministore'
 
-let timer: ReturnType<typeof setTimeout>
+/** The pending re-enable of expansion. A ministore whose dispose clears the timer, so that resetStores cancels it between tests. The timer is null whenever none is armed. */
+const suppressExpansionTimerStore = ministore<{ timer: Timer | null }>(
+  { timer: null },
+  { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
+)
 
-/** Supress context expansion for a short duration (default: 100ms). This avoids performance issues when desktop users hold ArrowDown or ArrowUp to move across many siblings. The state can be accessed with globals.suppressExpansion. If value is false, disables suppressExpansion immediately, cancels, the timer, and dispatches setCursor to re-trigger expandThoughts. */
+/** Clears the pending re-enable of expansion. */
+const clearTimer = () => {
+  clearTimeout(suppressExpansionTimerStore.getState().timer ?? undefined)
+  suppressExpansionTimerStore.update({ timer: null })
+}
+
+/** Supress context expansion for a short duration (default: 100ms). This avoids performance issues when desktop users hold ArrowDown or ArrowUp to move across many siblings. The state can be read from heldKeysStore. If value is false, disables suppressExpansion immediately, cancels, the timer, and dispatches setCursor to re-trigger expandThoughts. */
 // duration of 66.666ms (4 frames) is low enough to be unnoticeable and high enough to cover the default key repeat rate on most machines (30ms)
 export const suppressExpansionActionCreator =
   (value?: boolean, { duration }: { duration: number } = { duration: 66.666 }): Thunk =>
@@ -15,17 +27,17 @@ export const suppressExpansionActionCreator =
 
     /** Disables suppressExpansion and sets the cursor to re-trigger expandThoughts. */
     const unsuppress = () => {
-      globals.suppressExpansion = false
+      heldKeysStore.update({ suppressExpansion: false })
       const { cursor, noteFocus } = getState()
       dispatch(setCursor({ path: cursor, noteFocus })) // preserve noteFocus
     }
 
     /** Enables the global suppressExpansion flag. */
     const suppress = () => {
-      globals.suppressExpansion = true
+      heldKeysStore.update({ suppressExpansion: true })
     }
 
-    clearTimeout(timer)
+    clearTimer()
 
     if (!value) {
       unsuppress()
@@ -33,10 +45,12 @@ export const suppressExpansionActionCreator =
       suppress()
 
       // re-enable expansion after short delay
-      timer = setTimeout(() => {
-        if (globals.suppressExpansion) {
+      const timer = setTimeout(() => {
+        suppressExpansionTimerStore.update({ timer: null })
+        if (heldKeysStore.getState().suppressExpansion) {
           unsuppress()
         }
       }, duration)
+      suppressExpansionTimerStore.update({ timer })
     }
   }

@@ -8,17 +8,15 @@ import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actio
 import { isCapacitor } from '../../browser'
 import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../../constants'
 import copy from '../../device/copy'
-import download from '../../device/download'
-import share from '../../device/share'
-import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
-import storageStatusStore from '../../stores/storageStatus'
+import abandonImportStore from '../../stores/abandonImportStore'
+import storageStatusStore from '../../stores/storageStatusStore'
 import { clearAiDisclosureAcknowledgement, hasAcknowledgedAiDisclosure } from '../../util/aiDisclosure'
 import debugLog from '../../util/debugLog'
 import fastClick from '../../util/fastClick'
 import haptics from '../../util/haptics'
+import saveDebugLog from '../../util/saveDebugLog'
 import storage from '../../util/storage'
-import timestamp from '../../util/timestamp'
 import ThemeSwitch from '../ThemeSwitch'
 import ActionButton from './../ActionButton'
 import Checkbox from './../Checkbox'
@@ -133,9 +131,7 @@ const DebugLogging = () => {
   const intro =
     'Records a rolling log of app events to help diagnose rare, hard-to-reproduce bugs (such as freezes). Everything is stored locally on this device and nothing is transmitted. '
 
-  // A native WebView has no download manager, so the anchor click that download() performs is silently ignored in
-  // the iOS and Android apps. There the native share sheet is the only way off the device, as in the Export modal.
-  // Mobile browsers are unaffected: iOS Safari and Android Chrome both save the blob to Files/Downloads.
+  // the native apps share rather than download (see saveDebugLog)
   const isNative = isCapacitor()
   const saveLabel = isNative ? 'Share debug log' : 'Download debug log'
 
@@ -168,14 +164,8 @@ const DebugLogging = () => {
               // dispatch a thunk to read fresh state, so format() can append the state.thoughts dump that resolves
               // the ids in the entries to values and shows current sibling order
               dispatch((_, getState) => {
-                const text = debugLog.format(getState())
-                const filename = `em-debug-log-${timestamp()}.txt`
-                if (isNative) {
-                  share({ text, title: filename })
-                } else {
-                  download(text, filename)
-                }
-                setStatus(`${isNative ? 'Shared' : 'Downloaded'} ${debugLog.read().length} entries`)
+                const entryCount = saveDebugLog(getState())
+                setStatus(`${isNative ? 'Shared' : 'Downloaded'} ${entryCount} entries`)
               })
             })}
             className={cx(extendTapRecipe(), css({ whiteSpace: 'nowrap' }))}
@@ -362,7 +352,7 @@ const ModalSettings = () => {
           onClick={() => {
             // Escape hatch to cancel imports when frozen.
             // This is a workaround for a bug that has not been resolved.
-            globals.abandonImport = true
+            abandonImportStore.update(true)
             setTimeout(() => {
               storage.removeItem('resume-imports')
               window.location.reload()
