@@ -26,18 +26,24 @@ const useRevertCorrection = ({
 
     /** Notes a move away from the offset before the touch, and corrects a return to it after one. */
     const onSelectionChange = () => {
+      // the selection belongs to another editable
       if (document.activeElement !== editable) return
       const watch = touchStore.getState().revertWatch
+      // no touch on this editable is being watched
       if (watch?.editable !== editable) return
+      // a range is not a caret that iOS placed or reverted, e.g. a word selected by a double tap
       if (!selection.isCollapsed()) return
       const offset = selection.offsetFromNode(editable)
+      // the caret is not inside this editable
       if (offset === null) return
 
       if (!watch.moved && offset !== watch.before) touchStore.update({ revertWatch: { ...watch, moved: true } })
+      // not a revert: the caret has not left its offset yet, or has moved somewhere other than back to it
       if (!watch.moved || offset !== watch.before) return
 
       touchStore.update({ revertWatch: null })
       const tapped = getCaretOffset(editable, watch).offset
+      // nowhere to put the caret, or the tap was on the caret, so there is nothing to undo
       if (tapped === null || tapped === watch.before) return
       // iOS is still handling the tap when it fires this selectionchange.
       requestAnimationFrame(() => (onCorrect ? onCorrect(tapped) : selection.set(editable, { offset: tapped })))
