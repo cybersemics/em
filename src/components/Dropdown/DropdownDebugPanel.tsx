@@ -5,8 +5,10 @@ import { css } from '../../../styled-system/css'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import storage from '../../util/storage'
 import { DROPDOWN_Z_INDEX } from './Dropdown'
+import MotionStepperControls from './DropdownMotionStepper'
 import { DIALS_EVENT } from './dials'
 import { isDialsSyncAvailable, publishDials, pullDials, subscribeDials } from './dialsSync'
+import useMotionStepper, { DIALS_ROOT_ATTRIBUTE } from './useMotionStepper'
 
 /*
  * TEMPORARY. A design-dials panel for tuning the Command Universe sort dropdown (see the design-dials skill). Every
@@ -238,6 +240,7 @@ const SECTIONS: Section[] = [
   { id: 'surfaceLight', title: 'Command Universe lighting', controls: SURFACE_LIGHT_CONTROLS },
   { id: 'glow', title: 'Menu glow', controls: GLOW_CONTROLS },
   { id: 'rows', title: 'Type and spacing', controls: ROWS_CONTROLS },
+  { id: 'motion', title: 'Motion', note: 'freeze & step frames', controls: [] },
   { id: 'paste', title: 'Overrides to paste back', note: 'for baking in', controls: [] },
 ]
 
@@ -861,6 +864,7 @@ const DialsFab = ({
     <button
       type='button'
       aria-label='Sort dropdown dials'
+      {...{ [DIALS_ROOT_ATTRIBUTE]: '' }}
       title='Sort dropdown dials (drag to move, tap to open)'
       {...stopPress}
       onPointerDown={event => {
@@ -962,6 +966,8 @@ const DialsFab = ({
 
 /** The design-dials panel for the sort dropdown: a floating button over the Command Universe that opens the dials, inline or in a popup window. */
 const DropdownDebugPanel = () => {
+  // The frame stepper's state lives here, in the component that stays mounted, so freezing works while collapsed.
+  const motion = useMotionStepper()
   const [values, setValues] = useState<Record<string, string>>(readValues)
   const [openSections, setOpenSections] = useState<string[]>(readOpenSections)
   const [popup, setPopup] = useState<Window | null>(null)
@@ -1179,6 +1185,7 @@ const DropdownDebugPanel = () => {
           setValues={setValues}
           isDesktop={isDesktop}
         >
+          {section.id === 'motion' ? <MotionStepperControls motion={motion} Slider={ScrubSlider} /> : null}
           {section.id === 'paste' ? (
             <>
               <pre
@@ -1229,6 +1236,7 @@ const DropdownDebugPanel = () => {
       {isCommandUniverseOpen && expanded ? (
         <div
           {...stopPress}
+          {...{ [DIALS_ROOT_ATTRIBUTE]: '' }}
           className={css({
             position: 'fixed',
             transformOrigin: 'top left',
