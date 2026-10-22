@@ -1,5 +1,6 @@
 import { animate, motion, useMotionValue, useTransform } from 'motion/react'
 import { ReactNode, Ref, useCallback, useEffect, useImperativeHandle } from 'react'
+import { cx } from '../../../styled-system/css'
 import { notificationRecipe } from '../../../styled-system/recipes'
 import { NOTIFICATION_EASING } from '../../constants'
 import useSwipeToClear from '../../hooks/useSwipeToClear'
@@ -16,8 +17,8 @@ interface NotificationSurfaceProps {
   anchor: Anchor | { base: Anchor; lg?: Anchor }
   /** The decorative image treatment. */
   glow: Glow
-  /** The glow's image. The notification that shows it defines and prefetches it, keeping the path beside its use. */
-  glowImage: string
+  /** Sets the glow's image: a className from css({ backgroundImage: preloadImage(...) }) at the call site, so the notification that shows the image also preloads it. */
+  glowClassName: string
   /** Whether the consumer wants the surface visible. Hidden surfaces still mount for the fade. */
   isVisible: boolean
   /** Called once after a Clear action or successful swipe has finished fading the surface. */
@@ -47,7 +48,7 @@ const NotificationSurface = ({
   anchor,
   ref,
   glow,
-  glowImage,
+  glowClassName,
   isVisible,
   onDismiss,
   onOpacityChange,
@@ -124,7 +125,7 @@ const NotificationSurface = ({
         <motion.div data-notification-gradient='' style={{ opacity: dimmedOpacity }} />
       </div>
       <motion.div data-notification-opacity-wrapper='' style={{ opacity }}>
-        <motion.div className={slots.glow} style={{ opacity: dimOpacity, backgroundImage: `url(${glowImage})` }} />
+        <motion.div className={cx(slots.glow, glowClassName)} style={{ opacity: dimOpacity }} />
         <div
           className={slots.content}
           style={{ pointerEvents: isVisible && !pointerEventsPassThrough ? 'auto' : 'none' }}

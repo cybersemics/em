@@ -12,6 +12,7 @@ The main directory structure is organized as follows. Tests are located in a sub
 - [`/src/device`](../src/device) — Device/DOM-level helpers for selection, scrolling, clipboard, focus, and platform detection. The selection wrapper [`device/selection.ts`](../src/device/selection.ts) is the single point of access to `window.getSelection()` (enforced by lint). See [cursor-and-caret.md](cursor-and-caret.md).
 - [`/src/e2e`](../src/e2e) — End-to-end test setup, including the Puppeteer, iOS, and Android environments. See [testing.md](testing.md).
 - [`/src/hooks`](../src/hooks) — React hooks.
+- [`/src/panda-plugins`](../src/panda-plugins) — Panda CSS plugins, registered in [`panda.config.ts`](../panda.config.ts). [`preloadImagePlugin`](../src/panda-plugins/preloadImagePlugin.ts) lets Panda read [`preloadImage()`](../src/util/preloadImage.ts) calls, narrows `backgroundImage` in `css()` to preloaded images, and preloads the images recipes use.
 - [`/src/recipes`](../src/recipes) — Panda CSS recipes that define styled component variants. New components should use these or inline styles.
 - [`/src/redux-enhancers`](../src/redux-enhancers) — Redux enhancers (e.g. the [`pushQueue`](../src/redux-enhancers/pushQueue.ts) that flushes state mutations to thoughtspace persistence).
 - [`/src/redux-middleware`](../src/redux-middleware) — Redux middleware (e.g. the [`pullQueue`](../src/redux-middleware/pullQueue.ts) that loads thoughts on demand, or [`clearSelection`](../src/redux-middleware/clearSelection.ts) that clears the browser caret on cursor changes).

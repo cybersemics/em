@@ -22,8 +22,12 @@ import isTutorial from '../../selectors/isTutorial'
 import backgroundGlowStore from '../../stores/backgroundGlowStore'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
+import preloadImage from '../../util/preloadImage'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
+
+/** The glow overlay behind the open Command Center. */
+const overlayImage = preloadImage('/img/command-center/overlay.webp')
 
 /** Close to MUI easeOut, but with a 20% head start to catch up with the finger. Otherwise it feels sluggish. The animation can't start until touchend, so we can't afford to smoothly animate from 0. */
 const easeOpen = [0.1, 0.2, 0.2, 1] as const
@@ -63,22 +67,6 @@ const MultiselectMessage: FC = () => {
         {displayNumMulticursors} {pluralize('thought', displayNumMulticursors, false)} selected
       </span>
     </div>
-  )
-}
-
-/**
- * A hidden pre-rendered overlay on mobile, used as a workaround for the
- * Command Center flicker caused by the overlay background only being loaded
- * when the Command Center opens.
- */
-const HiddenOverlay = () => {
-  return (
-    <div
-      className={css({
-        backgroundImage: 'url(/img/command-center/overlay.webp)',
-        visibility: 'hidden',
-      })}
-    />
   )
 }
 
@@ -174,7 +162,6 @@ const CommandCenter = () => {
             }}
           />
         )}
-        <HiddenOverlay />
         <Sheet
           data-testid='command-center-panel'
           ref={sheetRef}
@@ -218,6 +205,7 @@ const CommandCenter = () => {
                   backgroundRepeat: 'no-repeat',
                 })}
                 style={{
+                  // eslint-disable-next-line no-restricted-syntax -- The debug glows are about 5 MB, so they are not preloaded for every user.
                   backgroundImage: `url(/img/glow/${backgroundGlow.image})`,
                   opacity: backgroundGlow.opacity,
                 }}
@@ -243,7 +231,7 @@ const CommandCenter = () => {
             className={css({
               position: 'fixed',
               pointerEvents: 'none',
-              backgroundImage: 'url(/img/command-center/overlay.webp)',
+              backgroundImage: overlayImage,
               backgroundSize: 'cover',
               backgroundPosition: 'center bottom',
               height: '100vh',

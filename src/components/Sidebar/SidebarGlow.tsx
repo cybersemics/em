@@ -1,10 +1,31 @@
 import { MotionValue, motion } from 'framer-motion'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
 import { isAndroid, isSafari } from '../../browser'
 import useBreakpoint from '../../hooks/useBreakpoint'
+import preloadImage from '../../util/preloadImage'
 import safeY from '../../util/safeY'
 import { EASE_OUT, SLOW_DURATION, cssEaseOut } from './constants'
 import { SECTIONS, SidebarSectionId } from './sidebarSections'
+
+/*
+ * Each section's glow is a pre-tinted, pre-blurred image rather than one image with a runtime hue-rotate/saturate
+ * filter, which made WebKit allocate a fresh GPU buffer per filtered layer and crash the app on iOS. Every section's
+ * images are preloaded so that the first section switch crossfades without a fetch or decode mid-animation.
+ */
+
+/** Sets each section's primary glow image. */
+const overlay1ImageClassName = {
+  favorites: css({ backgroundImage: preloadImage('/img/sidebar/overlay-layer-1-favorites.avif') }),
+  recentlyEdited: css({ backgroundImage: preloadImage('/img/sidebar/overlay-layer-1-recentlyEdited.avif') }),
+  recentlyDeleted: css({ backgroundImage: preloadImage('/img/sidebar/overlay-layer-1-recentlyDeleted.avif') }),
+} satisfies Record<SidebarSectionId, string>
+
+/** Sets each section's secondary glow image. */
+const overlay2ImageClassName = {
+  favorites: css({ backgroundImage: preloadImage('/img/sidebar/overlay-layer-2-favorites.avif') }),
+  recentlyEdited: css({ backgroundImage: preloadImage('/img/sidebar/overlay-layer-2-recentlyEdited.avif') }),
+  recentlyDeleted: css({ backgroundImage: preloadImage('/img/sidebar/overlay-layer-2-recentlyDeleted.avif') }),
+} satisfies Record<SidebarSectionId, string>
 
 /**
  * Primary glow overlay behind the sidebar header. It resizes when the section dropdown opens.
@@ -50,29 +71,28 @@ const SidebarOverlay1 = ({
             style={{
               opacity: sidebarSection.id === sectionId ? 1 : 0,
               transition: `opacity ${SLOW_DURATION}s linear`,
-              // Pre-tinted, pre-blurred per-section image — avoids a runtime hue-rotate/saturate
-              // filter, which made WebKit allocate a fresh GPU buffer per filtered layer and
-              // crash the app on iOS.
-              backgroundImage: `url(/img/sidebar/overlay-layer-1-${sidebarSection.id}.avif)`,
             }}
             initial={collapsed}
             animate={expanded ? open : collapsed}
             transition={{ duration: SLOW_DURATION, ease: EASE_OUT }}
-            className={css({
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              height: '100vh',
-              width: '100vw',
-              backgroundPositionX: '-150px', // negative offset to crop the left edge of the image
-              backgroundRepeat: 'no-repeat',
-              pointerEvents: 'none',
-              zIndex: 'sidebar',
-              // fade out the bottom edge of the overlay on portrait mobile for a smoother transition to the background
-              lgDown: {
-                maskImage: 'linear-gradient(to top, transparent 200px, black 80%)',
-              },
-            })}
+            className={cx(
+              overlay1ImageClassName[sidebarSection.id],
+              css({
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                height: '100vh',
+                width: '100vw',
+                backgroundPositionX: '-150px', // negative offset to crop the left edge of the image
+                backgroundRepeat: 'no-repeat',
+                pointerEvents: 'none',
+                zIndex: 'sidebar',
+                // fade out the bottom edge of the overlay on portrait mobile for a smoother transition to the background
+                lgDown: {
+                  maskImage: 'linear-gradient(to top, transparent 200px, black 80%)',
+                },
+              }),
+            )}
           />
         ))}
       </motion.div>
@@ -112,10 +132,6 @@ const SidebarOverlay1 = ({
           key={sidebarSection.id}
           // Panda cannot extract runtime safeY(), so top must remain inline.
           style={{
-            // Pre-tinted, pre-blurred per-section image — avoids a runtime hue-rotate/saturate
-            // filter, which made WebKit allocate a fresh GPU buffer per filtered layer and
-            // crash the app on iOS.
-            backgroundImage: `url(/img/sidebar/overlay-layer-1-${sidebarSection.id}.avif)`,
             opacity: sidebarSection.id === sectionId ? 1 : 0,
             transform: resizeTransform,
             transition: `opacity ${SLOW_DURATION}s linear, transform ${SLOW_DURATION}s ${cssEaseOut}`,
@@ -123,15 +139,18 @@ const SidebarOverlay1 = ({
             // Android: promote the crossfade and resize to avoid repaint flicker.
             willChange: isAndroid ? 'opacity, transform' : undefined,
           }}
-          className={css({
-            position: 'absolute',
-            left: '-150px', // collapsed backgroundPositionX (crops the image's left edge)
-            width: 'calc(1482px * 0.425)', // collapsed backgroundSize width
-            height: 'calc(744px * 0.475)', // collapsed backgroundSize height
-            transformOrigin: 'top left', // scale grows from the crop's top-left, like background-size
-            backgroundSize: '100% 100%',
-            backgroundRepeat: 'no-repeat',
-          })}
+          className={cx(
+            overlay1ImageClassName[sidebarSection.id],
+            css({
+              position: 'absolute',
+              left: '-150px', // collapsed backgroundPositionX (crops the image's left edge)
+              width: 'calc(1482px * 0.425)', // collapsed backgroundSize width
+              height: 'calc(744px * 0.475)', // collapsed backgroundSize height
+              transformOrigin: 'top left', // scale grows from the crop's top-left, like background-size
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat',
+            }),
+          )}
         />
       ))}
     </motion.div>
@@ -155,13 +174,6 @@ const SidebarOverlay2 = ({
   /** Active section. */
   sectionId: SidebarSectionId
 }) => {
-  /** Pre-baked section tints avoid runtime filters. */
-  const layers = SECTIONS.map(sidebarSection => ({
-    key: sidebarSection.id,
-    backgroundImage: `url(/img/sidebar/overlay-layer-2-${sidebarSection.id}.avif)`,
-    active: sidebarSection.id === sectionId,
-  }))
-
   return (
     <motion.div
       style={{ opacity, width: widthAsCssString, willChange: isAndroid ? 'opacity' : undefined }}
@@ -174,27 +186,29 @@ const SidebarOverlay2 = ({
         zIndex: 'sidebar',
       })}
     >
-      {layers.map(({ key, active, ...styles }) => (
+      {SECTIONS.map(sidebarSection => (
         <motion.div
-          key={key}
+          key={sidebarSection.id}
           // Android: promote the crossfade to avoid repaint flicker.
           style={{
-            ...styles,
-            opacity: active ? 1 : 0,
+            opacity: sidebarSection.id === sectionId ? 1 : 0,
             transition: `opacity ${SLOW_DURATION}s linear`,
             willChange: isAndroid ? 'opacity' : undefined,
           }}
-          className={css({
-            position: 'absolute',
-            inset: 0,
-            backgroundSize: '100% 800px',
-            backgroundPosition: 'top left',
-            backgroundRepeat: 'no-repeat',
-            // on lg+ (landscape mobile and larger) screens, fade off the last 10% vertically to prevent a hard line at the bottom edge
-            lg: {
-              maskImage: 'linear-gradient(to right, black 95%, transparent 100%)',
-            },
-          })}
+          className={cx(
+            overlay2ImageClassName[sidebarSection.id],
+            css({
+              position: 'absolute',
+              inset: 0,
+              backgroundSize: '100% 800px',
+              backgroundPosition: 'top left',
+              backgroundRepeat: 'no-repeat',
+              // on lg+ (landscape mobile and larger) screens, fade off the last 10% vertically to prevent a hard line at the bottom edge
+              lg: {
+                maskImage: 'linear-gradient(to right, black 95%, transparent 100%)',
+              },
+            }),
+          )}
         />
       ))}
     </motion.div>
