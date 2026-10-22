@@ -12,6 +12,49 @@ import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 
+/**
+ * Records the caret's focus offset on every selectionchange from the next touchstart on, in the page, so that a change
+ * between two WebDriver calls is not missed, and one still pending from before the touch is not counted.
+ */
+const recordCaretFromNextTouch = async () => {
+  await browser.execute(() => {
+    const w = window as unknown as { __caretOffsets: number[] }
+    w.__caretOffsets = []
+    document.addEventListener(
+      'touchstart',
+      () =>
+        document.addEventListener('selectionchange', () => {
+          const offset = document.getSelection()?.focusOffset
+          if (offset != null) w.__caretOffsets.push(offset)
+        }),
+      { capture: true, once: true },
+    )
+  })
+
+  return {
+    /**
+     * Waits until the caret has left the offset `before`, returned to it, and left it again, i.e. a tap that iOS
+     * reverted has been corrected. Also passes if `timeout` expires without the caret being reverted.
+     */
+    waitToSettle: async ({ before, timeout }: { before: number; timeout: number }): Promise<void> => {
+      const start = Date.now()
+      /** True once the offsets show the caret leaving before, returning to it, and leaving it again. */
+      const corrected = (offsets: number[]) => {
+        const left = offsets.findIndex(offset => offset !== before)
+        const returned = offsets.findIndex((offset, i) => i > left && offset === before)
+        return left !== -1 && returned !== -1 && offsets.slice(returned + 1).some(offset => offset !== before)
+      }
+      // Safari's driver does not wait for a promise returned from execute, so poll, with the deadline in the condition
+      await browser.waitUntil(
+        async () =>
+          Date.now() - start >= timeout ||
+          corrected(await browser.execute(() => (window as unknown as { __caretOffsets: number[] }).__caretOffsets)),
+        { timeout: timeout * 5, interval: 50 },
+      )
+    },
+  }
+}
+
 describe('Double tap', () => {
   // https://github.com/cybersemics/em/issues/5660
   it('a tap after a double tap on the caret does not activate drag and drop', async () => {
@@ -63,5 +106,32 @@ describe('Double tap', () => {
     )
     expect(alertText).not.toBe('Drag and drop to move thought')
     expect(await isKeyboardShown()).toBe(true)
+  })
+
+  // https://github.com/cybersemics/em/issues/5981
+  it('a tap within the thought being edited after a double tap is not undone', async () => {
+    await newThought('Existentialism eternally')
+    await hideKeyboardByTappingDone()
+    const editable = await waitForEditable('Existentialism eternally')
+    await tap(editable, { pointerType: 'touch' })
+    await waitUntil(isKeyboardShown)
+
+    await tap(editable, { offset: 'Existentialism'.length, pointerType: 'touch' })
+    await waitUntil(
+      async () => (await browser.execute(() => document.getSelection()?.focusOffset)) === 'Existentialism'.length,
+    )
+    await tap(editable, { offset: 'Existentialism'.length, pointerType: 'touch', count: 2 })
+    await waitUntil(async () => (await getSelection().toString()) === 'Existentialism')
+    await setSelection('Existentialism'.length, 'Existentialism'.length)
+
+    const caret = await recordCaretFromNextTouch()
+    // the middle of "eternally"
+    await tap(editable, { offset: 'Existentialism eter'.length, pointerType: 'touch' })
+    // iOS can move the caret back within about 300ms of the tap, after which em puts it back again
+    await caret.waitToSettle({ before: 'Existentialism'.length, timeout: 1000 })
+
+    const offset = await browser.execute(() => document.getSelection()?.focusOffset ?? null)
+    // anywhere in "eternally", which runs to the end of the text
+    expect(offset).toBeGreaterThanOrEqual('Existentialism '.length)
   })
 })
