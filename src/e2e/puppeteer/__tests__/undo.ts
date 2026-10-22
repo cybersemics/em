@@ -293,28 +293,6 @@ it('Native undo places the caret at the end of the restored thought', async () =
   expect(await getCaretOffset()).toBe('correct'.length)
 })
 
-describe('persistent storage', () => {
-  usePersistentTreecrdtStorage()
-
-  // https://github.com/cybersemics/em/pull/6082#discussion_r4344114144
-  it.skip('undoes the first edit after a reload as soon as it is typed', async () => {
-    await paste('Hello')
-    await waitForEditable('Hello')
-    await clickThought('Hello')
-
-    // a reload starts with an empty undo history
-    await refresh()
-    await waitForEditable('Hello')
-    await clickThought('Hello')
-    await press('End')
-    await keyboard.type('W')
-    await clickToolbar('Undo')
-    await waitForBrowserSettled()
-
-    expect(await getEditingText()).toBe('Hello')
-  })
-})
-
 describe('mobile only', () => {
   deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
@@ -392,5 +370,27 @@ describe('mobile only', () => {
     await keyboard.type('a')
     await clickToolbar('Undo')
     await page.waitForFunction(() => (window as unknown as { undoAnimations: number }).undoAnimations === 1)
+  })
+
+  describe('persistent storage', () => {
+    usePersistentTreecrdtStorage()
+
+    // https://github.com/cybersemics/em/pull/6082#discussion_r4344114144
+    it('undoes the first edit after a reload as soon as it is typed', async () => {
+      await paste('Hello')
+      await waitForEditable('Hello')
+      await clickThought('Hello')
+
+      // a reload starts with an empty undo history
+      await refresh()
+      await waitForEditable('Hello')
+      await clickThought('Hello')
+      await press('End')
+      await keyboard.type('W')
+      await clickToolbar('Undo')
+      await waitForBrowserSettled()
+
+      expect(await getEditingText()).toBe('Hello')
+    })
   })
 })
