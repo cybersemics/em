@@ -288,7 +288,7 @@ const LightLayerEditor = ({
 
 /** The light behind a Dropdown: its layers, the surface mask and radial blur under it, and their canvas editors. */
 const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
-  const { open, isOpen, anchorRect, menuRect, placement, selectedY, selectedTravel, timing, transition, lightMotion } =
+  const { isOpen, anchorRect, menuRect, placement, selectedY, selectedTravel, timing, transition, lightMotion } =
     useDropdown()
   // The light's origin offset, re-read on every render (the Dropdown re-renders its layers when a dial changes).
   // Desktop (md and up) has its own design values for the light group.
@@ -502,16 +502,13 @@ const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
             mixBlendMode: selection.blend as CSSProperties['mixBlendMode'],
             ...fade(selection.opacity),
             ...nudge(selection),
-            // Moves and fades as part of the selected row, on the rows' clock rather than the light's. When the menu
-            // drops down, the row slides between its place and the anchor (selectedTravel); the glow takes the same
-            // transform, and jumps straight to a newly picked row so it slides with it rather than chasing it. When the
-            // menu opens around the selection, the whole menu glides by its top, so the glow glides its top too.
-            // Opening, it lights up with the row; closing, it stays lit while the row slides home, then fades with the
-            // row's crossfade into the button's glyph (see DropdownRows).
+            // Moves with the selected row and fades with the other options. When the menu drops down, the row slides
+            // between its place and the anchor (selectedTravel); the glow takes the same transform, and jumps straight
+            // to a newly picked row so it slides with it rather than chasing it. When the menu opens around the
+            // selection, the whole menu glides by its top, so the glow glides its top too. Its fade runs on the rows'
+            // clock, from the moment the menu opens or closes, so it lights up and fades out with the options.
             transform: selectedTravel.transform,
-            transition: `${transition(placement === 'around' ? ['top', 'transform'] : ['transform'])}, ${
-              open ? transition(['opacity']) : transition(['opacity'], { delay: timing.content })
-            }`,
+            transition: transition(placement === 'around' ? ['top', 'transform', 'opacity'] : ['transform', 'opacity']),
           }}
         />
       ) : null}
