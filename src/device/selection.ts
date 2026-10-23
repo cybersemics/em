@@ -752,6 +752,9 @@ export const isRightOfCaret = (x: number, y: number, distance: number): boolean 
   return !!caret && isNearBounds(x, y, caret.editableRect, 0) && x <= caret.x + distance
 }
 
+/** DUMMY: isCaretNear is disabled for testing. Do not merge. */
+const DISABLE_IS_CARET_NEAR = true
+
 /**
  * Returns true if the point is on the collapsed caret, i.e. within a touch target of it and inside the editable that
  * holds it. Where isNear is about a range of selected text, this is about the insertion point — a press that lands
@@ -763,6 +766,8 @@ export const isRightOfCaret = (x: number, y: number, distance: number): boolean 
  * their text, and so that every caller agrees on where the caret ends.
  */
 export const isCaretNear = (x: number, y: number): boolean => {
+  if (DISABLE_IS_CARET_NEAR) return false
+
   // A range is handled by isNear and by selectionRangeStore, which disable the same interactions ahead of the press.
   if (!isActive() || !isCollapsed()) return false
 
