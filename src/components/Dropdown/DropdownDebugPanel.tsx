@@ -10,15 +10,17 @@ import { CanvasTarget, DIAL_SET_EVENT, setCanvasEditing } from './canvasEditing'
 import { DIALS_EVENT } from './dials'
 import {
   DialsDevice,
+  DialsPatch,
   DialsPresence,
   DialsSyncMode,
   isDialsSyncAvailable,
-  publishDials,
   pullDials,
+  sendDialsPatch,
   setDialsMode,
-  subscribeDials,
   subscribeDialsDemoted,
+  subscribeDialsPatch,
   subscribeDialsPresence,
+  subscribeDialsSeed,
   subscribeDialsState,
 } from './dialsSync'
 import useMotionStepper, { DIALS_ROOT_ATTRIBUTE } from './useMotionStepper'
@@ -1597,12 +1599,13 @@ const SYNC_MODES: { mode: DialsSyncMode; label: string; title: string }[] = [
   {
     mode: 'lead',
     label: 'Lead',
-    title: 'Lead: this device’s values are the session; every change goes to the devices following it',
+    title: 'Lead: your values are the starting point; then everyone linked edits together',
   },
   {
     mode: 'follow',
     label: 'Follow',
-    title: 'Follow: show the leading device’s values live (yours are kept and come back when you switch to Off)',
+    title:
+      'Follow: start from the leader’s values; your edits are shared with everyone linked (your own values come back when you switch to Off)',
   },
 ]
 
@@ -1649,13 +1652,14 @@ const syncStatusLine = (mode: DialsSyncMode, presence: DialsPresence | null, not
   if (!presence) return 'Connecting to the dev server…'
   const others = presence.count - 1
   const devices = others <= 0 ? `No other device on ${location.host}` : `${presence.count} devices on ${location.host}`
+  // Linked devices (Lead or Follow) all edit the session together; the leader only chose its starting values.
   const role =
     mode === 'lead'
-      ? `Leading · ${presence.followers} follower${presence.followers === 1 ? '' : 's'}`
+      ? `Leading · ${presence.followers} linked · edits shared`
       : mode === 'follow'
         ? presence.leader
-          ? `Following ${presence.leader.name}`
-          : 'No leader'
+          ? `Linked · started from ${presence.leader.name} · edits shared`
+          : 'Linked · no leader · edits shared'
         : presence.leader
           ? `Off · ${presence.leader.name} is leading`
           : 'Off'
@@ -1672,8 +1676,6 @@ const DropdownDebugPanel = () => {
     /** Applies one dial set from the canvas. */
     const onDialSet = (event: Event) => {
       const { name, value } = (event as CustomEvent<{ name: string; value: string }>).detail
-      // Read-only while following another device (see editValues).
-      if (storage.getItem(SYNC_MODE_KEY) === 'follow' && isDialsSyncAvailable()) return
       setValues(previous => ({ ...previous, [name]: value }))
     }
     window.addEventListener(DIAL_SET_EVENT, onDialSet)
@@ -1713,13 +1715,10 @@ const DropdownDebugPanel = () => {
   const applyingRemote = useRef(false)
   // False until the first render's values have been seen, so loading the panel doesn't send its stored values.
   const hasLoaded = useRef(false)
-  // While following, the panel is read-only: edits are ignored (the leader's values would overwrite them).
-  const following = syncAvailable && syncMode === 'follow'
-  /** Applies an edit from the panel, unless this device is following, when edits are ignored. */
-  const editValues: typeof setValues = update => {
-    if (syncModeRef.current === 'follow' && syncAvailable) return
-    setValues(update)
-  }
+  // Edits from the panel. Every linked device can edit, so this is setValues; the change effect sends the patch.
+  const editValues = setValues
+  // The values last written, to work out which dials an edit changed (only those go to the session).
+  const previousValues = useRef(values)
 
   /** Opens a group's inspector, or the layers list with null, and remembers it for the next reload. */
   const setView = (id: string | null) => {
@@ -1744,10 +1743,12 @@ const DropdownDebugPanel = () => {
     window.dispatchEvent(new Event(DIALS_EVENT))
   }, [values])
 
-  /** Applies the leader's values. */
-  const applyLeader = (leaderValues: Record<string, string>) => {
+  /** Applies values that came from the session, so the change effect doesn't send them back as a local edit. */
+  const applyRemote = (
+    update: Record<string, string> | ((previous: Record<string, string>) => Record<string, string>),
+  ) => {
     applyingRemote.current = true
-    setValues(leaderValues)
+    setValues(update)
   }
 
   /** Puts this device's own values aside before it starts following, unless they already are. */
@@ -1788,22 +1789,36 @@ const DropdownDebugPanel = () => {
     }
   }
 
-  // Subscriptions: the leader's values, the answer to a pull, presence, and being replaced as leader.
+  // Subscriptions: a leader seeding the session, other devices' patches, the answer to a pull, presence, and being
+  // replaced as leader. Off devices ignore everything.
   useEffect(() => {
     if (!syncAvailable) return
+    /** Whether this device is part of the session. */
+    const linked = () => syncModeRef.current !== 'off'
     const unsubscribers = [
-      subscribeDials((leaderValues, leader: DialsDevice) => {
-        if (syncModeRef.current !== 'follow') return
-        applyLeader(leaderValues)
-        // Keep a takeover note visible over the new leader's first push.
-        setSyncStatus(note => (note.endsWith('took over') ? note : `Updated by ${leader.name}`))
+      subscribeDialsSeed((sessionValues, leader: DialsDevice) => {
+        if (!linked()) return
+        applyRemote(sessionValues)
+        // Keep a takeover note visible over the new leader's seed.
+        setSyncStatus(note => (note.endsWith('took over') ? note : `Started from ${leader.name}`))
       }),
-      subscribeDialsState((leader, leaderValues) => {
+      subscribeDialsPatch(patch => {
+        if (!linked()) return
+        applyRemote(previous => {
+          const next = { ...previous }
+          Object.entries(patch).forEach(([name, value]) => {
+            if (value === null) delete next[name]
+            else next[name] = value
+          })
+          return next
+        })
+      }),
+      subscribeDialsState((leader, sessionValues) => {
         if (syncModeRef.current !== 'follow') return
-        if (leader && leaderValues) {
-          applyLeader(leaderValues)
-          setSyncStatus('')
-        } else setSyncStatus('No leader yet: values stay as they are')
+        if (sessionValues) {
+          applyRemote(sessionValues)
+          setSyncStatus(leader ? `Started from ${leader.name}` : 'Joined the session')
+        } else setSyncStatus('No session yet: your values stay, and edits are shared')
       }),
       subscribeDialsPresence(setPresence),
       subscribeDialsDemoted(by => {
@@ -1814,7 +1829,8 @@ const DropdownDebugPanel = () => {
         setSyncStatus(`${by.name} took over`)
       }),
     ]
-    // Register, resuming the mode left on before a reload: a leader pushes its values, a follower pulls the leader's.
+    // Register, resuming the mode left on before a reload: a leader re-seeds with its values, a follower pulls the
+    // session's.
     const mode = syncModeRef.current
     setDialsMode(mode, mode === 'lead' ? valuesRef.current : undefined)
     if (mode === 'follow') pullDials()
@@ -1822,9 +1838,12 @@ const DropdownDebugPanel = () => {
     // Subscribes once; the handlers read refs.
   }, [syncAvailable])
 
-  // While leading, send every local change. Skips the first render (registering sent the values) and values that
-  // arrived from a leader (only relevant if this device has just taken over).
+  // While linked, send each local edit as a patch of the dials it changed (null for a dial reset), so edits on any
+  // device reach every other. Skips the first render (registering sent the values) and values that came from the
+  // session (sending them back would echo).
   useEffect(() => {
+    const previous = previousValues.current
+    previousValues.current = values
     if (!hasLoaded.current) {
       hasLoaded.current = true
       return
@@ -1833,7 +1852,12 @@ const DropdownDebugPanel = () => {
       applyingRemote.current = false
       return
     }
-    if (syncAvailable && syncModeRef.current === 'lead') publishDials(values)
+    if (!syncAvailable || syncModeRef.current === 'off') return
+    const patch: DialsPatch = {}
+    new Set([...Object.keys(previous), ...Object.keys(values)]).forEach(name => {
+      if (previous[name] !== values[name]) patch[name] = values[name] ?? null
+    })
+    if (Object.keys(patch).length) sendDialsPatch(patch)
   }, [values, syncAvailable])
 
   // Clear the overrides only when the panel unmounts.
@@ -1921,12 +1945,7 @@ const DropdownDebugPanel = () => {
   const toolbar = (
     <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '6px', margin: '8px 0' })}>
       <IconButton icon='copy' label='Copy overrides' onClick={() => copy(pasteText)} />
-      <IconButton
-        icon='reset'
-        label='Reset all overrides'
-        onClick={() => editValues({})}
-        disabled={!overriddenCount || following}
-      />
+      <IconButton icon='reset' label='Reset all overrides' onClick={() => editValues({})} disabled={!overriddenCount} />
       <IconButton
         icon='popup'
         label={popup ? 'Close popup' : 'Open in popup'}
@@ -2014,18 +2033,6 @@ const DropdownDebugPanel = () => {
         padding: '0 10px 8px',
       })}
     >
-      {following ? (
-        <p
-          className={css({
-            margin: '8px 0',
-            padding: '6px 8px',
-            borderRadius: '6px',
-            backgroundColor: 'fgOverlay10',
-          })}
-        >
-          Following {presence?.leader?.name ?? 'the leader'}. Switch to Off or Lead to edit.
-        </p>
-      ) : null}
       {body}
     </div>
   )

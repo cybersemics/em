@@ -65,17 +65,25 @@ function tunnelTokenGate(): Plugin {
 /**
  * TEMPORARY prototype aid for the sort dropdown's design dials (src/components/Dropdown/dialsSync.ts). Relays dial
  * values between browsers connected to this dev server over Vite's own HMR websocket, so a value tuned on the desktop
- * shows up on a phone on the LAN. One device leads and the others follow (see dialsSync.ts); the leader's latest
- * values are kept in memory so a device that starts following later gets them. Dev server only; remove with the
- * dials panel.
+ * shows up on a phone on the LAN. Lead and Follow only decide where a session starts (the leader's values seed it);
+ * after that every linked device edits it together, by per-dial patches merged here (see dialsSync.ts). The merged
+ * session is kept in memory so a device that starts following later gets it. Dev server only; remove with the dials
+ * panel.
  */
 function dialsSync(): Plugin {
   type Values = Record<string, string>
+  type Patch = Record<string, string | null>
   type Device = { id: string; name: string }
+  type Mode = 'off' | 'lead' | 'follow'
   /** Every connected dials panel and its mode, keyed by its raw HMR socket so a closed socket can be dropped. */
-  const panels = new Map<unknown, Device & { mode: 'off' | 'lead' | 'follow' }>()
-  /** The one leader, if any: its socket and the values it last sent, replayed to devices that start following. */
-  let leader: { socket: unknown; device: Device; values: Values } | null = null
+  const panels = new Map<unknown, Device & { mode: Mode }>()
+  /** The one leader, if any. */
+  let leader: { socket: unknown; device: Device } | null = null
+  /**
+   * The shared session: the last leader's values with every linked device's patches merged in, last change winning per
+   * dial. Null until a leader has seeded it. It outlives the leader, so followers keep editing together without one.
+   */
+  let session: Values | null = null
   return {
     name: 'dials-sync',
     apply: 'serve',
@@ -87,7 +95,7 @@ function dialsSync(): Plugin {
           leader: leader?.device ?? null,
           followers: [...panels.values()].filter(panel => panel.mode === 'follow').length,
         })
-      server.ws.on('dials:mode', (data: Device & { mode: 'off' | 'lead' | 'follow'; values?: Values }, client) => {
+      server.ws.on('dials:mode', (data: Device & { mode: Mode; values?: Values }, client) => {
         const socket = (client as WebSocketClient).socket
         panels.set(socket, { id: data.id, name: data.name, mode: data.mode })
         if (data.mode === 'lead') {
@@ -97,8 +105,10 @@ function dialsSync(): Plugin {
             const previous = panels.get(leader.socket)
             if (previous) previous.mode = 'follow'
           }
-          leader = { socket, device: { id: data.id, name: data.name }, values: data.values ?? {} }
-          server.ws.send('dials:update', { values: leader.values, leader: leader.device })
+          leader = { socket, device: { id: data.id, name: data.name } }
+          // Taking Lead (re)seeds the session with the leader's values, for every linked device.
+          session = { ...(data.values ?? {}) }
+          server.ws.send('dials:seed', { values: session, leader: leader.device })
         } else if (leader?.socket === socket) {
           leader = null
         }
@@ -110,15 +120,21 @@ function dialsSync(): Plugin {
           if (panels.delete(socket)) broadcastPresence()
         })
       })
-      // Only the leader's changes count; anyone else's are ignored.
-      server.ws.on('dials:publish', (data: { id: string; values: Values }, client) => {
-        if (!leader || leader.socket !== (client as WebSocketClient).socket) return
-        leader.values = data.values
-        server.ws.send('dials:update', { values: data.values, leader: leader.device })
+      // Any linked device's edits: merged into the session (null removes a dial) and relayed to every device.
+      server.ws.on('dials:patch', (data: { id: string; patch: Patch }, client) => {
+        const panel = panels.get((client as WebSocketClient).socket)
+        if (!panel || panel.mode === 'off') return
+        const next: Values = { ...(session ?? {}) }
+        Object.entries(data.patch).forEach(([name, value]) => {
+          if (value === null) delete next[name]
+          else next[name] = value
+        })
+        session = next
+        server.ws.send('dials:patch', { id: data.id, patch: data.patch })
       })
-      // Always answers, with nulls when there is no leader, so a device starting to follow knows.
+      // Always answers, with a null session when nothing has seeded it yet, so a device starting to follow knows.
       server.ws.on('dials:pull', (_data, client) => {
-        client.send('dials:state', { leader: leader?.device ?? null, values: leader?.values ?? null })
+        client.send('dials:state', { leader: leader?.device ?? null, values: session })
       })
     },
   }

@@ -1,17 +1,22 @@
 // PROTOTYPE — design dials sync, delete with DropdownDebugPanel once the values are baked.
 //
 // Shares the panel's dial values between browsers connected to the same Vite dev server (the dialsSync plugin in
-// vite.config.ts), with explicit roles so no device's work is overwritten by surprise:
+// vite.config.ts). Roles decide only where a session starts, so no device's work is overwritten by surprise:
 //   - Off: the default. Sends nothing and receives nothing.
-//   - Lead: this device's values are the session. Taking Lead pushes them to every follower, and every change is sent.
-//     There is one leader per dev server; a device taking Lead demotes the previous leader to Follow.
-//   - Follow: applies the leader's values live and sends nothing.
+//   - Lead: this device's values seed the session. There is one leader per dev server; a device taking Lead re-seeds
+//     the session and demotes the previous leader to Follow.
+//   - Follow: starts from the session's values (its own are set aside, and come back on Off).
+// Once linked (Lead or Follow), every device edits the session together: changes go out as per-dial patches, and the
+// last change to a dial wins, so two people tuning different dials at once don't overwrite each other.
 // It rides on Vite's HMR websocket, so it needs no extra server or port and works over whatever URL the device loaded
 // the app from. In a production build or a preview deployment there is no HMR connection: isDialsSyncAvailable() is
 // false and the other functions do nothing.
 
 /** Dial values keyed by custom property name, as the panel stores them. */
 export type DialValues = Record<string, string>
+
+/** Changed dials: a new value, or null for a dial reset to its design value. */
+export type DialsPatch = Record<string, string | null>
 
 /** This device's part in the session. */
 export type DialsSyncMode = 'off' | 'lead' | 'follow'
@@ -59,17 +64,17 @@ export const dialsDeviceName = (): string => {
 /** True on the dev server, where values can be shared between devices. */
 export const isDialsSyncAvailable = (): boolean => !!import.meta.hot
 
-/** Registers this panel and its mode with the server. Taking Lead sends this device's values as the session's. */
+/** Registers this panel and its mode with the server. Taking Lead sends this device's values to seed the session. */
 export const setDialsMode = (mode: DialsSyncMode, values?: DialValues): void => {
   import.meta.hot?.send('dials:mode', { id: dialsClientId, name: dialsDeviceName(), mode, values })
 }
 
-/** As leader, sends this device's values to every follower. The server ignores it from anyone but the leader. */
-export const publishDials = (values: DialValues): void => {
-  import.meta.hot?.send('dials:publish', { id: dialsClientId, values })
+/** Sends this device's changed dials to the session. The server ignores it from a device that is Off. */
+export const sendDialsPatch = (patch: DialsPatch): void => {
+  import.meta.hot?.send('dials:patch', { id: dialsClientId, patch })
 }
 
-/** Asks the server for the leader's current values; the answer arrives through subscribeDialsState. */
+/** Asks the server for the session's current values; the answer arrives through subscribeDialsState. */
 export const pullDials = (): void => {
   import.meta.hot?.send('dials:pull', {})
 }
@@ -82,13 +87,19 @@ const on = <T>(event: string, callback: (data: T) => void): (() => void) => {
   return () => hot.off(event, callback)
 }
 
-/** Calls back with the leader's values whenever they change (this tab's own publishes are skipped). */
-export const subscribeDials = (callback: (values: DialValues, leader: DialsDevice) => void) =>
-  on<{ values: DialValues; leader: DialsDevice }>('dials:update', message => {
+/** Calls back when a leader seeds the session with its values (skipped on the leader itself). */
+export const subscribeDialsSeed = (callback: (values: DialValues, leader: DialsDevice) => void) =>
+  on<{ values: DialValues; leader: DialsDevice }>('dials:seed', message => {
     if (message.leader.id !== dialsClientId) callback(message.values, message.leader)
   })
 
-/** Calls back with the server's answer to pullDials: the leader and its values, or nulls when there is no leader. */
+/** Calls back with another linked device's changed dials (this tab's own patches are skipped). */
+export const subscribeDialsPatch = (callback: (patch: DialsPatch) => void) =>
+  on<{ id: string; patch: DialsPatch }>('dials:patch', message => {
+    if (message.id !== dialsClientId) callback(message.patch)
+  })
+
+/** Calls back with the server's answer to pullDials: the leader if any, and the session's values, null if unseeded. */
 export const subscribeDialsState = (callback: (leader: DialsDevice | null, values: DialValues | null) => void) =>
   on<{ leader: DialsDevice | null; values: DialValues | null }>('dials:state', message =>
     callback(message.leader, message.values),
