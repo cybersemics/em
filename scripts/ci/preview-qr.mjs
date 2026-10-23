@@ -209,10 +209,15 @@ export const selectPullRequest = (candidates, sha) => {
   return heads[0] ?? null
 }
 
-/** Lists every open pull request in the repository, following pagination. */
-const listOpenPullRequests = async (repo, page = 1) => {
-  const pulls = await api(`/repos/${repo}/pulls?state=open&per_page=100&page=${page}`)
-  return pulls.length < 100 ? pulls : [...pulls, ...(await listOpenPullRequests(repo, page + 1))]
+/**
+ * Finds the open pull request whose head is the commit, paging until it turns up. Most recently
+ * updated first, since the push that triggered the preview just updated it, so the match is almost
+ * always on the first page.
+ */
+const findOpenPullRequestByHead = async (repo, sha, page = 1) => {
+  const pulls = await api(`/repos/${repo}/pulls?state=open&sort=updated&direction=desc&per_page=100&page=${page}`)
+  const pr = pulls.find(pr => pr.head.sha === sha)
+  return pr ?? (pulls.length < 100 ? null : findOpenPullRequestByHead(repo, sha, page + 1))
 }
 
 /**
@@ -221,13 +226,12 @@ const listOpenPullRequests = async (repo, page = 1) => {
  * a pull request that has moved past the commit is reported and skipped.
  *
  * Asked of the base repository, `GET /commits/{sha}/pulls` returns nothing for a commit that lives
- * only in a fork, so an empty association falls back to matching the head of every open pull
- * request.
+ * only in a fork, so an empty association falls back to searching the open pull requests by head.
  */
 const resolvePullRequest = async (repo, sha) => {
   const pulls = await api(`/repos/${repo}/commits/${sha}/pulls?per_page=100`)
   const candidates = pulls.filter(pr => pr.state === 'open' && pr.base.repo.full_name === repo)
-  if (candidates.length === 0) return selectPullRequest(await listOpenPullRequests(repo), sha)
+  if (candidates.length === 0) return findOpenPullRequestByHead(repo, sha)
   // Re-fetch rather than trusting the association listing, which can lag behind a push.
   const current = await Promise.all(candidates.map(pr => api(`/repos/${repo}/pulls/${pr.number}`)))
   const pr = selectPullRequest(current, sha)
