@@ -1,4 +1,4 @@
-// PROTOTYPE — which ellipse, if any, is being edited on canvas (the light, the radial blur or the mask), shared by the dials
+// PROTOTYPE — which ellipse, if any, is being edited on canvas (the light, a light layer, the radial blur or the mask), shared by the dials
 // panel and the canvas editors. Delete with them once the values are baked.
 import { useEffect, useState } from 'react'
 
@@ -8,8 +8,11 @@ export const DIAL_SET_EVENT = 'sort-dropdown-dial-set'
 /** Fired on window when canvas editing starts, stops or switches to another ellipse. */
 const EDITING_EVENT = 'sort-dropdown-canvas-editing'
 
-/** The ellipses that can be edited on canvas. */
-export type CanvasTarget = 'light' | 'blur' | 'mask'
+/**
+ * The ellipses that can be edited on canvas: the light as a group, the radial blur, the mask, and each of the light's
+ * own layers.
+ */
+export type CanvasTarget = 'light' | 'blur' | 'mask' | 'tint' | 'image' | 'band' | 'bloom' | 'selection'
 
 /** The ellipse being edited, or null. Module state, so the panel's buttons and the editors share it. */
 let editing: CanvasTarget | null = null

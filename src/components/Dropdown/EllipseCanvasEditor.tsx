@@ -49,6 +49,56 @@ export interface ValueHandle {
 /** Which part of the ellipse a handle edits. */
 type HandleKind = 'centre' | 'inner' | 'outer' | 'aspect' | 'value'
 
+/** Keeps handles this far inside the viewport's edges (px), so they can be grabbed. */
+const MARGIN = 28
+
+/**
+ * Directions to try, in order, for a resize handle on an ellipse: the sides first, then the diagonals, then top and
+ * bottom. Angles in radians, measured with y pointing down.
+ */
+const HANDLE_ANGLES = [
+  0,
+  Math.PI,
+  Math.PI / 4,
+  (3 * Math.PI) / 4,
+  -Math.PI / 4,
+  (-3 * Math.PI) / 4,
+  Math.PI / 2,
+  -Math.PI / 2,
+]
+
+/**
+ * Where to put a resize handle for an ellipse of horizontal radius r: the first point on its outline that is on screen,
+ * trying HANDLE_ANGLES in order. When the whole outline is off screen (an ellipse bigger than the viewport, like a
+ * widely spread light on a phone), the handle sits where the line from the centre towards the viewport's middle
+ * leaves the screen, so it can still be reached. Also returns the direction a drag is measured along: the outline
+ * point's direction (cos θ, aspect × sin θ), and its length, so a drag along it maps back to a change in r.
+ */
+const placeHandle = (cx: number, cy: number, r: number, aspect: number) => {
+  /** Whether a point is inside the viewport, clear of its edges. */
+  const inside = (x: number, y: number) =>
+    x >= MARGIN && x <= window.innerWidth - MARGIN && y >= MARGIN && y <= window.innerHeight - MARGIN
+  /** A handle at an angle on the outline. */
+  const at = (theta: number) => {
+    const dx = Math.cos(theta)
+    const dy = aspect * Math.sin(theta)
+    const length = Math.hypot(dx, dy) || 1
+    return { x: cx + r * dx, y: cy + r * dy, ux: dx / length, uy: dy / length, length }
+  }
+  for (const theta of HANDLE_ANGLES) {
+    const point = at(theta)
+    if (inside(point.x, point.y)) return point
+  }
+  // Nothing on screen: aim at the viewport's middle and stop at its edge.
+  const theta = Math.atan2((window.innerHeight / 2 - cy) / Math.max(0.01, aspect), window.innerWidth / 2 - cx)
+  const point = at(theta)
+  return {
+    ...point,
+    x: Math.min(window.innerWidth - MARGIN, Math.max(MARGIN, point.x)),
+    y: Math.min(window.innerHeight - MARGIN, Math.max(MARGIN, point.y)),
+  }
+}
+
 /** Stops a press on the editor from reaching document-level listeners, which would close the menu or the dialog. */
 const stopPress = {
   onMouseDown: (event: React.SyntheticEvent) => event.stopPropagation(),
@@ -82,8 +132,11 @@ const EllipseCanvasEditor = ({
     geometry: EllipseGeometry
     /** The value handle's number when the drag began. */
     value: number
-    /** The side the resize handles were on when the drag began, so dragging outward always grows the ellipse. */
-    side: number
+    /**
+     * The direction the dragged resize handle sits in from the centre (a unit vector), and how far along it the
+     * outline is per pixel of horizontal radius, so dragging outward always grows the ellipse, wherever the handle is.
+     */
+    direction: { ux: number; uy: number; length: number }
     /** The side the shape handle was on, so dragging away from the centre always makes the ellipse taller. */
     vertical: number
   } | null>(null)
@@ -93,9 +146,11 @@ const EllipseCanvasEditor = ({
   const cy = centre.y + geometry.offsetY
   const rx = Math.max(1, geometry.outer)
   const ry = rx * geometry.aspect
-  // The resize handles sit on whichever side of the ellipse has room: the light is usually near the right edge, where
-  // the outer handle would otherwise land off screen. +1: right of the centre; -1: left.
-  const side = cx + rx + 24 > window.innerWidth ? -1 : 1
+  // The resize handles sit on the first part of each outline that is on screen (see placeHandle): the light is
+  // usually near the right edge, and spread wide it can be bigger than a phone's screen.
+  const innerRx = Math.max(0, geometry.inner)
+  const outerHandle = placeHandle(cx, cy, rx, geometry.aspect)
+  const innerHandle = placeHandle(cx, cy, Math.max(1, innerRx), geometry.aspect)
   // Likewise the shape handle: on top of the ellipse, or below it when the top is off screen. -1: top; +1: bottom.
   const vertical = cy - ry < 24 ? 1 : -1
 
@@ -105,7 +160,16 @@ const EllipseCanvasEditor = ({
     event.preventDefault()
     event.currentTarget.setPointerCapture(event.pointerId)
     const value = valueHandle?.read() ?? 0
-    drag.current = { kind, startX: event.clientX, startY: event.clientY, geometry: read(), value, side, vertical }
+    const handle = kind === 'inner' ? innerHandle : outerHandle
+    drag.current = {
+      kind,
+      startX: event.clientX,
+      startY: event.clientY,
+      geometry: read(),
+      value,
+      direction: { ux: handle.ux, uy: handle.uy, length: handle.length },
+      vertical,
+    }
     if (kind === 'value') setDragValue(value)
   }
 
@@ -116,8 +180,8 @@ const EllipseCanvasEditor = ({
     const dx = event.clientX - start.startX
     const dy = event.clientY - start.startY
     const g = start.geometry
-    // Outward along the side the resize handles are on.
-    const outward = dx * start.side
+    // Outward along the direction the handle sits in, converted to horizontal radius.
+    const outward = (dx * start.direction.ux + dy * start.direction.uy) / start.direction.length
     if (start.kind === 'centre') write.offset(Math.round(g.offsetX + dx), Math.round(g.offsetY + dy))
     else if (start.kind === 'outer') write.outer(Math.round(Math.max(g.inner + 10, g.outer + outward)))
     else if (start.kind === 'inner') write.inner?.(Math.round(Math.min(g.outer - 10, Math.max(0, g.inner + outward))))
@@ -192,7 +256,6 @@ const EllipseCanvasEditor = ({
     </div>
   )
 
-  const innerRx = Math.max(0, geometry.inner)
   // The value handle sits a little above the centre (below it when there's no room), clear of the centre handle.
   const valueY = cy - 56 < 24 ? cy + 56 : cy - 56
   return createPortal(
@@ -203,8 +266,10 @@ const EllipseCanvasEditor = ({
       {write.inner ? <div style={outline(innerRx, innerRx * geometry.aspect, colours.inner)} /> : null}
       <div style={outline(rx, ry, colours.outer)} />
       {handle(cx, cy, 'centre', 'Centre: drag to move', 'white')}
-      {write.inner ? handle(cx + side * innerRx, cy, 'inner', `${labels.inner}: drag to resize`, colours.inner) : null}
-      {handle(cx + side * rx, cy, 'outer', `${labels.outer}: drag to resize`, colours.outer)}
+      {write.inner
+        ? handle(innerHandle.x, innerHandle.y, 'inner', `${labels.inner}: drag to resize`, colours.inner)
+        : null}
+      {handle(outerHandle.x, outerHandle.y, 'outer', `${labels.outer}: drag to resize`, colours.outer)}
       {write.aspect
         ? handle(cx, cy + vertical * ry, 'aspect', 'Shape: drag up or down to change its height', colours.outer)
         : null}

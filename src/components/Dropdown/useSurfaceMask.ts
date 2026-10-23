@@ -61,7 +61,11 @@ const useSurfaceMask = (surface: HTMLElement | null, light: { x: number; y: numb
       el.style.maskImage = mask
       el.style.webkitMaskImage = mask
       el.style.transition = transition(['--dropdown-surface-mask'])
-      el.style.setProperty('--dropdown-surface-mask', isOpen ? 'calc(1 - var(--sort-dropdown-mask-strength, 1))' : '1')
+      // The visibility dial (1 or 0) switches the mask off without losing its strength.
+      el.style.setProperty(
+        '--dropdown-surface-mask',
+        isOpen ? 'calc(1 - var(--sort-dropdown-mask-strength, 1) * var(--sort-dropdown-mask-visible, 1))' : '1',
+      )
     })
   }, [surface, visible, isOpen, light.x, light.y])
 

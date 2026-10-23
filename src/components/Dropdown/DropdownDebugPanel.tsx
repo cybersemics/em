@@ -6,7 +6,7 @@ import useBreakpoint from '../../hooks/useBreakpoint'
 import storage from '../../util/storage'
 import { DROPDOWN_Z_INDEX } from './Dropdown'
 import MotionStepperControls from './DropdownMotionStepper'
-import useCanvasEditing, { CanvasTarget, DIAL_SET_EVENT, setCanvasEditing } from './canvasEditing'
+import { CanvasTarget, DIAL_SET_EVENT, setCanvasEditing } from './canvasEditing'
 import { DIALS_EVENT } from './dials'
 import {
   announceDials,
@@ -36,8 +36,11 @@ interface Control {
   /** The custom property this control writes. */
   name: string
   label: string
-  /** Numeric controls get a scrub slider that writes `${value}${unit}`. Select controls choose from options. Text controls take any CSS value. */
-  kind: 'number' | 'select' | 'text'
+  /**
+   * Numeric controls get a scrub slider that writes `${value}${unit}`. Select controls choose from options. Colour
+   * controls get a colour picker and a hex field. Text controls take any CSS value.
+   */
+  kind: 'number' | 'select' | 'text' | 'color'
   min?: number
   max?: number
   step?: number
@@ -73,7 +76,7 @@ const OPENING_CONTROLS: Control[] = [
   },
 ]
 
-const MASK_CONTROLS: Control[] = [
+const SCRIM_CONTROLS: Control[] = [
   {
     name: '--sort-dropdown-scrim-opacity',
     label: 'screen dim',
@@ -84,6 +87,9 @@ const MASK_CONTROLS: Control[] = [
     fallback: '0.65',
     hint: 'A dark fill over the whole screen. 0 = none, 1 = black.',
   },
+]
+
+const MASK_CONTROLS: Control[] = [
   {
     name: '--sort-dropdown-mask-strength',
     label: 'mask strength',
@@ -169,7 +175,6 @@ const MASK_CONTROLS: Control[] = [
 
 const GLOW_CONTROLS: Control[] = [
   {
-    hidden: true,
     name: '--sort-dropdown-glow-spread',
     label: 'spread',
     kind: 'number',
@@ -177,17 +182,28 @@ const GLOW_CONTROLS: Control[] = [
     max: 3,
     step: 0.05,
     fallback: '2.2',
-    hint: 'Scales the whole glow about its centre. Below 1 = tight, above 1 = diffuse.',
+    hint: 'The light’s radius: scales every light layer about its centre. Below 1 = tight, above 1 = diffuse.',
   },
   {
-    hidden: true,
     name: '--sort-dropdown-glow-intensity',
     label: 'intensity',
     kind: 'number',
     min: 0,
     max: 2,
-    step: 0.05,
-    fallback: '1.2',
+    step: 0.01,
+    fallback: '1.2 | 0.84',
+    hint: 'The light’s brightness: multiplies every light layer’s opacity. Doesn’t change its size.',
+  },
+  {
+    name: '--sort-dropdown-glow-hue',
+    label: 'hue shift',
+    kind: 'number',
+    min: -180,
+    max: 180,
+    step: 1,
+    unit: 'deg',
+    fallback: '0deg',
+    hint: 'Rotates the colour of every light layer together.',
   },
   {
     hidden: true,
@@ -195,7 +211,7 @@ const GLOW_CONTROLS: Control[] = [
     label: 'light origin, horizontal',
     kind: 'number',
     unit: 'px',
-    fallback: '0px',
+    fallback: '0px | -20px',
   },
   {
     hidden: true,
@@ -203,12 +219,13 @@ const GLOW_CONTROLS: Control[] = [
     label: 'light origin, vertical',
     kind: 'number',
     unit: 'px',
-    fallback: '0px',
+    fallback: '0px | 52px',
   },
 ]
 
 const BLUR_CONTROLS: Control[] = [
   {
+    hidden: true,
     name: '--sort-dropdown-blur-enabled',
     label: 'radial blur',
     kind: 'select',
@@ -370,30 +387,323 @@ const ROWS_CONTROLS: Control[] = [
   },
 ]
 
-/** One collapsible group of controls. */
-interface Section {
-  /** Stable key for the persisted open state. */
+/** Blend modes a light layer can use. */
+const BLEND_OPTIONS = [
+  'normal',
+  'screen',
+  'plus-lighter',
+  'overlay',
+  'soft-light',
+  'color-dodge',
+  'lighten',
+  'multiply',
+].map(value => ({ value, label: value }))
+
+/** A layer's visibility, written as 1 (shown) or 0 (hidden) so CSS can multiply by it. Set by the eye toggle. */
+const visibilityControl = (name: string): Control => ({
+  hidden: true,
+  name,
+  label: 'visible',
+  kind: 'text',
+  fallback: '1',
+})
+
+/** A colour dial with a picker. */
+const colourControl = (name: string, label: string, fallback: string, hint?: string): Control => ({
+  name,
+  label,
+  kind: 'color',
+  fallback,
+  hint,
+})
+
+/** The dials every light layer has, around its design values. */
+const lightLayerControls = (
+  id: string,
+  design: { opacity: number; blend: string; falloffStart: number; falloffEnd: number },
+): Control[] => [
+  {
+    name: `--sort-dropdown-${id}-opacity`,
+    label: 'opacity',
+    kind: 'number',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    fallback: String(design.opacity),
+    hint: 'Before the light’s intensity, which multiplies it.',
+  },
+  {
+    name: `--sort-dropdown-${id}-blend`,
+    label: 'blend mode',
+    kind: 'select',
+    options: BLEND_OPTIONS,
+    fallback: design.blend,
+  },
+  {
+    name: `--sort-dropdown-${id}-size`,
+    label: 'size',
+    kind: 'number',
+    min: 0.2,
+    max: 3,
+    step: 0.01,
+    fallback: '1',
+    hint: 'Relative to its design size, about its own centre. On canvas: the outer handle.',
+  },
+  {
+    name: `--sort-dropdown-${id}-falloff-start`,
+    label: 'falloff starts at',
+    kind: 'number',
+    min: 0,
+    max: 100,
+    step: 1,
+    fallback: String(design.falloffStart),
+    hint: '% of its ellipse that stays at full strength. On canvas: the inner handle.',
+  },
+  {
+    name: `--sort-dropdown-${id}-falloff-end`,
+    label: 'falloff ends at',
+    kind: 'number',
+    min: 10,
+    max: 150,
+    step: 1,
+    fallback: String(design.falloffEnd),
+    hint: '% of its ellipse where it has faded out.',
+  },
+  {
+    name: `--sort-dropdown-${id}-offset-x`,
+    label: 'offset, horizontal',
+    kind: 'number',
+    min: -300,
+    max: 300,
+    step: 1,
+    unit: 'px',
+    fallback: '0px',
+    hint: 'From where it sits in the design. On canvas: the centre handle.',
+  },
+  {
+    name: `--sort-dropdown-${id}-offset-y`,
+    label: 'offset, vertical',
+    kind: 'number',
+    min: -300,
+    max: 300,
+    step: 1,
+    unit: 'px',
+    fallback: '0px',
+  },
+  visibilityControl(`--sort-dropdown-${id}-visible`),
+]
+
+/**
+ * One entry in the panel's list: a visual layer (with an eye toggle and an inline main value) or a group of settings
+ * that isn't a layer (Opening, Type & spacing, Motion). Tapping it opens its inspector, which shows only its dials and,
+ * for a layer with geometry, puts its ellipse on the canvas.
+ */
+interface Group {
+  /** Stable key, persisted as the open inspector. */
   id: string
   title: string
   /** Shown beside the title. */
   note?: string
+  kind: 'layer' | 'entry'
+  /** Indented under the light group, whose spread, intensity and origin apply to it too. */
+  child?: boolean
   controls: Control[]
+  /** The eye toggle's dial, and what it holds when shown and when hidden. */
+  visibility?: { name: string; on: string; off: string }
+  /** The control shown inline in the list, scrubbable without opening the inspector. */
+  main?: string
+  /** The ellipse edited on canvas while this group's inspector is open. */
+  canvas?: CanvasTarget
+  /** Values edited only on canvas, shown read-only in the inspector: [label, property, design value]. */
+  readout?: [string, string, string][]
 }
 
-/** The panel's sections in display order. */
-const SECTIONS: Section[] = [
-  { id: 'opening', title: 'Opening', controls: OPENING_CONTROLS },
-  { id: 'mask', title: 'Mask over the screen', note: 'modal ↔ local', controls: MASK_CONTROLS },
-  { id: 'glow', title: 'Menu glow', controls: GLOW_CONTROLS },
-  { id: 'rows', title: 'Type and spacing', controls: ROWS_CONTROLS },
-  { id: 'blur', title: 'Radial blur', note: 'on by default', controls: BLUR_CONTROLS },
-  { id: 'motion', title: 'Motion', note: 'freeze & step frames', controls: [] },
-  { id: 'paste', title: 'Overrides to paste back', note: 'for baking in', controls: [] },
+/** The light layers' design values, as DropdownLight's LIGHT_LAYER_DEFAULTS. */
+const LIGHT_DESIGN = {
+  tint: { opacity: 0.28, blend: 'normal', falloffStart: 30, falloffEnd: 100 },
+  image: { opacity: 0.22, blend: 'screen', falloffStart: 35, falloffEnd: 100 },
+  band: { opacity: 0.5, blend: 'screen', falloffStart: 0, falloffEnd: 100 },
+  bloom: { opacity: 1, blend: 'plus-lighter', falloffStart: 0, falloffEnd: 100 },
+  selection: { opacity: 0.14, blend: 'plus-lighter', falloffStart: 0, falloffEnd: 100 },
+}
+
+/** The panel's list, layers in stacking order (top first), then the entries that aren't layers. */
+const GROUPS: Group[] = [
+  {
+    id: 'rows',
+    title: 'Rows',
+    note: 'menu text',
+    kind: 'layer',
+    visibility: { name: '--sort-dropdown-rows-visible', on: '1', off: '0' },
+    main: '--sort-dropdown-rows-opacity',
+    controls: [
+      {
+        name: '--sort-dropdown-rows-opacity',
+        label: 'opacity',
+        kind: 'number',
+        min: 0,
+        max: 1,
+        step: 0.01,
+        fallback: '1',
+      },
+      visibilityControl('--sort-dropdown-rows-visible'),
+    ],
+  },
+  {
+    id: 'selection',
+    title: 'Selection glow',
+    kind: 'layer',
+    visibility: { name: '--sort-dropdown-selection-visible', on: '1', off: '0' },
+    main: '--sort-dropdown-selection-opacity',
+    canvas: 'selection',
+    controls: [
+      colourControl('--sort-dropdown-selection-colour', 'colour', '#aaa0ff'),
+      ...lightLayerControls('selection', LIGHT_DESIGN.selection),
+    ],
+  },
+  {
+    id: 'light',
+    title: 'Light',
+    note: 'group',
+    kind: 'layer',
+    visibility: { name: '--sort-dropdown-glow-visible', on: '1', off: '0' },
+    main: '--sort-dropdown-glow-intensity',
+    canvas: 'light',
+    controls: [...GLOW_CONTROLS, visibilityControl('--sort-dropdown-glow-visible')],
+    readout: [
+      ['origin x', '--sort-dropdown-glow-offset-x', '0px | -20px'],
+      ['origin y', '--sort-dropdown-glow-offset-y', '0px | 52px'],
+    ],
+  },
+  {
+    id: 'bloom',
+    title: 'Bloom',
+    kind: 'layer',
+    child: true,
+    visibility: { name: '--sort-dropdown-bloom-visible', on: '1', off: '0' },
+    main: '--sort-dropdown-bloom-opacity',
+    canvas: 'bloom',
+    controls: [
+      colourControl('--sort-dropdown-bloom-centre-colour', 'centre colour', '#7869e1'),
+      colourControl('--sort-dropdown-bloom-edge-colour', 'edge colour', '#2c2c85', 'The colour it fades towards.'),
+      ...lightLayerControls('bloom', LIGHT_DESIGN.bloom),
+    ],
+  },
+  {
+    id: 'band',
+    title: 'Band',
+    kind: 'layer',
+    child: true,
+    visibility: { name: '--sort-dropdown-band-visible', on: '1', off: '0' },
+    main: '--sort-dropdown-band-opacity',
+    canvas: 'band',
+    controls: [
+      colourControl(
+        '--sort-dropdown-band-colour',
+        'colour',
+        '#434378',
+        'Its gradient’s opaque end (the left end is transparent).',
+      ),
+      ...lightLayerControls('band', LIGHT_DESIGN.band),
+    ],
+  },
+  {
+    id: 'image',
+    title: 'Glow image',
+    note: 'PNG',
+    kind: 'layer',
+    child: true,
+    visibility: { name: '--sort-dropdown-image-visible', on: '1', off: '0' },
+    main: '--sort-dropdown-image-opacity',
+    canvas: 'image',
+    controls: [
+      {
+        name: '--sort-dropdown-image-hue',
+        label: 'hue',
+        kind: 'number',
+        min: -180,
+        max: 180,
+        step: 1,
+        unit: 'deg',
+        fallback: '0deg',
+        hint: 'It’s a bitmap, so it’s recoloured by rotating its hue.',
+      },
+      {
+        name: '--sort-dropdown-image-saturate',
+        label: 'saturation',
+        kind: 'number',
+        min: 0,
+        max: 400,
+        step: 1,
+        unit: '%',
+        fallback: '100%',
+      },
+      ...lightLayerControls('image', LIGHT_DESIGN.image),
+    ],
+  },
+  {
+    id: 'tint',
+    title: 'Tint',
+    kind: 'layer',
+    child: true,
+    visibility: { name: '--sort-dropdown-tint-visible', on: '1', off: '0' },
+    main: '--sort-dropdown-tint-opacity',
+    canvas: 'tint',
+    controls: [
+      colourControl(
+        '--sort-dropdown-tint-colour',
+        'colour',
+        '#434378',
+        'Its gradient’s opaque end (the left end is transparent).',
+      ),
+      ...lightLayerControls('tint', LIGHT_DESIGN.tint),
+    ],
+  },
+  {
+    id: 'scrim',
+    title: 'Screen dim',
+    kind: 'layer',
+    visibility: { name: '--sort-dropdown-scrim-visible', on: '1', off: '0' },
+    main: '--sort-dropdown-scrim-opacity',
+    controls: [...SCRIM_CONTROLS, visibilityControl('--sort-dropdown-scrim-visible')],
+  },
+  {
+    id: 'blur',
+    title: 'Radial blur',
+    kind: 'layer',
+    visibility: { name: '--sort-dropdown-blur-enabled', on: 'on', off: 'off' },
+    main: '--sort-dropdown-blur-core',
+    canvas: 'blur',
+    controls: BLUR_CONTROLS,
+  },
+  {
+    id: 'mask',
+    title: 'Mask',
+    note: 'on content',
+    kind: 'layer',
+    visibility: { name: '--sort-dropdown-mask-visible', on: '1', off: '0' },
+    main: '--sort-dropdown-mask-strength',
+    canvas: 'mask',
+    controls: [...MASK_CONTROLS, visibilityControl('--sort-dropdown-mask-visible')],
+    readout: [
+      ['size', '--sort-dropdown-mask-size', '226px'],
+      ['aspect', '--sort-dropdown-mask-aspect', '1.11'],
+      ['core', '--sort-dropdown-mask-core', '44%'],
+      ['fade ends', '--sort-dropdown-mask-falloff', '109%'],
+      ['offset x', '--sort-dropdown-mask-offset-x', '0px'],
+      ['offset y', '--sort-dropdown-mask-offset-y', '0px'],
+    ],
+  },
+  { id: 'opening', title: 'Opening', kind: 'entry', controls: OPENING_CONTROLS },
+  { id: 'type', title: 'Type & spacing', kind: 'entry', controls: ROWS_CONTROLS },
+  { id: 'motion', title: 'Motion', note: 'freeze & step frames', kind: 'entry', controls: [] },
+  { id: 'paste', title: 'Overrides to paste back', note: 'for baking in', kind: 'entry', controls: [] },
 ]
 
-const ALL_CONTROLS = SECTIONS.flatMap(section => section.controls)
+const ALL_CONTROLS = GROUPS.flatMap(group => group.controls)
 
-const OPEN_SECTIONS_KEY = 'sortDropdownDials.openSections'
+/** The open inspector, persisted so a reload returns to it. */
+const VIEW_KEY = 'sortDropdownDials.view'
 const VALUES_KEY = 'sortDropdownDials.values'
 const AUTO_SYNC_KEY = 'sortDropdownDials.autoSync'
 /** When this device's values last changed (ms since epoch), by a local edit or one received from another device. */
@@ -428,14 +738,6 @@ const readJson = <T,>(key: string, fallback: T, isValid: (value: unknown) => val
     return fallback
   }
 }
-
-/** Reads the persisted set of open section ids; every section starts open, so the dials are visible at first. */
-const readOpenSections = (): string[] =>
-  readJson(
-    OPEN_SECTIONS_KEY,
-    SECTIONS.map(section => section.id),
-    (value): value is string[] => Array.isArray(value) && value.every(id => typeof id === 'string'),
-  )
 
 /** Reads the persisted overrides, so a reload of the preview keeps the values being tuned. */
 const readValues = (): Record<string, string> =>
@@ -561,6 +863,20 @@ const ICONS = {
     </>
   ),
   close: <path d='M6 6l12 12M18 6L6 18' />,
+  back: <path d='M15 5l-7 7 7 7' />,
+  chevron: <path d='M9 5l7 7-7 7' />,
+  eye: (
+    <>
+      <path d='M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z' />
+      <circle cx='12' cy='12' r='3' />
+    </>
+  ),
+  eyeOff: (
+    <>
+      <path d='M2 12s3.6-7 10-7c2 0 3.7.7 5.1 1.6M22 12s-3.6 7-10 7c-2 0-3.7-.7-5.1-1.6' />
+      <path d='M4 20L20 4' />
+    </>
+  ),
   dials: (
     <>
       <path d='M5 7h14M5 12h14M5 17h14' />
@@ -822,6 +1138,10 @@ const ScrubSlider = ({
   )
 }
 
+/** A slider's value written back as a dial: trimmed decimals, plus the control's unit. */
+const formatNumber = (value: number, decimals: number, unit = '') =>
+  `${value.toFixed(decimals).replace(/\.?0+$/, '') || '0'}${unit}`
+
 /** One labelled control: a scrub slider or a choice, plus a free-form text input for the same custom property. */
 const ControlRow = ({
   control,
@@ -856,15 +1176,22 @@ const ControlRow = ({
           ))}
         </select>
       ) : null}
+      {control.kind === 'color' ? (
+        <input
+          type='color'
+          // The picker only takes six-digit hex; anything else in the text field shows the design colour.
+          value={/^#[0-9a-f]{6}$/i.test(value) ? value : control.fallback}
+          onChange={event => onChange(event.target.value)}
+          className={css({ width: '100%', height: '40px', padding: 0, border: 'none', background: 'transparent' })}
+        />
+      ) : null}
       {control.kind === 'number' ? (
         <ScrubSlider
           value={numeric}
           min={control.min ?? 0}
           max={control.max ?? 1}
           step={control.step ?? 0.01}
-          onChange={(next, decimals) =>
-            onChange(`${next.toFixed(decimals).replace(/\.?0+$/, '') || '0'}${control.unit ?? ''}`)
-          }
+          onChange={(next, decimals) => onChange(formatNumber(next, decimals, control.unit))}
         />
       ) : null}
       {control.kind !== 'select' ? (
@@ -882,105 +1209,236 @@ const ControlRow = ({
   )
 }
 
+/** The dial's value as shown: the override where set, otherwise the layout's design value. */
+const shownValue = (control: Control, value: string, isDesktop: boolean) =>
+  value ||
+  (control.fallback.includes('|') ? `${fallbackNumber(control, isDesktop)}${control.unit ?? ''}` : control.fallback)
+
+/** Whether a layer is shown, by its eye toggle's dial. */
+const isShown = (group: Group, values: Record<string, string>) =>
+  !group.visibility || (values[group.visibility.name] || group.visibility.on) !== group.visibility.off
+
 /**
- * One collapsible section. The summary shows how many of its properties are overridden so a tweak can be found again
- * while collapsed, and a reset icon clears just this section's overrides.
+ * Flips a layer's eye toggle. Showing it again clears the override rather than writing the default, so the copied
+ * overrides only list layers that are actually hidden.
  */
-const CollapsibleSection = ({
-  section,
-  isOpen,
-  onToggle,
+const toggleVisibility = (
+  group: Group,
+  setValues: (update: (previous: Record<string, string>) => Record<string, string>) => void,
+) =>
+  setValues(previous => {
+    if (!group.visibility) return previous
+    const next = { ...previous }
+    if (isShown(group, previous)) next[group.visibility.name] = group.visibility.off
+    else delete next[group.visibility.name]
+    return next
+  })
+
+/** The eye toggle for a layer. */
+const EyeToggle = ({
+  group,
+  values,
+  setValues,
+}: {
+  group: Group
+  values: Record<string, string>
+  setValues: (update: (previous: Record<string, string>) => Record<string, string>) => void
+}) => {
+  const shown = isShown(group, values)
+  return (
+    <IconButton
+      icon={shown ? 'eye' : 'eyeOff'}
+      label={`${shown ? 'Hide' : 'Show'} ${group.title}`}
+      onClick={() => toggleVisibility(group, setValues)}
+      pressed={!shown}
+    />
+  )
+}
+
+/**
+ * One row of the layers list: the eye toggle, the layer's name, its main value as a small scrub slider, and a chevron
+ * that opens its inspector. Tapping the name opens it too.
+ */
+const LayerRow = ({
+  group,
   values,
   setValues,
   isDesktop,
-  children,
+  onOpen,
 }: {
-  section: Section
-  isOpen: boolean
-  onToggle: (open: boolean) => void
+  group: Group
   values: Record<string, string>
   setValues: (update: (previous: Record<string, string>) => Record<string, string>) => void
   isDesktop: boolean
-  /** Rendered above the section's controls. */
+  onOpen: () => void
+}) => {
+  const main = group.main ? group.controls.find(control => control.name === group.main) : undefined
+  const mainValue = main ? (values[main.name] ?? '') : ''
+  const parsed = parseFloat(mainValue)
+  const numeric = main ? (Number.isFinite(parsed) ? parsed : fallbackNumber(main, isDesktop)) : 0
+  const overridden = group.controls.filter(control => values[control.name]).length
+  const shown = isShown(group, values)
+  return (
+    <div
+      data-dials-group={group.id}
+      className={css({
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        minHeight: '44px',
+        borderBottom: '1px solid {colors.fgOverlay10}',
+      })}
+      style={{ paddingLeft: group.child ? 14 : 0, opacity: shown ? 1 : 0.55 }}
+    >
+      {group.visibility ? (
+        <EyeToggle group={group} values={values} setValues={setValues} />
+      ) : (
+        <span className={css({ width: '36px', flex: 'none' })} />
+      )}
+      <button
+        type='button'
+        onClick={onOpen}
+        className={css({
+          flex: 1,
+          minWidth: 0,
+          minHeight: '40px',
+          padding: '0 2px',
+          textAlign: 'left',
+          fontFamily: 'monospace',
+          fontSize: '13px',
+          color: 'fg',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        })}
+      >
+        {group.child ? '└ ' : ''}
+        <span className={css({ fontWeight: 700 })}>{group.title}</span>
+        {group.note ? <span className={css({ opacity: 0.5 })}> {group.note}</span> : null}
+        {overridden ? <span className={css({ color: 'vividHighlight' })}> •{overridden}</span> : null}
+      </button>
+      {main && main.kind === 'number' ? (
+        <>
+          <div className={css({ width: '64px', flex: 'none' })}>
+            <ScrubSlider
+              value={numeric}
+              min={main.min ?? 0}
+              max={main.max ?? 1}
+              step={main.step ?? 0.01}
+              onChange={(next, decimals) =>
+                setValues(previous => ({ ...previous, [main.name]: formatNumber(next, decimals, main.unit) }))
+              }
+            />
+          </div>
+          <span className={css({ width: '44px', flex: 'none', textAlign: 'right', opacity: 0.8, fontSize: '12px' })}>
+            {shownValue(main, mainValue, isDesktop)}
+          </span>
+        </>
+      ) : null}
+      <IconButton icon='chevron' label={`Open ${group.title}`} onClick={onOpen} />
+    </div>
+  )
+}
+
+/** A read-only line of values edited on canvas: the override where set, otherwise the design value. */
+const Readout = ({
+  values,
+  items,
+  isDesktop,
+}: {
+  values: Record<string, string>
+  items: [string, string, string][]
+  isDesktop: boolean
+}) => (
+  <p className={css({ margin: '0 0 8px', opacity: 0.7, fontFamily: 'monospace' })}>
+    {items
+      .map(([label, name, fallback]) => {
+        // "mobile | desktop" design values: show the current layout's.
+        const parts = fallback.split('|').map(part => part.trim())
+        return `${label} ${values[name] || (parts.length > 1 ? parts[isDesktop ? 1 : 0] : parts[0])}`
+      })
+      .join(' · ')}
+  </p>
+)
+
+/**
+ * A group's inspector: replaces the list, with a back arrow. Shows the group's eye toggle, a reset for just its dials,
+ * a note when its ellipse is on the canvas, its canvas-only values, and its controls. Children render above the
+ * controls (the motion stepper, the overrides to paste back).
+ */
+const Inspector = ({
+  group,
+  values,
+  setValues,
+  isDesktop,
+  onBack,
+  children,
+}: {
+  group: Group
+  values: Record<string, string>
+  setValues: (update: (previous: Record<string, string>) => Record<string, string>) => void
+  isDesktop: boolean
+  onBack: () => void
   children?: ReactNode
 }) => {
-  const overridden = section.controls.filter(control => values[control.name]).length
+  const overridden = group.controls.filter(control => values[control.name]).length
 
-  /** Drops this section's overrides, leaving the others in place. */
-  const resetSection = () =>
+  /** Drops this group's overrides, leaving the others in place. */
+  const resetGroup = () =>
     setValues(previous => {
       const next = { ...previous }
-      section.controls.forEach(control => delete next[control.name])
+      group.controls.forEach(control => delete next[control.name])
       return next
     })
 
   return (
-    <details
-      open={isOpen}
-      onToggle={event => onToggle((event.currentTarget as HTMLDetailsElement).open)}
-      className={css({
-        margin: '8px 0',
-        border: '1px solid {colors.fgOverlay20}',
-        borderRadius: '6px',
-      })}
-    >
-      <summary
+    <div data-dials-inspector={group.id}>
+      <div
         className={css({
+          position: 'sticky',
+          top: 0,
+          zIndex: 1,
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
-          minHeight: '40px',
-          padding: '4px 8px',
-          cursor: 'pointer',
-          fontWeight: 700,
-          backgroundColor: 'fgOverlay10',
-          borderRadius: '5px',
-          listStyle: 'none',
-          // Hide the native disclosure triangle; the span below draws one that also renders in the popup.
-          '&::-webkit-details-marker': { display: 'none' },
+          padding: '6px 0',
+          marginBottom: '6px',
+          backgroundColor: 'bg',
+          borderBottom: '1px solid {colors.fgOverlay20}',
         })}
       >
-        <span aria-hidden className={css({ opacity: 0.7, width: '1em' })}>
-          {isOpen ? '▾' : '▸'}
+        <IconButton icon='back' label='Back to layers' onClick={onBack} />
+        <span className={css({ flex: 1, minWidth: 0, fontWeight: 700 })}>
+          {group.title}
+          {group.note ? <span className={css({ opacity: 0.5, fontWeight: 400 })}> {group.note}</span> : null}
         </span>
-        <span>{section.title}</span>
-        {section.note ? <span className={css({ opacity: 0.5, fontWeight: 400 })}>{section.note}</span> : null}
-        {overridden ? (
-          <span
-            className={css({
-              marginLeft: 'auto',
-              padding: '0 6px',
-              borderRadius: '8px',
-              fontWeight: 400,
-              whiteSpace: 'nowrap',
-              backgroundColor: 'vividHighlight',
-              color: 'bg',
-            })}
-          >
-            {overridden} set
-          </span>
-        ) : null}
-      </summary>
-      <div className={css({ padding: '8px 8px 4px' })}>
-        {children}
-        {section.controls
-          .filter(control => !control.hidden)
-          .map(control => (
-            <ControlRow
-              key={control.name}
-              control={control}
-              value={values[control.name] ?? ''}
-              isDesktop={isDesktop}
-              onChange={value => setValues(previous => ({ ...previous, [control.name]: value }))}
-            />
-          ))}
-        {section.controls.length ? (
-          <div className={css({ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' })}>
-            <IconButton icon='reset' label='Reset this section' onClick={resetSection} disabled={!overridden} />
-          </div>
+        {group.visibility ? <EyeToggle group={group} values={values} setValues={setValues} /> : null}
+        {group.controls.length ? (
+          <IconButton icon='reset' label={`Reset ${group.title}`} onClick={resetGroup} disabled={!overridden} />
         ) : null}
       </div>
-    </details>
+      {group.canvas ? (
+        <p className={css({ margin: '0 0 8px', opacity: 0.6 })}>
+          Open the sort menu to see its outline on screen; drag the handles to edit it.
+        </p>
+      ) : null}
+      {group.readout ? <Readout values={values} items={group.readout} isDesktop={isDesktop} /> : null}
+      {children}
+      {group.controls
+        .filter(control => !control.hidden)
+        .map(control => (
+          <ControlRow
+            key={control.name}
+            control={control}
+            value={values[control.name] ?? ''}
+            isDesktop={isDesktop}
+            onChange={value => setValues(previous => ({ ...previous, [control.name]: value }))}
+          />
+        ))}
+    </div>
   )
 }
 
@@ -1010,6 +1468,8 @@ const DialsFab = ({
     samples: { x: number; y: number; t: number }[]
   } | null>(null)
   const frame = useRef(0)
+  // Set when a press ends without dragging; the click that follows it opens the panel.
+  const tapped = useRef(false)
 
   useEffect(() => () => cancelAnimationFrame(frame.current), [])
 
@@ -1048,6 +1508,13 @@ const DialsFab = ({
       {...{ [DIALS_ROOT_ATTRIBUTE]: '' }}
       title='Sort dropdown dials (drag to move, tap to open)'
       {...stopPress}
+      onClick={event => {
+        event.stopPropagation()
+        // A press that ended a drag also clicks; only a tap opens the panel.
+        if (!tapped.current) return
+        tapped.current = false
+        onOpen()
+      }}
       onPointerDown={event => {
         event.stopPropagation()
         cancelAnimationFrame(frame.current)
@@ -1078,7 +1545,9 @@ const DialsFab = ({
         press.current = null
         if (!current) return
         if (!current.dragging) {
-          onOpen()
+          // Opened by the click that follows, not here: on touch, the browser follows a tap with a click at the same
+          // spot, and if the panel opened now that click would land on whatever control it put under the finger.
+          tapped.current = true
           return
         }
         // Velocity over the last ~100ms of the drag.
@@ -1145,64 +1614,11 @@ const DialsFab = ({
   )
 }
 
-/**
- * Starts or stops editing one ellipse on canvas. Only one editor is active at a time, so starting this one stops any
- * other.
- */
-const CanvasEditButton = ({
-  target,
-  label,
-  active,
-  onStart,
-}: {
-  target: CanvasTarget
-  label: string
-  active: CanvasTarget | null
-  onStart?: () => void
-}) => {
-  const editing = active === target
-  return (
-    <button
-      type='button'
-      aria-pressed={editing}
-      onClick={() => {
-        if (!editing) onStart?.()
-        setCanvasEditing(editing ? null : target)
-      }}
-      className={css({
-        width: '100%',
-        minHeight: '40px',
-        marginBottom: '8px',
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        color: 'fg',
-        borderRadius: '8px',
-        border: '1px solid {colors.fgOverlay20}',
-        cursor: 'pointer',
-      })}
-      style={{ backgroundColor: editing ? 'rgba(120, 105, 225, 0.45)' : 'rgba(255, 255, 255, 0.06)' }}
-    >
-      {editing ? 'Editing on canvas: drag the handles (tap to stop)' : label}
-    </button>
-  )
-}
-
-/** A read-only line of values edited on canvas: the override where set, otherwise the design value. */
-const Readout = ({ values, items }: { values: Record<string, string>; items: [string, string, string][] }) => (
-  <p className={css({ margin: '0 0 8px', opacity: 0.7, fontFamily: 'monospace' })}>
-    {items.map(([label, name, fallback]) => `${label} ${values[name] || fallback}`).join(' · ')}
-  </p>
-)
-
 /** The design-dials panel for the sort dropdown: a floating button over the Command Universe that opens the dials, inline or in a popup window. */
 const DropdownDebugPanel = () => {
   // The frame stepper's state lives here, in the component that stays mounted, so freezing works while collapsed.
   const motion = useMotionStepper()
   const [values, setValues] = useState<Record<string, string>>(readValues)
-  // The ellipse being edited on canvas (the light, the mask or the radial blur), shown over the screen while the menu
-  // is open.
-  const canvasTarget = useCanvasEditing()
-
   // The canvas editor sets dials through an event; apply them like control changes, so copy and sync see them.
   useEffect(() => {
     /** Applies one dial set from the canvas. */
@@ -1213,7 +1629,9 @@ const DropdownDebugPanel = () => {
     window.addEventListener(DIAL_SET_EVENT, onDialSet)
     return () => window.removeEventListener(DIAL_SET_EVENT, onDialSet)
   }, [])
-  const [openSections, setOpenSections] = useState<string[]>(readOpenSections)
+  // The open inspector's group id, or null for the layers list.
+  const [view, setViewState] = useState<string | null>(() => storage.getItem(VIEW_KEY) || null)
+  const viewGroup = GROUPS.find(group => group.id === view) ?? null
   const [popup, setPopup] = useState<Window | null>(null)
   // The sort dropdown lives in the Command Universe, so the button and panel only show while it is open. The popup
   // and the overrides stay, so tuning can continue across closing and reopening it.
@@ -1245,13 +1663,16 @@ const DropdownDebugPanel = () => {
   // False until the first render's values have been seen, so loading the panel doesn't send its stored values.
   const hasLoaded = useRef(false)
 
-  /** Expands or collapses one section and remembers the choice for the next reload. */
-  const toggleSection = (id: string, open: boolean) =>
-    setOpenSections(previous => {
-      const next = open ? [...new Set([...previous, id])] : previous.filter(section => section !== id)
-      storage.setItem(OPEN_SECTIONS_KEY, JSON.stringify(next))
-      return next
-    })
+  /** Opens a group's inspector, or the layers list with null, and remembers it for the next reload. */
+  const setView = (id: string | null) => {
+    storage.setItem(VIEW_KEY, id ?? '')
+    setViewState(id)
+  }
+
+  // A layer's ellipse is on the canvas while its inspector is open, and the panel or its popup is showing.
+  useEffect(() => {
+    setCanvasEditing((expanded || popup) && viewGroup?.canvas ? viewGroup.canvas : null)
+  }, [expanded, popup, viewGroup])
 
   // Write the overrides to <html>, persist them, and tell the dropdown to re-read and re-measure.
   useEffect(() => {
@@ -1405,23 +1826,16 @@ const DropdownDebugPanel = () => {
     setPopup(win)
   }
 
-  /** Opens or closes every section at once. */
-  const setAllSections = (open: boolean) => {
-    const next = open ? SECTIONS.map(section => section.id) : []
-    storage.setItem(OPEN_SECTIONS_KEY, JSON.stringify(next))
-    setOpenSections(next)
-  }
-
   const layout = isDesktop ? 'desktop (≥ 400px)' : 'mobile (< 400px)'
   const set = Object.fromEntries(Object.entries(values).filter(([, value]) => value))
   const overriddenCount = Object.keys(set).length
   // Every override grouped by section with the fallback it replaces, so the list can be pasted into the pull request
   // and each value located in the code it belongs to.
-  const overrideRows = SECTIONS.flatMap(section => {
-    const rows = section.controls
+  const overrideRows = GROUPS.flatMap(group => {
+    const rows = group.controls
       .filter(control => values[control.name])
       .map(control => `${control.name}: ${values[control.name]};  /* was ${control.fallback} */`)
-    return rows.length ? [`// ${section.title}`, ...rows] : []
+    return rows.length ? [`// ${group.title}`, ...rows] : []
   })
   const pasteText = [
     `// sort dropdown overrides · ${layout} · ${window.innerWidth}×${window.innerHeight}`,
@@ -1439,8 +1853,6 @@ const DropdownDebugPanel = () => {
         label={popup ? 'Close popup' : 'Open in popup'}
         onClick={() => (popup ? popup.close() : openPopup())}
       />
-      <IconButton icon='expand' label='Expand all sections' onClick={() => setAllSections(true)} />
-      <IconButton icon='collapse' label='Collapse all sections' onClick={() => setAllSections(false)} />
       {syncAvailable ? (
         <>
           <IconButton icon='sync' label='Send these values to every device on the dev server' onClick={syncNow} />
@@ -1465,90 +1877,81 @@ const DropdownDebugPanel = () => {
     </div>
   )
 
-  const controls = (
-    <>
-      {toolbar}
-      <p className={css({ margin: '4px 0', opacity: 0.6 })}>
-        Open the sort menu, then drag. Move your finger up or down off a slider to scrub finely. Empty = current design
-        value (mobile | desktop where they differ).
-      </p>
-      {SECTIONS.map(section => (
-        <CollapsibleSection
-          key={section.id}
-          section={section}
-          isOpen={openSections.includes(section.id)}
-          onToggle={open => toggleSection(section.id, open)}
+  // The scrolling body: the layers list, or one group's inspector in its place.
+  const body = viewGroup ? (
+    <Inspector
+      group={viewGroup}
+      values={values}
+      setValues={setValues}
+      isDesktop={isDesktop}
+      onBack={() => setView(null)}
+    >
+      {viewGroup.id === 'motion' ? <MotionStepperControls motion={motion} Slider={ScrubSlider} /> : null}
+      {viewGroup.id === 'paste' ? (
+        <>
+          <pre
+            className={css({
+              margin: '0 0 6px',
+              padding: '6px 8px',
+              fontSize: '12px',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
+              userSelect: 'text',
+              backgroundColor: 'fgOverlay10',
+              border: '1px solid {colors.fgOverlay20}',
+              borderRadius: '6px',
+            })}
+          >
+            {pasteText}
+          </pre>
+          <IconButton icon='copy' label='Copy as JSON' onClick={() => copy(JSON.stringify(set, null, 2))} />
+        </>
+      ) : null}
+    </Inspector>
+  ) : (
+    <div data-dials-layers=''>
+      {GROUPS.filter(group => group.kind === 'layer').map(group => (
+        <LayerRow
+          key={group.id}
+          group={group}
           values={values}
           setValues={setValues}
           isDesktop={isDesktop}
-        >
-          {section.id === 'motion' ? <MotionStepperControls motion={motion} Slider={ScrubSlider} /> : null}
-          {section.id === 'glow' ? (
-            <>
-              <CanvasEditButton target='light' label='Edit light on canvas' active={canvasTarget} />
-              <Readout
-                values={values}
-                items={[
-                  ['spread', '--sort-dropdown-glow-spread', '2.2'],
-                  ['intensity', '--sort-dropdown-glow-intensity', '1.2'],
-                  ['origin x', '--sort-dropdown-glow-offset-x', '0px'],
-                  ['origin y', '--sort-dropdown-glow-offset-y', '0px'],
-                ]}
-              />
-            </>
-          ) : null}
-          {section.id === 'mask' ? (
-            <>
-              <CanvasEditButton target='mask' label='Edit mask on canvas' active={canvasTarget} />
-              <Readout
-                values={values}
-                items={[
-                  ['size', '--sort-dropdown-mask-size', '226px'],
-                  ['aspect', '--sort-dropdown-mask-aspect', '1.11'],
-                  ['core', '--sort-dropdown-mask-core', '44%'],
-                  ['fade ends', '--sort-dropdown-mask-falloff', '109%'],
-                  ['offset x', '--sort-dropdown-mask-offset-x', '0px'],
-                  ['offset y', '--sort-dropdown-mask-offset-y', '0px'],
-                ]}
-              />
-            </>
-          ) : null}
-          {section.id === 'blur' ? (
-            <CanvasEditButton
-              target='blur'
-              label='Edit blur on canvas'
-              active={canvasTarget}
-              onStart={() => {
-                // Editing a blur that is off would show nothing on screen, so editing turns it on.
-                if (values['--sort-dropdown-blur-enabled'] === 'off') {
-                  setValues(previous => ({ ...previous, '--sort-dropdown-blur-enabled': 'on' }))
-                }
-              }}
-            />
-          ) : null}
-          {section.id === 'paste' ? (
-            <>
-              <pre
-                className={css({
-                  margin: '0 0 6px',
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  userSelect: 'text',
-                  backgroundColor: 'fgOverlay10',
-                  border: '1px solid {colors.fgOverlay20}',
-                  borderRadius: '6px',
-                })}
-              >
-                {pasteText}
-              </pre>
-              <IconButton icon='copy' label='Copy as JSON' onClick={() => copy(JSON.stringify(set, null, 2))} />
-            </>
-          ) : null}
-        </CollapsibleSection>
+          onOpen={() => setView(group.id)}
+        />
       ))}
-    </>
+      <p className={css({ margin: '12px 0 4px', opacity: 0.5 })}>Settings</p>
+      {GROUPS.filter(group => group.kind === 'entry').map(group => (
+        <LayerRow
+          key={group.id}
+          group={group}
+          values={values}
+          setValues={setValues}
+          isDesktop={isDesktop}
+          onOpen={() => setView(group.id)}
+        />
+      ))}
+      <p className={css({ margin: '10px 0 4px', opacity: 0.5 })}>
+        Tap a row to edit it; its outline shows on screen while the sort menu is open. Drag a slider sideways to change
+        it; move your finger up or down off it to scrub finely.
+      </p>
+    </div>
+  )
+
+  /** The scrolling area under the pinned header. */
+  const scrollBody = (
+    <div
+      className={css({
+        flex: 1,
+        minHeight: 0,
+        overflowY: 'auto',
+        overscrollBehavior: 'contain',
+        touchAction: 'pan-y',
+        padding: '0 10px 8px',
+      })}
+    >
+      {body}
+    </div>
   )
 
   // The open panel sits beside the button: on whichever side has more room, its top level with the button's, and
@@ -1599,45 +2002,48 @@ const DropdownDebugPanel = () => {
               boxSizing: 'border-box',
               width: '100%',
               height: '100%',
-              overflowY: 'auto',
-              overscrollBehavior: 'contain',
-              padding: '8px 10px',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
               backgroundColor: 'bgOverlay80',
               // Blur what's behind, so the menu's own text under the panel doesn't compete with the controls.
               backdropFilter: 'blur(14px)',
               border: '1px solid {colors.fgOverlay20}',
               borderRadius: '10px',
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
-              touchAction: 'pan-y',
             })}
           >
-            <div className={css({ display: 'flex', alignItems: 'center', gap: '6px' })}>
-              <span className={css({ flex: 1, fontWeight: 700 })}>Dials · {layout}</span>
-              <IconButton icon='close' label='Close dials' onClick={() => setExpanded(false)} />
-            </div>
-            <label
-              className={css({ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.8, marginTop: '4px' })}
-            >
-              zoom
-              <input
-                type='range'
-                min={0.5}
-                max={1}
-                step={0.05}
-                value={panelZoom}
-                onChange={event => setPanelZoom(parseFloat(event.target.value))}
-                className={css({ flex: 1 })}
-              />
-              {Math.round(panelZoom * 100)}%
-            </label>
-            {popup ? (
-              <div className={css({ display: 'flex', gap: '6px', margin: '8px 0' })}>
-                <IconButton icon='focus' label='Focus popup' onClick={() => popup.focus()} />
-                <IconButton icon='close' label='Close popup' onClick={() => popup.close()} />
+            {/* Pinned header: title, zoom and the toolbar stay put while the list or inspector scrolls. */}
+            <div className={css({ flex: 'none', padding: '8px 10px 0' })}>
+              <div className={css({ display: 'flex', alignItems: 'center', gap: '6px' })}>
+                <span className={css({ flex: 1, fontWeight: 700 })}>Dials · {layout}</span>
+                <IconButton icon='close' label='Close dials' onClick={() => setExpanded(false)} />
               </div>
-            ) : (
-              controls
-            )}
+              <label
+                className={css({ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.8, marginTop: '4px' })}
+              >
+                zoom
+                <input
+                  type='range'
+                  min={0.5}
+                  max={1}
+                  step={0.05}
+                  value={panelZoom}
+                  onChange={event => setPanelZoom(parseFloat(event.target.value))}
+                  className={css({ flex: 1 })}
+                />
+                {Math.round(panelZoom * 100)}%
+              </label>
+              {popup ? (
+                <div className={css({ display: 'flex', gap: '6px', margin: '8px 0' })}>
+                  <IconButton icon='focus' label='Focus popup' onClick={() => popup.focus()} />
+                  <IconButton icon='close' label='Close popup' onClick={() => popup.close()} />
+                </div>
+              ) : (
+                toolbar
+              )}
+            </div>
+            {popup ? null : scrollBody}
           </div>
           <div
             aria-label='Resize panel'
@@ -1692,7 +2098,8 @@ const DropdownDebugPanel = () => {
               })}
             >
               <h3 className={css({ margin: '0 0 6px', fontSize: '14px' })}>Sort dropdown dials · {layout}</h3>
-              {controls}
+              {toolbar}
+              {body}
             </div>,
             popup.document.body,
           )
