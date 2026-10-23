@@ -30,6 +30,9 @@ const useNativeTextDrag = () => {
     /** The thought, its editable, and the plain-text offsets of the selected text being dragged natively on Android, or null if no native text drag is in progress. See #4225. */
     let nativeTextDrag: { id: ThoughtId; editable: HTMLElement; start: number; end: number } | null = null
 
+    /** The selected range when the last touch began, or null if the selection was collapsed. See onAndroidContextMenu. */
+    let pressedSelection: selection.SavedRange | null = null
+
     /**
      * Returns the thought editable that contains the node, and the id of its thought, or null if the node is not in a
      * thought. A thought that the Editable change handler would not let the user edit — one marked =readonly or
@@ -132,11 +135,22 @@ const useNativeTextDrag = () => {
      * Suppresses em's long-press handling of the context menu while selected text is pressed on Android. A long
      * press on selected text never becomes a thought drag (see canDrag), but the long-press handler in useLongPress
      * still blurs the editable and closes the keyboard, which interrupts the native text drag. The context menu that
-     * follows the long press may arrive just before or just after dragstart, so the selected range is checked too.
-     * Registered in the capture phase so it runs before React's handlers.
+     * follows the long press may arrive just before or just after dragstart, so a selection that is unchanged since the
+     * touch began is checked too. A long press on text that is not selected selects the word under the finger before the
+     * context menu arrives, and that selection is left to useLongPress to clear, so the press can become a thought drag
+     * (#5976). Registered in the capture phase so it runs before React's handlers.
      */
     const onAndroidContextMenu = (e: MouseEvent) => {
-      if ((e as PointerEvent).pointerType !== 'touch' || (!nativeTextDrag && !selection.text())) return
+      if ((e as PointerEvent).pointerType !== 'touch') return
+      const current = selection.saveRange()
+      const pressedOnSelection =
+        !!pressedSelection &&
+        !!current &&
+        current.anchorNode === pressedSelection.anchorNode &&
+        current.anchorOffset === pressedSelection.anchorOffset &&
+        current.focusNode === pressedSelection.focusNode &&
+        current.focusOffset === pressedSelection.focusOffset
+      if (!nativeTextDrag && !pressedOnSelection) return
       e.preventDefault()
       e.stopPropagation()
     }
@@ -242,9 +256,14 @@ const useNativeTextDrag = () => {
       })
     }
 
-    /** Ends a native text drag on Android whose drop and dragend never arrived, e.g. when the browser drops the drag, so the native caret is not left hidden. A native drag holds the touch, so the next touchstart comes after it has ended. */
+    /**
+     * Ends a native text drag on Android whose drop and dragend never arrived, e.g. when the browser drops the drag, so
+     * the native caret is not left hidden. A native drag holds the touch, so the next touchstart comes after it has
+     * ended. Also saves the selected range the touch began on, for onAndroidContextMenu.
+     */
     const onAndroidTouchStart = () => {
       if (nativeTextDrag) endNativeTextDrag()
+      pressedSelection = selection.isCollapsed() ? null : selection.saveRange()
     }
 
     /** Ends a native text drag on Android that was abandoned without a drop, reselecting the dragged text. */
