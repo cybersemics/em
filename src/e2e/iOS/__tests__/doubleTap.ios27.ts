@@ -8,7 +8,6 @@ import gesture from '../helpers/gesture'
 import getCaretOffset from '../helpers/getCaretOffset'
 import getEditingText from '../helpers/getEditingText'
 import getScreenOffsetY from '../helpers/getScreenOffsetY'
-import getSelection from '../helpers/getSelection'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import isKeyboardShown from '../helpers/isKeyboardShown'
 import newThought from '../helpers/newThought'
@@ -27,10 +26,6 @@ describe('Double tap', () => {
     await waitUntil(isKeyboardShown)
 
     await tap(editable, { offset: 'One'.length, pointerType: 'touch', count: 2 })
-    await waitUntil(async () => (await getSelection().toString()) === 'One')
-    // On a device the next tap moves the caret even though iOS withholds its touchend, but on BrowserStack it leaves
-    // the word selected, and em does not start a long press while a word is selected.
-    await setSelection('One'.length, 'One'.length)
 
     // clear of the bullet, which overlaps the editable's left edge
     await tap(editable, { horizontalTapLine: 'left', x: 4, pointerType: 'touch' })
@@ -53,7 +48,6 @@ describe('Double tap', () => {
     await waitUntil(isKeyboardShown)
 
     await tap(editable, { offset: 'One'.length, pointerType: 'touch', count: 2 })
-    await waitUntil(async () => (await getSelection().toString()) === 'One')
 
     await newThought()
     const empty = await browser.$('[data-editing=true] [data-editable]').getElement()
@@ -76,8 +70,6 @@ describe('Double tap', () => {
     await newThought('world')
     const world = await waitForEditable('world')
     await tap(world, { offset: 'world'.length, pointerType: 'touch', count: 2 })
-    await waitUntil(async () => (await getSelection().toString()) === 'world')
-    await setSelection('world'.length, 'world'.length)
 
     const hello = await waitForEditable('hello')
     await tap(hello, { offset: 'hello'.length, pointerType: 'touch' })
@@ -87,7 +79,7 @@ describe('Double tap', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5660
-  it.skip('a gesture that starts just below the caret after a double tap on the caret runs its command', async () => {
+  it('a gesture that starts just below the caret after a double tap on the caret runs its command', async () => {
     await newThought('One')
     await hideKeyboardByTappingDone()
     const editable = await waitForEditable('One')
@@ -95,7 +87,9 @@ describe('Double tap', () => {
     await waitUntil(isKeyboardShown)
 
     await tap(editable, { offset: 'One'.length, pointerType: 'touch', count: 2 })
+    // a touch on the thought is covered for a moment after each tap on it, to catch the second tap of a double tap
     await browser.pause(1000)
+    // if the double tap selected the word, BrowserStack leaves it selected, and a gesture is not run over a selection
     await setSelection('One'.length, 'One'.length)
 
     const caret = await browser.execute(() => {

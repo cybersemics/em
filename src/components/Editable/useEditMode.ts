@@ -8,6 +8,7 @@ import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
 import { isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
+import doubleTapShield from '../../device/doubleTapShield'
 import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
@@ -25,6 +26,12 @@ import head from '../../util/head'
 import isCommandKey from '../../util/isCommandKey'
 import lastTouch from './lastTouch'
 import useCaretRestore from './useCaretRestore'
+
+/** How long a press must be held before iOS shows the magnifier, after which it is no longer a tap. */
+const MAGNIFIER_DELAY = 500
+
+/** How far a touch can move and still be a tap rather than a gesture, in pixels. Matches MultiGesture's minDistance. */
+const TAP_SLOP = 10
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
@@ -60,8 +67,8 @@ const useEditMode = ({
   const store = useStore()
   const dispatch = useDispatch()
   const pressingRef = useRef(false)
-  // Where the touch in progress on this editable began.
-  const touchStartRef = useRef<{ clientX: number; clientY: number } | null>(null)
+  // Where and when the touch in progress on this editable began.
+  const touchStartRef = useRef<{ clientX: number; clientY: number; timeStamp: number } | null>(null)
 
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
@@ -222,7 +229,7 @@ const useEditMode = ({
     const onTouchStart = (e: TouchEvent) => {
       pressingRef.current = true
       const touch = e.touches[0]
-      touchStartRef.current = touch ? { clientX: touch.clientX, clientY: touch.clientY } : null
+      touchStartRef.current = touch ? { clientX: touch.clientX, clientY: touch.clientY, timeStamp: e.timeStamp } : null
     }
 
     /** Whether a tap on this thought may move the cursor onto it while the keyboard is open on another thought. */
@@ -270,6 +277,44 @@ const useEditMode = ({
             preserveMulticursor: true,
           }),
         )
+      })
+
+      // #5660: on iOS 27 a double tap on the thought being edited draws a word selection, which leaves a dead zone
+      // around the caret for the life of the tab. Any tap here may be the first of a double tap, so it places its own
+      // caret and covers the thought, and the second tap lands off the text. A press long enough for the magnifier is
+      // left to iOS, which opens the edit menu on release, the only remaining route to paste.
+      const touchStart = touchStartRef.current
+      const touch = e.changedTouches[0]
+      if (
+        (osVersionStore.getState() ?? 0) < 27 ||
+        document.activeElement !== editable ||
+        !touchStart ||
+        !touch ||
+        e.timeStamp - touchStart.timeStamp >= MAGNIFIER_DELAY ||
+        Math.hypot(touch.clientX - touchStart.clientX, touch.clientY - touchStart.clientY) >= TAP_SLOP
+      ) {
+        return
+      }
+
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        const multiEditing = isMultiEditing(state)
+        if (
+          (hasMulticursor(state) && !multiEditing) ||
+          multitouchStore.getState() ||
+          touchStore.getState().suppressCursorAfterTouch ||
+          state.longPress !== LongPressState.Inactive
+        ) {
+          return
+        }
+
+        // the overlay takes the tap's mousedown, which would otherwise place the caret
+        const { offset } = getCaretOffset(editable, touch)
+        if (offset !== null) {
+          allowDefaultSelection()
+          setCaretOffset(offset, { preserveMulticursor: multiEditing && isMulticursorPath(state, path) })
+        }
+        doubleTapShield.cover(editable)
       })
     }
 

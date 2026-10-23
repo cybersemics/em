@@ -13,6 +13,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, DEFAULT_FONT_SIZE, LongPressState } from '../constants'
+import doubleTapShield from '../device/doubleTapShield'
 import initKeyboardSelection from '../device/initKeyboardSelection'
 import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
@@ -264,6 +265,9 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Selection change event listener; save selection offset to storage, update command state store. */
   const onSelectionChange = () => {
+    // before anything records a range that is about to be collapsed
+    doubleTapShield.onSelectionChange()
+
     // save selection offset to storage, throttled
     saveSelectionOffset()
 
