@@ -4,7 +4,6 @@ import SettingsIcon from '../components/icons/SettingsIcon'
 
 const command = {
   id: 'settings',
-  allowOnAttribute: true,
   label: 'Settings' as const,
   description: 'Customize your experience of em.',
   keyboard: { key: ',', meta: true },

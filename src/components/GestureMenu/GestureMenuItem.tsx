@@ -12,13 +12,12 @@ import {
   SELECTED_ITEM_PADDING_BOTTOM_REM,
   SELECTED_ITEM_PADDING_TOP_REM,
 } from '../../hooks/useGestureMenuLayout'
-import canExecuteCommand from '../../selectors/canExecuteCommand'
 import store from '../../stores/app'
 import GestureDiagram from '../GestureDiagram'
 
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
-  canExecuteCommand(state, command) &&
+  (!command.canExecute || command.canExecute(state)) &&
   (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
 
 /** Renders a single command row inside the Gesture Menu. */

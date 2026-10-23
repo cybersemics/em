@@ -10,7 +10,6 @@ import isDocumentEditable from '../util/isDocumentEditable'
 
 const selectAllCommand = {
   id: 'selectAll',
-  allowOnAttribute: true,
   label: 'Select All' as const,
   labelInverse: 'Deselect All',
   description: 'Selects all thoughts at the current level. May reduce wrist strain.',

@@ -14,7 +14,6 @@ let showScrollZoneHelpAlert = false
 
 const openCommandCenterCommand = {
   id: 'openCommandCenter',
-  allowOnAttribute: true,
   label: 'Open Command Center' as const,
   description: `Opens a special keyboard which contains commands that can be executed on the cursor thought.`,
   gesture: 'u',

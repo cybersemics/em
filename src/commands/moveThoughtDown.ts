@@ -3,7 +3,6 @@ import { moveThoughtDownActionCreator as moveThoughtDown } from '../actions/move
 import MoveThoughtDownIcon from '../components/icons/MoveThoughtDownIcon'
 import nextSibling from '../selectors/nextSibling'
 import appendToPath from '../util/appendToPath'
-import isAttribute from '../util/isAttribute'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 
@@ -27,12 +26,8 @@ const moveThoughtDownCommand = {
     const nextThought = nextSibling(state, cursor)
 
     // if the cursor is the last child, move the thought to the beginning of its next uncle
-    // a metaprogramming attribute is read-only, so a thought cannot be moved into it
     const nextUncleThought = pathParent.length > 0 ? nextSibling(state, pathParent) : null
-    const nextUnclePath =
-      nextUncleThought && !isAttribute(nextUncleThought.value)
-        ? appendToPath(parentOf(pathParent), nextUncleThought.id)
-        : null
+    const nextUnclePath = nextUncleThought ? appendToPath(parentOf(pathParent), nextUncleThought.id) : null
 
     return !!nextThought || !!nextUnclePath
   },

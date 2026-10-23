@@ -1,11 +1,10 @@
 import { fireEvent } from '@testing-library/dom'
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import defineTerm from '../../commands/defineTerm'
 import generateEmoji from '../../commands/generateEmoji'
@@ -73,45 +72,6 @@ it('"paste" from clipboard app into non-empty thought', async () => {
     - a
       - b
         - c`)
-})
-
-describe('metaprogramming attributes', () => {
-  // https://github.com/cybersemics/em/pull/6056#issuecomment-6283713458
-  it('renders a metaprogramming attribute as read-only', async () => {
-    act(() => {
-      store.dispatch([
-        importText({
-          text: `
-            - aaa
-              - =favorite
-          `,
-        }),
-        toggleHiddenThoughts(),
-        setCursor(['aaa', '=favorite']),
-      ])
-    })
-    await act(vi.runOnlyPendingTimersAsync)
-
-    const editable = (await findThoughtByText('=favorite'))!
-    expect(editable).toHaveAttribute('contenteditable', 'false')
-  })
-
-  it('does not turn a thought into a metaprogramming attribute by typing', async () => {
-    act(() => {
-      windowEvent('keydown', { key: 'Enter' })
-    })
-
-    const editable = (await findThoughtByText(''))!
-    const user = userEvent.setup({ delay: null })
-    await user.type(editable, '=favorite')
-    await act(vi.runAllTimersAsync)
-
-    expect(await screen.findByText('Metaprogramming attributes can only be set with commands.')).toBeVisible()
-    // the = is kept, since it is not an attribute on its own
-    expect(editable).toHaveTextContent(/^=$/)
-    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - =`)
-  })
 })
 
 it('inserts emoji spacing immediately and allows Backspace at the emoji boundary', async () => {

@@ -178,22 +178,3 @@ describe('canExecute', () => {
     expect(outdentCommand.canExecute!(store.getState())).toBe(false)
   })
 })
-
-// https://github.com/cybersemics/em/pull/6056#issuecomment-6282962394
-it('does not outdent a metaprogramming attribute', () => {
-  store.dispatch([
-    importText({
-      text: `
-        - aaa
-          - =favorite
-      `,
-    }),
-    setCursor(['aaa', '=favorite']),
-  ])
-
-  executeCommandWithMulticursor(outdentCommand, { store })
-
-  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - aaa
-    - =favorite`)
-})

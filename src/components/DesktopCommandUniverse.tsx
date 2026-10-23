@@ -12,7 +12,6 @@ import { executeCommandWithMulticursor } from '../commands'
 import openDesktopCommandUniverseCommand from '../commands/openDesktopCommandUniverse'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
-import canExecuteCommand from '../selectors/canExecuteCommand'
 import storageModel from '../stores/storageModel'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 import CommandItem from './CommandItem'
@@ -139,7 +138,7 @@ const DesktopCommandUniverse: FC<{
       e.preventDefault()
       if (
         unmounted.current ||
-        !canExecuteCommand(store.getState(), command) ||
+        (command.canExecute && !command.canExecute(store.getState())) ||
         (store.getState().showModal && !command.allowExecuteFromModal)
       )
         return

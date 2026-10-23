@@ -4,7 +4,6 @@ import DeviceIcon from '../components/icons/DeviceIcon'
 
 const command = {
   id: 'devices',
-  allowOnAttribute: true,
   label: 'Device Management' as const,
   description: 'Add or remove devices that can access and edit this thoughtspace.',
   multicursor: false,

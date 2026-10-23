@@ -8,7 +8,6 @@ import State from '../@types/State'
 import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from '../actions/commandUniverseNavigate'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
-import canExecuteCommand from '../selectors/canExecuteCommand'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import CircleEllipsisIcon from './icons/CircleEllipsisIcon'
@@ -21,7 +20,7 @@ const GESTURE_GRADIENT = {
 
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
-  canExecuteCommand(state, command) &&
+  (!command.canExecute || command.canExecute(state)) &&
   (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
 
 interface CommandUniverseGridItemProps {

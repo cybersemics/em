@@ -7,7 +7,6 @@ import getLatestActionLabel from '../util/getLatestActionLabel'
 
 const undoCommand = {
   id: 'undo',
-  allowOnAttribute: true,
   label: 'Undo' as const,
   multicursor: false,
   description: state => {

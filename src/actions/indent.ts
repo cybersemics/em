@@ -14,7 +14,6 @@ import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
-import isAttribute from '../util/isAttribute'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
@@ -32,8 +31,7 @@ const indent = (state: State, { selectionOffset }: indentPayload = {}): State =>
 
   const prev = prevSibling(state, cursor)
 
-  // a metaprogramming attribute is read-only, so a thought cannot be indented into it
-  if (!prev || isAttribute(prev.value)) return state
+  if (!prev) return state
 
   // cancel if cursor is EM_TOKEN or HOME_TOKEN
   if (isEM(cursor) || isRoot(cursor)) {

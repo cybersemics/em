@@ -3,7 +3,6 @@ import { selectBetweenActionCreator } from '../actions/selectBetween'
 
 const selectBetweenCommand = {
   id: 'selectBetween',
-  allowOnAttribute: true,
   label: 'Select Between' as const,
   description: 'Selects all thoughts between two selected thoughts.',
   gesture: 'rdl',

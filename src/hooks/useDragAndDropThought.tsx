@@ -30,10 +30,8 @@ import getNextRank from '../selectors/getNextRank'
 import getRankAfter from '../selectors/getRankAfter'
 import getRankBefore from '../selectors/getRankBefore'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import isBefore from '../selectors/isBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
-import isInAttribute from '../selectors/isInAttribute'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
 import prevSibling from '../selectors/prevSibling'
@@ -93,9 +91,6 @@ const canDrag = (props: ThoughtContainerProps) => {
   return (
     isDocumentEditable() &&
     !!isDraggable &&
-    // metaprogramming attributes are read-only, so neither an attribute nor a selection that includes one can be moved
-    !isInAttribute(state, props.simplePath) &&
-    !(hasMulticursor(state) && isAttributeSelected(state)) &&
     !findDescendant(state, thoughtId, '=immovable') &&
     !findDescendant(state, thoughtId, '=readonly') &&
     !findDescendant(state, pathParentId, '=immovable') &&
@@ -159,9 +154,6 @@ const dropRejection = (props: ThoughtContainerProps, monitor: DropTargetMonitor)
   // Disallow dropping on context view.
   // This condition must be matched in isChildHovering to correctly highlight the hovering parent.
   if (showContexts) return 'contextView'
-  // Disallow dropping into a metaprogramming attribute, which is read-only. A thought is dropped before the target, i.e.
-  // into the target's parent.
-  if (isInAttribute(state, parentOf(thoughtsTo))) return 'attribute'
   if (!draggedItems.every(thoughtItem => canDropPath(thoughtItem.path, thoughtsTo))) return 'descendant'
   return null
 }

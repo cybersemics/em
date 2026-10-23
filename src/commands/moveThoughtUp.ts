@@ -5,7 +5,6 @@ import getThoughtBefore from '../selectors/getThoughtBefore'
 import prevSibling from '../selectors/prevSibling'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
-import isAttribute from '../util/isAttribute'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 
@@ -29,11 +28,7 @@ const moveThoughtUpCommand = {
 
     // if the cursor is on the first thought, move the thought to the end of its prev uncle
     const prevUncleThought = pathParent.length > 0 ? getThoughtBefore(state, simplifyPath(state, pathParent)) : null
-    // a metaprogramming attribute is read-only, so a thought cannot be moved into it
-    const prevUnclePath =
-      prevUncleThought && !isAttribute(prevUncleThought.value)
-        ? appendToPath(parentOf(pathParent), prevUncleThought.id)
-        : null
+    const prevUnclePath = prevUncleThought ? appendToPath(parentOf(pathParent), prevUncleThought.id) : null
 
     return !!prevThought || !!prevUnclePath
   },

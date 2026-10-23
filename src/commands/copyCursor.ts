@@ -58,7 +58,6 @@ const copyThoughts = async (ids: ThoughtId[], dispatch: Dispatch, getState: () =
 
 const copyCursorCommand = {
   id: 'copyCursor',
-  allowOnAttribute: true,
   label: 'Copy Cursor' as const,
   description: 'Copies the cursor and all descendants.',
   keyboard: { key: 'c', meta: true },

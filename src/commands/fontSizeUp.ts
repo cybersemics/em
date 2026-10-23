@@ -4,7 +4,6 @@ import SettingsIcon from '../components/icons/SettingsIcon'
 
 const fontSizeUpCommand = {
   id: 'fontSizeUp',
-  allowOnAttribute: true,
   label: 'Increase Font Size' as const,
   description: 'Increase the font size. Bigger is better!',
   multicursor: false,

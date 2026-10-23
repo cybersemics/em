@@ -25,7 +25,6 @@ import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 const cursorUpCommand = {
   id: 'cursorUp',
-  allowOnAttribute: true,
   label: 'Cursor Up' as const,
   longDescription: (
     <>

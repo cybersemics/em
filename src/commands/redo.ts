@@ -7,7 +7,6 @@ import getLatestActionLabel from '../util/getLatestActionLabel'
 
 const redoCommand = {
   id: 'redo',
-  allowOnAttribute: true,
   label: 'Redo' as const,
   multicursor: false,
   description: state => {

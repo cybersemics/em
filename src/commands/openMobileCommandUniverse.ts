@@ -5,7 +5,6 @@ import isDocumentEditable from '../util/isDocumentEditable'
 
 const openMobileCommandUniverseCommand = {
   id: 'openMobileCommandUniverse',
-  allowOnAttribute: true,
   label: 'Command Universe' as const,
   description: 'Opens the Command Universe.',
   gesture: 'rdld',

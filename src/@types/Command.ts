@@ -76,9 +76,6 @@ interface Command {
   /** Allow the command to be executed when a modal is open. This is generally false for commands that navigate or modify the thoughtspace, and true for commands that navigate to different modals. */
   allowExecuteFromModal?: boolean
 
-  /** Allow the command to be executed when a selected thought is a metaprogramming attribute or inside one. Attributes are read-only, so every command is disabled on them by default (see canExecuteCommand). Set on commands that only navigate, change visibility, or act on the app rather than the thoughtspace. */
-  allowOnAttribute?: boolean
-
   /** A selector that returns true if the command can be executed with the current state. */
   canExecute?: (state: State) => boolean
 

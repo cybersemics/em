@@ -5,7 +5,6 @@ import scrollTo from '../device/scrollTo'
 
 const customizeToolbarCommand = {
   id: 'customizeToolbar',
-  allowOnAttribute: true,
   label: 'Customize Toolbar' as const,
   description: 'Add or remove buttons from the toolbar.',
   multicursor: false,

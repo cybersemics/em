@@ -13,7 +13,6 @@ import headValue from '../util/headValue'
 /** Moves the cursor from a table column-one thought to its first child (column two) when ArrowRight is pressed with the caret at the end of the thought. Otherwise permits the default browser caret movement within the thought. */
 const cursorForwardTableCommand = {
   id: 'cursorForwardTable',
-  allowOnAttribute: true,
   label: 'Cursor Forward (Table Column)' as const,
   description: 'In table view, move the cursor from a column-one thought to its column-two child.',
   keyboard: { key: 'ArrowRight' },

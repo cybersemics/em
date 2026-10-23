@@ -4,7 +4,6 @@ import JumpBackIcon from '../components/icons/JumpBackIcon'
 
 const jumpBackCommand = {
   id: 'jumpBack',
-  allowOnAttribute: true,
   label: 'Jump Back' as const,
   description: 'Move the cursor to the last thought that was edited.',
   keyboard: { key: 'j', meta: true },

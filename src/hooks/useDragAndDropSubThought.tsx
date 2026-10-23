@@ -22,7 +22,6 @@ import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import isInAttribute from '../selectors/isInAttribute'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
@@ -92,8 +91,6 @@ const dropRejection = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: Drop
   if (isDivider(getThoughtById(state, head(thoughtsTo))?.value)) return 'divider'
   // do not drop on context view
   if (isContextViewActive(state, thoughtsTo)) return 'contextView'
-  // do not drop into a metaprogramming attribute, which is read-only
-  if (isInAttribute(state, thoughtsTo)) return 'attribute'
   return null
 }
 

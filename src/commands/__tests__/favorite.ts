@@ -157,23 +157,4 @@ describe('favorite', () => {
       expect(exported).toEqual(expectedOutput)
     })
   })
-
-  // https://github.com/cybersemics/em/pull/6056#issuecomment-6283125682
-  it('does not favorite a metaprogramming attribute', () => {
-    store.dispatch([
-      importText({
-        text: `
-          - aaa
-            - =favorite
-        `,
-      }),
-      setCursor(['aaa', '=favorite']),
-    ])
-
-    executeCommandWithMulticursor(favorite, { store })
-
-    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - aaa
-    - =favorite`)
-  })
 })

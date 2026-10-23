@@ -5,7 +5,6 @@ import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 const cursorNextCommand = {
   id: 'cursorNext',
-  allowOnAttribute: true,
   label: 'Next Thought' as const,
   description: 'Move the cursor to the next thought, skipping expanded children.',
   multicursor: false,

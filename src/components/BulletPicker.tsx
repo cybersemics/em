@@ -6,7 +6,6 @@ import { setBulletStyleActionCreator as setBulletStyle } from '../actions/setBul
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
 import getBulletStyle from '../selectors/getBulletStyle'
-import isAttributeSelected from '../selectors/isAttributeSelected'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import fastClick from '../util/fastClick'
@@ -64,8 +63,7 @@ const BulletOption: FC<{
 /** A dropdown menu for choosing the bullet style of the current list, applied via `=children/=bullet` on the cursor's parent. */
 const BulletPicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
-  // hidden while a metaprogramming attribute is selected, since attributes are read-only
-  const showBulletPicker = useSelector(state => state.showBulletPicker && !isAttributeSelected(state))
+  const showBulletPicker = useSelector(state => state.showBulletPicker)
 
   const bulletStyle = useSelector(state => {
     if (!state.cursor || isRoot(state.cursor)) return null

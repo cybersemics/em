@@ -13,7 +13,6 @@ let showScrollZoneHelpAlert = false
 
 const closeCommandCenterCommand = {
   id: 'closeCommandCenter',
-  allowOnAttribute: true,
   label: 'Close Command Center' as const,
   description: `Closes the command center if it's open. You can also just tap on the empty space.`,
   gesture: 'd',

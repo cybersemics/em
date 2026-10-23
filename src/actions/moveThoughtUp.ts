@@ -16,7 +16,6 @@ import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
-import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
 
 export interface moveThoughtUpPayload {
@@ -38,11 +37,7 @@ const moveThoughtUp = (state: State, { offset }: moveThoughtUpPayload = {}): Sta
 
   // if the cursor is on the first thought, move the thought to the end of its prev uncle
   const prevUncleThought = pathParent.length > 0 ? getThoughtBefore(state, simplifyPath(state, pathParent)) : null
-  // a metaprogramming attribute is read-only, so a thought cannot be moved into it
-  const prevUnclePath =
-    prevUncleThought && !isAttribute(prevUncleThought.value)
-      ? appendToPath(parentOf(pathParent), prevUncleThought.id)
-      : null
+  const prevUnclePath = prevUncleThought ? appendToPath(parentOf(pathParent), prevUncleThought.id) : null
 
   if (!prevThought && !prevUnclePath) return state
 

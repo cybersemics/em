@@ -3,7 +3,6 @@ import { noop } from '../constants'
 
 const cancelShortcut = {
   id: 'cancel',
-  allowOnAttribute: true,
   label: 'Cancel' as const,
   description: 'Scratch it out. Cancels the current gesture.',
   hideFromDesktopCommandUniverse: true,
