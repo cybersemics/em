@@ -20,12 +20,17 @@ interface SelectionState {
  *
  * @param start Character offset where the selection begins.
  * @param end Character offset where the selection ends.
+ * @param options.note Select in the note being edited rather than the thought.
  * @returns The resulting selection state.
  */
-const setSelection = async (start: number, end: number): Promise<SelectionState> => {
+const setSelection = async (
+  start: number,
+  end: number,
+  { note = false }: { note?: boolean } = {},
+): Promise<SelectionState> => {
   const raw = await browser.execute(
-    (from: number, to: number) => {
-      const editable = document.querySelector('[data-editing=true] [data-editable]')
+    (from: number, to: number, selector: string) => {
+      const editable = document.querySelector(selector)
       const textNode = editable?.firstChild
       if (!textNode || textNode.nodeType !== 3) {
         return JSON.stringify({ error: 'No editing text node found — is the editable focused?' })
@@ -44,6 +49,7 @@ const setSelection = async (start: number, end: number): Promise<SelectionState>
     },
     start,
     end,
+    note ? '[aria-label="note-editable"]' : '[data-editing=true] [data-editable]',
   )
 
   const result = JSON.parse(raw) as SelectionState & { error?: string }
