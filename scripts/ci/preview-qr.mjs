@@ -209,14 +209,25 @@ export const selectPullRequest = (candidates, sha) => {
   return heads[0] ?? null
 }
 
+/** Lists every open pull request in the repository, following pagination. */
+const listOpenPullRequests = async (repo, page = 1) => {
+  const pulls = await api(`/repos/${repo}/pulls?state=open&per_page=100&page=${page}`)
+  return pulls.length < 100 ? pulls : [...pulls, ...(await listOpenPullRequests(repo, page + 1))]
+}
+
 /**
  * Resolves the open pull request in this repository whose head is the commit. Fork branch names
  * are not unique, so association is by commit identity; a later push makes the run stale, so
  * a pull request that has moved past the commit is reported and skipped.
+ *
+ * Asked of the base repository, `GET /commits/{sha}/pulls` returns nothing for a commit that lives
+ * only in a fork, so an empty association falls back to matching the head of every open pull
+ * request.
  */
 const resolvePullRequest = async (repo, sha) => {
   const pulls = await api(`/repos/${repo}/commits/${sha}/pulls?per_page=100`)
   const candidates = pulls.filter(pr => pr.state === 'open' && pr.base.repo.full_name === repo)
+  if (candidates.length === 0) return selectPullRequest(await listOpenPullRequests(repo), sha)
   // Re-fetch rather than trusting the association listing, which can lag behind a push.
   const current = await Promise.all(candidates.map(pr => api(`/repos/${repo}/pulls/${pr.number}`)))
   const pr = selectPullRequest(current, sha)
