@@ -288,7 +288,8 @@ const LightLayerEditor = ({
 
 /** The light behind a Dropdown: its layers, the surface mask and radial blur under it, and their canvas editors. */
 const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
-  const { isOpen, anchorRect, menuRect, selectedY, timing, transition, lightMotion } = useDropdown()
+  const { isOpen, anchorRect, menuRect, placement, selectedY, selectedTravel, timing, transition, lightMotion } =
+    useDropdown()
   // The light's origin offset, re-read on every render (the Dropdown re-renders its layers when a dial changes).
   // Desktop (md and up) has its own design values for the light group.
   const isDesktop = useBreakpoint('md')
@@ -501,6 +502,12 @@ const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
             mixBlendMode: selection.blend as CSSProperties['mixBlendMode'],
             ...fade(selection.opacity),
             ...nudge(selection),
+            // Moves with the selected row. When the menu drops down, the row slides between its place and the anchor
+            // (selectedTravel); the glow takes the same transform on the same clock, and jumps straight to a newly
+            // picked row so it slides with it rather than chasing it. When the menu opens around the selection, the
+            // whole menu glides by its top instead, so the glow glides its top with it. The fade keeps the light's clock.
+            transform: selectedTravel.transform,
+            transition: `${transition(placement === 'around' ? ['top', 'transform'] : ['transform'])}, ${transition(['opacity'], { dur: timing.light })}`,
           }}
         />
       ) : null}
