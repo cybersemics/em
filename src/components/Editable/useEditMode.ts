@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
 import State from '../../@types/State'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
-import { isSafari, isTouch } from '../../browser'
+import { isIOS, isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
 import doubleTapShield from '../../device/doubleTapShield'
@@ -302,6 +302,8 @@ const useEditMode = ({
       const touch = e.changedTouches[0]
       if (
         (osVersionStore.getState() ?? 0) < 27 ||
+        // the iOS app disables WebKit's double tap recognizers natively instead (#6106)
+        isIOS ||
         document.activeElement !== editable ||
         !touchStart ||
         !touch ||
