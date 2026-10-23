@@ -3,8 +3,11 @@
  * Uses WDIO test runner with Mocha framework.
  */
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../../constants'
+import gestures from '../../../test-helpers/gestures'
+import gesture from '../helpers/gesture'
 import getCaretOffset from '../helpers/getCaretOffset'
 import getEditingText from '../helpers/getEditingText'
+import getScreenOffsetY from '../helpers/getScreenOffsetY'
 import getSelection from '../helpers/getSelection'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import isKeyboardShown from '../helpers/isKeyboardShown'
@@ -81,5 +84,32 @@ describe('Double tap', () => {
     await waitUntil(async () => (await getEditingText()) === 'hello')
 
     expect(await getCaretOffset()).toBe('hello'.length)
+  })
+
+  // https://github.com/cybersemics/em/issues/5660
+  it.skip('a gesture that starts just below the caret after a double tap on the caret runs its command', async () => {
+    await newThought('One')
+    await hideKeyboardByTappingDone()
+    const editable = await waitForEditable('One')
+    await tap(editable, { pointerType: 'touch' })
+    await waitUntil(isKeyboardShown)
+
+    await tap(editable, { offset: 'One'.length, pointerType: 'touch', count: 2 })
+    await browser.pause(1000)
+    await setSelection('One'.length, 'One'.length)
+
+    const caret = await browser.execute(() => {
+      const rect = window.getSelection()!.getRangeAt(0).getBoundingClientRect()
+      return { x: Math.round(rect.x), bottom: Math.round(rect.bottom) }
+    })
+    // below the editable, so em does not treat it as a press on the caret, but well inside WebKit's 44pt zone around it
+    await gesture(gestures.newSubThought, {
+      xStart: caret.x,
+      yStart: caret.bottom + 15 + (await getScreenOffsetY()),
+      segmentLength: 80,
+    })
+
+    const thoughtCount = await browser.execute(() => document.querySelectorAll('[data-editable]').length)
+    expect(thoughtCount).toBe(2)
   })
 })
