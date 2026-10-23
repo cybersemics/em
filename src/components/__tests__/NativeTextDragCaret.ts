@@ -61,9 +61,33 @@ const layOutCaretBefore = (editable: HTMLElement, word: string) => {
     configurable: true,
     value: (x: number, y: number) => {
       if (y < 50 || y > 70) return null
-      const text = editable.firstChild!
+      const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+      let text = walker.nextNode()!
+      while (!text.textContent!.includes(word)) text = walker.nextNode()!
       const range = document.createRange()
       range.setStart(text, text.textContent!.indexOf(word))
+      return Object.assign(range, { getBoundingClientRect: () => new DOMRect(x, 50, 0, 20) })
+    },
+  })
+  onTestFinished(() => {
+    delete (document as { caretRangeFromPoint?: unknown }).caretRangeFromPoint
+  })
+}
+
+/**
+ * Lays out the editable for document.caretRangeFromPoint, which JSDOM does not implement, with the caret at the end of
+ * its text on the line at y 50–70.
+ */
+const layOutCaretAtEnd = (editable: HTMLElement) => {
+  Object.defineProperty(document, 'caretRangeFromPoint', {
+    configurable: true,
+    value: (x: number, y: number) => {
+      if (y < 50 || y > 70) return null
+      const walker = document.createTreeWalker(editable, NodeFilter.SHOW_TEXT)
+      let text = walker.nextNode()!
+      for (let next = walker.nextNode(); next; next = walker.nextNode()) text = next
+      const range = document.createRange()
+      range.setStart(text, text.textContent!.length)
       return Object.assign(range, { getBoundingClientRect: () => new DOMRect(x, 50, 0, 20) })
     },
   })
@@ -213,10 +237,10 @@ it('moves dragged text to a single drop caret above the finger', async () => {
 
   const drop = await dropBelowCaret(editable)
 
-  // like the native drop, the dragged text is moved as is, without adjusting the spaces around it
+  // the dragged text is inserted as is, and a single space is left where it was
   expect(drop.defaultPrevented).toBe(true)
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - Sed et  fringillalacus`)
+  - Sed et fringillalacus`)
   expect(getDropCaret()).toBeNull()
   expect(document.body.dataset.nativeTextDrag).toBeUndefined()
 
@@ -242,7 +266,7 @@ it('moves dragged text with its formatting into another thought', async () => {
   await dropBelowCaret(target)
 
   expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
-    'foo  baz',
+    'foo baz',
     'one <b>bar</b>two',
   ])
   act(() => {
@@ -252,6 +276,192 @@ it('moves dragged text with its formatting into another thought', async () => {
   expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
     'foo <b>bar</b> baz',
     'one two',
+  ])
+})
+
+// https://github.com/cybersemics/em/issues/5952
+it('keeps the formatting that encloses dragged text and leaves a single space where it was', async () => {
+  await importOutline('- <b>foo bar baz</b> qux')
+  const editable = getEditable('foo bar baz qux')
+  layOutCaretAtEnd(editable)
+  selectWord(editable, 'bar')
+  await startDrag(editable)
+
+  await dropBelowCaret(editable)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<b>foo baz</b> qux<b>bar</b>',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#discussion_r4299621368
+it('does not nest formatting when dragged text is dropped into the same formatting', async () => {
+  await importOutline('- <b>Foo Bar Baz Qux</b>')
+  const editable = getEditable('Foo Bar Baz Qux')
+  layOutCaretBefore(editable, 'Qux')
+  selectWord(editable, 'Bar')
+  await startDrag(editable)
+
+  await dropBelowCaret(editable)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<b>Foo Baz BarQux</b>',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#discussion_r4299621368
+it('nests only the formatting that the drop point does not already have', async () => {
+  await importOutline(`- <b>Foo Baz Qux</b>
+- <b><i>Bar</i></b>`)
+  const target = getEditable('Foo Baz Qux')
+  const source = getEditable('Bar')
+  layOutCaretBefore(target, 'Qux')
+  selectWord(source, 'Bar')
+  await startDrag(source)
+
+  await dropBelowCaret(target)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<b>Foo Baz <i>Bar</i>Qux</b>',
+    '',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#discussion_r4300374926
+it('does not nest a color in the same color when dragged text is dropped into it', async () => {
+  await importOutline('- <span style="color: #ff0000;">Foo Bar Baz Qux</span>')
+  const editable = getEditable('Foo Bar Baz Qux')
+  layOutCaretBefore(editable, 'Qux')
+  selectWord(editable, 'Bar')
+  await startDrag(editable)
+
+  await dropBelowCaret(editable)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="color: #ff0000;">Foo Baz BarQux</span>',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#discussion_r4300374926
+it('keeps the color of dragged text dropped into text of another color', async () => {
+  await importOutline(`- <span style="color: #ff0000;">Left Right</span>
+- <span style="color: #0000ff;">Blue</span>
+- <span style="color: #ff0000;">Red</span>`)
+
+  const blue = getEditable('Blue')
+  layOutCaretBefore(getEditable('Left Right'), 'Right')
+  selectWord(blue, 'Blue')
+  await startDrag(blue)
+  await dropBelowCaret(getEditable('Left Right'))
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="color: #ff0000;">Left </span><span style="color: #0000ff;">Blue</span><span style="color: #ff0000;">Right</span>',
+    '',
+    '<span style="color: #ff0000;">Red</span>',
+  ])
+
+  // the red text is dropped between "Bl" and "ue", inside the blue text, which is inside no red text any more
+  const red = getEditable('Red')
+  layOutCaretBefore(getEditable('Left BlueRight'), 'ue')
+  selectWord(red, 'Red')
+  await startDrag(red)
+  await dropBelowCaret(getEditable('Left BlueRight'))
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="color: #ff0000;">Left </span><span style="color: #0000ff;">Bl</span><span style="color: #ff0000;">Red</span><span style="color: #0000ff;">ue</span><span style="color: #ff0000;">Right</span>',
+    '',
+    '',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#discussion_r4300374926
+it('keeps the formatting at the drop point on colored text dropped into text of another color', async () => {
+  await importOutline(`- <span style="color: #ff0000;"><b>Left Right</b></span>
+- <span style="color: #0000ff;">Blue</span>`)
+  const target = getEditable('Left Right')
+  const source = getEditable('Blue')
+  layOutCaretBefore(target, 'Right')
+  selectWord(source, 'Blue')
+  await startDrag(source)
+
+  await dropBelowCaret(target)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="color: #ff0000;"><b>Left </b></span><span style="color: #0000ff;"><b>Blue</b></span><span style="color: #ff0000;"><b>Right</b></span>',
+    '',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#discussion_r4300374926
+it('colors uncolored dragged text dropped into colored text', async () => {
+  await importOutline(`- <span style="color: #ff0000;">Left Right</span>
+- Plain`)
+  const target = getEditable('Left Right')
+  const source = getEditable('Plain')
+  layOutCaretBefore(target, 'Right')
+  selectWord(source, 'Plain')
+  await startDrag(source)
+
+  await dropBelowCaret(target)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="color: #ff0000;">Left PlainRight</span>',
+    '',
+  ])
+})
+
+// Text has a single color, a text color or a background, never both (#3877, #3930).
+// https://github.com/cybersemics/em/pull/5967#discussion_r4314432805
+it('keeps only the nearest source color of dragged text', async () => {
+  await importOutline(`- <span style="background-color: #ffff00;">Left <span style="color: #0000ff;">Blue</span>Right</span>
+- Plain`)
+  const source = getEditable('Left BlueRight')
+  const target = getEditable('Plain')
+  layOutCaretAtEnd(target)
+  selectWord(source, 'Blue')
+  await startDrag(source)
+
+  await dropBelowCaret(target)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="background-color: #ffff00;">Left Right</span>',
+    'Plain<span style="color: #0000ff;">Blue</span>',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#discussion_r4314432805
+it('keeps only the nearest source color of dragged text dropped into another color', async () => {
+  await importOutline(`- <span style="background-color: #ffff00;">Left <span style="color: #0000ff;">Blue</span>Right</span>
+- <span style="color: #ff0000;">One Two</span>`)
+  const source = getEditable('Left BlueRight')
+  const target = getEditable('One Two')
+  layOutCaretBefore(target, 'Two')
+  selectWord(source, 'Blue')
+  await startDrag(source)
+
+  await dropBelowCaret(target)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="background-color: #ffff00;">Left Right</span>',
+    '<span style="color: #ff0000;">One </span><span style="color: #0000ff;">Blue</span><span style="color: #ff0000;">Two</span>',
+  ])
+})
+
+// https://github.com/cybersemics/em/pull/5967#issuecomment-5629711975
+it('does not give dragged text a text color and a background at once', async () => {
+  await importOutline(`- <span style="background-color: #ffff00;">Left right</span>
+- <span style="color: #0000ff;">Blue</span>`)
+  const target = getEditable('Left right')
+  const source = getEditable('Blue')
+  layOutCaretBefore(target, 'right')
+  selectWord(source, 'Blue')
+  await startDrag(source)
+
+  await dropBelowCaret(target)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="background-color: #ffff00;">Left </span><span style="color: #0000ff;">Blue</span><span style="background-color: #ffff00;">right</span>',
+    '',
   ])
 })
 
