@@ -3,3 +3,8 @@
   See: https://panda-css.com/docs/concepts/writing-styles
 */
 @layer reset, base, tokens, recipes, utilities;
+
+/* A touch that begins while em still considers another in progress must not pan the page (#6077). */
+[data-touch-in-progress] #content {
+  touch-action: pinch-zoom;
+}

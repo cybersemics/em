@@ -353,6 +353,11 @@ const initEvents = (store: Store<State, any>) => {
     touchStore.update({ pressOnCaret: false, pressInEmptyThought: false })
   }
 
+  /** Marks the document while em has a touch in progress, so that a native pan cannot begin until em has seen it end. On iOS 27, WebKit withholds the touchend of a touch near the caret or selection until the next touchstart (#6077). */
+  const updateTouchInProgress = (e: TouchEvent) => {
+    document.documentElement.toggleAttribute('data-touch-in-progress', e.touches.length > 0)
+  }
+
   /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
    * the completed touch. Also latches whether the touch landed on the caret, i.e. whether the user is reaching for
    * native caret repositioning rather than starting a drag or a gesture (#3763): on iOS Safari the text magnifier, on
@@ -597,6 +602,9 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('touchstart', updateMultitouch, { capture: true })
   window.addEventListener('touchend', updateMultitouch)
   window.addEventListener('touchcancel', updateMultitouch)
+  window.addEventListener('touchstart', updateTouchInProgress, { capture: true })
+  window.addEventListener('touchend', updateTouchInProgress, { capture: true })
+  window.addEventListener('touchcancel', updateTouchInProgress, { capture: true })
   // Registered in the capture phase so that the latch is cleared before the gesture, drag, and cursor-set
   // subsystems read it in the same interaction.
   window.addEventListener('pointerdown', onPointerDown, { capture: true })
@@ -655,6 +663,10 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('touchstart', updateMultitouch, { capture: true })
     window.removeEventListener('touchend', updateMultitouch)
     window.removeEventListener('touchcancel', updateMultitouch)
+    window.removeEventListener('touchstart', updateTouchInProgress, { capture: true })
+    window.removeEventListener('touchend', updateTouchInProgress, { capture: true })
+    window.removeEventListener('touchcancel', updateTouchInProgress, { capture: true })
+    document.documentElement.removeAttribute('data-touch-in-progress')
     window.removeEventListener('pointerdown', onPointerDown, { capture: true })
     window.removeEventListener('touchmove', onMultitouchMove)
     document.removeEventListener('gesturestart', onSafariGesture)
