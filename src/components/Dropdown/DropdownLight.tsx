@@ -288,7 +288,7 @@ const LightLayerEditor = ({
 
 /** The light behind a Dropdown: its layers, the surface mask and radial blur under it, and their canvas editors. */
 const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
-  const { isOpen, anchorRect, menuRect, placement, selectedY, selectedTravel, timing, transition, lightMotion } =
+  const { open, isOpen, anchorRect, menuRect, placement, selectedY, selectedTravel, timing, transition, lightMotion } =
     useDropdown()
   // The light's origin offset, re-read on every render (the Dropdown re-renders its layers when a dial changes).
   // Desktop (md and up) has its own design values for the light group.
@@ -502,13 +502,16 @@ const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
             mixBlendMode: selection.blend as CSSProperties['mixBlendMode'],
             ...fade(selection.opacity),
             ...nudge(selection),
-            // Moves with the selected row and fades with the other options. When the menu drops down, the row slides
-            // between its place and the anchor (selectedTravel); the glow takes the same transform, and jumps straight
-            // to a newly picked row so it slides with it rather than chasing it. When the menu opens around the
-            // selection, the whole menu glides by its top, so the glow glides its top too. Its fade runs on the rows'
-            // clock, from the moment the menu opens or closes, so it lights up and fades out with the options.
+            // Moves with the selected row and fades with the other options, on the rows' clock. When the menu drops
+            // down, the row slides between its place and the anchor (selectedTravel) and the glow takes the same
+            // transform. When a pick closes the menu, the glow's top glides from the old row to the new one rather
+            // than jumping (a jump showed as a flicker at full brightness); opening, its top doesn't glide, so it never
+            // drifts in from a position measured before the rows were laid out. When the menu opens around the
+            // selection, the whole menu glides by its top, so the glow glides its top with it.
             transform: selectedTravel.transform,
-            transition: transition(placement === 'around' ? ['top', 'transform', 'opacity'] : ['transform', 'opacity']),
+            transition: transition(
+              placement === 'around' || !open ? ['top', 'transform', 'opacity'] : ['transform', 'opacity'],
+            ),
           }}
         />
       ) : null}
