@@ -1,5 +1,5 @@
 import Timer from '../@types/Timer'
-import { isSafari, isTouch } from '../browser'
+import { isIOS, isSafari, isTouch } from '../browser'
 import ministore from '../stores/ministore'
 import osVersionStore from '../stores/osVersionStore'
 import debugLog from '../util/debugLog'
@@ -14,15 +14,25 @@ const RESTORE_WINDOW = 1000
 /** How far the overlay reaches past the thought, so that a second tap just outside its text is covered too. */
 const OVERLAY_PADDING = 20
 
+/** How long a press must be held before iOS shows the magnifier, after which it is no longer a tap. */
+const MAGNIFIER_DELAY = 500
+
+/** How far a touch can move and still be a tap rather than a gesture, in pixels. Matches MultiGesture's minDistance. */
+const TAP_SLOP = 10
+
 /** A point in viewport coordinates. */
 type Point = { clientX: number; clientY: number }
+
+/** Whether a touch moved too far between two points to be a tap. */
+const moved = (start: Point, end: Point) =>
+  Math.hypot(end.clientX - start.clientX, end.clientY - start.clientY) >= TAP_SLOP
 
 /** The overlay over the thought being edited, and the caret to put back if a covered tap moves the selection out of it. Disposing removes the overlay and clears its timer. */
 const shieldStore = ministore<{
   overlay: HTMLElement | null
   timer: Timer | null
   editable: HTMLElement | null
-  /** The caret's offset within the thought, which survives a re-render that replaces its text nodes. */
+  /** The caret's plain-text offset within the editable, which survives a re-render that replaces its text nodes. */
   caret: number | null
   restoreUntil: number
 }>(
@@ -42,22 +52,11 @@ const uncover = () => {
 }
 
 /**
- * Covers the thought being edited for the double tap window after a tap on it, so that a second tap lands on the
- * overlay instead of the text. On iOS 27, a double tap on a focused editable draws a word selection, and from then on
- * WebKit withholds the touchend, touchmove and pointerup of every touch that begins within 44pt of the caret, for the
- * life of the tab (#5660, WebKit bug 322561). Nothing the page does afterwards ends that state, so it has to be
- * prevented. WebKit cancels a tap whose target changes before it commits, which also cancels the tap that was just
- * covered, so the caller places its caret before covering, and onTap places it for each tap that lands on the overlay.
+ * Covers the editable for the double tap window after a tap on it, so that a second tap lands on the overlay instead
+ * of the text. WebKit cancels a tap whose target changes before it commits, which also cancels the tap that was just
+ * covered, so the caller has already placed its caret, and placeCaret places it for each tap that lands on the overlay.
  */
-const cover = (
-  editable: HTMLElement,
-  {
-    onTap,
-  }: {
-    /** Called when a touch on the overlay ends, with where it began and ended. */
-    onTap: (start: Point, end: Point) => void
-  },
-) => {
+const cover = (editable: HTMLElement, placeCaret: (point: Point) => boolean) => {
   shieldStore.reset()
 
   let touchStart: Point | null = null
@@ -96,10 +95,11 @@ const cover = (
   overlay.addEventListener('touchend', e => {
     restartTimer()
     const touch = e.changedTouches[0]
-    if (!touchStart || !touch) return
-    onTap(touchStart, { clientX: touch.clientX, clientY: touch.clientY })
+    if (!touchStart || !touch || moved(touchStart, touch)) return
+    // a tap on the overlay would otherwise be lost, as it is for anything else under it
+    placeCaret(touch)
     // the caret to put back is now wherever the tap placed it
-    shieldStore.update({ caret: selection.offsetThought() })
+    shieldStore.update({ caret: selection.offsetFromNode(editable) })
   })
   overlay.addEventListener('touchcancel', restartTimer)
   // the covered tap's own mouse events can land here, after its caret was placed
@@ -112,17 +112,59 @@ const cover = (
     overlay,
     timer: setTimeout(uncover, DOUBLE_TAP_WINDOW),
     editable,
-    caret: selection.offsetThought(),
+    caret: selection.offsetFromNode(editable),
     restoreUntil: performance.now() + RESTORE_WINDOW,
   })
   debugLog.log('doubleTapShield', { event: 'cover' })
 }
 
 /**
- * Keeps a selection from being drawn in a thought on iOS 27, where any range drawn there starts the same withheld
- * touches as a double tap. Collapses a range in a thought before it is drawn, which catches the edit menu's Select and
- * Select All that no overlay can intercept. Also puts the caret back when a tap on the overlay moved the selection
- * onto text outside the thought. Called first from the selectionchange listener in initEvents.
+ * Handles the end of a touch on a thought or note. On iOS 27, a double tap on a focused editable draws a word
+ * selection, and from then on WebKit withholds the touchend, touchmove and pointerup of every touch that begins within
+ * 44pt of the caret, for the life of the tab (#5660, WebKit bug 322561). Nothing the page does afterwards ends that
+ * state, so it has to be prevented. Any tap on the editable being edited may be the first of a double tap, so it places
+ * its own caret with placeCaret, which returns false to leave the tap alone, and the editable is covered so that the
+ * second tap lands off the text. A press long enough for the magnifier is left to iOS, which opens the edit menu on
+ * release, the only remaining route to paste. The iOS app disables WebKit's double tap recognizers natively instead
+ * (#6106).
+ */
+const onTouchEnd = (
+  e: TouchEvent,
+  {
+    editable,
+    touchStart,
+    placeCaret,
+  }: {
+    /** The thought or note editable that the touch began on. */
+    editable: HTMLElement
+    /** Where and when the touch began. */
+    touchStart: (Point & { timeStamp: number }) | null
+    /** Places the caret at the point, or returns false if the tap should not place it. */
+    placeCaret: (point: Point) => boolean
+  },
+) => {
+  const touch = e.changedTouches[0]
+  if (
+    (osVersionStore.getState() ?? 0) < 27 ||
+    isIOS ||
+    document.activeElement !== editable ||
+    !touchStart ||
+    !touch ||
+    e.timeStamp - touchStart.timeStamp >= MAGNIFIER_DELAY ||
+    moved(touchStart, touch) ||
+    !placeCaret(touch)
+  ) {
+    return
+  }
+
+  cover(editable, placeCaret)
+}
+
+/**
+ * Keeps a selection from being drawn in a thought or note on iOS 27, where any range drawn there starts the same
+ * withheld touches as a double tap. Collapses a range in a thought or note before it is drawn, which catches the edit
+ * menu's Select and Select All that no overlay can intercept. Also puts the caret back when a tap on the overlay moved
+ * the selection onto text outside the editable. Called first from the selectionchange listener in initEvents.
  */
 const onSelectionChange = () => {
   if (!isTouch || !isSafari() || (osVersionStore.getState() ?? 0) < 27) return
@@ -146,6 +188,6 @@ const onSelectionChange = () => {
   }
 }
 
-const doubleTapShield = { cover, onSelectionChange }
+const doubleTapShield = { onTouchEnd, onSelectionChange }
 
 export default doubleTapShield

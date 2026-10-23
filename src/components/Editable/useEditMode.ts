@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
 import State from '../../@types/State'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
-import { isIOS, isSafari, isTouch } from '../../browser'
+import { isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
 import doubleTapShield from '../../device/doubleTapShield'
@@ -26,12 +26,6 @@ import head from '../../util/head'
 import isCommandKey from '../../util/isCommandKey'
 import lastTouch from './lastTouch'
 import useCaretRestore from './useCaretRestore'
-
-/** How long a press must be held before iOS shows the magnifier, after which it is no longer a tap. */
-const MAGNIFIER_DELAY = 500
-
-/** How far a touch can move and still be a tap rather than a gesture, in pixels. Matches MultiGesture's minDistance. */
-const TAP_SLOP = 10
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
@@ -294,40 +288,17 @@ const useEditMode = ({
         )
       })
 
-      // #5660: on iOS 27 a double tap on the thought being edited draws a word selection, which leaves a dead zone
-      // around the caret for the life of the tab. Any tap here may be the first of a double tap, so it places its own
-      // caret and covers the thought, and the second tap lands off the text. A press long enough for the magnifier is
-      // left to iOS, which opens the edit menu on release, the only remaining route to paste.
-      const touchStart = touchStartRef.current
-      const touch = e.changedTouches[0]
-      if (
-        (osVersionStore.getState() ?? 0) < 27 ||
-        // the iOS app disables WebKit's double tap recognizers natively instead (#6106)
-        isIOS ||
-        document.activeElement !== editable ||
-        !touchStart ||
-        !touch ||
-        e.timeStamp - touchStart.timeStamp >= MAGNIFIER_DELAY ||
-        Math.hypot(touch.clientX - touchStart.clientX, touch.clientY - touchStart.clientY) >= TAP_SLOP
-      ) {
-        return
-      }
-
-      dispatch((dispatch, getState) => {
-        const state = getState()
-        if (!canPlaceTapCaret(state)) return
-
-        placeTapCaret(state, touch)
-        doubleTapShield.cover(editable, {
-          // a tap on the overlay would otherwise be lost, as it is for anything else under it
-          onTap: (start, end) => {
-            if (Math.hypot(end.clientX - start.clientX, end.clientY - start.clientY) >= TAP_SLOP) return
-            dispatch((dispatch, getState) => {
-              const state = getState()
-              if (canPlaceTapCaret(state)) placeTapCaret(state, end)
-            })
-          },
-        })
+      // #5660
+      doubleTapShield.onTouchEnd(e, {
+        editable,
+        touchStart: touchStartRef.current,
+        placeCaret: point =>
+          dispatch((dispatch, getState) => {
+            const state = getState()
+            if (!canPlaceTapCaret(state)) return false
+            placeTapCaret(state, point)
+            return true
+          }),
       })
     }
 

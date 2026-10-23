@@ -14,7 +14,10 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
-import { isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
+import { LongPressState } from '../constants'
+import doubleTapShield from '../device/doubleTapShield'
+import getCaretOffset from '../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
@@ -26,6 +29,7 @@ import resolveNoteKey from '../selectors/resolveNoteKey'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import editableSyncStore from '../stores/editableSyncStore'
+import multitouchStore from '../stores/multitouchStore'
 import appendToPath from '../util/appendToPath'
 import applyOuterTags from '../util/applyOuterTags'
 import equalPathHead from '../util/equalPathHead'
@@ -81,6 +85,40 @@ const Note = React.memo(
     // pressed, so the caret escapes without any drag at all. It only escapes from the end, where the note abuts
     // the parent thought, so that is where it belongs when restored. (#3276)
     useCaretRestore({ editableRef: noteRef, enabled: !!hasFocus, end: true })
+
+    // #5660
+    const hasNote = note !== null
+    useEffect(() => {
+      const editable = noteRef.current
+      if (!editable || !isTouch || !isSafari()) return
+
+      let touchStart: { clientX: number; clientY: number; timeStamp: number } | null = null
+      /** Records where and when the touch began. */
+      const onTouchStart = (e: TouchEvent) => {
+        const touch = e.changedTouches[0]
+        touchStart = touch ? { clientX: touch.clientX, clientY: touch.clientY, timeStamp: e.timeStamp } : null
+      }
+      /** Places the caret for a tap that the double tap shield takes, since iOS would otherwise have placed it. */
+      const onTouchEnd = (e: TouchEvent) =>
+        doubleTapShield.onTouchEnd(e, {
+          editable,
+          touchStart,
+          placeCaret: point =>
+            dispatch((dispatch, getState) => {
+              if (multitouchStore.getState() || getState().longPress !== LongPressState.Inactive) return false
+              const { offset } = getCaretOffset(editable, point)
+              if (offset !== null) selection.set(editable, { offset })
+              return true
+            }),
+        })
+
+      editable.addEventListener('touchstart', onTouchStart)
+      editable.addEventListener('touchend', onTouchEnd)
+      return () => {
+        editable.removeEventListener('touchstart', onTouchStart)
+        editable.removeEventListener('touchend', onTouchEnd)
+      }
+    }, [dispatch, hasNote])
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
