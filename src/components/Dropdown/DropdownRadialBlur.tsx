@@ -36,7 +36,7 @@ const readBlur = () => {
     aspect: num('--sort-dropdown-blur-aspect', 1.1),
     offsetX: num('--sort-dropdown-blur-offset-x', 0),
     offsetY: num('--sort-dropdown-blur-offset-y', 0),
-    layers: Math.round(Math.min(8, Math.max(3, num('--sort-dropdown-blur-layers', 5)))),
+    layers: Math.round(Math.min(12, Math.max(1, num('--sort-dropdown-blur-layers', 5)))),
   }
 }
 
@@ -69,10 +69,13 @@ const DropdownRadialBlur = ({ centre }: { centre: { x: number; y: number } }) =>
         const feather = slice * 1.5
         const lead = Math.max(0, start - feather)
         const trail = Math.min(100, end + feather)
+        // A single layer carries the core blur and fades out from the end of the core to the outer ellipse.
         const mask =
-          i === 0
-            ? `radial-gradient(${rx}px ${ry}px at ${cx}px ${cy}px, black ${end}%, transparent ${trail}%)`
-            : `radial-gradient(${rx}px ${ry}px at ${cx}px ${cy}px, transparent ${lead}%, black ${start}%, black ${end}%, transparent ${trail}%)`
+          n === 1
+            ? `radial-gradient(${rx}px ${ry}px at ${cx}px ${cy}px, black ${innerPct}%, transparent 100%)`
+            : i === 0
+              ? `radial-gradient(${rx}px ${ry}px at ${cx}px ${cy}px, black ${end}%, transparent ${trail}%)`
+              : `radial-gradient(${rx}px ${ry}px at ${cx}px ${cy}px, transparent ${lead}%, black ${start}%, black ${end}%, transparent ${trail}%)`
         const style: CSSProperties = {
           position: 'fixed',
           inset: 0,

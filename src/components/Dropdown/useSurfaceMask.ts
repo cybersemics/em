@@ -4,12 +4,10 @@
 // centred on the light (the original design's variable mask), on the Dropdown's clock. The content is hidden most
 // at the light's centre and fades back to fully visible towards the ellipse's edge; any overall darkening comes from
 // the light's screen dim, not from here. Dimming the content and masking it are the only ways it attenuates what the menu
-// overlaps: the glass itself (fill, trapped highlights, stroke) is never touched. Beside the sheet, two optional
-// dials can also reach the backdrop blur and the surface's own light (the Command Universe's room light, top light
-// and selection glow); both default to leaving them as they are.
+// overlaps: the glass itself (fill, trapped highlights, stroke), its backdrop blur and the surface's own light (the
+// Command Universe's room light, top light and selection glow) are never touched.
 //
-// Design dials: the content opacity, the mask's strength, size, aspect, core, falloff and offset, the blur and the
-// room light read --sort-dropdown-* custom properties set by DropdownDebugPanel, with the current design values as
+// Design dials: the content opacity and the mask's strength, size, aspect, core, falloff and offset read --sort-dropdown-* custom properties set by DropdownDebugPanel, with the current design values as
 // fallbacks. The mask's size also follows the glow's spread dial, so the mask grows and shrinks with the light.
 //
 // Interim: this reaches into the surface's DOM and sets styles on it, because the surface (the
@@ -49,9 +47,6 @@ const useSurfaceMask = (surface: HTMLElement | null, light: { x: number; y: numb
 
   useEffect(() => {
     if (!surface || !visible) return
-    const isAbsolute = (el: Element): el is HTMLElement =>
-      el instanceof HTMLElement && getComputedStyle(el).position === 'absolute'
-
     // In-flow children (the header and the page): an elliptical mask centred on the light. Inside the core the
     // content shows at 1 − strength; from the core to the falloff end it fades back to fully visible. The core's
     // alpha transitions (it is a registered property), so the mask fades in and out with the light.
@@ -67,20 +62,6 @@ const useSurfaceMask = (surface: HTMLElement | null, light: { x: number; y: numb
       el.style.opacity = isOpen ? 'var(--sort-dropdown-content-opacity, 1)' : '1'
       el.style.setProperty('--dropdown-surface-mask', isOpen ? 'calc(1 - var(--sort-dropdown-mask-strength, 1))' : '1')
     })
-
-    // Beside the sheet: the backdrop blur, and the surface's own light.
-    ;[...(surface.parentElement?.children ?? [])]
-      .filter(el => el !== surface)
-      .filter(isAbsolute)
-      .forEach(el => {
-        const isBlur = getComputedStyle(el).backdropFilter !== 'none'
-        el.style.transition = transition(['opacity'])
-        el.style.opacity = !isOpen
-          ? ''
-          : isBlur
-            ? 'var(--sort-dropdown-glass-blur, 1)'
-            : 'var(--sort-dropdown-room-light, 1)'
-      })
   }, [surface, visible, isOpen, light.x, light.y])
 
   // Clear the mask once fully closed so the surface is untouched between uses.

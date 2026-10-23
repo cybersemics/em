@@ -166,29 +166,6 @@ const MASK_CONTROLS: Control[] = [
   },
 ]
 
-const SURFACE_LIGHT_CONTROLS: Control[] = [
-  {
-    name: '--sort-dropdown-room-light',
-    label: 'Command Universe light',
-    kind: 'number',
-    min: 0,
-    max: 1,
-    step: 0.01,
-    fallback: '1',
-    hint: 'The dialog’s own room light, top light and selection glow while the menu is open. 1 = stays lit, 0 = off.',
-  },
-  {
-    name: '--sort-dropdown-glass-blur',
-    label: 'glass blur',
-    kind: 'number',
-    min: 0,
-    max: 1,
-    step: 0.01,
-    fallback: '1',
-    hint: 'The blur behind the glass. Below 1, the editor shows through unblurred.',
-  },
-]
-
 const GLOW_CONTROLS: Control[] = [
   {
     name: '--sort-dropdown-glow-scope',
@@ -311,8 +288,8 @@ const BLUR_CONTROLS: Control[] = [
     name: '--sort-dropdown-blur-layers',
     label: 'layers',
     kind: 'number',
-    min: 3,
-    max: 8,
+    min: 1,
+    max: 12,
     step: 1,
     fallback: '5',
     hint: 'More layers give a smoother falloff and cost more to draw.',
@@ -398,7 +375,6 @@ interface Section {
 const SECTIONS: Section[] = [
   { id: 'opening', title: 'Opening', controls: OPENING_CONTROLS },
   { id: 'mask', title: 'Mask over the screen', note: 'modal ↔ local', controls: MASK_CONTROLS },
-  { id: 'surfaceLight', title: 'Command Universe lighting', controls: SURFACE_LIGHT_CONTROLS },
   { id: 'glow', title: 'Menu glow', controls: GLOW_CONTROLS },
   { id: 'rows', title: 'Type and spacing', controls: ROWS_CONTROLS },
   { id: 'blur', title: 'Radial blur', note: 'off by default', controls: BLUR_CONTROLS },
