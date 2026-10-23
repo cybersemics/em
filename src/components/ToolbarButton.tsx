@@ -97,7 +97,8 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       () => {
         isPressedRef.current = false
       },
-      800,
+      // A toolbar button can only be dragged in customize mode, so elsewhere the toolbar must stay scrollable after a long press (#3461).
+      { delay: 800, lockScroll: !!customize },
     ),
   }
   const longPressTapUp = longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']
@@ -325,7 +326,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       }
       <SVG
         size={fontSize}
-        cssRaw={css.raw({
+        className={css({
           position: 'relative' as const,
           cursor: isButtonExecutable ? 'pointer' : 'default',
           opacity: dropToRemove ? 0 : 1,

@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import Autofocus from '../@types/Autofocus'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import equalPath from '../util/equalPath'
@@ -9,8 +9,8 @@ import { hasChildren } from './getChildren'
 import rootedParentOf from './rootedParentOf'
 import zoomPath from './zoomPath'
 
-/** Calculates whether a thought is shown, hidden, or dimmed based on the position of the cursor. */
-const calculateAutofocus = (state: State, path: Path) => {
+/** Prepares autofocus calculations for paths in one synchronous traversal of the current tree. */
+const calculateAutofocus = (state: State): ((path: Path) => Autofocus) => {
   /* Note:
 
   # Thoughts that should not be dimmed
@@ -26,61 +26,44 @@ const calculateAutofocus = (state: State, path: Path) => {
 
   */
 
-  if (!state.cursor || isRoot(path)) return 'show'
+  if (!state.cursor) return () => 'show'
 
   // =focus/Zoom gives the zoomed thought the full screen by hiding everything outside its subtree, i.e. its parent, its siblings, and their descendants.
   const zoom = zoomPath(state)
-  if (zoom && !isDescendantPath(path, zoom)) {
-    // Ancestors of the cursor use 'hide-parent' so that they fade rather than snap in when navigating back up. See: VirtualThought.
-    return isDescendantPath(state.cursor, path) ? 'hide-parent' : 'hide'
-  }
-
-  const cursorParent = rootedParentOf(state, state.cursor!)
+  const cursorParent = rootedParentOf(state, state.cursor)
   const cursorGrandparent = rootedParentOf(state, cursorParent)
 
   // Generally if the cursor is on a leaf, the autofocus should be the same as its parent.
   // This avoids a visual shift when there are no additional descendants to focus on.
   const isCursorLeaf = !hasChildren(state, head(state.cursor))
 
-  /** Returns true if the thought is the parent or sibling of the cursor. */
-  const isParentOrSibling = () => equalPath(cursorParent, path) || equalPath(cursorParent, rootedParentOf(state, path))
+  return (path: Path) => {
+    if (isRoot(path)) return 'show'
+    if (zoom && !isDescendantPath(path, zoom)) {
+      // Ancestors of the cursor use 'hide-parent' so that they fade rather than snap in when navigating back up. See: VirtualThought.
+      return isDescendantPath(state.cursor, path) ? 'hide-parent' : 'hide'
+    }
 
-  /** Returns true if the thought is the grandparent of the cursor. */
-  const isGrandparent = () => equalPath(cursorGrandparent, path)
+    const parent = rootedParentOf(state, path)
+    const isParentOrSibling = equalPath(cursorParent, path) || equalPath(cursorParent, parent)
+    const isGrandparent = equalPath(cursorGrandparent, path)
+    const isUncle = equalPath(cursorGrandparent, parent)
 
-  /** Returns true if the thought is the parent of the cursor. */
-  const isUncle = () => equalPath(cursorGrandparent, rootedParentOf(state, path))
-
-  /** Returns true if the thought is a descendant of the cursor. */
-  const isDescendantOfCursor = () => isDescendantPath(path, state.cursor)
-
-  /** Returns true if the thought is a descendant of an uncle of the cursor. */
-  const isDescendantOfUncle = () => isDescendantPath(path, cursorParent)
-
-  /** Returns true if the thought is a descendant of an uncle of the cursor. */
-  const isDescendantOfGreatUncle = () => isDescendantPath(path, cursorGrandparent)
-
-  /** Returns true if the thought is expanded by hovering above the first visible thought. */
-  const isExpandedTop = () =>
-    !!state.expandHoverUpPath &&
-    (isRoot(state.expandHoverUpPath) || isDescendantPath(path, state.expandHoverUpPath || null))
-
-  /** Returns true if the thought is expanded by hovering below a thought. */
-  const isExpandedBottom = () => isDescendantPath(path, state.expandHoverDownPath ?? null)
-
-  return (isCursorLeaf && isParentOrSibling()) || isDescendantOfCursor()
-    ? 'show'
-    : isParentOrSibling() ||
-        isDescendantOfUncle() ||
-        (isCursorLeaf && isGrandparent()) ||
-        (isCursorLeaf && isUncle()) ||
-        (isCursorLeaf && isDescendantOfGreatUncle()) ||
-        isExpandedBottom() ||
-        isExpandedTop()
-      ? 'dim'
-      : isGrandparent() || isUncle()
-        ? 'hide-parent'
-        : 'hide'
+    return (isCursorLeaf && isParentOrSibling) || isDescendantPath(path, state.cursor)
+      ? 'show'
+      : isParentOrSibling ||
+          isDescendantPath(path, cursorParent) ||
+          (isCursorLeaf && isGrandparent) ||
+          (isCursorLeaf && isUncle) ||
+          (isCursorLeaf && isDescendantPath(path, cursorGrandparent)) ||
+          isDescendantPath(path, state.expandHoverDownPath ?? null) ||
+          (!!state.expandHoverUpPath &&
+            (isRoot(state.expandHoverUpPath) || isDescendantPath(path, state.expandHoverUpPath)))
+        ? 'dim'
+        : isGrandparent || isUncle
+          ? 'hide-parent'
+          : 'hide'
+  }
 }
 
-export default _.curryRight(calculateAutofocus)
+export default calculateAutofocus

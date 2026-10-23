@@ -73,6 +73,7 @@ const linearizeTree = (
     depth: 0,
     indexDescendant: 0,
   },
+  getAutofocus = calculateAutofocus(state),
 ): TreeThought[] => {
   const path = basePath || HOME_PATH
   const hashedPath = hashPath(path)
@@ -107,10 +108,8 @@ const linearizeTree = (
 
   // 0-based ordinal of each visible non-attribute child, used to number =bullet/Ordered lists without re-sorting siblings in each Bullet.
   // Attributes (e.g. =children when showHiddenThoughts is enabled) occupy a slot in filteredChildren but are skipped in the numbering (-1).
-  const childIndexNonAttribute = filteredChildren.reduce<number[]>(
-    (accum, child) => [...accum, isAttribute(child.value) ? -1 : accum.filter(index => index >= 0).length],
-    [],
-  )
+  let ordinal = 0
+  const childIndexNonAttribute = filteredChildren.map(child => (isAttribute(child.value) ? -1 : ordinal++))
 
   const thoughts = filteredChildren.reduce<TreeThought[]>((accum, filteredChild, i) => {
     // If the context view is active, render the context's parent instead of the context itself.
@@ -136,7 +135,7 @@ const linearizeTree = (
     const isInSortedContext = attributeEquals(state, head(simplePath), '=sort', 'Alphabetical')
     const isTableCol2 = attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
     const isTableCol2Child = attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table')
-    const autofocus = calculateAutofocus(state, childPath)
+    const autofocus = getAutofocus(childPath)
 
     const node: TreeThought = {
       belowCursor: !!belowCursor,
@@ -171,22 +170,26 @@ const linearizeTree = (
     }
 
     // RECURSION
-    const descendants = linearizeTree(state, {
-      basePath: childPath,
-      belowCursor,
-      contextId: contextViewActive ? filteredChild.id : undefined,
-      contextChain: contextChainNew,
-      depth: depth + 1,
-      env: envNew,
-      indexDescendant: virtualIndexNew,
-      // merge styleGrandchildren so it gets applied to this child's children
-      styleAccum: safeRefMerge(
-        styleAccum,
-        pick(styleChildren, ACCUM_STYLE_PROPERTIES),
-        pick(getStyle(state, grandchildrenAttributeId), ACCUM_STYLE_PROPERTIES),
-      ),
-      styleFromGrandparent: getStyle(state, grandchildrenAttributeId),
-    })
+    const descendants = linearizeTree(
+      state,
+      {
+        basePath: childPath,
+        belowCursor,
+        contextId: contextViewActive ? filteredChild.id : undefined,
+        contextChain: contextChainNew,
+        depth: depth + 1,
+        env: envNew,
+        indexDescendant: virtualIndexNew,
+        // merge styleGrandchildren so it gets applied to this child's children
+        styleAccum: safeRefMerge(
+          styleAccum,
+          pick(styleChildren, ACCUM_STYLE_PROPERTIES),
+          pick(getStyle(state, grandchildrenAttributeId), ACCUM_STYLE_PROPERTIES),
+        ),
+        styleFromGrandparent: getStyle(state, grandchildrenAttributeId),
+      },
+      getAutofocus,
+    )
 
     // In order to mark every thought after the cursor as belowCursor, we need to update belowCursor before the next sibling is processed. Otherwise, the recursive belowCursor will not be propagated up the call stack and will still be undefined on the next uncle.
     if (!belowCursor && descendants[descendants.length - 1]?.belowCursor) {

@@ -219,7 +219,7 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
  * Styles
  *****************************************************************************/
 
-const rotate180Class = css.raw({ transform: 'rotate(180deg)' })
+const rotate180Class = css({ transform: 'rotate(180deg)' })
 
 /******************************************************************************
  * Components
@@ -276,7 +276,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
         {selected.label}
       </a>
       <span className={css({ display: 'inline-flex', verticalAlign: 'middle' })}>
-        <ChevronImg onClickHandle={() => setIsOpen(!isOpen)} cssRaw={isOpen ? rotate180Class : undefined} />
+        <ChevronImg onClickHandle={() => setIsOpen(!isOpen)} className={isOpen ? rotate180Class : undefined} />
         <span>
           <Dropdown
             isOpen={isOpen}
@@ -762,7 +762,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         >
           <ChevronImg
             onClickHandle={onAdvancedClick}
-            cssRaw={css.raw(advancedSettings && rotate180Class, { opacity: advancedSettings ? 1 : 0.5 })}
+            className={cx(advancedSettings && rotate180Class, css({ opacity: advancedSettings ? 1 : 0.5 }))}
           />
         </span>
       </div>

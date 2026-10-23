@@ -44,12 +44,12 @@ const ThoughtLink = ({
             staticText={staticBreadcrumbs}
             charLimit={charLimit || 32}
             thoughtsLimit={thoughtsLimit || 10}
-            linkCssRaw={css.raw({ fontWeight: 'inherit' })}
+            linkClassName={css({ fontWeight: 'inherit' })}
           />
         </div>
       )}
       <Link
-        cssRaw={css.raw({ fontWeight: 'inherit', color: 'fg' })}
+        className={css({ fontWeight: 'inherit', color: 'fg' })}
         simplePath={simplePath}
         placeholder={EMPTY_THOUGHT_PLACEHOLDER}
         style={styleLink}

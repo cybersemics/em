@@ -1,12 +1,12 @@
-import { css, cx } from '../../../styled-system/css'
+import { cx } from '../../../styled-system/css'
 import { iconRecipe } from '../../../styled-system/recipes'
 import IconType from '../../@types/IconType'
 
 /** Icon for the swapGrandparent command: three levels of a lineage, with the outer two exchanging places around the untouched middle one. */
-const SwapGrandparentIcon = ({ fill, size = 18, style = {}, cssRaw }: IconType) => (
+const SwapGrandparentIcon = ({ fill, size = 18, style = {}, className }: IconType) => (
   <svg
     xmlns='http://www.w3.org/2000/svg'
-    className={cx(iconRecipe(), css(cssRaw))}
+    className={cx(iconRecipe(), className)}
     viewBox='0 0 24 24'
     width={size}
     height={size}
