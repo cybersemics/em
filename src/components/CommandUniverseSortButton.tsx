@@ -8,6 +8,8 @@ import CommandSortType from '../@types/CommandSortType'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../actions/toggleMobileCommandUniverse'
 import { DEFAULT_FONT_SIZE } from '../constants'
+import useBreakpoint from '../hooks/useBreakpoint'
+import durations from '../util/durations'
 import Dropdown, { DropdownPlacement } from './Dropdown/Dropdown'
 import DropdownLight from './Dropdown/DropdownLight'
 import DropdownRows, { DropdownAction, DropdownItem } from './Dropdown/DropdownRows'
@@ -86,8 +88,8 @@ const CommandUniverseSortButton = ({ sortOrder }: CommandUniverseSortButtonProps
   // called). The prototype is about the dropdown; re-sorting the list is a 100ms+ render that disturbed its animation.
   const [selectedSort, setSelectedSort] = useState<CommandSortType>(sortOrder)
   const [open, setOpen] = useState(false)
-  // True from opening until the close animation finishes, while the menu's copy of the glyph is on screen.
-  const [menuShown, setMenuShown] = useState(false)
+  // The Command Universe switches to its desktop layout at md (400px).
+  const isDesktop = useBreakpoint('md')
   const buttonRef = useRef<HTMLDivElement>(null)
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const [surface, setSurface] = useState<HTMLElement | null>(null)
@@ -102,19 +104,22 @@ const CommandUniverseSortButton = ({ sortOrder }: CommandUniverseSortButtonProps
     setSurface(buttonRef.current?.closest<HTMLElement>('[data-cu-glass-sheet]') ?? null)
   }, [])
 
-  const actions: DropdownAction[] = [
-    {
-      id: 'customize',
-      label: 'Customize Toolbar',
-      icon: CustomizeIcon,
-      onAction: () => {
-        dispatch(toggleMobileCommandUniverse({ value: false }))
-        dispatch(showModal({ id: 'customizeToolbar' }))
-      },
-    },
-    // Placeholder: no undock behavior exists yet, so this just closes the menu.
-    { id: 'undock', label: 'Undock', icon: UndockIcon, onAction: () => {} },
-  ]
+  // Customize Toolbar and Undock belong to the desktop Command Universe; mobile shows only the sort options.
+  const actions: DropdownAction[] = isDesktop
+    ? [
+        {
+          id: 'customize',
+          label: 'Customize Toolbar',
+          icon: CustomizeIcon,
+          onAction: () => {
+            dispatch(toggleMobileCommandUniverse({ value: false }))
+            dispatch(showModal({ id: 'customizeToolbar' }))
+          },
+        },
+        // Placeholder: no undock behavior exists yet, so this just closes the menu.
+        { id: 'undock', label: 'Undock', icon: UndockIcon, onAction: () => {} },
+      ]
+    : []
 
   const SelectedIcon =
     selectedSort === 'alphabetical' ? AToZIcon : selectedSort === 'recent' ? ClockIcon : CommandsListIcon
@@ -126,7 +131,6 @@ const CommandUniverseSortButton = ({ sortOrder }: CommandUniverseSortButtonProps
       aria-label='Group commands'
       onClick={() => {
         setOpen(true)
-        setMenuShown(true)
       }}
       className={css({
         position: 'relative',
@@ -138,8 +142,13 @@ const CommandUniverseSortButton = ({ sortOrder }: CommandUniverseSortButtonProps
       })}
       style={{ width: iconSize, height: iconSize }}
     >
-      {/* The button's own glyph, hidden while the menu's copy of it is on screen. */}
-      <div className={css({ display: 'flex', mixBlendMode: 'plus-lighter' })} style={{ opacity: menuShown ? 0 : 0.5 }}>
+      {/* The button's own glyph. Hidden at once while the menu opens (the menu's copy takes its place), and faded back
+          in as the menu closes, crossfading with the menu's copy as it slides home, so it settles at its resting colour
+          instead of snapping from the menu's lit white to grey when the menu unmounts. */}
+      <div
+        className={css({ display: 'flex', mixBlendMode: 'plus-lighter' })}
+        style={{ opacity: open ? 0 : 0.5, transition: open ? 'none' : `opacity ${durations.get('medium')}ms ease-out` }}
+      >
         <SelectedIcon
           size={iconSize}
           fill={ICON_COLOR}
@@ -150,7 +159,6 @@ const CommandUniverseSortButton = ({ sortOrder }: CommandUniverseSortButtonProps
       <Dropdown
         open={open}
         onClose={() => setOpen(false)}
-        onClosed={() => setMenuShown(false)}
         // The Dropdown closes itself after a pick.
         onSelect={setSelectedSort}
         anchor={anchor}

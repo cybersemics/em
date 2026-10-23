@@ -8,7 +8,7 @@
 // current design values as fallbacks. Bake a tuned value by editing its fallback.
 import { ComponentType } from 'react'
 import { createPortal } from 'react-dom'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import { useDropdown } from './Dropdown'
 
@@ -56,8 +56,23 @@ const rowClass = css({
 
 const iconBoxClass = css({ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' })
 
+/**
+ * Lights a row's label and icon to full opacity under the pointer (or while pressed on touch), as the sidebar's section
+ * picker does. Only applied while the menu is open, so a hovered row doesn't stay lit as the menu closes. !important
+ * because the label and icon opacities are inline, for the open and close animation.
+ */
+const rowHoverClass = css({
+  '@media (hover: hover)': {
+    '&:hover > *': { opacity: '1 !important', transitionDuration: '{durations.fast} !important' },
+  },
+  '@media (hover: none)': {
+    '&:active > *': { opacity: '1 !important', transitionDuration: '{durations.fast} !important' },
+  },
+})
+
 const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize }: DropdownRowsProps<T>) => {
   const {
+    open,
     isOpen,
     placement,
     selectedId,
@@ -120,7 +135,7 @@ const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize
             key={id}
             ref={registerRow(id)}
             onClick={() => select(id)}
-            className={rowClass}
+            className={cx(rowClass, isOpen && rowHoverClass)}
             style={{
               paddingBlock: rowPad,
               // 'around': the selected row never moves within the menu; the menu's position carries it onto the anchor.
@@ -143,7 +158,9 @@ const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize
                 width: iconSize,
                 height: iconSize,
                 // Closed, matches the anchor glyph's 50%.
-                opacity: isOpen ? (isSelected ? 0.72 : 0.41) : 0.5,
+                // Opening, the selected icon starts at the anchor glyph's 50% to take over from it. Closing, it fades out
+                // while the anchor's own glyph fades back in (see CommandUniverseSortButton).
+                opacity: isOpen ? (isSelected ? 0.72 : 0.41) : open ? 0.5 : 0,
                 transition: transition(['opacity']),
               }}
             >
@@ -173,7 +190,7 @@ const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize
                 close()
                 onAction()
               }}
-              className={rowClass}
+              className={cx(rowClass, isOpen && rowHoverClass)}
               style={{ paddingBlock: rowPad, ...rowMotion(id) }}
             >
               <span style={{ opacity: 0.34 }}>{label}</span>
