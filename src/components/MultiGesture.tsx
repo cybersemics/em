@@ -502,7 +502,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         <GestureMenu />
         <TraceGesture eventNodeRef={ref} />
         <ScrollZone leftHanded={this.leftHanded} />
-        <div ref={ref}>{this.props.children}</div>
+        <div ref={ref} data-multigesture>
+          {this.props.children}
+        </div>
       </View>
     )
   }

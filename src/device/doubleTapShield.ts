@@ -66,16 +66,24 @@ const cover = (editable: HTMLElement) => {
     e => {
       // keeps the focus, and with it the keyboard, on the thought
       e.preventDefault()
-      // a triple tap outlasts the window, so each tap on the overlay keeps it up for another
+      // removing the overlay under a finger would send its touchend to a detached node, which nothing hears
       clearTimeout(shieldStore.getState().timer ?? undefined)
-      shieldStore.update({ timer: setTimeout(uncover, DOUBLE_TAP_WINDOW), restoreUntil: e.timeStamp + RESTORE_WINDOW })
+      shieldStore.update({ timer: null, restoreUntil: e.timeStamp + RESTORE_WINDOW })
       debugLog.log('doubleTapShield', { event: 'tap' })
     },
     { passive: false },
   )
+  /** Keeps the overlay up for another window after each touch on it, which also covers a triple tap. */
+  const restartTimer = () => {
+    clearTimeout(shieldStore.getState().timer ?? undefined)
+    shieldStore.update({ timer: setTimeout(uncover, DOUBLE_TAP_WINDOW) })
+  }
+  overlay.addEventListener('touchend', restartTimer)
+  overlay.addEventListener('touchcancel', restartTimer)
   // the covered tap's own mouse events can land here, after its caret was placed
   overlay.addEventListener('mousedown', e => e.preventDefault())
-  document.body.appendChild(overlay)
+  // inside MultiGesture, whose responder only hears touches on its descendants, so a swipe that starts here still runs
+  ;(editable.closest('[data-multigesture]') ?? document.body).appendChild(overlay)
 
   shieldStore.update({
     overlay,
