@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import TouchMark from '../@types/TouchMark'
 import themeColors from '../selectors/themeColors'
-import showTouchesAutoFadeStore from '../stores/showTouchesAutoFadeStore'
 import showTouchesStore from '../stores/showTouchesStore'
 import durations from '../util/durations'
 import trackPrimaryTouch from '../util/trackPrimaryTouch'
@@ -55,8 +54,11 @@ const TouchCanvas = () => {
 
   // Set by the drawing effect, which owns the marks that a change to Auto Fade acts on.
   const autoFadeChangeRef = useRef<((value: boolean) => void) | null>(null)
-  const onAutoFadeChange = useCallback((value: boolean) => autoFadeChangeRef.current?.(value), [])
-  showTouchesAutoFadeStore.useEffect(onAutoFadeChange)
+  const onSettingsChange = useCallback(
+    ({ autoFade }: { autoFade: boolean }) => autoFadeChangeRef.current?.(autoFade),
+    [],
+  )
+  showTouchesStore.useEffect(onSettingsChange)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -73,7 +75,7 @@ const TouchCanvas = () => {
     const fade = durations.get('touchFade')
     const fadeOut = durations.get('touchFadeOut')
     // whether marks fade on their own, or stay until the next touch starts
-    const autoFade = { current: showTouchesAutoFadeStore.getState() }
+    const autoFade = { current: showTouchesStore.getState().autoFade }
 
     /** Whether a mark is fading out, after which it is dropped. */
     const isFading = (mark: TimedMark) => autoFade.current || !!mark.fading
@@ -195,6 +197,7 @@ const TouchCanvas = () => {
 
     /** Follows the Auto Fade setting. Turning it on fades the marks left on screen from now, rather than from when they were made, which would remove them at once. */
     autoFadeChangeRef.current = value => {
+      if (value === autoFade.current) return
       autoFade.current = value
       const now = performance.now()
       if (value) marks.current = marks.current.map(mark => ({ ...mark, time: now, fading: false, fadeFrom: undefined }))
@@ -244,7 +247,7 @@ const TouchCanvas = () => {
 
 /** Draws every touch of the primary finger while Show Touches is on for this device, for recording a video or a screenshot of a touch or gesture issue. Draws nothing, and listens to nothing, while it is off. */
 const ShowTouches = () => {
-  const showTouches = showTouchesStore.useState()
+  const showTouches = showTouchesStore.useSelector(state => state.enabled)
   return showTouches ? <TouchCanvas /> : null
 }
 

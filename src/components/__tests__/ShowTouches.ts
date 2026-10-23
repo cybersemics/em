@@ -1,5 +1,4 @@
 import { act } from 'react'
-import showTouchesAutoFadeStore from '../../stores/showTouchesAutoFadeStore'
 import showTouchesStore from '../../stores/showTouchesStore'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatchTouchEvent from '../../test-helpers/dispatchTouchEvent'
@@ -8,7 +7,7 @@ import storage from '../../util/storage'
 // Which touches are drawn, and where, is covered by src/util/__tests__/trackPrimaryTouch.ts.
 
 /** Turns Show Touches on or off on this device. */
-const setShowTouches = (value: boolean) => act(() => showTouchesStore.update(value))
+const setShowTouches = (value: boolean) => act(() => showTouchesStore.update({ enabled: value }))
 
 /** Returns the Show Touches canvas, or null while the setting is off. */
 const canvas = () => document.querySelector('[data-testid="show-touches"]')
@@ -37,13 +36,13 @@ it('draws over the app while the setting is on, and remembers it on this device 
 })
 
 it('fades touches by default, and remembers Auto Fade turned off on this device only', async () => {
-  expect(showTouchesAutoFadeStore.getState()).toBe(true)
+  expect(showTouchesStore.getState().autoFade).toBe(true)
   expect(storage.getItem('showTouchesAutoFade')).toBeNull()
 
-  await act(() => showTouchesAutoFadeStore.update(false))
+  await act(() => showTouchesStore.update({ autoFade: false }))
   expect(storage.getItem('showTouchesAutoFade')).toBe('false')
 
-  await act(() => showTouchesAutoFadeStore.update(true))
+  await act(() => showTouchesStore.update({ autoFade: true }))
   expect(storage.getItem('showTouchesAutoFade')).toBeNull()
 })
 
