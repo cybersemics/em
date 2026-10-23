@@ -146,6 +146,7 @@ const DropEnd = ({
       )}
       {(showDropHover || testFlags.simulateDrag) && (
         <span
+          data-testid={`drop-end-hover-${thoughtId}`}
           className={dropHoverRecipe({ insideDropEnd: true })}
           style={{
             backgroundColor: dropHoverColorValue,

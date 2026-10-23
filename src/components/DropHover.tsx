@@ -49,6 +49,7 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
 
   return (
     <span
+      data-testid={`thought-drop-hover-${thoughtId}`}
       className={cx(
         dropHoverRecipe({ insideDivider }),
         css({
