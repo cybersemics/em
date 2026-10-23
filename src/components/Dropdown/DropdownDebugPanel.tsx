@@ -6,6 +6,7 @@ import useBreakpoint from '../../hooks/useBreakpoint'
 import storage from '../../util/storage'
 import { DROPDOWN_Z_INDEX } from './Dropdown'
 import MotionStepperControls from './DropdownMotionStepper'
+import useCanvasEditing, { CanvasTarget, DIAL_SET_EVENT, setCanvasEditing } from './canvasEditing'
 import { DIALS_EVENT } from './dials'
 import {
   announceDials,
@@ -16,7 +17,6 @@ import {
   subscribeDialsPeers,
   subscribeDialsState,
 } from './dialsSync'
-import useBlurEditing, { DIAL_SET_EVENT, setBlurEditing } from './radialBlurEditing'
 import useMotionStepper, { DIALS_ROOT_ATTRIBUTE } from './useMotionStepper'
 
 /*
@@ -51,6 +51,11 @@ interface Control {
   fallback: string
   /** One line on what the control does, shown under its label. */
   hint?: string
+  /**
+   * Set on <html>, copied and synced like any control, but with no slider: edited on canvas instead (the light's and
+   * the mask's geometry), and shown in the section's readout.
+   */
+  hidden?: boolean
 }
 
 const OPENING_CONTROLS: Control[] = [
@@ -63,7 +68,7 @@ const OPENING_CONTROLS: Control[] = [
       { value: 'down', label: 'drops down from the button' },
       { value: 'down-fade', label: 'drops down, others fade in place' },
     ],
-    fallback: 'down',
+    fallback: 'down-fade',
     hint: 'Around: the selected item stays on the button. Down: every item opens in the same place, the others spreading out from the button. Fade in place: only the selected item moves.',
   },
 ]
@@ -76,18 +81,8 @@ const MASK_CONTROLS: Control[] = [
     min: 0,
     max: 1,
     step: 0.01,
-    fallback: '0.525',
+    fallback: '0.65',
     hint: 'A dark fill over the whole screen. 0 = none, 1 = black.',
-  },
-  {
-    name: '--sort-dropdown-content-opacity',
-    label: 'Command Universe content',
-    kind: 'number',
-    min: 0,
-    max: 1,
-    step: 0.01,
-    fallback: '1',
-    hint: 'How visible the commands behind the menu stay. 1 = untouched.',
   },
   {
     name: '--sort-dropdown-mask-strength',
@@ -100,6 +95,7 @@ const MASK_CONTROLS: Control[] = [
     hint: 'How hidden the content is at the centre of the light. 0 = mask off, 1 = fully hidden.',
   },
   {
+    hidden: true,
     name: '--sort-dropdown-mask-size',
     label: 'mask size',
     kind: 'number',
@@ -111,6 +107,7 @@ const MASK_CONTROLS: Control[] = [
     hint: 'The ellipse’s width at a glow spread of 1; it also grows with the spread (Figma: ~545px at 1.9).',
   },
   {
+    hidden: true,
     name: '--sort-dropdown-mask-aspect',
     label: 'mask aspect',
     kind: 'number',
@@ -121,6 +118,7 @@ const MASK_CONTROLS: Control[] = [
     hint: 'Height ÷ width. Above 1 = taller than wide.',
   },
   {
+    hidden: true,
     name: '--sort-dropdown-mask-core',
     label: 'fully hidden core',
     kind: 'number',
@@ -132,6 +130,7 @@ const MASK_CONTROLS: Control[] = [
     hint: 'How much of the ellipse, from the centre, stays at full strength before fading.',
   },
   {
+    hidden: true,
     name: '--sort-dropdown-mask-falloff',
     label: 'fade ends at',
     kind: 'number',
@@ -143,6 +142,7 @@ const MASK_CONTROLS: Control[] = [
     hint: 'Where the content is fully visible again, as % of the ellipse. Lower = a tighter, harder edge.',
   },
   {
+    hidden: true,
     name: '--sort-dropdown-mask-offset-x',
     label: 'mask offset, horizontal',
     kind: 'number',
@@ -154,6 +154,7 @@ const MASK_CONTROLS: Control[] = [
     hint: 'Moves the mask from the light’s centre. Positive = right.',
   },
   {
+    hidden: true,
     name: '--sort-dropdown-mask-offset-y',
     label: 'mask offset, vertical',
     kind: 'number',
@@ -168,26 +169,18 @@ const MASK_CONTROLS: Control[] = [
 
 const GLOW_CONTROLS: Control[] = [
   {
-    name: '--sort-dropdown-glow-scope',
-    label: 'laid out',
-    kind: 'select',
-    options: [
-      { value: 'menu', label: 'around the options' },
-      { value: 'surface', label: 'across the dialog' },
-    ],
-    fallback: 'menu',
-  },
-  {
+    hidden: true,
     name: '--sort-dropdown-glow-spread',
     label: 'spread',
     kind: 'number',
     min: 0.5,
     max: 3,
     step: 0.05,
-    fallback: '1.9',
+    fallback: '2.2',
     hint: 'Scales the whole glow about its centre. Below 1 = tight, above 1 = diffuse.',
   },
   {
+    hidden: true,
     name: '--sort-dropdown-glow-intensity',
     label: 'intensity',
     kind: 'number',
@@ -195,6 +188,22 @@ const GLOW_CONTROLS: Control[] = [
     max: 2,
     step: 0.05,
     fallback: '1.2',
+  },
+  {
+    hidden: true,
+    name: '--sort-dropdown-glow-offset-x',
+    label: 'light origin, horizontal',
+    kind: 'number',
+    unit: 'px',
+    fallback: '0px',
+  },
+  {
+    hidden: true,
+    name: '--sort-dropdown-glow-offset-y',
+    label: 'light origin, vertical',
+    kind: 'number',
+    unit: 'px',
+    fallback: '0px',
   },
 ]
 
@@ -207,7 +216,7 @@ const BLUR_CONTROLS: Control[] = [
       { value: 'off', label: 'off' },
       { value: 'on', label: 'on' },
     ],
-    fallback: 'off',
+    fallback: 'on',
     hint: 'A progressive blur behind the light: strongest at its core, easing off outward.',
   },
   {
@@ -218,7 +227,7 @@ const BLUR_CONTROLS: Control[] = [
     max: 40,
     step: 0.5,
     unit: 'px',
-    fallback: '16px',
+    fallback: '6px',
     hint: 'Blur inside the inner ellipse.',
   },
   {
@@ -229,7 +238,7 @@ const BLUR_CONTROLS: Control[] = [
     max: 20,
     step: 0.5,
     unit: 'px',
-    fallback: '0px',
+    fallback: '2px',
     hint: 'Blur at the outer ellipse; beyond it there is none.',
   },
   {
@@ -240,7 +249,7 @@ const BLUR_CONTROLS: Control[] = [
     max: 600,
     step: 5,
     unit: 'px',
-    fallback: '120px',
+    fallback: '200px',
     hint: 'Horizontal radius of the fully blurred core.',
   },
   {
@@ -251,7 +260,7 @@ const BLUR_CONTROLS: Control[] = [
     max: 1200,
     step: 5,
     unit: 'px',
-    fallback: '360px',
+    fallback: '462px',
     hint: 'Horizontal radius where the blur has eased off to the edge blur.',
   },
   {
@@ -261,7 +270,7 @@ const BLUR_CONTROLS: Control[] = [
     min: 0.3,
     max: 3,
     step: 0.01,
-    fallback: '1.1',
+    fallback: '0.94',
   },
   {
     name: '--sort-dropdown-blur-offset-x',
@@ -291,7 +300,7 @@ const BLUR_CONTROLS: Control[] = [
     min: 1,
     max: 12,
     step: 1,
-    fallback: '5',
+    fallback: '4',
     hint: 'More layers give a smoother falloff and cost more to draw.',
   },
 ]
@@ -377,7 +386,7 @@ const SECTIONS: Section[] = [
   { id: 'mask', title: 'Mask over the screen', note: 'modal ↔ local', controls: MASK_CONTROLS },
   { id: 'glow', title: 'Menu glow', controls: GLOW_CONTROLS },
   { id: 'rows', title: 'Type and spacing', controls: ROWS_CONTROLS },
-  { id: 'blur', title: 'Radial blur', note: 'off by default', controls: BLUR_CONTROLS },
+  { id: 'blur', title: 'Radial blur', note: 'on by default', controls: BLUR_CONTROLS },
   { id: 'motion', title: 'Motion', note: 'freeze & step frames', controls: [] },
   { id: 'paste', title: 'Overrides to paste back', note: 'for baking in', controls: [] },
 ]
@@ -631,6 +640,9 @@ const inputStyle = css({
   borderRadius: '6px',
 })
 
+/** How far a press must move (px) before it counts as a scrub rather than a tap. */
+const SCRUB_SLOP = 6
+
 /**
  * A pointer-driven slider with precision scrubbing. Dragging along the track moves the value at the normal rate;
  * moving the finger up or down away from the track slows it (see SCRUB_BANDS) and lets it land on finer steps, down
@@ -653,6 +665,9 @@ const ScrubSlider = ({
   const trackRef = useRef<HTMLDivElement>(null)
   // The drag in progress: the last pointer x, and the unrounded value it has accumulated.
   const drag = useRef<{ lastX: number; raw: number } | null>(null)
+  // A press that hasn't moved far enough to count as a scrub yet. A vertical swipe that starts on the slider is left to
+  // the browser so the panel scrolls; a horizontal one becomes a scrub; one that doesn't move is a tap.
+  const press = useRef<{ x: number; y: number } | null>(null)
   const [band, setBand] = useState<(typeof SCRUB_BANDS)[number] | null>(null)
   const fraction = Math.min(1, Math.max(0, (value - min) / (max - min)))
 
@@ -671,21 +686,37 @@ const ScrubSlider = ({
     return [...SCRUB_BANDS].reverse().find(b => distance >= b.distance) ?? SCRUB_BANDS[0]
   }
 
-  /** Jumps to where the track was pressed, then follows the drag from there. */
+  /** Notes the press; whether it becomes a scrub, a tap or a scroll depends on how it moves. */
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    event.preventDefault()
     event.stopPropagation()
-    event.currentTarget.setPointerCapture(event.pointerId)
+    press.current = { x: event.clientX, y: event.clientY }
+  }
+
+  /** Jumps to where the track was tapped. */
+  const jumpTo = (clientX: number) => {
     const rect = trackRef.current!.getBoundingClientRect()
-    const raw = min + ((event.clientX - rect.left) / rect.width) * (max - min)
-    const next = settle(raw, 1)
-    drag.current = { lastX: event.clientX, raw: next.value }
-    setBand(SCRUB_BANDS[0])
+    const next = settle(min + ((clientX - rect.left) / rect.width) * (max - min), 1)
     onChange(next.value, next.decimals)
   }
 
   /** Moves the value by the pointer's horizontal travel, scaled by the band it is in. */
   const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    // A press becomes a scrub once it moves more across than down. Vertical presses are left alone: on touch the browser
+    // scrolls the panel (and cancels the pointer); with a mouse nothing happens.
+    if (!drag.current && press.current) {
+      const dx = Math.abs(event.clientX - press.current.x)
+      const dy = Math.abs(event.clientY - press.current.y)
+      if (dx < SCRUB_SLOP && dy < SCRUB_SLOP) return
+      if (dy >= dx) {
+        press.current = null
+        return
+      }
+      event.currentTarget.setPointerCapture(event.pointerId)
+      // Scrubs continue from the current value, starting where the press began.
+      drag.current = { lastX: press.current.x, raw: value }
+      press.current = null
+      setBand(SCRUB_BANDS[0])
+    }
     const current = drag.current
     if (!current) return
     const rect = trackRef.current!.getBoundingClientRect()
@@ -698,10 +729,17 @@ const ScrubSlider = ({
     if (next.value !== value) onChange(next.value, next.decimals)
   }
 
-  /** Ends the drag. */
+  /** Ends the drag. Also called when the browser takes the touch over to scroll. */
   const onPointerEnd = () => {
     drag.current = null
+    press.current = null
     setBand(null)
+  }
+
+  /** Ends a scrub, or treats a press that never moved as a tap. */
+  const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (press.current) jumpTo(event.clientX)
+    onPointerEnd()
   }
 
   return (
@@ -713,14 +751,15 @@ const ScrubSlider = ({
       aria-valuenow={value}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
-      onPointerUp={onPointerEnd}
+      onPointerUp={onPointerUp}
       onPointerCancel={onPointerEnd}
       className={css({
         position: 'relative',
         height: '40px',
         cursor: 'ew-resize',
-        // The page must not scroll or zoom while a finger scrubs, including when it strays up or down.
-        touchAction: 'none',
+        // Vertical pans stay with the browser so a swipe that starts on a slider still scrolls the panel. Once a touch
+        // has started moving sideways the browser won't scroll it, so a scrub can stray up and down into finer bands.
+        touchAction: 'pan-y',
         userSelect: 'none',
       })}
     >
@@ -924,15 +963,17 @@ const CollapsibleSection = ({
       </summary>
       <div className={css({ padding: '8px 8px 4px' })}>
         {children}
-        {section.controls.map(control => (
-          <ControlRow
-            key={control.name}
-            control={control}
-            value={values[control.name] ?? ''}
-            isDesktop={isDesktop}
-            onChange={value => setValues(previous => ({ ...previous, [control.name]: value }))}
-          />
-        ))}
+        {section.controls
+          .filter(control => !control.hidden)
+          .map(control => (
+            <ControlRow
+              key={control.name}
+              control={control}
+              value={values[control.name] ?? ''}
+              isDesktop={isDesktop}
+              onChange={value => setValues(previous => ({ ...previous, [control.name]: value }))}
+            />
+          ))}
         {section.controls.length ? (
           <div className={css({ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' })}>
             <IconButton icon='reset' label='Reset this section' onClick={resetSection} disabled={!overridden} />
@@ -1104,13 +1145,63 @@ const DialsFab = ({
   )
 }
 
+/**
+ * Starts or stops editing one ellipse on canvas. Only one editor is active at a time, so starting this one stops any
+ * other.
+ */
+const CanvasEditButton = ({
+  target,
+  label,
+  active,
+  onStart,
+}: {
+  target: CanvasTarget
+  label: string
+  active: CanvasTarget | null
+  onStart?: () => void
+}) => {
+  const editing = active === target
+  return (
+    <button
+      type='button'
+      aria-pressed={editing}
+      onClick={() => {
+        if (!editing) onStart?.()
+        setCanvasEditing(editing ? null : target)
+      }}
+      className={css({
+        width: '100%',
+        minHeight: '40px',
+        marginBottom: '8px',
+        fontFamily: 'monospace',
+        fontSize: '13px',
+        color: 'fg',
+        borderRadius: '8px',
+        border: '1px solid {colors.fgOverlay20}',
+        cursor: 'pointer',
+      })}
+      style={{ backgroundColor: editing ? 'rgba(120, 105, 225, 0.45)' : 'rgba(255, 255, 255, 0.06)' }}
+    >
+      {editing ? 'Editing on canvas: drag the handles (tap to stop)' : label}
+    </button>
+  )
+}
+
+/** A read-only line of values edited on canvas: the override where set, otherwise the design value. */
+const Readout = ({ values, items }: { values: Record<string, string>; items: [string, string, string][] }) => (
+  <p className={css({ margin: '0 0 8px', opacity: 0.7, fontFamily: 'monospace' })}>
+    {items.map(([label, name, fallback]) => `${label} ${values[name] || fallback}`).join(' · ')}
+  </p>
+)
+
 /** The design-dials panel for the sort dropdown: a floating button over the Command Universe that opens the dials, inline or in a popup window. */
 const DropdownDebugPanel = () => {
   // The frame stepper's state lives here, in the component that stays mounted, so freezing works while collapsed.
   const motion = useMotionStepper()
   const [values, setValues] = useState<Record<string, string>>(readValues)
-  // The radial blur's canvas editor: shown over the screen while the menu is open.
-  const blurEditing = useBlurEditing()
+  // The ellipse being edited on canvas (the light, the mask or the radial blur), shown over the screen while the menu
+  // is open.
+  const canvasTarget = useCanvasEditing()
 
   // The canvas editor sets dials through an event; apply them like control changes, so copy and sync see them.
   useEffect(() => {
@@ -1392,32 +1483,48 @@ const DropdownDebugPanel = () => {
           isDesktop={isDesktop}
         >
           {section.id === 'motion' ? <MotionStepperControls motion={motion} Slider={ScrubSlider} /> : null}
+          {section.id === 'glow' ? (
+            <>
+              <CanvasEditButton target='light' label='Edit light on canvas' active={canvasTarget} />
+              <Readout
+                values={values}
+                items={[
+                  ['spread', '--sort-dropdown-glow-spread', '2.2'],
+                  ['intensity', '--sort-dropdown-glow-intensity', '1.2'],
+                  ['origin x', '--sort-dropdown-glow-offset-x', '0px'],
+                  ['origin y', '--sort-dropdown-glow-offset-y', '0px'],
+                ]}
+              />
+            </>
+          ) : null}
+          {section.id === 'mask' ? (
+            <>
+              <CanvasEditButton target='mask' label='Edit mask on canvas' active={canvasTarget} />
+              <Readout
+                values={values}
+                items={[
+                  ['size', '--sort-dropdown-mask-size', '226px'],
+                  ['aspect', '--sort-dropdown-mask-aspect', '1.11'],
+                  ['core', '--sort-dropdown-mask-core', '44%'],
+                  ['fade ends', '--sort-dropdown-mask-falloff', '109%'],
+                  ['offset x', '--sort-dropdown-mask-offset-x', '0px'],
+                  ['offset y', '--sort-dropdown-mask-offset-y', '0px'],
+                ]}
+              />
+            </>
+          ) : null}
           {section.id === 'blur' ? (
-            <button
-              type='button'
-              aria-pressed={blurEditing}
-              onClick={() => {
+            <CanvasEditButton
+              target='blur'
+              label='Edit blur on canvas'
+              active={canvasTarget}
+              onStart={() => {
                 // Editing a blur that is off would show nothing on screen, so editing turns it on.
-                if (!blurEditing && values['--sort-dropdown-blur-enabled'] !== 'on') {
+                if (values['--sort-dropdown-blur-enabled'] === 'off') {
                   setValues(previous => ({ ...previous, '--sort-dropdown-blur-enabled': 'on' }))
                 }
-                setBlurEditing(!blurEditing)
               }}
-              className={css({
-                width: '100%',
-                minHeight: '40px',
-                marginBottom: '8px',
-                fontFamily: 'monospace',
-                fontSize: '13px',
-                color: 'fg',
-                borderRadius: '8px',
-                border: '1px solid {colors.fgOverlay20}',
-                cursor: 'pointer',
-              })}
-              style={{ backgroundColor: blurEditing ? 'rgba(120, 105, 225, 0.45)' : 'rgba(255, 255, 255, 0.06)' }}
-            >
-              {blurEditing ? 'Editing on canvas: drag the handles (tap to stop)' : 'Edit on canvas'}
-            </button>
+            />
           ) : null}
           {section.id === 'paste' ? (
             <>

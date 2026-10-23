@@ -94,7 +94,7 @@ const CommandUniverseSortButton = ({ sortOrder }: CommandUniverseSortButtonProps
   // Design dial: whether the menu opens around the selection or drops down from the button.
   useDialsVersion()
   // 'down-fade': drops down, and only the selected item moves; the others fade in where they are.
-  const opening = readDial('--sort-dropdown-placement', 'down')
+  const opening = readDial('--sort-dropdown-placement', 'down-fade')
   const placement: DropdownPlacement = opening === 'around' ? 'around' : 'down'
 
   useLayoutEffect(() => {
