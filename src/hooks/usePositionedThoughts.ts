@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
@@ -49,6 +49,11 @@ const usePositionedThoughts = (
   }, [dragInProgress])
 
   const { isHoveringSorted, newRank } = useSortedContext()
+
+  // The last measured width of each table col1 thought, kept after list virtualization unmounts the thought and releases its size.
+  // Otherwise col1 narrows whenever its widest thought falls below the virtualization cutoff. col2 then unwraps, the thoughts above get shorter, and the widest thought moves back above the cutoff. Once it mounts, col1 widens again and pushes it back below, so it flickers indefinitely, and on iOS Safari this can trigger "Maximum update depth exceeded" (React error #185).
+  // A mounted thought's measured width always takes precedence, so editing col1 still narrows the column.
+  const col1WidthsRetained = useRef(new Map<string, number>())
 
   /** The value of scrollTop. Only enabled when there is a drag in progress for performance reasons. */
   const scrollTopIfDragging = scrollTopStore.useSelector(scrollTop => (dragInProgress ? scrollTop : null))
@@ -108,6 +113,14 @@ const usePositionedThoughts = (
     // form a multi-level chain, so the column band is shared across up to three visible levels rather than two.
     const tableThoughtKeys = new Set(treeThoughts.filter(node => node.visibleChildrenKeys).map(node => node.key))
 
+    treeThoughts.forEach(node => {
+      const width = node.isTableCol1 ? sizes[node.key]?.width : undefined
+      if (width) col1WidthsRetained.current.set(node.key, width)
+    })
+
+    /** Gets the width of a table col1 thought: its measured width if it is mounted, otherwise the width it had when it was last mounted. */
+    const col1Width = (key: string) => sizes[key]?.width || col1WidthsRetained.current.get(key) || 0
+
     // The number of table levels that the available horizontal band is shared among. This does not fix the column
     // proportions: col1 is always as wide as its widest visible thought, so a table with short col1 thoughts stays
     // narrow and gives the rest of the band to col2. It only sets the upper bound at which an overlong col1 is
@@ -127,7 +140,7 @@ const usePositionedThoughts = (
     // Unlike other tables, the root is never rendered as a node in linearizeTree, so it never gets visibleChildrenKeys and its col1 width is never registered below.
     // Register it here, keyed by HOME_TOKEN, from the measured widths of the visible top-level col1 thoughts, so its col2 descendants can be shifted right (see ancestorTableWidths).
     const homeTableCol1Width = treeThoughts.reduce(
-      (accum, node) => (node.depth === 0 && node.isTableCol1 ? Math.max(accum, sizes[node.key]?.width || 0) : accum),
+      (accum, node) => (node.depth === 0 && node.isTableCol1 ? Math.max(accum, col1Width(node.key)) : accum),
       0,
     )
     if (homeTableCol1Width > 0) {
@@ -169,7 +182,7 @@ const usePositionedThoughts = (
       // set the width of table col1 to the minimum width of all visible thoughts in the column
       if (node.visibleChildrenKeys) {
         const tableCol1Width = node.visibleChildrenKeys?.reduce(
-          (accum, childKey) => Math.max(accum, sizes[childKey]?.width || 0),
+          (accum, childKey) => Math.max(accum, col1Width(childKey)),
           0,
         )
         if (tableCol1Width > 0) {

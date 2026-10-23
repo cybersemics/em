@@ -91,7 +91,7 @@ yaccum += height (unless table col1)
 
 After the loop:
 
-- `tableCol1Widths: Map<ThoughtId, number>` — the widths of every table's col1, used as inputs to `ancestorTableWidths` further down the loop.
+- `tableCol1Widths: Map<ThoughtId, number>` — the widths of every table's col1, used as inputs to `ancestorTableWidths` further down the loop. A col1 is as wide as its widest thought, and a col1 thought that [virtualization](#virtualization) has unmounted still counts at the width it had when it was last mounted. Without that, the column would narrow whenever its widest thought fell below the cutoff, the col2 thoughts above it would unwrap and shorten, and the widest thought would move back above the cutoff and remount, widening the column again. That cycle never settles. The thought flickers indefinitely, and on iOS Safari it can end in "Maximum update depth exceeded" (React error #185).
 - `indentCursorAncestorTables` — captured when the cursor node is visited; drives the global horizontal autocrop (see [Indent](#indent-horizontal-autocrop)).
 - `hoverArrowVisibility` — `'above' | 'below' | null`, set when the user is dragging into a sorted context and the drop position is outside the currently-rendered range. Drives the [`HoverArrow`](../src/components/HoverArrow.tsx) component.
 
