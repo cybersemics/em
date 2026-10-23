@@ -201,6 +201,8 @@ Both take the browser selection away from the thought as they open — the deskt
 
 Typing into a thought does not reach Redux on the keystroke. [`Editable`](../src/components/Editable.tsx) dispatches `editThought` through a lodash throttle of `EDIT_THROTTLE` (500 ms) with `leading: false`, so the value the user just typed sits on the trailing edge until the window closes. A command that mutates thought text and runs inside that window would read the pre-edit value, and the trailing edit would then commit over the command's own result — the typed character wins and the formatting is lost ([issue #4774](https://github.com/cybersemics/em/issues/4774)).
 
+The exception is an edit typed while there is nothing to undo, such as the first keystroke after a reload, which `Editable` commits immediately. Undo's `canExecute` reads the undo history, so the throttle would otherwise leave the Undo button disabled for the first 500 ms of typing, and a tap on it in that window would be dropped. The edits that follow are throttled as usual, and the undo history merges them with the immediate one into a single step.
+
 `Editable` subscribes to `commandEmitter` and flushes the throttle on `command`, so any activation surface can force the pending edit to commit first by triggering it. Every surface does, at the point where it knows a command is about to run:
 
 - **Keyboard and gesture** — `keyDown` and `handleGestureEnd` trigger it before they dispatch.
