@@ -140,7 +140,7 @@ Write a gesture as arrows, not as the letters the code uses: `←↓→`, not `l
 
 The thoughts a reporter gives are the text they happened to be writing when they noticed the bug, rather than the input the bug needs. Where the bug depends only on the structure of the text, reduce it to the smallest input that still reproduces: the punctuation, the nesting and the order of the parts, with every word replaced by a single letter. Drop each part in turn and keep it only if the bug goes away without it. Run the reduced case and the original, and post only once both fail the same way.
 
-[#6119](https://github.com/cybersemics/em/issues/6119) was reported with a long sentence about fashion school and two named people. The bug needs only two parentheticals separated by a comma, so its steps give `a (b), c (d)`. That case also showed that one parenthetical alone splits correctly, which the original text could not show.
+[#6119](https://github.com/cybersemics/em/issues/6119) was reported with a long, personal sentence naming two people. The bug needs only two parentheticals separated by a comma, so its steps give `a (b), c (d)`. That case also showed that one parenthetical alone splits correctly, which the original text could not show.
 
 Keep the original text, anonymized, where the bug depends on the text itself:
 
