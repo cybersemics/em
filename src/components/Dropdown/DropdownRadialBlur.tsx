@@ -10,13 +10,22 @@
 // and outer (edge blur) ellipses, the centre offset and the shape. Drags set the same dials as the panel.
 import { CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
+import useBreakpoint from '../../hooks/useBreakpoint'
 import { DROPDOWN_Z_INDEX, useDropdown } from './Dropdown'
 import EllipseCanvasEditor from './EllipseCanvasEditor'
 import useCanvasEditing, { setDial } from './canvasEditing'
 import { readDial } from './dials'
 
-/** The blur's current geometry and strength, from the dials (with their defaults). */
-const readBlur = () => {
+/**
+ * The blur's extents by layout (px). The desktop values were tuned on a ~1400px window; on a phone they cover the whole
+ * screen (a 462px outer radius on a 402px-wide viewport), so the phone gets its own, sized to ease out just past the
+ * menu. Below md (400px) is the Command Universe's mobile layout.
+ */
+const EXTENTS = { mobile: { inner: 110, outer: 260 }, desktop: { inner: 200, outer: 462 } }
+
+/** The blur's current geometry and strength, from the dials (with their defaults for the current layout). */
+const readBlur = (isDesktop: boolean) => {
+  const extents = isDesktop ? EXTENTS.desktop : EXTENTS.mobile
   /** Reads a numeric dial, falling back when it is unset or not a number. */
   const num = (name: string, fallback: number) => {
     const value = parseFloat(readDial(name, String(fallback)))
@@ -26,8 +35,8 @@ const readBlur = () => {
     enabled: readDial('--sort-dropdown-blur-enabled', 'on') === 'on',
     coreBlur: num('--sort-dropdown-blur-core', 6),
     edgeBlur: num('--sort-dropdown-blur-edge', 2),
-    inner: num('--sort-dropdown-blur-inner', 200),
-    outer: num('--sort-dropdown-blur-outer', 462),
+    inner: num('--sort-dropdown-blur-inner', extents.inner),
+    outer: num('--sort-dropdown-blur-outer', extents.outer),
     aspect: num('--sort-dropdown-blur-aspect', 0.94),
     offsetX: num('--sort-dropdown-blur-offset-x', 0),
     offsetY: num('--sort-dropdown-blur-offset-y', 0),
@@ -105,7 +114,8 @@ const dissolveStops = (from: number, to: number, toPct: (d: number) => number) =
 /** The radial progressive blur, offset from the centre it's given: the light's centre, in viewport coordinates. */
 const DropdownRadialBlur = ({ centre }: { centre: { x: number; y: number } }) => {
   const { isOpen, timing, transition } = useDropdown()
-  const blur = readBlur()
+  const isDesktop = useBreakpoint('md')
+  const blur = readBlur(isDesktop)
   if (!blur.enabled) return null
 
   const cx = centre.x + blur.offsetX
@@ -148,11 +158,12 @@ const DropdownRadialBlur = ({ centre }: { centre: { x: number; y: number } }) =>
 export const DropdownRadialBlurEditor = ({ centre }: { centre: { x: number; y: number } }) => {
   const { isOpen } = useDropdown()
   const target = useCanvasEditing()
+  const isDesktop = useBreakpoint('md')
   if (target !== 'blur' || !isOpen) return null
   return (
     <EllipseCanvasEditor
       centre={centre}
-      read={readBlur}
+      read={() => readBlur(isDesktop)}
       write={{
         offset: (x, y) => {
           setDial('--sort-dropdown-blur-offset-x', `${x}px`)

@@ -270,7 +270,7 @@ const BLUR_CONTROLS: Control[] = [
     max: 600,
     step: 5,
     unit: 'px',
-    fallback: '200px',
+    fallback: '110px | 200px',
     hint: 'Horizontal radius of the fully blurred core.',
   },
   {
@@ -281,7 +281,7 @@ const BLUR_CONTROLS: Control[] = [
     max: 1200,
     step: 5,
     unit: 'px',
-    fallback: '462px',
+    fallback: '260px | 462px',
     hint: 'Horizontal radius where the blur has eased off to the edge blur.',
   },
   {
