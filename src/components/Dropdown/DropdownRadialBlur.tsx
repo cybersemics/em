@@ -11,7 +11,7 @@
 import { CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import useBreakpoint from '../../hooks/useBreakpoint'
-import { DROPDOWN_Z_INDEX, useDropdown } from './Dropdown'
+import { DROPDOWN_LAYER_Z, useDropdown } from './Dropdown'
 import EllipseCanvasEditor from './EllipseCanvasEditor'
 import useCanvasEditing, { setDial } from './canvasEditing'
 import { readDial } from './dials'
@@ -140,7 +140,7 @@ const DropdownRadialBlur = ({ centre }: { centre: { x: number; y: number } }) =>
           width: halfWidth * 2,
           height: halfHeight * 2,
           pointerEvents: 'none',
-          zIndex: DROPDOWN_Z_INDEX,
+          zIndex: DROPDOWN_LAYER_Z.base,
           backdropFilter: `blur(${radius.toFixed(2)}px)`,
           WebkitBackdropFilter: `blur(${radius.toFixed(2)}px)`,
           maskImage: mask,

@@ -26,6 +26,24 @@ import useDialsVersion, { DROPDOWN_OPENING_EVENT } from './dials'
 /** Above the dialog: the layers are later in <body>, so the same z-index paints over it. */
 export const DROPDOWN_Z_INDEX = Number(token('zIndex.dialog'))
 
+/**
+ * The dropdown's layers, each on its own level above the dialog, so their order never depends on which was added to
+ * <body> last (a layer that mounts after the menu opens, such as the radial blur turned on from the dials panel, used
+ * to land on top of the rows and blur them).
+ */
+export const DROPDOWN_LAYER_Z = {
+  /** The tap catcher and the radial blur: under everything the dropdown draws. */
+  base: DROPDOWN_Z_INDEX,
+  /** The light: the dim, tint, glow image, band, bloom and selection glow. */
+  light: DROPDOWN_Z_INDEX + 1,
+  /** The menu's rows. */
+  rows: DROPDOWN_Z_INDEX + 2,
+  /** The design dials' canvas editors. */
+  editor: DROPDOWN_Z_INDEX + 3,
+  /** The design dials panel and its button. */
+  panel: DROPDOWN_Z_INDEX + 4,
+}
+
 /** Default easing for every layer (matches the sidebar's EASE_OUT). */
 export const EASE = 'cubic-bezier(0.16, 0.6, 0.2, 1)'
 
@@ -294,7 +312,7 @@ const Dropdown = <T extends string>({
     selectedId,
     menuStyle: {
       position: 'fixed',
-      zIndex: DROPDOWN_Z_INDEX,
+      zIndex: DROPDOWN_LAYER_Z.rows,
       right: menuRight,
       top: menuTop,
       pointerEvents: isOpen ? 'auto' : 'none',

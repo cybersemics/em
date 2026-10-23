@@ -18,7 +18,7 @@
 import { CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import useBreakpoint from '../../hooks/useBreakpoint'
-import { DROPDOWN_Z_INDEX, useDropdown } from './Dropdown'
+import { DROPDOWN_LAYER_Z, useDropdown } from './Dropdown'
 import DropdownMaskEditor from './DropdownMaskEditor'
 import DropdownRadialBlur, { DropdownRadialBlurEditor } from './DropdownRadialBlur'
 import EllipseCanvasEditor from './EllipseCanvasEditor'
@@ -170,7 +170,7 @@ const layerGeometry = (
 /** A fixed, non-interactive layer portalled to <body>. */
 const Layer = ({ style }: { style: CSSProperties }) =>
   createPortal(
-    <div style={{ position: 'fixed', pointerEvents: 'none', zIndex: DROPDOWN_Z_INDEX, ...style }} />,
+    <div style={{ position: 'fixed', pointerEvents: 'none', zIndex: DROPDOWN_LAYER_Z.light, ...style }} />,
     document.body,
   )
 
@@ -288,7 +288,7 @@ const LightLayerEditor = ({
 
 /** The light behind a Dropdown: its layers, the surface mask and radial blur under it, and their canvas editors. */
 const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
-  const { isOpen, anchorRect, menuRect, placement, selectedY, selectedTravel, timing, transition, lightMotion } =
+  const { open, isOpen, anchorRect, menuRect, placement, selectedY, selectedTravel, timing, transition, lightMotion } =
     useDropdown()
   // The light's origin offset, re-read on every render (the Dropdown re-renders its layers when a dial changes).
   // Desktop (md and up) has its own design values for the light group.
@@ -502,12 +502,16 @@ const DropdownLight = ({ surface }: { surface: HTMLElement | null }) => {
             mixBlendMode: selection.blend as CSSProperties['mixBlendMode'],
             ...fade(selection.opacity),
             ...nudge(selection),
-            // Moves with the selected row. When the menu drops down, the row slides between its place and the anchor
-            // (selectedTravel); the glow takes the same transform on the same clock, and jumps straight to a newly
-            // picked row so it slides with it rather than chasing it. When the menu opens around the selection, the
-            // whole menu glides by its top instead, so the glow glides its top with it. The fade keeps the light's clock.
+            // Moves and fades as part of the selected row, on the rows' clock rather than the light's. When the menu
+            // drops down, the row slides between its place and the anchor (selectedTravel); the glow takes the same
+            // transform, and jumps straight to a newly picked row so it slides with it rather than chasing it. When the
+            // menu opens around the selection, the whole menu glides by its top, so the glow glides its top too.
+            // Opening, it lights up with the row; closing, it stays lit while the row slides home, then fades with the
+            // row's crossfade into the button's glyph (see DropdownRows).
             transform: selectedTravel.transform,
-            transition: `${transition(placement === 'around' ? ['top', 'transform'] : ['transform'])}, ${transition(['opacity'], { dur: timing.light })}`,
+            transition: `${transition(placement === 'around' ? ['top', 'transform'] : ['transform'])}, ${
+              open ? transition(['opacity']) : transition(['opacity'], { delay: timing.content })
+            }`,
           }}
         />
       ) : null}

@@ -8,7 +8,7 @@
 // value, which the owner turns into dials set through the panel (so copying and syncing pick them up).
 import { CSSProperties, PointerEvent as ReactPointerEvent, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { DROPDOWN_Z_INDEX } from './Dropdown'
+import { DROPDOWN_LAYER_Z } from './Dropdown'
 import { DIALS_ROOT_ATTRIBUTE } from './useMotionStepper'
 
 /** An ellipse pair as the editor sees it: horizontal radii in px, height = width × aspect, offset from the centre. */
@@ -261,7 +261,7 @@ const EllipseCanvasEditor = ({
   return createPortal(
     <div
       {...{ [DIALS_ROOT_ATTRIBUTE]: '' }}
-      style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: DROPDOWN_Z_INDEX + 1 }}
+      style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: DROPDOWN_LAYER_Z.editor }}
     >
       {write.inner ? <div style={outline(innerRx, innerRx * geometry.aspect, colours.inner)} /> : null}
       <div style={outline(rx, ry, colours.outer)} />

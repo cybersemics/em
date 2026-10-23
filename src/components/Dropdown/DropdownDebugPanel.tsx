@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import storage from '../../util/storage'
-import { DROPDOWN_Z_INDEX } from './Dropdown'
+import { DROPDOWN_LAYER_Z } from './Dropdown'
 import MotionStepperControls from './DropdownMotionStepper'
 import { CanvasTarget, DIAL_SET_EVENT, setCanvasEditing } from './canvasEditing'
 import { DIALS_EVENT } from './dials'
@@ -1556,7 +1556,7 @@ const DialsFab = ({
         touchAction: 'none',
         userSelect: 'none',
       })}
-      style={{ left: position.x, top: position.y, zIndex: DROPDOWN_Z_INDEX + 1 }}
+      style={{ left: position.x, top: position.y, zIndex: DROPDOWN_LAYER_Z.panel }}
     >
       <svg
         width='22'
@@ -2072,7 +2072,7 @@ const DropdownDebugPanel = () => {
           })}
           // Above the dropdown's layers and its tap catcher, which sit at the dialog's z-index.
           style={{
-            zIndex: DROPDOWN_Z_INDEX + 1,
+            zIndex: DROPDOWN_LAYER_Z.panel,
             left: panelAt.x,
             top: panelAt.y,
             width: PANEL_WIDTH,
