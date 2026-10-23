@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
@@ -121,6 +121,10 @@ const TreeNode = ({
 
   const onResize: OnResize = useCallback(props => setSize({ ...props, cliff }), [cliff, setSize])
 
+  // The scrollTop and viewport height at which this thought was last re-rendered after being virtualized. See the guard below.
+  const remountedAt = useRef<{ scrollTop: number; viewportHeight: number } | null>(null)
+  const wasBelowViewport = useRef(false)
+
   // Subscribe to the virtualization result rather than scrollTop itself. Most scroll frames leave this boolean
   // unchanged, so only thoughts that cross the viewport boundary rerender. Keeping the scroll subscription out of
   // LayoutTree also avoids rerendering TransitionGroup and every TreeNode on each scroll frame.
@@ -128,8 +132,18 @@ const TreeNode = ({
     scrollTop =>
       belowCursor &&
       !isCursor &&
-      y > Math.max(scrollTop, 0) + viewportHeight + viewportBottomOffset + singleLineHeightWithCliff,
+      y > Math.max(scrollTop, 0) + viewportHeight + viewportBottomOffset + singleLineHeightWithCliff &&
+      // Infinite loop guard: a thought that was virtualized and then re-rendered without the viewport moving cannot be virtualized again until the viewport moves.
+      // Otherwise any layout input that depends on which thoughts are rendered can close a loop: the thought unmounts, the layout above it shifts, it moves back above the cutoff and remounts, the layout shifts back, and it unmounts again. Every cycle needs that second unmount, so blocking it breaks the loop, whatever layout input closes it. Without the guard, the loop can run within passive effects and trigger "Maximum update depth exceeded" (React error #185). See the table col1 width in usePositionedThoughts for one such input.
+      !(remountedAt.current?.scrollTop === scrollTop && remountedAt.current.viewportHeight === viewportHeight),
   )
+
+  useLayoutEffect(() => {
+    if (wasBelowViewport.current && !isBelowViewport) {
+      remountedAt.current = { scrollTop: scrollTopStore.getState(), viewportHeight }
+    }
+    wasBelowViewport.current = isBelowViewport
+  }, [isBelowViewport, viewportHeight])
 
   const completeExit = transitionGroupsProps.in === false ? transitionGroupsProps.onExited : undefined
 
