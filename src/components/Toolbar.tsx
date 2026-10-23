@@ -27,6 +27,7 @@ import {
 import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
 import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
+import viewportStore from '../stores/viewportStore'
 import haptics from '../util/haptics'
 import FadeTransition from './FadeTransition'
 import ToolbarButton from './ToolbarButton'
@@ -176,6 +177,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
   // A keyboard shortcut can open the Color Picker outside the toolbar viewport. Scroll only by the clipped
   // distance after the picker renders, including when the toolbar remounts after distraction-free typing.
+  // Also publish the height of the open Color Picker, so that LayoutTree can make room above the thoughts to scroll them
+  // out from under it. It is cleared when the Color Picker closes or the toolbar unmounts, e.g. when a modal opens.
   useEffect(() => {
     if (customize || !showColorPicker) return
 
@@ -196,6 +199,9 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     // moving for ~200ms after they are visible, so a test that clicks one races the animation and hits its neighbor.
     if (scrollOffset !== 0)
       toolbar.scrollBy({ behavior: navigator.webdriver ? 'instant' : 'smooth', left: scrollOffset })
+
+    viewportStore.update({ colorPickerHeight: colorPickerRect.height })
+    return () => viewportStore.update({ colorPickerHeight: 0 })
   }, [customize, showColorPicker])
 
   // disable pressing on drag

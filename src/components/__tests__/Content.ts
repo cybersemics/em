@@ -1,6 +1,9 @@
+import { fireEvent } from '@testing-library/react'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
 import * as selection from '../../device/selection'
+import store from '../../stores/app'
 import click from '../../test-helpers/click'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
@@ -68,4 +71,38 @@ it('clicking empty space collapses the text selection without blurring the thoug
   expect(selection.isCollapsed()).toBe(true)
   // the thought keeps the caret, so the keyboard is not torn down in the same beat as the context menu
   expect(document.activeElement).toBe(editable)
+})
+
+// When pressing a thought moves the content, e.g. by scrolling the new cursor out from under the Color Picker, the
+// release lands on a different element and the browser dispatches the click to their common ancestor. That press began
+// on a thought, so it must not be treated as a click on empty space.
+// https://github.com/cybersemics/em/issues/6057
+it('a press that begins on a thought and is released on empty space does not close the dropdowns', async () => {
+  await dispatch([
+    importText({ text: '- Labrador\n- Golden Retriever' }),
+    setCursor(['Golden Retriever']),
+    toggleDropdown({ dropDownType: 'colorPicker', value: true }),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const editable = [...document.querySelectorAll('[data-editable]')].find(el => el.textContent === 'Labrador')!
+  await act(async () => {
+    fireEvent.mouseDown(editable)
+  })
+  await act(async () => {
+    fireEvent.click(document.getElementById('content')!)
+  })
+
+  expect(store.getState().showColorPicker).toBe(true)
+})
+
+it('clicking empty space closes the dropdowns', async () => {
+  await dispatch([importText({ text: '- Labrador' }), toggleDropdown({ dropDownType: 'colorPicker', value: true })])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  await click('#content')
+
+  expect(store.getState().showColorPicker).toBe(false)
 })
