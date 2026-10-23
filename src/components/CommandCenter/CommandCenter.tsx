@@ -740,6 +740,10 @@ const CommandCenter = () => {
               backgroundColor: 'transparent',
               overflow: 'visible',
               boxShadow: 'none',
+              /** Disables text selection in the drawer. A long press on a command row would otherwise select its label and raise the iOS edit menu. */
+              userSelect: 'none',
+              /** The Capacitor app targets iOS 15, where WebKit honors only the prefixed property. Panda does not autoprefix. */
+              WebkitUserSelect: 'none',
             })}
             style={{
               // override default Sheet.Container styles
