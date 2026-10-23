@@ -28,6 +28,8 @@ Meta-attribute children are hidden in normal view. Toggle the **Show Hidden Thou
 
 This shape lets attribute lookups skip the linear scan that regular value-based lookups need.
 
+Attributes are ordinary thoughts that can be edited like any other while hidden thoughts are shown. An edit that makes a value stop being an attribute, such as bolding `=favorite` into `<b>=favorite</b>`, simply turns it into a normal thought that configures nothing. [`editThought`](../src/actions/editThought.ts) rebuilds the parent's `childrenMap` whenever a thought becomes an attribute or stops being one, so no key is left pointing at a thought with a different value.
+
 The four selectors most code uses:
 
 - [`attribute(state, id, name)`](../src/selectors/attribute.ts) — returns the *value of the first visible child* of the named attribute, or `null`. So `attribute(state, parent.id, '=pin')` returns `'true'` (when set to `=pin/true`), `'false'`, or `null`. Use this when an attribute carries a string payload.

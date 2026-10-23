@@ -76,3 +76,35 @@ describe('multicursor', () => {
   - c`)
   })
 })
+
+describe('metaprogramming attributes', () => {
+  // https://github.com/cybersemics/em/issues/6009
+  it('bolds and unbolds a metaprogramming attribute without error', async () => {
+    act(() => {
+      store.dispatch([
+        importText({
+          text: `
+            - aaa
+              - =favorite
+          `,
+        }),
+        setCursor(['aaa', '=favorite']),
+      ])
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Bold
+    await keyDown('b', { meta: true })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - aaa
+    - **=favorite**`)
+
+    // Bold again
+    await keyDown('b', { meta: true })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - aaa
+    - =favorite`)
+  })
+})
