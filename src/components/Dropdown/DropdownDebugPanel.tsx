@@ -1274,8 +1274,6 @@ const LayerRow = ({
 }) => {
   const main = group.main ? group.controls.find(control => control.name === group.main) : undefined
   const mainValue = main ? (values[main.name] ?? '') : ''
-  const parsed = parseFloat(mainValue)
-  const numeric = main ? (Number.isFinite(parsed) ? parsed : fallbackNumber(main, isDesktop)) : 0
   const overridden = group.controls.filter(control => values[control.name]).length
   const shown = isShown(group, values)
   return (
@@ -1320,23 +1318,13 @@ const LayerRow = ({
         {group.note ? <span className={css({ opacity: 0.5 })}> {group.note}</span> : null}
         {overridden ? <span className={css({ color: 'vividHighlight' })}> •{overridden}</span> : null}
       </button>
+      {/* The list shows the main value only; its slider lives in the inspector, where there is room for it. */}
       {main && main.kind === 'number' ? (
-        <>
-          <div className={css({ width: '64px', flex: 'none' })}>
-            <ScrubSlider
-              value={numeric}
-              min={main.min ?? 0}
-              max={main.max ?? 1}
-              step={main.step ?? 0.01}
-              onChange={(next, decimals) =>
-                setValues(previous => ({ ...previous, [main.name]: formatNumber(next, decimals, main.unit) }))
-              }
-            />
-          </div>
-          <span className={css({ width: '44px', flex: 'none', textAlign: 'right', opacity: 0.8, fontSize: '12px' })}>
-            {shownValue(main, mainValue, isDesktop)}
-          </span>
-        </>
+        <span
+          className={css({ flex: 'none', textAlign: 'right', opacity: 0.8, fontSize: '12px', whiteSpace: 'nowrap' })}
+        >
+          {shownValue(main, mainValue, isDesktop)}
+        </span>
       ) : null}
       <IconButton icon='chevron' label={`Open ${group.title}`} onClick={onOpen} />
     </div>
