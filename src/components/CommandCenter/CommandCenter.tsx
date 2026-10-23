@@ -104,9 +104,6 @@ const CHEVRON_SECTION_HEIGHT_REM = 1.56
 const CHEVRON_WIDTH = 33
 const CHEVRON_HEIGHT = 13
 
-/** Colour of the chevron. */
-const CHEVRON_COLOR = token('colors.fgOverlay10')
-
 /**
  * A custom hook that returns the last non-zero number of multicursors.
  * This is used to avoid showing the MultiselectMessage changing as the Command Center is closed.
@@ -800,7 +797,7 @@ const CommandCenter = () => {
                       direction='down'
                       width={CHEVRON_WIDTH}
                       height={CHEVRON_HEIGHT}
-                      fill={CHEVRON_COLOR}
+                      fill={token('colors.fgOverlay30')}
                       rounded
                       stretch
                     />
@@ -955,7 +952,7 @@ const CommandCenter = () => {
                         direction='up'
                         width={CHEVRON_WIDTH}
                         height={CHEVRON_HEIGHT}
-                        fill={CHEVRON_COLOR}
+                        fill={token('colors.fgOverlay10')}
                         rounded
                         stretch
                       />
