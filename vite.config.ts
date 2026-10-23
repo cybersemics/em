@@ -64,37 +64,61 @@ function tunnelTokenGate(): Plugin {
 
 /**
  * TEMPORARY prototype aid for the sort dropdown's design dials (src/components/Dropdown/dialsSync.ts). Relays dial
- * values between every browser connected to this dev server over Vite's own HMR websocket, so a value tuned on the
- * desktop shows up on a phone on the LAN. Keeps the latest values in memory so a device that connects later can pull
- * them. Dev server only; remove with the dials panel.
+ * values between browsers connected to this dev server over Vite's own HMR websocket, so a value tuned on the desktop
+ * shows up on a phone on the LAN. One device leads and the others follow (see dialsSync.ts); the leader's latest
+ * values are kept in memory so a device that starts following later gets them. Dev server only; remove with the
+ * dials panel.
  */
 function dialsSync(): Plugin {
-  /** The most recent publish, replayed to devices that join. */
-  let latest: { values: Record<string, string>; from: string; at: number } | null = null
-  /** Dials panels currently connected, keyed by their raw HMR socket so a closed socket can be dropped. */
-  const panels = new Map<unknown, string>()
+  type Values = Record<string, string>
+  type Device = { id: string; name: string }
+  /** Every connected dials panel and its mode, keyed by its raw HMR socket so a closed socket can be dropped. */
+  const panels = new Map<unknown, Device & { mode: 'off' | 'lead' | 'follow' }>()
+  /** The one leader, if any: its socket and the values it last sent, replayed to devices that start following. */
+  let leader: { socket: unknown; device: Device; values: Values } | null = null
   return {
     name: 'dials-sync',
     apply: 'serve',
     configureServer(server) {
-      /** Tells every client how many dials panels are connected, so a device on another server shows up as alone. */
-      const broadcastPeers = () => server.ws.send('dials:peers', { count: panels.size })
-      server.ws.on('dials:hello', (data: { from: string }, client) => {
-        panels.set((client as WebSocketClient).socket, data.from)
-        broadcastPeers()
+      /** Tells every client who is connected, so each panel can show the leader and a device on another server alone. */
+      const broadcastPresence = () =>
+        server.ws.send('dials:presence', {
+          count: panels.size,
+          leader: leader?.device ?? null,
+          followers: [...panels.values()].filter(panel => panel.mode === 'follow').length,
+        })
+      server.ws.on('dials:mode', (data: Device & { mode: 'off' | 'lead' | 'follow'; values?: Values }, client) => {
+        const socket = (client as WebSocketClient).socket
+        panels.set(socket, { id: data.id, name: data.name, mode: data.mode })
+        if (data.mode === 'lead') {
+          // One leader per server: the previous one is told and becomes a follower.
+          if (leader && leader.socket !== socket) {
+            server.ws.send('dials:demoted', { id: leader.device.id, by: { id: data.id, name: data.name } })
+            const previous = panels.get(leader.socket)
+            if (previous) previous.mode = 'follow'
+          }
+          leader = { socket, device: { id: data.id, name: data.name }, values: data.values ?? {} }
+          server.ws.send('dials:update', { values: leader.values, leader: leader.device })
+        } else if (leader?.socket === socket) {
+          leader = null
+        }
+        broadcastPresence()
       })
       server.ws.on('connection', socket => {
         socket.on('close', () => {
-          if (panels.delete(socket)) broadcastPeers()
+          if (leader?.socket === socket) leader = null
+          if (panels.delete(socket)) broadcastPresence()
         })
       })
-      server.ws.on('dials:publish', (data: { values: Record<string, string>; from: string; at: number }) => {
-        latest = data
-        server.ws.send('dials:update', data)
+      // Only the leader's changes count; anyone else's are ignored.
+      server.ws.on('dials:publish', (data: { id: string; values: Values }, client) => {
+        if (!leader || leader.socket !== (client as WebSocketClient).socket) return
+        leader.values = data.values
+        server.ws.send('dials:update', { values: data.values, leader: leader.device })
       })
-      // Always answers, with null when nobody has published yet, so a joining device knows the session is empty.
+      // Always answers, with nulls when there is no leader, so a device starting to follow knows.
       server.ws.on('dials:pull', (_data, client) => {
-        client.send('dials:state', { latest })
+        client.send('dials:state', { leader: leader?.device ?? null, values: leader?.values ?? null })
       })
     },
   }

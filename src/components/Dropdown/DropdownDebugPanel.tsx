@@ -9,12 +9,16 @@ import MotionStepperControls from './DropdownMotionStepper'
 import { CanvasTarget, DIAL_SET_EVENT, setCanvasEditing } from './canvasEditing'
 import { DIALS_EVENT } from './dials'
 import {
-  announceDials,
+  DialsDevice,
+  DialsPresence,
+  DialsSyncMode,
   isDialsSyncAvailable,
   publishDials,
   pullDials,
+  setDialsMode,
   subscribeDials,
-  subscribeDialsPeers,
+  subscribeDialsDemoted,
+  subscribeDialsPresence,
   subscribeDialsState,
 } from './dialsSync'
 import useMotionStepper, { DIALS_ROOT_ATTRIBUTE } from './useMotionStepper'
@@ -705,9 +709,10 @@ const ALL_CONTROLS = GROUPS.flatMap(group => group.controls)
 /** The open inspector, persisted so a reload returns to it. */
 const VIEW_KEY = 'sortDropdownDials.view'
 const VALUES_KEY = 'sortDropdownDials.values'
-const AUTO_SYNC_KEY = 'sortDropdownDials.autoSync'
-/** When this device's values last changed (ms since epoch), by a local edit or one received from another device. */
-const EDITED_AT_KEY = 'sortDropdownDials.editedAt'
+/** This device's sync mode (off, lead or follow). */
+const SYNC_MODE_KEY = 'sortDropdownDials.syncMode'
+/** A follower's own values, put aside while it follows and restored when it switches to Off. */
+const STASH_KEY = 'sortDropdownDials.stash'
 const FAB_KEY = 'sortDropdownDials.fab'
 
 /** Diameter of the floating button (px). */
@@ -809,22 +814,6 @@ const stopPress = {
 
 /** Inline 24×24 stroke icons for the icon buttons. */
 const ICONS = {
-  // Two arrows chasing each other: send these values to every device on the dev server.
-  sync: (
-    <>
-      <path d='M20 11a8 8 0 0 0-14.3-4.9L4 8' />
-      <path d='M4 4v4h4' />
-      <path d='M4 13a8 8 0 0 0 14.3 4.9L20 16' />
-      <path d='M20 20v-4h-4' />
-    </>
-  ),
-  // A chain link: keep every device in step as values change.
-  autoSync: (
-    <>
-      <path d='M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1' />
-      <path d='M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1' />
-    </>
-  ),
   copy: (
     <>
       <rect x='9' y='9' width='11' height='11' rx='2' />
@@ -1602,6 +1591,77 @@ const DialsFab = ({
   )
 }
 
+/** The sync modes, in the order the control shows them, with the tooltip that explains each. */
+const SYNC_MODES: { mode: DialsSyncMode; label: string; title: string }[] = [
+  { mode: 'off', label: 'Off', title: 'Off: this device keeps its own values; it sends and receives nothing' },
+  {
+    mode: 'lead',
+    label: 'Lead',
+    title: 'Lead: this device’s values are the session; every change goes to the devices following it',
+  },
+  {
+    mode: 'follow',
+    label: 'Follow',
+    title: 'Follow: show the leading device’s values live (yours are kept and come back when you switch to Off)',
+  },
+]
+
+/** A three-way segmented control for this device's sync mode. */
+const SyncModeControl = ({ mode, onChange }: { mode: DialsSyncMode; onChange: (mode: DialsSyncMode) => void }) => (
+  <div
+    role='radiogroup'
+    aria-label='Sync with other devices'
+    className={css({
+      display: 'flex',
+      flex: 'none',
+      height: '36px',
+      border: '1px solid {colors.fgOverlay20}',
+      borderRadius: '8px',
+      overflow: 'hidden',
+    })}
+  >
+    {SYNC_MODES.map(option => (
+      <button
+        key={option.mode}
+        type='button'
+        role='radio'
+        aria-checked={mode === option.mode}
+        title={option.title}
+        onClick={() => onChange(option.mode)}
+        className={css({
+          padding: '0 9px',
+          fontFamily: 'monospace',
+          fontSize: '12px',
+          color: 'fg',
+          border: 'none',
+          cursor: 'pointer',
+        })}
+        style={{ backgroundColor: mode === option.mode ? 'rgba(120, 105, 225, 0.45)' : 'rgba(255, 255, 255, 0.06)' }}
+      >
+        {option.label}
+      </button>
+    ))}
+  </div>
+)
+
+/** The line under the sync control: this device's role, the leader and followers, and the last sync event. */
+const syncStatusLine = (mode: DialsSyncMode, presence: DialsPresence | null, note: string): string => {
+  if (!presence) return 'Connecting to the dev server…'
+  const others = presence.count - 1
+  const devices = others <= 0 ? `No other device on ${location.host}` : `${presence.count} devices on ${location.host}`
+  const role =
+    mode === 'lead'
+      ? `Leading · ${presence.followers} follower${presence.followers === 1 ? '' : 's'}`
+      : mode === 'follow'
+        ? presence.leader
+          ? `Following ${presence.leader.name}`
+          : 'No leader'
+        : presence.leader
+          ? `Off · ${presence.leader.name} is leading`
+          : 'Off'
+  return [role, devices, note].filter(Boolean).join(' · ')
+}
+
 /** The design-dials panel for the sort dropdown: a floating button over the Command Universe that opens the dials, inline or in a popup window. */
 const DropdownDebugPanel = () => {
   // The frame stepper's state lives here, in the component that stays mounted, so freezing works while collapsed.
@@ -1612,6 +1672,8 @@ const DropdownDebugPanel = () => {
     /** Applies one dial set from the canvas. */
     const onDialSet = (event: Event) => {
       const { name, value } = (event as CustomEvent<{ name: string; value: string }>).detail
+      // Read-only while following another device (see editValues).
+      if (storage.getItem(SYNC_MODE_KEY) === 'follow' && isDialsSyncAvailable()) return
       setValues(previous => ({ ...previous, [name]: value }))
     }
     window.addEventListener(DIAL_SET_EVENT, onDialSet)
@@ -1633,23 +1695,31 @@ const DropdownDebugPanel = () => {
   const panelResize = useRef<{ startY: number; height: number } | null>(null)
   // Device sync over the dev server (dialsSync). Unavailable, and hidden, in production builds and previews.
   const syncAvailable = isDialsSyncAvailable()
-  // Auto-sync, the link button: join the dev server's live session. Joining takes the session's values (or seeds an
-  // empty session with this device's), then every local change is sent to every other device.
-  const [autoSync, setAutoSyncState] = useState(() => storage.getItem(AUTO_SYNC_KEY) === 'true')
-  // Read by the send effect, so turning auto-sync on joins the session without also sending this device's values.
-  const autoSyncRef = useRef(autoSync)
-  autoSyncRef.current = autoSync
-  // The current values, for the join handler, which subscribes once.
+  // This device's part in the session: off (alone), lead (its values are the session) or follow (shows the leader's).
+  const [syncMode, setSyncModeState] = useState<DialsSyncMode>(() => {
+    const stored = storage.getItem(SYNC_MODE_KEY)
+    return stored === 'lead' || stored === 'follow' ? stored : 'off'
+  })
+  // Read by the subscriptions, which are set up once.
+  const syncModeRef = useRef(syncMode)
+  syncModeRef.current = syncMode
   const valuesRef = useRef(values)
   valuesRef.current = values
-  // How many dials panels are connected to this dev server, this one included. 1 means no other device is here.
-  const [peers, setPeers] = useState<number | null>(null)
-  // A short note on the last sync, shown under the toolbar.
+  // Who is connected to this dev server: the panel count, the leader and its followers.
+  const [presence, setPresence] = useState<DialsPresence | null>(null)
+  // A short note on the last sync event, shown under the mode control.
   const [syncStatus, setSyncStatus] = useState('')
-  // True while applying values received from another device, so they aren't sent straight back out.
+  // True while applying the leader's values, so a leader's own change effect doesn't treat them as a local edit.
   const applyingRemote = useRef(false)
   // False until the first render's values have been seen, so loading the panel doesn't send its stored values.
   const hasLoaded = useRef(false)
+  // While following, the panel is read-only: edits are ignored (the leader's values would overwrite them).
+  const following = syncAvailable && syncMode === 'follow'
+  /** Applies an edit from the panel, unless this device is following, when edits are ignored. */
+  const editValues: typeof setValues = update => {
+    if (syncModeRef.current === 'follow' && syncAvailable) return
+    setValues(update)
+  }
 
   /** Opens a group's inspector, or the layers list with null, and remembers it for the next reload. */
   const setView = (id: string | null) => {
@@ -1674,56 +1744,86 @@ const DropdownDebugPanel = () => {
     window.dispatchEvent(new Event(DIALS_EVENT))
   }, [values])
 
-  // Apply values sent from other devices. Always on where sync is available: a device receives what another sends,
-  // whether or not it is auto-syncing itself.
+  /** Applies the leader's values. */
+  const applyLeader = (leaderValues: Record<string, string>) => {
+    applyingRemote.current = true
+    setValues(leaderValues)
+  }
+
+  /** Puts this device's own values aside before it starts following, unless they already are. */
+  const stashOwnValues = () => {
+    if (storage.getItem(STASH_KEY) === null) storage.setItem(STASH_KEY, JSON.stringify(valuesRef.current))
+  }
+
+  /** Switches this device's sync mode, remembers it, and tells the server. */
+  const setSyncMode = (next: DialsSyncMode) => {
+    const previous = syncModeRef.current
+    if (next === previous) return
+    storage.setItem(SYNC_MODE_KEY, next)
+    syncModeRef.current = next
+    setSyncModeState(next)
+    if (next === 'follow') {
+      stashOwnValues()
+      setDialsMode('follow')
+      pullDials()
+      setSyncStatus('Joining…')
+    } else if (next === 'lead') {
+      // Leading from what is on screen now; a follower's stash is no longer needed.
+      storage.removeItem(STASH_KEY)
+      setDialsMode('lead', valuesRef.current)
+      setSyncStatus('')
+    } else {
+      setDialsMode('off')
+      // Back to this device's own values from before it followed.
+      const stash = storage.getItem(STASH_KEY)
+      if (previous === 'follow' && stash !== null) {
+        try {
+          setValues(JSON.parse(stash) as Record<string, string>)
+        } catch {
+          // A malformed stash leaves the current values in place.
+        }
+        setSyncStatus('Restored this device’s own values')
+      } else setSyncStatus('')
+      storage.removeItem(STASH_KEY)
+    }
+  }
+
+  // Subscriptions: the leader's values, the answer to a pull, presence, and being replaced as leader.
   useEffect(() => {
     if (!syncAvailable) return
-    return subscribeDials((remote, meta) => {
-      applyingRemote.current = true
-      storage.setItem(EDITED_AT_KEY, String(meta.at))
-      setValues(remote)
-      setSyncStatus(`Received from another device · ${new Date(meta.at).toLocaleTimeString()}`)
-    })
+    const unsubscribers = [
+      subscribeDials((leaderValues, leader: DialsDevice) => {
+        if (syncModeRef.current !== 'follow') return
+        applyLeader(leaderValues)
+        // Keep a takeover note visible over the new leader's first push.
+        setSyncStatus(note => (note.endsWith('took over') ? note : `Updated by ${leader.name}`))
+      }),
+      subscribeDialsState((leader, leaderValues) => {
+        if (syncModeRef.current !== 'follow') return
+        if (leader && leaderValues) {
+          applyLeader(leaderValues)
+          setSyncStatus('')
+        } else setSyncStatus('No leader yet: values stay as they are')
+      }),
+      subscribeDialsPresence(setPresence),
+      subscribeDialsDemoted(by => {
+        stashOwnValues()
+        storage.setItem(SYNC_MODE_KEY, 'follow')
+        syncModeRef.current = 'follow'
+        setSyncModeState('follow')
+        setSyncStatus(`${by.name} took over`)
+      }),
+    ]
+    // Register, resuming the mode left on before a reload: a leader pushes its values, a follower pulls the leader's.
+    const mode = syncModeRef.current
+    setDialsMode(mode, mode === 'lead' ? valuesRef.current : undefined)
+    if (mode === 'follow') pullDials()
+    return () => unsubscribers.forEach(unsubscribe => unsubscribe())
+    // Subscribes once; the handlers read refs.
   }, [syncAvailable])
 
-  // Presence: register with the server and follow how many panels share the session.
-  useEffect(() => {
-    if (!syncAvailable) return
-    const unsubscribe = subscribeDialsPeers(setPeers)
-    announceDials()
-    return unsubscribe
-  }, [syncAvailable])
-
-  // Joining: the server answers a pull with the session's latest values, or null when nobody has sent any. The newer
-  // of the session's values and this device's last change wins, so joining never discards fresher local tuning.
-  useEffect(() => {
-    if (!syncAvailable) return
-    return subscribeDialsState(latest => {
-      if (!autoSyncRef.current) return
-      const editedAt = Number(storage.getItem(EDITED_AT_KEY) ?? 0)
-      if (latest && latest.at >= editedAt) {
-        applyingRemote.current = true
-        storage.setItem(EDITED_AT_KEY, String(latest.at))
-        setValues(latest.values)
-        setSyncStatus(`Joined: took the session's values · ${new Date(latest.at).toLocaleTimeString()}`)
-      } else {
-        publishDials(valuesRef.current)
-        setSyncStatus(
-          latest
-            ? 'Joined: this device’s values were newer, sent them'
-            : 'Joined an empty session: sent this device’s values',
-        )
-      }
-    })
-  }, [syncAvailable])
-
-  // Join on load when auto-sync was left on, and whenever it is turned on.
-  useEffect(() => {
-    if (syncAvailable && autoSync) pullDials()
-  }, [syncAvailable, autoSync])
-
-  // While auto-syncing, send every local change. Skips the first render (joining pulls instead) and values that just
-  // arrived from another device (sending them back would echo).
+  // While leading, send every local change. Skips the first render (registering sent the values) and values that
+  // arrived from a leader (only relevant if this device has just taken over).
   useEffect(() => {
     if (!hasLoaded.current) {
       hasLoaded.current = true
@@ -1733,22 +1833,8 @@ const DropdownDebugPanel = () => {
       applyingRemote.current = false
       return
     }
-    storage.setItem(EDITED_AT_KEY, String(Date.now()))
-    if (syncAvailable && autoSyncRef.current) publishDials(values)
+    if (syncAvailable && syncModeRef.current === 'lead') publishDials(values)
   }, [values, syncAvailable])
-
-  /** Turns auto-sync on (joining the session) or off, and remembers the choice for the next reload. */
-  const setAutoSync = (on: boolean) => {
-    storage.setItem(AUTO_SYNC_KEY, String(on))
-    setAutoSyncState(on)
-    setSyncStatus(on ? 'Joining the session…' : 'Auto-sync off')
-  }
-
-  /** Sends this device's values to every device on the dev server, once. */
-  const syncNow = () => {
-    publishDials(values)
-    setSyncStatus(`Sent to other devices · ${new Date().toLocaleTimeString()}`)
-  }
 
   // Clear the overrides only when the panel unmounts.
   useEffect(
@@ -1835,31 +1921,21 @@ const DropdownDebugPanel = () => {
   const toolbar = (
     <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '6px', margin: '8px 0' })}>
       <IconButton icon='copy' label='Copy overrides' onClick={() => copy(pasteText)} />
-      <IconButton icon='reset' label='Reset all overrides' onClick={() => setValues({})} disabled={!overriddenCount} />
+      <IconButton
+        icon='reset'
+        label='Reset all overrides'
+        onClick={() => editValues({})}
+        disabled={!overriddenCount || following}
+      />
       <IconButton
         icon='popup'
         label={popup ? 'Close popup' : 'Open in popup'}
         onClick={() => (popup ? popup.close() : openPopup())}
       />
-      {syncAvailable ? (
-        <>
-          <IconButton icon='sync' label='Send these values to every device on the dev server' onClick={syncNow} />
-          <IconButton
-            icon='autoSync'
-            label={autoSync ? 'Auto-sync on (tap to turn off)' : 'Auto-sync off (tap to turn on)'}
-            onClick={() => setAutoSync(!autoSync)}
-            pressed={autoSync}
-          />
-        </>
-      ) : null}
+      {syncAvailable ? <SyncModeControl mode={syncMode} onChange={setSyncMode} /> : null}
       {syncAvailable ? (
         <p className={css({ flexBasis: '100%', margin: 0, opacity: 0.6 })}>
-          {peers === null
-            ? 'Connecting to the dev server…'
-            : peers <= 1
-              ? `No other device on ${location.host}. Open the same address on your other device.`
-              : `${peers} devices on ${location.host}`}
-          {syncStatus ? ` · ${syncStatus}` : ''}
+          {syncStatusLine(syncMode, presence, syncStatus)}
         </p>
       ) : null}
     </div>
@@ -1870,7 +1946,7 @@ const DropdownDebugPanel = () => {
     <Inspector
       group={viewGroup}
       values={values}
-      setValues={setValues}
+      setValues={editValues}
       isDesktop={isDesktop}
       onBack={() => setView(null)}
     >
@@ -1903,7 +1979,7 @@ const DropdownDebugPanel = () => {
           key={group.id}
           group={group}
           values={values}
-          setValues={setValues}
+          setValues={editValues}
           isDesktop={isDesktop}
           onOpen={() => setView(group.id)}
         />
@@ -1914,7 +1990,7 @@ const DropdownDebugPanel = () => {
           key={group.id}
           group={group}
           values={values}
-          setValues={setValues}
+          setValues={editValues}
           isDesktop={isDesktop}
           onOpen={() => setView(group.id)}
         />
@@ -1938,6 +2014,18 @@ const DropdownDebugPanel = () => {
         padding: '0 10px 8px',
       })}
     >
+      {following ? (
+        <p
+          className={css({
+            margin: '8px 0',
+            padding: '6px 8px',
+            borderRadius: '6px',
+            backgroundColor: 'fgOverlay10',
+          })}
+        >
+          Following {presence?.leader?.name ?? 'the leader'}. Switch to Off or Lead to edit.
+        </p>
+      ) : null}
       {body}
     </div>
   )
