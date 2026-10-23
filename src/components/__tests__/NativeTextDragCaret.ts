@@ -408,6 +408,24 @@ it('keeps only the nearest source color of dragged text dropped into another col
   ])
 })
 
+// https://github.com/cybersemics/em/pull/5967#issuecomment-5629711975
+it('does not give dragged text a text color and a background at once', async () => {
+  await importOutline(`- <span style="background-color: #ffff00;">Left right</span>
+- <span style="color: #0000ff;">Blue</span>`)
+  const target = getEditable('Left right')
+  const source = getEditable('Blue')
+  layOutCaretBefore(target, 'right')
+  selectWord(source, 'Blue')
+  await startDrag(source)
+
+  await dropBelowCaret(target)
+
+  expect(getChildrenRanked(store.getState(), HOME_TOKEN).map(thought => thought.value)).toEqual([
+    '<span style="background-color: #ffff00;">Left </span><span style="color: #0000ff;">Blue</span><span style="background-color: #ffff00;">right</span>',
+    '',
+  ])
+})
+
 // https://github.com/cybersemics/em/issues/4225
 it('does not drop dragged text into a read-only thought', async () => {
   await importOutline(`- foo bar baz
