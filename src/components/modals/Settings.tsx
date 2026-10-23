@@ -10,6 +10,7 @@ import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../..
 import copy from '../../device/copy'
 import getUserSetting from '../../selectors/getUserSetting'
 import abandonImportStore from '../../stores/abandonImportStore'
+import showTouchesAutoFadeStore from '../../stores/showTouchesAutoFadeStore'
 import showTouchesStore from '../../stores/showTouchesStore'
 import storageStatusStore from '../../stores/storageStatusStore'
 import { clearAiDisclosureAcknowledgement, hasAcknowledgedAiDisclosure } from '../../util/aiDisclosure'
@@ -233,12 +234,27 @@ const AiAcknowledgement = () => {
 /** The Show Touches setting. Device-local rather than an /EM/Settings thought, so that turning it on to record one device does not start drawing on the account's other devices. */
 const ShowTouchesSetting = () => {
   const showTouches = showTouchesStore.useState()
+  const autoFade = showTouchesAutoFadeStore.useState()
   return (
-    <Checkbox checked={showTouches} title='Show Touches' onChange={() => showTouchesStore.update(!showTouches)}>
-      Draws a dot where a finger first touches the screen and as it moves, and a ring where it lifts, so that a screen
-      recording or screenshot shows exactly where each touch landed. Only the first finger of a touch is drawn. Applies
-      to this device only. Useful when reporting a touch or gesture issue.
-    </Checkbox>
+    <>
+      <Checkbox
+        checked={showTouches}
+        parent
+        title='Show Touches'
+        onChange={() => showTouchesStore.update(!showTouches)}
+      >
+        Draws a dot where a finger first touches the screen and as it moves.
+      </Checkbox>
+      <Checkbox
+        checked={autoFade}
+        child
+        disabled={!showTouches}
+        title='Auto Fade'
+        onChange={() => showTouchesAutoFadeStore.update(!autoFade)}
+      >
+        Fades out each dot after one second. Disable to keep the dots on the screen until the next touch clears them.
+      </Checkbox>
+    </>
   )
 }
 

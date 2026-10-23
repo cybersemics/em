@@ -1,4 +1,5 @@
 import { act } from 'react'
+import showTouchesAutoFadeStore from '../../stores/showTouchesAutoFadeStore'
 import showTouchesStore from '../../stores/showTouchesStore'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatchTouchEvent from '../../test-helpers/dispatchTouchEvent'
@@ -33,6 +34,17 @@ it('draws over the app while the setting is on, and remembers it on this device 
 
   expect(canvas()).toBeNull()
   expect(storage.getItem('showTouches')).toBeNull()
+})
+
+it('fades touches by default, and remembers Auto Fade turned off on this device only', async () => {
+  expect(showTouchesAutoFadeStore.getState()).toBe(true)
+  expect(storage.getItem('showTouchesAutoFade')).toBeNull()
+
+  await act(() => showTouchesAutoFadeStore.update(false))
+  expect(storage.getItem('showTouchesAutoFade')).toBe('false')
+
+  await act(() => showTouchesAutoFadeStore.update(true))
+  expect(storage.getItem('showTouchesAutoFade')).toBeNull()
 })
 
 it('does not prevent or stop the touch events it draws', async () => {
