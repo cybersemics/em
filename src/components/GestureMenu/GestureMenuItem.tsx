@@ -1,12 +1,14 @@
-import { FC, useEffect, useRef } from 'react'
+import { FC } from 'react'
 import { useSelector } from 'react-redux'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
+import { gestureMenuFogRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
 import State from '../../@types/State'
 import { gestureString } from '../../commands'
 import useGestureHighlight from '../../hooks/useGestureHighlight'
 import {
+  type GestureMenuFogDepth,
   SELECTED_ITEM_DESCRIPTION_LINE_HEIGHT_REM,
   SELECTED_ITEM_GAP_REM,
   SELECTED_ITEM_PADDING_BOTTOM_REM,
@@ -26,11 +28,9 @@ const GestureMenuItem: FC<{
   selected: boolean
   gestureInProgress: string
   isFirstCommand?: boolean
-  isLastCommand?: boolean
-  /** Whether to scroll the selected row into view. Disabled in the non-scrolling multi-column grid. Defaults to true. */
-  autoScroll?: boolean
-}> = ({ command, selected, gestureInProgress, isFirstCommand, isLastCommand, autoScroll = true }) => {
-  const ref = useRef<HTMLDivElement | null>(null)
+  /** Fog depth for trailing rows when the list overflows; 0 = no fog. */
+  fogDepth?: GestureMenuFogDepth
+}> = ({ command, selected, gestureInProgress, isFirstCommand, fogDepth = 0 }) => {
   const disabled = useSelector((state: State) => !isExecutable(state, command))
   const isActive = command.isActive?.(store.getState())
   const description = useSelector((state: State) => {
@@ -40,29 +40,21 @@ const GestureMenuItem: FC<{
 
   const gestureHighlight = useGestureHighlight({ command, gestureInProgress, selected, disabled })
 
-  useEffect(() => {
-    if (!autoScroll || !selected) return
-    if (!isFirstCommand && !isLastCommand) {
-      ref.current?.scrollIntoView({ block: 'nearest' })
-      return
-    }
-    const scrollContainer = ref.current?.parentElement
-    if (scrollContainer) {
-      scrollContainer.scrollTop = isFirstCommand ? 0 : scrollContainer.scrollHeight
-    }
-  })
-
   return (
     <div
-      ref={ref}
-      className={css({
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: selected ? 'stretch' : 'center',
-        gap: '0.89rem',
-        // Allow the row to shrink within a grid cell so the label's nowrap text does not overflow the column.
-        minWidth: 0,
-      })}
+      data-testid='gesture-menu-item'
+      className={cx(
+        css({
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: selected ? 'stretch' : 'center',
+          gap: '0.89rem',
+          // Allow the row to shrink within a grid cell so the label's nowrap text does not overflow the column.
+          minWidth: 0,
+        }),
+        // panda types recipe variant keys as strings, so the numeric depth is stringified for the lookup.
+        gestureMenuFogRecipe({ depth: `${fogDepth}` }),
+      )}
       // paddingTop/paddingBottom are computed from GESTURE_MENU_ITEM_SELECTED_PADDING_*_REM (shared
       // with useGestureMenuLayout's reserve calc), so they're plain inline styles — panda's css()
       // only extracts statically analyzable literals, not values from an imported constant.
