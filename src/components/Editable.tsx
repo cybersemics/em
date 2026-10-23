@@ -47,6 +47,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import isMultiEditing from '../selectors/isMultiEditing'
 import isMulticursorPath from '../selectors/isMulticursorPath'
+import isUndoEnabled from '../selectors/isUndoEnabled'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -320,7 +321,7 @@ const Editable = ({
   /** Set or reset invalid state. */
   const invalidStateError = (invalidValue: string | null) => {
     const isInvalid = invalidValue != null
-    dispatch(error({ value: isInvalid ? `Invalid Value: "${invalidValue}"` : null }))
+    dispatch(error({ value: isInvalid ? `Invalid Value: "${ellipsize(invalidValue)}"` : null }))
     setInvalidState(isInvalid)
 
     // the Editable cannot connect to state.invalidState, as it would re-render during editing
@@ -475,7 +476,7 @@ const Editable = ({
     /** Snapshots the input event and editable state for the rolling log. `branch` names the code path that handled the event,
      * so the log distinguishes an ignored keystroke from the retarget path that runs after iOS autocomplete. */
     const logInput = (e: InputEvent, branch: string) =>
-      debugLog.log('input', {
+      debugLog.log('input', () => ({
         branch,
         inputType: e.inputType,
         data: e.data,
@@ -483,7 +484,7 @@ const Editable = ({
         value: editable.textContent,
         sel: selection.offsetThought() ?? selection.offset(),
         pending: pendingAutocompleteAt,
-      })
+      }))
 
     /** After iOS autocomplete (insertReplacementText) accepts a word, no touch events reach the DOM
      * in a "dead zone" beneath the word until focus is retargeted. Moving focus to the asyncFocus dummy input
@@ -546,7 +547,7 @@ const Editable = ({
         // Neither focus may scroll: on iOS 27, focusing the dummy input and then the editable again scrolls the cursor
         // thought to the center of the screen, even though it was already visible (#5676).
         editableSyncStore.update({ suppressBlurSync: true })
-        asyncFocus({ force: true, preventScroll: true })
+        asyncFocus({ force: true })
         editableSyncStore.update({ suppressBlurSync: false })
 
         debugLog.log('retarget', { step: 'preventAutoscroll', savedOffset: savedCharOffset })
@@ -587,23 +588,23 @@ const Editable = ({
       contenteditable: el?.getAttribute?.('contenteditable') ?? null,
     })
     /** Logs when the editable gains focus, recording which element is now active. */
-    const onEditableFocus = () => debugLog.log('focus', describeElement(document.activeElement))
+    const onEditableFocus = () => debugLog.log('focus', () => describeElement(document.activeElement))
     /** Logs when the editable loses focus, recording which element is now active and which element focus is moving to (reveals the asyncFocus retarget target). */
     const onEditableBlur = (e: FocusEvent) =>
-      debugLog.log('blur', {
+      debugLog.log('blur', () => ({
         ...describeElement(document.activeElement),
         relatedTarget: describeElement(e.relatedTarget instanceof Element ? e.relatedTarget : null),
-      })
+      }))
 
     /** Logs caret movement ONLY during the ~250ms autocomplete window (pendingAutocompleteAt != null) to trace the caret
      * entering the touch dead zone without flooding the log with every ordinary selection change. */
     const onSelectionChange = () => {
       if (pendingAutocompleteAt == null) return
-      debugLog.log('selectionchange', {
+      debugLog.log('selectionchange', () => ({
         anchor: selection.anchorOffset(),
         focus: selection.offset(),
         collapsed: selection.isCollapsed(),
-      })
+      }))
     }
 
     editable.addEventListener('input', onAutocompleteInput)
@@ -657,13 +658,13 @@ const Editable = ({
         // TODO: What happens when actual HTML is inserted from the clipboard app? It needs to be differentiated from plain text with divs.
         // TODO: Consider handling this in importData or textToHtml, as onChangeHandler should not contain import logic. Just need to make sure it does not introduce regressions.
         const text = incomingValue.slice(oldValue.length).replace(/<div>/g, '\n')
-        debugLog.log('change', {
+        debugLog.log('change', () => ({
           branch: 'clipboard',
           isClipboardInsert,
           oldValue,
           newValue: incomingValue,
           cursorOffset: selection.offsetThought(),
-        })
+        }))
         dispatch(
           importData({
             path: simplePath,
@@ -770,7 +771,7 @@ const Editable = ({
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
           })
-          dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
+          dispatch(error({ value: `"${oldValueClean}" is read-only and cannot be edited.` }))
           throttledChangeRef.current.cancel() // see above
           return
         } else if (uneditable) {
@@ -781,7 +782,7 @@ const Editable = ({
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
           })
-          dispatch(error({ value: `"${ellipsize(oldValueClean)}" is uneditable.` }))
+          dispatch(error({ value: `"${oldValueClean}" is uneditable.` }))
           throttledChangeRef.current.cancel() // see above
           return
         } else if (options && !options.includes(newValue.toLowerCase())) {
@@ -844,7 +845,9 @@ const Editable = ({
 
         // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
         // run it immediately is there is a style wrapper that needs to be applied to the editable after a clearThought action (#3673)
+        // run it immediately if there is nothing to undo yet, so that the Undo button is enabled as soon as the first edit is typed rather than after the throttle (#5994)
         if (
+          !isUndoEnabled(state) ||
           wrappedValue !== incomingValue ||
           emojiSpaceAdded ||
           transient ||
@@ -1102,7 +1105,7 @@ const Editable = ({
 
         // Record the tap inputs that determine which branch runs. `cancelable: false` on a touchend means the
         // preventDefault below is a silent no-op and iOS Safari will still synthesize focus/mouse events for the tap.
-        debugLog.log('tap', {
+        debugLog.log('tap', () => ({
           eventType: e.type,
           cancelable: e.cancelable,
           touching: touchStore.getState().touching,
@@ -1116,7 +1119,7 @@ const Editable = ({
           noteFocus: state.noteFocus,
           cursorOffset: state.cursorOffset,
           activeElement: document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName ?? null,
-        })
+        }))
 
         // If long press is in progress, don't allow the editable to receive focus or iOS Safari will scroll it.
         if (state.longPress !== LongPressState.Inactive) {

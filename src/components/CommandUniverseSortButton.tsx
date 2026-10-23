@@ -61,17 +61,17 @@ const UndockIcon = ({ size }: { size: number }) => (
 
 /** Type glyph, white so the menu's plus-lighter blend can tint it. */
 const TypeIcon = ({ size }: { size: number }) => (
-  <CommandsListIcon size={size} fill='white' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
+  <CommandsListIcon size={size} fill='white' strokeWidth={0} className={css({ flex: 'none' })} />
 )
 
 /** Alphabetical glyph, white so the menu's plus-lighter blend can tint it. */
 const AlphabeticalIcon = ({ size }: { size: number }) => (
-  <AToZIcon size={size} fill='white' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
+  <AToZIcon size={size} fill='white' strokeWidth={0} className={css({ flex: 'none' })} />
 )
 
 /** Recently used glyph, white so the menu's plus-lighter blend can tint it. */
 const RecentIcon = ({ size }: { size: number }) => (
-  <ClockIcon size={size} fill='white' strokeWidth={1.5} cssRaw={css.raw({ flex: 'none' })} />
+  <ClockIcon size={size} fill='white' strokeWidth={1.5} className={css({ flex: 'none' })} />
 )
 
 const ITEMS: DropdownItem<CommandSortType>[] = [
@@ -158,7 +158,7 @@ const CommandUniverseSortButton = ({ sortOrder }: CommandUniverseSortButtonProps
           size={iconSize}
           fill={ICON_COLOR}
           strokeWidth={selectedSort === 'recent' ? 1.5 : 0}
-          cssRaw={css.raw({ flex: 'none' })}
+          className={css({ flex: 'none' })}
         />
       </div>
       <Dropdown

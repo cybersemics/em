@@ -71,6 +71,7 @@ function CursorOverlay({
     >
       <g>
         <ellipse
+          data-testid='bullet-cursor-overlay'
           ry={bulletOverlayRadius}
           rx={bulletOverlayRadius}
           cy='300'

@@ -1,5 +1,5 @@
 import { MotionValue, motion } from 'motion/react'
-import React, { PropsWithChildren, useEffect, useRef } from 'react'
+import React, { PropsWithChildren, useCallback, useEffect, useRef } from 'react'
 import { dialogRecipe } from '../../../styled-system/recipes'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import useOnClickOutside from '../../hooks/useOnClickOutside'
@@ -20,8 +20,16 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
   const dialog = dialogRecipe()
   const isDesktop = useBreakpoint('md')
 
-  // Close the dialog when the user clicks or taps outside of it.
-  useOnClickOutside(wrapperRef, onClose)
+  // Close the dialog when the user clicks or taps outside of it. A press on a surface layered above the dialog, marked
+  // data-above-dialog, is not outside it: the dialog is still what the user is working in.
+  const closeUnlessAbove = useCallback(
+    (event: MouseEvent | TouchEvent) => {
+      if (event.target instanceof Element && event.target.closest('[data-above-dialog]')) return
+      onClose()
+    },
+    [onClose],
+  )
+  useOnClickOutside(wrapperRef, closeUnlessAbove)
 
   /**
    * Disable swipe-to-go-back.

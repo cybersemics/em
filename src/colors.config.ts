@@ -41,6 +41,10 @@ const colors = {
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
     red: 'rgba(255, 87, 61, 1)', // #ff573d
+    selectionHandle: 'rgba(65, 105, 225, 1)', // #4169e1 (royalblue) – mirrored in android/app/src/main/res/values/colors.xml
+    selectionHighlight: 'rgba(65, 105, 225, 0.2)', // selectionHandle at the 0.2 alpha WebKit uses for the iOS selection highlight
+    selectionHighlightText: 'rgba(217, 225, 249, 1)', // fg seen through selectionHighlight, which iOS draws over the text
+    selectionHighlightDimText: 'rgba(217, 225, 249, 0.5)', // dim seen through selectionHighlight
     vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
     whiteOverlay6: 'rgba(255, 255, 255, 0.06)',
     whiteOverlay40: 'rgba(255, 255, 255, 0.4)',
@@ -118,6 +122,11 @@ const colors = {
     commandUniverseSubtitleText: '#f4f0ffd6',
     commandUniverseGestureCaptionGradientStart: '#dbf5ff',
     commandUniverseGestureCaptionGradientEnd: '#a9bfd6',
+    // Pinned command overlay text, tuned against the design.
+    pinnedCommandTitle: '#e8dcf8',
+    pinnedCommandInstructionGradientStart: '#97a0c2',
+    pinnedCommandInstructionGradientEnd: '#9d75c2',
+    pinnedCommandGenieIcon: '#abaad3',
     gestureMenuLabel: 'rgba(255, 255, 255, 0.7)', // gesture menu – "Gestures" header label (always renders on the dark glow overlay, so it doesn't flip with theme)
     gestureMenuDivider: 'rgba(174, 168, 214, 0.59)', // gesture menu – gradient start stop of the divider under the "Gestures" header
   },
@@ -163,6 +172,10 @@ const colors = {
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
     red: 'rgba(255, 87, 61, 1)', // #ff573d
+    selectionHandle: 'rgba(65, 105, 225, 1)', // #4169e1 (royalblue) – mirrored in android/app/src/main/res/values/colors.xml
+    selectionHighlight: 'rgba(0, 122, 255, 0.2)', // iOS system blue (#007aff) at the 0.2 alpha of the iOS selection highlight, since the light theme leaves caret-color auto
+    selectionHighlightText: 'rgba(0, 24, 51, 1)', // fg seen through selectionHighlight, which iOS draws over the text
+    selectionHighlightDimText: 'rgba(6, 30, 57, 0.5)', // dim seen through selectionHighlight
     vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
     whiteOverlay6: 'rgba(255, 255, 255, 0.06)',
     whiteOverlay40: 'rgba(255, 255, 255, 0.4)',
@@ -240,6 +253,11 @@ const colors = {
     commandUniverseSubtitleText: '#f4f0ffd6',
     commandUniverseGestureCaptionGradientStart: '#dbf5ff',
     commandUniverseGestureCaptionGradientEnd: '#a9bfd6',
+    // Pinned command overlay text, tuned against the design.
+    pinnedCommandTitle: '#e8dcf8',
+    pinnedCommandInstructionGradientStart: '#97a0c2',
+    pinnedCommandInstructionGradientEnd: '#9d75c2',
+    pinnedCommandGenieIcon: '#abaad3',
     gestureMenuLabel: 'rgba(255, 255, 255, 0.7)',
     gestureMenuDivider: 'rgba(174, 168, 214, 0.59)',
   },

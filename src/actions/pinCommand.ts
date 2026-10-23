@@ -14,6 +14,8 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
  */
 const pinCommand = (state: State, { commandId }: { commandId: CommandId }): State => ({
   ...state,
+  // Changing the pin closes its tooltip.
+  ...(state.learning.pinnedCommandId !== commandId ? { showPinnedCommandTooltip: false } : null),
   learning: {
     pinnedCommandId: commandId,
     progress: {

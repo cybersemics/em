@@ -130,7 +130,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
                 {showGesture && (
                   <GestureDiagram
                     path={gestureString(command)}
-                    cssRaw={css.raw({ display: 'block' })}
+                    display='block'
                     size={150}
                     arrowSize={1}
                     strokeWidth={12}
@@ -172,7 +172,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
                 style={{ width: 20, height: 20 }}
               >
                 <Icon
-                  cssRaw={css.raw({ flex: 'none' })}
+                  className={css({ flex: 'none' })}
                   size={20}
                   fill={token(disabled ? 'colors.gray50' : 'colors.fg')}
                 />

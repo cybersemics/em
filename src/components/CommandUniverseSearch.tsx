@@ -69,7 +69,7 @@ const CommandUniverseSearch: FC<{
           size={28}
           fill={token('colors.dialogSearchAccent')}
           strokeWidth={1.5}
-          cssRaw={css.raw({ flex: 'none' })}
+          className={css({ flex: 'none' })}
         />
       </div>
       <input
