@@ -245,6 +245,21 @@ const useEditMode = ({
       !multitouchStore.getState() &&
       style?.visibility !== 'hidden'
 
+    /** Whether a tap on the thought being edited may place the caret itself, which it does on iOS 27 because the double tap shield takes the tap's mousedown. Mirrors the conditions under which onMouseDown places it. */
+    const canPlaceTapCaret = (state: State) =>
+      (!hasMulticursor(state) || isMultiEditing(state)) &&
+      !multitouchStore.getState() &&
+      !touchStore.getState().suppressCursorAfterTouch &&
+      state.longPress === LongPressState.Inactive
+
+    /** Places the caret where a tap on the thought being edited landed. */
+    const placeTapCaret = (state: State, point: { clientX: number; clientY: number }) => {
+      const { offset } = getCaretOffset(editable, point)
+      if (offset === null) return
+      allowDefaultSelection()
+      setCaretOffset(offset, { preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path) })
+    }
+
     /** Ends the touch, records it for ghost-click detection, and sets the cursor on the tapped thought. */
     const onTouchEnd = (e: TouchEvent) => {
       pressingRef.current = false
@@ -298,23 +313,19 @@ const useEditMode = ({
 
       dispatch((dispatch, getState) => {
         const state = getState()
-        const multiEditing = isMultiEditing(state)
-        if (
-          (hasMulticursor(state) && !multiEditing) ||
-          multitouchStore.getState() ||
-          touchStore.getState().suppressCursorAfterTouch ||
-          state.longPress !== LongPressState.Inactive
-        ) {
-          return
-        }
+        if (!canPlaceTapCaret(state)) return
 
-        // the overlay takes the tap's mousedown, which would otherwise place the caret
-        const { offset } = getCaretOffset(editable, touch)
-        if (offset !== null) {
-          allowDefaultSelection()
-          setCaretOffset(offset, { preserveMulticursor: multiEditing && isMulticursorPath(state, path) })
-        }
-        doubleTapShield.cover(editable)
+        placeTapCaret(state, touch)
+        doubleTapShield.cover(editable, {
+          // a tap on the overlay would otherwise be lost, as it is for anything else under it
+          onTap: (start, end) => {
+            if (Math.hypot(end.clientX - start.clientX, end.clientY - start.clientY) >= TAP_SLOP) return
+            dispatch((dispatch, getState) => {
+              const state = getState()
+              if (canPlaceTapCaret(state)) placeTapCaret(state, end)
+            })
+          },
+        })
       })
     }
 

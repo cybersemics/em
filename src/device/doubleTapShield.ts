@@ -14,6 +14,9 @@ const RESTORE_WINDOW = 1000
 /** How far the overlay reaches past the thought, so that a second tap just outside its text is covered too. */
 const OVERLAY_PADDING = 20
 
+/** A point in viewport coordinates. */
+type Point = { clientX: number; clientY: number }
+
 /** The overlay over the thought being edited, and the caret to put back if a covered tap moves the selection out of it. Disposing removes the overlay and clears its timer. */
 const shieldStore = ministore<{
   overlay: HTMLElement | null
@@ -43,11 +46,20 @@ const uncover = () => {
  * WebKit withholds the touchend, touchmove and pointerup of every touch that begins within 44pt of the caret, for the
  * life of the tab (#5660, WebKit bug 322561). Nothing the page does afterwards ends that state, so it has to be
  * prevented. WebKit cancels a tap whose target changes before it commits, which also cancels the tap that was just
- * covered, so the caller places its caret before covering.
+ * covered, so the caller places its caret before covering, and onTap places it for each tap that lands on the overlay.
  */
-const cover = (editable: HTMLElement) => {
+const cover = (
+  editable: HTMLElement,
+  {
+    onTap,
+  }: {
+    /** Called when a touch on the overlay ends, with where it began and ended. */
+    onTap: (start: Point, end: Point) => void
+  },
+) => {
   shieldStore.reset()
 
+  let touchStart: Point | null = null
   const rect = editable.getBoundingClientRect()
   const overlay = document.createElement('div')
   Object.assign(overlay.style, {
@@ -66,6 +78,8 @@ const cover = (editable: HTMLElement) => {
     e => {
       // keeps the focus, and with it the keyboard, on the thought
       e.preventDefault()
+      const touch = e.changedTouches[0]
+      touchStart = touch ? { clientX: touch.clientX, clientY: touch.clientY } : null
       // removing the overlay under a finger would send its touchend to a detached node, which nothing hears
       clearTimeout(shieldStore.getState().timer ?? undefined)
       shieldStore.update({ timer: null, restoreUntil: e.timeStamp + RESTORE_WINDOW })
@@ -78,7 +92,14 @@ const cover = (editable: HTMLElement) => {
     clearTimeout(shieldStore.getState().timer ?? undefined)
     shieldStore.update({ timer: setTimeout(uncover, DOUBLE_TAP_WINDOW) })
   }
-  overlay.addEventListener('touchend', restartTimer)
+  overlay.addEventListener('touchend', e => {
+    restartTimer()
+    const touch = e.changedTouches[0]
+    if (!touchStart || !touch) return
+    onTap(touchStart, { clientX: touch.clientX, clientY: touch.clientY })
+    // the caret to put back is now wherever the tap placed it
+    shieldStore.update({ caret: selection.save() })
+  })
   overlay.addEventListener('touchcancel', restartTimer)
   // the covered tap's own mouse events can land here, after its caret was placed
   overlay.addEventListener('mousedown', e => e.preventDefault())
