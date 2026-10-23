@@ -104,7 +104,8 @@ const cover = (
   // the covered tap's own mouse events can land here, after its caret was placed
   overlay.addEventListener('mousedown', e => e.preventDefault())
   // inside MultiGesture, whose responder only hears touches on its descendants, so a swipe that starts here still runs
-  ;(editable.closest('[data-multigesture]') ?? document.body).appendChild(overlay)
+  const gestureContainer = editable.closest('[data-multigesture]') ?? document.body
+  gestureContainer.appendChild(overlay)
 
   shieldStore.update({
     overlay,
