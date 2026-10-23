@@ -27,7 +27,7 @@ import useDialsVersion, { DROPDOWN_OPENING_EVENT } from './dials'
 export const DROPDOWN_Z_INDEX = Number(token('zIndex.dialog'))
 
 /** Default easing for every layer (matches the sidebar's EASE_OUT). */
-const EASE = 'cubic-bezier(0.16, 0.6, 0.2, 1)'
+export const EASE = 'cubic-bezier(0.16, 0.6, 0.2, 1)'
 
 /**
  * Where the menu sits relative to its anchor.

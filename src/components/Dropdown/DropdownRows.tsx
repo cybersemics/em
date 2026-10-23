@@ -74,6 +74,7 @@ const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize
   const {
     open,
     isOpen,
+    timing,
     placement,
     selectedId,
     selectedTravel,
@@ -97,7 +98,12 @@ const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize
       onClick={e => e.stopPropagation()}
       {...stopPress}
       className={css({ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', whiteSpace: 'nowrap' })}
-      style={{ ...menuStyle, mixBlendMode: 'plus-lighter' }}
+      style={{
+        ...menuStyle,
+        mixBlendMode: 'plus-lighter',
+        // Design dials: the rows' opacity and visibility (the dials panel's Rows layer).
+        opacity: 'calc(var(--sort-dropdown-rows-opacity, 1) * var(--sort-dropdown-rows-visible, 1))',
+      }}
     >
       {heading && (
         <div
@@ -157,14 +163,24 @@ const DropdownRows = <T extends string>({ heading, items, actions = [], iconSize
               style={{
                 width: iconSize,
                 height: iconSize,
-                // Closed, matches the anchor glyph's 50%.
-                // Opening, the selected icon starts at the anchor glyph's 50% to take over from it. Closing, it fades out
-                // while the anchor's own glyph fades back in (see CommandUniverseSortButton).
-                opacity: isOpen ? (isSelected ? 0.72 : 0.41) : open ? 0.5 : 0,
+                // Closed, matches the anchor glyph's 50%: opening, the selected icon takes over from the glyph at that
+                // value; closing, it settles back to it as it slides home.
+                opacity: isOpen ? (isSelected ? 0.72 : 0.41) : 0.5,
                 transition: transition(['opacity']),
               }}
             >
-              <Icon size={iconSize} />
+              {/* Closing, once the selected icon has slid home (after the rows' duration), it crossfades in place with
+                  the anchor's own glyph, which fades in over the same time (see CommandUniverseSortButton). Both sit at
+                  50% in the same spot, so only the colour settles; the slide itself plays in full. */}
+              <div
+                style={{
+                  display: 'flex',
+                  opacity: open || !isSelected ? 1 : 0,
+                  transition: open ? undefined : transition(['opacity'], { delay: timing.content }),
+                }}
+              >
+                <Icon size={iconSize} />
+              </div>
             </div>
           </div>
         )

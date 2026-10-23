@@ -10,7 +10,7 @@ import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse
 import { DEFAULT_FONT_SIZE } from '../constants'
 import useBreakpoint from '../hooks/useBreakpoint'
 import durations from '../util/durations'
-import Dropdown, { DropdownPlacement } from './Dropdown/Dropdown'
+import Dropdown, { DropdownPlacement, EASE } from './Dropdown/Dropdown'
 import DropdownLight from './Dropdown/DropdownLight'
 import DropdownRows, { DropdownAction, DropdownItem } from './Dropdown/DropdownRows'
 import useDialsVersion, { readDial } from './Dropdown/dials'
@@ -142,12 +142,17 @@ const CommandUniverseSortButton = ({ sortOrder }: CommandUniverseSortButtonProps
       })}
       style={{ width: iconSize, height: iconSize }}
     >
-      {/* The button's own glyph. Hidden at once while the menu opens (the menu's copy takes its place), and faded back
-          in as the menu closes, crossfading with the menu's copy as it slides home, so it settles at its resting colour
+      {/* The button's own glyph. Hidden at once while the menu opens (the menu's copy takes its place). Closing, the
+          menu's copy slides home first, then the two crossfade in place, so the glyph settles at its resting colour
           instead of snapping from the menu's lit white to grey when the menu unmounts. */}
       <div
         className={css({ display: 'flex', mixBlendMode: 'plus-lighter' })}
-        style={{ opacity: open ? 0 : 0.5, transition: open ? 'none' : `opacity ${durations.get('medium')}ms ease-out` }}
+        style={{
+          opacity: open ? 0 : 0.5,
+          // Waits for the menu's copy to slide home, then crossfades with it in place, on the same curve as its fade-out
+          // so the two always add up to the resting 50% (both blend additively).
+          transition: open ? 'none' : `opacity ${durations.get('medium')}ms ${EASE} ${durations.get('medium')}ms`,
+        }}
       >
         <SelectedIcon
           size={iconSize}
