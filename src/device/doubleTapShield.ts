@@ -22,7 +22,8 @@ const shieldStore = ministore<{
   overlay: HTMLElement | null
   timer: Timer | null
   editable: HTMLElement | null
-  caret: selection.SavedSelection | null
+  /** The caret's offset within the thought, which survives a re-render that replaces its text nodes. */
+  caret: number | null
   restoreUntil: number
 }>(
   { overlay: null, timer: null, editable: null, caret: null, restoreUntil: 0 },
@@ -98,7 +99,7 @@ const cover = (
     if (!touchStart || !touch) return
     onTap(touchStart, { clientX: touch.clientX, clientY: touch.clientY })
     // the caret to put back is now wherever the tap placed it
-    shieldStore.update({ caret: selection.save() })
+    shieldStore.update({ caret: selection.offsetThought() })
   })
   overlay.addEventListener('touchcancel', restartTimer)
   // the covered tap's own mouse events can land here, after its caret was placed
@@ -111,7 +112,7 @@ const cover = (
     overlay,
     timer: setTimeout(uncover, DOUBLE_TAP_WINDOW),
     editable,
-    caret: selection.save(),
+    caret: selection.offsetThought(),
     restoreUntil: performance.now() + RESTORE_WINDOW,
   })
   debugLog.log('doubleTapShield', { event: 'cover' })
@@ -128,13 +129,13 @@ const onSelectionChange = () => {
 
   const { editable, caret, restoreUntil } = shieldStore.getState()
   if (
-    caret &&
+    caret !== null &&
     performance.now() < restoreUntil &&
     document.activeElement === editable &&
     selection.isActive() &&
     !selection.isOnEditable()
   ) {
-    selection.restore(caret)
+    selection.set(editable, { offset: caret })
     debugLog.log('doubleTapShield', { event: 'restore' })
     return
   }
