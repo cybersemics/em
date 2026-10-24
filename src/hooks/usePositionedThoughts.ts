@@ -53,6 +53,7 @@ const usePositionedThoughts = (
   // The last measured width of each table col1 thought, kept after list virtualization unmounts the thought and releases its size.
   // Otherwise col1 narrows whenever its widest thought falls below the virtualization cutoff. col2 then unwraps, the thoughts above get shorter, and the widest thought moves back above the cutoff. Once it mounts, col1 widens again and pushes it back below, so it flickers indefinitely, and on iOS Safari this can trigger "Maximum update depth exceeded" (React error #185).
   // A mounted thought's measured width always takes precedence, so editing col1 still narrows the column.
+  // Rebuilt on every pass from treeThoughts, which still includes virtualized thoughts, so a thought's width is dropped once it leaves the tree (e.g. its context is collapsed or it is deleted).
   const col1WidthsRetained = useRef(new Map<string, number>())
 
   /** The value of scrollTop. Only enabled when there is a drag in progress for performance reasons. */
@@ -113,13 +114,15 @@ const usePositionedThoughts = (
     // form a multi-level chain, so the column band is shared across up to three visible levels rather than two.
     const tableThoughtKeys = new Set(treeThoughts.filter(node => node.visibleChildrenKeys).map(node => node.key))
 
-    treeThoughts.forEach(node => {
-      const width = node.isTableCol1 ? sizes[node.key]?.width : undefined
-      if (width) col1WidthsRetained.current.set(node.key, width)
-    })
+    col1WidthsRetained.current = new Map(
+      treeThoughts.flatMap(node => {
+        const width = node.isTableCol1 ? sizes[node.key]?.width || col1WidthsRetained.current.get(node.key) : undefined
+        return width ? [[node.key, width] as const] : []
+      }),
+    )
 
     /** Gets the width of a table col1 thought: its measured width if it is mounted, otherwise the width it had when it was last mounted. */
-    const col1Width = (key: string) => sizes[key]?.width || col1WidthsRetained.current.get(key) || 0
+    const col1Width = (key: string) => col1WidthsRetained.current.get(key) || 0
 
     // The number of table levels that the available horizontal band is shared among. This does not fix the column
     // proportions: col1 is always as wide as its widest visible thought, so a table with short col1 thoughts stays
