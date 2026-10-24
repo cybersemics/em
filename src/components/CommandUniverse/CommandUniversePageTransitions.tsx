@@ -1,6 +1,5 @@
 import { MotionConfigContext, motion, useReducedMotion } from 'motion/react'
 import { ReactElement, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
 import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import CommandUniverseNavigation from '../../@types/CommandUniverseNavigation'
@@ -100,6 +99,14 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
     if (entryId === activeEntryId) restoreFocus(entryId)
   }, [activeEntryId, isOpen, transition])
 
+  // The destination is interactive from the moment a zoom starts (see `inert` below), so its focus is restored then
+  // rather than when the zoom finishes, which could pull focus away from something used mid-zoom.
+  useEffect(() => {
+    if (!isOpen || !transition || transition.type === 'none') return
+    restoreFocus(transition.toEntryId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per transition, when it starts
+  }, [transition])
+
   return (
     <div
       ref={root}
@@ -145,15 +152,14 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
               entering && transition.type !== 'none'
                 ? () => {
                     if (!isOpen) return
-                    // Commit the navigation before focusing: until the transition clears, every page is inert and
-                    // a focus call inside one is ignored.
-                    flushSync(() => setTransition(current => (current === transition ? null : current)))
-                    restoreFocus(entryId)
+                    setTransition(current => (current === transition ? null : current))
                   }
                 : undefined
             }
             tabIndex={-1}
-            inert={!isOpen || !active || !!transition}
+            // Only the page being left is inert. The destination is usable as soon as navigation starts, so the zoom's
+            // long easing tail never holds up the user.
+            inert={!isOpen || !active}
             aria-hidden={!active}
             onFocusCapture={event => focusTargets.current.set(entryId, event.target)}
             // Opacity rather than visibility, which descendants can override.

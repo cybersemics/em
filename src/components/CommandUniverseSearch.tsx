@@ -1,4 +1,4 @@
-import { FC, useRef } from 'react'
+import { FC, KeyboardEvent, useEffect, useRef } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import useDismissKeyboardOnScroll from '../hooks/useDismissKeyboardOnScroll'
@@ -12,10 +12,18 @@ import CommandsSearchIcon from './icons/CommandsSearchIcon'
  * Distinct from SearchCommands (used by Help / CustomizeToolbar via CommandTable),
  * which keeps the legacy bordered look.
  */
-const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onInput }) => {
+const CommandUniverseSearch: FC<{
+  value?: string
+  onInput?: (value: string) => void
+  autoFocus?: boolean
+  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void
+}> = ({ value, onInput, autoFocus, onKeyDown }) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
   useDismissKeyboardOnScroll(inputRef)
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus({ preventScroll: true })
+  }, [autoFocus])
 
   /**
    * When the input is clicked/tapped, focus it while preventing iOS' native autoscroll.
@@ -67,9 +75,12 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
       <input
         ref={inputRef}
         type='text'
+        aria-label='Search for a command'
+        value={value}
+        onKeyDown={onKeyDown}
         placeholder='Search for a command'
-        onMouseDown={handleMouseDown}
-        onInput={(e: React.FormEvent<HTMLInputElement>) => {
+        onMouseDown={autoFocus ? undefined : handleMouseDown}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           onInput?.(e.currentTarget.value)
         }}
         className={css({

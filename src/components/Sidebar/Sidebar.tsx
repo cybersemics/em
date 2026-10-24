@@ -47,6 +47,7 @@ import { LongPressState } from '../../constants'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import useLockBodyScroll from '../../hooks/useLockBodyScroll'
 import usePrefetchImages from '../../hooks/usePrefetchImages'
+import Dropdown from '../Dropdown/Dropdown'
 import FadeTransition from '../FadeTransition'
 import SidebarBackground from './SidebarBackground'
 import SidebarContent from './SidebarContent'
@@ -264,64 +265,69 @@ const Sidebar = () => {
               userSelect: 'none',
             })}
           >
-            {/* Background dimming/blur/gradient layer – sits behind everything */}
-            <SidebarBackground
-              x={x}
-              width={width}
-              showSidebar={showSidebar}
-              toggleSidebar={toggleSidebar}
-              widthAsCssString={widthAsCssString}
-              sectionId={sectionId}
-            />
-
-            {/* Primary and secondary glow overlays */}
-            <SidebarGlow
-              widthAsCssString={widthAsCssString}
-              opacity={contentOpacity}
-              expanded={dropdownOpen}
-              sectionId={sectionId}
-            />
-
-            {/* The sliding drawer panel — header and masked scrollable content */}
-            <SidebarDrawer
-              drawerRef={drawerRef}
-              x={x}
-              width={width}
-              widthAsCssString={widthAsCssString}
-              contentOpacity={contentOpacity}
-              transition={transition}
-              showSidebar={showSidebar}
-              isLargeDevice={isLargeDevice}
-              title={SECTIONS.find(s => s.id === sectionId)?.label ?? ''}
-              onEdgeTap={() => toggleSidebar(false)}
-              onAnimationComplete={() => {
-                if (!showSidebar) setDrawerMounted(false)
+            {/* The section picker's shared timeline: the header's rows, the glow's resize and the content mask all
+                read their open state and timing from here, so they move on one clock. */}
+            <Dropdown
+              open={dropdownOpen}
+              onClose={() => setDropdownOpen(false)}
+              onSelect={(id: SidebarSectionId) => {
+                setSectionId(id)
+                setDropdownOpen(false)
               }}
-              onTouchMove={handleDrawerTouchMove}
-              onTouchEnd={() => setIsSwiping(false)}
+              anchor={null}
+              selectedId={sectionId}
+              placement='below'
+              persistent
+              catcher={false}
             >
-              {/* Non-scrolling header. Fades in with the sidebar; the 3.75rem top margin
-                  sits just below the safe-area inset. */}
-              <FadeTransition type='medium' in={showSidebar}>
-                <div
-                  className={css({
-                    marginTop: '3.75rem',
-                    padding: '0 1em',
-                  })}
-                >
-                  <SidebarHeader
-                    sections={SECTIONS}
-                    sectionId={sectionId}
-                    onSectionChange={setSectionId}
-                    isOpen={dropdownOpen}
-                    setIsOpen={setDropdownOpen}
-                  />
-                </div>
-              </FadeTransition>
+              {/* Background dimming/blur/gradient layer – sits behind everything */}
+              <SidebarBackground
+                x={x}
+                width={width}
+                showSidebar={showSidebar}
+                toggleSidebar={toggleSidebar}
+                widthAsCssString={widthAsCssString}
+                sectionId={sectionId}
+              />
 
-              {/* Masked, scrollable content area below the header */}
-              <SidebarContent sectionId={sectionId} dropdownOpen={dropdownOpen} isSwiping={isSwiping} />
-            </SidebarDrawer>
+              {/* Primary and secondary glow overlays */}
+              <SidebarGlow widthAsCssString={widthAsCssString} opacity={contentOpacity} sectionId={sectionId} />
+
+              {/* The sliding drawer panel — header and masked scrollable content */}
+              <SidebarDrawer
+                drawerRef={drawerRef}
+                x={x}
+                width={width}
+                widthAsCssString={widthAsCssString}
+                contentOpacity={contentOpacity}
+                transition={transition}
+                showSidebar={showSidebar}
+                isLargeDevice={isLargeDevice}
+                title={SECTIONS.find(s => s.id === sectionId)?.label ?? ''}
+                onEdgeTap={() => toggleSidebar(false)}
+                onAnimationComplete={() => {
+                  if (!showSidebar) setDrawerMounted(false)
+                }}
+                onTouchMove={handleDrawerTouchMove}
+                onTouchEnd={() => setIsSwiping(false)}
+              >
+                {/* Non-scrolling header. Fades in with the sidebar; the 3.75rem top margin
+                  sits just below the safe-area inset. */}
+                <FadeTransition type='medium' in={showSidebar}>
+                  <div
+                    className={css({
+                      marginTop: '3.75rem',
+                      padding: '0 1em',
+                    })}
+                  >
+                    <SidebarHeader sections={SECTIONS} sectionId={sectionId} setIsOpen={setDropdownOpen} />
+                  </div>
+                </FadeTransition>
+
+                {/* Masked, scrollable content area below the header */}
+                <SidebarContent sectionId={sectionId} isSwiping={isSwiping} />
+              </SidebarDrawer>
+            </Dropdown>
           </div>
         </Dialog.Portal>
       </Dialog.Root>

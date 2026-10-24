@@ -3,6 +3,7 @@ import { css } from '../../../styled-system/css'
 import { isAndroid, isSafari } from '../../browser'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import safeY from '../../util/safeY'
+import { useDropdown } from '../Dropdown/Dropdown'
 import { EASE_OUT, SLOW_DURATION, cssEaseOut } from './constants'
 import { SECTIONS, SidebarSectionId } from './sidebarSections'
 
@@ -24,6 +25,8 @@ const SidebarOverlay1 = ({
   sectionId: SidebarSectionId
 }) => {
   const isLargeDevice = useBreakpoint('lg')
+  /** The dropdown's light duration, so the glow's resize stays on the same clock as the rows and content mask. */
+  const lightDuration = useDropdown().timing.light
 
   // WebKit resizes a fixed layer; scaling it creates oversized backing stores and can exhaust memory.
   if (isSafari()) {
@@ -57,7 +60,7 @@ const SidebarOverlay1 = ({
             }}
             initial={collapsed}
             animate={expanded ? open : collapsed}
-            transition={{ duration: SLOW_DURATION, ease: EASE_OUT }}
+            transition={{ duration: lightDuration, ease: EASE_OUT }}
             className={css({
               position: 'absolute',
               top: 0,
@@ -118,7 +121,7 @@ const SidebarOverlay1 = ({
             backgroundImage: `url(/img/sidebar/overlay-layer-1-${sidebarSection.id}.avif)`,
             opacity: sidebarSection.id === sectionId ? 1 : 0,
             transform: resizeTransform,
-            transition: `opacity ${SLOW_DURATION}s linear, transform ${SLOW_DURATION}s ${cssEaseOut}`,
+            transition: `opacity ${SLOW_DURATION}s linear, transform ${lightDuration}s ${cssEaseOut}`,
             top: safeY(-84) /* collapsed backgroundPositionY */,
             // Android: promote the crossfade and resize to avoid repaint flicker.
             willChange: isAndroid ? 'opacity, transform' : undefined,
@@ -209,24 +212,25 @@ const SidebarOverlay2 = ({
 const SidebarGlow = ({
   widthAsCssString,
   opacity,
-  expanded,
   sectionId,
 }: {
   /** CSS width of the secondary overlay (either '100%' or '400px'). */
   widthAsCssString: string
   /** Opacity derived from the sidebar's x position, shared by both overlays. */
   opacity: MotionValue<number>
-  /** Whether the dropdown is currently expanded. Only the primary overlay responds. */
-  expanded: boolean
   /** Active section. */
   sectionId: SidebarSectionId
-}) => (
-  <>
-    {/* Primary glow overlay – responds to dropdown expansion */}
-    <SidebarOverlay1 opacity={opacity} expanded={expanded} sectionId={sectionId} />
-    {/* Secondary glow overlay – adds middle tones */}
-    <SidebarOverlay2 widthAsCssString={widthAsCssString} opacity={opacity} sectionId={sectionId} />
-  </>
-)
+}) => {
+  /** Whether the section picker is open, from the enclosing Dropdown (see Sidebar). */
+  const { isOpen } = useDropdown()
+  return (
+    <>
+      {/* Primary glow overlay – responds to dropdown expansion */}
+      <SidebarOverlay1 opacity={opacity} expanded={isOpen} sectionId={sectionId} />
+      {/* Secondary glow overlay – adds middle tones */}
+      <SidebarOverlay2 widthAsCssString={widthAsCssString} opacity={opacity} sectionId={sectionId} />
+    </>
+  )
+}
 
 export default SidebarGlow

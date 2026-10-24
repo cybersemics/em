@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 import { execSync } from 'child_process'
 import { randomBytes } from 'crypto'
 import path from 'path'
-import { type Plugin, defineConfig } from 'vite'
+import { type Plugin, type WebSocketClient, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -58,6 +58,84 @@ function tunnelTokenGate(): Plugin {
     },
     configurePreviewServer(server) {
       server.middlewares.use(gate)
+    },
+  }
+}
+
+/**
+ * TEMPORARY prototype aid for the sort dropdown's design dials (src/components/Dropdown/dialsSync.ts). Relays dial
+ * values between browsers connected to this dev server over Vite's own HMR websocket, so a value tuned on the desktop
+ * shows up on a phone on the LAN. Lead and Follow only decide where a session starts (the leader's values seed it);
+ * after that every linked device edits it together, by per-dial patches merged here (see dialsSync.ts). The merged
+ * session is kept in memory so a device that starts following later gets it. Dev server only; remove with the dials
+ * panel.
+ */
+function dialsSync(): Plugin {
+  type Values = Record<string, string>
+  type Patch = Record<string, string | null>
+  type Device = { id: string; name: string }
+  type Mode = 'off' | 'lead' | 'follow'
+  /** Every connected dials panel and its mode, keyed by its raw HMR socket so a closed socket can be dropped. */
+  const panels = new Map<unknown, Device & { mode: Mode }>()
+  /** The one leader, if any. */
+  let leader: { socket: unknown; device: Device } | null = null
+  /**
+   * The shared session: the last leader's values with every linked device's patches merged in, last change winning per
+   * dial. Null until a leader has seeded it. It outlives the leader, so followers keep editing together without one.
+   */
+  let session: Values | null = null
+  return {
+    name: 'dials-sync',
+    apply: 'serve',
+    configureServer(server) {
+      /** Tells every client who is connected, so each panel can show the leader and a device on another server alone. */
+      const broadcastPresence = () =>
+        server.ws.send('dials:presence', {
+          count: panels.size,
+          leader: leader?.device ?? null,
+          followers: [...panels.values()].filter(panel => panel.mode === 'follow').length,
+        })
+      server.ws.on('dials:mode', (data: Device & { mode: Mode; values?: Values }, client) => {
+        const socket = (client as WebSocketClient).socket
+        panels.set(socket, { id: data.id, name: data.name, mode: data.mode })
+        if (data.mode === 'lead') {
+          // One leader per server: the previous one is told and becomes a follower.
+          if (leader && leader.socket !== socket) {
+            server.ws.send('dials:demoted', { id: leader.device.id, by: { id: data.id, name: data.name } })
+            const previous = panels.get(leader.socket)
+            if (previous) previous.mode = 'follow'
+          }
+          leader = { socket, device: { id: data.id, name: data.name } }
+          // Taking Lead (re)seeds the session with the leader's values, for every linked device.
+          session = { ...(data.values ?? {}) }
+          server.ws.send('dials:seed', { values: session, leader: leader.device })
+        } else if (leader?.socket === socket) {
+          leader = null
+        }
+        broadcastPresence()
+      })
+      server.ws.on('connection', socket => {
+        socket.on('close', () => {
+          if (leader?.socket === socket) leader = null
+          if (panels.delete(socket)) broadcastPresence()
+        })
+      })
+      // Any linked device's edits: merged into the session (null removes a dial) and relayed to every device.
+      server.ws.on('dials:patch', (data: { id: string; patch: Patch }, client) => {
+        const panel = panels.get((client as WebSocketClient).socket)
+        if (!panel || panel.mode === 'off') return
+        const next: Values = { ...(session ?? {}) }
+        Object.entries(data.patch).forEach(([name, value]) => {
+          if (value === null) delete next[name]
+          else next[name] = value
+        })
+        session = next
+        server.ws.send('dials:patch', { id: data.id, patch: data.patch })
+      })
+      // Always answers, with a null session when nothing has seeded it yet, so a device starting to follow knows.
+      server.ws.on('dials:pull', (_data, client) => {
+        client.send('dials:state', { leader: leader?.device ?? null, values: session })
+      })
     },
   }
 }
@@ -129,6 +207,8 @@ export default defineConfig({
     ...(useHttps ? [basicSsl()] : []),
     // Gate the cloudflared tunnel hostnames behind a token; all other authorities pass ungated.
     tunnelTokenGate(),
+    // TEMPORARY: relays the sort dropdown's design-dial values between devices. Remove with the dials panel.
+    dialsSync(),
   ],
   server: {
     // Allow bs-local.com for BrowserStack local testing, and the Cloudflare tunnel pool's

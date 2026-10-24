@@ -1,7 +1,6 @@
 import Command from '../@types/Command'
 import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../actions/toggleMobileCommandUniverse'
 import CommandUniverseIcon from '../components/icons/CommandUniverseIcon'
-import isDocumentEditable from '../util/isDocumentEditable'
 
 const openMobileCommandUniverseCommand = {
   id: 'openMobileCommandUniverse',
@@ -11,10 +10,11 @@ const openMobileCommandUniverseCommand = {
   multicursor: false,
   hideAlert: true,
   hideFromDesktopCommandUniverse: true,
+  keyboard: { key: 'p', meta: true },
   svg: CommandUniverseIcon,
-  canExecute: () => isDocumentEditable(),
+  allowExecuteFromModal: true,
   exec: dispatch => {
-    dispatch(toggleMobileCommandUniverse({ value: true }))
+    dispatch(toggleMobileCommandUniverse({}))
   },
 } satisfies Command
 

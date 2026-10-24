@@ -5,12 +5,9 @@ import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
-import Key from '../@types/Key'
 import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../actions/desktopCommandUniverse'
-import { hashCommand, hashKeyDown } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
-import openDesktopCommandUniverseCommand from '../commands/openDesktopCommandUniverse'
-import * as selection from '../device/selection'
+import useCommandUniverseSelection from '../hooks/useCommandUniverseSelection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import storageModel from '../stores/storageModel'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
@@ -43,11 +40,7 @@ const DesktopCommandUniverseSearch: FC<{
   /** Handle desktop command universe commands. */
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (
-        e.key === 'Escape' ||
-        // manually check if the desktopCommandUniverse command is entered since global commands are disabled while the desktop command universe is open
-        hashCommand(openDesktopCommandUniverseCommand.keyboard as Key) === hashKeyDown(e)
-      ) {
+      if (e.key === 'Escape') {
         e.preventDefault()
         e.stopPropagation()
         dispatch(desktopCommandUniverse())
@@ -71,14 +64,7 @@ const DesktopCommandUniverseSearch: FC<{
   )
 
   useEffect(() => {
-    const sel = selection.save()
     inputRef.current?.focus()
-    return () => {
-      // Do not overwrite a caret that the executed command placed in a thought or note, e.g. Note focuses the new note. The Command Universe unmounts after its fade-out, well after the command has run.
-      if (!selection.isThought()) {
-        selection.restore(sel)
-      }
-    }
   }, [])
 
   // save selection and add event listeners on desktop
@@ -125,6 +111,7 @@ const DesktopCommandUniverse: FC<{
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
+  const restoreSelection = useCommandUniverseSelection()
 
   const [selectedCommand, setSelectedCommand] = useState<{
     command: Command
@@ -143,12 +130,13 @@ const DesktopCommandUniverse: FC<{
       )
         return
       const commandsNew = [command.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
+      restoreSelection()
       dispatch(desktopCommandUniverse())
       executeCommandWithMulticursor(command, { event: e, type: 'desktopCommandUniverse', store })
       storageModel.set('recentCommands', commandsNew)
       setRecentCommands(commandsNew)
     },
-    [dispatch, recentCommands, setRecentCommands, store],
+    [dispatch, recentCommands, restoreSelection, setRecentCommands, store],
   )
 
   /** Execute the selected command. */

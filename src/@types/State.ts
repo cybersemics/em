@@ -4,6 +4,7 @@ import ActionType from './ActionType'
 import Alert from './Alert'
 import Command from './Command'
 import CommandId from './CommandId'
+import CommandSortType from './CommandSortType'
 import CommandUniverseNavigation from './CommandUniverseNavigation'
 import Context from './Context'
 import DragCommandZone from './DragCommandZone'
@@ -31,6 +32,8 @@ interface State {
   autologin: boolean
   /** Page history for the current Command Universe session. */
   commandUniverseNavigation: CommandUniverseNavigation
+  /** Transient search and ordering for the current Command Universe session. */
+  commandUniverseBrowsing: { search: string; sortOrder: CommandSortType }
   /** Key: hashPath(path). */
   contextViews: Index<boolean>
   cursor: Path | null

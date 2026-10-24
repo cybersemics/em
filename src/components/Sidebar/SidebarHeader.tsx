@@ -1,10 +1,10 @@
-import { ComponentType, useCallback, useMemo, useRef } from 'react'
+import { ComponentType, Ref } from 'react'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import { isAndroid } from '../../browser'
 import fastClick from '../../util/fastClick'
 import ChevronImg from '../ChevronImg'
-import { MEDIUM_DURATION, cssEaseOut } from './constants'
+import { useDropdown } from '../Dropdown/Dropdown'
 import { SidebarSection, SidebarSectionId } from './sidebarSections'
 
 /** A sidebar section row: icon + label. Used for both the active header and dropdown items. */
@@ -12,12 +12,15 @@ const SidebarSectionRow = ({
   icon: Icon,
   label,
   iconSize = 28,
+  rowRef,
 }: {
   icon: ComponentType<{ size?: number; fill?: string }>
   label: string
   iconSize?: number
+  /** The dropdown's anchor point for this section: the element that lands on the header when it's selected. */
+  rowRef?: Ref<HTMLDivElement>
 }) => (
-  <div className={css({ display: 'flex', alignItems: 'center', gap: '0.75rem' })}>
+  <div ref={rowRef} className={css({ display: 'flex', alignItems: 'center', gap: '0.75rem' })}>
     <div
       className={css({
         width: '36px',
@@ -51,10 +54,6 @@ interface SidebarHeaderProps {
   sections: SidebarSection[]
   /** The currently active section. */
   sectionId: SidebarSectionId
-  /** Callback when user selects a different section. */
-  onSectionChange: (id: SidebarSectionId) => void
-  /** Whether the dropdown is currently expanded. */
-  isOpen: boolean
   /** State setter to toggle the dropdown open/closed. */
   setIsOpen: (open: boolean) => void
 }
@@ -64,32 +63,12 @@ interface SidebarHeaderProps {
  * for the current SidebarSection. It can be tapped to toggle a dropdown
  * view, which shows all SidebarSections.
  */
-const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen }: SidebarHeaderProps) => {
+const SidebarHeader = ({ sections, sectionId, setIsOpen }: SidebarHeaderProps) => {
   /** The currently active section. */
   const section = sections.find(s => s.id === sectionId)!
 
-  /** Refs to each dropdown item's inner div, keyed by section id. Used by getSelectedOffset
-   * below to measure where the selected row currently sits, which determines how far the
-   * selected item must translate up to land on the header row. */
-  const itemEls = useRef<Record<string, HTMLDivElement | null>>({})
-
-  /** Distance the selected row must move to become the closed header. A transformed wrapper can
-   * become offsetParent, so include its offset only when offsetTop does not already contain it. */
-  const getSelectedOffset = useCallback(() => {
-    const inner = itemEls.current[sectionId]
-    const sectionRow = inner?.firstElementChild as HTMLElement | null
-    const motionDiv = inner?.parentElement as HTMLElement | null
-    if (sectionRow && motionDiv) {
-      const includesMotionDivOffset = sectionRow.offsetParent !== motionDiv
-      return sectionRow.offsetTop + (includesMotionDivOffset ? 0 : motionDiv.offsetTop)
-    }
-    // If the elements aren't mounted yet, estimate based on index * row height
-    const idx = sections.findIndex(s => s.id === sectionId)
-    return Math.max(0, idx) * 54
-  }, [sectionId, sections])
-
-  // Measure only when the dropdown or section changes; offsetTop forces layout.
-  const selectedOffset = useMemo(getSelectedOffset, [getSelectedOffset, isOpen])
+  /** Open state, timing, and the selected row's offset all come from the enclosing Dropdown (see Sidebar). */
+  const { isOpen, timing, transition, registerRow, registerAnchorPoint, selectedTravel, select, close } = useDropdown()
 
   return (
     // position:relative creates a stacking context for the absolutely-positioned dropdown.
@@ -114,7 +93,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
         <div
           style={{
             opacity: isOpen ? 0 : 1,
-            transition: `opacity ${MEDIUM_DURATION}s ${isOpen ? 'ease-out' : 'linear'} ${isOpen ? 0 : MEDIUM_DURATION}s`,
+            transition: `opacity ${timing.content}s ${isOpen ? 'ease-out' : 'linear'} ${isOpen ? 0 : timing.content}s`,
             willChange: isAndroid ? 'opacity' : undefined, // Android: avoid opacity-transition flicker.
           }}
           className={css({ display: 'inline-flex', paddingTop: '0.375rem' })}
@@ -130,8 +109,8 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
 
       {/* Dismiss the dropdown when the area behind it is clicked. */}
       <div
-        style={{ opacity: isOpen ? 1 : 0, transition: `opacity ${MEDIUM_DURATION}s ${cssEaseOut}` }}
-        {...fastClick(() => setIsOpen(false))}
+        style={{ opacity: isOpen ? 1 : 0, transition: transition(['opacity']) }}
+        {...fastClick(close)}
         className={css({
           position: 'absolute',
           zIndex: 1,
@@ -165,24 +144,18 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
           return (
             <div
               key={s.id}
+              ref={registerRow(s.id)}
               style={{
                 // The selected row stays visible and slides into the header; other rows fade.
+                ...(isSelected ? selectedTravel : { transition: transition(['opacity', 'transform']) }),
                 opacity: isSelected ? 1 : isOpen ? 1 : 0,
-                transform: `translateY(${isSelected && !isOpen ? -selectedOffset : 0}px)`,
-                transition: `opacity ${MEDIUM_DURATION}s ${cssEaseOut}, transform ${MEDIUM_DURATION}s ${cssEaseOut}`,
                 // Android: keep each row promoted to avoid fast-switch flicker.
                 willChange: isAndroid ? 'transform, opacity' : undefined,
               }}
             >
               <div
-                ref={(el: HTMLDivElement | null) => {
-                  itemEls.current[s.id] = el
-                }}
                 data-testid={`sidebar-${s.id}`}
-                {...fastClick(() => {
-                  onSectionChange(s.id)
-                  setIsOpen(false)
-                })}
+                {...fastClick(() => select(s.id))}
                 className={css({
                   cursor: 'pointer',
                   paddingTop: i === 0 ? 0 : '0.5rem',
@@ -198,7 +171,7 @@ const SidebarHeader = ({ sections, sectionId, onSectionChange, isOpen, setIsOpen
               >
                 {/* All section icons render at the same size (28, the header size) so nothing
                     resizes when the dropdown opens or the selection changes. */}
-                <SidebarSectionRow icon={s.icon} label={s.label} iconSize={28} />
+                <SidebarSectionRow icon={s.icon} label={s.label} iconSize={28} rowRef={registerAnchorPoint(s.id)} />
               </div>
             </div>
           )
