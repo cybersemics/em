@@ -91,7 +91,7 @@ yaccum += height (unless table col1)
 
 After the loop:
 
-- `tableCol1Widths: Map<ThoughtId, number>` — the widths of every table's col1, used as inputs to `ancestorTableWidths` further down the loop.
+- `tableCol1Widths: Map<ThoughtId, number>` — the widths of every table's col1, used as inputs to `ancestorTableWidths` further down the loop. A col1 is as wide as its widest thought, and a col1 thought that [virtualization](#virtualization) has unmounted still counts at the width it had when it was last mounted. Without that, the column would narrow whenever its widest thought fell below the cutoff, the col2 thoughts above it would unwrap and shorten, and the widest thought would move back above the cutoff and remount, widening the column again. That cycle never settles. The thought flickers indefinitely, and on iOS Safari it can end in "Maximum update depth exceeded" (React error #185).
 - `indentCursorAncestorTables` — captured when the cursor node is visited; drives the global horizontal autocrop (see [Indent](#indent-horizontal-autocrop)).
 - `hoverArrowVisibility` — `'above' | 'below' | null`, set when the user is dragging into a sorted context and the drop position is outside the currently-rendered range. Drives the [`HoverArrow`](../src/components/HoverArrow.tsx) component.
 
@@ -135,7 +135,7 @@ viewportBottom = max(scrollTop, 0)
                + (singleLineHeight * 5) // overshoot, so a small scroll doesn't reveal blanks
 ```
 
-Each `TreeNode` subscribes to `scrollTopStore` with a selector that returns only whether that thought is beyond the boundary. Most scroll updates leave this boolean unchanged, so they do not rerender `LayoutTree`, `TransitionGroup`, or the full thought list. A `TreeNode` returns `null` only when it is below the cursor, is not the cursor itself, and its `y` is more than one estimated thought height beyond `viewportBottom`. It remains in `treeThoughtsPositioned` so crossing the boundary can render it without rebuilding the list, while the fixed container height keeps the document height stable. (Above the cursor, autocrop already handles the blank space.)
+Each `TreeNode` subscribes to `scrollTopStore` with a selector that returns only whether that thought is beyond the boundary. Most scroll updates leave this boolean unchanged, so they do not rerender `LayoutTree`, `TransitionGroup`, or the full thought list. A `TreeNode` returns `null` only when it is below the cursor, is not the cursor itself, and its `y` is more than one estimated thought height beyond `viewportBottom`. A thought that was virtualized and then rendered again while `scrollTop` and `innerHeight` stayed the same is not virtualized again until one of them changes. That guard keeps a layout feedback loop from forming: when the layout above a thought depends on whether that thought is rendered, as a table's col1 width does, unmounting it can move it back above the cutoff, and remounting it can push it back below, indefinitely, until React aborts with "Maximum update depth exceeded" (error #185). Every such cycle needs a second unmount at the same viewport, so the guard breaks it whatever closes it. It remains in `treeThoughtsPositioned` so crossing the boundary can render it without rebuilding the list, while the fixed container height keeps the document height stable. (Above the cursor, autocrop already handles the blank space.)
 
 ## `useSizeTracking` and the `sizes` map
 
