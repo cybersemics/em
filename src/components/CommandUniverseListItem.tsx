@@ -245,7 +245,7 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
           opacity: disabled ? 0.25 : 1,
         })}
       >
-        <Icon cssRaw={css.raw({ flex: 'none' })} size={16} fill={token('colors.fg')} />
+        <Icon className={css({ flex: 'none' })} size={16} fill={token('colors.fg')} />
       </div>
 
       {/* Title + description column. Takes the available width so the shortcut chip hugs
