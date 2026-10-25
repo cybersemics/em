@@ -4,15 +4,21 @@ import { act } from 'react'
 import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import useViewportForSuite from '../../test-helpers/useViewportForSuite'
+import durations from '../../util/durations'
 
 // These tests cover pinning, not elapsed motion time. Use real Motion with zero-duration settings.
 vi.mock('../CommandUniverse/commandUniverseMotion', () => ({ default: { duration: 0, ease: 'linear' } }))
 
+const originalDurationMode = durations.get('fast') === 0
+beforeEach(() => durations.setInTest(true))
 beforeEach(createTestApp)
+useViewportForSuite({ width: 320 })
 afterEach(async () => {
   // Motion schedules cleanup on its shared frame loop. Unmount before flushing/resetting the fake clock.
   cleanup()
   await cleanupTestApp()
+  durations.setInTest(originalDurationMode)
 })
 
 it('show the pinned command in the corner widget after pressing Pin Command on its detail page', async () => {

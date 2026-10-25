@@ -14,13 +14,13 @@ const origin = { x: 0.25, y: 0.5 }
 
 it('derives page ids, props, and navigation options from the registered components', () => {
   type NavigateArguments = Parameters<typeof commandUniverseNavigateActionCreator>
-  expectTypeOf<'grid' | 'detail'>().toMatchTypeOf<CommandUniversePage['pageId']>()
-  expectTypeOf<['grid', Record<string, never>]>().toMatchTypeOf<NavigateArguments>()
+  expectTypeOf<'commands' | 'detail'>().toMatchTypeOf<CommandUniversePage['pageId']>()
+  expectTypeOf<['commands', Record<string, never>]>().toMatchTypeOf<NavigateArguments>()
   expectTypeOf<
     ['detail', { command: Command }, { zoom: 'out'; origin: typeof origin }]
   >().toMatchTypeOf<NavigateArguments>()
   expectTypeOf<['detail', Record<string, never>]>().not.toMatchTypeOf<NavigateArguments>()
-  expectTypeOf<['grid', { command: Command }]>().not.toMatchTypeOf<NavigateArguments>()
+  expectTypeOf<['commands', { command: Command }]>().not.toMatchTypeOf<NavigateArguments>()
   expectTypeOf<['missing', Record<string, never>]>().not.toMatchTypeOf<NavigateArguments>()
 })
 
@@ -29,7 +29,7 @@ it('starts at the grid root with no history', () => {
   expect(commandUniverseBack(state)).toBe(state)
   expect(commandUniverseForward(state)).toBe(state)
   expect(state.commandUniverseNavigation).toEqual({
-    entries: [{ entryId: 'root', page: { pageId: 'grid', props: {} }, arrival: null }],
+    entries: [{ entryId: 'root', page: { pageId: 'commands', props: {} }, arrival: null }],
     index: 0,
   })
 })
@@ -75,7 +75,7 @@ it('supports no transition for a direct detail visit while retaining its Back hi
     transition: 'none',
   })
 
-  expect(visited.commandUniverseNavigation.entries.map(entry => entry.page.pageId)).toEqual(['grid', 'detail'])
+  expect(visited.commandUniverseNavigation.entries.map(entry => entry.page.pageId)).toEqual(['commands', 'detail'])
   expect(visited.commandUniverseNavigation.entries[1].arrival?.type).toBe('none')
   const back = commandUniverseBack(visited)
   expect(back.commandUniverseNavigation.index).toBe(0)
@@ -102,9 +102,9 @@ it('drops the abandoned forward branch while keeping the reachable history', () 
 
   expect(
     branched.commandUniverseNavigation.entries.map(entry =>
-      entry.page.pageId === 'detail' ? entry.page.props.command.label : 'grid',
+      entry.page.pageId === 'detail' ? entry.page.props.command.label : 'commands',
     ),
-  ).toEqual(['grid', 'A', 'C'])
+  ).toEqual(['commands', 'A', 'C'])
   expect(commandUniverseForward(branched)).toBe(branched)
 })
 
@@ -117,7 +117,7 @@ it('routes page visits through the global Redux store with distinct entry ids', 
 
   const navigation = store.getState().commandUniverseNavigation
   expect(navigation.index).toBe(1)
-  expect(navigation.entries.map(entry => entry.page.pageId)).toEqual(['grid', 'detail'])
+  expect(navigation.entries.map(entry => entry.page.pageId)).toEqual(['commands', 'detail'])
   expect(navigation.entries[1].entryId).not.toBe(rootId)
   expect(navigation.entries[1].arrival).toEqual({ zoom: 'in', origin })
 })
@@ -144,7 +144,21 @@ it('ignores navigation while closed and resets history when reopened', () => {
   const reopened = toggleMobileCommandUniverse(closedAgain, { value: true, entryId: 'second-root' })
 
   expect(reopened.commandUniverseNavigation).toEqual({
-    entries: [{ entryId: 'second-root', page: { pageId: 'grid', props: {} }, arrival: null }],
+    entries: [{ entryId: 'second-root', page: { pageId: 'commands', props: {} }, arrival: null }],
     index: 0,
   })
+})
+
+it('retains search and sorting through detail navigation and resets them on a fresh open', () => {
+  const open = toggleMobileCommandUniverse(initialState(), { value: true })
+  const searched = { ...open, commandUniverseBrowsing: { search: 'indent', sortOrder: 'alphabetical' as const } }
+  const detail = commandUniverseNavigate(searched, {
+    entryId: 'search-detail',
+    page: { pageId: 'detail', props: { command } },
+    arrival: { zoom: 'in', origin: null },
+  })
+  expect(commandUniverseBack(detail).commandUniverseBrowsing).toEqual({ search: 'indent', sortOrder: 'alphabetical' })
+  const closed = toggleMobileCommandUniverse(detail, { value: false })
+  const reopened = toggleMobileCommandUniverse(closed, { value: true })
+  expect(reopened.commandUniverseBrowsing).toEqual({ search: '', sortOrder: 'type' })
 })

@@ -152,14 +152,20 @@ The Toolbar renders a configurable subset of commands as buttons. The user's cus
 
 The **Command Universe** is the searchable command palette. Two flavors:
 
-- **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.
-- **`MobileCommandUniverse`** — dialog opened by `openMobileCommandUniverse`, also reachable by gesture. Clicking a grid cell opens its command detail page, including when the command cannot currently execute. Cells are native buttons, so Enter and Space also open details. Every detail page has a Pin Command row that pins the command to the corner widget without executing it; see [learning.md](learning.md). Back/Forward in `DialogHeader` navigate the dialog history. Search stays above the grid scroller, and changing search or sort resets the results to the top.
+- **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — legacy desktop palette opened programmatically; its former keyboard shortcut is assigned to the responsive dialog.
+- **`MobileCommandUniverse`** is the responsive dialog opened by Cmd/Ctrl+P or the Open Command Universe gesture. Cmd/Ctrl+P or Escape closes it. Below `md`, it presents the mobile command grid. Clicking a grid cell opens its command detail page, including when the command cannot currently execute. Cells are native buttons, so Enter and Space also open details. At `md` and above, it presents a keyboard-driven list with search and sorting in the header and navigation hints in its footer. Enter or a row click executes a command; Tab opens its details, and Shift+Tab navigates back. Unavailable commands remain inspectable. Every detail page has a Pin Command row that pins the command to the corner widget without executing it; see [learning.md](learning.md). Back/Forward in `CommandUniverseHeader` navigate the dialog history. Search stays above the grid scroller, and changing search or sort resets the results to the top.
 
 Each grid cell reserves a square for its gesture diagram but mounts the original SVG only near the grid scroller's viewport. An `IntersectionObserver` updates those cells as the user scrolls and holds the last visible diagrams through a page zoom, so Back reveals them immediately. This keeps offscreen SVGs out of the retained grid's DOM during the zoom without changing the diagrams themselves.
 
-The grid uses Motion’s `useInView` with `once: false` to render diagrams near its scroll viewport. Already rendered diagrams are retained while the page is hidden or transitioning.
+The grid uses Motion’s `useInView` with `once: false` to render diagrams within 180px of its inner scroll viewport. Diagram boxes retain their size, and already rendered diagrams are retained while the page is hidden or transitioning.
 
 The pinned-command gesture tooltip opens the pinned command's detail page directly through `commandUniverseNavigate`, after opening a fresh dialog session. This visit settles the detail page immediately without the Command Universe entry zoom, while retaining the grid in Back history and the usual animated Back and Forward navigation. A previous search cannot hide the target, and this navigation never executes the command. On pointer activation, the ring captures the editor selection before it can take focus; the dialog's open action keeps that snapshot instead of replacing it with the tooltip selection.
+
+Search and sort order live in `commandUniverseBrowsing`, beside the Redux navigation session. Opening a fresh session resets both controls; visiting details and returning retains them. The commands page supports presentation as a grid or list. Browsing changes are transient and not undoable.
+
+During a Command Universe page zoom, the destination accepts input immediately. Focus moves at navigation start rather than completion, so completing the animation does not steal focus from a control already used. The selection glow fades back over the return zoom and returns at its normal size.
+
+The optional deferred-rendering layer draws twelve command rows initially and schedules the remainder after the opening animation plus 50 ms. The complete navigation collection exists immediately. This approach remains a performance proposal: it needs measured opening-time benefit and review of interactions with rows not yet mounted before adoption.
 
 The Command Universe has Redux-owned session navigation with separate routing and presentation layers:
 

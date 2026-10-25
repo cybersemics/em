@@ -7,9 +7,9 @@ const openDesktopCommandUniverseCommand = {
   label: 'Command Universe' as const,
   description: 'Opens the Command Universe.',
   hideFromDesktopCommandUniverse: true,
+  hideFromHelp: true,
   multicursor: false,
   svg: CommandUniverseIcon,
-  keyboard: { key: 'p', meta: true },
   exec: dispatch => dispatch(desktopCommandUniverse()),
   allowExecuteFromModal: true,
 } satisfies Command

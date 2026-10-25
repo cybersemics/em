@@ -5,7 +5,7 @@ import type commandUniversePages from '../components/CommandUniverse/commandUniv
 type CommandUniversePage = {
   [Id in keyof typeof commandUniversePages]: {
     pageId: Id
-    props: ComponentProps<(typeof commandUniversePages)[Id]>
+    props: Id extends 'commands' ? Record<string, never> : ComponentProps<(typeof commandUniversePages)[Id]>
   }
 }[keyof typeof commandUniversePages]
 

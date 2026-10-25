@@ -2,10 +2,10 @@ import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { css } from '../../../styled-system/css'
 import { isAndroid } from '../../browser'
+import { useDropdown } from '../Dropdown/Dropdown'
 import Favorites from '../Favorites'
 import RecentlyDeleted from '../RecentlyDeleted'
 import RecentlyEdited from '../RecentlyEdited'
-import { MEDIUM_DURATION, cssEaseOut } from './constants'
 import { SidebarSectionId } from './sidebarSections'
 
 /** Height (px) of the mask's fully-transparent band — the region hidden under the open dropdown. */
@@ -31,19 +31,19 @@ const SCROLL_HINT_MASK_OFFSET = -SCROLL_HINT_FADE
  */
 const SidebarContent = ({
   sectionId,
-  dropdownOpen,
   isSwiping,
 }: {
   /** Active section; determines which content renders. */
   sectionId: SidebarSectionId
-  /** Whether the section-picker dropdown is open. Dims and masks the list underneath. */
-  dropdownOpen: boolean
   /** Disables Favorites drag-and-drop while a swipe-to-close gesture is in progress. */
   isSwiping: boolean
 }) => {
   /** Whether the scrollable content area has been scrolled down.
    * Used to conditionally show a top fade-out mask for scroll overflow indication. */
   const [isScrolled, setIsScrolled] = useState(false)
+
+  /** Whether the section-picker dropdown is open (dims and masks the list underneath), and its clock. */
+  const { isOpen: dropdownOpen, transition } = useDropdown()
 
   // Positions for the 128px dropdown band and 48px scroll fade:
   //   0     = band in place — the region under the open dropdown is hidden
@@ -71,7 +71,7 @@ const SidebarContent = ({
           // Cover the viewport at every mask position.
           height: `calc(100% + ${MASK_OVERSIZE}px)`,
           transform: `translateY(${maskSlideY}px)`,
-          transition: `transform ${MEDIUM_DURATION}s ${cssEaseOut}`,
+          transition: transition(['transform']),
           // Let taps pass through the carrier; the scroller opts back in.
           pointerEvents: 'none',
           // Android: promote before the mask transition to avoid a one-frame blank.
@@ -105,7 +105,7 @@ const SidebarContent = ({
             transform: `translateY(${-maskSlideY}px)`,
             // Dim the content while the dropdown is open.
             opacity: dropdownOpen ? 0.5 : 1,
-            transition: `opacity ${MEDIUM_DURATION}s ${cssEaseOut}, transform ${MEDIUM_DURATION}s ${cssEaseOut}`,
+            transition: transition(['opacity', 'transform']),
             pointerEvents: 'auto',
             willChange: isAndroid ? 'opacity, transform' : undefined,
           }}

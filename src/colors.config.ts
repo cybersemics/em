@@ -46,6 +46,11 @@ const colors = {
     selectionHighlightText: 'rgba(217, 225, 249, 1)', // fg seen through selectionHighlight, which iOS draws over the text
     selectionHighlightDimText: 'rgba(217, 225, 249, 0.5)', // dim seen through selectionHighlight
     vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
+    whiteOverlay6: 'rgba(255, 255, 255, 0.06)',
+    whiteOverlay40: 'rgba(255, 255, 255, 0.4)',
+    commandUniverseTitleMuted: 'rgba(234, 234, 234, 0.7)',
+    highlightedTextMatch: 'rgba(255, 255, 255, 1)',
+    highlightedTextUnmatched: 'rgba(255, 255, 255, 0.45)',
     white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
     inputBorder: 'rgba(153, 153, 153, 1)', // #999, also used in navBar
@@ -172,6 +177,11 @@ const colors = {
     selectionHighlightText: 'rgba(0, 24, 51, 1)', // fg seen through selectionHighlight, which iOS draws over the text
     selectionHighlightDimText: 'rgba(6, 30, 57, 0.5)', // dim seen through selectionHighlight
     vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
+    whiteOverlay6: 'rgba(255, 255, 255, 0.06)',
+    whiteOverlay40: 'rgba(255, 255, 255, 0.4)',
+    commandUniverseTitleMuted: 'rgba(234, 234, 234, 0.7)',
+    highlightedTextMatch: 'rgba(255, 255, 255, 1)',
+    highlightedTextUnmatched: 'rgba(255, 255, 255, 0.45)',
     white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
     inputBorder: 'rgba(238, 238, 238, 1)', // #eeeeee

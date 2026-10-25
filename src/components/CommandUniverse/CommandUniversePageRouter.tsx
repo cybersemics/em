@@ -1,10 +1,15 @@
-import { ComponentType, Fragment } from 'react'
+import { ComponentProps, ComponentType, Fragment } from 'react'
 import { useSelector } from 'react-redux'
+import CommandUniverseCommandPage from './CommandUniverseCommandPage'
 import CommandUniversePageTransitions from './CommandUniversePageTransitions'
 import commandUniversePages from './commandUniversePages'
 
 /** Resolves registered page ids and forwards their props. Layout and navigation ownership live outside the router. */
-const CommandUniversePageRouter = () => {
+const CommandUniversePageRouter = ({
+  listRef,
+  onFocusedRowChange,
+  onBeforeExecute,
+}: Pick<ComponentProps<typeof CommandUniverseCommandPage>, 'listRef' | 'onFocusedRowChange' | 'onBeforeExecute'>) => {
   const entries = useSelector(state => state.commandUniverseNavigation.entries)
   return (
     <CommandUniversePageTransitions>
@@ -13,7 +18,15 @@ const CommandUniversePageRouter = () => {
         const Page = commandUniversePages[page.pageId] as ComponentType<typeof page.props>
         return (
           <Fragment key={entryId}>
-            <Page {...page.props} />
+            {page.pageId === 'commands' ? (
+              <CommandUniverseCommandPage
+                listRef={listRef}
+                onFocusedRowChange={onFocusedRowChange}
+                onBeforeExecute={onBeforeExecute}
+              />
+            ) : (
+              <Page {...page.props} />
+            )}
           </Fragment>
         )
       })}
