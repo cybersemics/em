@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer-core'
-import { type Environment, builtinEnvironments, populateGlobal } from 'vitest/environments'
+import { type Environment, builtinEnvironments, populateGlobal } from 'vitest/runtime'
 
 /** Puppeteer Environment for vitest. */
 const PuppeteerEnvironment: Environment = {
@@ -52,7 +52,7 @@ const PuppeteerEnvironment: Environment = {
       async teardown() {
         await browser.disconnect()
         keys.forEach(key => delete global[key])
-        originals.forEach((v, k) => (global[k] = v))
+        originals.forEach((descriptor, k) => Object.defineProperty(global, k, descriptor))
       },
     }
   },
