@@ -28,7 +28,8 @@ import useMotionStepper, { DIALS_ROOT_ATTRIBUTE } from './useMotionStepper'
 /*
  * TEMPORARY. A design-dials panel for tuning the Command Universe sort dropdown (see the design-dials skill). Every
  * control writes a --sort-dropdown-* custom property on <html> that Dropdown, DropdownRows, DropdownLight or
- * useSurfaceMask reads with the current design value as its fallback. Once the values are settled, bake them into
+ * useSurfaceMask reads with the current design value as its fallback. The Rearrange group writes --cu-rearrange-*
+ * properties instead, read by useRearrangeAnimation and CommandUniverseSortButton. Once the values are settled, bake them into
  * those fallbacks and delete this file, dials.ts, and its mount in AppComponent.
  *
  * Unlike the skill's default, this panel is mounted in every build except automated runs, not only in development:
@@ -394,6 +395,82 @@ const ROWS_CONTROLS: Control[] = [
 ]
 
 /** Blend modes a light layer can use. */
+/** The grid's rearrangement on sort and search, read by useRearrangeAnimation and CommandUniverseSortButton. */
+const REARRANGE_CONTROLS: Control[] = [
+  {
+    name: '--cu-rearrange-arrival',
+    label: 'cells coming into view',
+    kind: 'select',
+    options: [
+      { value: 'diagonal', label: 'in new-slot order, from their old column' },
+      { value: 'lanes', label: 'in new-slot order, straight up' },
+      { value: 'real', label: 'from where they really were' },
+      { value: 'fixed', label: 'all rise the same 64px' },
+    ],
+    fallback: 'diagonal',
+    hint: 'Where each cell rising from below the fold starts. Cells leaving mirror it when they slide: straight up also leaves straight down, and a fixed rise also drops and fades.',
+  },
+  {
+    name: '--cu-rearrange-offscreen-start',
+    label: 'furthest start below the fold',
+    kind: 'number',
+    min: 0.05,
+    max: 1,
+    step: 0.01,
+    fallback: '0.5',
+    hint: 'As a fraction of the visible height. Lower keeps more of each path on screen.',
+  },
+  {
+    name: '--cu-rearrange-departure',
+    label: 'cells leaving the view',
+    kind: 'select',
+    options: [
+      { value: 'slide', label: 'slide toward their new slot' },
+      { value: 'fade', label: 'fade out where they were' },
+    ],
+    fallback: 'slide',
+    hint: 'A cell dropped from the list always fades.',
+  },
+  {
+    name: '--cu-rearrange-row-delay',
+    label: 'delay per row',
+    kind: 'number',
+    min: 0,
+    max: 80,
+    step: 1,
+    unit: 'ms',
+    fallback: '0ms',
+    hint: 'Each row of new slots starts this much after the row above, so the top settles first.',
+  },
+  {
+    name: '--cu-rearrange-duration',
+    label: 'duration',
+    kind: 'number',
+    min: 100,
+    max: 1500,
+    step: 10,
+    unit: 'ms',
+    fallback: '450ms',
+  },
+  {
+    name: '--cu-rearrange-ease',
+    label: 'easing',
+    kind: 'text',
+    fallback: 'cubic-bezier(0.16, 0.46, 0.3, 1)',
+    hint: 'A cubic-bezier(). The default is the Command Universe zoom’s curve.',
+  },
+  {
+    name: '--cu-rearrange-apply',
+    label: 'a sort pick applies',
+    kind: 'select',
+    options: [
+      { value: 'at-pick', label: 'at once, rearranging as the menu closes' },
+      { value: 'after-close', label: 'once the menu has closed' },
+    ],
+    fallback: 'at-pick',
+  },
+]
+
 const BLEND_OPTIONS = [
   'normal',
   'screen',
@@ -702,11 +779,19 @@ const GROUPS: Group[] = [
   },
   { id: 'opening', title: 'Opening', kind: 'entry', controls: OPENING_CONTROLS },
   { id: 'type', title: 'Type & spacing', kind: 'entry', controls: ROWS_CONTROLS },
+  { id: 'rearrange', title: 'Rearrange', note: 'grid on sort & search', kind: 'entry', controls: REARRANGE_CONTROLS },
   { id: 'motion', title: 'Motion', note: 'freeze & step frames', kind: 'entry', controls: [] },
   { id: 'paste', title: 'Overrides to paste back', note: 'for baking in', kind: 'entry', controls: [] },
 ]
 
-const ALL_CONTROLS = GROUPS.flatMap(group => group.controls)
+/**
+ * The one group the panel shows, opened directly with no list of layers to go back to. The dropdown's own groups are
+ * kept for now but not shown, and their controls are left out of ALL_CONTROLS, so any of their overrides saved on a
+ * device stop applying and the dropdown renders its design values.
+ */
+const SHOWN_GROUP = GROUPS.find(group => group.id === 'rearrange')!
+
+const ALL_CONTROLS = SHOWN_GROUP.controls
 
 /** The open inspector, persisted so a reload returns to it. */
 const VIEW_KEY = 'sortDropdownDials.view'
@@ -1360,7 +1445,8 @@ const Inspector = ({
   values: Record<string, string>
   setValues: (update: (previous: Record<string, string>) => Record<string, string>) => void
   isDesktop: boolean
-  onBack: () => void
+  /** Omitted when the group is the only one shown, so there is no list to go back to. */
+  onBack?: () => void
   children?: ReactNode
 }) => {
   const overridden = group.controls.filter(control => values[control.name]).length
@@ -1389,7 +1475,7 @@ const Inspector = ({
           borderBottom: '1px solid {colors.fgOverlay20}',
         })}
       >
-        <IconButton icon='back' label='Back to layers' onClick={onBack} />
+        {onBack ? <IconButton icon='back' label='Back to layers' onClick={onBack} /> : null}
         <span className={css({ flex: 1, minWidth: 0, fontWeight: 700 })}>
           {group.title}
           {group.note ? <span className={css({ opacity: 0.5, fontWeight: 400 })}> {group.note}</span> : null}
@@ -1682,8 +1768,9 @@ const DropdownDebugPanel = () => {
     return () => window.removeEventListener(DIAL_SET_EVENT, onDialSet)
   }, [])
   // The open inspector's group id, or null for the layers list.
-  const [view, setViewState] = useState<string | null>(() => storage.getItem(VIEW_KEY) || null)
-  const viewGroup = GROUPS.find(group => group.id === view) ?? null
+  const [, setViewState] = useState<string | null>(() => storage.getItem(VIEW_KEY) || null)
+  // The panel shows only SHOWN_GROUP, so the stored view is not read.
+  const viewGroup: Group | null = SHOWN_GROUP
   const [popup, setPopup] = useState<Window | null>(null)
   // The sort dropdown lives in the Command Universe, so the button and panel only show while it is open. The popup
   // and the overrides stay, so tuning can continue across closing and reopening it.
@@ -1962,13 +2049,7 @@ const DropdownDebugPanel = () => {
 
   // The scrolling body: the layers list, or one group's inspector in its place.
   const body = viewGroup ? (
-    <Inspector
-      group={viewGroup}
-      values={values}
-      setValues={editValues}
-      isDesktop={isDesktop}
-      onBack={() => setView(null)}
-    >
+    <Inspector group={viewGroup} values={values} setValues={editValues} isDesktop={isDesktop}>
       {viewGroup.id === 'motion' ? <MotionStepperControls motion={motion} Slider={ScrubSlider} /> : null}
       {viewGroup.id === 'paste' ? (
         <>

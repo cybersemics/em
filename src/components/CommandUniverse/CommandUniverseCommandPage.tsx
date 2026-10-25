@@ -99,7 +99,11 @@ const CommandUniverseCommandPageComponent = ({
 
   const ghostLayerRef = React.useRef<HTMLDivElement>(null)
 
-  const captureLayout = useRearrangeAnimation({ scrollRef, ghostLayerRef, layoutKey: gridSections })
+  const { capture: captureLayout, inViewKeys } = useRearrangeAnimation({
+    scrollRef,
+    ghostLayerRef,
+    layoutKey: gridSections,
+  })
 
   return (
     <div
@@ -155,7 +159,13 @@ const CommandUniverseCommandPageComponent = ({
             />
           )
         ) : (
-          <CommandUniverseGrid sections={gridSections} search={search} scrollRootRef={scrollRef} pageRef={pageRef} />
+          <CommandUniverseGrid
+            sections={gridSections}
+            search={search}
+            scrollRootRef={scrollRef}
+            pageRef={pageRef}
+            forceGestureKeys={inViewKeys}
+          />
         )}
       </DialogContent>
 

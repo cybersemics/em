@@ -66,6 +66,11 @@ interface CommandSection {
   difficulty?: Pick<CommandDifficulty, 'id' | 'title'>
 }
 
+/** The sections useCommandList derives, in display order. */
+export interface UseCommandListReturn {
+  sections: CommandSection[]
+}
+
 /** Derives command sections from the search and ordering owned by its caller. */
 const useCommandList = ({
   search,
@@ -75,7 +80,7 @@ const useCommandList = ({
   search: string
   sortOrder: CommandSortType
   sortActiveCommandsFirst?: boolean
-}): { sections: CommandSection[] } => {
+}): UseCommandListReturn => {
   const [recentCommands] = useState(() => storageModel.get('recentCommands'))
   const filteredCommands = useFilteredCommands(search, {
     platformCommandsOnly: true,

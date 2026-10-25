@@ -1,5 +1,5 @@
 import { useInView } from 'motion/react'
-import { FC, RefObject, useEffect, useRef, useState } from 'react'
+import { FC, RefObject, memo, useEffect, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -25,6 +25,8 @@ interface CommandUniverseGridItemProps {
   scrollRootRef: RefObject<HTMLDivElement | null>
   /** The page root that the zoom origin is measured against. */
   pageRef: RefObject<HTMLDivElement | null>
+  /** Renders the gesture diagram before the cell is reported near view, for a cell arriving in a rearrangement. */
+  forceGesture?: boolean
 }
 
 /** Renders a single command as a cell in CommandUniverseGrid. */
@@ -33,6 +35,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
   search = '',
   scrollRootRef,
   pageRef,
+  forceGesture = false,
 }) => {
   const dispatch = useDispatch()
   const gestureBoxRef = useRef<HTMLDivElement>(null)
@@ -128,7 +131,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
                   margin: '0 auto',
                 })}
               >
-                {showGesture && (
+                {(showGesture || forceGesture) && (
                   <GestureDiagram
                     path={gestureString(command)}
                     display='block'
@@ -213,4 +216,4 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
   )
 }
 
-export default CommandUniverseGridItem
+export default memo(CommandUniverseGridItem)

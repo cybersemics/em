@@ -1,6 +1,7 @@
 import { AnimationPlaybackControls, animate, useReducedMotion } from 'motion/react'
-import { RefObject, useLayoutEffect, useRef } from 'react'
+import { RefObject, useLayoutEffect, useRef, useState } from 'react'
 import durations from '../../util/durations'
+import { readDial } from '../Dropdown/dials'
 import commandUniverseMotion from './commandUniverseMotion'
 
 /**
@@ -33,9 +34,35 @@ const measureCells = (scroller: HTMLElement): Map<string, { element: HTMLElement
   )
 }
 
-/** Compresses a distance so that it never exceeds MAX_OFFSCREEN_START of the viewport's height, while preserving order: a greater distance always compresses to a greater one. */
-const compressOffscreen = (distance: number, viewportHeight: number) =>
-  MAX_OFFSCREEN_START * viewportHeight * (1 - Math.exp(-distance / (MAX_OFFSCREEN_START * viewportHeight)))
+/** Compresses a distance so that it never exceeds `limit` (by default MAX_OFFSCREEN_START) of the viewport's height, while preserving order: a greater distance always compresses to a greater one. */
+const compressOffscreen = (distance: number, viewportHeight: number, limit = MAX_OFFSCREEN_START) =>
+  limit * viewportHeight * (1 - Math.exp(-distance / (limit * viewportHeight)))
+
+/** PROTOTYPE: how far every arriving cell rises when the arrival dial is 'fixed', the first version tried (px). */
+const FIXED_RISE = 64
+
+/** PROTOTYPE: parses a cubic-bezier() dial into Motion's four-number ease, or returns undefined if it does not parse. */
+const parseCubicBezier = (value: string): [number, number, number, number] | undefined => {
+  const numbers = value.match(/-?\d*\.?\d+/g)?.map(Number)
+  return numbers?.length === 4 ? (numbers as [number, number, number, number]) : undefined
+}
+
+/**
+ * PROTOTYPE: the design dials for the rearrangement (see Dropdown/DropdownDebugPanel's Rearrange group), read when each rearrangement starts. The defaults are the current design.
+ *
+ * - `arrival`: where a cell coming into view starts, and, when departures slide, where a cell leaving the view ends, so that both directions follow the same rule. 'diagonal' starts it below the fold in the order of the new slots, in its old column, and a cell leaving slides toward its new column. 'lanes' does the same but keeps each cell in one column, so it rises straight up and leaves straight down. 'real' starts it from a compressed version of where it really was, so paths cross; a cell leaving slides as with 'diagonal'. 'fixed' starts every cell FIXED_RISE below its slot, so they rise as one sheet, and a cell leaving drops FIXED_RISE and fades.
+ * - `departure`: whether a cell leaving the view slides (as `arrival` says) or fades where it was.
+ * - `offscreenStart`: how far below the fold, as a fraction of the viewport's height, the furthest cell starts or ends (see MAX_OFFSCREEN_START). Lower keeps more of each path in view, so the difference between the arrival options shows.
+ * - `rowDelay`: how long each row of new slots waits after the row above (seconds).
+ */
+const readDials = () => ({
+  arrival: readDial('--cu-rearrange-arrival', 'diagonal') as 'diagonal' | 'lanes' | 'real' | 'fixed',
+  departure: readDial('--cu-rearrange-departure', 'slide') as 'slide' | 'fade',
+  rowDelay: (parseFloat(readDial('--cu-rearrange-row-delay', '0')) || 0) / 1000,
+  offscreenStart: parseFloat(readDial('--cu-rearrange-offscreen-start', '')) || MAX_OFFSCREEN_START,
+  duration: (parseFloat(readDial('--cu-rearrange-duration', '')) || durations.get('commandUniverseRearrange')) / 1000,
+  ease: parseCubicBezier(readDial('--cu-rearrange-ease', '')) ?? commandUniverseMotion.ease,
+})
 
 /**
  * Animates the grid rearranging itself when the sort order or search changes, in place of a crossfade of the whole page. A change always returns the grid to the top, so anything that newly comes into view arrives from below. Each cell in view takes one of three animations, all started together:
@@ -51,6 +78,8 @@ const compressOffscreen = (distance: number, viewportHeight: number) =>
  * Motion's own layout animations (the `layout` prop) would be the obvious way to do this, but they do not fit. They animate every cell in the list rather than only those in view, and they move each cell the full distance between its old and new slots, whereas here a cell leaving travels only a compressed distance below the fold, and a cell arriving starts just below it rather than from its old row. So the hook measures the cells itself, before and after, and animates the difference.
  *
  * A cell that leaves the view cannot animate its own element. Its slide ends at a compressed point just below the fold, but its element has to stay in its new slot, often far further down the list, and a cell removed from the list has no element at all. Instead `capture` clones each cell in view into a ghost, and the ghost of each cell that left animates out in its place, in the ghost layer over the page.
+ *
+ * Also returns `inViewKeys`, the cells in view after the change, which must mount their gesture diagrams immediately. A cell mounts its diagram only once its IntersectionObserver reports it near view, which happens a few frames into the animation, so a cell arriving from far down the list would otherwise rise without its diagram. The animation also moves cells far enough to change what their observers report, so the keys hold until the next change replaces them rather than handing back to the observers mid-flight.
  *
  * A change that arrives while a rearrangement is still running interrupts it: `capture` measures the cells mid-flight, then cancels the running animations and clears the ghost layer, so the next rearrangement starts every cell from wherever it had got to.
  */
@@ -69,10 +98,12 @@ const useRearrangeAnimation = ({
   const reduceMotion = useReducedMotion()
   /** The cells in view at the last capture, keyed by `data-rearrange-key`. Null when nothing has been captured since the last rearrangement, so a render that is not a sort or search change does not animate. */
   const capturedRef = useRef<Map<string, CapturedCell> | null>(null)
-  /** The left edge of every cell at capture, including those out of view, so that a cell coming into view can start from the column it held in the old layout. */
-  const capturedLeftRef = useRef<Map<string, number>>(new Map())
+  /** Where every cell was at capture, including those out of view, so that a cell coming into view can start from the column (or, with the arrival dial, the position) it held in the old layout. */
+  const capturedRectsRef = useRef<Map<string, DOMRect>>(new Map())
   /** The animations of the rearrangement in progress, so that the next capture can cancel them. */
   const animationsRef = useRef<AnimationPlaybackControls[]>([])
+  /** The cells in view after the last rearrangement, which render their gesture diagrams without waiting for their observers. */
+  const [inViewKeys, setInViewKeys] = useState<ReadonlySet<string>>(new Set())
 
   /** Records where each cell in view is, so that the next layout can animate from it. */
   const capture = () => {
@@ -81,7 +112,7 @@ const useRearrangeAnimation = ({
 
     // Measure before cancelling a rearrangement that is still running, so that its cells start again from wherever they had got to.
     const cells = measureCells(scroller)
-    capturedLeftRef.current = new Map([...cells].map(([key, { rect }]) => [key, rect.left]))
+    capturedRectsRef.current = new Map([...cells].map(([key, { rect }]) => [key, rect]))
     capturedRef.current = new Map(
       [...cells]
         .filter(([, { inView }]) => inView)
@@ -114,7 +145,7 @@ const useRearrangeAnimation = ({
 
   useLayoutEffect(() => {
     const before = capturedRef.current
-    const beforeLeft = capturedLeftRef.current
+    const beforeRects = capturedRectsRef.current
     const scroller = scrollRef.current
     const ghostLayer = ghostLayerRef.current
     capturedRef.current = null
@@ -122,23 +153,44 @@ const useRearrangeAnimation = ({
 
     // Scroll position is meaningless in a different order, so every change starts again from the top.
     scroller.scrollTop = 0
+    const cells = measureCells(scroller)
+    // Set in a layout effect, so the cells re-render with their diagrams before the first frame is painted.
+    setInViewKeys(new Set([...cells].filter(([, { inView }]) => inView).map(([key]) => key)))
     if (reduceMotion) return
 
-    const cells = measureCells(scroller)
     const viewport = scroller.getBoundingClientRect()
     const layerRect = ghostLayer.getBoundingClientRect()
-    const transition = { duration: durations.get('commandUniverseRearrange') / 1000, ease: commandUniverseMotion.ease }
+    const dials = readDials()
+    const transition = { duration: dials.duration, ease: dials.ease }
+
+    // The rows of new slots in view, top first, so that the row delay dial can stagger them.
+    const rowTops = [
+      ...new Set([...cells.values()].filter(({ inView }) => inView).map(({ rect }) => Math.round(rect.top))),
+    ].sort((a, b) => a - b)
+    /** The transition for a cell landing in a slot at the given top, delayed by its row (see the row delay dial). */
+    const landing = (top: number) => ({ ...transition, delay: rowTops.indexOf(Math.round(top)) * dials.rowDelay })
 
     /** Animates a cell coming into view, rising from below the fold. */
     const animateArrival = (key: string, element: HTMLElement, rect: DOMRect) => {
+      const old = beforeRects.get(key)
       // Horizontal offset to the column the cell held in the old layout, or none if it had no old position.
-      const startX = (beforeLeft.get(key) ?? rect.left) - rect.left
-      // Vertical offset to a start below the fold, further down the lower the cell's new slot is (see MAX_OFFSCREEN_START).
-      const startY = viewport.bottom + compressOffscreen(rect.top - viewport.top, viewport.height) - rect.top
+      const startX = dials.arrival === 'diagonal' || dials.arrival === 'real' ? (old?.left ?? rect.left) - rect.left : 0
+      const startY =
+        dials.arrival === 'fixed'
+          ? FIXED_RISE
+          : dials.arrival === 'real' && old
+            ? // Vertical offset to a compressed version of where the cell really was below the fold.
+              viewport.bottom +
+              compressOffscreen(Math.max(0, old.top - viewport.bottom), viewport.height, dials.offscreenStart) -
+              rect.top
+            : // Vertical offset to a start below the fold, further down the lower the cell's new slot is (see MAX_OFFSCREEN_START).
+              viewport.bottom +
+              compressOffscreen(rect.top - viewport.top, viewport.height, dials.offscreenStart) -
+              rect.top
       return animate(
         element,
         { transform: [`translate(${startX}px, ${startY}px)`, 'translate(0px, 0px)'], opacity: [0, 1] },
-        transition,
+        landing(rect.top),
       )
     }
 
@@ -156,10 +208,10 @@ const useRearrangeAnimation = ({
                 ],
                 opacity: [previous.opacity, 1],
               },
-              transition,
+              landing(rect.top),
             )
           : key.startsWith('section:')
-            ? animate(element, { opacity: [0, 1] }, { ...transition, duration: durations.get('slow') / 1000 })
+            ? animate(element, { opacity: [0, 1] }, { ...landing(rect.top), duration: durations.get('slow') / 1000 })
             : animateArrival(key, element, rect)
       })
 
@@ -167,12 +219,23 @@ const useRearrangeAnimation = ({
     Object.assign(ghostLayer.style, {
       clipPath: `inset(${viewport.top - layerRect.top}px ${layerRect.right - viewport.right}px ${layerRect.bottom - viewport.bottom}px ${viewport.left - layerRect.left}px)`,
     })
-    /** Animates the ghost of a cell leaving the view, sliding down toward its new slot below the fold. */
-    const animateDeparture = (ghost: HTMLElement, rect: DOMRect, next: DOMRect) => {
-      // Horizontal offset to the cell's column in the new layout.
-      const endX = next.left - rect.left
+    /** Animates the ghost of a cell leaving the view, sliding down toward its new slot below the fold, mirroring the arrival dial. */
+    const animateDeparture = (ghost: HTMLElement, rect: DOMRect, next: DOMRect, opacity: number) => {
+      // A fixed drop mirrors the fixed rise: every cell drops the same distance and fades, as one sheet.
+      if (dials.arrival === 'fixed') {
+        return animate(
+          ghost,
+          { transform: ['translate(0px, 0px)', `translate(0px, ${FIXED_RISE}px)`], opacity: [opacity, 0] },
+          transition,
+        )
+      }
+      // Horizontal offset to the cell's column in the new layout, or none in lanes, where a cell keeps its column.
+      const endX = dials.arrival === 'lanes' ? 0 : next.left - rect.left
       // Vertical offset to an end below the fold, further down the further below the view the new slot is, compressed so that a cell heading far down the list does not shoot off.
-      const endY = viewport.bottom + compressOffscreen(next.top - viewport.bottom, viewport.height) - rect.top
+      const endY =
+        viewport.bottom +
+        compressOffscreen(next.top - viewport.bottom, viewport.height, dials.offscreenStart) -
+        rect.top
       return animate(ghost, { transform: ['translate(0px, 0px)', `translate(${endX}px, ${endY}px)`] }, transition)
     }
 
@@ -183,10 +246,10 @@ const useRearrangeAnimation = ({
         ghost.style.left = `${parseFloat(ghost.style.left) - layerRect.left}px`
         ghost.style.top = `${parseFloat(ghost.style.top) - layerRect.top}px`
         ghostLayer.appendChild(ghost)
-        // The cell's position in the new layout, which it slides toward. Undefined for a section header and for a cell no longer in the list, which fade out where they were instead.
-        const next = key.startsWith('section:') ? undefined : cells.get(key)?.rect
+        // The cell's position in the new layout, which it slides toward. Undefined for a section header, for a cell no longer in the list, and for every cell when the departure dial is 'fade', which fade out where they were instead.
+        const next = key.startsWith('section:') || dials.departure === 'fade' ? undefined : cells.get(key)?.rect
         const animation = next
-          ? animateDeparture(ghost, rect, next)
+          ? animateDeparture(ghost, rect, next, opacity)
           : // Half the time of the others, so that a cell leaving has cleared its slot before the one taking it arrives, rather than the two crossfading.
             animate(ghost, { opacity: [opacity, 0] }, { ...transition, duration: transition.duration / 2 })
         animation.then(() => ghost.remove())
@@ -197,7 +260,7 @@ const useRearrangeAnimation = ({
     // Runs only when the layout changes. The other values are refs and settings read at the time, and re-running on them would animate a layout that has not changed.
   }, [layoutKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  return capture
+  return { capture, inViewKeys }
 }
 
 export default useRearrangeAnimation

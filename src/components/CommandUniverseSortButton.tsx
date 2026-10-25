@@ -85,8 +85,9 @@ const CommandUniverseSortButton = ({ sortOrder, onSortChange }: CommandUniverseS
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
   const iconSize = Math.min((28 * fontSize) / DEFAULT_FONT_SIZE, 36)
-  // PROTOTYPE: the pick is applied to the Command Universe (onSortChange) at once, so the grid's rearrangement plays
-  // while the dropdown animates closed. Re-sorting the list is a 100ms+ render, which may disturb the close.
+  // PROTOTYPE: by default the pick is applied to the Command Universe (onSortChange) at once, so the grid's
+  // rearrangement plays while the dropdown animates closed. Re-sorting the list is a 100ms+ render, which may disturb
+  // the close, so a dial can hold the pick until the close has finished instead.
   const [selectedSort, setSelectedSort] = useState<CommandSortType>(sortOrder)
   const [open, setOpen] = useState(false)
   // The Command Universe switches to its desktop layout at md (400px).
@@ -99,6 +100,9 @@ const CommandUniverseSortButton = ({ sortOrder, onSortChange }: CommandUniverseS
   // 'down-fade': drops down, and only the selected item moves; the others fade in where they are.
   const opening = readDial('--sort-dropdown-placement', 'down-fade')
   const placement: DropdownPlacement = opening === 'around' ? 'around' : 'down'
+  // Design dial: whether the pick re-sorts the grid at once or once the dropdown has closed. Read at the pick, and the
+  // pick held here until the close when it waits.
+  const heldSortRef = useRef<CommandSortType | null>(null)
 
   useLayoutEffect(() => {
     setAnchor(buttonRef.current)
@@ -165,10 +169,17 @@ const CommandUniverseSortButton = ({ sortOrder, onSortChange }: CommandUniverseS
       <Dropdown
         open={open}
         onClose={() => setOpen(false)}
+        // Design dial: the held pick is applied here instead, once the close has finished.
+        onClosed={() => {
+          const held = heldSortRef.current
+          heldSortRef.current = null
+          if (held && held !== sortOrder) onSortChange(held)
+        }}
         // The Dropdown closes itself after a pick.
         onSelect={id => {
           setSelectedSort(id)
-          if (id !== sortOrder) onSortChange(id)
+          if (readDial('--cu-rearrange-apply', 'at-pick') === 'after-close') heldSortRef.current = id
+          else if (id !== sortOrder) onSortChange(id)
         }}
         anchor={anchor}
         selectedId={selectedSort}

@@ -13,6 +13,8 @@ interface CommandUniverseGridProps {
   scrollRootRef: RefObject<HTMLDivElement | null>
   /** The page root that zoom origins are measured against. */
   pageRef: RefObject<HTMLDivElement | null>
+  /** Keys (`command:<id>`) of the cells that must render their gesture diagrams whether or not they have been reported near view yet. */
+  forceGestureKeys: ReadonlySet<string>
 }
 
 /** A section header row: a centered title flanked by gradient hairlines that fade outward to delimit each command section. Spans both columns of the grid. */
@@ -43,7 +45,6 @@ const CommandUniverseSectionHeader = ({
         className={css({
           flexGrow: 1,
           height: '1px',
-          // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
           background: 'linear-gradient(to right, {colors.transparent} 0%, {colors.dialogHeaderDivider} 100%)',
         })}
       />
@@ -64,7 +65,6 @@ const CommandUniverseSectionHeader = ({
         className={css({
           flexGrow: 1,
           height: '1px',
-          // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
           background: 'linear-gradient(to right, {colors.dialogHeaderDivider} 0%, {colors.transparent} 100%)',
         })}
       />
@@ -77,7 +77,13 @@ const CommandUniverseSectionHeader = ({
  *
  * Every section shares one grid so that a command keeps its element when a sort or search moves it to another section. This lets the parent animate the rearrangement, and spares each cell from remounting and re-rendering its gesture diagram.
  */
-const CommandUniverseGrid = ({ sections, search, scrollRootRef, pageRef }: CommandUniverseGridProps) => {
+const CommandUniverseGrid = ({
+  sections,
+  search,
+  scrollRootRef,
+  pageRef,
+  forceGestureKeys,
+}: CommandUniverseGridProps) => {
   const fontSize = useSelector(state => state.fontSize)
   return (
     <table className={css({ fontSize: '14px' })}>
@@ -103,6 +109,7 @@ const CommandUniverseGrid = ({ sections, search, scrollRootRef, pageRef }: Comma
                 search={search}
                 scrollRootRef={scrollRootRef}
                 pageRef={pageRef}
+                forceGesture={forceGestureKeys.has(`command:${command.id}`)}
               />
             )),
         ])}
