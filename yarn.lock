@@ -7857,15 +7857,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-redux@npm:^7.1.34":
-  version: 7.1.34
-  resolution: "@types/react-redux@npm:7.1.34"
+"@types/react-redux@npm:^7.1.35":
+  version: 7.1.35
+  resolution: "@types/react-redux@npm:7.1.35"
   dependencies:
     "@types/hoist-non-react-statics": "npm:^3.3.0"
     "@types/react": "npm:*"
     hoist-non-react-statics: "npm:^3.3.0"
     redux: "npm:^4.0.0"
-  checksum: 10c0/6750964ec656eb6973b0e4fda787549aee5dbc266a0f0e78fc9efb417b4965c0b060d10b99a7b7fa0c8812b8a0a07d97a1ef46d094bf64fee07144e8bbad781a
+  checksum: 10c0/13f31eb7f5a1274493d4894d2fdb6d921385a4aaedb26949abce21695c0c5ba8aed6bcdae7a36e95e7a757d22cfeb0e2dc6002639d8f2d87d9b9fac30b01ab87
   languageName: node
   linkType: hard
 
@@ -12464,7 +12464,7 @@ __metadata:
     "@types/react-dom": "npm:^19.3.0"
     "@types/react-gravatar": "npm:^2.6.14"
     "@types/react-native": "npm:^0.73.0"
-    "@types/react-redux": "npm:^7.1.34"
+    "@types/react-redux": "npm:^7.1.35"
     "@types/react-transition-group": "npm:^4.4.12"
     "@types/redux-mock-store": "npm:^1.5.0"
     "@types/sanitize-html": "npm:^2.16.2"
