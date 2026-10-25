@@ -57,6 +57,7 @@ import head from './util/head'
 import isAttribute from './util/isAttribute'
 import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
+import parentOf from './util/parentOf'
 import saveDebugLog from './util/saveDebugLog'
 
 export const globalCommands: Command[] = Object.values(commandsObject)
@@ -621,11 +622,15 @@ export const executeCommandWithMulticursor = (
         // A command tapped in the Command Center that ends with an empty selection (e.g. delete, whose thoughts no
         // longer exist to be restored above) would dismiss the Command Center, since multicursorAlertMiddleware
         // closes it when nothing is selected. Select the thought the cursor landed on instead, the same way the
-        // Command Center is opened in the first place, so that it stays open and can be used again. When the last
-        // thought was deleted there is no cursor left to select and it closes as usual.
+        // Command Center is opened in the first place, so that it stays open and can be used again. When the
+        // command removed the last remaining sibling, the cursor falls back to the parent (or to nothing at the
+        // root), which the user did not select, so leave the selection empty and let the Command Center close.
         if (commandType === 'commandCenter') {
           const state = commandStore.getState()
-          if (!hasMulticursor(state) && state.cursor) {
+          const removedLastSibling = execPaths.some(
+            path => !equalPath(recomputePath(state, path), path) && equalPath(parentOf(path), state.cursor),
+          )
+          if (!hasMulticursor(state) && state.cursor && !removedLastSibling) {
             dispatch(addMulticursor({ path: state.cursor }))
           }
         }
