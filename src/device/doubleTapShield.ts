@@ -67,7 +67,7 @@ const uncover = () => {
 const cover = (editable: HTMLElement, placeCaret: (point: Point) => boolean) => {
   shieldStore.reset()
 
-  let touchStart: Point | null = null
+  let touchStart: (Point & { timeStamp: number }) | null = null
   const rect = editable.getBoundingClientRect()
   const overlay = document.createElement('div')
   Object.assign(overlay.style, {
@@ -88,7 +88,7 @@ const cover = (editable: HTMLElement, placeCaret: (point: Point) => boolean) => 
       // keeps the focus, and with it the keyboard, on the thought
       e.preventDefault()
       const touch = e.changedTouches[0]
-      touchStart = touch ? { clientX: touch.clientX, clientY: touch.clientY } : null
+      touchStart = touch ? { clientX: touch.clientX, clientY: touch.clientY, timeStamp: e.timeStamp } : null
       // removing the overlay under a finger would send its touchend to a detached node, which nothing hears
       clearTimeout(shieldStore.getState().timer ?? undefined)
       shieldStore.update({ timer: null, restoreUntil: e.timeStamp + RESTORE_WINDOW })
@@ -102,7 +102,9 @@ const cover = (editable: HTMLElement, placeCaret: (point: Point) => boolean) => 
     shieldStore.update({ timer: setTimeout(uncover, DOUBLE_TAP_WINDOW) })
   }
   overlay.addEventListener('touchend', e => {
-    restartTimer()
+    // a long press is not a tap, so it cannot start a double tap, and the press the user retries should reach the text
+    if (touchStart && e.timeStamp - touchStart.timeStamp >= MAGNIFIER_DELAY) uncover()
+    else restartTimer()
     const touch = e.changedTouches[0]
     if (!touchStart || !touch || moved(touchStart, touch)) return
     const target = document
