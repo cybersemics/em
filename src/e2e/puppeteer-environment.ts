@@ -45,6 +45,10 @@ const PuppeteerEnvironment: Environment = {
 
     const { keys, originals } = populateGlobal(global, {
       ...win,
+      // populateGlobal overrides localStorage and sessionStorage on the global, but the spread drops them because they
+      // are not enumerable on the window. Pass them explicitly so that modules reading storage at import time work.
+      localStorage: win.localStorage,
+      sessionStorage: win.sessionStorage,
       browser,
     })
 
