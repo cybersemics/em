@@ -555,6 +555,9 @@ export default defineConfig({
             'toolbar',
             'pinnedCommand',
             'navbar',
+            // Covers the thought being edited and its neighbours for a moment after each tap on iOS 27, beneath the app's
+            // chrome so that the toolbar and nav bar still take taps. See doubleTapShield.
+            'doubleTapShield',
             'backgroundGlowFalloff',
             'latestCommands',
             'tutorialTraceGesture',

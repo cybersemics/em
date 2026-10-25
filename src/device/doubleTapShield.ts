@@ -1,18 +1,26 @@
+import { token } from '../../styled-system/tokens'
 import Timer from '../@types/Timer'
 import { isIOS, isSafari, isTouch } from '../browser'
 import ministore from '../stores/ministore'
 import osVersionStore from '../stores/osVersionStore'
 import debugLog from '../util/debugLog'
+import getCaretOffset from './getCaretOffset'
 import * as selection from './selection'
 
-/** How long a tap on the thought being edited stays covered. Covers the second tap of a double tap, which follows the first by as little as 37 ms on a device. */
-const DOUBLE_TAP_WINDOW = 350
+/** How long a tap on the thought being edited stays covered. Longer than iOS's own double tap interval, which counted two taps 363 ms apart on a device, since a tap on the overlay still counts as the first of a pair. */
+const DOUBLE_TAP_WINDOW = 500
 
 /** How long after the last covered tap the caret is put back when the selection leaves the thought. A covered tap that iOS commits late selects the nearest text outside the thought, well after the overlay is gone. */
 const RESTORE_WINDOW = 1000
 
-/** How far the overlay reaches past the thought, so that a second tap just outside its text is covered too. */
-const OVERLAY_PADDING = 20
+/** How far the overlay reaches past the editable horizontally, so that a second tap just outside its text is covered too. */
+const OVERLAY_PADDING_X = 20
+
+/** How far the overlay reaches past the editable vertically. On a device, iOS paired a tap with one on the neighbouring note about ten pixels away, so the neighbours are covered as well. */
+const OVERLAY_PADDING_Y = 60
+
+/** The thoughts and notes that a tap on the overlay can be passed to. */
+const EDITABLE_SELECTOR = '[data-editable], [aria-label="note-editable"]'
 
 /** How long a press must be held before iOS shows the magnifier, after which it is no longer a tap. */
 const MAGNIFIER_DELAY = 500
@@ -64,11 +72,12 @@ const cover = (editable: HTMLElement, placeCaret: (point: Point) => boolean) => 
   const overlay = document.createElement('div')
   Object.assign(overlay.style, {
     position: 'fixed',
-    left: `${rect.left - OVERLAY_PADDING}px`,
-    top: `${rect.top - OVERLAY_PADDING}px`,
-    width: `${rect.width + 2 * OVERLAY_PADDING}px`,
-    height: `${rect.height + 2 * OVERLAY_PADDING}px`,
-    zIndex: '100000',
+    left: `${rect.left - OVERLAY_PADDING_X}px`,
+    top: `${rect.top - OVERLAY_PADDING_Y}px`,
+    width: `${rect.width + 2 * OVERLAY_PADDING_X}px`,
+    height: `${rect.height + 2 * OVERLAY_PADDING_Y}px`,
+    // below the toolbar, nav bar and footer, which it may reach
+    zIndex: token('zIndex.doubleTapShield'),
     userSelect: 'none',
     webkitUserSelect: 'none',
   })
@@ -96,10 +105,22 @@ const cover = (editable: HTMLElement, placeCaret: (point: Point) => boolean) => 
     restartTimer()
     const touch = e.changedTouches[0]
     if (!touchStart || !touch || moved(touchStart, touch)) return
-    // a tap on the overlay would otherwise be lost, as it is for anything else under it
-    placeCaret(touch)
+    const target = document
+      .elementsFromPoint(touch.clientX, touch.clientY)
+      .find(el => el !== overlay)
+      ?.closest<HTMLElement>(EDITABLE_SELECTOR)
+    // a tap over another thought or note goes to it, as it would have without the overlay
+    if (target && target !== editable) {
+      if (document.activeElement !== target) target.focus({ preventScroll: true })
+      const { offset } = getCaretOffset(target, touch)
+      if (offset !== null) selection.set(target, { offset })
+    } else {
+      if (document.activeElement !== editable) editable.focus({ preventScroll: true })
+      placeCaret(touch)
+    }
     // the caret to put back is now wherever the tap placed it
-    shieldStore.update({ caret: selection.offsetFromNode(editable) })
+    const focused = target ?? editable
+    shieldStore.update({ editable: focused, caret: selection.offsetFromNode(focused) })
   })
   overlay.addEventListener('touchcancel', restartTimer)
   // the covered tap's own mouse events can land here, after its caret was placed
