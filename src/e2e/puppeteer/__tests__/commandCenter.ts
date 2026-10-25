@@ -7,10 +7,12 @@ import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
 import closeKeyboard from '../helpers/closeKeyboard'
 import deviceEmulation from '../helpers/deviceEmulation'
+import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
 import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
+import press from '../helpers/press'
 import waitForAlert from '../helpers/waitForAlert'
 import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
@@ -261,5 +263,58 @@ describe('command center', () => {
     )
     expect(caret).toBeNull()
     expect(await page.$$('[aria-label="bullet"][data-highlighted="true"]')).toHaveLength(1)
+  })
+
+  // Keys typed into the search field belong to the field, so they must not run the thought commands bound to them.
+  // Return is bound to New Thought.
+  it('does not create a thought when Return is pressed in the search field', async () => {
+    await paste('- a')
+    await clickThought('a')
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+
+    await click('[aria-label="Expand Command Center"]')
+    await waitForSelector('[data-testid=command-menu-panel][data-stage=expanded]')
+
+    await click('input[placeholder="Search commands..."]')
+    await keyboard.type('note')
+
+    await press('Enter')
+
+    expect(await exportThoughts()).toBe(`
+- a
+`)
+  })
+
+  // Backspace is bound to Delete Empty Thought or Outdent. It runs on the selected thought and clears the selection,
+  // which dismisses the sheet.
+  it('stays open and deletes a search character when Backspace is pressed in the search field', async () => {
+    await paste(`
+      - a
+      - b
+    `)
+    await clickThought('b')
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+
+    await click('[aria-label="Expand Command Center"]')
+    await waitForSelector('[data-testid=command-menu-panel][data-stage=expanded]')
+
+    await click('input[placeholder="Search commands..."]')
+    await keyboard.type('note')
+
+    await press('Backspace')
+
+    // the selection is cleared during the keydown, so a wrongly dismissed sheet has already left the open state
+    expect(await page.$('[data-testid="command-center-panel"][data-sheet-state="open"]')).not.toBeNull()
+    expect(
+      await page.$eval('input[placeholder="Search commands..."]', input => (input as HTMLInputElement).value),
+    ).toBe('not')
+    expect(await exportThoughts()).toBe(`
+- a
+- b
+`)
   })
 })

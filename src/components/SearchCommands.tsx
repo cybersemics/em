@@ -1,4 +1,4 @@
-import { FC, useRef } from 'react'
+import { FC, useEffect, useRef } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import useDismissKeyboardOnScroll from '../hooks/useDismissKeyboardOnScroll'
@@ -9,6 +9,27 @@ const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) 
   const inputRef = useRef<HTMLInputElement>(null)
 
   useDismissKeyboardOnScroll(inputRef)
+
+  useEffect(() => {
+    const input = inputRef.current
+    if (!input) return
+
+    /** Stops the native beforeinput event from bubbling to the window. */
+    const stopBeforeInput = (e: InputEvent) => e.stopPropagation()
+    input.addEventListener('beforeinput', stopBeforeInput)
+    return () => input.removeEventListener('beforeinput', stopBeforeInput)
+  }, [])
+
+  /**
+   * Stops keydown before it reaches the global `keyDown` handler.
+   *
+   * Keys typed into the search belong to the search. Otherwise they run the thought commands bound to them.
+   * - Return runs New Thought.
+   * - Backspace runs Delete Empty Thought or Outdent on the selected thought, which clears the selection and dismisses the Command Center.
+   */
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    e.stopPropagation()
+  }
 
   /**
    * Focuses the input on tap while preventing iOS' native autoscroll.
@@ -46,6 +67,7 @@ const SearchCommands: FC<{ onInput?: (value: string) => void }> = ({ onInput }) 
           type='text'
           placeholder='Search commands...'
           onMouseDown={handleMouseDown}
+          onKeyDown={handleKeyDown}
           onInput={(e: React.FormEvent<HTMLInputElement>) => {
             onInput?.(e.currentTarget.value)
           }}
