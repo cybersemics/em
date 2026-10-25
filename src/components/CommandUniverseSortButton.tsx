@@ -80,13 +80,13 @@ const ITEMS: DropdownItem<CommandSortType>[] = [
   { id: 'recent', label: 'Recently used', icon: RecentIcon },
 ]
 
+/** The Command Universe's sort button and the dropdown it opens. */
 const CommandUniverseSortButton = ({ sortOrder, onSortChange }: CommandUniverseSortButtonProps) => {
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
   const iconSize = Math.min((28 * fontSize) / DEFAULT_FONT_SIZE, 36)
-  // PROTOTYPE: the pick is held here while the dropdown animates closed, and only applied to the Command Universe
-  // (onSortChange) once the close has finished, so the grid's rearrangement plays after it rather than during it.
-  // Re-sorting the list is a 100ms+ render that disturbed the dropdown's animation when it ran at the pick.
+  // PROTOTYPE: the pick is applied to the Command Universe (onSortChange) at once, so the grid's rearrangement plays
+  // while the dropdown animates closed. Re-sorting the list is a 100ms+ render, which may disturb the close.
   const [selectedSort, setSelectedSort] = useState<CommandSortType>(sortOrder)
   const [open, setOpen] = useState(false)
   // The Command Universe switches to its desktop layout at md (400px).
@@ -165,11 +165,11 @@ const CommandUniverseSortButton = ({ sortOrder, onSortChange }: CommandUniverseS
       <Dropdown
         open={open}
         onClose={() => setOpen(false)}
-        onClosed={() => {
-          if (selectedSort !== sortOrder) onSortChange(selectedSort)
-        }}
         // The Dropdown closes itself after a pick.
-        onSelect={setSelectedSort}
+        onSelect={id => {
+          setSelectedSort(id)
+          if (id !== sortOrder) onSortChange(id)
+        }}
         anchor={anchor}
         selectedId={selectedSort}
         placement={placement}
