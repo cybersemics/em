@@ -69,7 +69,7 @@ it('preserves the sizes map when the key is already absent', () => {
   expect(result.current.sizes).toBe(sizesBeforeRemoval)
 })
 
-it('tracks widths separately and removes them with the size', () => {
+it('keeps the width when the size is removed until the width is removed', () => {
   const { result } = renderHook(useSizeTracking)
 
   act(() => {
@@ -86,6 +86,7 @@ it('tracks widths separately and removes them with the size', () => {
   expect(result.current.sizes).toEqual({ 'thought-1': { height: 20, cliff: 0, isVisible: true } })
   expect(result.current.widths).toEqual({ 'thought-1': 100 })
 
+  // VirtualThought unmounts, e.g. when the thought is virtualized
   act(() => {
     result.current.setSize({
       cliff: 0,
@@ -97,5 +98,12 @@ it('tracks widths separately and removes them with the size', () => {
   })
 
   expect(result.current.sizes).toEqual({})
+  expect(result.current.widths).toEqual({ 'thought-1': 100 })
+
+  // TreeNode unmounts when the thought leaves the tree
+  act(() => {
+    result.current.removeWidth('thought-1')
+  })
+
   expect(result.current.widths).toEqual({})
 })

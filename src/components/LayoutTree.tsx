@@ -135,7 +135,7 @@ const useLayoutTreeTop = (
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const editing = useSelector(state => state.isKeyboardOpen)
-  const { sizes, widths, setSize } = useSizeTracking()
+  const { sizes, widths, setSize, removeWidth } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
@@ -331,6 +331,7 @@ const LayoutTree = () => {
                 bulletWidth,
                 cursorUncleId,
                 setSize,
+                removeWidth,
                 cliffPaddingStyle,
                 dragInProgress,
                 autofocusDepth,

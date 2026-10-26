@@ -49,6 +49,7 @@ const TreeNode = ({
   bulletWidth,
   cursorUncleId,
   setSize,
+  removeWidth,
   cliffPaddingStyle,
   dragInProgress,
   autofocusDepth,
@@ -64,6 +65,8 @@ const TreeNode = ({
   bulletWidth: number
   cursorUncleId: string | null
   setSize: SetSize
+  /** Removes the tracked width of a thought. Called when the TreeNode unmounts, i.e. when the thought leaves the tree. */
+  removeWidth: (key: string) => void
   cliffPaddingStyle: { paddingBottom: number }
   dragInProgress: boolean
   autofocusDepth: number
@@ -121,6 +124,9 @@ const TreeNode = ({
 
   const onResize: OnResize = useCallback(props => setSize({ ...props, cliff }), [cliff, setSize])
 
+  // VirtualThought releases the size when it unmounts, but the width is kept until the thought leaves the tree. A virtualized thought's TreeNode stays mounted, so this only runs once the thought is gone. See useSizeTracking.
+  useEffect(() => () => removeWidth(thoughtKey), [removeWidth, thoughtKey])
+
   // The scrollTop and viewport height at which this thought was last re-rendered after being virtualized. See the guard below.
   const remountedAt = useRef<{ scrollTop: number; viewportHeight: number } | null>(null)
   const wasBelowViewport = useRef(false)
@@ -134,7 +140,7 @@ const TreeNode = ({
       !isCursor &&
       y > Math.max(scrollTop, 0) + viewportHeight + viewportBottomOffset + singleLineHeightWithCliff &&
       // Infinite loop guard: a thought that was virtualized and then re-rendered without the viewport moving cannot be virtualized again until the viewport moves.
-      // Otherwise any layout input that depends on which thoughts are rendered can close a loop: the thought unmounts, the layout above it shifts, it moves back above the cutoff and remounts, the layout shifts back, and it unmounts again. Every cycle needs that second unmount, so blocking it breaks the loop, whatever layout input closes it. Without the guard, the loop can run within passive effects and trigger "Maximum update depth exceeded" (React error #185). See the table col1 width in usePositionedThoughts for one such input.
+      // Otherwise any layout input that depends on which thoughts are rendered can close a loop: the thought unmounts, the layout above it shifts, it moves back above the cutoff and remounts, the layout shifts back, and it unmounts again. Every cycle needs that second unmount, so blocking it breaks the loop, whatever layout input closes it. Without the guard, the loop can run within passive effects and trigger "Maximum update depth exceeded" (React error #185). For example, a table's col1 width depended on whether its widest thought was rendered until widths were kept for virtualized thoughts (see useSizeTracking).
       !(remountedAt.current?.scrollTop === scrollTop && remountedAt.current.viewportHeight === viewportHeight),
   )
 
