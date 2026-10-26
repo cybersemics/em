@@ -14,9 +14,6 @@ interface StubCommand {
 /** The path of the module that exports every registered command. The app reads its command list from this module and nothing else. */
 const COMMANDS_MODULE = '/src/commands/index.ts'
 
-/** Commands that the Gesture Menu always shows, whatever gesture is in progress. They keep their gestures, so that the menu around the stubs looks as it does to the user. */
-const KEPT_COMMAND_IDS = ['openMobileCommandUniverse', 'cancel']
-
 /** Rewrites the commands module as served by the dev server, so that it exports the registered commands without their gestures, keyboard shortcuts, or chaining, followed by the stubs. The registered commands stay in the list because the app looks some of them up by id, such as the toolbar buttons. */
 const rewriteCommandsModule = (source: string, stubs: StubCommand[]): string => {
   const names: string[] = []
@@ -41,8 +38,7 @@ const rewriteCommandsModule = (source: string, stubs: StubCommand[]): string => 
 
   return [
     imports,
-    `const keptCommandIds = ${JSON.stringify(KEPT_COMMAND_IDS)}`,
-    'const unbind = command => keptCommandIds.includes(command.id) ? command : { ...command, gesture: undefined, keyboard: undefined, isChainable: undefined }',
+    'const unbind = command => ({ ...command, gesture: undefined, keyboard: undefined, isChainable: undefined })',
     ...names.map(name => `const __unbound_${name} = unbind(__registered_${name})`),
     `export { ${names.map(name => `__unbound_${name} as ${name}`).join(', ')} }`,
     // Stubs are hidden from Help, since they belong to no group in COMMAND_DIFFICULTIES.
