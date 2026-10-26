@@ -62,13 +62,17 @@ A command bound to an array of keyboard shortcuts also receives `keyboardIndex`,
 
 ### Discovery and indexing
 
-At startup, [`commands.ts`](../src/commands.ts) flattens the barrel into `globalCommands: Command[]` and builds three indices via `index()`:
+At startup, [`commands.ts`](../src/commands.ts) flattens the barrel into `registeredCommands: Command[]`. Everything that lists commands or matches input against them reads `globalCommands` instead, which is the registered commands unless a test has replaced them with stubs (see [Stubbing the global commands](#stubbing-the-global-commands)). `index()` builds three indices:
 
 - **`commandKeyIndex`** — `hash(keyboard) → Command`. Used by `keyDown` for O(1) shortcut lookup.
-- **`commandIdIndex`** — `id → Command`. Used by `commandById(id)`. Use this only when the id is dynamic; otherwise prefer a static import.
+- **`commandIdIndex`** — `id → Command`. Used by `commandById(id)`. Use this only when the id is dynamic; otherwise prefer a static import. Built from the registered commands, so that commands looked up by id, such as the toolbar buttons, still work when a test has stubbed the global commands.
 - **`commandGestureIndex`** — `gestureSequence → Command`. Used by `handleGestureEnd` for O(1) gesture lookup.
 
 If two commands share the same keyboard hash, `index()` logs a `console.error` at startup naming both — so collisions surface early.
+
+### Stubbing the global commands
+
+A snapshot of a command list, such as the Gesture Menu or the Command Universe, would otherwise change whenever a command is added, removed, or renamed. A Puppeteer test can replace the global commands with a fixed list by preloading [`testFlags.commands`](../src/e2e/testFlags.ts) with plain data (`label`, `gesture`, `keyboard`, `description`), from which `commands.ts` builds inert commands in place of the registered commands: every command list, keyboard shortcuts, and gestures. `globalCommands` is computed once when the module loads, so the flag must be set before the app starts; the [`stubCommands`](../src/e2e/puppeteer/helpers/stubCommands.ts) helper preloads it and reloads the page.
 
 ### Keyboard activation
 

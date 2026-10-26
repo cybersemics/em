@@ -1,3 +1,4 @@
+import type Command from '../@types/Command'
 import type { ThoughtspaceStorage } from '../data-providers/thoughtspace'
 
 type TestFlags = {
@@ -19,6 +20,8 @@ type TestFlags = {
   simulateDrag: boolean
   /** Render drop targets as blocks of color. */
   simulateDrop: boolean
+  /** Plain data for inert commands that replace the registered commands wherever the app lists or matches commands. Read once when the app loads, so it must be preloaded. See globalCommands in commands.ts. */
+  commands: Pick<Command, 'label' | 'gesture' | 'keyboard' | 'description'>[] | null
 }
 
 const preloadedTestFlags = typeof window === 'undefined' ? null : (window.em?.testFlags ?? null)
@@ -35,6 +38,7 @@ const testFlags: TestFlags = {
   pinDropHovers: false,
   simulateDrag: false,
   simulateDrop: false,
+  commands: preloadedTestFlags?.commands ?? null,
 }
 
 export default testFlags
