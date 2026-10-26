@@ -1,13 +1,20 @@
+import { GestureResponderEvent } from 'react-native'
+import { importTextActionCreator as importText } from '../actions/importText'
 import {
   beforeInput,
   formatKeyboardShortcut,
+  handleGestureEnd,
   handleGestureSegment,
   hashCommand,
   hashKeyDown,
   keyDown,
   parseCommandShortcut,
 } from '../commands'
+import { HOME_TOKEN } from '../constants'
+import exportContext from '../selectors/exportContext'
+import store from '../stores/app'
 import initStore from '../test-helpers/initStore'
+import { setCursorFirstMatchActionCreator as setCursor } from '../test-helpers/setCursorFirstMatch'
 
 describe('parseCommandShortcut', () => {
   it('parses a space-separated shortcut', () => {
@@ -156,6 +163,29 @@ describe('hashKeyDown', () => {
     expect(
       hashKeyDown(keyDownEvent({ key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, metaKey: true, shiftKey: true })),
     ).toBe(hashCommand({ key: 'ArrowDown', meta: true, shift: true }))
+  })
+})
+
+describe('handleGestureEnd', () => {
+  beforeEach(initStore)
+
+  // New Thought only chains into Outdent, so New Thought followed by Move Thought Up must not chain.
+  it('do not chain a command that the first command does not allow to follow it', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+        `,
+      }),
+      setCursor(['a']),
+    ])
+
+    // New Thought (rd) + Move Thought Up (udu)
+    handleGestureEnd({ sequence: 'rd' + 'udu', e: {} as GestureResponderEvent })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a`)
   })
 })
 
