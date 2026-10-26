@@ -137,14 +137,14 @@ viewportBottom = max(scrollTop, 0)
 
 Each `TreeNode` subscribes to `scrollTopStore` with a selector that returns only whether that thought is beyond the boundary. Most scroll updates leave this boolean unchanged, so they do not rerender `LayoutTree`, `TransitionGroup`, or the full thought list. A `TreeNode` returns `null` only when it is below the cursor, is not the cursor itself, and its `y` is more than one estimated thought height beyond `viewportBottom`. A thought that was virtualized and then rendered again while `scrollTop` and `innerHeight` stayed the same is not virtualized again until one of them changes. That guard keeps a layout feedback loop from forming: when the layout above a thought depends on whether that thought is rendered, as a table's col1 width does, unmounting it can move it back above the cutoff, and remounting it can push it back below, indefinitely, until React aborts with "Maximum update depth exceeded" (error #185). Every such cycle needs a second unmount at the same viewport, so the guard breaks it whatever closes it. It remains in `treeThoughtsPositioned` so crossing the boundary can render it without rebuilding the list, while the fixed container height keeps the document height stable. (Above the cursor, autocrop already handles the blank space.)
 
-## `useSizeTracking` and the `sizes` map
+## `useSizeTracking`, `sizes` and `widths`
 
-[`useSizeTracking`](../src/hooks/useSizeTracking.ts) keeps a state map of `{ height, width, isVisible, cliff }` keyed by `crossContextualKey`. `setSize` is the entry point — it's passed into every `VirtualThought` as `onResize`.
+[`useSizeTracking`](../src/hooks/useSizeTracking.ts) keeps two state maps keyed by `crossContextualKey`: `sizes` holds `{ height, isVisible, cliff }`, and `widths` holds the measured width of each thought. Widths are kept apart because only table col1 reads them, to size the column (see `tableCol1Widths` above), while every other consumer reads heights and treats an entry in `sizes` as a measured thought. `setSize` is the entry point — it's passed into every `VirtualThought` as `onResize`.
 
 Two details:
 
 - **Height clipping by `fontSize / 8`.** Each measured height is reduced by `fontSize / 8` before storage. Why: thoughts use a `clipPath` to avoid accidental caret-snap to the line above/below when a click lands on a 1px boundary. The clipPath leaves a gap; the small height reduction overlaps thoughts by exactly that gap, eliminating it visually.
-- **Unmount cleanup.** When a `VirtualThought` unmounts, it calls `onResize` with `height: null`, and `useSizeTracking.removeSize` deletes the entry. An `unmounted` ref prevents racing setState after the parent has already gone.
+- **Unmount cleanup.** When a `VirtualThought` unmounts, it calls `onResize` with `height: null`, and `useSizeTracking.removeSize` deletes its entries from both maps. An `unmounted` ref prevents racing setState after the parent has already gone.
 
 `useSingleLineHeight` (in `LayoutTree.tsx`) finds the smallest measured height in `sizes` that's close to `fontSize * 2` and uses that as the canonical single-line height for unmeasured thoughts. Cached in a ref so it doesn't reset to the estimate when single-line thoughts scroll out of view.
 

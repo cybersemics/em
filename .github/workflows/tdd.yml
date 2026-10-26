@@ -280,6 +280,11 @@ jobs:
             SKIP="true"
             REASON="PR has skip-tdd label"
           fi
+          # A prototype pull request skips CI (docs/testing.md § Prototype pull requests).
+          if echo "$LABELS" | grep -q '"prototype"'; then
+            SKIP="true"
+            REASON="PR has prototype label"
+          fi
 
           # 1b. Check for granular skip labels
           if echo "$LABELS" | grep -q '"skip-tdd-unit"'; then
