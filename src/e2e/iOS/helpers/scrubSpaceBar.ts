@@ -6,22 +6,31 @@ const SCRUB_STEP_PX = 50
 
 /**
  * Drives the iOS virtual keyboard's trackpad: long-presses the space bar to enter caret-scrub mode, then
- * drags horizontally. Switches to the native context to reach the keyboard and restores the web context.
+ * drags horizontally, or vertically with the `vertical` option. Switches to the native context to reach the keyboard
+ * and restores the web context.
  *
  * The pointer is anchored to the space key element rather than to its coordinates. `getElementRect` reports web
  * coordinates while `performActions` works in screen space, and mixing the two lands the touch on the letter
  * rows, which types instead of scrubbing.
  *
- * @param steps Number of drag increments. Negative drags left.
+ * @param steps Number of drag increments. Negative drags left, or up when vertical.
  */
-const scrubSpaceBar = async (steps: number): Promise<void> => {
+const scrubSpaceBar = async (
+  steps: number,
+  {
+    vertical,
+  }: {
+    /** Drag up and down instead of left and right. */
+    vertical?: boolean
+  } = {},
+): Promise<void> => {
   const webContext = (await browser.getContext()) as string
   await browser.switchContext('NATIVE_APP')
 
   try {
     const space = await browser.$('-ios predicate string:type == "XCUIElementTypeKey" AND name == "space"')
     const elementId = (await space.getElement()).elementId
-    const dx = steps < 0 ? -SCRUB_STEP_PX : SCRUB_STEP_PX
+    const delta = steps < 0 ? -SCRUB_STEP_PX : SCRUB_STEP_PX
 
     // performActions directly: XCUITest does not implement the releaseActions endpoint that
     // action().perform() calls afterwards.
@@ -41,7 +50,13 @@ const scrubSpaceBar = async (steps: number): Promise<void> => {
           { type: 'pointerDown', button: 0 },
           { type: 'pause', duration: SCRUB_HOLD_MS },
           ...Array.from({ length: Math.abs(steps) }, () => [
-            { type: 'pointerMove' as const, duration: 300, origin: 'pointer' as const, x: dx, y: 0 },
+            {
+              type: 'pointerMove' as const,
+              duration: 300,
+              origin: 'pointer' as const,
+              x: vertical ? 0 : delta,
+              y: vertical ? delta : 0,
+            },
             { type: 'pause' as const, duration: 100 },
           ]).flat(),
           { type: 'pointerUp', button: 0 },
