@@ -1,5 +1,6 @@
 import { unescape } from 'html-escaper'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { ConnectDragSource, ConnectableElement, DragSourceOptions } from 'react-dnd'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { childRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
@@ -17,12 +18,14 @@ import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/
 import { isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
+import doubleTapShield from '../device/doubleTapShield'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
 import useDragLeave from '../hooks/useDragLeave'
 import useHideBullet from '../hooks/useHideBullet'
+import { LongPressProps } from '../hooks/useLongPress'
 import useThoughtStyle from '../hooks/useThoughtStyle'
 import useThoughtStyleContainer from '../hooks/useThoughtStyleContainer'
 import attribute from '../selectors/attribute'
@@ -294,6 +297,7 @@ const ThoughtContainer = ({
     dragPreview,
     dragSourceBullet,
     dragSourceEditable,
+    dragSpec,
     isHovering,
     dropTarget,
     canDropThought,
@@ -559,6 +563,26 @@ const ThoughtContainer = ({
 
   const hasSelectionRange = selectionRangeStore.useState()
 
+  // the same handlers that the thought's and bullet's own elements get, for a long press that begins on the double tap overlay over them
+  const dragTargetRef = useRef<{ drag: typeof dragSpec; longPress: LongPressProps } | null>(null)
+  dragTargetRef.current = isTouch && !hasSelectionRange ? { drag: dragSpec, longPress: dragHoldResult.props } : null
+  const bulletDragTargetRef = useRef({ drag: dragSpec, longPress: dragHoldResult.props })
+  bulletDragTargetRef.current = { drag: dragSpec, longPress: dragHoldResult.props }
+  const dragSourceThought: ConnectDragSource = useCallback(
+    (node: ConnectableElement, options?: DragSourceOptions) => {
+      if (node instanceof Element) doubleTapShield.dragTargets.set(node, dragTargetRef)
+      return dragSourceEditable(node, options)
+    },
+    [dragSourceEditable],
+  )
+  const dragSourceBulletWithShield: ConnectDragSource = useCallback(
+    (node: ConnectableElement, options?: DragSourceOptions) => {
+      if (node instanceof Element) doubleTapShield.dragTargets.set(node, bulletDragTargetRef)
+      return dragSourceBullet(node, options)
+    },
+    [dragSourceBullet],
+  )
+
   // thought does not exist
   if (value == null) return null
 
@@ -616,7 +640,7 @@ const ThoughtContainer = ({
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
           <div style={alignmentTransition.bullet}>
             <Bullet
-              dragSource={dragSourceBullet}
+              dragSource={dragSourceBulletWithShield}
               longPressProps={dragHoldResult.props}
               isContextPending={isContextPending}
               isDragging={isDragging}
@@ -639,7 +663,7 @@ const ThoughtContainer = ({
         <div style={alignmentTransition.editable}>
           <StaticThought
             allowSingleContext={allowSingleContext}
-            dragSource={dragSourceEditable}
+            dragSource={dragSourceThought}
             // Disallow long press on mobile when there is a selection range, otherwise it will interfere with native selection controls like
             // adjusting the selection or selection drag-and-drop. This is part of matching logic across StaticThought, Thought, and
             // useDragAndDropThought that disables long press when there is a selection range.

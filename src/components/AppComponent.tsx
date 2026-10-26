@@ -24,6 +24,7 @@ import BackgroundGlow from './BackgroundGlow'
 import CommandCenter from './CommandCenter/CommandCenter'
 import Content from './Content'
 import DesktopCommandUniverse from './DesktopCommandUniverse'
+import DoubleTapShieldDragSource from './DoubleTapShieldDragSource'
 import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
@@ -227,6 +228,7 @@ const AppComponent: FC = () => {
       <DropGutter />
       {isAndroid && <SelectionStems />}
       <NativeTextDragCaret />
+      {isTouch && isSafari() && <DoubleTapShieldDragSource />}
 
       <MultiGestureIfTouch>
         {showModal ? (

@@ -5,6 +5,8 @@ type TestFlags = {
   logMultigesture: boolean
   /** Delay in ms before expanding the hovering thought. */
   expandHoverDelay: number | null
+  /** How long in ms the double tap overlay stays up after a tap, so that a test can reach it with a separate action. */
+  doubleTapWindow: number | null
   /** Delay in ms to mock data replication, for simulating network latency in tests. */
   replicationDelay: number
   /** Prevent automatic app initialization on page load. */
@@ -28,6 +30,7 @@ const testFlags: TestFlags = {
   logActions: false,
   logMultigesture: false,
   expandHoverDelay: null,
+  doubleTapWindow: null,
   replicationDelay: preloadedTestFlags?.replicationDelay ?? 0,
   preventInitialize: preloadedTestFlags?.preventInitialize ?? false,
   initialize: null,

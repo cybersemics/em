@@ -364,21 +364,17 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
   const propsTypes = props as ThoughtContainerProps
   const dispatch = useDispatch()
 
-  const [{ isDragging: isDraggingBullet }, dragSourceBullet, dragPreview] = useDrag({
+  const dragSpec = {
     type: DragAndDropType.Thought,
     item: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
-    end: (item, monitor) => endDrag(monitor),
+    end: (item: DragThoughtItem[], monitor: DragSourceMonitor) => endDrag(monitor),
     collect: dragCollect,
-  })
+  }
 
-  const [{ isDragging: isDraggingEditable }, dragSourceEditable] = useDrag({
-    type: DragAndDropType.Thought,
-    item: () => beginDrag(propsTypes),
-    canDrag: () => canDrag(propsTypes),
-    end: (item, monitor) => endDrag(monitor),
-    collect: dragCollect,
-  })
+  const [{ isDragging: isDraggingBullet }, dragSourceBullet, dragPreview] = useDrag(dragSpec)
+
+  const [{ isDragging: isDraggingEditable }, dragSourceEditable] = useDrag(dragSpec)
 
   const [{ isHovering, isDeepHovering, canDropThought }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
@@ -437,6 +433,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     isDragging: isDraggingBullet || isDraggingEditable || isDraggingMultiple, // Combine both drag states: either this is the primary drag source OR it's part of multiselect drag
     dragSourceBullet,
     dragSourceEditable,
+    dragSpec,
     dragPreview,
     isHovering: isHoveringPinned,
     isDeepHovering,

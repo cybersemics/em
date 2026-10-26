@@ -1,8 +1,11 @@
 import { token } from '../../styled-system/tokens'
 import Timer from '../@types/Timer'
 import { isIOS, isSafari, isTouch } from '../browser'
-import ministore from '../stores/ministore'
+import testFlags from '../e2e/testFlags'
+import type useDragAndDropThought from '../hooks/useDragAndDropThought'
+import type { LongPressProps } from '../hooks/useLongPress'
 import osVersionStore from '../stores/osVersionStore'
+import reactMinistore from '../stores/react-ministore'
 import debugLog from '../util/debugLog'
 import getCaretOffset from './getCaretOffset'
 import * as selection from './selection'
@@ -36,7 +39,7 @@ const moved = (start: Point, end: Point) =>
   Math.hypot(end.clientX - start.clientX, end.clientY - start.clientY) >= TAP_SLOP
 
 /** The overlay over the thought being edited, and the caret to put back if a covered tap moves the selection out of it. Disposing removes the overlay and clears its timer. */
-const shieldStore = ministore<{
+const shieldStore = reactMinistore<{
   overlay: HTMLElement | null
   timer: Timer | null
   editable: HTMLElement | null
@@ -52,6 +55,12 @@ const shieldStore = ministore<{
     },
   },
 )
+
+/** The thoughts that a long press on the overlay can drag, keyed by their element, each with its own drag source spec and long press handlers. Registered by Thought. */
+const dragTargets = new WeakMap<
+  Element,
+  { current: { drag: ReturnType<typeof useDragAndDropThought>['dragSpec']; longPress: LongPressProps } | null }
+>()
 
 /** Removes the overlay, leaving the caret armed for the rest of its restore window. */
 const uncover = () => {
@@ -99,14 +108,15 @@ const cover = (editable: HTMLElement, placeCaret: (point: Point) => boolean) => 
   /** Keeps the overlay up for another window after each touch on it, which also covers a triple tap. */
   const restartTimer = () => {
     clearTimeout(shieldStore.getState().timer ?? undefined)
-    shieldStore.update({ timer: setTimeout(uncover, DOUBLE_TAP_WINDOW) })
+    shieldStore.update({ timer: setTimeout(uncover, testFlags.doubleTapWindow ?? DOUBLE_TAP_WINDOW) })
   }
   overlay.addEventListener('touchend', e => {
     // a long press is not a tap, so it cannot start a double tap, and the press the user retries should reach the text
     if (touchStart && e.timeStamp - touchStart.timeStamp >= MAGNIFIER_DELAY) uncover()
     else restartTimer()
     const touch = e.changedTouches[0]
-    if (!touchStart || !touch || moved(touchStart, touch)) return
+    // a long press that began a drag hold cleared the selection to close the keyboard
+    if (!touchStart || !touch || moved(touchStart, touch) || !selection.isActive()) return
     const target = document
       .elementsFromPoint(touch.clientX, touch.clientY)
       .find(el => el !== overlay)
@@ -133,7 +143,7 @@ const cover = (editable: HTMLElement, placeCaret: (point: Point) => boolean) => 
 
   shieldStore.update({
     overlay,
-    timer: setTimeout(uncover, DOUBLE_TAP_WINDOW),
+    timer: setTimeout(uncover, testFlags.doubleTapWindow ?? DOUBLE_TAP_WINDOW),
     editable,
     caret: selection.offsetFromNode(editable),
     restoreUntil: performance.now() + RESTORE_WINDOW,
@@ -211,6 +221,6 @@ const onSelectionChange = () => {
   }
 }
 
-const doubleTapShield = { onTouchEnd, onSelectionChange }
+const doubleTapShield = { onTouchEnd, onSelectionChange, shieldStore, dragTargets }
 
 export default doubleTapShield

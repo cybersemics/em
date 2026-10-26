@@ -749,6 +749,10 @@ Puppeteer preloads `testFlags.thoughtspaceStorage` before the application starts
 
 Test durable persistence in a regular browser context. Private browsing storage is temporary: Safari Private Browsing falls back to memory and loses thoughts on reload, while Chromium Incognito keeps OPFS only until the private session ends.
 
+### Double tap window
+
+`testFlags.doubleTapWindow` keeps the iOS 27 double tap overlay ([Double taps on iOS 27](cursor-and-caret.md#double-taps-on-ios-27)) up for longer than its 500 ms, so that a test can press on it with a separate action. WebDriverAgent cannot put a press on a second point within 500 ms of a tap: a single pointer that moves between a release and the next press has its release held back until that press, a second pointer touches down at its first move, and separate `performActions` calls arrive about 900 ms apart.
+
 ### Drag-and-drop visualization
 
 You can enable drop target visualization boxes by running `em.testFlags.simulateDrop = true` in the JS console or setting `testFlags.simulateDrop` to true in [src/e2e/testFlags.ts](../src/e2e/testFlags.ts).
