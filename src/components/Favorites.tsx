@@ -178,7 +178,9 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
     return (getLexeme(state, '=favorite')?.contexts || [])
       .map(id => {
         const thought = getThoughtById(state, id)
-        if (!thought) return null
+        // The Lexeme is keyed by the normalized value, so it also lists formatted values such as <b>=favorite</b>, which
+        // are normal thoughts rather than attributes.
+        if (thought?.value !== '=favorite') return null
         const path = thoughtToPath(state, thought.parentId)
         return path
       })
