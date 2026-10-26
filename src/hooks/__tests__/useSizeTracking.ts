@@ -68,3 +68,34 @@ it('preserves the sizes map when the key is already absent', () => {
 
   expect(result.current.sizes).toBe(sizesBeforeRemoval)
 })
+
+it('tracks widths separately and removes them with the size', () => {
+  const { result } = renderHook(useSizeTracking)
+
+  act(() => {
+    result.current.setSize({
+      cliff: 0,
+      height: 20,
+      width: 100,
+      id: 'thought-1' as ThoughtId,
+      isVisible: true,
+      key: 'thought-1',
+    })
+  })
+
+  expect(result.current.sizes).toEqual({ 'thought-1': { height: 20, cliff: 0, isVisible: true } })
+  expect(result.current.widths).toEqual({ 'thought-1': 100 })
+
+  act(() => {
+    result.current.setSize({
+      cliff: 0,
+      height: null,
+      id: 'thought-1' as ThoughtId,
+      isVisible: true,
+      key: 'thought-1',
+    })
+  })
+
+  expect(result.current.sizes).toEqual({})
+  expect(result.current.widths).toEqual({})
+})
