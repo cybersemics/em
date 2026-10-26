@@ -91,7 +91,7 @@ yaccum += height (unless table col1)
 
 After the loop:
 
-- `tableCol1Widths: Map<ThoughtId, number>` — the widths of every table's col1, used as inputs to `ancestorTableWidths` further down the loop. A col1 is as wide as its widest thought, and a col1 thought that [virtualization](#virtualization) has unmounted still counts at its last measured width, since its width is kept until it leaves the tree (see [`useSizeTracking`](#usesizetracking-sizes-and-widths)). Without that, the column would narrow whenever its widest thought fell below the cutoff, the col2 thoughts above it would unwrap and shorten, and the widest thought would move back above the cutoff and remount, widening the column again. That cycle never settles.
+- `tableCol1Widths: Map<ThoughtId, number>` — the widths of every table's col1, used as inputs to `ancestorTableWidths` further down the loop. A col1 is as wide as its widest thought, and a col1 thought that [virtualization](#virtualization) has unmounted still counts at its last measured width, since its width is kept until it leaves the tree (see [`useSizeTracking`](#usesizetracking-heights-and-widths)). Without that, the column would narrow whenever its widest thought fell below the cutoff, the col2 thoughts above it would unwrap and shorten, and the widest thought would move back above the cutoff and remount, widening the column again. That cycle never settles.
 - `indentCursorAncestorTables` — captured when the cursor node is visited; drives the global horizontal autocrop (see [Indent](#indent-horizontal-autocrop)).
 - `hoverArrowVisibility` — `'above' | 'below' | null`, set when the user is dragging into a sorted context and the drop position is outside the currently-rendered range. Drives the [`HoverArrow`](../src/components/HoverArrow.tsx) component.
 
@@ -144,7 +144,7 @@ Each `TreeNode` subscribes to `scrollTopStore` with a selector that returns only
 Two details:
 
 - **Height clipping by `fontSize / 8`.** Each measured height is reduced by `fontSize / 8` before storage. Why: thoughts use a `clipPath` to avoid accidental caret-snap to the line above/below when a click lands on a 1px boundary. The clipPath leaves a gap; the small height reduction overlaps thoughts by exactly that gap, eliminating it visually.
-- **Unmount cleanup.** When a `VirtualThought` unmounts, it calls `onResize` with `height: null`, and `useSizeTracking.removeSize` deletes its entry from `sizes`. Its width stays in `widths` until its `TreeNode` unmounts and calls `removeWidth`, which happens only when the thought leaves the tree: a virtualized thought keeps its `TreeNode` and only unmounts the `VirtualThought` inside it. An `unmounted` ref prevents racing setState after the parent has already gone.
+- **Unmount cleanup.** When a `VirtualThought` unmounts, it calls `onResize` with `height: null`, and `useSizeTracking.removeSize` deletes its entry from `heights`. Its width stays in `widths` until its `TreeNode` unmounts and calls `removeWidth`, which happens only when the thought leaves the tree: a virtualized thought keeps its `TreeNode` and only unmounts the `VirtualThought` inside it. An `unmounted` ref prevents racing setState after the parent has already gone.
 
 `useSingleLineHeight` (in `LayoutTree.tsx`) finds the smallest measured height in `heights` that's close to `fontSize * 2` and uses that as the canonical single-line height for unmeasured thoughts. Cached in a ref so it doesn't reset to the estimate when single-line thoughts scroll out of view.
 
