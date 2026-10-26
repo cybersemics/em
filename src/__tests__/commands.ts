@@ -230,3 +230,47 @@ describe('isolation between tests', () => {
     })
   })
 })
+
+describe('stubbed commands', () => {
+  /** Loads fresh copies of commands.ts and the store with testFlags.stubCommands set to one command bound to Cmd+K, since the global commands are read once when commands.ts loads. Returns the fresh commands module. */
+  const loadStubbed = async () => {
+    // initStore in an earlier test leaves fake timers on, which stall the fresh initStore below
+    vi.useRealTimers()
+    vi.resetModules()
+    const { default: testFlags } = await import('../e2e/testFlags')
+    testFlags.stubCommands = [{ label: 'Stub', keyboard: { key: 'k', meta: true } }]
+    const commands = await import('../commands')
+    const { default: initStore } = await import('../test-helpers/initStore')
+    await initStore()
+    return commands
+  }
+
+  afterEach(() => {
+    vi.resetModules()
+  })
+
+  it('list only the stubbed commands', async () => {
+    const commands = await loadStubbed()
+    expect(commands.globalCommands.map(command => command.label)).toEqual(['Stub'])
+  })
+
+  it('run a stubbed command from its keyboard shortcut', async () => {
+    const commands = await loadStubbed()
+    const exec = vi.spyOn(commands.globalCommands[0], 'exec')
+    commands.keyDown(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))
+    expect(exec).toHaveBeenCalledTimes(1)
+  })
+
+  it('do not run a registered command while the commands are stubbed', async () => {
+    const commands = await loadStubbed()
+    const exec = vi.spyOn(commands.commandById('settings'), 'exec')
+    // Settings (Cmd+,)
+    commands.keyDown(new KeyboardEvent('keydown', { key: ',', metaKey: true }))
+    expect(exec).not.toHaveBeenCalled()
+  })
+
+  it('find registered commands by id', async () => {
+    const commands = await loadStubbed()
+    expect(commands.commandById('newThought')?.id).toBe('newThought')
+  })
+})
