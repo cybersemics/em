@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
@@ -68,7 +68,7 @@ const TreeNode = ({
   dragInProgress: boolean
   autofocusDepth: number
   editing: boolean
-} & Pick<CSSTransitionProps, 'in'>) => {
+} & Pick<CSSTransitionProps<HTMLElement>, 'in' | 'onExited'>) => {
   // Since the thoughts slide up & down, the faux caret needs to be a child of the TreeNode
   // rather than one universal caret in the parent.
   const fadeThoughtRef = useRef<HTMLDivElement>(null)
@@ -131,6 +131,13 @@ const TreeNode = ({
       y > Math.max(scrollTop, 0) + viewportHeight + viewportBottomOffset + singleLineHeightWithCliff,
   )
 
+  const completeExit = transitionGroupsProps.in === false ? transitionGroupsProps.onExited : undefined
+
+  // Without a mounted fade node, there is no transition to finish the exit.
+  useEffect(() => {
+    if (!fadeThoughtRef.current) completeExit?.()
+  }, [isBelowViewport, completeExit])
+
   // List Virtualization
   // Do not render thoughts that are below the viewport.
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
@@ -152,6 +159,7 @@ const TreeNode = ({
       type={type}
       nodeRef={fadeThoughtRef}
       in={transitionGroupsProps.in}
+      onExited={transitionGroupsProps.onExited}
       onEnter={() => setIsMounted(true)}
       onExit={() => setIsMounted(false)}
       unmountOnExit

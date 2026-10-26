@@ -71,7 +71,6 @@ const glyph = cva({
         _mobile: {
           top: '0',
           left: '-0.3em',
-          marginRight: 'calc(-0.48em - 5px)',
         },
       },
     },

@@ -527,6 +527,9 @@ export default defineConfig({
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
         zIndex: {
           ...zIndexDescending([
+            // Show Touches draws over everything, since a touch can land anywhere. It ignores pointer events, so it
+            // never blocks what is beneath it.
+            'showTouches',
             // The help genie flies over everything, including the Command Universe dialog it is let out from. Its
             // canvas ignores pointer events, so it never blocks what is beneath it.
             'helpGenie',

@@ -136,6 +136,18 @@ Write a keyboard shortcut as `<kbd>` elements, one per key, with no separator be
 
 Write a gesture as arrows, not as the letters the code uses: `←↓→`, not `ldr`. `l` → `←`, `r` → `→`, `u` → `↑`, `d` → `↓`. The reader is following the steps with a finger on a screen, and the arrows are the swipe; the letters are an implementation detail they have to translate first. Name the command alongside it where the gesture has one — "Swipe New Subthought (`→↓→`)".
 
+#### Reduce to the minimal case
+
+The thoughts a reporter gives are the text they happened to be writing when they noticed the bug, rather than the input the bug needs. Where the bug depends only on the structure of the text, reduce it to the smallest input that still reproduces: the punctuation, the nesting and the order of the parts, with every word replaced by a single letter. Drop each part in turn and keep it only if the bug goes away without it. Run the reduced case and the original, and post only once both fail the same way.
+
+[#6119](https://github.com/cybersemics/em/issues/6119) was reported with a long, personal sentence naming two people. The bug needs only two parentheticals separated by a comma, so its steps give `a (b), c (d)`. That case also showed that one parenthetical alone splits correctly, which the original text could not show.
+
+Keep the original text, anonymized, where the bug depends on the text itself:
+
+- **Width**, where wrapping, truncation or layout is involved.
+- **Lexemes and contexts**, where thoughts must share a Lexeme or appear in each other's contexts.
+- **Particular characters or words**, such as emoji, a URL, or a word a command matches on.
+
 Include preconditions that are awkward but load-bearing — a specific device width, a wrapped line, a particular sort order — as steps rather than assuming they are obvious.
 
 ### Current Behavior
@@ -390,6 +402,7 @@ New issues often originate in a comment thread on another issue or PR.
 - A screenshot with no steps.
 - A personal thought (a name, a place, a feeling) quoted from a reporter's Debug Log or thoughtspace instead of a placeholder, including one spelled out a keystroke at a time across `input` or `keydown` entries.
 - Generic text replaced with placeholders that it did not need, making the steps harder to follow.
+- A reporter's text copied verbatim into the steps where the bug depends only on its structure, and a minimal case would reproduce it.
 - Placeholders that merge or split Lexemes the originals did not, in an issue that involves Lexemes.
 - A `Blocked by` line in the body with no relationship configured on GitHub.
 - A piece of a larger feature opened as a sibling with `Part of #5481` in the body, where a sub-issue relationship is what tracks it.
