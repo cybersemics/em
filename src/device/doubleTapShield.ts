@@ -72,7 +72,7 @@ const useDragTargets = ({
   dragSourceEditable,
   dragSourceBullet,
 }: DragTarget & {
-  /** Whether the thought itself takes a long press, as its bullet always does. */
+  /** Whether the thought itself takes a long press, which it does not while text is selected, unlike its bullet. */
   thoughtLongPress: boolean
   dragSourceEditable: ConnectDragSource
   dragSourceBullet: ConnectDragSource
