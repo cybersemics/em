@@ -88,6 +88,10 @@ const DoubleTapShieldDragSource = () => {
   useEffect(() => {
     if (!overlay) return
 
+    /** Calls the thought's long press handler with the native event, which has everything useLongPress and useDragHold read from a React one. */
+    const callLongPress = (handler: 'onTouchStart' | 'onTouchEnd' | 'onTouchCancel', e: TouchEvent) =>
+      (targetRef.current?.longPress[handler] as unknown as ((e: TouchEvent) => void) | undefined)?.(e)
+
     /** Finds the thought beneath the press and starts its long press. */
     const onTouchStart = (e: TouchEvent) => {
       const touch = e.changedTouches[0]
@@ -98,12 +102,12 @@ const DoubleTapShieldDragSource = () => {
             ?.closest('[aria-label="thought"], [aria-label="bullet"]')
         : null
       targetRef.current = (thought && doubleTapShield.dragTargets.get(thought)?.current) || null
-      targetRef.current?.longPress.onTouchStart(e)
+      callLongPress('onTouchStart', e)
     }
     /** Ends the long press. */
-    const onTouchEnd = (e: TouchEvent) => targetRef.current?.longPress.onTouchEnd(e)
+    const onTouchEnd = (e: TouchEvent) => callLongPress('onTouchEnd', e)
     /** Cancels the long press. */
-    const onTouchCancel = (e: TouchEvent) => targetRef.current?.longPress.onTouchCancel(e)
+    const onTouchCancel = (e: TouchEvent) => callLongPress('onTouchCancel', e)
 
     dragSource(overlay)
     overlay.addEventListener('touchstart', onTouchStart)

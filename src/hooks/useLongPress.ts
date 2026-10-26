@@ -20,9 +20,9 @@ export interface LongPressProps {
   onDragEnd?: () => void
   onMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void
   onMouseUp?: (e?: React.MouseEvent) => void
-  onTouchStart: (e: React.MouseEvent | React.TouchEvent | TouchEvent) => void
-  onTouchEnd: (e?: React.TouchEvent | TouchEvent) => void
-  onTouchCancel: (e?: React.TouchEvent | TouchEvent) => void
+  onTouchStart: (e: React.MouseEvent | React.TouchEvent) => void
+  onTouchEnd: () => void
+  onTouchCancel: () => void
 }
 
 /** Custom hook to manage long press.
@@ -31,7 +31,7 @@ export interface LongPressProps {
  **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
-  onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => void) | null = noop,
+  onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent | MouseEvent) => void) | null = noop,
   {
     delay = TIMEOUT_LONG_PRESS_THOUGHT,
     lockScroll = true,
@@ -99,8 +99,8 @@ const useLongPress = (
   /** On mouseDown or touchStart, mark that the press has begun so that when the 'start' event fires in react-dnd,
    * we will know which element is being long-pressed. */
   const start = useCallback(
-    (e: React.MouseEvent | React.TouchEvent | TouchEvent) => {
-      if ('nativeEvent' in e && e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2) return
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2) return
 
       // A press that lands on the caret is the user reaching for native caret repositioning, not the start of a drag.
       // Never marking the press keeps the rest of the chain — haptics, the scroll lock, DragHold — from running (#3763).
@@ -119,7 +119,7 @@ const useLongPress = (
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.)
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
-    (e?: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => {
+    (e?: React.MouseEvent | React.TouchEvent | MouseEvent) => {
       setPressing(false)
 
       // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
