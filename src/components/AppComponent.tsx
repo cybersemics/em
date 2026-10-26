@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux'
 import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
 import State from '../@types/State'
-import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
+import { isAndroid, isIOS, isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { handleGestureCancel, handleGestureEnd, handleGestureSegment } from '../commands'
 import { LongPressState, Settings } from '../constants'
 import * as selection from '../device/selection'
@@ -16,6 +16,7 @@ import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
+import osVersionStore from '../stores/osVersionStore'
 import touchStore from '../stores/touchStore'
 import debugLog from '../util/debugLog'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -228,7 +229,8 @@ const AppComponent: FC = () => {
       <DropGutter />
       {isAndroid && <SelectionStems />}
       <NativeTextDragCaret />
-      {isTouch && isSafari() && <DoubleTapShield />}
+      {/* Safari reads its version from the user agent at load, while the iOS app disables double taps natively (#6106). */}
+      {isTouch && isSafari() && !isIOS && (osVersionStore.getState() ?? 0) >= 27 && <DoubleTapShield />}
 
       <MultiGestureIfTouch>
         {showModal ? (
