@@ -28,18 +28,20 @@ describe('gesture menu', () => {
     expect(parseFloat(paddingLeft)).toBeGreaterThan(70)
   })
 
-  it('lists stubbed commands in place of the registered commands', async () => {
-    await stubCommands([{ label: 'Stub Command', gesture: 'rl' }])
+  describe('with stubbed commands', () => {
+    stubCommands([{ label: 'Stub Command', gesture: 'rl' }])
 
-    await paste('Hello')
-    await clickThought('Hello')
-    await gesture('r', { hold: true, yStart: 150 })
-    await waitForSelector('[data-testid=popup-value]')
+    it('lists stubbed commands in place of the registered commands', async () => {
+      await paste('Hello')
+      await clickThought('Hello')
+      await gesture('r', { hold: true, yStart: 150 })
+      await waitForSelector('[data-testid=popup-value]')
 
-    const menuText = await page.$eval('[data-testid=gesture-menu-content]', el => el.textContent)
+      const menuText = await page.$eval('[data-testid=gesture-menu-content]', el => el.textContent)
 
-    expect(menuText).toContain('Stub Command')
-    // New Thought (rd) would be listed if the registered commands were not stubbed
-    expect(menuText).not.toContain('New Thought')
+      expect(menuText).toContain('Stub Command')
+      // New Thought (rd) would be listed if the registered commands were not stubbed
+      expect(menuText).not.toContain('New Thought')
+    })
   })
 })
