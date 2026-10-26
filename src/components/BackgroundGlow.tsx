@@ -18,7 +18,7 @@ const glowLayerStyles = css.raw({
 })
 
 /** In the Android app, returns the tallest viewport height seen at the current width, so that when the keyboard opens and the WebView shrinks, the glow stays put and the keyboard covers its bottom, as on the other platforms, instead of shrinking and sliding up above the keyboard. Heights are kept per width so that a rotation starts over in the new orientation and restores the old one's height on the way back. The viewport is only selected in the Android app, so that the viewport updates iOS fires while scrolling with the keyboard up do not re-render the glow. Returns undefined on other platforms. An explicit height overrides the bottom of inset: 0, so the layers hang below the shrunken viewport. */
-const useGlowHeight = (): number | undefined => {
+const useTallestViewportHeight = (): number | undefined => {
   const innerWidth = viewportStore.useSelector(state => (isAndroidApp ? state.innerWidth : 0))
   const innerHeight = viewportStore.useSelector(state => (isAndroidApp ? state.innerHeight : 0))
   const [tallestHeights, setTallestHeights] = useState<Record<number, number>>({})
@@ -34,7 +34,7 @@ const BackgroundGlow = () => {
   const { image, opacity } = backgroundGlowStore.useState()
   const showModal = useSelector(state => !!state.showModal)
 
-  const height = useGlowHeight()
+  const height = useTallestViewportHeight()
 
   return image ? (
     <>
