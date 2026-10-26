@@ -7,7 +7,11 @@ import getUserSetting from '../selectors/getUserSetting'
 import touchStore from '../stores/touchStore'
 import viewportStore from '../stores/viewportStore'
 import haptics from '../util/haptics'
+import preloadImage from '../util/preloadImage'
 import FadeTransition from './FadeTransition'
+
+/** The stardust texture that tiles the scroll zone. */
+const stardustImage = preloadImage('/img/scroll-zone/stardust.png')
 
 /** True if the browser supports the ScrollTimeline Web Animations API. */
 const supportsScrollTimeline = 'ScrollTimeline' in window
@@ -101,7 +105,7 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
       ref={scrollZoneRef}
       data-testid='scroll-zone'
       className={css({
-        backgroundImage: `url('/img/scroll-zone/stardust.png')`,
+        backgroundImage: stardustImage,
         backgroundRepeat: 'repeat',
         zIndex: 'scrollZone',
         backgroundSize: '800px',

@@ -35,6 +35,7 @@ const BackgroundGlow = () => {
             transform: 'scaleY(-1)',
           },
         })}
+        // eslint-disable-next-line no-restricted-syntax -- The debug glows are about 5 MB, so they are not preloaded for every user.
         style={{ backgroundImage: `url(/img/glow/${image})`, opacity }}
       />
       {/* Falloff that fades the content out into the glow above the nav bar. Repaints the page background (bg + the glow at the same opacity, pixel-aligned with the layer above since both are fixed and anchored to the full viewport) masked in by a vertical gradient, so the content appears to dissolve into the glow rather than being blacked out. Rendered above the content but below the nav bar and footer. */}
@@ -51,6 +52,7 @@ const BackgroundGlow = () => {
         >
           <div
             className={css(glowLayerStyles, { position: 'absolute' })}
+            // eslint-disable-next-line no-restricted-syntax -- The debug glows are about 5 MB, so they are not preloaded for every user.
             style={{ backgroundImage: `url(/img/glow/${image})`, opacity }}
           />
         </div>

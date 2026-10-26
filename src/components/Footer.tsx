@@ -201,6 +201,7 @@ const BackgroundGlowPicker = () => {
                   {...fastClick(() => backgroundGlowStore.update({ image: glowImage }))}
                   className={glowSwatchClass}
                   style={{
+                    // eslint-disable-next-line no-restricted-syntax -- The debug glows are about 5 MB, so they are not preloaded for every user.
                     backgroundImage: `url(/img/glow/${glowImage})`,
                     borderColor: image === glowImage ? token('colors.fg') : undefined,
                   }}

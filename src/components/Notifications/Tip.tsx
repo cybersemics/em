@@ -4,15 +4,13 @@ import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import { isTouch } from '../../browser'
-import usePrefetchImages from '../../hooks/usePrefetchImages'
 import fastClick from '../../util/fastClick'
+import preloadImage from '../../util/preloadImage'
 import CloseIcon from '../icons/CloseIcon'
 import NotificationSurface from './NotificationSurface'
 
-/** The image behind the tip's rainbow glow. */
-const GLOW_IMAGE = '/img/tip/tip-glow-alpha.webp'
-/** Stable, so usePrefetchImages does not re-run every render. */
-const GLOW_IMAGES = [GLOW_IMAGE]
+/** Sets the image behind the tip's rainbow glow. */
+const glowClassName = css({ backgroundImage: preloadImage('/img/tip/tip-glow-alpha.webp') })
 
 /** A tip notification with its own visibility rules, message, and Clear control. */
 const Tip: FC<PropsWithChildren<{ tipId: TipId }>> = ({ tipId, children }) => {
@@ -25,9 +23,6 @@ const Tip: FC<PropsWithChildren<{ tipId: TipId }>> = ({ tipId, children }) => {
     state => (state.isKeyboardOpen && isTouch) || state.showCommandCenter || state.showSidebar || !!state.showModal,
   )
 
-  // Prefetch the glow image before the tip becomes visible.
-  usePrefetchImages(GLOW_IMAGES)
-
   const isTipActive = tip === tipId
 
   return isTipActive ? (
@@ -36,7 +31,7 @@ const Tip: FC<PropsWithChildren<{ tipId: TipId }>> = ({ tipId, children }) => {
       key={tipId}
       anchor={{ base: 'bottom-full', lg: 'bottom-right' }}
       glow='rainbow'
-      glowImage={GLOW_IMAGE}
+      glowClassName={glowClassName}
       isVisible={!isHidden}
       swipeToDismiss
       onDismiss={() => dispatch(dismissTip())}
