@@ -32,7 +32,15 @@ export interface LongPressProps {
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
   onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent | MouseEvent) => void) | null = noop,
-  delay: number = TIMEOUT_LONG_PRESS_THOUGHT,
+  {
+    delay = TIMEOUT_LONG_PRESS_THOUGHT,
+    lockScroll = true,
+  }: {
+    /** Milliseconds to hold before the long press begins on desktop. On touch devices the TouchBackend's delayTouchStart is used instead. */
+    delay?: number
+    /** Block touch scrolling once the long press begins, so that iOS Safari cannot start a scroll before a drag begins (#3141). Disable for elements that cannot be dragged, so that a long press does not stop the user from scrolling (#3461). */
+    lockScroll?: boolean
+  } = {},
 ) => {
   const [pressing, setPressing] = useState(false)
   const longPressState = useSelector(state => state.longPress)
@@ -54,7 +62,9 @@ const useLongPress = (
       // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
       // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
       // Calling preventDefault on all touchmove events blocks scrolling entirely, but calling it once long press begins can prevent buggy behavior.
-      allowTouchToScroll(false)
+      if (lockScroll) {
+        allowTouchToScroll(false)
+      }
 
       haptics.light()
       onLongPressStart?.()
@@ -75,7 +85,7 @@ const useLongPress = (
 
       return () => clearTimeout(timerIdRef.current)
     }
-  }, [delay, dragDropManager, onLongPressStart, pressing])
+  }, [delay, dragDropManager, lockScroll, onLongPressStart, pressing])
 
   // Desktop can initiate drag-and-drop without waiting for a long press, so the timer does generate an
   // 'Invalid longPress transition' error unless it cleans up the timer. This error doesn't have any effect

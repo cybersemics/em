@@ -852,7 +852,8 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     const chainedGestureCollapsed = sequence!.toString().slice(chainedGesture1.length - 1)
     const chainedGesture = sequence!.toString().slice(chainedGesture1.length)
     const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
-    if (commandMatch) {
+    // only chain a command that the first command allows to follow it, as the gesture menu does
+    if (commandMatch && chainableCommandInProgressExclusive.isChainable?.(commandMatch)) {
       command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
     }
   }
@@ -955,10 +956,13 @@ export const handleNativeHistory = (type: 'undo' | 'redo') => {
  * Android soft keyboards report the space keydown as keyCode 229 ('Unidentified'), so the space-to-indent
  * command is never matched in keyDown and keyCommandId is never set. The second branch catches that case:
  * a `beforeinput` insertText of a single space over an empty thought indents it instead of inserting the
- * space, mirroring the keyDown-matched path on desktop/iOS (#4178). */
+ * space, mirroring the keyDown-matched path on desktop/iOS (#4178). Neither branch applies while the caret is in
+ * the thought's note, where the space belongs to the note (#5969). */
 export const beforeInput = (e: InputEvent) => {
   const keyCommandId = keyCommandIdStore.getState().id
-  if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
+  // editingValueStore holds the cursor thought's value even when the caret is in its note, so space-to-indent is excluded under noteFocus and the space is inserted into the note (#5969).
+  const isSpaceToIndent = editingValueStore.getState() === '' && !store.getState().noteFocus
+  if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && isSpaceToIndent)) {
     e.preventDefault()
     return
   }
@@ -968,7 +972,7 @@ export const beforeInput = (e: InputEvent) => {
   // and indent the empty thought instead of letting the literal space get inserted (#4178). Non-empty
   // thoughts and other input types (paste, IME composition) are excluded, so typing a space mid-word is
   // unaffected; desktop/iOS reach indent via their keyDown-matched path and short-circuit above.
-  if (e.inputType === 'insertText' && e.data === ' ' && editingValueStore.getState() === '') {
+  if (e.inputType === 'insertText' && e.data === ' ' && isSpaceToIndent) {
     e.preventDefault()
     store.dispatch(indent())
   }
@@ -1021,6 +1025,11 @@ export const keyDown = (e: KeyboardEvent) => {
 
   // disable if modal is shown, except for navigation commands
   if (!command || state.showMobileCommandUniverse || (state.showModal && !command.allowExecuteFromModal)) return
+
+  // A space typed in a note is text. Space-to-indent applies only when the caret is in the thought itself, so reject it
+  // here rather than in indent's exec: executeCommandWithMulticursor sets the cursor on each selected thought before
+  // exec runs, which clears noteFocus, so the empty thought would be indented and the space dropped (#5969).
+  if (command.id === 'indent' && state.noteFocus) return
 
   // execute the command
   commandEmitter.trigger('command', command)

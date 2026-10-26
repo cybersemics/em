@@ -18,12 +18,25 @@ interface TraceGestureProps {
 
 type SignaturePadEventType = 'beginStroke' | 'endStroke' | 'beforeUpdateStroke' | 'afterUpdateStroke'
 
+/** The point that SignaturePad draws, converted from a touch or pointer event. */
+interface SignatureEvent {
+  event: Event
+  type: string
+  x: number
+  y: number
+  pressure: number
+}
+
 /** Overriden SignaturePad ref to provide access to private members. Dangerous! Will break if SignaturePad internals change. Necessary to clear the canvas and apply drop shadow glow effect to signature. */
 interface SignaturePadOverride {
   _handleTouchStart: (e: TouchEvent) => void
   _handleTouchMove: (e: TouchEvent) => void
   _handleTouchEnd: (e: TouchEvent) => void
+  _handleTouchCancel: (e: TouchEvent) => void
   _handlePointerMove: (e: PointerEvent) => void
+  _drawingStroke: boolean
+  _strokeMoveUpdate: (event: SignatureEvent) => void
+  _strokeEnd: (event: SignatureEvent, shouldUpdate?: boolean) => void
   _ctx: CanvasRenderingContext2D
   addEventListener: (event: SignaturePadEventType, listener: (e: Event) => void) => void
   canvas: HTMLCanvasElement
@@ -54,6 +67,8 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
   const signaturePadRef = useRef<SignaturePad | null>(null)
+  // the identifier of the first finger of the touch, which is the only finger that is traced
+  const touchIdentifierRef = useRef<number | null>(null)
 
   // Clear the signature pad when the stroke starts.
   // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
@@ -101,8 +116,37 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
         }
       }
 
-    signaturePad._handleTouchMove = neutralizeMoveHandler(signaturePad._handleTouchMove)
     signaturePad._handlePointerMove = neutralizeMoveHandler(signaturePad._handlePointerMove)
+  }, [])
+
+  /** Trace only the first finger of a touch. SignaturePad draws the first finger that changed in each event, and stops drawing when more than one finger is on the same element, so a finger that joins a gesture in progress would otherwise hijack the trace. Replaces SignaturePad's touch move and end handlers before any stroke begins, since SignaturePad adds them to the window when a stroke begins. The replacements also never call preventDefault, which breaks the iOS native text-selection drag on move (#3483) and tap-to-edit on end. See #5966. */
+  useEffect(() => {
+    if (!signaturePadRef.current) return
+
+    const signaturePad = signaturePadRef.current['signaturePad'] as SignaturePadOverride
+
+    /** Converts the first finger to a SignatureEvent, or returns undefined if the first finger did not change. */
+    const firstFingerEvent = (e: TouchEvent): SignatureEvent | undefined => {
+      const touch = Array.from(e.changedTouches).find(touch => touch.identifier === touchIdentifierRef.current)
+      return touch && { event: e, type: e.type, x: touch.clientX, y: touch.clientY, pressure: touch.force }
+    }
+
+    signaturePad._handleTouchMove = (e: TouchEvent) => {
+      const event = firstFingerEvent(e)
+      if (!event) return
+      if (!signaturePad._drawingStroke) {
+        // removes the move and end listeners that remain on the window
+        signaturePad._strokeEnd(event, false)
+        return
+      }
+      signaturePad._strokeMoveUpdate(event)
+    }
+
+    signaturePad._handleTouchEnd = (e: TouchEvent) => {
+      const event = firstFingerEvent(e)
+      if (!event) return
+      signaturePad._strokeEnd(event)
+    }
   }, [])
 
   useEffect(() => {
@@ -116,13 +160,23 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad.canvas.width = signaturePad.canvas.offsetWidth
     signaturePad.canvas.height = signaturePad.canvas.offsetHeight
 
-    /** Forwards the touchstart event to the signaturePad if in the gesture zone. */
+    /** Forwards the touchstart event of the first finger to the signaturePad if in the gesture zone. */
     const onTouchStart = (e: TouchEvent) => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
       // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
       e.preventDefault = noop
 
+      // A finger that lands while another is down is never traced. If no gesture has begun, the touch is multi-touch,
+      // which MultiGesture abandons, so stop tracing the first finger too.
+      if (e.touches.length !== 1) {
+        if (!gestureStore.getState().gesture) {
+          signaturePad._handleTouchCancel(e)
+        }
+        return
+      }
+
       const touch = e.touches[0]
+      touchIdentifierRef.current = touch.identifier
       if (isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
         signaturePad._handleTouchStart(e)
       }
@@ -140,13 +194,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
     /** Forwards the touchend event to the signaturePad. */
     const onTouchEnd = (e: TouchEvent) => {
-      // Make preventDefault a noop otherwise tap-to-edit is broken.
-      // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
-      const preventDefault = e.preventDefault
-      e.preventDefault = noop
-
       signaturePad._handleTouchEnd(e)
-      e.preventDefault = preventDefault
     }
 
     /**
