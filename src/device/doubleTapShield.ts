@@ -150,7 +150,8 @@ const cover = (editable: HTMLElement, placeCaret: (point: Point) => boolean) => 
   }
   overlay.addEventListener('touchend', e => {
     // a long press is not a tap, so it cannot start a double tap, and the press the user retries should reach the text
-    if (touchStart && e.timeStamp - touchStart.timeStamp >= MAGNIFIER_DELAY) uncover()
+    // Deferred, since DoubleTapShield's listeners for this touchend would otherwise be removed before they run.
+    if (touchStart && e.timeStamp - touchStart.timeStamp >= MAGNIFIER_DELAY) setTimeout(uncover)
     else restartTimer()
     const touch = e.changedTouches[0]
     // a long press that began a drag hold cleared the selection to close the keyboard

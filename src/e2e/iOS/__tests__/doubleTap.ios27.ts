@@ -45,6 +45,21 @@ const pressBullet = async (text: string, holdMs: number) => {
   ])
 }
 
+/** Waits for a released long press to have ended and selected only the given thought. The bullet is highlighted during the long press as well, so the multiselect is read from the state. */
+const waitForLongPressSelection = (value: string) =>
+  browser.waitUntil(
+    async () => {
+      const selected = await browser.execute(() => {
+        const state = window.em.store.getState()
+        return state.longPress === 'Inactive'
+          ? Object.values(state.multicursors).map(path => window.em.getThoughtById(path[path.length - 1])?.value)
+          : null
+      })
+      return selected?.length === 1 && selected[0] === value
+    },
+    { timeout: 5000, interval: 250, timeoutMsg: `The long press did not end with ${value} selected` },
+  )
+
 describe('Double tap', () => {
   // https://github.com/cybersemics/em/issues/5660
   it('a gesture that starts just below the caret after a double tap on the caret runs its command', async () => {
@@ -128,18 +143,7 @@ describe('Double tap', () => {
     await tap(two, { pointerType: 'touch' })
     await tap(await waitForEditable('One'), { pointerType: 'touch', releaseDelayMs: 1000 })
 
-    // releasing a long press on a thought without dragging it selects it
-    await browser.waitUntil(
-      () =>
-        browser
-          .execute(() =>
-            Array.from(document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]')).map(
-              bullet => bullet.closest('[aria-label="child"]')?.querySelector('[data-editable]')?.textContent,
-            ),
-          )
-          .then(selected => selected.length === 1 && selected[0] === 'One'),
-      { timeout: 5000, interval: 250, timeoutMsg: 'One was not selected by the long press' },
-    )
+    await waitForLongPressSelection('One')
   })
 
   // https://github.com/cybersemics/em/issues/5660
@@ -159,17 +163,7 @@ describe('Double tap', () => {
 
     await pressBullet('Two', 1000)
 
-    await browser.waitUntil(
-      () =>
-        browser
-          .execute(() =>
-            Array.from(document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]')).map(
-              bullet => bullet.closest('[aria-label="child"]')?.querySelector('[data-editable]')?.textContent,
-            ),
-          )
-          .then(selected => selected.length === 1 && selected[0] === 'Two'),
-      { timeout: 5000, interval: 250, timeoutMsg: 'Two was not selected by the long press on its bullet' },
-    )
+    await waitForLongPressSelection('Two')
   })
 
   // https://github.com/cybersemics/em/issues/5660
