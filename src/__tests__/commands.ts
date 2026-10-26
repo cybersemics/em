@@ -1,18 +1,23 @@
 import { GestureResponderEvent } from 'react-native'
+import Command from '../@types/Command'
+import CommandId from '../@types/CommandId'
 import { importTextActionCreator as importText } from '../actions/importText'
 import {
   beforeInput,
   formatKeyboardShortcut,
+  getGlobalCommands,
   handleGestureEnd,
   handleGestureSegment,
   hashCommand,
   hashKeyDown,
   keyDown,
   parseCommandShortcut,
+  registeredCommands,
 } from '../commands'
 import { HOME_TOKEN } from '../constants'
 import exportContext from '../selectors/exportContext'
 import store from '../stores/app'
+import commandsStore from '../stores/commandsStore'
 import initStore from '../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../test-helpers/setCursorFirstMatch'
 
@@ -228,5 +233,39 @@ describe('isolation between tests', () => {
       beforeInput(e)
       expect(e.defaultPrevented).toBe(false)
     })
+  })
+})
+
+describe('stubbed commands', () => {
+  /** Stubs the global commands with one command bound to Cmd+K, and returns it. */
+  const stubCommand = (): Command => {
+    const command: Command = {
+      id: 'stub' as CommandId,
+      label: 'Stub',
+      keyboard: { key: 'k', meta: true },
+      multicursor: false,
+      exec: vi.fn(),
+    }
+    commandsStore.update({ commands: [command] })
+    return command
+  }
+
+  beforeEach(() => initStore())
+
+  it('run a stubbed command from its keyboard shortcut', () => {
+    const command = stubCommand()
+    keyDown(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))
+    expect(command.exec).toHaveBeenCalledTimes(1)
+  })
+
+  it('do not run a registered command while the commands are stubbed', () => {
+    stubCommand()
+    // Settings (Cmd+,)
+    keyDown(new KeyboardEvent('keydown', { key: ',', metaKey: true }))
+    expect(store.getState().showModal).toBeFalsy()
+  })
+
+  it('restore the registered commands in the next test', () => {
+    expect(getGlobalCommands()).toBe(registeredCommands)
   })
 })
