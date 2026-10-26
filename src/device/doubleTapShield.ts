@@ -155,10 +155,15 @@ const cover = (editable: HTMLElement, placeCaret: (point: Point) => boolean) => 
     const touch = e.changedTouches[0]
     // a long press that began a drag hold cleared the selection to close the keyboard
     if (!touchStart || !touch || moved(touchStart, touch) || !selection.isActive()) return
-    const target = document
-      .elementsFromPoint(touch.clientX, touch.clientY)
-      .find(el => el !== overlay)
-      ?.closest<HTMLElement>(EDITABLE_SELECTOR)
+    const under = document.elementsFromPoint(touch.clientX, touch.clientY).find(el => el !== overlay)
+    const target = under?.closest<HTMLElement>(EDITABLE_SELECTOR)
+    // A tap on a bullet, link or other fastClick button runs its click handler, as it would have without the overlay.
+    // Editables have role="button" too, and so does Content's wrapper, whose click is a tap on empty space.
+    const button = target ? null : under?.closest<HTMLElement>('[role="button"], a')
+    if (button && button.id !== 'content-wrapper') {
+      button.click()
+      return
+    }
     // a tap over another thought or note goes to it, as it would have without the overlay
     if (target && target !== editable) {
       if (document.activeElement !== target) target.focus({ preventScroll: true })

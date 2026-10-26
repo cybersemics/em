@@ -18,6 +18,33 @@ import waitForEditable from '../helpers/waitForEditable'
 import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
 
+/** Presses the center of a thought's bullet glyph for the given time. */
+const pressBullet = async (text: string, holdMs: number) => {
+  const bullet = await browser.execute((text: string) => {
+    const editable = Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === text)
+    const rect = editable
+      ?.closest('[aria-label="child"]')
+      ?.querySelector('[aria-label="bullet"] svg')
+      ?.getBoundingClientRect()
+    return rect && { x: Math.round(rect.x + rect.width / 2), y: Math.round(rect.y + rect.height / 2) }
+  }, text)
+  if (!bullet) throw new Error(`The bullet of ${text} was not found.`)
+  const screenOffsetY = await getScreenOffsetY()
+  await browser.performActions([
+    {
+      type: 'pointer',
+      id: 'pointer1',
+      parameters: { pointerType: 'touch' },
+      actions: [
+        { type: 'pointerMove', duration: 0, x: bullet.x, y: bullet.y + screenOffsetY, origin: 'viewport' },
+        { type: 'pointerDown', button: 0 },
+        { type: 'pause', duration: holdMs },
+        { type: 'pointerUp', button: 0 },
+      ],
+    },
+  ])
+}
+
 describe('Double tap', () => {
   // https://github.com/cybersemics/em/issues/5660
   it('a gesture that starts just below the caret after a double tap on the caret runs its command', async () => {
@@ -130,29 +157,7 @@ describe('Double tap', () => {
     })
     await tap(two, { pointerType: 'touch' })
 
-    const bullet = await browser.execute(() => {
-      const editable = Array.from(document.querySelectorAll('[data-editable]')).find(el => el.textContent === 'Two')
-      const rect = editable
-        ?.closest('[aria-label="child"]')
-        ?.querySelector('[aria-label="bullet"] svg')
-        ?.getBoundingClientRect()
-      return rect && { x: Math.round(rect.x + rect.width / 2), y: Math.round(rect.y + rect.height / 2) }
-    })
-    if (!bullet) throw new Error('The bullet of Two was not found.')
-    const screenOffsetY = await getScreenOffsetY()
-    await browser.performActions([
-      {
-        type: 'pointer',
-        id: 'pointer1',
-        parameters: { pointerType: 'touch' },
-        actions: [
-          { type: 'pointerMove', duration: 0, x: bullet.x, y: bullet.y + screenOffsetY, origin: 'viewport' },
-          { type: 'pointerDown', button: 0 },
-          { type: 'pause', duration: 1000 },
-          { type: 'pointerUp', button: 0 },
-        ],
-      },
-    ])
+    await pressBullet('Two', 1000)
 
     await browser.waitUntil(
       () =>
@@ -164,6 +169,30 @@ describe('Double tap', () => {
           )
           .then(selected => selected.length === 1 && selected[0] === 'Two'),
       { timeout: 5000, interval: 250, timeoutMsg: 'Two was not selected by the long press on its bullet' },
+    )
+  })
+
+  // https://github.com/cybersemics/em/issues/5660
+  it('a tap on the bullet of a neighboring thought just after a tap on the thought being edited moves the cursor to it', async () => {
+    await paste(`
+      - One
+      - Two
+    `)
+    const two = await waitForEditable('Two')
+    await tap(two, { pointerType: 'touch' })
+    await waitUntil(isKeyboardShown)
+
+    await browser.execute(() => {
+      window.em.testFlags.doubleTapWindow = 10000
+    })
+    await tap(two, { pointerType: 'touch' })
+
+    await pressBullet('One', 100)
+
+    await browser.waitUntil(
+      () =>
+        browser.execute(() => document.querySelector('[data-editing="true"] [data-editable]')?.textContent === 'One'),
+      { timeout: 5000, interval: 250, timeoutMsg: 'The cursor did not move to One' },
     )
   })
 
