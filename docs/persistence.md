@@ -62,10 +62,10 @@ Each node carries a payload: a JSON-encoded `ThoughtPayload` ([`payload.ts`](../
 
 Two app-owned tables live alongside the CRDT tables in the same SQLite database. Neither is part of the CRDT, so neither replicates; both are rebuilt or maintained locally.
 
-- **`em_lexeme_memberships`** ([`lexemes.ts`](../src/data-providers/treecrdt/lexemes.ts)) — one row per live thought, indexed by `hashThought(value)`. The provider assembles complete Lexemes from these rows, including contexts not loaded in Redux. Timestamps and author come from the thought payloads.
+- **`em_lexeme_memberships`** ([`lexemes.ts`](../src/data-providers/treecrdt/lexemes.ts)) — one row per live thought, indexed by `hashThought(value)`. The provider assembles complete Lexemes from these rows, including contexts not loaded in Redux.
 - **`em_attribute_children`** ([`attributeChildren.ts`](../src/data-providers/treecrdt/attributeChildren.ts)) — `child_id` → (`parent_id`, `value`) for `=attribute` children only, indexed by `parent_id`. This restores em's `childrenMap` contract, where meta-attributes are keyed by value rather than by id.
 
-Both indexes follow local and incoming materialization events. Their shared `em_derived_indexes_meta` checkpoint advances only after both updates succeed. On opening, a missing or outdated checkpoint rebuilds both from the tree, without changing operations. Existing databases are upgraded this way; the old `em_lexemes` cache is not read. An indexing failure rejects subsequent provider writes until reopening rebuilds the indexes.
+Both indexes follow local and incoming materialization events. Their shared `em_derived_indexes_meta` checkpoint advances only after both updates succeed. On opening, a missing or outdated checkpoint rebuilds both from the tree. An indexing failure rejects subsequent provider writes until reopening.
 
 ### Reading a thought
 
@@ -87,7 +87,7 @@ Both indexes follow local and incoming materialization events. Their shared `em_
 
 The function returns the `readonly Operation[]` it minted. That array is what the runtime forwards to remote sync.
 
-`DataProvider.updateThoughts` accepts whole thought records and optional move placements, not derived lexeme updates. It waits for the resulting index updates before resolving. Redux still derives optimistic lexemes synchronously for the view. Writes that arrive before the client is bound wait on a readiness promise; a failed initialization or a `drop` rejects those waiters so the next initialization starts clean.
+`DataProvider.updateThoughts` accepts whole thought records and optional move placements, not derived lexeme updates. It waits for the resulting index updates before resolving. Writes that arrive before the client is bound wait on a readiness promise; a failed initialization or a `drop` rejects those waiters so the next initialization starts clean.
 
 #### Order and placement
 
@@ -116,10 +116,10 @@ It also stamps every local write with a `writeId` of the form `em-local:${source
 
 [`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) then:
 
-1. Waits for local writes and indexing, coalescing buffered events into one membership read.
+1. Waits for local writes and indexing.
 2. For incoming changes only, refreshes affected thoughts and projects sibling order onto numeric ranks.
-3. Reads complete memberships for affected old and new values. If the view or queued work changed during the read, retries after persistence catches up; a retired provider cannot publish.
-4. Applies changed memberships and incoming thoughts through the *materialization bridge*. Unchanged membership results do not dispatch another update.
+3. Reads complete memberships for affected old and new values.
+4. Applies changed memberships and incoming thoughts through the *materialization bridge*.
 
 The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.
 
@@ -151,7 +151,7 @@ Failures are non-fatal by design: a failed start logs a warning and em keeps run
 
 [`redux-enhancers/pushQueue.ts`](../src/redux-enhancers/pushQueue.ts) is a Redux store enhancer that runs after every reducer. It drains `state.pushQueue` (a list of `PushBatch` objects pushed there by [`updateThoughts`](../src/actions/updateThoughts.ts) and friends) and partitions it into:
 
-- **`dbQueue`** — batches with `local || remote` set. Applied sequentially through `thoughtspaceRuntime.persistPushQueueBatches`, which wraps them in the write barrier and calls the provider with `thoughtIndexUpdates` and `movePlacements`. Lexeme updates remain in Redux; they are not persistence input. After provider persistence finishes, any `idbSynced` callback on the original batch is invoked.
+- **`dbQueue`** — batches with `local || remote` set. Applied sequentially through `thoughtspaceRuntime.persistPushQueueBatches`, which wraps them in the write barrier and calls the provider with `thoughtIndexUpdates` and `movePlacements`. Lexeme updates remain in Redux. After provider persistence finishes, any `idbSynced` callback on the original batch is invoked.
 - **`freeQueue`** — state-only batches whose `null` thought/lexeme entries indicate they should be released from the in-memory cache. Calls `db.freeThought` / `db.freeLexeme` (no-ops for TreeCRDT; the Redux-side release is what matters).
 
 The enhancer also caches a small set of critical settings (`CACHED_SETTINGS` in [`constants.ts`](../src/constants.ts)) into `localStorage` so that things like the Tutorial setting are available during the first paint before the thoughtspace hydrates. The corresponding read path is [`selectors/getSetting.ts`](../src/selectors/getSetting.ts).
@@ -201,7 +201,7 @@ Three tokens are bootstrapped in [`data-providers/thoughtspaceSession.ts`](../sr
 
 - **`accessToken`** — a per-device 21-char nanoid stored in `localStorage`. It is the device's secret: `clientId` is derived from it, and it keys the device's permissions entry. Nothing currently transmits it — the sync client connects without auth. Can be overridden by `?auth=<token>` in the URL.
 - **`tsid`** — the thoughtspace ID. Also a 21-char nanoid in `localStorage`. It is the TreeCRDT `docId`, the OPFS filename (`/treecrdt-em-${tsid}.db`), the Web Lock name, and the permissions storage key. Can be overridden by `?share=<tsid>` to switch the app onto a shared thoughtspace.
-- **`clientId`** — a public key derived as `SHA-256(accessToken)`, base64-encoded. Available asynchronously via the exported `clientIdReady` promise. Stored in Thought payloads as `updatedBy` (persisted Lexemes derive it from their members), and converted by `clientIdToReplicaId` into the 32-byte replica id TreeCRDT mints local operations under.
+- **`clientId`** — a public key derived as `SHA-256(accessToken)`, base64-encoded. Available asynchronously via the exported `clientIdReady` promise. Stored in Thought payloads as `updatedBy`, and converted by `clientIdToReplicaId` into the 32-byte replica id TreeCRDT mints local operations under.
 
 Device permissions live in [`permissionsStore.ts`](../src/data-providers/permissionsStore.ts): a [ministore](glossary.md#m) holding `Index<Share>` keyed by access token (one entry per device with access), persisted with `idb-keyval` under `em-permissions:${tsid}`. It is loaded during runtime initialization and skipped entirely in unit tests. CRUD lives in [`permissionsModel.ts`](../src/data-providers/permissionsModel.ts):
 
