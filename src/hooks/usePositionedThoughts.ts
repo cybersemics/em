@@ -18,13 +18,13 @@ const usePositionedThoughts = (
   {
     maxVisibleY,
     singleLineHeight,
-    sizes,
+    heights,
     widths,
   }: {
     maxVisibleY: number
     singleLineHeight: number
-    sizes: Index<{ height: number; isVisible: boolean; cliff?: number }>
-    /** Measured thought widths, keyed like sizes. Used to size table col1. */
+    heights: Index<{ height: number; isVisible: boolean; cliff?: number }>
+    /** Measured thought widths, keyed like heights. Used to size table col1. */
     widths: Index<number>
   },
 ): {
@@ -56,7 +56,7 @@ const usePositionedThoughts = (
   /** The value of scrollTop. Only enabled when there is a drag in progress for performance reasons. */
   const scrollTopIfDragging = scrollTopStore.useSelector(scrollTop => (dragInProgress ? scrollTop : null))
 
-  // Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
+  // Accumulate the y position as we iterate the visible thoughts since the heights may vary.
   // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
   const {
     indentCursorAncestorTables,
@@ -147,7 +147,7 @@ const usePositionedThoughts = (
 
     const treeThoughtsPositioned = treeThoughts.map((node, i) => {
       const prev = treeThoughts[i - 1] as TreeThought | undefined
-      const prevCliff = prev ? sizes[prev.key]?.cliff : 0
+      const prevCliff = prev ? heights[prev.key]?.cliff : 0
       const next = treeThoughts[i + 1] as TreeThought | undefined
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
@@ -158,7 +158,7 @@ const usePositionedThoughts = (
       // The single line height needs to be increased for thoughts that have a cliff below them.
       // For some reason this is not yielding an exact subpixel match, so the first updateHeight will not short circuit. Performance could be improved if th exact subpixel match could be determined. Still, this is better than not taking into account cliff padding.
       const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? cliffPadding : 0)
-      const height = sizes[node.key]?.height ?? singleLineHeightWithCliff
+      const height = heights[node.key]?.height ?? singleLineHeightWithCliff
 
       // sum ancestor table widths
       // ignore thought and parent since horizontal shift should begin with col 2, and tableCol1Widths is keyed by the thought with =table
@@ -242,7 +242,11 @@ const usePositionedThoughts = (
           - [empty]
       */
       const isNewCliff =
-        !sizes[node.key] && cliff < 0 && prev && node.depth >= prev.depth && (prevCliff === undefined || prevCliff < 0)
+        !heights[node.key] &&
+        cliff < 0 &&
+        prev &&
+        node.depth >= prev.depth &&
+        (prevCliff === undefined || prevCliff < 0)
 
       // Capture the y position of the current thought before it is incremented by its own height for the next thought.
       const y = yaccum - (isNewCliff ? cliffPadding : 0)
@@ -314,7 +318,7 @@ const usePositionedThoughts = (
     newRank,
     scrollTopIfDragging,
     singleLineHeight,
-    sizes,
+    heights,
     toolbarHeight,
     treeThoughts,
     widths,
