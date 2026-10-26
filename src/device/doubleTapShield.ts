@@ -21,7 +21,7 @@ const RESTORE_WINDOW = 1000
 /** How far the overlay reaches past the editable horizontally, so that a second tap just outside its text is covered too. */
 const OVERLAY_PADDING_X = 20
 
-/** How far the overlay reaches past the editable vertically. On a device, iOS paired a tap with one on the neighbouring note about ten pixels away, so the neighbours are covered as well. */
+/** How far the overlay reaches past the editable vertically. On a device, iOS paired a tap with one on the neighbouring note about ten pixels away, so the neighbours are covered as well. The value is a margin over that observation rather than a measured distance. WebKit's 44pt handleHitTestPadding is unrelated: it is the zone around a drawn range's handles whose touches WebKit takes over, not how far apart two taps of a double tap can be, which is UIKit's. */
 const OVERLAY_PADDING_Y = 60
 
 /** The thoughts and notes that a tap on the overlay can be passed to. */
