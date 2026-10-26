@@ -20,6 +20,30 @@ expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
+/** A fixed list of commands, enough to fill multiple columns of the Gesture Menu at a wide viewport. */
+const STUB_COMMANDS = [
+  'r',
+  'rd',
+  'ru',
+  'rl',
+  'rdr',
+  'rdl',
+  'rur',
+  'rul',
+  'rdu',
+  'rud',
+  'rld',
+  'rlu',
+  'rdrd',
+  'rurd',
+  'rldr',
+  'rulu',
+].map((gesture, i) => ({
+  label: `Command ${i + 1}`,
+  gesture,
+  description: `Description of command ${i + 1}.`,
+}))
+
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 it('DesktopCommandUniverse', async () => {
@@ -85,7 +109,7 @@ describe('GestureMenu', () => {
       await clickThought('Hello')
 
       // replace the registered commands with a fixed list so that the snapshot does not need to be updated every time a command is added, removed, or renamed
-      await stubCommands()
+      await stubCommands(STUB_COMMANDS)
 
       // swipe and hold r gesture so that the snapshot shows the gesture menu commands in multiple columns
       await gesture('r', { hold: true })
