@@ -23,7 +23,7 @@ it('removes only the tracked size', () => {
     })
   })
 
-  const sizesBeforeRemoval = result.current.sizes
+  const heightsBeforeRemoval = result.current.heights
 
   act(() => {
     result.current.setSize({
@@ -35,13 +35,13 @@ it('removes only the tracked size', () => {
     })
   })
 
-  expect(result.current.sizes).not.toBe(sizesBeforeRemoval)
-  expect(result.current.sizes).toEqual({
-    'thought-2': sizesBeforeRemoval['thought-2'],
+  expect(result.current.heights).not.toBe(heightsBeforeRemoval)
+  expect(result.current.heights).toEqual({
+    'thought-2': heightsBeforeRemoval['thought-2'],
   })
 })
 
-it('preserves the sizes map when the key is already absent', () => {
+it('preserves the heights map when the key is already absent', () => {
   const { result } = renderHook(useSizeTracking)
 
   act(() => {
@@ -54,7 +54,7 @@ it('preserves the sizes map when the key is already absent', () => {
     })
   })
 
-  const sizesBeforeRemoval = result.current.sizes
+  const heightsBeforeRemoval = result.current.heights
 
   act(() => {
     result.current.setSize({
@@ -66,10 +66,10 @@ it('preserves the sizes map when the key is already absent', () => {
     })
   })
 
-  expect(result.current.sizes).toBe(sizesBeforeRemoval)
+  expect(result.current.heights).toBe(heightsBeforeRemoval)
 })
 
-it('tracks widths separately and removes them with the size', () => {
+it('tracks widths separately and removes them with the height', () => {
   const { result } = renderHook(useSizeTracking)
 
   act(() => {
@@ -83,7 +83,7 @@ it('tracks widths separately and removes them with the size', () => {
     })
   })
 
-  expect(result.current.sizes).toEqual({ 'thought-1': { height: 20, cliff: 0, isVisible: true } })
+  expect(result.current.heights).toEqual({ 'thought-1': { height: 20, cliff: 0, isVisible: true } })
   expect(result.current.widths).toEqual({ 'thought-1': 100 })
 
   act(() => {
@@ -96,6 +96,6 @@ it('tracks widths separately and removes them with the size', () => {
     })
   })
 
-  expect(result.current.sizes).toEqual({})
+  expect(result.current.heights).toEqual({})
   expect(result.current.widths).toEqual({})
 })
