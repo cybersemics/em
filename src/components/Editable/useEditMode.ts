@@ -8,7 +8,6 @@ import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
 import { isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
-import doubleTapShield from '../../device/doubleTapShield'
 import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
@@ -61,8 +60,8 @@ const useEditMode = ({
   const store = useStore()
   const dispatch = useDispatch()
   const pressingRef = useRef(false)
-  // Where and when the touch in progress on this editable began.
-  const touchStartRef = useRef<{ clientX: number; clientY: number; timeStamp: number } | null>(null)
+  // Where the touch in progress on this editable began.
+  const touchStartRef = useRef<{ clientX: number; clientY: number } | null>(null)
 
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
@@ -223,7 +222,7 @@ const useEditMode = ({
     const onTouchStart = (e: TouchEvent) => {
       pressingRef.current = true
       const touch = e.touches[0]
-      touchStartRef.current = touch ? { clientX: touch.clientX, clientY: touch.clientY, timeStamp: e.timeStamp } : null
+      touchStartRef.current = touch ? { clientX: touch.clientX, clientY: touch.clientY } : null
     }
 
     /** Whether a tap on this thought may move the cursor onto it while the keyboard is open on another thought. */
@@ -238,21 +237,6 @@ const useEditMode = ({
       // the gesture and resets on the next single-finger touchstart. See #4233.
       !multitouchStore.getState() &&
       style?.visibility !== 'hidden'
-
-    /** Whether a tap on the thought being edited may place the caret itself, which it does on iOS 27 because the double tap shield takes the tap's mousedown. Mirrors the conditions under which onMouseDown places it. */
-    const canPlaceTapCaret = (state: State) =>
-      (!hasMulticursor(state) || isMultiEditing(state)) &&
-      !multitouchStore.getState() &&
-      !touchStore.getState().suppressCursorAfterTouch &&
-      state.longPress === LongPressState.Inactive
-
-    /** Places the caret where a tap on the thought being edited landed. */
-    const placeTapCaret = (state: State, point: { clientX: number; clientY: number }) => {
-      const { offset } = getCaretOffset(editable, point)
-      if (offset === null) return
-      allowDefaultSelection()
-      setCaretOffset(offset, { preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path) })
-    }
 
     /** Ends the touch, records it for ghost-click detection, and sets the cursor on the tapped thought. */
     const onTouchEnd = (e: TouchEvent) => {
@@ -286,19 +270,6 @@ const useEditMode = ({
             preserveMulticursor: true,
           }),
         )
-      })
-
-      // #5660
-      doubleTapShield.onTouchEnd(e, {
-        editable,
-        touchStart: touchStartRef.current,
-        placeCaret: point =>
-          dispatch((dispatch, getState) => {
-            const state = getState()
-            if (!canPlaceTapCaret(state)) return false
-            placeTapCaret(state, point)
-            return true
-          }),
       })
     }
 
