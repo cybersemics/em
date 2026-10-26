@@ -13,6 +13,7 @@ import isMultiEditing from '../selectors/isMultiEditing'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import multitouchStore from '../stores/multitouchStore'
 import touchStore from '../stores/touchStore'
+import head from '../util/head'
 
 /** The drag target registered by the thought beneath a press on the overlay. */
 type DragTarget = NonNullable<NonNullable<ReturnType<typeof doubleTapShield.dragTargets.get>>['current']>
@@ -44,24 +45,26 @@ const DoubleTapShield = () => {
       doubleTapShield.onTouchEnd(e, {
         editable,
         touchStart,
-        placeCaret: point =>
+        placeCaret: (target, point) =>
           dispatch((dispatch, getState) => {
-            const state = getState()
             // Replicates the guards under which useEditMode places a tap's caret, rather than calling into it, so that
             // the shield stays out of useEditMode and can be removed on its own.
             if (
-              (hasMulticursor(state) && !isMultiEditing(state)) ||
+              (hasMulticursor(getState()) && !isMultiEditing(getState())) ||
               multitouchStore.getState() ||
               touchStore.getState().suppressCursorAfterTouch ||
-              state.longPress !== LongPressState.Inactive
+              getState().longPress !== LongPressState.Inactive
             ) {
               return false
             }
 
-            const { offset } = getCaretOffset(editable, point)
+            // Editable's onFocus makes a focused thought the cursor synchronously, so the state is read after it.
+            if (document.activeElement !== target) target.focus({ preventScroll: true })
+            const state = getState()
+            const { offset } = getCaretOffset(target, point)
             if (offset === null) return true
-            selection.set(editable, { offset })
-            if (editable.hasAttribute('data-editable') && state.cursor) {
+            selection.set(target, { offset })
+            if (state.cursor && target.getAttribute('aria-label') === `editable-${head(state.cursor)}`) {
               const preserveMulticursor = isMultiEditing(state) && isMulticursorPath(state, state.cursor)
               dispatch(setCursor({ path: state.cursor, offset, preserveMulticursor }))
             }

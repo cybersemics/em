@@ -9,7 +9,6 @@ import type { LongPressProps } from '../hooks/useLongPress'
 import osVersionStore from '../stores/osVersionStore'
 import reactMinistore from '../stores/react-ministore'
 import debugLog from '../util/debugLog'
-import getCaretOffset from './getCaretOffset'
 import * as selection from './selection'
 
 /** How long a tap on the thought being edited stays covered. Longer than iOS's own double tap interval, which counted two taps 363 ms apart on a device, since a tap on the overlay still counts as the first of a pair. */
@@ -111,7 +110,7 @@ const uncover = () => {
  * of the text. WebKit cancels a tap whose target changes before it commits, which also cancels the tap that was just
  * covered, so the caller has already placed its caret, and placeCaret places it for each tap that lands on the overlay.
  */
-const cover = (editable: HTMLElement, placeCaret: (point: Point) => boolean) => {
+const cover = (editable: HTMLElement, placeCaret: (editable: HTMLElement, point: Point) => boolean) => {
   shieldStore.reset()
 
   let touchStart: (Point & { timeStamp: number }) | null = null
@@ -166,16 +165,9 @@ const cover = (editable: HTMLElement, placeCaret: (point: Point) => boolean) => 
       return
     }
     // a tap over another thought or note goes to it, as it would have without the overlay
-    if (target && target !== editable) {
-      if (document.activeElement !== target) target.focus({ preventScroll: true })
-      const { offset } = getCaretOffset(target, touch)
-      if (offset !== null) selection.set(target, { offset })
-    } else {
-      if (document.activeElement !== editable) editable.focus({ preventScroll: true })
-      placeCaret(touch)
-    }
-    // the caret to put back is now wherever the tap placed it
     const focused = target ?? editable
+    if (!placeCaret(focused, touch)) return
+    // the caret to put back is now wherever the tap placed it
     shieldStore.update({ editable: focused, caret: selection.offsetFromNode(focused) })
   })
   overlay.addEventListener('touchcancel', restartTimer)
@@ -216,8 +208,8 @@ const onTouchEnd = (
     editable: HTMLElement
     /** Where and when the touch began. */
     touchStart: (Point & { timeStamp: number }) | null
-    /** Places the caret at the point, or returns false if the tap should not place it. */
-    placeCaret: (point: Point) => boolean
+    /** Focuses the editable if needed and places the caret at the point, or returns false if the tap should not place it. */
+    placeCaret: (editable: HTMLElement, point: Point) => boolean
   },
 ) => {
   const touch = e.changedTouches[0]
@@ -229,7 +221,7 @@ const onTouchEnd = (
     !touch ||
     e.timeStamp - touchStart.timeStamp >= MAGNIFIER_DELAY ||
     moved(touchStart, touch) ||
-    !placeCaret(touch)
+    !placeCaret(editable, touch)
   ) {
     return
   }
