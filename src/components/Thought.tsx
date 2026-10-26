@@ -1,6 +1,5 @@
 import { unescape } from 'html-escaper'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { ConnectDragSource, ConnectableElement, DragSourceOptions } from 'react-dnd'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { childRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
@@ -25,7 +24,6 @@ import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
 import useDragLeave from '../hooks/useDragLeave'
 import useHideBullet from '../hooks/useHideBullet'
-import { LongPressProps } from '../hooks/useLongPress'
 import useThoughtStyle from '../hooks/useThoughtStyle'
 import useThoughtStyleContainer from '../hooks/useThoughtStyleContainer'
 import attribute from '../selectors/attribute'
@@ -563,25 +561,15 @@ const ThoughtContainer = ({
 
   const hasSelectionRange = selectionRangeStore.useState()
 
-  // the same handlers that the thought's and bullet's own elements get, for a long press that begins on the double tap overlay over them
-  const dragTargetRef = useRef<{ drag: typeof dragSpec; longPress: LongPressProps } | null>(null)
-  dragTargetRef.current = isTouch && !hasSelectionRange ? { drag: dragSpec, longPress: dragHoldResult.props } : null
-  const bulletDragTargetRef = useRef({ drag: dragSpec, longPress: dragHoldResult.props })
-  bulletDragTargetRef.current = { drag: dragSpec, longPress: dragHoldResult.props }
-  const dragSourceThought: ConnectDragSource = useCallback(
-    (node: ConnectableElement, options?: DragSourceOptions) => {
-      if (node instanceof Element) doubleTapShield.dragTargets.set(node, dragTargetRef)
-      return dragSourceEditable(node, options)
-    },
-    [dragSourceEditable],
-  )
-  const dragSourceBulletWithShield: ConnectDragSource = useCallback(
-    (node: ConnectableElement, options?: DragSourceOptions) => {
-      if (node instanceof Element) doubleTapShield.dragTargets.set(node, bulletDragTargetRef)
-      return dragSourceBullet(node, options)
-    },
-    [dragSourceBullet],
-  )
+  // #5660
+  const { dragSourceEditable: dragSourceThought, dragSourceBullet: dragSourceBulletRegistered } =
+    doubleTapShield.useDragTargets({
+      drag: dragSpec,
+      longPress: dragHoldResult.props,
+      thoughtLongPress: isTouch && !hasSelectionRange,
+      dragSourceEditable,
+      dragSourceBullet,
+    })
 
   // thought does not exist
   if (value == null) return null
@@ -640,7 +628,7 @@ const ThoughtContainer = ({
         {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
           <div style={alignmentTransition.bullet}>
             <Bullet
-              dragSource={dragSourceBulletWithShield}
+              dragSource={dragSourceBulletRegistered}
               longPressProps={dragHoldResult.props}
               isContextPending={isContextPending}
               isDragging={isDragging}

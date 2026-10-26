@@ -1,3 +1,5 @@
+import { useCallback, useRef } from 'react'
+import { ConnectDragSource, ConnectableElement, DragSourceOptions } from 'react-dnd'
 import { token } from '../../styled-system/tokens'
 import Timer from '../@types/Timer'
 import { isIOS, isSafari, isTouch } from '../browser'
@@ -56,11 +58,47 @@ const shieldStore = reactMinistore<{
   },
 )
 
-/** The thoughts that a long press on the overlay can drag, keyed by their element, each with its own drag source spec and long press handlers. Registered by Thought. */
-const dragTargets = new WeakMap<
-  Element,
-  { current: { drag: ReturnType<typeof useDragAndDropThought>['dragSpec']; longPress: LongPressProps } | null }
->()
+/** A thought's drag source spec and long press handlers, borrowed by a long press that begins on the overlay over it. */
+type DragTarget = { drag: ReturnType<typeof useDragAndDropThought>['dragSpec']; longPress: LongPressProps }
+
+/** The thoughts that a long press on the overlay can drag, keyed by their element and their bullet's. Registered by useDragTargets. */
+const dragTargets = new WeakMap<Element, { current: DragTarget | null }>()
+
+/** Registers a thought's element and its bullet's in dragTargets as they mount, by wrapping their drag source connectors. */
+const useDragTargets = ({
+  drag,
+  longPress,
+  thoughtLongPress,
+  dragSourceEditable,
+  dragSourceBullet,
+}: DragTarget & {
+  /** Whether the thought itself takes a long press, as its bullet always does. */
+  thoughtLongPress: boolean
+  dragSourceEditable: ConnectDragSource
+  dragSourceBullet: ConnectDragSource
+}) => {
+  const thoughtRef = useRef<DragTarget | null>(null)
+  thoughtRef.current = thoughtLongPress ? { drag, longPress } : null
+  const bulletRef = useRef<DragTarget | null>(null)
+  bulletRef.current = { drag, longPress }
+
+  const dragSourceThought: ConnectDragSource = useCallback(
+    (node: ConnectableElement, options?: DragSourceOptions) => {
+      if (node instanceof Element) dragTargets.set(node, thoughtRef)
+      return dragSourceEditable(node, options)
+    },
+    [dragSourceEditable],
+  )
+  const dragSourceBulletRegistered: ConnectDragSource = useCallback(
+    (node: ConnectableElement, options?: DragSourceOptions) => {
+      if (node instanceof Element) dragTargets.set(node, bulletRef)
+      return dragSourceBullet(node, options)
+    },
+    [dragSourceBullet],
+  )
+
+  return { dragSourceEditable: dragSourceThought, dragSourceBullet: dragSourceBulletRegistered }
+}
 
 /** Removes the overlay, leaving the caret armed for the rest of its restore window. */
 const uncover = () => {
@@ -221,6 +259,6 @@ const onSelectionChange = () => {
   }
 }
 
-const doubleTapShield = { onTouchEnd, onSelectionChange, shieldStore, dragTargets }
+const doubleTapShield = { onTouchEnd, onSelectionChange, shieldStore, dragTargets, useDragTargets }
 
 export default doubleTapShield
