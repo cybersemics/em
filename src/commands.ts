@@ -44,6 +44,7 @@ import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import commandEmitter from './stores/commandEmitter'
+import commandsStore from './stores/commandsStore'
 import editingValueStore from './stores/editingValueStore'
 import gestureStore from './stores/gestureStore'
 import heldKeysStore from './stores/heldKeysStore'
@@ -59,7 +60,15 @@ import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
 import saveDebugLog from './util/saveDebugLog'
 
-export const globalCommands: Command[] = Object.values(commandsObject)
+/** The commands registered in src/commands/index.ts. */
+export const registeredCommands: Command[] = Object.values(commandsObject)
+
+/** Returns the commands that the app lists and matches against keyboard shortcuts and gestures: the registered commands, or the commands a test has stubbed in their place with testHelpers.stubCommands. */
+export const getGlobalCommands = (): Command[] => commandsStore.getState().commands ?? registeredCommands
+
+/** A hook that returns the global commands and re-renders when a test stubs them. See getGlobalCommands. */
+export const useGlobalCommands = (): Command[] =>
+  commandsStore.useSelector(state => state.commands) ?? registeredCommands
 
 export { commandEmitter }
 
@@ -245,14 +254,16 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | Key[] | string): 
   )
 }
 
-/** Initializes command indices and logs keyboard shortcut conflicts. */
-const index = (): {
+/** Indexes the given commands and logs keyboard shortcut conflicts. */
+const index = (
+  commands: Command[],
+): {
   commandKeyIndex: Index<Command>
   commandIdIndex: Index<Command>
   commandGestureIndex: Index<Command>
 } => {
   // index commands for O(1) lookup by keyboard
-  const commandKeyIndex: Index<Command> = keyValueBy(globalCommands, (command, i, accum) => {
+  const commandKeyIndex: Index<Command> = keyValueBy(commands, (command, i, accum) => {
     if (!command.keyboard) return null
 
     // Handle both single keyboard shortcut and arrays of shortcuts
@@ -274,12 +285,12 @@ const index = (): {
   })
 
   // index command for O(1) lookup by id
-  const commandIdIndex: Index<Command> = keyValueBy(globalCommands, command =>
+  const commandIdIndex: Index<Command> = keyValueBy(commands, command =>
     command.id ? { [command.id]: command } : null,
   )
 
   // index command for O(1) lookup by gesture
-  const commandGestureIndex: Index<Command> = keyValueBy(globalCommands, command =>
+  const commandGestureIndex: Index<Command> = keyValueBy(commands, command =>
     command.gesture
       ? {
           // command.gesture may be a string or array of strings
@@ -310,7 +321,20 @@ const clearGestureMenuTimer = () => {
   gestureMenuTimerStore.update({ timer: null })
 }
 
-const { commandKeyIndex, commandIdIndex, commandGestureIndex } = index()
+/** The indices of the global commands, rebuilt when a test stubs them. */
+let indicesCache: { commands: Command[]; indices: ReturnType<typeof index> } | null = null
+
+/** Gets the indices of the current global commands. See getGlobalCommands. */
+const getIndices = () => {
+  const commands = getGlobalCommands()
+  if (indicesCache?.commands !== commands) {
+    indicesCache = { commands, indices: index(commands) }
+  }
+  return indicesCache.indices
+}
+
+// Look up ids among the registered commands even when a test has stubbed the global commands, since commandById is only called with ids of registered commands.
+const { commandIdIndex } = getIndices()
 
 /** Gets the canonical gesture of the command as a string, ignoring aliases. Returns an empty string if the command does not have a gesture. */
 export const gestureString = (command: Command): Gesture =>
@@ -792,6 +816,7 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
   // When the gesture menu  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
 
   const openMobileCommandUniverseGesture = gestureString(openMobileCommandUniverseCommand)
+  const { commandGestureIndex } = getIndices()
 
   // If sequence ends with help gesture, use help command.
   // If sequence starts with a chainable command gesture and has additional swipes, use the chained command with the longest matching gesture.
@@ -813,7 +838,7 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
   // The chainable command that is in progress (only if there is at least one additional swipe). Otherwise null.
   const chainableCommandInProgressExclusive: Command | undefined = command
     ? undefined
-    : globalCommands.find(
+    : getGlobalCommands().find(
         command =>
           command.isChainable &&
           sequence?.toString().startsWith(gestureString(command)) &&
@@ -995,7 +1020,7 @@ export const keyDown = (e: KeyboardEvent) => {
   // disable if desktop command universe is displayed
   if (state.showDesktopCommandUniverse) return
 
-  const command = commandKeyIndex[hashKeyDown(e)]
+  const command = getIndices().commandKeyIndex[hashKeyDown(e)]
   keyCommandIdStore.update({ id: command?.id ?? null })
 
   // disable if modal is shown, except for navigation commands
