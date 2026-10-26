@@ -18,7 +18,7 @@ import touchStore from '../stores/touchStore'
 type DragTarget = NonNullable<NonNullable<ReturnType<typeof doubleTapShield.dragTargets.get>>['current']>
 
 /** Passes each tap on a thought or note to doubleTapShield, and makes the double tap overlay a drag source, so that a long press that begins on it drags the thought beneath it, as it would without the overlay. Each press borrows the drag spec and long press handlers that the thought registered in doubleTapShield.dragTargets. */
-const DoubleTapShieldDragSource = () => {
+const DoubleTapShield = () => {
   const dispatch = useDispatch()
   const overlay = doubleTapShield.shieldStore.useSelector(state => state.overlay)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
@@ -130,4 +130,4 @@ const DoubleTapShieldDragSource = () => {
   return null
 }
 
-export default DoubleTapShieldDragSource
+export default DoubleTapShield
