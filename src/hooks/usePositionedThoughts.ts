@@ -19,10 +19,13 @@ const usePositionedThoughts = (
     maxVisibleY,
     singleLineHeight,
     sizes,
+    widths,
   }: {
     maxVisibleY: number
     singleLineHeight: number
-    sizes: Index<{ height: number; width?: number; isVisible: boolean; cliff?: number }>
+    sizes: Index<{ height: number; isVisible: boolean; cliff?: number }>
+    /** Measured thought widths, keyed like sizes. Used to size table col1. */
+    widths: Index<number>
   },
 ): {
   indentCursorAncestorTables: number
@@ -127,7 +130,7 @@ const usePositionedThoughts = (
     // Unlike other tables, the root is never rendered as a node in linearizeTree, so it never gets visibleChildrenKeys and its col1 width is never registered below.
     // Register it here, keyed by HOME_TOKEN, from the measured widths of the visible top-level col1 thoughts, so its col2 descendants can be shifted right (see ancestorTableWidths).
     const homeTableCol1Width = treeThoughts.reduce(
-      (accum, node) => (node.depth === 0 && node.isTableCol1 ? Math.max(accum, sizes[node.key]?.width || 0) : accum),
+      (accum, node) => (node.depth === 0 && node.isTableCol1 ? Math.max(accum, widths[node.key] || 0) : accum),
       0,
     )
     if (homeTableCol1Width > 0) {
@@ -169,7 +172,7 @@ const usePositionedThoughts = (
       // set the width of table col1 to the minimum width of all visible thoughts in the column
       if (node.visibleChildrenKeys) {
         const tableCol1Width = node.visibleChildrenKeys?.reduce(
-          (accum, childKey) => Math.max(accum, sizes[childKey]?.width || 0),
+          (accum, childKey) => Math.max(accum, widths[childKey] || 0),
           0,
         )
         if (tableCol1Width > 0) {
@@ -314,6 +317,7 @@ const usePositionedThoughts = (
     sizes,
     toolbarHeight,
     treeThoughts,
+    widths,
   ])
 
   return {

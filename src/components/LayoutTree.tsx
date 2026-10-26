@@ -26,7 +26,7 @@ import TreeNode from './TreeNode'
 const CONTENT_PADDING_BOTTOM = 153
 
 /** Calculates the height of a single-line thought. Initially uses an estimated height, then uses the height measured from thn DOM. */
-const useSingleLineHeight = (sizes: Index<{ height: number; width?: number; isVisible: boolean }>) => {
+const useSingleLineHeight = (sizes: Index<{ height: number; isVisible: boolean }>) => {
   const fontSize = useSelector(state => state.fontSize)
   // singleLineHeight is the measured height of a single line thought.
   // If no sizes have been measured yet, use the estimated height.
@@ -135,7 +135,7 @@ const useLayoutTreeTop = (
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const editing = useSelector(state => state.isKeyboardOpen)
-  const { sizes, setSize } = useSizeTracking()
+  const { sizes, widths, setSize } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
@@ -236,6 +236,7 @@ const LayoutTree = () => {
       maxVisibleY: viewportHeight - (layoutTop + navbarHeight),
       singleLineHeight,
       sizes,
+      widths,
     },
   )
 

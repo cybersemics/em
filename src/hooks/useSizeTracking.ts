@@ -2,20 +2,26 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 
+/** Returns a copy of the record without the given key, or the same record if the key is absent, so that removing an untracked key does not trigger a re-render. */
+const omitKey = <T>(record: Index<T>, key: string): Index<T> => {
+  if (!(key in record)) return record
+  const recordNew = { ...record }
+  delete recordNew[key]
+  return recordNew
+}
+
 /** Dynamically update and remove sizes for different keys. */
 const useSizeTracking = () => {
   // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
-  const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
+  const [sizes, setSizes] = useState<Index<{ height: number; isVisible: boolean; cliff: number }>>({})
+  // Track thought widths separately from sizes. Only table col1 widths are read, to size the column.
+  const [widths, setWidths] = useState<Index<number>>({})
   const unmounted = useRef(false)
 
   const removeSize = useCallback((key: string) => {
     if (unmounted.current) return
-    setSizes(sizesOld => {
-      if (!(key in sizesOld)) return sizesOld
-      const sizesNew = { ...sizesOld }
-      delete sizesNew[key]
-      return sizesNew
-    })
+    setSizes(sizesOld => omitKey(sizesOld, key))
+    setWidths(widthsOld => omitKey(widthsOld, key))
   }, [])
 
   /** Update the size record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
@@ -36,17 +42,19 @@ const useSizeTracking = () => {
     }) => {
       if (height !== null) {
         setSizes(sizesOld =>
-          height === sizesOld[key]?.height && width === sizesOld[key]?.width && isVisible === sizesOld[key]?.isVisible
+          height === sizesOld[key]?.height && isVisible === sizesOld[key]?.isVisible
             ? sizesOld
             : {
                 ...sizesOld,
                 [key]: {
                   height,
-                  width: width || undefined,
                   cliff,
                   isVisible,
                 },
               },
+        )
+        setWidths(widthsOld =>
+          !width ? omitKey(widthsOld, key) : width === widthsOld[key] ? widthsOld : { ...widthsOld, [key]: width },
         )
       } else {
         removeSize(key)
@@ -64,9 +72,10 @@ const useSizeTracking = () => {
   return useMemo(
     () => ({
       sizes,
+      widths,
       setSize,
     }),
-    [sizes, setSize],
+    [sizes, widths, setSize],
   )
 }
 
