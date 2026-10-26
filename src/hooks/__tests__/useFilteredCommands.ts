@@ -165,7 +165,7 @@ vi.mock('../../commands', async () => {
     gestureString: actual.gestureString,
     hashCommand: actual.hashCommand,
     parseCommandShortcut: actual.parseCommandShortcut,
-    useGlobalCommands: () => globalCommands,
+    globalCommands,
   }
 })
 

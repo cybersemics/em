@@ -23,7 +23,7 @@ import CommandDifficulty from '../@types/CommandDifficulty'
 import CommandGroup from '../@types/CommandGroup'
 import CommandSortType from '../@types/CommandSortType'
 import { isTouch } from '../browser'
-import { commandById, registeredCommands } from '../commands'
+import { commandById, globalCommands } from '../commands'
 import { COMMAND_DIFFICULTIES } from '../constants'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
@@ -37,8 +37,7 @@ const commandsGroupedMap = keyValueBy(
   COMMAND_DIFFICULTIES.flatMap(level => level.groups.flatMap(group => group.commands)),
   true,
 )
-// The registered commands rather than getGlobalCommands, since this guards the code, not the commands a test has stubbed.
-const commandsUngrouped = registeredCommands.filter(
+const commandsUngrouped = globalCommands.filter(
   command => !commandsGroupedMap[command.id] && !command.hideFromHelp && (isTouch ? command.gesture : command.keyboard),
 )
 if (commandsUngrouped.length > 0) {

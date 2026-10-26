@@ -1,7 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 import { Device } from '@capacitor/device'
 import moize from 'moize'
-import Command from './@types/Command'
 import CommandId from './@types/CommandId'
 import Context from './@types/Context'
 import MimeType from './@types/MimeType'
@@ -26,7 +25,6 @@ import getLexeme from './selectors/getLexeme'
 import getThoughtById from './selectors/getThoughtById'
 import thoughtToContext from './selectors/thoughtToContext'
 import store from './stores/app'
-import commandsStore from './stores/commandsStore'
 import offlineStatusStore, { init as initOfflineStatusStore } from './stores/offlineStatusStore'
 import osVersionStore from './stores/osVersionStore'
 import storageStatusStore from './stores/storageStatusStore'
@@ -179,18 +177,6 @@ const testHelpers = {
     executeCommand(commandById(id))
   },
   dropThoughtspace: thoughtspaceRuntime.drop,
-  // Replaces the global commands with inert commands built from plain data, which is all a test can pass into the page, so that a snapshot of a command list does not change whenever a command is added, removed, or renamed. Null restores the registered commands, as does resetStores. See getGlobalCommands.
-  stubCommands: (stubs: Pick<Command, 'label' | 'gesture' | 'keyboard' | 'description'>[] | null) => {
-    commandsStore.update({
-      commands:
-        stubs?.map(stub => ({
-          ...stub,
-          id: stub.label as CommandId,
-          multicursor: false,
-          exec: () => {},
-        })) ?? null,
-    })
-  },
   waitForInitialized,
   waitForThoughtspaceRuntimeIdle: thoughtspaceRuntime.waitForIdle,
   importToContext: withDispatch(importToContext),

@@ -62,21 +62,13 @@ A command bound to an array of keyboard shortcuts also receives `keyboardIndex`,
 
 ### Discovery and indexing
 
-At startup, [`commands.ts`](../src/commands.ts) flattens the barrel into `registeredCommands: Command[]`. Everything that lists commands or matches input against them reads the **global commands** instead, through `getGlobalCommands()`, or `useGlobalCommands()` in a component, which re-renders when they change. The global commands are the registered commands unless a test has replaced them with stubs (see [Stubbing the global commands](#stubbing-the-global-commands)). `index()` builds three indices:
+At startup, [`commands.ts`](../src/commands.ts) flattens the barrel into `globalCommands: Command[]` and builds three indices via `index()`:
 
 - **`commandKeyIndex`** — `hash(keyboard) → Command`. Used by `keyDown` for O(1) shortcut lookup.
 - **`commandIdIndex`** — `id → Command`. Used by `commandById(id)`. Use this only when the id is dynamic; otherwise prefer a static import.
 - **`commandGestureIndex`** — `gestureSequence → Command`. Used by `handleGestureEnd` for O(1) gesture lookup.
 
-The key and gesture indices are built from the global commands, and rebuilt when they change. The id index is built from the registered commands at startup and never changes, since `commandById` is only called with the ids of registered commands.
-
 If two commands share the same keyboard hash, `index()` logs a `console.error` at startup naming both — so collisions surface early.
-
-### Stubbing the global commands
-
-A snapshot of a command list, such as the Gesture Menu or the Command Universe, would otherwise change whenever a command is added, removed, or renamed. A test can replace the global commands with a fixed list through `window.em.testHelpers.stubCommands(stubs)`, which takes plain data (`label`, `gesture`, `keyboard`, `description`), the only thing a Puppeteer test can pass into the page, and builds inert commands from it. The stubs replace the registered commands everywhere the global commands are read: every command list, keyboard shortcuts, and gestures. `stubCommands(null)` restores the registered commands, as does `resetStores`, since the stubs are held in [`commandsStore`](../src/stores/commandsStore.ts).
-
-Two readers keep using the registered commands: `commandById`, as above, and the guard in [`useCommandList`](../src/hooks/useCommandList.ts) that every visible registered command belongs to a group in `COMMAND_DIFFICULTIES`, since it checks the code rather than what a test displays.
 
 ### Keyboard activation
 
@@ -195,7 +187,7 @@ Description components can dispatch the Command Universe navigation actions when
 
 The router and route types update from the registry. No separate id union, props union, or routing switch needs editing. `commandUniverseNavigateActionCreator` calls are checked against the registered component's props. Add tests for the new page's behavior.
 
-Both filter the global commands by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`.
+Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`.
 
 Help and Customize Toolbar present commands grouped by `COMMAND_DIFFICULTIES` (in [`constants.ts`](../src/constants.ts)), a two-level hierarchy of difficulty levels containing category groups, which defines the order: Beginner (Creating Thoughts → Navigation → Contexts) → Intermediate (Categorizing → Nudging → Deleting) → Advanced (Creating Thoughts II → Edit History → Notes → Views).
 

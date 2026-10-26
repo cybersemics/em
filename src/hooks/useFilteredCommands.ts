@@ -5,7 +5,7 @@ import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
-import { chainCommand, gestureString, hashCommand, parseCommandShortcut, useGlobalCommands } from '../commands'
+import { chainCommand, gestureString, globalCommands, hashCommand, parseCommandShortcut } from '../commands'
 import gestureStore from '../stores/gestureStore'
 
 /** Returns true if the command can be executed. */
@@ -28,7 +28,6 @@ const useFilteredCommands = (
     sortActiveCommandsFirst?: boolean
   },
 ): Command[] => {
-  const globalCommands = useGlobalCommands()
   const gestureInProgress = gestureStore.useSelector(state => state.gesture as string)
   // The chainable command that is in progress (including when there are no other swipes). Otherwise null.
   const chainableCommandInProgressInclusive: Command | undefined = globalCommands.find(
@@ -155,7 +154,6 @@ const useFilteredCommands = (
     })
     return sorted
   }, [
-    globalCommands,
     gestureInProgress,
     sortActiveCommandsFirst,
     search,

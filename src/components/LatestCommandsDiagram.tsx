@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
-import { gestureString, useGlobalCommands } from '../commands'
+import { gestureString, globalCommands } from '../commands'
 import FadeTransition from './FadeTransition'
 import GestureDiagram from './GestureDiagram'
 
@@ -9,7 +9,7 @@ import GestureDiagram from './GestureDiagram'
  * Shows latest activated commands diagram.
  */
 const LatestCommandsDiagram: FC<{ position?: 'middle' | 'bottom' }> = ({ position = 'middle' }) => {
-  const latestCommands = useGlobalCommands().slice(0, 2)
+  const latestCommands = globalCommands.slice(0, 2)
 
   const latestCommandsRef = useRef(latestCommands)
 

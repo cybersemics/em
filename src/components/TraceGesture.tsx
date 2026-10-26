@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { css } from '../../styled-system/css'
-import { gestureString, getGlobalCommands } from '../commands'
+import { gestureString, globalCommands } from '../commands'
 import { GESTURE_GLOW_BLUR, Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
@@ -50,7 +50,7 @@ const useGestureCancelled = () => {
     state =>
       state.gesture &&
       state.gestureMenuAnimationState !== 'hidden' &&
-      !getGlobalCommands().some(command => !command.hideFromHelp && gestureString(command) === state.gesture),
+      !globalCommands.some(command => !command.hideFromHelp && gestureString(command) === state.gesture),
   )
 
   return invalidGesture
