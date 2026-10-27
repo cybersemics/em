@@ -4,7 +4,8 @@ import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer
 import type { ThoughtspaceStorage } from '../../data-providers/thoughtspace'
 import createId from '../../util/createId'
 import deviceEmulation from './helpers/deviceEmulation'
-import preloadTestFlags, { PreloadedTestFlags } from './helpers/preloadTestFlags'
+import preloadTestFlags from './helpers/preloadTestFlags'
+import { suiteTestFlags } from './helpers/useTestFlags'
 import { page, setPage } from './session'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -14,7 +15,6 @@ declare namespace global {
 
 let context: BrowserContext
 let activeThoughtspaceStorage: ThoughtspaceStorage = 'memory'
-let suiteTestFlags: PreloadedTestFlags = {}
 
 /** Opens an additional page with the requested thoughtspace storage. */
 export const createTreecrdtTestPage = async (
@@ -37,20 +37,6 @@ export const usePersistentTreecrdtStorage = (): ThoughtspaceStorage => {
   })
 
   return 'persistent'
-}
-
-/** Preloads test flags into the page of every test in the calling describe block or file, before setup starts the app, so that a flag read once at startup needs no reload. */
-export const useTestFlags = (flags: PreloadedTestFlags): void => {
-  let previous: PreloadedTestFlags = {}
-
-  beforeAll(() => {
-    previous = suiteTestFlags
-    suiteTestFlags = { ...suiteTestFlags, ...flags }
-  })
-
-  afterAll(() => {
-    suiteTestFlags = previous
-  })
 }
 
 /** Opens em in a new incognito window in Puppeteer. */
@@ -90,7 +76,7 @@ const setup = async ({
     localStorage.setItem('accessToken', sessionId)
   }, sessionId)
 
-  await preloadTestFlags(page, { ...suiteTestFlags, thoughtspaceStorage: activeThoughtspaceStorage })
+  await preloadTestFlags(page, { ...suiteTestFlags(), thoughtspaceStorage: activeThoughtspaceStorage })
 
   page.on('dialog', async dialog => dialog.accept())
 
@@ -107,6 +93,7 @@ const setup = async ({
         break
       case 'info':
       case 'log':
+        // eslint-disable-next-line no-console
         console[messageType](text)
         break
       // ConsoleMessage 'warning needs to be converted to native console 'warn'
