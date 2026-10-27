@@ -25,6 +25,7 @@ import head from '../../util/head'
 import isCommandKey from '../../util/isCommandKey'
 import lastTouch from './lastTouch'
 import useCaretRestore from './useCaretRestore'
+import useRevertCorrection from './useRevertCorrection'
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
@@ -68,6 +69,7 @@ const useEditMode = ({
   const editingOrOnCursor = isCursor || editing
 
   useCaretRestore({ editableRef: contentRef, enabled: isCursor && !!editing })
+  useRevertCorrection({ editableRef: contentRef, enabled: isCursor && !!editing, path })
 
   useEffect(
     () => {
