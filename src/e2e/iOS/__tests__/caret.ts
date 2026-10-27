@@ -37,6 +37,9 @@ const getCaretOffsetIn = (element: WebdriverIO.Element) =>
     return range.toString().length
   }, element)
 
+/** Returns the element's text content. Read in the page, since Safari's WebDriver does not implement getProperty. */
+const getTextContent = (element: WebdriverIO.Element) => browser.execute(el => el.textContent, element)
+
 // tests succeeds individually, but fails when there are too many tests running in parallel
 // https://github.com/cybersemics/em/issues/1475
 // https://github.com/cybersemics/em/issues/1523
@@ -225,8 +228,8 @@ describe('Caret', () => {
     await tap(note, { pointerType: 'touch', offset: 'Sed '.length })
     await tapEditMenuItem('Paste')
 
-    await waitUntil(async () => (await note.getProperty('textContent')) !== 'Sed tortor nunc')
-    expect(await note.getProperty('textContent')).toBe('Sed Ipsumtortor nunc')
+    await waitUntil(async () => (await getTextContent(note)) !== 'Sed tortor nunc')
+    expect(await getTextContent(note)).toBe('Sed Ipsumtortor nunc')
     // measure the caret relative to the whole note, since the paste may leave the caret in a text node nested in it
     expect(await getCaretOffsetIn(note)).toBe('Sed Ipsum'.length)
   })
