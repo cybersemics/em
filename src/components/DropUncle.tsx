@@ -31,7 +31,7 @@ const DropUncle = ({
     testFlags.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : '',
   )
 
-  const { isHovering, dropTarget } = useDragAndDropThought({
+  const { isHovering, isOver, dropTarget } = useDragAndDropThought({
     path,
     simplePath,
     hoverZone: DropThoughtZone.SubthoughtsDrop,
@@ -54,6 +54,7 @@ const DropUncle = ({
       )}
       style={{ height: `${1.9 + dropTargetHeight}em` }}
       ref={dndRef(dropTarget)}
+      data-drop-over={isOver}
     >
       {testFlags.simulateDrop && (
         <span
