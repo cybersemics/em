@@ -26,6 +26,17 @@ import waitForEditable from '../helpers/waitForEditable'
 import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
 
+/** Returns the caret's plain-text offset within the element, counted across any nested nodes, or null if the caret is not in it. Mirrors selection.offsetFromNode, which browser.execute cannot import. */
+const getCaretOffsetIn = (element: WebdriverIO.Element) =>
+  browser.execute(el => {
+    const selection = window.getSelection()
+    if (!selection?.focusNode || !el.contains(selection.focusNode)) return null
+    const range = document.createRange()
+    range.selectNodeContents(el)
+    range.setEnd(selection.focusNode, selection.focusOffset)
+    return range.toString().length
+  }, element)
+
 // tests succeeds individually, but fails when there are too many tests running in parallel
 // https://github.com/cybersemics/em/issues/1475
 // https://github.com/cybersemics/em/issues/1523
@@ -214,23 +225,10 @@ describe('Caret', () => {
     await tap(note, { pointerType: 'touch', offset: 'Sed '.length })
     await tapEditMenuItem('Paste')
 
-    await waitUntil(() =>
-      browser.execute(() => document.querySelector('[aria-label="note-editable"]')?.textContent !== 'Sed tortor nunc'),
-    )
-    const { text, caretOffset } = await browser.execute(() => {
-      const editable = document.querySelector('[aria-label="note-editable"]')!
-      const selection = window.getSelection()!
-      // measure the caret relative to the whole note, since the paste may leave the caret in a text node nested in it
-      const range = document.createRange()
-      range.selectNodeContents(editable)
-      range.setEnd(selection.focusNode!, selection.focusOffset)
-      return {
-        text: editable.textContent,
-        caretOffset: editable.contains(selection.focusNode) ? range.toString().length : null,
-      }
-    })
-    expect(text).toBe('Sed Ipsumtortor nunc')
-    expect(caretOffset).toBe('Sed Ipsum'.length)
+    await waitUntil(async () => (await note.getProperty('textContent')) !== 'Sed tortor nunc')
+    expect(await note.getProperty('textContent')).toBe('Sed Ipsumtortor nunc')
+    // measure the caret relative to the whole note, since the paste may leave the caret in a text node nested in it
+    expect(await getCaretOffsetIn(note)).toBe('Sed Ipsum'.length)
   })
 
   it.skip('Tap empty content while keyboard up', async () => {
