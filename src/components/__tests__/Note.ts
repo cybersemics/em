@@ -300,6 +300,53 @@ describe('=note', () => {
 
     expectPathToEqual(store.getState(), store.getState().cursor, ['b'])
   })
+
+  // https://github.com/cybersemics/em/issues/3679
+  test.skip('names adding and editing a note in the undo and redo alerts', async () => {
+    await dispatch([importText({ text: '- a' }), setCursor(['a'])])
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'n', metaKey: true, altKey: true })
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    await act(async () => {
+      fireEvent.input(screen.getByLabelText('note-editable'), { target: { innerHTML: 'Redoo' } })
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true })
+    })
+    const undoEdit = store.getState().alert?.value
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true })
+    })
+    const undoAdd = store.getState().alert?.value
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true, shiftKey: true })
+    })
+    const redoAdd = store.getState().alert?.value
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true, shiftKey: true })
+    })
+    const redoEdit = store.getState().alert?.value
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect({ undoEdit, undoAdd, redoAdd, redoEdit }).toEqual({
+      undoEdit: 'Undo: Edit Note',
+      undoAdd: 'Undo: Add Note',
+      redoAdd: 'Redo: Add Note',
+      redoEdit: 'Redo: Edit Note',
+    })
+  })
 })
 
 describe('=note/=path', () => {
