@@ -392,6 +392,7 @@ const createTreecrdtDataProvider = () => {
       },
       updateThoughts: async updates => {
         await waitForIndexes()
+        if (updates.favoriteOrder) await lexemes.setFavoriteOrder(updates.favoriteOrder)
         const operations = await updateThoughtsForClient({ client, replicaId }, updates)
         await waitForIndexes()
         return operations
@@ -403,6 +404,7 @@ const createTreecrdtDataProvider = () => {
       pending: [],
       isActive: () => subscribed && activeDb === clientDb,
     }
+    let publicationFailed = false
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
       // A failed update poisons this binding's queue: later events must not checkpoint over incomplete indexes.
@@ -416,10 +418,13 @@ const createTreecrdtDataProvider = () => {
       void indexQueue.catch(err => console.error('TreeCRDT derived indexing failed', err))
       if (!materializationContext) return
       materializationContext.pending.push({ event, keys })
-      if (materializationContext.pending.length === 1) {
-        void enqueueMaterializedThoughtsToStore(materializationContext).catch(err =>
-          console.error('TreeCRDT materialized UI sync failed', err),
-        )
+      // A failed publication retains its events, so the next event must retry even when the buffer was not empty.
+      if (materializationContext.pending.length === 1 || publicationFailed) {
+        publicationFailed = false
+        void enqueueMaterializedThoughtsToStore(materializationContext).catch(err => {
+          publicationFailed = true
+          console.error('TreeCRDT materialized UI sync failed', err)
+        })
       }
     })
 

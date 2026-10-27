@@ -15,6 +15,8 @@ export interface DataProvider {
   updateThoughts: (args: {
     thoughtIndexUpdates: Index<Thought | null>
     movePlacements?: Index<ThoughtId | null>
+    /** Explicit Favorites ordering preference, independent of derived membership. */
+    favoriteOrder?: ThoughtId[]
   }) => Promise<unknown>
   freeThought: (id: ThoughtId) => Promise<void>
   freeLexeme: (key: string) => Promise<void>

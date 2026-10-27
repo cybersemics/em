@@ -81,6 +81,7 @@ const updateThoughts = (
   state: State,
   {
     cursorOffset,
+    favoriteOrder,
     lexemeIndexUpdates,
     thoughtIndexUpdates,
     recentlyEdited,
@@ -95,7 +96,12 @@ const updateThoughts = (
     repairCursor,
   }: UpdateThoughtsOptions,
 ) => {
-  if (Object.keys(thoughtIndexUpdates).length === 0 && Object.keys(lexemeIndexUpdates).length === 0) return state
+  if (
+    favoriteOrder === undefined &&
+    Object.keys(thoughtIndexUpdates).length === 0 &&
+    Object.keys(lexemeIndexUpdates).length === 0
+  )
+    return state
 
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
@@ -140,6 +146,7 @@ const updateThoughts = (
 
   // updates are queued, detected by the pushQueue middleware, and sync'd with the local and remote stores
   const batch: PushBatch = {
+    favoriteOrder,
     idbSynced,
     lexemeIndexUpdates,
     local,

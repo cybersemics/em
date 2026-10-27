@@ -118,6 +118,34 @@ it('retries stale membership readback after a newer optimistic rename and persis
   expect(snapshot.thoughtIndex[THOUGHT_ID].value).toBe('b')
 })
 
+it('publishes pending memberships on the next edit after a readback failure', async () => {
+  const getText = client.runner.getText.bind(client.runner)
+  const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const reader = vi.spyOn(client.runner, 'getText').mockImplementation((sql, params) => {
+    if (sql.includes("'key', lexeme_hash")) throw new Error('transient membership read')
+    return getText(sql, params)
+  })
+  try {
+    await withTreecrdtWriteBarrier(() =>
+      provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
+    )
+    await expect(waitForMaterializedThoughtsToStore()).rejects.toThrow('transient membership read')
+    reader.mockRestore()
+
+    const laterThought = { ...thought('b'), id: '00000000000000000000000000000202' as ThoughtId }
+    await withTreecrdtWriteBarrier(() =>
+      provider.db.updateThoughts({ thoughtIndexUpdates: { [laterThought.id]: laterThought } }),
+    )
+    await waitForMaterializedThoughtsToStore()
+
+    expect(snapshot.lexemeIndex[hashThought('a')]?.contexts).toEqual([THOUGHT_ID])
+    expect(snapshot.lexemeIndex[hashThought('b')]?.contexts).toEqual([laterThought.id])
+  } finally {
+    reader.mockRestore()
+    report.mockRestore()
+  }
+})
+
 it('does not publish an old binding after the provider is reset during readback', async () => {
   const reading = deferred()
   const release = deferred()

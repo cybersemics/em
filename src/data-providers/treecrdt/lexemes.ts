@@ -9,6 +9,7 @@ import { decodeThoughtPayload } from './payload'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 
 const TABLE = 'em_lexeme_memberships'
+const FAVORITE_KEY = hashThought('=favorite')
 const ROOT_IDS = new Set<string>([GLOBAL_ROOT_TOKEN, ...SYSTEM_ROOT_THOUGHT_IDS])
 
 /** Maintains one membership per live thought, independent of which contexts Redux has loaded. */
@@ -22,7 +23,26 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
       updated_by TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_${TABLE}_hash ON ${TABLE} (lexeme_hash);
+    CREATE TABLE IF NOT EXISTS em_favorite_order (
+      id INTEGER PRIMARY KEY CHECK (id = 1), contexts_json TEXT NOT NULL
+    );
   `)
+  // The old lexeme cache owned the manual order. Import only that preference, never its membership.
+  if (await client.runner.getText("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'em_lexemes'")) {
+    await client.runner.getText(
+      `INSERT OR IGNORE INTO em_favorite_order (id, contexts_json)
+       SELECT 1, json_extract(payload_json, '$.contexts') FROM em_lexemes
+       WHERE id = ?1 AND json_type(payload_json, '$.contexts') = 'array'`,
+      [FAVORITE_KEY],
+    )
+  }
+
+  /** Saves explicit ordering intent separately from membership updates, which must not prune it. */
+  const setFavoriteOrder = (contexts: ThoughtId[]) =>
+    client.runner.getText('INSERT OR REPLACE INTO em_favorite_order (id, contexts_json) VALUES (1, ?1)', [
+      JSON.stringify(contexts),
+    ])
+
   /** Replaces a thought's membership from current materialized state, returning both affected hashes. */
   const reindex = async (id: ThoughtId): Promise<string[]> => {
     if (ROOT_IDS.has(id)) return []
@@ -105,12 +125,23 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
         }
       }
     }
+    const favorites = lexemes.get(FAVORITE_KEY)
+    if (favorites) {
+      const text = await client.runner.getText('SELECT contexts_json FROM em_favorite_order WHERE id = 1')
+      const order = new Set(JSON.parse(text ?? '[]') as ThoughtId[])
+      const members = new Set(favorites.contexts)
+      favorites.contexts = [
+        ...[...order].filter(id => members.has(id)),
+        ...favorites.contexts.filter(id => !order.has(id)),
+      ]
+    }
     return keys.map(key => lexemes.get(key))
   }
 
   return {
     rebuild,
     applyChanges,
+    setFavoriteOrder,
     getLexemesByIds,
     getLexemeById: async (key: string) => (await getLexemesByIds([key]))[0],
   }
