@@ -3,7 +3,7 @@ import clickThought from '../helpers/clickThought'
 import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import paste from '../helpers/paste'
-import stubCommands from '../helpers/stubCommands'
+import useTestFlags from '../helpers/useTestFlags'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
@@ -29,7 +29,7 @@ describe('gesture menu', () => {
   })
 
   describe('with stubbed commands', () => {
-    stubCommands([{ label: 'Stub Command', gesture: 'rl' }])
+    useTestFlags({ stubCommands: [{ label: 'Stub Command', gesture: 'rl' }] })
 
     it('lists stubbed commands in place of the registered commands', async () => {
       await paste('Hello')
