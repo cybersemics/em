@@ -222,8 +222,8 @@ describe('geometry-based framing', () => {
   })
 })
 
-describe('filled-inset arrowhead', () => {
-  const props = { path: 'rd' as const, size: 100, arrowhead: 'filled-inset' as const, useGradient: false as const }
+describe('filled-wide arrowhead', () => {
+  const props = { path: 'rd' as const, size: 100, arrowhead: 'filled-wide' as const, useGradient: false as const }
 
   it('paints a filled chevron in place of the marker', () => {
     const markup = render({ ...props, color: 'dim', highlightColor: 'bright' })

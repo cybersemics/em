@@ -24,7 +24,7 @@ it('includes the actual stroke radius when no arrowhead is requested', () => {
 
 it('pads a filled chevron to contain its apex past the gesture end', () => {
   const options = { arrowSize: 10, strokeWidth: 2, size: 50, chevronSize: 2, chevronApexAngle: 60 }
-  const [x, , width] = getGestureViewBox(geometry, { ...options, arrowhead: 'filled-inset' })
+  const [x, , width] = getGestureViewBox(geometry, { ...options, arrowhead: 'filled-wide' })
     .split(' ')
     .map(Number)
   // halfSpan = 2 * 1.5 * chevronSize. getChevron places the apex halfSpan / (2 * tan(30°)) past the end at x = 45.

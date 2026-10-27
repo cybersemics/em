@@ -61,7 +61,7 @@ interface GestureDiagramBaseProps {
   chevronApexAngle?: number
   /** Chevron half-span as a multiple of the rendered stroke width. Default 2.2. */
   chevronSize?: number
-  /** Half-span of the 'filled-inset' chevron as a multiple of the rendered stroke width. Default 1.3. */
+  /** Half-span of the 'filled-wide' chevron as a multiple of the rendered stroke width. Default 1.3. */
   triangleSize?: number
   /** Stroke color for highlighted directions. Default: token('colors.vividHighlight'). */
   highlightColor?: string
@@ -130,9 +130,9 @@ const GestureDiagram = ({
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
 
-  // Only the solid renderer paints a filled chevron. Elsewhere 'filled-inset' falls back to the filled marker.
-  const filledChevron = arrowhead === 'filled-inset' && !gradient && !useGradient && !rounded
-  const resolvedArrowhead = arrowhead === 'filled-inset' && !filledChevron ? 'filled' : arrowhead
+  // Only the solid renderer paints a filled chevron. Elsewhere 'filled-wide' falls back to the filled marker.
+  const filledChevron = arrowhead === 'filled-wide' && !gradient && !useGradient && !rounded
+  const resolvedArrowhead = arrowhead === 'filled-wide' && !filledChevron ? 'filled' : arrowhead
 
   const geometry = useMemo(
     () =>
@@ -219,8 +219,8 @@ const GestureDiagram = ({
           arrowhead: resolvedArrowhead,
           strokeWidth,
           size,
-          chevronSize: resolvedArrowhead === 'filled-inset' ? triangleSize : chevronSize,
-          chevronApexAngle: resolvedArrowhead === 'filled-inset' ? FILLED_CHEVRON_APEX_ANGLE : chevronApexAngle,
+          chevronSize: resolvedArrowhead === 'filled-wide' ? triangleSize : chevronSize,
+          chevronApexAngle: resolvedArrowhead === 'filled-wide' ? FILLED_CHEVRON_APEX_ANGLE : chevronApexAngle,
         })
       }
     >
