@@ -9,10 +9,11 @@ import gesture from '../helpers/gesture'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
+import { PreloadedTestFlags } from '../helpers/preloadTestFlags'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
-import stubCommands from '../helpers/stubCommands'
+import useTestFlags from '../helpers/useTestFlags'
 import waitForBackgroundImage from '../helpers/waitForBackgroundImage'
 import waitForSelector from '../helpers/waitForSelector'
 
@@ -20,29 +21,18 @@ expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
-/** A fixed list of commands, enough to fill multiple columns of the Gesture Menu at a wide viewport. */
-const STUB_COMMANDS = [
-  'r',
-  'rd',
-  'ru',
-  'rl',
-  'rdr',
-  'rdl',
-  'rur',
-  'rul',
-  'rdu',
-  'rud',
-  'rld',
-  'rlu',
-  'rdrd',
-  'rurd',
-  'rldr',
-  'rulu',
-].map((gesture, i) => ({
-  label: `Command ${i + 1}`,
-  gesture,
-  description: `Description of command ${i + 1}.`,
-}))
+/** A fixed list of commands, enough to fill every column of the Gesture Menu at a wide viewport. Cancel and Command Universe are kept, since the Gesture Menu always lists them after the matching commands. */
+const STUB_COMMANDS: NonNullable<PreloadedTestFlags['stubCommands']> = [
+  'cancel',
+  'openMobileCommandUniverse',
+  ...(['r', 'rd', 'ru', 'rl', 'rdr', 'rdl', 'rur', 'rul', 'rdu', 'rud', 'rld', 'rlu', 'rdrd'] as const).map(
+    (gesture, i) => ({
+      label: `Command ${i + 1}`,
+      gesture,
+      description: `Description of command ${i + 1}.`,
+    }),
+  ),
+]
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -101,7 +91,7 @@ describe('GestureMenu', () => {
     deviceEmulation.useForSuite(KnownDevices['iPad Mini landscape'])
 
     // replace the registered commands with a fixed list so that the snapshot does not need to be updated every time a command is added, removed, or renamed
-    stubCommands(STUB_COMMANDS)
+    useTestFlags({ stubCommands: STUB_COMMANDS })
 
     it('render possible commands in multiple columns', async () => {
       await hideHUD()
