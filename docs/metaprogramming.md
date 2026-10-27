@@ -93,7 +93,7 @@ Not every attribute is propagable. Currently the `=children`/`=grandchildren` in
 
 - **`=archive`** — marks the thought (and, semantically, its descendants) as archived. Archived thoughts are hidden from normal views but kept for recovery; the user surfaces them via the **Recently Deleted** UI. The `=archive` attribute is special-cased in many filters (e.g. it survives `isAttribute`-based hiding so the recently-deleted view can find it). See [`archiveThought`](../src/actions/archiveThought.ts) and [`isThoughtArchived`](../src/util/isThoughtArchived.ts).
 - **`=done`** — marks a thought as completed. The thought is rendered grayed out and struck through. Consumed by [`Bullet`](../src/components/Bullet.tsx), [`Editable`](../src/components/Editable.tsx), and the **Mark as done** command.
-- **`=favorite`** — marks the thought for inclusion in the Favorites panel. The Favorites Lexeme (`=favorite`) tracks every context that has this attribute.
+- **`=favorite`** — marks the thought for inclusion in the Favorites panel. The Favorites Lexeme (`=favorite`) tracks every context that has this attribute. A `=favorite` directly under the root, such as one outdented there, does not list the root in Favorites.
 
 ### Linking & cross-references
 
