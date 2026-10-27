@@ -1,4 +1,5 @@
 import type Command from '../@types/Command'
+import type CommandId from '../@types/CommandId'
 import type { ThoughtspaceStorage } from '../data-providers/thoughtspace'
 
 type TestFlags = {
@@ -20,8 +21,8 @@ type TestFlags = {
   simulateDrag: boolean
   /** Render drop targets as blocks of color. */
   simulateDrop: boolean
-  /** Replaces the commands the app lists and matches against keyboard shortcuts and gestures with inert commands built from this plain data. Read once at startup, so it must be preloaded before the app loads. See globalCommands in commands.ts. */
-  stubCommands: Pick<Command, 'label' | 'gesture' | 'keyboard' | 'description'>[] | null
+  /** Replaces the commands the app lists and matches against keyboard shortcuts and gestures. Each entry is either plain data that an inert command is built from, or the id of a registered command to keep, such as cancel or openMobileCommandUniverse, which the Gesture Menu always lists. Read once at startup, so it must be preloaded before the app loads. See globalCommands in commands.ts. */
+  stubCommands: (CommandId | Pick<Command, 'label' | 'gesture' | 'keyboard' | 'description'>)[] | null
 }
 
 const preloadedTestFlags = typeof window === 'undefined' ? null : (window.em?.testFlags ?? null)

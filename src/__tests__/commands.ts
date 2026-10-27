@@ -11,6 +11,7 @@ import {
   parseCommandShortcut,
 } from '../commands'
 import { HOME_TOKEN } from '../constants'
+import type testFlags from '../e2e/testFlags'
 import exportContext from '../selectors/exportContext'
 import store from '../stores/app'
 import initStore from '../test-helpers/initStore'
@@ -232,13 +233,15 @@ describe('isolation between tests', () => {
 })
 
 describe('stubbed commands', () => {
-  /** Loads fresh copies of commands.ts and the store with testFlags.stubCommands set to one command bound to Cmd+K, since the global commands are read once when commands.ts loads. Returns the fresh commands module. */
-  const loadStubbed = async () => {
+  /** Loads fresh copies of commands.ts and the store with testFlags.stubCommands set to the given stubs, by default one command bound to Cmd+K, since the global commands are read once when commands.ts loads. Returns the fresh commands module. */
+  const loadStubbed = async (
+    stubs: NonNullable<typeof testFlags.stubCommands> = [{ label: 'Stub', keyboard: { key: 'k', meta: true } }],
+  ) => {
     // initStore in an earlier test leaves fake timers on, which stall the fresh initStore below
     vi.useRealTimers()
     vi.resetModules()
-    const { default: testFlags } = await import('../e2e/testFlags')
-    testFlags.stubCommands = [{ label: 'Stub', keyboard: { key: 'k', meta: true } }]
+    const { default: freshTestFlags } = await import('../e2e/testFlags')
+    freshTestFlags.stubCommands = stubs
     const commands = await import('../commands')
     const { default: initStore } = await import('../test-helpers/initStore')
     await initStore()
@@ -252,6 +255,12 @@ describe('stubbed commands', () => {
   it('list only the stubbed commands', async () => {
     const commands = await loadStubbed()
     expect(commands.globalCommands.map(command => command.label)).toEqual(['Stub'])
+  })
+
+  it('keep a registered command given by id', async () => {
+    const commands = await loadStubbed(['cancel', { label: 'Stub' }])
+    expect(commands.globalCommands.map(command => command.id)).toEqual(['cancel', 'Stub'])
+    expect(commands.globalCommands[0]).toBe(commands.commandById('cancel'))
   })
 
   it('run a stubbed command from its keyboard shortcut', async () => {
