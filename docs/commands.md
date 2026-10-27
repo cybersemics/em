@@ -146,7 +146,7 @@ The Toolbar renders a configurable subset of commands as buttons. The user's cus
 
 - **`svg`** — icon component.
 - **`isActive(state)`** — returns true if the command should be highlighted (e.g. `pin` is active when the cursor thought is pinned).
-- **`isDropdownOpen(state)`** — renders a small dropdown indicator beneath the icon. It also marks the command as the owner of a toolbar dropdown: tapping a button whose command has no `isDropdownOpen` closes any open toolbar dropdown before the command executes, while a dropdown command toggles its own dropdown and closes the others itself through `toggleDropdown`. The Command Center and the multiselect survive the tap, since the command may act on the selected thoughts.
+- **`isDropdownOpen(state)`** — renders a small dropdown indicator beneath the icon. It also marks the command as the owner of a toolbar dropdown: tapping a button whose command has no `isDropdownOpen` closes any open toolbar dropdown before the command executes, while a dropdown command toggles its own dropdown and closes the others itself through `toggleDropdown`. The Command Center and the multiselect survive the tap, since the command may act on the selected thoughts. Undo and Redo also leave the [Undo Slider](#undo-history-and-the-undo-slider) open, since they move through the history it shows.
 - **`overlay.gesture` / `overlay.keyboard`** — alternative shortcuts shown in the toolbar long-press overlay.
 - **`longPress(dispatch)`** — runs when a toolbar button is long-pressed.
 

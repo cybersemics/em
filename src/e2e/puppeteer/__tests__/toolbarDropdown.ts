@@ -108,7 +108,7 @@ it('tapping another toolbar button closes the open toolbar dropdown', async () =
 })
 
 // https://github.com/cybersemics/em/issues/6155
-it.skip('tapping Undo keeps the Undo Slider open', async () => {
+it('tapping Undo keeps the Undo Slider open', async () => {
   await paste(`
     - hello world
   `)
