@@ -3,6 +3,8 @@
  * Uses WDIO test runner with Mocha framework.
  */
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../../constants'
+import getCaretOffset from '../helpers/getCaretOffset'
+import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import isKeyboardShown from '../helpers/isKeyboardShown'
@@ -133,5 +135,21 @@ describe('Double tap', () => {
     const offset = await browser.execute(() => document.getSelection()?.focusOffset ?? null)
     // anywhere in "eternally", which runs to the end of the text
     expect(offset).toBeGreaterThanOrEqual('Existentialism '.length)
+  })
+
+  // https://github.com/cybersemics/em/issues/5761
+  it('a tap on another thought after a double tap places the caret where it lands', async () => {
+    await newThought('hello')
+    await newThought('world')
+    const world = await waitForEditable('world')
+    await tap(world, { offset: 'world'.length, pointerType: 'touch', count: 2 })
+    await waitUntil(async () => (await getSelection().toString()) === 'world')
+    await setSelection('world'.length, 'world'.length)
+
+    const hello = await waitForEditable('hello')
+    await tap(hello, { offset: 'hello'.length, pointerType: 'touch' })
+    await waitUntil(async () => (await getEditingText()) === 'hello')
+
+    expect(await getCaretOffset()).toBe('hello'.length)
   })
 })

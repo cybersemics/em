@@ -18,6 +18,7 @@ import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
 import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
+import notificationRecipe from './src/recipes/notification'
 import panelCommandGroupRecipe from './src/recipes/panelCommandGroupRecipe'
 import panelCommandRecipe from './src/recipes/panelCommandRecipe'
 import slideTransitionRecipe from './src/recipes/slideTransition'
@@ -526,10 +527,18 @@ export default defineConfig({
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
         zIndex: {
           ...zIndexDescending([
+            // Show Touches draws over everything, since a touch can land anywhere. It ignores pointer events, so it
+            // never blocks what is beneath it.
+            'showTouches',
+            // The help genie flies over everything, including the Command Universe dialog it is let out from. Its
+            // canvas ignores pointer events, so it never blocks what is beneath it.
+            'helpGenie',
+            // Above dialogs so the pinned command stays visible over the Mobile Command Universe. See docs/learning.md.
+            'pinnedCommandExpanded',
             'dialog',
             'dialogContainer',
             'popup',
-            'tip',
+            'notification',
             'cloneDroppedThought',
             'hoverArrow',
             'gestureTrace',
@@ -586,6 +595,7 @@ export default defineConfig({
         dialogRecipe,
         modalRecipe,
         modalTextRecipe,
+        notificationRecipe,
         fadeTransitionRecipe,
         slideTransitionRecipe,
       },

@@ -28,6 +28,8 @@ Meta-attribute children are hidden in normal view. Toggle the **Show Hidden Thou
 
 This shape lets attribute lookups skip the linear scan that regular value-based lookups need.
 
+Attributes are ordinary thoughts that can be edited like any other while hidden thoughts are shown. An edit that makes a value stop being an attribute, such as bolding `=favorite` into `<b>=favorite</b>`, simply turns it into a normal thought that configures nothing. [`editThought`](../src/actions/editThought.ts) rebuilds the parent's `childrenMap` whenever a thought becomes an attribute or stops being one, so no key is left pointing at a thought with a different value. Lexeme keys are normalized and ignore formatting, so `<b>=favorite</b>` still shares the `=favorite` Lexeme. The lists that are built from an attribute's Lexeme, Favorites ([`Favorites`](../src/components/Favorites.tsx)) and Recently Deleted ([`RecentlyDeleted`](../src/components/RecentlyDeleted.tsx)), include only thoughts whose value is exactly the attribute.
+
 The four selectors most code uses:
 
 - [`attribute(state, id, name)`](../src/selectors/attribute.ts) — returns the *value of the first visible child* of the named attribute, or `null`. So `attribute(state, parent.id, '=pin')` returns `'true'` (when set to `=pin/true`), `'false'`, or `null`. Use this when an attribute carries a string payload.
@@ -95,7 +97,7 @@ Not every attribute is propagable. Currently the `=children`/`=grandchildren` in
 
 ### Linking & cross-references
 
-- **`=bindContext`** — binds the current context to another so edits propagate between them. Created via the `bindContext` command, which stores the destination under a paired internal key `=bindContextCommand`.
+- **`=bindContext`** — binds the current context to another so edits propagate between them. Created via the `bindContext` command, which is currently disabled. It stores the destination under a paired internal key `=bindContextCommand`.
 - **`=label`** — display alternative text for the thought (the *label*) while continuing to use the thought's real value for any context lookups. The real value remains hidden unless the user is editing. Consumed by [`Editable`](../src/components/Editable.tsx) and [`ThoughtAnnotation`](../src/components/ThoughtAnnotation.tsx).
 - **`=note`** — render a small note in lighter type underneath the thought. The first child of a literal `=note` is the note's text. See [`Note`](../src/components/Note.tsx).
 - **`=path`** — used under a `=note` to redirect the note's content to another thought, instead of rendering the literal child of `=note`. Its target name matches a child of the annotated thought by visible text, ignoring case and formatting while preserving punctuation, accents, whitespace, and singular/plural distinctions. If several children match, the first in the context's configured sort order is used. The target's visible children are rendered in their configured sort order, separated by commas, and editing the note updates the corresponding children. See [`resolveNotePath`](../src/selectors/resolveNotePath.ts).
@@ -126,7 +128,7 @@ A few `=`-prefixed values appear in source but are not currently active user-fac
 
 - **`=hidden`** — referenced by an old comment in [`getChildren.ts`](../src/selectors/getChildren.ts) but the gating call is commented out. The feature is dead; setting `=hidden` on a thought has no effect today.
 - **`=hello`, `=dazzle`, `=test`, `=b`, `=c`, `=x`** — fixtures used in tests; they have no consumers in production code.
-- **`=bindContextCommand`** — internal storage key used by the `bindContext` command, not authored by users.
+- **`=bindContextCommand`** — internal storage key used by the disabled `bindContext` command, not authored by users.
 
 ## User settings
 
@@ -136,6 +138,7 @@ The canonical list is the `Settings` enum in [`constants.ts`](../src/constants.t
 
 ```ts
 enum Settings {
+  debugCrashLog,
   experienceMode,
   hideScrollZone,
   leftHanded,

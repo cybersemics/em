@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
+import ContentEditableModule, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
@@ -37,6 +37,12 @@ import useCaretRestore from './Editable/useCaretRestore'
 import useOnCut from './Editable/useOnCut'
 import useRevertCorrection from './Editable/useRevertCorrection'
 import FauxCaret from './FauxCaret'
+
+// react-contenteditable is CommonJS that sets __esModule. Because em's package.json has "type": "module", Vite resolves
+// its default import to module.exports rather than module.exports.default, while Vitest unwraps it to the component.
+// See https://vite.dev/guide/migration#consistent-commonjs-interop.
+const ContentEditable =
+  (ContentEditableModule as unknown as { default?: typeof ContentEditableModule }).default ?? ContentEditableModule
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = React.memo(
