@@ -32,6 +32,7 @@ import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
+import testFlags from './e2e/testFlags'
 import documentSort from './selectors/documentSort'
 import filterCursors from './selectors/filterCursors'
 import getThoughtById from './selectors/getThoughtById'
@@ -59,7 +60,21 @@ import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
 import saveDebugLog from './util/saveDebugLog'
 
-export const globalCommands: Command[] = Object.values(commandsObject)
+/** The commands registered in src/commands/index.ts. */
+export const registeredCommands: Command[] = Object.values(commandsObject)
+
+/** The commands that the app lists and matches against keyboard shortcuts and gestures: the registered commands, or the commands that a test preloaded into testFlags.stubCommands so that a snapshot of a command list does not change whenever a command is added, removed, or renamed. A stub given as an id keeps that registered command; any other stub becomes an inert command. */
+export const globalCommands: Command[] =
+  testFlags.stubCommands?.map(stub =>
+    typeof stub === 'string'
+      ? registeredCommands.find(command => command.id === stub)!
+      : {
+          ...stub,
+          id: stub.label as CommandId,
+          multicursor: false,
+          exec: () => {},
+        },
+  ) ?? registeredCommands
 
 export { commandEmitter }
 
@@ -274,7 +289,8 @@ const index = (): {
   })
 
   // index command for O(1) lookup by id
-  const commandIdIndex: Index<Command> = keyValueBy(globalCommands, command =>
+  // Look up ids among the registered commands even when a test has stubbed the global commands, since commandById is only called with ids of registered commands.
+  const commandIdIndex: Index<Command> = keyValueBy(registeredCommands, command =>
     command.id ? { [command.id]: command } : null,
   )
 
