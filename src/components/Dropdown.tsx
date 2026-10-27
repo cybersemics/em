@@ -20,6 +20,7 @@ const Dropdown = React.forwardRef<HTMLDivElement, DropdownProps>(
     return isOpen ? (
       <div
         ref={ref}
+        aria-label='export format options'
         className={css({
           boxShadow: '0 0 10px 0px {colors.bg}',
           // display: 'flex',
