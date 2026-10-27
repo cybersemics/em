@@ -24,7 +24,6 @@ import tap from '../helpers/tap'
 import tapEditMenuItem from '../helpers/tapEditMenuItem'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForElement from '../helpers/waitForElement'
-import waitForElementAtRest from '../helpers/waitForElementAtRest'
 import waitUntil from '../helpers/waitUntil'
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
@@ -173,7 +172,7 @@ describe('Caret', () => {
   // The same hit test escapes a note without any drag: a note is short enough that the point lands outside it
   // as soon as the space bar is held, and it leaves from the end, where the note abuts the parent thought.
   it('a caret scrubbed in a note stays in the note (#3276)', async () => {
-    // The note moves into place after the paste, and a tap aimed at it mid-move lands on the parent thought.
+    // The note slides into place after the paste, and a tap aimed at it mid-slide lands on the parent thought.
     await disableTransitions()
     await newThought()
     await paste(
@@ -185,8 +184,6 @@ describe('Caret', () => {
     )
 
     const note = await waitForElement('[aria-label="note-editable"]')
-    // Disabling transitions does not stop the smooth scroll that brings the pasted cursor into view.
-    await waitForElementAtRest(note)
     await tap(note)
     await waitUntil(isKeyboardShown)
 
@@ -214,8 +211,6 @@ describe('Caret', () => {
 
     // The first tap places the caret between "Sed " and "tortor", the second raises the edit menu on it.
     const note = await waitForElement('[aria-label="note-editable"]')
-    // Disabling transitions does not stop the smooth scroll that brings the cursor into view.
-    await waitForElementAtRest(note)
     await tap(note, { pointerType: 'touch', offset: 'Sed '.length })
     await waitUntil(isKeyboardShown)
     await tap(note, { pointerType: 'touch', offset: 'Sed '.length })

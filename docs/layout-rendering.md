@@ -207,7 +207,7 @@ When `b` is positioned, `yaccum` is *not* incremented; `b1` is placed at `(x = f
 
 ## `useLayoutTreeTop`
 
-A small effect that writes the LayoutTree's top y (offset + autocrop) into `viewportStore.layoutTreeTop`. Used by `scrollCursorIntoView` to figure out where thoughts actually start on the page (vs. the toolbar above).
+A small layout effect that writes the LayoutTree's top y (offset + autocrop) into `viewportStore.layoutTreeTop`. Used by `scrollCursorIntoView` to figure out where thoughts actually start on the page (vs. the toolbar above). It is a layout effect so that the value is set before the cursor overlay, a child of LayoutTree, checks the cursor on mount: React runs a child's passive effects before its parent's, so a passive effect here would leave `layoutTreeTop` at 0 for that check, and a cursor in plain view would be measured as behind the toolbar and scrolled.
 
 ## Scrolling the cursor into view
 
