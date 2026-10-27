@@ -8,7 +8,7 @@ import initStore from '../../test-helpers/initStore'
 beforeEach(initStore)
 
 // https://github.com/cybersemics/em/pull/6159#issuecomment-6439306340
-it.skip('keeps the Undo Slider open when undo removes the cursor thought', async () => {
+it('keeps the Undo Slider open when undo removes the cursor thought', async () => {
   await initialize({ storage: 'memory' })
 
   store.dispatch([newThought({ value: 'hello' }), toggleDropdown({ dropDownType: 'undoSlider' })])
