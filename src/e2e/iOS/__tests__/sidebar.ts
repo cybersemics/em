@@ -11,7 +11,7 @@ import waitForElement from '../helpers/waitForElement'
 
 describe('Sidebar', () => {
   // https://github.com/cybersemics/em/issues/3681
-  it.skip('a swipe right from the left edge of the screen does not navigate back while the sidebar is open', async () => {
+  it('a swipe right from the left edge of the screen does not navigate back while the sidebar is open', async () => {
     // Safari only offers swipe-back when there is a page to go back to, so open another page before em.
     const appUrl = await browser.getUrl()
     await browser.url(new URL('/favicon-32x32.png', appUrl).href)
