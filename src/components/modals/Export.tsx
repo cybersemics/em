@@ -278,16 +278,17 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
       <span className={css({ display: 'inline-flex', verticalAlign: 'middle' })}>
         <ChevronImg onClickHandle={() => setIsOpen(!isOpen)} className={isOpen ? rotate180Class : undefined} />
         <span>
-          <Dropdown
-            isOpen={isOpen}
-            selected={selected}
-            onSelect={(option: ExportOption) => {
-              onSelect?.(option)
-              setIsOpen(false)
-            }}
-            options={exportOptions}
-            dark={dark}
-          />
+          {isOpen && (
+            <Dropdown
+              selected={selected}
+              onSelect={(option: ExportOption) => {
+                onSelect?.(option)
+                setIsOpen(false)
+              }}
+              options={exportOptions}
+              dark={dark}
+            />
+          )}
         </span>
       </span>
     </span>
