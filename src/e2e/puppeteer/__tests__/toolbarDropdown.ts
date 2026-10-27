@@ -6,6 +6,7 @@ import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
+import longPressToolbar from '../helpers/longPressToolbar'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import waitForEditable from '../helpers/waitForEditable'
@@ -104,4 +105,27 @@ it('tapping another toolbar button closes the open toolbar dropdown', async () =
   } catch {
     throw new Error('Expected the Text Color dropdown to close after tapping Bold, but it is still open.')
   }
+})
+
+// https://github.com/cybersemics/em/issues/6155
+it.skip('tapping Undo keeps the Undo Slider open', async () => {
+  await paste(`
+    - hello world
+  `)
+
+  await clickThought('hello world')
+
+  await clickToolbar('Bold')
+  await waitForEditable('<b>hello world</b>')
+
+  await longPressToolbar('Undo')
+
+  await clickToolbar('Undo')
+  await waitForEditable('hello world')
+
+  // The tap that undoes the bold is what would close the slider, in the same update, so a wrongly closed slider is already fading out or gone by now and never reports itself as open again.
+  const open = await page.evaluate(
+    () => document.querySelector('[data-testid="undo-slider"]')?.getAttribute('data-open') ?? null,
+  )
+  expect(open).toBe('true')
 })
