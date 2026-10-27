@@ -375,4 +375,48 @@ describe('removing thoughts from the Command Center', () => {
     expectPathToEqual(store.getState(), store.getState().cursor, ['a', 'd'])
     expect(store.getState().showCommandCenter).toBe(true)
   })
+
+  it('keeps the Command Center open when a multiselection across parents leaves a sibling under one of them', async () => {
+    await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - x
+            - y
+            - z`,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['x', 'y']),
+    ])
+
+    executeCommandWithMulticursor(deleteCommand, { store, type: 'commandCenter' })
+
+    expect(store.getState().showCommandCenter).toBe(true)
+    expect(Object.keys(store.getState().multicursors).length).toBe(1)
+  })
+
+  it('closes the Command Center when a multiselection across parents leaves no siblings under any of them', async () => {
+    await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - x
+            - y`,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['x', 'y']),
+    ])
+
+    executeCommandWithMulticursor(deleteCommand, { store, type: 'commandCenter' })
+
+    expect(store.getState().showCommandCenter).toBe(false)
+  })
 })

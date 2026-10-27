@@ -30,10 +30,11 @@ import { undoActionCreator as undo } from './actions/undo'
 import { isCapacitor, isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
-import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
+import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, HOME_TOKEN, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
 import documentSort from './selectors/documentSort'
 import filterCursors from './selectors/filterCursors'
+import getChildren from './selectors/getChildren'
 import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
@@ -621,17 +622,30 @@ export const executeCommandWithMulticursor = (
 
         // A command tapped in the Command Center that ends with an empty selection (e.g. delete, whose thoughts no
         // longer exist to be restored above) would dismiss the Command Center, since multicursorAlertMiddleware
-        // closes it when nothing is selected. Select the thought the cursor landed on instead, the same way the
-        // Command Center is opened in the first place, so that it stays open and can be used again. When the
-        // command removed the last remaining sibling, the cursor falls back to the parent (or to nothing at the
-        // root), which the user did not select, so leave the selection empty and let the Command Center close.
+        // closes it when nothing is selected. Select a thought instead, the same way the Command Center is opened in
+        // the first place, so that it stays open and can be used again. If the command removed thoughts, stay open
+        // only while a sibling of a removed thought is left: select the cursor if it is such a sibling, otherwise the
+        // first one. When no siblings are left anywhere, the cursor has fallen back to a parent (or to nothing at the
+        // root) that the user did not select, so leave the selection empty and let the Command Center close.
         if (commandType === 'commandCenter') {
           const state = commandStore.getState()
-          const removedLastSibling = execPaths.some(
-            path => !equalPath(recomputePath(state, path), path) && equalPath(parentOf(path), state.cursor),
-          )
-          if (!hasMulticursor(state) && state.cursor && !removedLastSibling) {
-            dispatch(addMulticursor({ path: state.cursor }))
+          if (!hasMulticursor(state)) {
+            const removedPaths = execPaths.filter(path => !equalPath(recomputePath(state, path), path))
+            if (removedPaths.length === 0) {
+              if (state.cursor) dispatch(addMulticursor({ path: state.cursor }))
+            } else {
+              /** True if the path is a sibling of a removed thought that is still there. */
+              const isRemainingSibling = (path: Path) =>
+                removedPaths.some(removed => equalPath(parentOf(removed), parentOf(path)) && !equalPath(removed, path))
+              let sibling = state.cursor && isRemainingSibling(state.cursor) ? state.cursor : null
+              for (const removed of removedPaths) {
+                if (sibling) break
+                const parentId = removed.length > 1 ? removed[removed.length - 2] : HOME_TOKEN
+                const firstChild = getChildren(state, parentId)[0]
+                if (firstChild) sibling = [...parentOf(removed), firstChild.id] as Path
+              }
+              if (sibling) dispatch(addMulticursor({ path: sibling }))
+            }
           }
         }
 
