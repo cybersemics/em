@@ -13,6 +13,9 @@ import getGestureViewBox from './GestureDiagram/getGestureViewBox'
 import GestureArrowhead from './GestureDiagram/types/GestureArrowhead'
 import GestureGradient from './GestureDiagram/types/GestureGradient'
 
+// A base slightly wider than the chevron is deep matches the design's squat arrowhead.
+const FILLED_CHEVRON_APEX_ANGLE = 2 * Math.atan(1 / 1.7) * (180 / Math.PI)
+
 interface GestureDiagramBaseProps {
   /** Length of the SVG arrowhead marker. */
   arrowSize?: number
@@ -58,7 +61,7 @@ interface GestureDiagramBaseProps {
   chevronApexAngle?: number
   /** Chevron half-span as a multiple of the rendered stroke width. Default 2.2. */
   chevronSize?: number
-  /** Inset triangle half-width as a multiple of the rendered stroke width. Default 1.3. */
+  /** Half-span of the 'filled-inset' chevron as a multiple of the rendered stroke width. Default 1.3. */
   triangleSize?: number
   /** Stroke color for highlighted directions. Default: token('colors.vividHighlight'). */
   highlightColor?: string
@@ -127,10 +130,9 @@ const GestureDiagram = ({
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
 
-  // Only the solid renderer paints an inset triangle. Elsewhere 'filled-inset' falls back to the filled marker.
-  const insetTriangle = arrowhead === 'filled-inset' && !gradient && !useGradient && !rounded
-  const resolvedArrowhead = arrowhead === 'filled-inset' && !insetTriangle ? 'filled' : arrowhead
-  const triangleHalfWidth = strokeWidth * 1.5 * triangleSize
+  // Only the solid renderer paints a filled chevron. Elsewhere 'filled-inset' falls back to the filled marker.
+  const filledChevron = arrowhead === 'filled-inset' && !gradient && !useGradient && !rounded
+  const resolvedArrowhead = arrowhead === 'filled-inset' && !filledChevron ? 'filled' : arrowhead
 
   const geometry = useMemo(
     () =>
@@ -140,13 +142,13 @@ const GestureDiagram = ({
             chevron:
               gradient && arrowhead === 'outlined-wide'
                 ? { apexAngle: chevronApexAngle, halfSpan: strokeWidth * 1.5 * chevronSize }
-                : undefined,
+                : filledChevron
+                  ? { apexAngle: FILLED_CHEVRON_APEX_ANGLE, halfSpan: strokeWidth * 1.5 * triangleSize, filled: true }
+                  : undefined,
             cornerRadius: gradient ? cornerRadius : 0,
             reversalOffset: reversalOffset!,
             rounded,
             size,
-            // A base slightly wider than the triangle is long matches the design's squat arrowhead.
-            triangle: insetTriangle ? { halfWidth: triangleHalfWidth, length: triangleHalfWidth * 1.7 } : undefined,
           }),
     [
       arrowhead,
@@ -159,8 +161,8 @@ const GestureDiagram = ({
       rounded,
       gradient,
       strokeWidth,
-      insetTriangle,
-      triangleHalfWidth,
+      filledChevron,
+      triangleSize,
     ],
   )
 
@@ -217,9 +219,8 @@ const GestureDiagram = ({
           arrowhead: resolvedArrowhead,
           strokeWidth,
           size,
-          chevronSize,
-          chevronApexAngle,
-          triangleHalfWidth,
+          chevronSize: resolvedArrowhead === 'filled-inset' ? triangleSize : chevronSize,
+          chevronApexAngle: resolvedArrowhead === 'filled-inset' ? FILLED_CHEVRON_APEX_ANGLE : chevronApexAngle,
         })
       }
     >
@@ -231,7 +232,7 @@ const GestureDiagram = ({
           highlightColor={highlightColor}
           highlighted={highlight != null && highlight >= path.length}
           instanceId={instanceId}
-          kind={geometry!.chevron || geometry!.triangle ? 'none' : resolvedArrowhead}
+          kind={geometry!.chevron ? 'none' : resolvedArrowhead}
           rounded={rounded}
           strokeWidth={strokeWidth}
         />

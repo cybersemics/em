@@ -88,7 +88,7 @@ const RDLD_SEGMENTS: readonly GestureSegment[] = [
   { kind: 'line', from: { x: 45, y: 58.5 }, to: { x: 45, y: 72 }, gestureIndex: 3 },
 ]
 
-type BaseGestureGeometry = Omit<GestureGeometry, 'chevron' | 'triangle'>
+type BaseGestureGeometry = Omit<GestureGeometry, 'chevron'>
 
 /** Builds an unscaled line, circular-arc or question-mark template. */
 const getBaseGestureGeometry = (
@@ -184,7 +184,7 @@ const getBaseGestureGeometry = (
 
 /** Scales any path template so its longest dimension equals size, before corners, arrowheads or strokes. */
 const scaleGeometryToSize = (geometry: BaseGestureGeometry, size: number): BaseGestureGeometry => {
-  const bounds = getGestureBounds({ ...geometry, chevron: null, triangle: null })
+  const bounds = getGestureBounds({ ...geometry, chevron: null })
   const extent = Math.max(bounds.width, bounds.height)
   if (extent === 0) return geometry
 
@@ -289,32 +289,6 @@ const getChevron = (
   ]
 }
 
-/** Constructs a filled triangle whose tip sits on the gesture end and whose base lies behind it. */
-const getTriangle = (
-  tip: GesturePoint,
-  tangent: GesturePoint,
-  {
-    halfWidth,
-    length,
-  }: {
-    /** Perpendicular distance from the centerline to either base corner. */
-    halfWidth: number
-    /** Distance from the base to the tip along the final tangent. */
-    length: number
-  },
-): readonly [GesturePoint, GesturePoint, GesturePoint] => {
-  const tangentLength = Math.hypot(tangent.x, tangent.y) || 1
-  const forwardX = tangent.x / tangentLength
-  const forwardY = tangent.y / tangentLength
-  const baseX = tip.x - forwardX * length
-  const baseY = tip.y - forwardY * length
-  return [
-    { x: baseX - forwardY * halfWidth, y: baseY + forwardX * halfWidth },
-    tip,
-    { x: baseX + forwardY * halfWidth, y: baseY - forwardX * halfWidth },
-  ]
-}
-
 /** Builds the complete canonical shape consumed by paint and framing. */
 const getGestureGeometry = (
   path: Gesture,
@@ -324,12 +298,9 @@ const getGestureGeometry = (
     reversalOffset,
     rounded,
     size,
-    triangle,
   }: {
-    /** Dimensions of a geometry-based chevron, or undefined for an SVG marker. */
-    chevron?: { apexAngle: number; halfSpan: number }
-    /** Dimensions of an inset filled triangle, or undefined for an SVG marker. Applies only to a final line. */
-    triangle?: { halfWidth: number; length: number }
+    /** Dimensions of a geometry-based chevron, or undefined for an SVG marker. A filled chevron applies only to a final line. */
+    chevron?: { apexAngle: number; halfSpan: number; filled?: boolean }
     /** Radius used to soften vertices in line geometry. */
     cornerRadius?: number
     /** Orthogonal offset used to separate reversing directions. */
@@ -343,31 +314,28 @@ const getGestureGeometry = (
   const base = getBaseGestureGeometry(path, { reversalRatio: size === 0 ? 0 : reversalOffset / size, rounded })
   const geometry = softenCorners(scaleGeometryToSize(base, size), cornerRadius)
   const finalSegment = geometry.segments.at(-1)
-  if (path === 'rdld' || !finalSegment) return { ...geometry, chevron: null, triangle: null }
+  if (path === 'rdld' || !finalSegment || !chevron) return { ...geometry, chevron: null }
 
-  if (triangle && finalSegment.kind === 'line') {
-    const trianglePoints = getTriangle(finalSegment.to, getEndTangent(finalSegment), triangle)
+  const chevronPoints = getChevron(finalSegment.to, getEndTangent(finalSegment), chevron)
+
+  if (chevron.filled) {
+    if (finalSegment.kind !== 'line') return { ...geometry, chevron: null }
+    const legs = {
+      x: (chevronPoints[0].x + chevronPoints[2].x) / 2,
+      y: (chevronPoints[0].y + chevronPoints[2].y) / 2,
+    }
     const segmentLength = Math.hypot(finalSegment.to.x - finalSegment.from.x, finalSegment.to.y - finalSegment.from.y)
-    // The shaft stops at the triangle's base so its round cap cannot poke past the tip.
-    // A final line shorter than the triangle collapses to its start rather than reversing.
-    const shaftEnd =
-      segmentLength > triangle.length
-        ? {
-            x: (trianglePoints[0].x + trianglePoints[2].x) / 2,
-            y: (trianglePoints[0].y + trianglePoints[2].y) / 2,
-          }
-        : finalSegment.from
+    const legsBehindEnd = Math.hypot(finalSegment.to.x - legs.x, finalSegment.to.y - legs.y)
+    // The shaft stops between the legs so its round cap stays inside the filled chevron.
+    // A final line shorter than that distance collapses to its start rather than reversing.
+    const shaftEnd = segmentLength > legsBehindEnd ? legs : finalSegment.from
     return {
       ...geometry,
       segments: [...geometry.segments.slice(0, -1), { ...finalSegment, to: shaftEnd }],
-      chevron: null,
-      triangle: trianglePoints,
+      chevron: chevronPoints,
     }
   }
 
-  if (!chevron) return { ...geometry, chevron: null, triangle: null }
-
-  const chevronPoints = getChevron(finalSegment.to, getEndTangent(finalSegment), chevron)
   return {
     ...geometry,
     // An arc's endpoint is fixed by its circle and angles. Add a tangent line so the
@@ -380,7 +348,6 @@ const getGestureGeometry = (
           ]
         : [...geometry.segments.slice(0, -1), { ...finalSegment, to: chevronPoints[1] }],
     chevron: chevronPoints,
-    triangle: null,
   }
 }
 

@@ -8,7 +8,6 @@ const geometry: GestureGeometry = {
   extendedPath: 'r',
   segments: [{ kind: 'line', from: { x: -5, y: 2 }, to: { x: 45, y: 2 }, gestureIndex: 0 }],
   chevron: null,
-  triangle: null,
 }
 
 it('reserves a square frame for conventional markers', () => {
@@ -23,16 +22,15 @@ it('includes the actual stroke radius when no arrowhead is requested', () => {
   )
 })
 
-it('pads an inset triangle by half its sideways overhang plus the stroke radius', () => {
-  expect(
-    getGestureViewBox(geometry, {
-      arrowSize: 10,
-      arrowhead: 'filled-inset',
-      strokeWidth: 2,
-      size: 50,
-      triangleHalfWidth: 4,
-    }),
-  ).toBe('-8.5 -26.5 57 57')
+it('pads a filled chevron to contain its apex past the gesture end', () => {
+  const options = { arrowSize: 10, strokeWidth: 2, size: 50, chevronSize: 2, chevronApexAngle: 60 }
+  const [x, , width] = getGestureViewBox(geometry, { ...options, arrowhead: 'filled-inset' })
+    .split(' ')
+    .map(Number)
+  // halfSpan = 2 * 1.5 * chevronSize. getChevron places the apex halfSpan / (2 * tan(30°)) past the end at x = 45.
+  const apexX = 45 + 6 / (2 * Math.tan(Math.PI / 6))
+
+  expect(x + width).toBeGreaterThan(apexX)
 })
 
 it('uses bounds to center each shape without changing its scale', () => {

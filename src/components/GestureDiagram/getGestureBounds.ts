@@ -1,7 +1,7 @@
 import GestureGeometry from './types/GestureGeometry'
 import GesturePoint from './types/GesturePoint'
 
-/** Returns exact centerline bounds, including the chevron and triangle but excluding stroke and SVG markers. */
+/** Returns exact centerline bounds, including the chevron but excluding stroke and SVG markers. */
 const getGestureBounds = (geometry: GestureGeometry) => {
   const points = geometry.segments.flatMap<GesturePoint>(segment => {
     const endpoints = [segment.from, segment.to]
@@ -37,7 +37,7 @@ const getGestureBounds = (geometry: GestureGeometry) => {
     })
     return [...endpoints, ...extrema]
   })
-  const allPoints = [...points, ...(geometry.chevron ?? []), ...(geometry.triangle ?? [])]
+  const allPoints = [...points, ...(geometry.chevron ?? [])]
   if (allPoints.length === 0) return { x: 0, y: 0, width: 0, height: 0 }
 
   const extrema = allPoints.reduce(

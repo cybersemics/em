@@ -222,10 +222,10 @@ describe('geometry-based framing', () => {
   })
 })
 
-describe('inset triangle arrowhead', () => {
+describe('filled-inset arrowhead', () => {
   const props = { path: 'rd' as const, size: 100, arrowhead: 'filled-inset' as const, useGradient: false as const }
 
-  it('paints a solid triangle in place of the marker', () => {
+  it('paints a filled chevron in place of the marker', () => {
     const markup = render({ ...props, color: 'dim', highlightColor: 'bright' })
 
     expect(markup).toContain('<polygon points="')
@@ -233,7 +233,7 @@ describe('inset triangle arrowhead', () => {
     expect(markup).not.toContain('marker-end')
   })
 
-  it('keeps the triangle dim until the whole gesture is traced', () => {
+  it('keeps the chevron dim until the whole gesture is traced', () => {
     const partial = render({ ...props, color: 'dim', highlightColor: 'bright', highlight: 1 })
     const complete = render({ ...props, color: 'dim', highlightColor: 'bright', highlight: 2 })
 

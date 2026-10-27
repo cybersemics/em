@@ -50,27 +50,34 @@ it('applies corner softening in the authored coordinate space', () => {
   })
 })
 
-it('ends an inset triangle on the gesture end and stops the shaft at its base', () => {
-  const geometry = getGestureGeometry('r', { size: 100, reversalOffset: 30, triangle: { halfWidth: 5, length: 8 } })
+it('centers a filled chevron on the gesture end and stops the shaft between its legs', () => {
+  const chevron = { apexAngle: 90, halfSpan: 5, filled: true }
+  const geometry = getGestureGeometry('r', { size: 100, reversalOffset: 30, chevron })
+  /** Rounds away floating-point noise from the apex angle's tangent. */
+  const round = (point: { x: number; y: number }) => ({ x: +point.x.toFixed(6), y: +point.y.toFixed(6) })
 
-  expect(geometry.triangle).toEqual([
-    { x: 92, y: 5 },
-    { x: 100, y: 0 },
-    { x: 92, y: -5 },
+  expect(geometry.chevron!.map(round)).toEqual([
+    { x: 97.5, y: 5 },
+    { x: 102.5, y: 0 },
+    { x: 97.5, y: -5 },
   ])
-  expect(geometry.segments).toEqual([{ kind: 'line', from: { x: 0, y: 0 }, to: { x: 92, y: 0 }, gestureIndex: 0 }])
+  expect(geometry.segments.map(segment => ({ ...segment, to: round(segment.to) }))).toEqual([
+    { kind: 'line', from: { x: 0, y: 0 }, to: { x: 97.5, y: 0 }, gestureIndex: 0 },
+  ])
 })
 
-it('collapses a final line shorter than the inset triangle instead of reversing it', () => {
-  const geometry = getGestureGeometry('r', { size: 10, reversalOffset: 3, triangle: { halfWidth: 5, length: 20 } })
+it('collapses a final line shorter than half the filled chevron instead of reversing it', () => {
+  const chevron = { apexAngle: 20, halfSpan: 5, filled: true }
+  const geometry = getGestureGeometry('r', { size: 10, reversalOffset: 3, chevron })
 
-  expect(geometry.triangle![1]).toEqual({ x: 10, y: 0 })
+  expect(geometry.chevron![1].x).toBeGreaterThan(10)
   expect(geometry.segments[0].to).toEqual({ x: 0, y: 0 })
 })
 
-it('omits the inset triangle from the question mark', () => {
-  const geometry = getGestureGeometry('rdld', { size: 50, reversalOffset: 15, triangle: { halfWidth: 5, length: 8 } })
+it('omits the filled chevron from the question mark', () => {
+  const chevron = { apexAngle: 90, halfSpan: 5, filled: true }
+  const geometry = getGestureGeometry('rdld', { size: 50, reversalOffset: 15, chevron })
 
-  expect(geometry.triangle).toBeNull()
+  expect(geometry.chevron).toBeNull()
   expect(geometry.segments).toEqual(getGestureGeometry('rdld', { size: 50, reversalOffset: 15 }).segments)
 })

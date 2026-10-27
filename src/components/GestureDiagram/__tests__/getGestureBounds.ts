@@ -1,7 +1,7 @@
 import getGestureBounds from '../getGestureBounds'
 import GestureGeometry from '../types/GestureGeometry'
 
-const empty: GestureGeometry = { path: '', extendedPath: '', segments: [], chevron: null, triangle: null }
+const empty: GestureGeometry = { path: '', extendedPath: '', segments: [], chevron: null }
 
 it('includes line endpoints and chevron points in the bounds', () => {
   expect(
@@ -108,7 +108,6 @@ it('measures the authored rdld centerline as 36.3 by 67.5', () => {
     path: 'rdld',
     extendedPath: 'rdld',
     chevron: null,
-    triangle: null,
     segments: [
       {
         kind: 'quadratic',

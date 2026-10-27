@@ -10,10 +10,11 @@ interface GestureGeometry {
   extendedPath: Gesture
   /** Ordered geometric segments associated with their semantic directions. */
   segments: readonly GestureSegment[]
-  /** Wide chevron points, or null when the arrowhead uses an SVG marker. */
+  /**
+   * Chevron points as leg, apex, leg, or null when the arrowhead uses an SVG marker.
+   * SolidGestureRenderer fills them for 'filled-inset'. ContinuousGradientGestureRenderer strokes them for 'outlined-wide'.
+   */
   chevron: readonly [GesturePoint, GesturePoint, GesturePoint] | null
-  /** Filled triangle points as base corner, tip, base corner, or null when there is no inset triangle. */
-  triangle: readonly [GesturePoint, GesturePoint, GesturePoint] | null
 }
 
 export default GestureGeometry
