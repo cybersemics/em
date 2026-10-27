@@ -30,10 +30,12 @@ import { undoActionCreator as undo } from './actions/undo'
 import { isCapacitor, isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
-import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
+import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, HOME_TOKEN, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
+import testFlags from './e2e/testFlags'
 import documentSort from './selectors/documentSort'
 import filterCursors from './selectors/filterCursors'
+import getChildren from './selectors/getChildren'
 import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
@@ -57,9 +59,24 @@ import head from './util/head'
 import isAttribute from './util/isAttribute'
 import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
+import parentOf from './util/parentOf'
 import saveDebugLog from './util/saveDebugLog'
 
-export const globalCommands: Command[] = Object.values(commandsObject)
+/** The commands registered in src/commands/index.ts. */
+export const registeredCommands: Command[] = Object.values(commandsObject)
+
+/** The commands that the app lists and matches against keyboard shortcuts and gestures: the registered commands, or the commands that a test preloaded into testFlags.stubCommands so that a snapshot of a command list does not change whenever a command is added, removed, or renamed. A stub given as an id keeps that registered command; any other stub becomes an inert command. */
+export const globalCommands: Command[] =
+  testFlags.stubCommands?.map(stub =>
+    typeof stub === 'string'
+      ? registeredCommands.find(command => command.id === stub)!
+      : {
+          ...stub,
+          id: stub.label as CommandId,
+          multicursor: false,
+          exec: () => {},
+        },
+  ) ?? registeredCommands
 
 export { commandEmitter }
 
@@ -274,7 +291,8 @@ const index = (): {
   })
 
   // index command for O(1) lookup by id
-  const commandIdIndex: Index<Command> = keyValueBy(globalCommands, command =>
+  // Look up ids among the registered commands even when a test has stubbed the global commands, since commandById is only called with ids of registered commands.
+  const commandIdIndex: Index<Command> = keyValueBy(registeredCommands, command =>
     command.id ? { [command.id]: command } : null,
   )
 
@@ -620,13 +638,30 @@ export const executeCommandWithMulticursor = (
 
         // A command tapped in the Command Center that ends with an empty selection (e.g. delete, whose thoughts no
         // longer exist to be restored above) would dismiss the Command Center, since multicursorAlertMiddleware
-        // closes it when nothing is selected. Select the thought the cursor landed on instead, the same way the
-        // Command Center is opened in the first place, so that it stays open and can be used again. When the last
-        // thought was deleted there is no cursor left to select and it closes as usual.
+        // closes it when nothing is selected. Select a thought instead, the same way the Command Center is opened in
+        // the first place, so that it stays open and can be used again. If the command removed thoughts, stay open
+        // only while a sibling of a removed thought is left: select the cursor if it is such a sibling, otherwise the
+        // first one. When no siblings are left anywhere, the cursor has fallen back to a parent (or to nothing at the
+        // root) that the user did not select, so leave the selection empty and let the Command Center close.
         if (commandType === 'commandCenter') {
           const state = commandStore.getState()
-          if (!hasMulticursor(state) && state.cursor) {
-            dispatch(addMulticursor({ path: state.cursor }))
+          if (!hasMulticursor(state)) {
+            const removedPaths = execPaths.filter(path => !equalPath(recomputePath(state, path), path))
+            if (removedPaths.length === 0) {
+              if (state.cursor) dispatch(addMulticursor({ path: state.cursor }))
+            } else {
+              /** True if the path is a sibling of a removed thought that is still there. */
+              const isRemainingSibling = (path: Path) =>
+                removedPaths.some(removed => equalPath(parentOf(removed), parentOf(path)) && !equalPath(removed, path))
+              let sibling = state.cursor && isRemainingSibling(state.cursor) ? state.cursor : null
+              for (const removed of removedPaths) {
+                if (sibling) break
+                const parentId = removed.length > 1 ? removed[removed.length - 2] : HOME_TOKEN
+                const firstChild = getChildren(state, parentId)[0]
+                if (firstChild) sibling = [...parentOf(removed), firstChild.id] as Path
+              }
+              if (sibling) dispatch(addMulticursor({ path: sibling }))
+            }
           }
         }
 
@@ -827,7 +862,8 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     const chainedGestureCollapsed = sequence!.toString().slice(chainedGesture1.length - 1)
     const chainedGesture = sequence!.toString().slice(chainedGesture1.length)
     const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
-    if (commandMatch) {
+    // only chain a command that the first command allows to follow it, as the gesture menu does
+    if (commandMatch && chainableCommandInProgressExclusive.isChainable?.(commandMatch)) {
       command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
     }
   }
@@ -930,10 +966,13 @@ export const handleNativeHistory = (type: 'undo' | 'redo') => {
  * Android soft keyboards report the space keydown as keyCode 229 ('Unidentified'), so the space-to-indent
  * command is never matched in keyDown and keyCommandId is never set. The second branch catches that case:
  * a `beforeinput` insertText of a single space over an empty thought indents it instead of inserting the
- * space, mirroring the keyDown-matched path on desktop/iOS (#4178). */
+ * space, mirroring the keyDown-matched path on desktop/iOS (#4178). Neither branch applies while the caret is in
+ * the thought's note, where the space belongs to the note (#5969). */
 export const beforeInput = (e: InputEvent) => {
   const keyCommandId = keyCommandIdStore.getState().id
-  if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
+  // editingValueStore holds the cursor thought's value even when the caret is in its note, so space-to-indent is excluded under noteFocus and the space is inserted into the note (#5969).
+  const isSpaceToIndent = editingValueStore.getState() === '' && !store.getState().noteFocus
+  if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && isSpaceToIndent)) {
     e.preventDefault()
     return
   }
@@ -943,7 +982,7 @@ export const beforeInput = (e: InputEvent) => {
   // and indent the empty thought instead of letting the literal space get inserted (#4178). Non-empty
   // thoughts and other input types (paste, IME composition) are excluded, so typing a space mid-word is
   // unaffected; desktop/iOS reach indent via their keyDown-matched path and short-circuit above.
-  if (e.inputType === 'insertText' && e.data === ' ' && editingValueStore.getState() === '') {
+  if (e.inputType === 'insertText' && e.data === ' ' && isSpaceToIndent) {
     e.preventDefault()
     store.dispatch(indent())
   }
@@ -996,6 +1035,11 @@ export const keyDown = (e: KeyboardEvent) => {
 
   // disable if modal is shown, except for navigation commands
   if (!command || state.showMobileCommandUniverse || (state.showModal && !command.allowExecuteFromModal)) return
+
+  // A space typed in a note is text. Space-to-indent applies only when the caret is in the thought itself, so reject it
+  // here rather than in indent's exec: executeCommandWithMulticursor sets the cursor on each selected thought before
+  // exec runs, which clears noteFocus, so the empty thought would be indented and the space dropped (#5969).
+  if (command.id === 'indent' && state.noteFocus) return
 
   // execute the command
   commandEmitter.trigger('command', command)

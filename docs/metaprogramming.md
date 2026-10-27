@@ -28,6 +28,8 @@ Meta-attribute children are hidden in normal view. Toggle the **Show Hidden Thou
 
 This shape lets attribute lookups skip the linear scan that regular value-based lookups need.
 
+Attributes are ordinary thoughts that can be edited like any other while hidden thoughts are shown. An edit that makes a value stop being an attribute, such as bolding `=favorite` into `<b>=favorite</b>`, simply turns it into a normal thought that configures nothing. [`editThought`](../src/actions/editThought.ts) rebuilds the parent's `childrenMap` whenever a thought becomes an attribute or stops being one, so no key is left pointing at a thought with a different value. Lexeme keys are normalized and ignore formatting, so `<b>=favorite</b>` still shares the `=favorite` Lexeme. The lists that are built from an attribute's Lexeme, Favorites ([`Favorites`](../src/components/Favorites.tsx)) and Recently Deleted ([`RecentlyDeleted`](../src/components/RecentlyDeleted.tsx)), include only thoughts whose value is exactly the attribute.
+
 The four selectors most code uses:
 
 - [`attribute(state, id, name)`](../src/selectors/attribute.ts) — returns the *value of the first visible child* of the named attribute, or `null`. So `attribute(state, parent.id, '=pin')` returns `'true'` (when set to `=pin/true`), `'false'`, or `null`. Use this when an attribute carries a string payload.
@@ -136,6 +138,7 @@ The canonical list is the `Settings` enum in [`constants.ts`](../src/constants.t
 
 ```ts
 enum Settings {
+  debugCrashLog,
   experienceMode,
   hideScrollZone,
   leftHanded,

@@ -92,13 +92,13 @@ describe('url history on desktop', () => {
       - C
     `)
 
-    const pathnameInitial = await page.evaluate(() => window.location.pathname)
+    // Wait for the url to name each thought rather than for it to change: paste moves the cursor to C, and its
+    // throttled url write can land after a click on A, which a change from the previous url would mistake for A's.
     await clickThought('A')
-    await waitForUrlChange(pathnameInitial)
-    const pathnameA = await page.evaluate(() => window.location.pathname)
+    await waitForUrlCursor('A')
 
     await clickThought('C')
-    await waitForUrlChange(pathnameA)
+    await waitForUrlCursor('C')
     await page.goBack()
     await waitForCursor('A')
 
