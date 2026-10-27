@@ -122,8 +122,8 @@ describe('Gestures', () => {
       lastScrollY = scrollY
       return settled
     })
-    // BrowserStack's iOS 17 device scrolls the page when the keyboard opens, where a physical device leaves it in place,
-    // which lifts b into the band at the top that isInGestureZone leaves to the toolbar
+    // On BrowserStack's iOS 17 device, Safari scrolls the page as the tap focuses b, before the keyboard opens, where a
+    // physical device leaves it in place. That lifts b into the band at the top that isInGestureZone leaves to the toolbar.
     await browser.execute(() => window.scrollTo(0, 0))
     expect(await waitUntil(async () => (await browser.execute(() => window.scrollY)) === 0)).toBeTruthy()
     // an upward drag scrolls down, so there must be room below
