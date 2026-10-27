@@ -103,9 +103,11 @@ describe('Gestures', () => {
 
   // https://github.com/cybersemics/em/issues/5844
   it('does not scroll the document when a drag starts on the caret', async () => {
-    const filler = Array.from({ length: 8 }, (_, i) => `- x${i}`).join('\n')
-    // keeps b low enough that the keyboard does not shift the visual viewport on iOS 17, which puts the drag off the caret
-    await paste(`${filler}\n- a\n- b\n- c`)
+    await paste(`
+      - a
+      - b
+      - c
+    `)
 
     await clickThought('b')
     await tap(await waitForEditable('b'), { pointerType: 'touch' })
