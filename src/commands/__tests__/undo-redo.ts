@@ -33,6 +33,7 @@ import archiveCommand from '../archive'
 import deleteCommand from '../delete'
 import indentCommand from '../indent'
 import moveCursorForward from '../moveCursorForward'
+import noteCommand from '../note'
 
 beforeEach(initStore)
 
@@ -448,6 +449,27 @@ describe('undo', () => {
     store.dispatch(undo())
 
     expect(store.getState().alert?.value).toBe('Undo: Text Color')
+  })
+
+  // The Note command runs inside a multicursor undo bracket, so the setDescendant that adds each note merges into the
+  // bracket's patch. Its undoLabel has to survive the merge and name the step instead of the command.
+  it('name a multicursor note in the undo alert', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b`,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+    ])
+
+    executeCommandWithMulticursor(noteCommand, { store })
+
+    store.dispatch(undo())
+
+    expect(store.getState().alert?.value).toBe('Undo: Add Note')
   })
 
   it('undo should stay enabled and not throw after a multicursor command that nets to no change', () => {

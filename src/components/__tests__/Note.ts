@@ -302,7 +302,7 @@ describe('=note', () => {
   })
 
   // https://github.com/cybersemics/em/issues/3679
-  test.skip('names adding and editing a note in the undo and redo alerts', async () => {
+  test('names adding and editing a note in the undo and redo alerts', async () => {
     await dispatch([importText({ text: '- a' }), setCursor(['a'])])
     await act(vi.runOnlyPendingTimersAsync)
 

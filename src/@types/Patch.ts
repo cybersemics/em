@@ -9,7 +9,7 @@ export interface CommandPatchMetadata {
   /** Identifies this execution, including its asynchronous continuations, without implying an undo group. */
   invocationId: string
   commandId: CommandId
-  /** User-facing command label at the time the patch was created. */
+  /** User-facing command label at the time the patch was created, or the undoLabel of an action dispatched by the command, which describes what the command did more specifically. */
   label: string
   /** How the command was invoked. Undefined for programmatic execution. */
   type?: CommandType

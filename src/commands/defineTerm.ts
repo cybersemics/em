@@ -209,7 +209,7 @@ const defineTerm = {
       /** Waits for the definition request before closing the multicursor undo bracket. */
       const defineAll = async () => {
         await Promise.resolve()
-        dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'defineTerm' }))
+        dispatch(setIsMulticursorExecuting({ value: true }))
         try {
           await dispatch(defineTermAtPaths(cursors))
         } finally {
