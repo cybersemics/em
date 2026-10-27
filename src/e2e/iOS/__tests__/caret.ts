@@ -174,8 +174,8 @@ describe('Caret', () => {
   it('a caret scrubbed in a note stays in the note (#3276)', async () => {
     // The note slides into place after the paste, and a tap aimed at it mid-slide lands on the parent thought.
     await disableTransitions()
-    // Paste with the keyboard down. Opening it first, e.g. with newThought, lets Safari scroll the page, so the cursor
-    // scroll that follows the paste moves the note while it is being tapped.
+    // Import the thoughts before the keyboard opens. Opening it first, e.g. with newThought, lets Safari scroll the page,
+    // so the cursor scroll that follows the import moves the note while it is being tapped.
     await paste(`
     - a
       - =note
