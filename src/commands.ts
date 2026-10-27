@@ -63,14 +63,18 @@ import saveDebugLog from './util/saveDebugLog'
 /** The commands registered in src/commands/index.ts. */
 export const registeredCommands: Command[] = Object.values(commandsObject)
 
-/** The commands that the app lists and matches against keyboard shortcuts and gestures: the registered commands, or inert commands that a test preloaded into testFlags.stubCommands so that a snapshot of a command list does not change whenever a command is added, removed, or renamed. */
+/** The commands that the app lists and matches against keyboard shortcuts and gestures: the registered commands, or the commands that a test preloaded into testFlags.stubCommands so that a snapshot of a command list does not change whenever a command is added, removed, or renamed. A stub given as an id keeps that registered command; any other stub becomes an inert command. */
 export const globalCommands: Command[] =
-  testFlags.stubCommands?.map(stub => ({
-    ...stub,
-    id: stub.label as CommandId,
-    multicursor: false,
-    exec: () => {},
-  })) ?? registeredCommands
+  testFlags.stubCommands?.map(stub =>
+    typeof stub === 'string'
+      ? registeredCommands.find(command => command.id === stub)!
+      : {
+          ...stub,
+          id: stub.label as CommandId,
+          multicursor: false,
+          exec: () => {},
+        },
+  ) ?? registeredCommands
 
 export { commandEmitter }
 
