@@ -36,6 +36,7 @@ const createTreeNode = (y: number, onExited: () => void) => {
     bulletWidth: 20,
     cursorUncleId: null,
     setSize: vi.fn(),
+    removeWidth: vi.fn(),
     cliffPaddingStyle: { paddingBottom: 4 },
     dragInProgress: false,
     autofocusDepth: 0,

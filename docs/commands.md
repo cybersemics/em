@@ -62,13 +62,21 @@ A command bound to an array of keyboard shortcuts also receives `keyboardIndex`,
 
 ### Discovery and indexing
 
-At startup, [`commands.ts`](../src/commands.ts) flattens the barrel into `globalCommands: Command[]` and builds three indices via `index()`:
+At startup, [`commands.ts`](../src/commands.ts) flattens the barrel into `registeredCommands: Command[]`. Everything that lists commands or matches input against them reads `globalCommands` instead, which is the registered commands unless a test has stubbed them (see [Stubbing the global commands](#stubbing-the-global-commands)). `index()` builds three indices:
 
 - **`commandKeyIndex`** — `hash(keyboard) → Command`. Used by `keyDown` for O(1) shortcut lookup.
 - **`commandIdIndex`** — `id → Command`. Used by `commandById(id)`. Use this only when the id is dynamic; otherwise prefer a static import.
 - **`commandGestureIndex`** — `gestureSequence → Command`. Used by `handleGestureEnd` for O(1) gesture lookup.
 
+The key and gesture indices are built from `globalCommands`. The id index is built from the registered commands, since `commandById` is only called with the ids of registered commands.
+
 If two commands share the same keyboard hash, `index()` logs a `console.error` at startup naming both — so collisions surface early.
+
+### Stubbing the global commands
+
+A snapshot of a command list, such as the Gesture Menu, would otherwise change whenever a command is added, removed, or renamed. A Puppeteer test can replace the global commands with a fixed list by preloading [`testFlags.stubCommands`](../src/e2e/testFlags.ts) with plain data (`label`, `gesture`, `keyboard`, `description`), from which `commands.ts` builds inert commands. An entry can instead be the id of a registered command to keep, such as `cancel` and `openMobileCommandUniverse`, which the Gesture Menu always lists after the commands that match the gesture. `globalCommands` is computed once when `commands.ts` loads, so the flag must be set before the app starts; [`useTestFlags`](../src/e2e/puppeteer/helpers/useTestFlags.ts) preloads it for every test in a describe block, before shared setup opens the page. The stubs replace the registered commands everywhere `globalCommands` is read: the Gesture Menu, Command Universe search results, keyboard shortcuts, and gestures. The Command Universe's default views, grouped by category or sorted by label, are built from `COMMAND_DIFFICULTIES` at startup and still show the registered commands.
+
+Two readers keep using the registered commands: `commandById`, as above, and the guard in [`useCommandList`](../src/hooks/useCommandList.ts) that every visible registered command belongs to a group in `COMMAND_DIFFICULTIES`, since it checks the code rather than what a test displays.
 
 ### Keyboard activation
 
@@ -122,7 +130,7 @@ A gesture is also always a **single finger**. `MultiGesture` follows only the fi
 - **Download Debug Log.** While Debug Logging is on, the secret gesture →↓←↓↑ saves the [debug log](debug-log.md) instead of running a command. It is not a command, so it appears nowhere a command does — Command Universe, gesture menu, help, or tutorial.
 
 - **Mobile Command Universe.** If the sequence ends with the `openMobileCommandUniverse` gesture, that command runs.
-- **Chained commands.** If the sequence *starts* with a gesture for an `isChainable` command and continues with another command's gesture, the two are chained and executed together. The canonical example: `selectAll` is chainable, so `<selectAll-gesture><archive-gesture>` archives all selected thoughts in one motion. `chainCommand(c1, c2)` synthesizes a `Command` whose gesture and label combine both. Both commands execute inside one command transaction whose metadata identifies the combined command, so they produce one undo patch.
+- **Chained commands.** If the sequence *starts* with a gesture for a command that has `isChainable` and continues with another command's gesture, and that command's `isChainable` accepts the second command, the two are chained and executed together. The canonical example: `selectAll` chains into any multicursor command, so `<selectAll-gesture><archive-gesture>` archives all selected thoughts in one motion. `newThought` chains only into `outdent`, so New Thought followed by any other command's gesture runs nothing. The gesture menu applies the same check, so it offers exactly the chains that run on release. `chainCommand(c1, c2)` synthesizes a `Command` whose gesture and label combine both. Both commands execute inside one command transaction whose metadata identifies the combined command, so they produce one undo patch.
 
 In training mode, an alert briefly confirms the command's `label`, unless the command has `hideAlert: true`. The label is shown just before the command executes, so an alert the command raises itself — such as an error explaining why it cannot be executed — replaces the label rather than being hidden by it.
 
@@ -146,7 +154,7 @@ The Toolbar renders a configurable subset of commands as buttons. The user's cus
 
 - **`svg`** — icon component.
 - **`isActive(state)`** — returns true if the command should be highlighted (e.g. `pin` is active when the cursor thought is pinned).
-- **`isDropdownOpen(state)`** — renders a small dropdown indicator beneath the icon.
+- **`isDropdownOpen(state)`** — renders a small dropdown indicator beneath the icon. It also marks the command as the owner of a toolbar dropdown: tapping a button whose command has no `isDropdownOpen` closes any open toolbar dropdown before the command executes, while a dropdown command toggles its own dropdown and closes the others itself through `toggleDropdown`. The Command Center and the multiselect survive the tap, since the command may act on the selected thoughts.
 - **`overlay.gesture` / `overlay.keyboard`** — alternative shortcuts shown in the toolbar long-press overlay.
 - **`longPress(dispatch)`** — runs when a toolbar button is long-pressed.
 

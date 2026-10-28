@@ -17,6 +17,7 @@ import thoughtToPath from '../selectors/thoughtToPath'
 import dndRef from '../util/dndRef'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
+import isRoot from '../util/isRoot'
 import nonNull from '../util/nonNull'
 import Checkbox from './Checkbox'
 import SlideTransition from './SlideTransition'
@@ -178,9 +179,12 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
     return (getLexeme(state, '=favorite')?.contexts || [])
       .map(id => {
         const thought = getThoughtById(state, id)
-        if (!thought) return null
+        // The Lexeme is keyed by the normalized value, so it also lists formatted values such as <b>=favorite</b>, which
+        // are normal thoughts rather than attributes.
+        if (thought?.value !== '=favorite') return null
         const path = thoughtToPath(state, thought.parentId)
-        return path
+        // A =favorite moved directly under the root, e.g. by outdent, would otherwise list the root by its id.
+        return isRoot(path) ? null : path
       })
       .filter(nonNull)
   }, _.isEqual)
