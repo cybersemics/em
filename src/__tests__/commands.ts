@@ -1,13 +1,21 @@
+import { GestureResponderEvent } from 'react-native'
+import { importTextActionCreator as importText } from '../actions/importText'
 import {
   beforeInput,
   formatKeyboardShortcut,
+  handleGestureEnd,
   handleGestureSegment,
   hashCommand,
   hashKeyDown,
   keyDown,
   parseCommandShortcut,
 } from '../commands'
+import { HOME_TOKEN } from '../constants'
+import type testFlags from '../e2e/testFlags'
+import exportContext from '../selectors/exportContext'
+import store from '../stores/app'
 import initStore from '../test-helpers/initStore'
+import { setCursorFirstMatchActionCreator as setCursor } from '../test-helpers/setCursorFirstMatch'
 
 describe('parseCommandShortcut', () => {
   it('parses a space-separated shortcut', () => {
@@ -159,6 +167,29 @@ describe('hashKeyDown', () => {
   })
 })
 
+describe('handleGestureEnd', () => {
+  beforeEach(initStore)
+
+  // New Thought only chains into Outdent, so New Thought followed by Move Thought Up must not chain.
+  it('do not chain a command that the first command does not allow to follow it', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+        `,
+      }),
+      setCursor(['a']),
+    ])
+
+    // New Thought (rd) + Move Thought Up (udu)
+    handleGestureEnd({ sequence: 'rd' + 'udu', e: {} as GestureResponderEvent })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a`)
+  })
+})
+
 // Each pair below depends on its order: the first test leaves module state behind in commands.ts, and the second checks
 // that it did not reach it. The store is initialized and the fake clock installed once per describe, so no test
 // reinstalls the clock and discards what the last one left; the only thing between the two tests is the reset that
@@ -198,5 +229,57 @@ describe('isolation between tests', () => {
       beforeInput(e)
       expect(e.defaultPrevented).toBe(false)
     })
+  })
+})
+
+describe('stubbed commands', () => {
+  /** Loads fresh copies of commands.ts and the store with testFlags.stubCommands set to the given stubs, by default one command bound to Cmd+K, since the global commands are read once when commands.ts loads. Returns the fresh commands module. */
+  const loadStubbed = async (
+    stubs: NonNullable<typeof testFlags.stubCommands> = [{ label: 'Stub', keyboard: { key: 'k', meta: true } }],
+  ) => {
+    // initStore in an earlier test leaves fake timers on, which stall the fresh initStore below
+    vi.useRealTimers()
+    vi.resetModules()
+    const { default: freshTestFlags } = await import('../e2e/testFlags')
+    freshTestFlags.stubCommands = stubs
+    const commands = await import('../commands')
+    const { default: initStore } = await import('../test-helpers/initStore')
+    await initStore()
+    return commands
+  }
+
+  afterEach(() => {
+    vi.resetModules()
+  })
+
+  it('list only the stubbed commands', async () => {
+    const commands = await loadStubbed()
+    expect(commands.globalCommands.map(command => command.label)).toEqual(['Stub'])
+  })
+
+  it('keep a registered command given by id', async () => {
+    const commands = await loadStubbed(['cancel', { label: 'Stub' }])
+    expect(commands.globalCommands.map(command => command.id)).toEqual(['cancel', 'Stub'])
+    expect(commands.globalCommands[0]).toBe(commands.commandById('cancel'))
+  })
+
+  it('run a stubbed command from its keyboard shortcut', async () => {
+    const commands = await loadStubbed()
+    const exec = vi.spyOn(commands.globalCommands[0], 'exec')
+    commands.keyDown(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))
+    expect(exec).toHaveBeenCalledTimes(1)
+  })
+
+  it('do not run a registered command while the commands are stubbed', async () => {
+    const commands = await loadStubbed()
+    const exec = vi.spyOn(commands.commandById('settings'), 'exec')
+    // Settings (Cmd+,)
+    commands.keyDown(new KeyboardEvent('keydown', { key: ',', metaKey: true }))
+    expect(exec).not.toHaveBeenCalled()
+  })
+
+  it('find registered commands by id', async () => {
+    const commands = await loadStubbed()
+    expect(commands.commandById('newThought')?.id).toBe('newThought')
   })
 })

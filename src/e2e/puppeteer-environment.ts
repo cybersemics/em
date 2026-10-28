@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer-core'
-import { type Environment, builtinEnvironments, populateGlobal } from 'vitest/environments'
+import { type Environment, builtinEnvironments, populateGlobal } from 'vitest/runtime'
 
 /** Puppeteer Environment for vitest. */
 const PuppeteerEnvironment: Environment = {
@@ -45,6 +45,10 @@ const PuppeteerEnvironment: Environment = {
 
     const { keys, originals } = populateGlobal(global, {
       ...win,
+      // populateGlobal overrides localStorage and sessionStorage on the global, but the spread drops them because they
+      // are not enumerable on the window. Pass them explicitly so that modules reading storage at import time work.
+      localStorage: win.localStorage,
+      sessionStorage: win.sessionStorage,
       browser,
     })
 
@@ -52,7 +56,7 @@ const PuppeteerEnvironment: Environment = {
       async teardown() {
         await browser.disconnect()
         keys.forEach(key => delete global[key])
-        originals.forEach((v, k) => (global[k] = v))
+        originals.forEach((descriptor, k) => Object.defineProperty(global, k, descriptor))
       },
     }
   },
