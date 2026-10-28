@@ -4,6 +4,7 @@ import { removeMulticursorActionCreator as removeMulticursor } from '../../actio
 import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
+import archiveCommand from '../../commands/archive'
 import clearThoughtCommand from '../../commands/clearThought'
 import deleteCommand from '../../commands/delete'
 import indentCommand from '../../commands/indent'
@@ -15,6 +16,7 @@ import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThoughtByContext } from '../../test-helpers/editThoughtByContext'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
@@ -266,4 +268,155 @@ it('keeps the Command Center open when New Subthought (above) replaces the multi
 
   expect(Object.keys(store.getState().multicursors).length).toBe(3)
   expect(store.getState().showCommandCenter).toBe(true)
+})
+
+// https://github.com/cybersemics/em/issues/6143
+describe('removing thoughts from the Command Center', () => {
+  it('keeps the Command Center open when Delete leaves a sibling for the cursor', async () => {
+    await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+            - c`,
+      }),
+      setCursor(['a', 'b']),
+      // open the Command Center by activating a multicursor on the cursor thought (swipe up)
+      addMulticursor(['a', 'b']),
+    ])
+
+    executeCommandWithMulticursor(deleteCommand, { store, type: 'commandCenter' })
+
+    expectPathToEqual(store.getState(), store.getState().cursor, ['a', 'c'])
+    expect(store.getState().showCommandCenter).toBe(true)
+  })
+
+  it('closes the Command Center when Delete removes the last remaining sibling', async () => {
+    await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+            - c`,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+    ])
+
+    executeCommandWithMulticursor(deleteCommand, { store, type: 'commandCenter' })
+    executeCommandWithMulticursor(deleteCommand, { store, type: 'commandCenter' })
+
+    expectPathToEqual(store.getState(), store.getState().cursor, ['a'])
+    expect(store.getState().showCommandCenter).toBe(false)
+  })
+
+  it('closes the Command Center when Archive removes the last remaining sibling', async () => {
+    await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b`,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+    ])
+
+    executeCommandWithMulticursor(archiveCommand, { store, type: 'commandCenter' })
+
+    expectPathToEqual(store.getState(), store.getState().cursor, ['a'])
+    expect(store.getState().showCommandCenter).toBe(false)
+  })
+
+  it('closes the Command Center when Delete removes a multiselection of all siblings', async () => {
+    await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+            - c`,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['a', 'c']),
+    ])
+
+    executeCommandWithMulticursor(deleteCommand, { store, type: 'commandCenter' })
+
+    expectPathToEqual(store.getState(), store.getState().cursor, ['a'])
+    expect(store.getState().showCommandCenter).toBe(false)
+  })
+
+  it('keeps the Command Center open when Archive removes a multiselection that leaves a sibling', async () => {
+    await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+            - c
+            - d`,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['a', 'c']),
+    ])
+
+    executeCommandWithMulticursor(archiveCommand, { store, type: 'commandCenter' })
+
+    expectPathToEqual(store.getState(), store.getState().cursor, ['a', 'd'])
+    expect(store.getState().showCommandCenter).toBe(true)
+  })
+
+  it('keeps the Command Center open when a multiselection across parents leaves a sibling under one of them', async () => {
+    await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - x
+            - y
+            - z`,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['x', 'y']),
+    ])
+
+    executeCommandWithMulticursor(deleteCommand, { store, type: 'commandCenter' })
+
+    expect(store.getState().showCommandCenter).toBe(true)
+    expect(Object.keys(store.getState().multicursors).length).toBe(1)
+  })
+
+  it('closes the Command Center when a multiselection across parents leaves no siblings under any of them', async () => {
+    await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - x
+            - y`,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['x', 'y']),
+    ])
+
+    executeCommandWithMulticursor(deleteCommand, { store, type: 'commandCenter' })
+
+    expect(store.getState().showCommandCenter).toBe(false)
+  })
 })

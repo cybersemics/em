@@ -11,6 +11,7 @@ import getContexts from '../../selectors/getContexts'
 import getLexeme from '../../selectors/getLexeme'
 import getRankAfter from '../../selectors/getRankAfter'
 import pathToThought from '../../selectors/pathToThought'
+import addMulticursorAtFirstMatch from '../../test-helpers/addMulticursorAtFirstMatch'
 import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -284,6 +285,55 @@ it('moving unrelated thought should not update cursor', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a'])
+})
+
+it('moving a thought up a level should keep the cursor on its descendant', () => {
+  const steps = [
+    importText({
+      text: `
+        - a
+          - x
+            - x1
+      `,
+    }),
+    setCursor(['a', 'x', 'x1']),
+    moveThoughtAtFirstMatch({
+      from: ['a', 'x'],
+      to: ['x'],
+      newRank: 1,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor).toEqual(contextToPath(stateNew, ['x', 'x1']))
+})
+
+it('moving a selected thought should move it in the multiselect', () => {
+  const steps = [
+    importText({
+      text: `
+        - a
+          - x
+          - y
+        - b
+      `,
+    }),
+    addMulticursorAtFirstMatch(['a', 'x']),
+    addMulticursorAtFirstMatch(['a', 'y']),
+    moveThoughtAtFirstMatch({
+      from: ['a', 'x'],
+      to: ['b', 'x'],
+      newRank: 0,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(Object.values(stateNew.multicursors)).toEqual([
+    contextToPath(stateNew, ['b', 'x']),
+    contextToPath(stateNew, ['a', 'y']),
+  ])
 })
 
 it('moving a context in the context view should update the cursor to the moved thought', () => {

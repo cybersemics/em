@@ -11,11 +11,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.5",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "prettier": "^3.9.9",
+    "prettier": "^3.9.10",
     "typescript": "7.0.2"
   }
 }

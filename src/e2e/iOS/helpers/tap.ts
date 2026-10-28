@@ -19,6 +19,8 @@ interface Options {
   y?: number
   // Milliseconds to delay the release of the tap.
   releaseDelayMs?: number
+  // Number of taps, e.g. 2 for a double tap.
+  count?: number
 }
 
 /**
@@ -27,7 +29,15 @@ interface Options {
  */
 const tap = async (
   nodeHandle: Element,
-  { horizontalTapLine = 'center', offset, x = 0, y = 0, pointerType = 'mouse', releaseDelayMs = 100 }: Options = {},
+  {
+    horizontalTapLine = 'center',
+    offset,
+    x = 0,
+    y = 0,
+    pointerType = 'mouse',
+    releaseDelayMs = 100,
+    count = 1,
+  }: Options = {},
 ) => {
   // Ensure element exists and has an elementId
   const exists = await nodeHandle.isExisting()
@@ -90,9 +100,13 @@ const tap = async (
           y: Math.round(finalCoords.y),
           origin: 'viewport',
         },
-        { type: 'pointerDown', button: 0 },
-        { type: 'pause', duration: releaseDelayMs },
-        { type: 'pointerUp', button: 0 },
+        ...Array.from({ length: count }, (_, i) => [
+          // without a pause between them, the taps overlap
+          ...(i > 0 ? [{ type: 'pause', duration: 100 }] : []),
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: releaseDelayMs },
+          { type: 'pointerUp', button: 0 },
+        ]).flat(),
       ],
     },
   ])

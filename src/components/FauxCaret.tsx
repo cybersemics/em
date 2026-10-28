@@ -1,8 +1,7 @@
 import { head } from 'lodash'
-import { useState } from 'react'
+import { CSSProperties, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { Property } from '../../styled-system/types/csstype'
 import FauxCaretType from '../@types/FauxCaretType'
 import Path from '../@types/Path'
 import { isSafari, isTouch } from '../browser'
@@ -40,10 +39,10 @@ const FauxCaret = ({
 }) => {
   const [styles, setStyles] = useState<{
     position?: 'absolute'
-    display?: Property.Display
-    fontSize?: Property.FontSize
-    top?: Property.Top
-    left?: Property.Left
+    display?: CSSProperties['display']
+    fontSize?: CSSProperties['fontSize']
+    top?: CSSProperties['top']
+    left?: CSSProperties['left']
   }>(() => (isTouch && isSafari() && caretType === 'positioned' ? { display: 'none' } : {}))
 
   const isEditingCursor = useSelector(state => state.isKeyboardOpen && equalPath(path, state.cursor))

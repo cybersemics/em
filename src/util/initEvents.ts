@@ -12,7 +12,7 @@ import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
-import { AlertType, LongPressState } from '../constants'
+import { AlertType, DEFAULT_FONT_SIZE, LongPressState } from '../constants'
 import initKeyboardSelection from '../device/initKeyboardSelection'
 import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
@@ -26,6 +26,7 @@ import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
 import ministore from '../stores/ministore'
 import multitouchStore, { updateMultitouch } from '../stores/multitouchStore'
+import osVersionStore from '../stores/osVersionStore'
 import scrollContainerStore from '../stores/scrollContainerStore'
 import { updateScrollTop } from '../stores/scrollTopStore'
 import selectionRangeStore from '../stores/selectionRangeStore'
@@ -63,6 +64,21 @@ const RESUME_SETTLE_DELAY = 1000
 
 /** Timer for the settled viewport snapshot logged after the app resumes. A ministore whose dispose clears the timer, like passiveTimeoutStore. */
 const resumeSettleTimeoutStore = ministore<{ timer: Timer | null }>(
+  { timer: null },
+  { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
+)
+
+/** The pending frame of the per-frame visual viewport watch that runs after the app resumes. A ministore whose dispose cancels the frame, like passiveTimeoutStore. */
+const resumeFrameWatchStore = ministore<{ frame: number | null }>(
+  { frame: null },
+  { dispose: ({ frame }) => cancelAnimationFrame(frame ?? 0) },
+)
+
+/** How long scrolling must pause before the scroll is considered finished and its end is logged. Covers the gaps between scroll events during momentum scrolling on iOS. */
+const SCROLL_END_DELAY = 150
+
+/** Timer for the viewport snapshot logged when a scroll ends. A pending timer also marks a scroll in progress, so that only its first scroll event logs a start. A ministore whose dispose clears the timer, like passiveTimeoutStore. */
+const scrollEndTimeoutStore = ministore<{ timer: Timer | null }>(
   { timer: null },
   { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
 )
@@ -157,27 +173,68 @@ let eventHandlers: EventHandlers | null = null
 const initEvents = (store: Store<State, any>) => {
   if (eventHandlers) return eventHandlers
 
-  let lastState: number
+  /** Reads the numeric browser history state used by updateUrlHistory. */
+  const historyState = () => (typeof window.history.state === 'number' ? window.history.state : 0)
+
+  let lastState: number = historyState()
   let lastPath: Path | null
+
+  /** Tracks pushState/replaceState writes so popstate direction is based on fresh history state. */
+  const trackHistoryState = () => {
+    const pushState = window.history.pushState.bind(window.history)
+    const replaceState = window.history.replaceState.bind(window.history)
+
+    window.history.pushState = ((state, title, url) => {
+      if (typeof state === 'number') {
+        lastState = state
+        lastPath = store.getState().cursor
+      }
+      return pushState(state, title, url)
+    }) as History['pushState']
+
+    window.history.replaceState = ((state, title, url) => {
+      if (typeof state === 'number') {
+        lastState = state
+        lastPath = store.getState().cursor
+      }
+      return replaceState(state, title, url)
+    }) as History['replaceState']
+
+    return () => {
+      window.history.pushState = pushState
+      window.history.replaceState = replaceState
+    }
+  }
+
+  const untrackHistoryState = trackHistoryState()
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
     const state = store.getState()
 
-    const { path, contextViews } = decodeThoughtsUrl(state)
+    // A history entry outlives its thoughts, so require them to exist; a deleted thought decodes to a null path instead of reaching pathToContext, which throws on a missing thought.
+    const { path, contextViews } = decodeThoughtsUrl(state, { exists: true })
+    const direction = !lastState || lastState > e.state ? 'back' : 'forward'
+
+    // Skip an entry whose thought has since been deleted or moved, continuing in the same direction until an entry resolves to an existing path. The cursor is left untouched in the meantime.
+    if (!path || !pathExists(state, pathToContext(state, path))) {
+      lastState = e.state
+      window.history[direction]()
+      return
+    }
 
     if (!lastPath) {
       lastPath = state.cursor
     }
 
-    if (!path || !pathExists(state, pathToContext(state, path)) || equalPath(lastPath, path)) {
-      window.history[!lastState || lastState > e.state ? 'back' : 'forward']()
+    if (equalPath(lastPath, path)) {
+      window.history[direction]()
     }
 
-    lastPath = path && pathExists(state, pathToContext(state, path)) ? path : lastPath
+    lastPath = path
     lastState = e.state
 
-    const toRoot = !path || isRoot(path)
+    const toRoot = isRoot(path)
 
     // clear the selection if root
     if (toRoot) {
@@ -293,7 +350,7 @@ const initEvents = (store: Store<State, any>) => {
   const onTouchEnd = () => {
     scrollAtEdge.stop()
     scrollContainerStore.reset()
-    touchStore.update({ pressOnCaret: false })
+    touchStore.update({ pressOnCaret: false, pressInEmptyThought: false })
   }
 
   /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
@@ -313,6 +370,13 @@ const initEvents = (store: Store<State, any>) => {
     touchStore.update({
       pressOnCaret:
         isTouch && (isSafari() || isEmptyThought) && !!touch && selection.isCaretNear(touch.clientX, touch.clientY),
+      pressInEmptyThought:
+        isTouch &&
+        isEmptyThought &&
+        (osVersionStore.getState() ?? 0) >= 27 &&
+        !!touch &&
+        // about 3em of the placeholder, so a press farther right still drags
+        selection.isRightOfCaret(touch.clientX, touch.clientY, 3 * DEFAULT_FONT_SIZE),
       /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
        * the completed touch. Registered in the capture phase because touchstart propagation is unreliable in the bubble
        * phase (see the note on the touchmove listener below). */
@@ -360,8 +424,8 @@ const initEvents = (store: Store<State, any>) => {
   /** The geometry of the last viewport entry written to the debug log, so that resize events that change nothing it records do not flood the log. */
   let lastViewportLogged = ''
 
-  /** Logs the viewport geometry to the debug log. A resize entry is skipped when the geometry matches the last entry. Resume and settled entries are always written, so the geometry at every resume is on record even when nothing changed. This makes a layout that was left at the wrong size visible in the log, such as the nav bar drawn mid-screen after returning to the app because iOS kept the keyboard-open viewport height. */
-  const logViewport = (reason: 'resize' | 'resume' | 'settled') => {
+  /** Logs the viewport geometry to the debug log. A resize entry is skipped when the geometry matches the last entry. Resume, settled, scrollStart and scrollEnd entries are always written, so the geometry at every resume and around every scroll is on record even when nothing changed. This makes a layout that was left at the wrong size visible in the log, such as the nav bar drawn mid-screen after returning to the app because iOS kept the keyboard-open viewport height. */
+  const logViewport = (reason: 'resize' | 'resume' | 'settled' | 'scrollStart' | 'scrollEnd' | 'frame') => {
     // skip the layout reads below when nothing will be logged
     if (!debugLog.isEnabled()) return
     const visualViewport = window.visualViewport
@@ -370,9 +434,13 @@ const initEvents = (store: Store<State, any>) => {
       innerHeight: window.innerHeight,
       // height of the layout viewport, which position: fixed and position: sticky elements are laid out against
       clientHeight: document.documentElement.clientHeight,
+      visualViewportWidth: visualViewport ? Math.round(visualViewport.width) : null,
       visualViewportHeight: visualViewport ? Math.round(visualViewport.height) : null,
       visualViewportOffsetTop: visualViewport ? Math.round(visualViewport.offsetTop) : null,
       scrollY: Math.round(window.scrollY),
+      scrollHeight: document.documentElement.scrollHeight,
+      // whether the browser still considers the page landscape, since the visual viewport has been left corrupt after the app switcher's landscape snapshot (#5972)
+      orientation: window.screen.orientation?.type ?? null,
       isKeyboardOpen: store.getState().isKeyboardOpen,
     }
     const serialized = JSON.stringify(geometry)
@@ -381,8 +449,41 @@ const initEvents = (store: Store<State, any>) => {
     debugLog.log('viewport', { reason, ...geometry })
   }
 
+  /** Watches the visual viewport on every frame until the settled snapshot after the app resumes, and logs the viewport geometry on each frame in which the visual viewport changed. After the app switcher's landscape snapshot, visualViewport.height has gone bad a fraction of a second after resume without firing a resize event (#5972), so only a per-frame read can place the change between the entries around it. Runs for one second per resume, and only while the debug log is enabled. */
+  const watchViewportFrames = () => {
+    if (!debugLog.isEnabled() || !window.visualViewport) return
+    const visualViewport = window.visualViewport
+    let last = ''
+    /** Reads the visual viewport and logs it if it changed since the last frame. */
+    const onFrame = () => {
+      const current = `${visualViewport.width},${visualViewport.height},${visualViewport.offsetTop}`
+      // the first frame only records the starting point, which the resume entry already logged
+      if (last && current !== last) {
+        logViewport('frame')
+      }
+      last = current
+      resumeFrameWatchStore.update({ frame: requestAnimationFrame(onFrame) })
+    }
+    onFrame()
+  }
+
   /** Logs the viewport geometry on resize. */
   const onResizeLog = () => logViewport('resize')
+
+  /** Logs the viewport geometry at the start and end of each scroll, rather than on every scroll event, which fires about once per frame and would flood the bounded log. */
+  const onScrollLog = () => {
+    if (!debugLog.isEnabled()) return
+    if (!scrollEndTimeoutStore.getState().timer) {
+      logViewport('scrollStart')
+    }
+    scrollEndTimeoutStore.reset()
+    scrollEndTimeoutStore.update({
+      timer: setTimeout(() => {
+        scrollEndTimeoutStore.update({ timer: null })
+        logViewport('scrollEnd')
+      }, SCROLL_END_DELAY),
+    })
+  }
 
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
@@ -393,9 +494,16 @@ const initEvents = (store: Store<State, any>) => {
 
     // Log the viewport geometry when the app resumes and again once it has had time to settle, so that a viewport left at the wrong size by the app switch shows up in the log.
     resumeSettleTimeoutStore.reset()
+    resumeFrameWatchStore.reset()
     if (newState === 'active') {
       logViewport('resume')
-      resumeSettleTimeoutStore.update({ timer: setTimeout(logViewport, RESUME_SETTLE_DELAY, 'settled') })
+      watchViewportFrames()
+      resumeSettleTimeoutStore.update({
+        timer: setTimeout(() => {
+          resumeFrameWatchStore.reset()
+          logViewport('settled')
+        }, RESUME_SETTLE_DELAY),
+      })
     }
 
     // dismiss the gesture alert on hide
@@ -509,6 +617,7 @@ const initEvents = (store: Store<State, any>) => {
   }
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener('scroll', updateScrollTop)
+  window.addEventListener('scroll', onScrollLog)
   window.addEventListener('dragenter', dragEnter)
   window.addEventListener('dragleave', dragLeave)
   window.addEventListener('drop', drop)
@@ -516,6 +625,8 @@ const initEvents = (store: Store<State, any>) => {
   const resizeHost = window.visualViewport || window
   resizeHost.addEventListener('resize', updateSize)
   resizeHost.addEventListener('resize', onResizeLog)
+  // While the keyboard is open, iOS pans the visual viewport within the layout viewport, which fires scroll on the visual viewport rather than on the window. When there is no visualViewport, resizeHost is the window, and adding the same listener again is a no-op.
+  resizeHost.addEventListener('scroll', onScrollLog)
 
   // Initialize virtual keyboard handlers
   const unsubscribeKeyboardSelection = initKeyboardSelection()
@@ -551,16 +662,21 @@ const initEvents = (store: Store<State, any>) => {
     document.removeEventListener('gestureend', onSafariGesture)
     window.removeEventListener('beforeunload', onBeforeUnload)
     window.removeEventListener('scroll', updateScrollTop)
+    window.removeEventListener('scroll', onScrollLog)
     window.removeEventListener('dragenter', dragEnter)
     window.removeEventListener('dragleave', dragLeave)
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
     resizeHost.removeEventListener('resize', onResizeLog)
+    resizeHost.removeEventListener('scroll', onScrollLog)
     resumeSettleTimeoutStore.reset()
+    resumeFrameWatchStore.reset()
+    scrollEndTimeoutStore.reset()
     unsubscribeKeyboardSelection()
     virtualKeyboardHandler.destroy()
     nativeHistory.destroy()
+    untrackHistoryState()
     eventHandlers = null
   }
 

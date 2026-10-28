@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { dropHoverRecipe } from '../../styled-system/recipes'
@@ -18,6 +18,7 @@ import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
 import { compareReasonable } from '../util/compareThought'
+import debugLog from '../util/debugLog'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -34,11 +35,16 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
 
   const animateHover = useSelector(state => {
     const parent = parentOf(simplePath)
-    const autofocus = calculateAutofocus(state, simplePath)
-    const autofocusParent = calculateAutofocus(state, parent)
-    return autofocus === 'dim' && autofocusParent === 'hide'
+    const autofocus = calculateAutofocus(state)
+    return autofocus(simplePath) === 'dim' && autofocus(parent) === 'hide'
   })
   const thoughtId = head(simplePath)
+
+  // Records each drop hover that is actually shown, so that a hovered drop target that renders no drop hover can be told apart in the debug log from one that does.
+  useEffect(() => {
+    debugLog.log('dropHover', { zone: 'thought', thoughtId })
+  }, [thoughtId])
+
   const insideDivider = useSelector(state => isDivider(getThoughtById(state, thoughtId)?.value))
 
   return (

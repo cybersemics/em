@@ -1,6 +1,7 @@
 import { type ConsoleMessage, ElementHandle, KnownDevices } from 'puppeteer'
 import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
+import swapNoteCommand from '../../../commands/swapNote'
 import $ from '../helpers/$'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
@@ -13,6 +14,7 @@ import scrollTo from '../helpers/scrollTo'
 import setConnectionStatus from '../helpers/setConnectionStatus'
 import setSelection from '../helpers/setSelection'
 import waitForAlert from '../helpers/waitForAlert'
+import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
@@ -68,6 +70,25 @@ describe('alerts', () => {
     // Verify alert content contains gesture hint text
     const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
     expect(alertText).toBeTruthy()
+  })
+
+  // https://github.com/cybersemics/em/issues/5735
+  it('shows the error alert when Swap Note is swiped on a thought in the home context', async () => {
+    await paste(`
+      - aaa
+        - bbb
+    `)
+    await clickThought('aaa')
+    await waitForCursor('aaa')
+
+    await gesture(swapNoteCommand)
+
+    // Let the task deferred from the end of the gesture run before asserting which alert remains, so that an error
+    // alert that is shown only momentarily before the gesture hint replaces it does not pass the test.
+    await waitForBrowserSettled()
+
+    const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
+    expect(alertText).toBe('Thoughts in the home context cannot be converted to a note.')
   })
 })
 
@@ -174,6 +195,58 @@ describe('gestures', () => {
     await activeGesture.end()
 
     expect(await exportThoughts()).toBe(outline)
+  })
+
+  // https://github.com/cybersemics/em/issues/5966
+  it('ignores a second finger that touches down during a gesture in progress', async () => {
+    const firstFinger = await startGesture()
+    await firstFinger.move('r')
+    await waitForSelector('[data-testid=gesture-menu-content]')
+
+    // Drag a second finger down a line on the other side of the screen while the first finger is held.
+    const secondFinger = await startGesture({ xStart: 300, yStart: 250 })
+    await secondFinger.move('d', { segmentLength: 250 })
+
+    await firstFinger.move('d')
+
+    // Count the opaque pixels of the gesture trace in a strip around the second finger's line. Only the
+    // first finger's →↓ should be drawn, which stays well to the left of the strip.
+    const secondFingerInk = await page.$eval('[data-testid=gesture-trace] canvas', canvas => {
+      const pixels = (canvas as HTMLCanvasElement).getContext('2d')!.getImageData(295, 300, 10, 180).data
+      return pixels.filter((value, i) => i % 4 === 3 && value > 50).length
+    })
+    expect(secondFingerInk).toBe(0)
+
+    await firstFinger.end()
+    await secondFinger.end()
+
+    // New Thought creates an empty thought and puts the cursor on it.
+    await waitForCursor('')
+    expect(await exportThoughts()).toBe(`
+- ${''}
+`)
+  })
+
+  // https://github.com/cybersemics/em/issues/5966
+  it('ignores a two-finger tap during a gesture in progress', async () => {
+    const firstFinger = await startGesture()
+    await firstFinger.move('r')
+    await waitForSelector('[data-testid=gesture-menu-content]')
+
+    // Tap with two more fingers at once while the first finger is held, so that three fingers are down.
+    const secondFinger = await startGesture({ xStart: 300, yStart: 250 })
+    const thirdFinger = await startGesture({ xStart: 300, yStart: 450 })
+    await secondFinger.end()
+    await thirdFinger.end()
+
+    await firstFinger.move('d')
+    await firstFinger.end()
+
+    // New Thought creates an empty thought and puts the cursor on it.
+    await waitForCursor('')
+    expect(await exportThoughts()).toBe(`
+- ${''}
+`)
   })
 })
 

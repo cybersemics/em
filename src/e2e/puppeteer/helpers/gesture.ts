@@ -83,7 +83,8 @@ const getDirections = (gestureOrCommand: Gesture | Command): Direction[] => {
 
 /**
  * Start a touch and return controls for moving it through one or more gestures before ending it.
- * This allows other real input, such as scrolling, to occur between phases of the same touch.
+ * This allows other real input, such as scrolling or another finger, to occur between phases of the same touch.
+ * Each call starts a separate touch point, so two active gestures move two fingers independently.
  */
 export const startGesture = async ({ target, xStart, yStart }: GesturePositionOptions = {}): Promise<ActiveGesture> => {
   // Starting position more reliably in gesture zone
@@ -101,7 +102,7 @@ export const startGesture = async ({ target, xStart, yStart }: GesturePositionOp
     y = rect.top + rect.height / 2
   }
 
-  await page.touchscreen.touchStart(x, y)
+  const touch = await page.touchscreen.touchStart(x, y)
 
   return {
     move: async (gestureOrCommand, { segmentLength = 80 }: GestureMoveOptions = {}) => {
@@ -123,11 +124,11 @@ export const startGesture = async ({ target, xStart, yStart }: GesturePositionOp
         }
 
         for (const point of getMovePoints(previous.x, previous.y, x, y)) {
-          await page.touchscreen.touchMove(point.x, point.y)
+          await touch.move(point.x, point.y)
         }
       }
     },
-    end: () => page.touchscreen.touchEnd(),
+    end: () => touch.end(),
   }
 }
 

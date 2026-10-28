@@ -13,6 +13,7 @@
  * not have to exclude itself from that count.
  */
 const fs = require('node:fs')
+const { jobLog, parseDetailsUrl } = require('./job-log.cjs')
 
 /** Directory the report is written to, shared with start-dependabot-fix-task.mjs. */
 const REPORT_DIR = 'dependabot-fix'
@@ -45,75 +46,6 @@ const MAX_TASKS = 3
 
 /** Failing jobs to pull a log excerpt from, in the order the checks API returned them. */
 const MAX_LOG_JOBS = 3
-
-/** Lines kept per log excerpt. */
-const MAX_LOG_LINES = 40
-
-/** Characters kept per log excerpt, so one pathologically long line cannot swallow the prompt. */
-const MAX_LOG_CHARS = 2500
-
-/** Log lines that are pure runner bookkeeping and carry nothing a reader needs. */
-const NOISE = /^##\[(?:start-action|end-action|endgroup\]|debug\])/
-
-/** Splits a raw job log into readable lines, dropping the ISO timestamp, ANSI codes, and noise. */
-const cleanLog = text =>
-  text
-    .split('\n')
-    .map(line =>
-      line
-        .replace(/^\d{4}-\d{2}-\d{2}T\S+Z /, '')
-        .replace(/\u001b\[[0-9;]*[A-Za-z]/g, '')
-        .trimEnd(),
-    )
-    .filter(line => line && !NOISE.test(line))
-
-/**
- * The interesting window of a job log. The tail is worthless on its own — every Actions job ends
- * with the same twenty lines of checkout cleanup — so this anchors on the `##[error]` annotations
- * the runner emits, keeping enough before the first one to show which command was running and
- * enough after the last one to catch a multi-line type error. Falls back to the tail when a job
- * failed without annotating anything.
- */
-const excerpt = lines => {
-  const errors = lines.map((line, i) => (line.startsWith('##[error]') ? i : -1)).filter(i => i >= 0)
-  const window = errors.length
-    ? lines.slice(Math.max(0, errors[0] - 20), Math.min(lines.length, errors[errors.length - 1] + 9))
-    : lines.slice(-MAX_LOG_LINES)
-  const kept = window.slice(0, MAX_LOG_LINES)
-  const text = kept.join('\n')
-  // Marked either way, so nothing reading this mistakes a clipped log for the whole of one.
-  const clipped = kept.length < window.length || text.length > MAX_LOG_CHARS
-  return clipped ? `${text.slice(0, MAX_LOG_CHARS)}\n…` : text
-}
-
-/**
- * Fetches one job's log, or null when it cannot be read. The logs endpoint answers a redirect to
- * blob storage that rejects the Authorization header, so the redirect is followed by hand rather
- * than through octokit. A missing or expired log is not worth failing the run over — the task
- * still gets the check names and links.
- */
-const jobLog = async ({ owner, repo, jobId, core }) => {
-  try {
-    const url = `https://api.github.com/repos/${owner}/${repo}/actions/jobs/${jobId}/logs`
-    const redirect = await fetch(url, {
-      headers: { accept: 'application/vnd.github+json', authorization: `Bearer ${process.env.GH_TOKEN}` },
-      redirect: 'manual',
-    })
-    const location = redirect.headers.get('location')
-    const response = location ? await fetch(location) : redirect
-    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
-    return excerpt(cleanLog(await response.text()))
-  } catch (e) {
-    core.warning(`Could not read the log for job ${jobId}: ${e.message}`)
-    return null
-  }
-}
-
-/** Run and job ids, which an Actions check run carries only in the URL it links a human to. */
-const parseDetailsUrl = url => {
-  const match = /\/actions\/runs\/(\d+)\/job\/(\d+)/.exec(url || '')
-  return match ? { runId: match[1], jobId: match[2] } : null
-}
 
 /** Collects the failing checks on a Dependabot pull request and reports whether to start a task. */
 const collectDependabotFailures = async ({ github, context, core }) => {

@@ -29,10 +29,13 @@ flowchart TD
     TDD --> RT["<b>run-test</b><br/>run one test for real"]
     REP --> RT
 
-    CM --> TD["<b>test-diagnosis</b><br/>what kind of failure is this?"]
+    CM --> TD["<b>test-diagnosis</b><br/>whose failure, and what kind?"]
     TD --> PUS["<b>puppeteer-update-snapshots</b><br/>regenerate screenshots"]
 
     CM --> ES["<b>end-session</b><br/>checklist before stopping"]
+
+    ASK(["Asked to bisect"]) --> BIS["<b>bisect</b><br/>regression or always broken?"]
+    BIS --> BC
     ES --> DS["<b>docs-sync</b><br/>make docs true again"]
 
     style REP fill:#2d4a2d,color:#fff
@@ -51,6 +54,7 @@ flowchart TD
     click RT "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#run-test" "run-test — run one test for real"
     click CM "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#ci-monitor" "ci-monitor — wait for every check"
     click TD "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#test-diagnosis" "test-diagnosis — classify the failure"
+    click BIS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#bisect" "bisect — find the commit that broke it"
     click PUS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#puppeteer-update-snapshots" "puppeteer-update-snapshots — regenerate screenshots"
 ```
 
@@ -67,11 +71,14 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`tdd-write-failing-test`](#tdd-write-failing-test) | Turn a reproduction into a permanent test that fails for the right reason | [SKILL.md](../../.github/skills/tdd-write-failing-test/SKILL.md) |
 | [`run-test`](#run-test) | Run one test in the real harness and report what happened | [SKILL.md](../../.github/skills/run-test/SKILL.md) |
 | [`ci-monitor`](#ci-monitor) | Wait for every CI check and report which passed | [SKILL.md](../../.github/skills/ci-monitor/SKILL.md) |
-| [`test-diagnosis`](#test-diagnosis) | Classify a CI failure and decide how to fix it | [SKILL.md](../../.github/skills/test-diagnosis/SKILL.md) |
+| [`test-diagnosis`](#test-diagnosis) | Classify a CI failure, decide whether the pull request caused it, and decide how to handle it | [SKILL.md](../../.github/skills/test-diagnosis/SKILL.md) |
 | [`puppeteer-update-snapshots`](#puppeteer-update-snapshots) | Regenerate screenshot comparisons after an intended visual change | [SKILL.md](../../.github/skills/puppeteer-update-snapshots/SKILL.md) |
 | [`end-session`](#end-session) | Work through the exit checklist before stopping for any reason | [SKILL.md](../../.github/skills/end-session/SKILL.md) |
 | [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
-| `write-issue` | Write a GitHub issue in the format this repo uses | [SKILL.md](../../.github/skills/write-issue/SKILL.md) |
+| [`bisect`](#bisect) | Find whether a bug is a recent regression, and the commit and pull request that introduced it | [SKILL.md](../../.github/skills/bisect/SKILL.md) |
+| `create-issue` | Write a GitHub issue, or the reproduction sections of a pull request with no linked issue, in the format this repo uses | [SKILL.md](../../.github/skills/create-issue/SKILL.md) |
+| [`liminal`](#liminal) | Style a static artifact, such as a report page, like em's Liminal UI | [SKILL.md](../../.github/skills/liminal/SKILL.md) |
+| [`report-review-gaps`](#report-review-gaps) | Report the feedback a final reviewer gave after the first review, as review principles | [SKILL.md](../../.github/skills/report-review-gaps/SKILL.md) |
 
 ## The gates
 
@@ -172,6 +179,27 @@ Two facts shape the whole skill, and both were measured rather than assumed.
 
 The skill also tells the agent to run it *before* escalating a failed reproduction. "Their log has four `composition` entries mine never produced" is a question the user can answer; "could not reproduce" is not.
 
+## Finding regressions
+
+### bisect
+
+**Source: [`.github/skills/bisect/SKILL.md`](../../.github/skills/bisect/SKILL.md)**
+
+Runs on demand — when someone asks to bisect an issue, or whether a bug used to work. It takes an issue number or URL, and the issue must carry exact Steps to Reproduce; without them it stops rather than inventing steps, because a bisect is only as trustworthy as the reproduction it repeats at every commit.
+
+It drives `git bisect` by hand instead of with `git bisect run`. A bug here may be a failing test, but it is as often a caret position on iOS or a gesture that misfires one time in three, and the only oracle that covers all of those is the agent reproducing the steps. So at each commit it reinstalls, restarts the dev server, reproduces, and tells `git bisect` what it saw.
+
+The search window is deliberately short. It looks for a good commit 30 days back, then a year back, and if the bug is present a year ago it reports the bug as having always existed and stops. It bisects along `main`'s first-parent history, where each squash-merged commit is one pull request.
+
+Two rules carry most of the weight:
+
+- **Nondeterministic bugs get a measured number of trials.** The agent first reproduces 5 times at the tip of `main`, and that rate sets how many clean trials a commit needs before it counts as good. One sighting of the failure is enough to call a commit bad; one clean run is not enough to call it good.
+- **The answer is checked before it is reported.** The named commit must reproduce again, and its parent must come up clean at twice the usual trial count. If the parent is bad too, the result is reported as inconclusive and no pull request is named.
+
+iOS needs the most care, because not every environment has every behaviour. BrowserStack's devices have autocorrect switched off, a local Simulator has it but is not real hardware, and Safari and the Capacitor app handle the keyboard differently. So the skill says which environment covers what, and when the bug does not reproduce at the tip of `main`, it checks the commit from when the issue was filed to tell "already fixed" apart from "needs an environment we lack".
+
+It reports a verdict and the commit and pull request behind it, and nothing about the cause — explaining the bug is left to a separate agent, so the bisect's evidence is not mixed with a guess.
+
 ## Testing
 
 ### tdd-write-failing-test
@@ -222,7 +250,7 @@ So: only use it when the visual change was intentional, never to silence a failu
 
 Lists the workflow runs for the current branch and waits for all of them to finish before reporting. Derives the repository from the git remote rather than assuming, and filters by the current branch. Because the main workflows cancel a run the moment a newer push supersedes it (see [Superseded runs](../testing.md#superseded-runs)), it judges each workflow by its run on the current head sha — a `cancelled` run on an older commit is not a failure to chase.
 
-Its central instruction: **never claim tests pass without checking.** The skill says outright that hallucinating test results is the worst thing it can do. If CI still fails after five fix-and-push cycles, stop and hand back to a human.
+Its central instruction: **never claim tests pass without checking.** The skill says outright that hallucinating test results is the worst thing it can do. If CI still fails after five fix-and-push cycles, or only failures attributed to `main` remain, stop and hand back to a human.
 
 ### test-diagnosis
 
@@ -230,9 +258,11 @@ Its central instruction: **never claim tests pass without checking.** The skill 
 
 Sorts a CI failure into one of: a build error, a lint or formatting error, a failed unit test, a mismatched screenshot, a timeout, or a known flaky test. Then fixes them in that order — nothing else matters if the code does not build, and lint failures are quick and mechanical.
 
+Before fixing anything it decides whose failure it is, from `main`'s own runs of the same workflow. A failure the pull request caused is fixed there. One that fails consistently on `main` is a blocker, tracked by the [`main-fix`](../testing.md#failing-ci-on-main) issue that Main Fix files rather than one filed by hand, and fixed in its own pull request. One that is flaky on `main` gets a single unchanged re-run, its evidence cited, and a tracking issue if it has none. The pull request carries no code for either, because a request to address a failing check asks for a diagnosis, not for the pull request's scope to grow around whatever happened to be red.
+
 The rule that matters most is for failing tests: **fix the code, not the test**, unless you are genuinely certain the test is wrong. Never edit a test into passing without understanding why it failed.
 
-For suspected flakiness it checks the project's open issues labelled "test" for known cases. If a test looks flaky but is not on that list, stop and say so rather than deciding for yourself.
+For suspected flakiness it checks the project's open issues labelled "test" for known cases. A flake that is not on that list is tracked — filed as `Flaky test: <file> > <full name>`, or reported to the user when the agent cannot file issues — rather than fixed in the pull request it happened to fail on.
 
 ## Ending the session
 
@@ -244,7 +274,7 @@ The exit gate. The [`reproduce`](#reproduce) and [`plan`](#plan) skills control 
 
 It exists because the last action of a run is the one nobody supervises, and its two worst failures are silent ones. A session that ends with the fix still sitting in the working tree has destroyed the work rather than delivered it: the runner is disposable, so the branch looks untouched and the effort is gone. A session that ends while CI is still running has reported a result it never watched. Both read as success from inside the transcript, which is why this is a checklist rather than a principle.
 
-It opens by asking whether the agent is entitled to stop at all — not straight after a gate confirmation line, not mid fix-validate loop, not with CI still running — because the more common failure is not a messy ending but a premature one, stopping to wait for a human who is not there. An earlier version of this system had agents printing a gate line and then yielding mid-task. Only four endings are legitimate: the work is green, a documented attempt limit was hit, the bug would not reproduce, or the path is genuinely ambiguous.
+It opens by asking whether the agent is entitled to stop at all — not straight after a gate confirmation line, not mid fix-validate loop, not with CI still running — because the more common failure is not a messy ending but a premature one, stopping to wait for a human who is not there. An earlier version of this system had agents printing a gate line and then yielding mid-task. Only five endings are legitimate: the work is green, a documented attempt limit was hit, the bug would not reproduce, the path is genuinely ambiguous, or the only red checks are failures `test-diagnosis` attributed to `main`.
 
 From there the order is load-bearing, and each step is placed where it is for a reason. Documentation is repaired first, through [`docs-sync`](#docs-sync), because a doc edit is itself a file change and anything done after the tree is taken stock of misses the commit. Then every changed file is accounted for — each line of `git status --porcelain` is part of the work, scratch to delete, or something the agent did not write, which it must leave alone and mention rather than quietly discard. Then everything is committed and pushed, verified by `git status --porcelain` and `git log @{u}..HEAD` both coming back empty. Only then is CI examined, because committing restarts it. Regression tests are checked for a leftover `.skip` against what this branch added rather than the whole suite, the pull request is checked for its draft status, issue reference, plan, and a description that says each thing once and claims no test results GitHub's own CI status already shows, and the final report carries the `docs:` line along with whatever was deliberately left undone.
 
@@ -287,6 +317,20 @@ It reports one line back into the ending — the documents it updated, or `docs:
 
 The escalation rule is the interesting one. If a change contradicts **design intent** recorded in a doc — not a detail, but the stated reason a subsystem is built the way it is — the agent stops and raises it instead of editing the intent to match the new code. Quietly rewriting the "why" erases the only record that a deliberate decision was ever made.
 
+## Presenting work
+
+### liminal
+
+**Source: [`.github/skills/liminal/SKILL.md`](../../.github/skills/liminal/SKILL.md)**
+
+Runs on demand — when someone asks for a static artifact, such as a report page built outside the app, in em's look. It is never used to change the app's own UI. It gives the colour tokens, base CSS and conventions for em's Liminal UI: white on pure black, translucent surfaces, and a small copy of the background glow, embedded in the page so the Artifact stays a single file that can be shared. It has a single dark theme, and it keeps long links and code blocks wrapped so nothing scrolls sideways on a phone.
+
+### report-review-gaps
+
+**Source: [`.github/skills/report-review-gaps/SKILL.md`](../../.github/skills/report-review-gaps/SKILL.md)**
+
+Runs on demand, ahead of a review check-in. Its script collects every comment the final reviewer posted after the first reviewer's first review, on PRs by the given authors. The agent then keeps only the substantive feedback, groups it into review principles with the comments quoted verbatim, and publishes the result as a [`liminal`](#liminal) artifact. The report is shared with the first reviewer, so it never quotes them, and it is written as principles to adopt rather than a scorecard.
+
 ## Writing a new skill
 
 Create `.github/skills/<name>/SKILL.md` starting with frontmatter:
@@ -312,5 +356,7 @@ Beyond the frontmatter, patterns worth copying from the existing ones:
 **Name the ways it goes wrong.** `plan` lists three failure modes by name; [`tdd-write-failing-test`](#tdd-write-failing-test) describes exactly what a wrongly-failing test looks like. Naming a trap is how you stop an agent walking into it.
 
 **Say what to do when stuck.** Every skill ends with escalation rules, and most end with the same line: default to acting on your own, escalate only when the right path is genuinely unclear. Without that, agents either stop constantly or never stop at all.
+
+**Run a procedure skill once on a real case before opening its pull request.** Checking its commands one by one is not enough: the `bisect` skill's first version passed that check, and its first real bisect still turned up a stale build step, a missing iOS environment, and a report step that needed the user's say. Where a step could not be run, say so in the pull request.
 
 **Split large skills by what the caller needs.** `browser-control` routes to a Chrome half and an iOS half so that a web task never loads several hundred lines about BrowserStack.

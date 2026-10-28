@@ -7,15 +7,21 @@ import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
+import importDataAtFirstMatch from '../../test-helpers/importDataAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
 import findCursor from '../../test-helpers/queries/findCursor'
 import selectRange from '../../test-helpers/selectRange'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import head from '../../util/head'
 import removeHome from '../../util/removeHome'
+import { clearActionCreator as clear } from '../clear'
 import importDataActionCreator from '../importData'
+import { importFilesActionCreator as importFiles } from '../importFiles'
 import { importTextActionCreator as importText } from '../importText'
 import { newThoughtActionCreator as newThought } from '../newThought'
+import { pullActionCreator as pull } from '../pull'
 
 /** Helper function that initializes the store, imports html into the root, and exports it as plaintext to make easily readable assertions. This is async because importFiles is async. */
 const importExport = async (html: string, outputFormat: MimeType = 'text/plain') => {
@@ -446,8 +452,7 @@ it('should paste text with an improperly nested meta tag', async () => {
 `)
 })
 
-// TODO: Should be imported as siblings, not parent-child
-it.skip('simple duplicate', async () => {
+it('simple duplicate', async () => {
   const text = `
     - a
     - a
@@ -461,8 +466,7 @@ it.skip('simple duplicate', async () => {
   expect(exported.trim()).toBe(expectedExport.trim())
 })
 
-// TODO: No longer working as it did in importText. What should we expect?
-it.skip('multiple duplicates', async () => {
+it('multiple duplicates', async () => {
   const text = `
     - a
       - b
@@ -501,6 +505,535 @@ it('keeps children under each duplicate ancestor', async () => {
 - foo
   - baz
 `)
+})
+
+// https://github.com/cybersemics/em/issues/2712
+// importText and importFiles are two pipelines for the same import. They are being consolidated into one, so each
+// outline is imported into two identical destinations, once through each pipeline, and both must give the same outline.
+describe('importText and importFiles import the same outline', () => {
+  it.each([
+    {
+      name: 'duplicate siblings',
+      destination: '',
+      text: `
+- a
+- a`,
+      expected: `
+  - a
+  - a`,
+    },
+    {
+      name: 'duplicate nested thoughts',
+      destination: '',
+      text: `
+- a
+  - b
+    - c
+  - b
+- a
+  - b
+    - d`,
+      expected: `
+  - a
+    - b
+      - c
+    - b
+  - a
+    - b
+      - d`,
+    },
+    {
+      name: 'empty thoughts',
+      destination: '',
+      text: `
+- a
+- ${''}
+- b`,
+      expected: `
+  - a
+  - ${''}
+  - b`,
+    },
+    {
+      name: 'duplicates of the descendants of the destination',
+      destination: `
+- b
+  - c`,
+      text: `
+- b
+  - d
+- e`,
+      expected: `
+  - b
+    - c
+  - b
+    - d
+  - e`,
+    },
+    {
+      name: 'metaprogramming attributes',
+      destination: `
+- =sort
+  - Alphabetical
+- b`,
+      text: `
+- =sort
+  - Alphabetical
+- c
+  - =pin
+    - true
+  - d`,
+      expected: `
+  - =sort
+    - Alphabetical
+  - b
+  - c
+    - =pin
+      - true
+    - d`,
+    },
+  ])('$name', async ({ destination, text, expected }) => {
+    vi.useFakeTimers()
+    const { cleanup } = await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({ text: '- text\n- files' }),
+      (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['text'])!, text: destination })),
+      (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['files'])!, text: destination })),
+      (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['text'])!, text })),
+      (dispatch, getState) =>
+        dispatch(
+          importFiles({
+            path: contextToPath(getState(), ['files'])!,
+            files: [{ lastModified: 0, name: 'test', size: text.length, text: async () => text }],
+          }),
+        ),
+    ])
+
+    await vi.runOnlyPendingTimersAsync()
+
+    const exportedText = exportContext(store.getState(), ['text'], 'text/plain')
+    const exportedFiles = exportContext(store.getState(), ['files'], 'text/plain')
+
+    cleanup()
+
+    expect(exportedText).toBe(`- text${expected}`)
+    expect(exportedFiles).toBe(`- files${expected}`)
+  })
+
+  it('an empty destination thought with siblings', async () => {
+    vi.useFakeTimers()
+    const { cleanup } = await initialize({ storage: 'memory' })
+
+    const text = `
+- a
+- b`
+
+    store.dispatch([
+      importText({
+        text: `
+          - text
+            - x
+            - y
+          - files
+            - x
+            - y
+        `,
+      }),
+      setCursor(['text', 'x']),
+      newThought({}),
+      setCursor(['files', 'x']),
+      newThought({}),
+      (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['text', ''])!, text })),
+      (dispatch, getState) =>
+        dispatch(
+          importFiles({
+            path: contextToPath(getState(), ['files', ''])!,
+            files: [{ lastModified: 0, name: 'test', size: text.length, text: async () => text }],
+          }),
+        ),
+    ])
+
+    await vi.runOnlyPendingTimersAsync()
+
+    const exportedText = exportContext(store.getState(), ['text'], 'text/plain')
+    const exportedFiles = exportContext(store.getState(), ['files'], 'text/plain')
+
+    cleanup()
+
+    expect(exportedText).toBe(`- text
+  - x
+  - a
+  - b
+  - y`)
+    expect(exportedFiles).toBe(`- files
+  - x
+  - a
+  - b
+  - y`)
+  })
+})
+
+// https://github.com/cybersemics/em/issues/2712
+// A resumed import continues from the number of thoughts recorded in the resume manifest. Duplicates are not merged,
+// so a count that falls behind the thoughts actually imported would import them a second time. Recording the count
+// after every thought keeps it from falling behind.
+it('records the progress of an import after every imported thought', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+  const setItem = vi.spyOn(localStorage, 'setItem')
+  setItem.mockClear()
+
+  const text = `
+- a
+  - b
+- c`
+
+  store.dispatch(
+    importFiles({
+      path: HOME_PATH,
+      files: [{ lastModified: 0, name: 'test', size: text.length, text: async () => text }],
+    }),
+  )
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // the number of thoughts imported, recorded in each write of the resume manifest
+  const thoughtsImported = setItem.mock.calls
+    .filter(([key]) => key === 'resume-imports')
+    .map(([, value]) =>
+      Object.values(JSON.parse(value) as Record<string, { thoughtsImported: number }>).map(
+        file => file.thoughtsImported,
+      ),
+    )
+
+  cleanup()
+
+  // the manifest is deleted once the import is complete
+  expect(thoughtsImported).toEqual([[0], [1], [2], [3], []])
+})
+
+// https://github.com/cybersemics/em/issues/2712
+// The cursor is set on the first imported thought that is not a metaprogramming attribute. Duplicates are not merged,
+// so when it duplicates an existing sibling, the cursor belongs on the imported thought, not on the existing one.
+it('sets the cursor on the imported thought when it duplicates an existing sibling', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+      `,
+    }),
+    importDataAtFirstMatch(['a'], {
+      text: `
+- =sort
+  - Alphabetical
+- b
+- c`,
+    }),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const state = store.getState()
+  const [, bImported] = getChildrenRankedByContext(state, ['a']).filter(child => child.value === 'b')
+
+  cleanup()
+
+  expect(state.cursor && head(state.cursor)).toBe(bImported.id)
+})
+
+// https://github.com/cybersemics/em/issues/2712
+it('does not merge a pasted thought into a duplicate sibling', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+        - x
+      `,
+    }),
+    setCursor(['x']),
+    newThought({}),
+    (dispatch, getState) =>
+      dispatch(
+        importDataActionCreator({
+          path: contextToPath(getState(), [''])!,
+          text: `
+- a
+  - b
+    - c
+- y`,
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - b
+- x
+- a
+  - b
+    - c
+- y
+`)
+})
+
+// https://github.com/cybersemics/em/issues/2712
+it('does not merge pasted children into duplicate descendants of the destination', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+            - c
+      `,
+    }),
+    (dispatch, getState) =>
+      dispatch(
+        importDataActionCreator({
+          path: contextToPath(getState(), ['a'])!,
+          text: `
+- b
+  - d
+- e`,
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - b
+    - c
+  - b
+    - d
+  - e
+`)
+})
+
+// https://github.com/cybersemics/em/issues/2712
+// Merging duplicates required the descendants of each duplicate at the destination to be loaded before every imported
+// thought, which made importing slow. Since duplicates are no longer merged, a pending duplicate must be left pending.
+it('does not load the pending descendants of a duplicate at the destination', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(
+    importText({
+      text: `
+        - a
+          - b
+            - c
+        - x
+      `,
+    }),
+  )
+  await waitForThoughtspaceIdle()
+
+  // reload from storage one level deep, so that a/b is pending
+  store.dispatch(clear())
+  await store.dispatch(pull([HOME_TOKEN], { maxDepth: 1 }))
+  expect(getThoughtById(store.getState(), head(contextToPath(store.getState(), ['a', 'b'])!))?.pending).toBe(true)
+
+  store.dispatch([
+    setCursor(['x']),
+    newThought({}),
+    (dispatch, getState) =>
+      dispatch(
+        importDataActionCreator({
+          path: contextToPath(getState(), [''])!,
+          text: `
+- a
+  - b
+    - d
+- y`,
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const state = store.getState()
+  // c is left in storage, so it is not in the export until it is loaded
+  const exported = exportContext(state, HOME_PATH, 'text/plain')
+  const pending = getThoughtById(state, head(contextToPath(state, ['a', 'b'])!))?.pending
+
+  // load everything to show that c was left untouched under the original a/b
+  await store.dispatch(pull([HOME_TOKEN], { maxDepth: Infinity }))
+  const exportedAfterPull = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - b
+- x
+- a
+  - b
+    - d
+- y
+`)
+  expect(pending).toBe(true)
+  expect(removeHome(exportedAfterPull)).toBe(`
+- a
+  - b
+    - c
+- x
+- a
+  - b
+    - d
+- y
+`)
+})
+
+// Metaprogramming attributes are the only thoughts that are still merged on import, so importing an attribute that
+// already exists in the destination must not create a second one.
+describe('merge metaprogramming attributes', () => {
+  it('merges a pasted attribute into an existing attribute of the destination', async () => {
+    vi.useFakeTimers()
+    const { cleanup } = await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =sort
+              - Alphabetical
+            - b
+        `,
+      }),
+      (dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['a'])!,
+            text: `
+- =sort
+  - Alphabetical
+- c`,
+          }),
+        ),
+    ])
+
+    await vi.runOnlyPendingTimersAsync()
+
+    const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+    cleanup()
+
+    expect(removeHome(exported)).toBe(`
+- a
+  - =sort
+    - Alphabetical
+  - b
+  - c
+`)
+  })
+
+  it('merges a pasted attribute into an existing attribute of a destination that is not loaded yet', async () => {
+    vi.useFakeTimers()
+    const { cleanup } = await initialize({ storage: 'memory' })
+
+    store.dispatch(
+      importText({
+        text: `
+          - x
+            - a
+              - =sort
+                - Alphabetical
+              - b
+        `,
+      }),
+    )
+    await waitForThoughtspaceIdle()
+
+    // reload from storage one level deep, so that x/a is pending
+    store.dispatch(clear())
+    await store.dispatch(pull([HOME_TOKEN], { maxDepth: 1 }))
+    expect(getThoughtById(store.getState(), head(contextToPath(store.getState(), ['x', 'a'])!))?.pending).toBe(true)
+
+    store.dispatch((dispatch, getState) =>
+      dispatch(
+        importDataActionCreator({
+          path: contextToPath(getState(), ['x', 'a'])!,
+          text: `
+- =sort
+  - Alphabetical
+- c`,
+        }),
+      ),
+    )
+
+    await vi.runOnlyPendingTimersAsync()
+
+    // load everything so the export shows the whole outline
+    await store.dispatch(pull([HOME_TOKEN], { maxDepth: Infinity }))
+    const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+    cleanup()
+
+    expect(removeHome(exported)).toBe(`
+- x
+  - a
+    - =sort
+      - Alphabetical
+    - b
+    - c
+`)
+  })
+
+  it('merges an attribute imported with importText into an existing attribute of the destination', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =sort
+              - Alphabetical
+            - b
+        `,
+      }),
+      (dispatch, getState) =>
+        dispatch(
+          importText({
+            path: contextToPath(getState(), ['a'])!,
+            text: `
+- =sort
+  - Alphabetical
+- c`,
+          }),
+        ),
+    ])
+
+    const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+    expect(removeHome(exported)).toBe(`
+- a
+  - =sort
+    - Alphabetical
+  - b
+  - c
+`)
+  })
 })
 
 it('two root thoughts', async () => {
@@ -778,6 +1311,197 @@ f
           - H6
             - f
 `)
+})
+
+// https://github.com/cybersemics/em/issues/5172
+it('import a dropped markdown file', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  const markdown = `# Fruits
+
+- Apple
+- Banana
+
+# Vegetables
+
+- Carrot
+`
+
+  store.dispatch([
+    importText({ text: '- a' }),
+    (dispatch, getState) =>
+      dispatch(
+        importFiles({
+          path: contextToPath(getState(), ['a'])!,
+          files: [
+            {
+              lastModified: Date.now(),
+              name: 'test.md',
+              size: markdown.length,
+              text: async () => markdown,
+            },
+          ],
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - Fruits
+    - Apple
+    - Banana
+  - Vegetables
+    - Carrot
+`)
+})
+
+// https://github.com/cybersemics/em/issues/5172
+// Pasted markdown is imported with importText and a dropped markdown file is imported with importFiles. Both must give
+// the same outline, so the same markdown is imported into two identical destinations, once through each.
+it('import the same markdown with importText and importFiles', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  const markdown = `# Fruits
+
+- Apple
+  - Red
+- Banana
+
+## Citrus
+
+- Orange
+
+# Vegetables
+
+- Carrot
+`
+
+  store.dispatch([
+    importText({ text: '- text\n- files' }),
+    (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['text'])!, text: markdown })),
+    (dispatch, getState) =>
+      dispatch(
+        importFiles({
+          path: contextToPath(getState(), ['files'])!,
+          files: [{ lastModified: Date.now(), name: 'test.md', size: markdown.length, text: async () => markdown }],
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exportedText = exportContext(store.getState(), ['text'], 'text/plain')
+  const exportedFiles = exportContext(store.getState(), ['files'], 'text/plain')
+
+  cleanup()
+
+  const expected = `
+  - Fruits
+    - Apple
+      - Red
+    - Banana
+    - Citrus
+      - Orange
+  - Vegetables
+    - Carrot`
+
+  expect(exportedText).toBe(`- text${expected}`)
+  expect(exportedFiles).toBe(`- files${expected}`)
+})
+
+// https://github.com/cybersemics/em/issues/5172
+// The CSS id selector at the start of a line matches isMarkdown, but the file must still be imported as HTML.
+it('import a dropped HTML file that looks like markdown', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  const html = `<html><head><style>
+#main { color: red }
+</style></head><body><ul><li>Fruits<ul><li>Apple</li><li>Banana</li></ul></li></ul></body></html>`
+
+  store.dispatch([
+    importText({ text: '- a' }),
+    (dispatch, getState) =>
+      dispatch(
+        importFiles({
+          path: contextToPath(getState(), ['a'])!,
+          files: [{ lastModified: Date.now(), name: 'test.html', size: html.length, text: async () => html }],
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - Fruits
+    - Apple
+    - Banana
+`)
+})
+
+// https://github.com/cybersemics/em/issues/5172
+// HTML within code is text, so the file must still be imported as markdown, and the code must keep its tags as text.
+it('import a dropped markdown file with HTML in its code', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  const markdown = `# Tags
+
+- Wrap a list in \`<ul>\`
+- Wrap an item in \`<li>\`
+
+\`\`\`
+<ul><li>Apple</li></ul>
+\`\`\`
+`
+
+  store.dispatch([
+    importText({ text: '- a' }),
+    (dispatch, getState) =>
+      dispatch(
+        importFiles({
+          path: contextToPath(getState(), ['a'])!,
+          files: [{ lastModified: Date.now(), name: 'tags.md', size: markdown.length, text: async () => markdown }],
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), ['a'], 'text/html')
+
+  cleanup()
+
+  expect(exported).toBe(`<ul>
+  <li>a${EMPTY_SPACE}
+    <ul>
+      <li>Tags${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
+        <ul>
+          <li>Wrap a list in <code>&lt;ul&gt;</code></li>
+          <li>Wrap an item in <code>&lt;li&gt;</code></li>
+          <li>&lt;ul&gt;&lt;li&gt;Apple&lt;/li&gt;&lt;/ul&gt;${EMPTY_SPACE.repeat(5)}
+            <ul>
+              <li>=code</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>`)
 })
 
 // TODO: Indentation broke when switching from importText to importData
@@ -1257,6 +1981,140 @@ it('insert single-line HTML copied from Mac desktop Chrome at end of thought', a
   - afoo`)
 })
 
+// https://github.com/cybersemics/em/issues/4161
+it('strip formatting from single-line HTML copied from a web page', async () => {
+  // the text/html that Chrome writes to the clipboard when a code block on a web page is copied
+  const html = `<pre style="color: rgb(31, 35, 40); font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; padding: 16px; background-color: rgb(246, 248, 250); border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13.6px;"><code>Hello world of beautiful people</code></pre>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: 'Hello world of beautiful people' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('aHello world of beautiful people')
+})
+
+// https://github.com/cybersemics/em/issues/4161
+it('separate the text of adjacent block elements when stripping formatting from single-line HTML', async () => {
+  // the text/html that Chrome writes to the clipboard when a heading and paragraph on a web page are copied
+  const html = `<h2 style="color: rgb(31, 35, 40); font-family: sans-serif;">Heading here</h2><p style="color: rgb(31, 35, 40); font-family: sans-serif;">Some<span> </span><b>para</b><span> </span>text</p>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: 'Heading here\nSome para text' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('aHeading here Some <b>para</b> text')
+})
+
+// https://github.com/cybersemics/em/issues/4161
+it('keep basic formatting within the text when stripping formatting from single-line HTML', async () => {
+  const html = `<p style="font-family: sans-serif;">Some <strong style="color: rgb(255, 0, 0);">bold</strong>, <i>italic</i>, <em>emphasized</em>, <s>struck</s>, <del>deleted</del> and <code>code</code> text</p>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(
+    importDataActionCreator({ path, html, text: 'Some bold, italic, emphasized, struck, deleted and code text' }),
+  )
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe(
+    'aSome <strong>bold</strong>, <i>italic</i>, <em>emphasized</em>, <strike>struck</strike>, <strike>deleted</strike> and <code>code</code> text',
+  )
+})
+
+// https://github.com/cybersemics/em/issues/4161
+it('unwrap formatting that covers all of the text when stripping formatting from single-line HTML', async () => {
+  // the text/html that Google Docs writes to the clipboard, which wraps every copy in a <b> that is not bold
+  const html = `<meta charset='utf-8'><b style="font-weight:normal;" id="docs-internal-guid-6c3b2a1e-7fff-1a2b-3c4d-5e6f7a8b9c0d"><span style="font-size:11pt;font-family:Arial,sans-serif;color:#000000;"><i>Hello world</i></span></b>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: 'Hello world' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('aHello world')
+})
+
+// https://github.com/cybersemics/em/issues/4161
+it('keep escaped markup as text when stripping formatting from single-line HTML', async () => {
+  // a code block on a web page that shows HTML source, as Chrome writes it to the clipboard
+  const html = `<pre style="background-color: rgb(246, 248, 250);"><code>&lt;b&gt;bold&lt;/b&gt; &amp; more</code></pre>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: '&lt;b&gt;bold&lt;/b&gt; &amp; more' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('a&lt;b&gt;bold&lt;/b&gt; &amp; more')
+})
+
+// https://github.com/cybersemics/em/issues/4161
+it('keep the spacing of the text when stripping formatting from single-line HTML', async () => {
+  const html = `<p style="font-family: sans-serif;">東京\u3000大阪 a&nbsp;&nbsp;b 10\u202f%</p>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: '東京\u3000大阪 a\u00a0\u00a0b 10\u202f%' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('a東京\u3000大阪 a  b 10\u202f%')
+})
+
 it('do not insert html with newlines as a single-line', async () => {
   const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
@@ -1364,5 +2222,93 @@ describe('paste over a selection', () => {
 
     const state = store.getState()
     expect(getThoughtById(state, head(state.cursor!))!.value).toBe('one three three')
+  })
+
+  // https://github.com/cybersemics/em/issues/5232
+  it('trims the trailing space of single-line HTML pasted over the selection', async () => {
+    act(() => {
+      store.dispatch([importText({ text: '- One two' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findCursor()
+    expect(thought).toBeTruthy()
+    selectRange(thought!, 'One '.length, 'One two'.length)
+
+    // Copied within em, whose HTML is inserted as is, unlike external HTML or plain text, which importData trims itself.
+    await act(async () => {
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['One two'])!,
+            html: "<meta charset='utf-8'>One ",
+            isEmText: true,
+          }),
+        ),
+      )
+    })
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('One One')
+    expect(state.cursorOffset).toBe('One One'.length)
+  })
+
+  // The emoji space must survive the trim of the whitespace before the emoji (#5232).
+  it('separates an emoji from the thought after trimming the leading space of single-line HTML pasted before it', async () => {
+    act(() => {
+      store.dispatch([importText({ text: '- Hello' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findCursor()
+    expect(thought).toBeTruthy()
+    selectRange(thought!, 0, 0)
+
+    await act(async () => {
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['Hello'])!,
+            html: "<meta charset='utf-8'> 🧠",
+            isEmText: true,
+          }),
+        ),
+      )
+    })
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('🧠 Hello')
+    expect(state.cursorOffset).toBe('🧠 '.length)
+  })
+
+  // A leading no-break space is not trimmed, as when typing, so it must not shift the caret either.
+  it('places the caret after single-line HTML pasted with a leading no-break space', async () => {
+    act(() => {
+      store.dispatch([importText({ text: '- Baz' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findCursor()
+    expect(thought).toBeTruthy()
+    selectRange(thought!, 0, 0)
+
+    await act(async () => {
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['Baz'])!,
+            html: "<meta charset='utf-8'>&nbsp;Bar",
+            isEmText: true,
+          }),
+        ),
+      )
+    })
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('&nbsp;BarBaz')
+    expect(state.cursorOffset).toBe('\u00a0Bar'.length)
   })
 })

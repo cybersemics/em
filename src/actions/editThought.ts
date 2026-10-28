@@ -81,11 +81,14 @@ const editThought = (
   }
 
   // only calculate decendant thought when current edited thought is a metaprogramming attribute
-  const thoughtIdForExistingMetaProgrammingThought =
+  const existingMetaProgrammingThoughtId =
     isAttribute(newValue) &&
     state.cursor &&
     head(state.cursor) === editedThought.id &&
     findDescendant(state, editedThought.parentId, newValue)
+  // the edited thought is not a duplicate of itself, which a stale childrenMap entry could otherwise suggest
+  const thoughtIdForExistingMetaProgrammingThought =
+    existingMetaProgrammingThoughtId !== editedThought.id && existingMetaProgrammingThoughtId
 
   // We do not want to create a duplicate metaprogramming thought within the same context. Instead this logic ensures we delete the current cursor thought and move the cursor to the existing one
   if (thoughtIdForExistingMetaProgrammingThought) {
@@ -183,14 +186,16 @@ const editThought = (
     noteParentThought && getSortPreference(state, noteParentThought.parentId).type === 'Note'
       ? {
           ...noteParentThought,
-          rank: getSortedRank(state, noteParentThought.parentId, newValue),
+          rank: getSortedRank(state, noteParentThought.parentId, newValue, { staleId: noteParentThought.id }),
           lastUpdated: timestamp(),
           updatedBy: clientId,
         }
       : null
 
   const thoughtIndexUpdates: Index<Thought | null> = {
-    ...(isAttribute(newValue)
+    // childrenMap keys attributes by value, so it is rebuilt when a thought becomes an attribute or stops being one,
+    // e.g. when =favorite is bolded to <b>=favorite</b>
+    ...(isAttribute(oldValue) || isAttribute(newValue)
       ? {
           [parentOfEditedThought.id]: {
             ...parentOfEditedThought,

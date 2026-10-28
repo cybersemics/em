@@ -10,6 +10,7 @@ import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
 import multitouchStore from '../stores/multitouchStore'
+import osVersionStore from '../stores/osVersionStore'
 import touchStore from '../stores/touchStore'
 import haptics from '../util/haptics'
 import head from '../util/head'
@@ -30,8 +31,16 @@ export interface LongPressProps {
  **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
-  onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent) => void) | null = noop,
-  delay: number = TIMEOUT_LONG_PRESS_THOUGHT,
+  onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent | MouseEvent) => void) | null = noop,
+  {
+    delay = TIMEOUT_LONG_PRESS_THOUGHT,
+    lockScroll = true,
+  }: {
+    /** Milliseconds to hold before the long press begins on desktop. On touch devices the TouchBackend's delayTouchStart is used instead. */
+    delay?: number
+    /** Block touch scrolling once the long press begins, so that iOS Safari cannot start a scroll before a drag begins (#3141). Disable for elements that cannot be dragged, so that a long press does not stop the user from scrolling (#3461). */
+    lockScroll?: boolean
+  } = {},
 ) => {
   const [pressing, setPressing] = useState(false)
   const longPressState = useSelector(state => state.longPress)
@@ -53,7 +62,9 @@ const useLongPress = (
       // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
       // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
       // Calling preventDefault on all touchmove events blocks scrolling entirely, but calling it once long press begins can prevent buggy behavior.
-      allowTouchToScroll(false)
+      if (lockScroll) {
+        allowTouchToScroll(false)
+      }
 
       haptics.light()
       onLongPressStart?.()
@@ -74,7 +85,7 @@ const useLongPress = (
 
       return () => clearTimeout(timerIdRef.current)
     }
-  }, [delay, dragDropManager, onLongPressStart, pressing])
+  }, [delay, dragDropManager, lockScroll, onLongPressStart, pressing])
 
   // Desktop can initiate drag-and-drop without waiting for a long press, so the timer does generate an
   // 'Invalid longPress transition' error unless it cleans up the timer. This error doesn't have any effect
@@ -96,6 +107,9 @@ const useLongPress = (
       // The flag is latched by the capture-phase touchstart listener in initEvents, which runs first.
       if (touchStore.getState().pressOnCaret) return
 
+      // On iOS 27 a withheld tap on an empty thought gives no sign that it lifted (#5660).
+      if (touchStore.getState().pressInEmptyThought) return
+
       setPressing(true)
     },
     [setPressing],
@@ -105,7 +119,7 @@ const useLongPress = (
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.)
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
-    (e?: React.MouseEvent | React.TouchEvent) => {
+    (e?: React.MouseEvent | React.TouchEvent | MouseEvent) => {
       setPressing(false)
 
       // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
@@ -126,6 +140,25 @@ const useLongPress = (
     [onLongPressEnd, setPressing],
   )
 
+  // iOS 27 can withhold a press's touchend until the next touch, but still fires mouseup when the finger lifts (#5660).
+  useEffect(() => {
+    if (!pressing || (osVersionStore.getState() ?? 0) < 27) return
+
+    window.addEventListener('mouseup', stop, { capture: true })
+    return () => window.removeEventListener('mouseup', stop, { capture: true })
+  }, [pressing, stop])
+
+  // A withheld tap can get no mouseup either, but iOS still moves the caret when it lifts (#5660). A finger still down
+  // does not move the caret before the long press delay, and once DragHold begins em blurs the editable itself.
+  useEffect(() => {
+    if (!pressing || longPressState !== LongPressState.Inactive || (osVersionStore.getState() ?? 0) < 27) return
+
+    /** Ends the press. */
+    const onSelectionChange = () => stop()
+    document.addEventListener('selectionchange', onSelectionChange)
+    return () => document.removeEventListener('selectionchange', onSelectionChange)
+  }, [longPressState, pressing, stop])
+
   // Prevent context menu from appearing on long press, otherwise it interferes with drag-and-drop.
   // A press on the caret of an *empty* thought is exempt, where the menu is the only way to reach paste: every other
   // route to it goes through selecting a word, and an empty thought has none.
@@ -137,8 +170,8 @@ const useLongPress = (
       if ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch') {
         const state = store.getState()
         const isEmptyThought = !!state.cursor && getThoughtById(state, head(state.cursor))?.value === ''
-        const { pressOnCaret } = touchStore.getState()
-        if (pressOnCaret && isEmptyThought) return
+        const { pressOnCaret, pressInEmptyThought } = touchStore.getState()
+        if ((pressOnCaret || pressInEmptyThought) && isEmptyThought) return
 
         e.preventDefault()
         e.stopPropagation()

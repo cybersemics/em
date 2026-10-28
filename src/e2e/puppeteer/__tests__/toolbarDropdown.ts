@@ -3,8 +3,12 @@ import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
 import deviceEmulation from '../helpers/deviceEmulation'
+import exportThoughts from '../helpers/exportThoughts'
+import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
+import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
+import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
@@ -57,4 +61,47 @@ it('tapping a toolbar dropdown option does not move the cursor to the thought un
   await waitForSelector('[aria-label="bullet-glyph"][data-bullet="ordered"]')
 
   expect(await getEditingText()).toBe('quebec romeo sierra tango')
+})
+
+// https://github.com/cybersemics/em/issues/5850
+it('the first gesture after a toolbar dropdown is closed is executed', async () => {
+  await paste(`
+    - a
+    - b
+    - c
+  `)
+
+  await clickThought('b')
+
+  await clickToolbar('Sort Picker', 'Alphabetical')
+  await waitForSelector('[aria-label="sort options"]', { hidden: true })
+
+  await gesture('rd')
+
+  expect(await exportThoughts()).toBe(`
+- =sort
+  - Alphabetical
+    - Asc
+- a
+- b
+- ${''}
+- c
+`)
+})
+
+// https://github.com/cybersemics/em/issues/3625
+it('tapping another toolbar button closes the open toolbar dropdown', async () => {
+  await newThought('hello')
+
+  await clickToolbar('Text Color')
+  await waitForSelector('[aria-label="text color swatches"]')
+
+  await clickToolbar('Bold')
+  await waitForEditable('<b>hello</b>')
+
+  try {
+    await waitForSelector('[aria-label="text color swatches"]', { hidden: true, timeout: 3000 })
+  } catch {
+    throw new Error('Expected the Text Color dropdown to close after tapping Bold, but it is still open.')
+  }
 })

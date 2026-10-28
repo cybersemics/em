@@ -134,6 +134,7 @@ const GestureMenu: FC<{
               <div
                 className={css({
                   height: '1px',
+                  // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
                   background: 'linear-gradient(90deg, {colors.gestureMenuDivider} 0%, {colors.bgTransparent} 100%)',
                 })}
                 style={{ width: dividerWidth }}
@@ -241,6 +242,7 @@ function Overlay() {
       className={css({
         pointerEvents: 'none',
         position: 'absolute',
+        // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
         background: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 60%, {colors.bgOverlay50} 100%)',
         top: 0,
         width: '100%',

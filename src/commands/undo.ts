@@ -26,9 +26,10 @@ const undoCommand = {
     if (!isUndoEnabled(getState())) return
     dispatch(undo())
   },
+  canExecute: state => isUndoEnabled(state),
   // Native browser undo creates problems when document.execCommand has been used for formatting. (#3879)
-  // canExecute should always be true so that it always calls e.preventDefault() and blocks native undo.
-  isActive: state => isUndoEnabled(state),
+  // Always call e.preventDefault() to block native undo, even when there is nothing to undo.
+  preventDefault: true,
   longPress: dispatch => {
     dispatch(toggleDropdown({ dropDownType: 'undoSlider' }))
   },

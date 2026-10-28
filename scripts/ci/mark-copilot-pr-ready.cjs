@@ -14,7 +14,9 @@
  * this repository owns outright.
  *
  * The workflow fires on every check completion, so most calls here stop at one of the guards
- * below; only the run that sees the last check complete reaches the mutation. Being
+ * below; only the run that sees the last check complete reaches the mutation. That run also sets a
+ * `ready` output, with `pr` and `sha`, for a pull request that is already out of draft too: the
+ * finished-and-green verdict is what pr-ready.yml's merge step acts on. Being
  * `workflow_run`-triggered, this reports no check of its own to the head commit and so never waits
  * on itself.
  */
@@ -59,6 +61,8 @@ const markCopilotPrReady = async ({ github, context, core }) => {
   }
   const prNumber = Number(rawNumber || '0')
 
+  core.setOutput('ready', 'false')
+
   // Resolved from the branch rather than from workflow_run.pull_requests, which is empty whenever
   // the triggering run's head commit is no longer the head of an open pull request.
   let pr
@@ -79,12 +83,15 @@ const markCopilotPrReady = async ({ github, context, core }) => {
     core.info(`No open pull request for ${headBranch || `#${prNumber}`}; nothing to mark ready.`)
     return
   }
-  if (!pr.draft) {
-    core.info(`#${pr.number} is already ready for review.`)
-    return
-  }
   if (pr.user.login !== COPILOT || pr.user.type !== 'Bot') {
     core.info(`#${pr.number} is authored by ${pr.user.login}, not ${COPILOT}; leaving its draft status alone.`)
+    return
+  }
+  // A prototype skips CI, so its checks are all green without testing anything, and its draft is
+  // what keeps it from being merged (docs/testing.md § Prototype pull requests). Returning before
+  // the `ready` output also keeps the merge step off it.
+  if (pr.labels.some(label => label.name === 'prototype')) {
+    core.info(`#${pr.number} is a prototype; leaving its draft status alone.`)
     return
   }
 
@@ -133,6 +140,20 @@ const markCopilotPrReady = async ({ github, context, core }) => {
     core.info(
       `#${pr.number}: ${failed.map(check => check.name).join(', ')} failed on ${headSha.slice(0, 7)}. ` +
         'A draft is the correct state for a pull request whose checks are red.',
+    )
+    return
+  }
+
+  // Reported whether or not this undrafts it, so the merge step that follows — which merges a
+  // pull request fixing `main`, see merge-main-fix.cjs — acts on the same verdict.
+  core.setOutput('ready', 'true')
+  core.setOutput('pr', String(pr.number))
+  core.setOutput('sha', headSha)
+  core.setOutput('undrafted', String(pr.draft))
+
+  if (!pr.draft) {
+    core.info(
+      `#${pr.number}: all ${checkRuns.length} checks passed on ${headSha.slice(0, 7)}; already ready for review.`,
     )
     return
   }

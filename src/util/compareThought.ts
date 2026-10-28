@@ -332,21 +332,21 @@ export const compareThoughtByUpdated: ComparatorFunction<Thought> = (a: Thought,
 export const compareThoughtByUpdatedDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
   compare(b.lastUpdated, a.lastUpdated) || compareByRank(a, b)
 
-/** Makes a comparator function that compares two thoughts by their note value. */
+/** Makes a comparator function that compares two thoughts by their note value. An empty note has no sort key, so it is compared as if absent. */
 const makeCompareThoughtByNote =
   (state: State): ComparatorFunction<Thought> =>
   (a: Thought, b: Thought) => {
-    const noteA = noteValue(state, thoughtToPath(state, a.id)) ?? '\0'
-    const noteB = noteValue(state, thoughtToPath(state, b.id)) ?? '\0'
+    const noteA = noteValue(state, thoughtToPath(state, a.id)) || '\0'
+    const noteB = noteValue(state, thoughtToPath(state, b.id)) || '\0'
     return compareReasonable(noteA, noteB)
   }
 
-/** Makes a comparator function that compares two thoughts by their note value. */
+/** Makes a comparator function that sorts thoughts with a note before thoughts without one. An empty note, such as the one the Note command creates before the user types into it, does not count, so that the thought stays at its point of creation until the note has a value (#3965). */
 const makeCompareThoughtNoteAndOther =
   (state: State): ComparatorFunction<Thought> =>
   (a: Thought, b: Thought) => {
-    const aHasNote = noteValue(state, thoughtToPath(state, a.id)) !== null
-    const bHasNote = noteValue(state, thoughtToPath(state, b.id)) !== null
+    const aHasNote = !!noteValue(state, thoughtToPath(state, a.id))
+    const bHasNote = !!noteValue(state, thoughtToPath(state, b.id))
     return aHasNote && !bHasNote ? -1 : bHasNote && !aHasNote ? 1 : 0
   }
 

@@ -4,12 +4,12 @@ import SortPicker from '../SortPicker'
 import SortIcon from './Sort'
 
 /** Sort Icon Component with popup Picker. */
-const SortWithPicker = ({ size = 18, style, cssRaw }: IconType) => {
+const SortWithPicker = ({ size = 18, style, className }: IconType) => {
   const showSortPicker = useSelector(state => state.showSortPicker)
 
   return (
     <div>
-      <SortIcon size={size} style={style} cssRaw={cssRaw} animated={showSortPicker} />
+      <SortIcon size={size} style={style} className={className} animated={showSortPicker} />
       <SortPicker size={size} />
     </div>
   )

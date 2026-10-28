@@ -3,6 +3,7 @@ import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../de
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import viewportStore from '../stores/viewportStore'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
+import debugLog from '../util/debugLog'
 
 // A scroll that is waiting for preventAutoscroll to finish. Held so that it can be cancelled, since it is a scroll that has been decided on but not yet performed.
 let preventAutoscrollTimer: ReturnType<typeof setTimeout> | undefined
@@ -26,7 +27,9 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // window.visualViewport.height excludes the virtual keyboard height (i.e. it changes when the keyboard is open/closed).
   // It changes in a single step (before the virtual keyboard animation completes), so we can use it to determine if the element will be below the visible area.
   // On desktop or when the virtual keyboard is down, it is equivalent to window.innerHeight.
-  const visualViewportHeight = window.visualViewport?.height ?? window.innerHeight
+  // After the app switcher's landscape snapshot, iOS can report a visualViewport.height of zero or less for the rest of the session (#5972). Scrolling against it would push the cursor far down the page and pan the visible area below the nav bar, so fall back to innerHeight.
+  const visualViewportHeight =
+    window.visualViewport && window.visualViewport.height > 0 ? window.visualViewport.height : window.innerHeight
 
   // On iOS Capacitor the Keyboard plugin is configured with resize: 'none', so the WebView stays full-screen
   // and window.visualViewport.height does NOT shrink when the keyboard opens. We therefore derive the effective
@@ -89,6 +92,30 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
 
   const scrollDistance = Math.abs(scrollYNew - window.scrollY)
   const behavior: ScrollBehavior = scrollDistance < visualViewportHeight ? 'smooth' : 'auto'
+
+  // Record the inputs to the scroll decision, so a cursor scrolled to the wrong place can be checked against where the
+  // cursor was and what bounded it. Every value is one this function already computed, except scrollHeight, which
+  // is free here: window.scrollY and the navbar rect above, read on every path, have just brought layout up to date,
+  // and nothing has written to the DOM since. It shows whether the browser will clamp the target at the bottom of the
+  // document. The scroll itself is recorded by the viewport scrollStart and scrollEnd entries that follow.
+  debugLog.log('scroll', () => ({
+    source: 'cursor',
+    y,
+    height,
+    layoutTreeTop: viewport.layoutTreeTop,
+    scrollY: Math.round(window.scrollY),
+    yViewport: Math.round(yViewport),
+    toolbarBottom: Math.round(toolbarBottom),
+    // which of the two viewport heights bounded the cursor: the iOS Capacitor keyboard branch or visualViewport
+    keyboardOpen,
+    visualViewportHeight: Math.round(visualViewportHeight),
+    effectiveViewportHeight: Math.round(effectiveViewportHeight),
+    bottomBoundary: Math.round(bottomBoundary),
+    scrollHeight: document.documentElement.scrollHeight,
+    direction: isAboveViewport ? 'up' : 'down',
+    top: Math.round(top),
+    behavior,
+  }))
 
   window.scrollTo({
     top,
