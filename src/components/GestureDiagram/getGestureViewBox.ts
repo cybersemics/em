@@ -33,8 +33,15 @@ const getGestureViewBox = (
   const halfSpan = strokeWidth * 1.5 * chevronSize
   // getChevron places each leg half the depth behind the centerline endpoint.
   const halfDepth = halfSpan / (2 * Math.max(Math.tan((chevronApexAngle * Math.PI) / 360), 0.01))
+  // The frame centers on bounds that already include the chevron, so a filled chevron needs only half its overhang
+  // on each side. Gesture lines run horizontally or vertically, so the overhang along either axis is at most
+  // halfDepth past the end or halfSpan to the side.
   const chevronPadding =
-    arrowhead === 'outlined-wide' || arrowhead === 'filled-wide' ? Math.hypot(halfSpan, halfDepth) + strokeRadius : 0
+    arrowhead === 'outlined-wide'
+      ? Math.hypot(halfSpan, halfDepth) + strokeRadius
+      : arrowhead === 'filled-wide'
+        ? Math.max(halfSpan, halfDepth) / 2 + strokeRadius
+        : 0
   const side = size + 2 * Math.max(markerPadding, chevronPadding)
   const bounds = getGestureBounds(geometry)
   const centerX = bounds.x + bounds.width / 2

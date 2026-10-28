@@ -22,15 +22,36 @@ it('includes the actual stroke radius when no arrowhead is requested', () => {
   )
 })
 
-it('pads a filled chevron to contain its apex past the gesture end', () => {
-  const options = { arrowSize: 10, strokeWidth: 2, size: 50, chevronSize: 2, chevronApexAngle: 60 }
-  const [x, , width] = getGestureViewBox(geometry, { ...options, arrowhead: 'filled-wide' })
-    .split(' ')
-    .map(Number)
-  // halfSpan = 2 * 1.5 * chevronSize. getChevron places the apex halfSpan / (2 * tan(30°)) past the end at x = 45.
-  const apexX = 45 + 6 / (2 * Math.tan(Math.PI / 6))
+it('frames every filled chevron and shaft end without clipping', () => {
+  const strokeWidth = 3
+  const strokeRadius = (strokeWidth * 1.5) / 2
+  const paths = ['r', 'l', 'u', 'd', 'rd', 'dr', 'lu', 'ud', 'rlr', 'rdl', 'rdlu', 'drul'] as const
 
-  expect(x + width).toBeGreaterThan(apexX)
+  ;[1.3, 2.4, 5].forEach(chevronSize => {
+    const chevron = { apexAngle: 61, halfSpan: strokeWidth * 1.5 * chevronSize, filled: true }
+    paths.forEach(path => {
+      const geometry = getGestureGeometry(path, { size: 50, reversalOffset: 15, chevron })
+      const [x, y, width, height] = getGestureViewBox(geometry, {
+        arrowSize: 1,
+        arrowhead: 'filled-wide',
+        strokeWidth,
+        size: 50,
+        chevronSize,
+        chevronApexAngle: 61,
+      })
+        .split(' ')
+        .map(Number)
+      const shaftEnds = geometry.segments.flatMap(segment => [segment.from, segment.to])
+
+      ;[...geometry.chevron!, ...shaftEnds].forEach(point => {
+        const margin = geometry.chevron!.includes(point) ? 0 : strokeRadius
+        expect(point.x - margin).toBeGreaterThanOrEqual(x - 1e-9)
+        expect(point.x + margin).toBeLessThanOrEqual(x + width + 1e-9)
+        expect(point.y - margin).toBeGreaterThanOrEqual(y - 1e-9)
+        expect(point.y + margin).toBeLessThanOrEqual(y + height + 1e-9)
+      })
+    })
+  })
 })
 
 it('uses bounds to center each shape without changing its scale', () => {
