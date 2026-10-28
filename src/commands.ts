@@ -27,13 +27,15 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { undoActionCreator as undo } from './actions/undo'
-import { isMac } from './browser'
+import { isCapacitor, isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
-import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
+import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, HOME_TOKEN, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
+import testFlags from './e2e/testFlags'
 import documentSort from './selectors/documentSort'
 import filterCursors from './selectors/filterCursors'
+import getChildren from './selectors/getChildren'
 import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
@@ -57,8 +59,24 @@ import head from './util/head'
 import isAttribute from './util/isAttribute'
 import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
+import parentOf from './util/parentOf'
+import saveDebugLog from './util/saveDebugLog'
 
-export const globalCommands: Command[] = Object.values(commandsObject)
+/** The commands registered in src/commands/index.ts. */
+export const registeredCommands: Command[] = Object.values(commandsObject)
+
+/** The commands that the app lists and matches against keyboard shortcuts and gestures: the registered commands, or the commands that a test preloaded into testFlags.stubCommands so that a snapshot of a command list does not change whenever a command is added, removed, or renamed. A stub given as an id keeps that registered command; any other stub becomes an inert command. */
+export const globalCommands: Command[] =
+  testFlags.stubCommands?.map(stub =>
+    typeof stub === 'string'
+      ? registeredCommands.find(command => command.id === stub)!
+      : {
+          ...stub,
+          id: stub.label as CommandId,
+          multicursor: false,
+          exec: () => {},
+        },
+  ) ?? registeredCommands
 
 export { commandEmitter }
 
@@ -273,7 +291,8 @@ const index = (): {
   })
 
   // index command for O(1) lookup by id
-  const commandIdIndex: Index<Command> = keyValueBy(globalCommands, command =>
+  // Look up ids among the registered commands even when a test has stubbed the global commands, since commandById is only called with ids of registered commands.
+  const commandIdIndex: Index<Command> = keyValueBy(registeredCommands, command =>
     command.id ? { [command.id]: command } : null,
   )
 
@@ -619,13 +638,30 @@ export const executeCommandWithMulticursor = (
 
         // A command tapped in the Command Center that ends with an empty selection (e.g. delete, whose thoughts no
         // longer exist to be restored above) would dismiss the Command Center, since multicursorAlertMiddleware
-        // closes it when nothing is selected. Select the thought the cursor landed on instead, the same way the
-        // Command Center is opened in the first place, so that it stays open and can be used again. When the last
-        // thought was deleted there is no cursor left to select and it closes as usual.
+        // closes it when nothing is selected. Select a thought instead, the same way the Command Center is opened in
+        // the first place, so that it stays open and can be used again. If the command removed thoughts, stay open
+        // only while a sibling of a removed thought is left: select the cursor if it is such a sibling, otherwise the
+        // first one. When no siblings are left anywhere, the cursor has fallen back to a parent (or to nothing at the
+        // root) that the user did not select, so leave the selection empty and let the Command Center close.
         if (commandType === 'commandCenter') {
           const state = commandStore.getState()
-          if (!hasMulticursor(state) && state.cursor) {
-            dispatch(addMulticursor({ path: state.cursor }))
+          if (!hasMulticursor(state)) {
+            const removedPaths = execPaths.filter(path => !equalPath(recomputePath(state, path), path))
+            if (removedPaths.length === 0) {
+              if (state.cursor) dispatch(addMulticursor({ path: state.cursor }))
+            } else {
+              /** True if the path is a sibling of a removed thought that is still there. */
+              const isRemainingSibling = (path: Path) =>
+                removedPaths.some(removed => equalPath(parentOf(removed), parentOf(path)) && !equalPath(removed, path))
+              let sibling = state.cursor && isRemainingSibling(state.cursor) ? state.cursor : null
+              for (const removed of removedPaths) {
+                if (sibling) break
+                const parentId = removed.length > 1 ? removed[removed.length - 2] : HOME_TOKEN
+                const firstChild = getChildren(state, parentId)[0]
+                if (firstChild) sibling = [...parentOf(removed), firstChild.id] as Path
+              }
+              if (sibling) dispatch(addMulticursor({ path: sibling }))
+            }
           }
         }
 
@@ -729,6 +765,10 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
     haptics.light()
   }
 
+  // While the pinned command tooltip is open the user is practicing the gesture it shows, so the gesture menu would
+  // only cover it. Haptics still confirm each segment.
+  if (state.showPinnedCommandTooltip) return
+
   // gesture menu
   // alert after a delay of COMMAND_PALETTE_TIMEOUT
   clearGestureMenuTimer()
@@ -748,9 +788,40 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
   gestureMenuTimerStore.update({ timer })
 }
 
+/** Dismiss gesture hint that is shown by alert. */
+export const handleGestureCancel = () => {
+  clearGestureMenuTimer()
+  store.dispatch((dispatch, getState) => {
+    const state = getState()
+    if (state.showGestureMenu) {
+      dispatch(gestureMenu())
+    }
+    if (state.alert?.alertType === AlertType.GestureHint || state.showGestureMenu) {
+      dispatch(alert(null))
+    }
+  })
+}
+
+/** A secret gesture (→↓←↓↑) that downloads the debug log, or shares it in the native apps, while Debug Logging is on. A debugging backdoor rather than a command, so that it appears nowhere a command does: the Command Universe, the gesture menu, help, or the tutorial. */
+const DOWNLOAD_DEBUG_LOG_GESTURE: Gesture = 'rdldu'
+
 /** Executes a valid gesture and closes the gesture hint. Special handling for chainable commands. */
 export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e: GestureResponderEvent }) => {
   const state = store.getState()
+
+  // secret gesture
+  if (
+    sequence === DOWNLOAD_DEBUG_LOG_GESTURE &&
+    debugLog.isEnabled() &&
+    !state.showModal &&
+    !state.showMobileCommandUniverse &&
+    state.longPress !== LongPressState.DragInProgress
+  ) {
+    handleGestureCancel()
+    const entryCount = saveDebugLog(state)
+    store.dispatch(alert(`${isCapacitor() ? 'Shared' : 'Downloaded'} ${entryCount} debug log entries`))
+    return
+  }
 
   // Get the command from the command gesture index.
   // When the gesture menu  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
@@ -791,7 +862,8 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     const chainedGestureCollapsed = sequence!.toString().slice(chainedGesture1.length - 1)
     const chainedGesture = sequence!.toString().slice(chainedGesture1.length)
     const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
-    if (commandMatch) {
+    // only chain a command that the first command allows to follow it, as the gesture menu does
+    if (commandMatch && chainableCommandInProgressExclusive.isChainable?.(commandMatch)) {
       command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
     }
   }
@@ -872,20 +944,6 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
   })
 }
 
-/** Dismiss gesture hint that is shown by alert. */
-export const handleGestureCancel = () => {
-  clearGestureMenuTimer()
-  store.dispatch((dispatch, getState) => {
-    const state = getState()
-    if (state.showGestureMenu) {
-      dispatch(gestureMenu())
-    }
-    if (state.alert?.alertType === AlertType.GestureHint || state.showGestureMenu) {
-      dispatch(alert(null))
-    }
-  })
-}
-
 /** Performs a native undo/redo gesture (iOS shake-to-undo, three-finger swipe, or the Edit menu) as em's own undo/redo, so that Redux remains the single source of truth. Called by `device/nativeHistory.ts` from every route a native gesture can arrive by. */
 export const handleNativeHistory = (type: 'undo' | 'redo') => {
   // Flush any pending throttled edit before reading the state, mirroring keyDown. Editing dispatches editThought on a
@@ -908,10 +966,13 @@ export const handleNativeHistory = (type: 'undo' | 'redo') => {
  * Android soft keyboards report the space keydown as keyCode 229 ('Unidentified'), so the space-to-indent
  * command is never matched in keyDown and keyCommandId is never set. The second branch catches that case:
  * a `beforeinput` insertText of a single space over an empty thought indents it instead of inserting the
- * space, mirroring the keyDown-matched path on desktop/iOS (#4178). */
+ * space, mirroring the keyDown-matched path on desktop/iOS (#4178). Neither branch applies while the caret is in
+ * the thought's note, where the space belongs to the note (#5969). */
 export const beforeInput = (e: InputEvent) => {
   const keyCommandId = keyCommandIdStore.getState().id
-  if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
+  // editingValueStore holds the cursor thought's value even when the caret is in its note, so space-to-indent is excluded under noteFocus and the space is inserted into the note (#5969).
+  const isSpaceToIndent = editingValueStore.getState() === '' && !store.getState().noteFocus
+  if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && isSpaceToIndent)) {
     e.preventDefault()
     return
   }
@@ -921,7 +982,7 @@ export const beforeInput = (e: InputEvent) => {
   // and indent the empty thought instead of letting the literal space get inserted (#4178). Non-empty
   // thoughts and other input types (paste, IME composition) are excluded, so typing a space mid-word is
   // unaffected; desktop/iOS reach indent via their keyDown-matched path and short-circuit above.
-  if (e.inputType === 'insertText' && e.data === ' ' && editingValueStore.getState() === '') {
+  if (e.inputType === 'insertText' && e.data === ' ' && isSpaceToIndent) {
     e.preventDefault()
     store.dispatch(indent())
   }
@@ -974,6 +1035,11 @@ export const keyDown = (e: KeyboardEvent) => {
 
   // disable if modal is shown, except for navigation commands
   if (!command || state.showMobileCommandUniverse || (state.showModal && !command.allowExecuteFromModal)) return
+
+  // A space typed in a note is text. Space-to-indent applies only when the caret is in the thought itself, so reject it
+  // here rather than in indent's exec: executeCommandWithMulticursor sets the cursor on each selected thought before
+  // exec runs, which clears noteFocus, so the empty thought would be indented and the space dropped (#5969).
+  if (command.id === 'indent' && state.noteFocus) return
 
   // execute the command
   commandEmitter.trigger('command', command)

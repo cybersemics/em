@@ -39,7 +39,8 @@ jobs:
   run:
     name: Lint
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.changed_files > 0
+    # A `prototype` pull request skips the suite; see docs/testing.md § Prototype pull requests.
+    if: (github.event_name != 'pull_request' || github.event.pull_request.changed_files > 0) && !contains(github.event.pull_request.labels.*.name, 'prototype')
 
     steps:
       - name: Clone repository

@@ -14,7 +14,7 @@ interface Options {
 }
 
 /**
- * Tap and hold a thought until a long press occurs.
+ * Tap and hold a thought until a long press occurs, then release it and wait for the release to be processed.
  */
 const longPressThought = async (
   nodeHandle: ElementHandle<Element> | JSHandle<undefined>,
@@ -70,6 +70,11 @@ const longPressThought = async (
     await waitForHighlight()
     await page.touchscreen.touchEnd()
   }
+
+  // The app ends the long press on a timer after the release, and only then commits the selection and leaves DragHold.
+  // Until it does, a tap on another bullet is ignored as the tail of the long press (see BulletPositioner), so wait for
+  // the body's data-drag-hold attribute, which mirrors state.longPress, to return to 'false'.
+  await page.waitForFunction(() => document.body.getAttribute('data-drag-hold') === 'false', { timeout: 5000 })
 }
 
 export default longPressThought

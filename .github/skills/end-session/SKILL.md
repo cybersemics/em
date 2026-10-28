@@ -32,8 +32,9 @@ There is no human waiting to unblock you mid-task — stopping to ask for permis
 2. You have hit a documented limit — 5 fix-push cycles, or 5 fix-validate attempts — and are escalating.
 3. You cannot reproduce the issue (the `reproduce` skill, Step 3), and are escalating.
 4. The correct path is genuinely ambiguous and proceeding either way risks the wrong outcome.
+5. The only red checks are failures `test-diagnosis` attributed to `main` — consistent there, or flaky and still red after one unchanged re-run — and you are escalating with the evidence and the tracking issue.
 
-Endings 2–4 still run the whole checklist below. **An escalation is an ending, not an exemption** — that is precisely when unpushed work is most likely to be lost, because you are stopping in the middle rather than at a natural finish.
+Endings 2–5 still run the whole checklist below. **An escalation is an ending, not an exemption** — that is precisely when unpushed work is most likely to be lost, because you are stopping in the middle rather than at a natural finish.
 
 ---
 
@@ -104,7 +105,7 @@ The one legitimate exit with a `.skip` still present is an escalation where the 
 Use `ci-monitor`. Wait for every run on the branch to complete; do not report on a partial set.
 
 - **Read which check failed.** A red `TDD` check and a red normal suite mean opposite things. `tdd.yml` un-skips your new test on the base branch and *expects it to fail*, so a red TDD check usually means the test wrongly **passes** on base — it does not capture the bug. A red normal suite means the code is broken. "CI failed" alone is not a diagnosis.
-- If anything is red, this is not an ending. Diagnose with `test-diagnosis`, fix, and return to Step 3 — pushing restarts CI and restarts this checklist. Stop only at 5 fix-push cycles, and then as an escalation.
+- If anything is red, this is not an ending. Diagnose with `test-diagnosis`, fix what this pull request caused, and return to Step 3 — pushing restarts CI and restarts this checklist. Stop only at 5 fix-push cycles, or when every remaining failure is attributed to `main` (ending 5), and then as an escalation.
 - Never claim checks pass without having seen them pass. Hallucinated test results are the worst failure mode available to you.
 
 ---

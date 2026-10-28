@@ -119,4 +119,8 @@ export { default as toggleMobileCommandUniverse } from './toggleMobileCommandUni
 export { default as updateThoughts } from './updateThoughts'
 export { default as pinCommand } from './pinCommand'
 export { default as unpinCommand } from './unpinCommand'
+export { default as showPinnedCommandTooltip } from './showPinnedCommandTooltip'
 export { default as pinnedCommandAddRep } from './pinnedCommandAddRep'
+export { default as toggleHelpGenie } from './toggleHelpGenie'
+export { default as moveHelpGenie } from './moveHelpGenie'
+export { default as disableHelpGenie } from './disableHelpGenie'

@@ -10,6 +10,7 @@ import useDelayedState from '../hooks/useDelayedState'
 import getChildPath from '../selectors/getChildPath'
 import { getAllChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
+import getThoughtById from '../selectors/getThoughtById'
 import pathToThought from '../selectors/pathToThought'
 import thoughtToPath from '../selectors/thoughtToPath'
 import hashPath from '../util/hashPath'
@@ -48,7 +49,12 @@ const RecentlyDeleted = () => {
 
     const lexeme = getLexeme(state, '=archive')
     // paths of all =archive instances
-    const archivePaths = lexeme?.contexts.map(cxid => thoughtToPath(state, cxid)) ?? []
+    // The Lexeme is keyed by the normalized value, so it also lists formatted values such as <b>=archive</b>, which are
+    // normal thoughts rather than attributes.
+    const archivePaths =
+      lexeme?.contexts
+        .filter(cxid => getThoughtById(state, cxid)?.value === '=archive')
+        .map(cxid => thoughtToPath(state, cxid)) ?? []
     // paths of all the children of =archive, since those are the deleted thoughts
     const childrenPaths = archivePaths.flatMap(path =>
       getAllChildren(state, head(path)).map(child => getChildPath(state, child, path)),
