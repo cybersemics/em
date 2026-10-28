@@ -67,19 +67,17 @@ const useRevertCorrection = ({
       // a tap on the caret
       if (tapped === null || tapped === before) return
 
-      // iOS is still handling the tap when it fires this selectionchange.
-      requestAnimationFrame(() => {
-        selection.set(editable, { offset: tapped })
-        dispatch((dispatch, getState) => {
-          const state = getState()
-          dispatch(
-            setCursor({
-              path,
-              offset: tapped,
-              preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path),
-            }),
-          )
-        })
+      // iOS does not move the caret again after the revert, so it can be set synchronously.
+      selection.set(editable, { offset: tapped })
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        dispatch(
+          setCursor({
+            path,
+            offset: tapped,
+            preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path),
+          }),
+        )
       })
     }
 
