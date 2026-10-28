@@ -1,12 +1,7 @@
 import { useEffect } from 'react'
-import { useDispatch } from 'react-redux'
-import Path from '../../@types/Path'
-import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
 import { isSafari, isTouch } from '../../browser'
 import getCaretOffset from '../../device/getCaretOffset'
 import * as selection from '../../device/selection'
-import isMultiEditing from '../../selectors/isMultiEditing'
-import isMulticursorPath from '../../selectors/isMulticursorPath'
 import multitouchStore from '../../stores/multitouchStore'
 
 /**
@@ -17,16 +12,11 @@ import multitouchStore from '../../stores/multitouchStore'
 const useRevertCorrection = ({
   editableRef,
   enabled,
-  path,
 }: {
   editableRef: React.RefObject<HTMLElement | null>
   /** Correct only while this editable is the one being edited, i.e. the cursor thought with the keyboard open. */
   enabled: boolean
-  /** The thought whose cursor offset follows the corrected caret. */
-  path: Path
 }) => {
-  const dispatch = useDispatch()
-
   useEffect(() => {
     const editable = editableRef.current
     if (!editable || !enabled || !isTouch || !isSafari()) return
@@ -67,18 +57,9 @@ const useRevertCorrection = ({
       // a tap on the caret
       if (tapped === null || tapped === before) return
 
-      // iOS does not move the caret again after the revert, so it can be set synchronously.
+      // iOS does not move the caret again after the revert, so it can be set synchronously. The cursor offset in Redux
+      // is left alone, as it is for a tap that iOS places itself: nothing writes it during a tap without mouse events.
       selection.set(editable, { offset: tapped })
-      dispatch((dispatch, getState) => {
-        const state = getState()
-        dispatch(
-          setCursor({
-            path,
-            offset: tapped,
-            preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path),
-          }),
-        )
-      })
     }
 
     editable.addEventListener('touchend', onTouchEnd)
@@ -97,7 +78,7 @@ const useRevertCorrection = ({
       document.removeEventListener('beforeinput', endWatch, { capture: true })
       document.removeEventListener('selectionchange', onSelectionChange)
     }
-  }, [dispatch, editableRef, enabled, path])
+  }, [editableRef, enabled])
 }
 
 export default useRevertCorrection

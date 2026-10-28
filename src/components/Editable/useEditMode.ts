@@ -69,7 +69,7 @@ const useEditMode = ({
   const editingOrOnCursor = isCursor || editing
 
   useCaretRestore({ editableRef: contentRef, enabled: isCursor && !!editing })
-  useRevertCorrection({ editableRef: contentRef, enabled: isCursor && !!editing, path })
+  useRevertCorrection({ editableRef: contentRef, enabled: isCursor && !!editing })
 
   useEffect(
     () => {
