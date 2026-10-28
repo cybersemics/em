@@ -48,7 +48,7 @@ Once both gates are satisfied (or determined not to apply), continue with the li
 
 - Begin by creating a new branch for the work. If a previous agent working on the same task already created a branch and a PR, use that one.
 - When opening a PR, start the description with a closing keyword and the issue number (e.g. "Fixes #1234") when merging the PR resolves the issue — GitHub then links the issue in the sidebar's Development section and closes it automatically on merge. Use the bare issue number (e.g. "#1234") only when the PR relates to the issue without resolving it.
-- Keep the PR description free of redundancy. Say each thing once: no reviewer-notes section that restates the summary, and no consequence the reader has already drawn from it. Never state that tests pass — GitHub renders the CI status on the PR itself.
+- Keep the PR description free of redundancy. Say each thing once: no reviewer-notes section that restates the summary, and no consequence the reader has already drawn from it. Never state that tests pass — GitHub renders the CI status on the PR itself. Write the title and description with the `write-pr` skill.
 - Make all commits in this branch. Push after each meaningful change. Never commit directly to main or protected branches.
   - Run `yarn prettier --write .` before committing any changes to ensure proper code formatting. There is no pre-commit hook, and formatting violations in source files fail `yarn lint` in CI.
 - After completing the initial implementation, open a draft pull request with a clear, descriptive title and summary to merge your feature branch into `main`. Create the PR with the `runtime-tools-create_pull_request` tool — do not shell out to `git` or `gh` to open it.

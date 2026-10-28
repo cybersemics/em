@@ -77,6 +77,7 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
 | [`bisect`](#bisect) | Find whether a bug is a recent regression, and the commit and pull request that introduced it | [SKILL.md](../../.github/skills/bisect/SKILL.md) |
 | `create-issue` | Write a GitHub issue, or the reproduction sections of a pull request with no linked issue, in the format this repo uses | [SKILL.md](../../.github/skills/create-issue/SKILL.md) |
+| `write-pr` | Write or edit a pull request's title and description, keeping only what the diff, the issue and CI do not already say | [SKILL.md](../../.github/skills/write-pr/SKILL.md) |
 | [`liminal`](#liminal) | Style a static artifact, such as a report page, like em's Liminal UI | [SKILL.md](../../.github/skills/liminal/SKILL.md) |
 | [`report-review-gaps`](#report-review-gaps) | Report the feedback a final reviewer gave after the first review, as review principles | [SKILL.md](../../.github/skills/report-review-gaps/SKILL.md) |
 
