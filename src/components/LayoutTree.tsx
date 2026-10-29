@@ -124,7 +124,10 @@ const useLayoutTreeTop = (
   /** The amount that the layout tree is shifted up is needed to produce the correct layoutTreeTop value. See: useAutocrop. */
   autocrop: number,
 ) => {
-  useEffect(() => {
+  // A layout effect, so that layoutTreeTop is set before the cursor overlay's scrollCursorIntoView effect runs on mount.
+  // Child effects run before their parent's, so a passive effect here would leave layoutTreeTop at 0 for that first
+  // check, and a cursor in plain view would be measured as behind the toolbar and scrolled.
+  useLayoutEffect(() => {
     if (!ref.current) return
     viewportStore.update({ layoutTreeTop: (ref.current?.offsetTop || 0) + autocrop })
   }, [ref, autocrop])

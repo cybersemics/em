@@ -53,11 +53,11 @@ Polling CI means writing a loop that decides when to stop. Get that condition wr
 When CI checks fail, follow this loop:
 
 1. Use the Test Failure Diagnosis skill to identify and categorize the failure.
-2. Fix the issue based on the diagnosis.
-3. Push the fix to the branch.
+2. Act on the diagnosis. Fix a failure this pull request caused; handle one that is consistent or flaky on `main` as the diagnosis skill's [Attribute the Failure](../test-diagnosis/SKILL.md#attribute-the-failure) says, without fixing it here.
+3. Push the fix to the branch, or re-run the failed job unchanged for a flaky failure.
 4. Wait for all CI runs to complete again using this skill.
 5. If all checks pass, you're done. Summarize what you did.
-6. If checks still fail, return to step 1.
+6. If a failure this pull request caused is still red, return to step 1. If only failures attributed to `main` remain, stop the loop and escalate as the diagnosis skill says.
 
 IMPORTANT:
 
