@@ -1,4 +1,5 @@
-import React, { FC, useRef } from 'react'
+import React, { FC, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -14,11 +15,65 @@ interface PopoverProps {
   size?: number
 }
 
-/** A reusable popover component that handles positioning and styling for popup menus. */
+/**
+ * A reusable popover component that handles positioning and styling for popup menus.
+ *
+ * In the toolbar, the popover is portaled into the toolbar's dropdown layer, outside the horizontally scrolling #toolbar. Rendered inside the scroller, it would either be clipped by overflow-x: scroll, or, kept in flow, stretch the scroller's box down across the thoughts beside it, where it swallows taps and gestures (#5977). It is positioned at an anchor that stays in the toolbar button, and follows the anchor as the toolbar scrolls. Outside a toolbar, e.g. when a picker is rendered on its own, it renders in place.
+ */
 const Popover: FC<PopoverProps> = ({ ariaLabel, children, show, size = 18 }) => {
+  const anchorRef = useRef<HTMLDivElement>(null)
   const ref = useRef<HTMLDivElement>(null)
   const fontSize = useSelector(state => state.fontSize)
   const overflow = useWindowOverflow(ref)
+  const [layer, setLayer] = useState<HTMLElement | null>(null)
+
+  // eyeballing it to get font sizes 14–24 to look right
+  const left = (size * (size + 90)) / 200 + 600 / (size * size)
+  const marginTop = size * 1.2 - 10
+
+  useLayoutEffect(() => {
+    setLayer(
+      anchorRef.current?.closest('[aria-label="toolbar"]')?.querySelector<HTMLElement>('[data-toolbar-dropdowns]') ??
+        null,
+    )
+  }, [])
+
+  // Measure once when the popover opens, and again on resize, rather than on every scroll. While it is open, the
+  // popover follows the toolbar's scroll with a transform, which only the compositor has to handle.
+  // The position is written to the element rather than kept in state, so that it is in place before any passive effect
+  // reads it, such as the Toolbar's, which scrolls an open Color Picker into view.
+  useLayoutEffect(() => {
+    const anchor = anchorRef.current
+    const scroller = anchor?.closest<HTMLElement>('#toolbar')
+    if (!show || !layer || !anchor || !scroller) return
+
+    let scrollLeftAtMeasure = 0
+
+    /** Positions the popover at the anchor, relative to the dropdown layer. */
+    const measure = () => {
+      const el = ref.current
+      if (!el) return
+      const anchorRect = anchor.getBoundingClientRect()
+      const layerRect = layer.getBoundingClientRect()
+      scrollLeftAtMeasure = scroller.scrollLeft
+      el.style.left = `${anchorRect.left - layerRect.left + left}px`
+      el.style.top = `${anchorRect.top - layerRect.top + marginTop}px`
+      el.style.transform = ''
+    }
+
+    /** Moves the popover with its toolbar button as the toolbar scrolls. */
+    const followScroll = () => {
+      if (ref.current) ref.current.style.transform = `translateX(${scrollLeftAtMeasure - scroller.scrollLeft}px)`
+    }
+
+    measure()
+    scroller.addEventListener('scroll', followScroll, { passive: true })
+    window.addEventListener('resize', measure)
+    return () => {
+      scroller.removeEventListener('scroll', followScroll)
+      window.removeEventListener('resize', measure)
+    }
+  }, [show, layer, left, marginTop])
 
   /** Stops a tap that lands on the popover's padding rather than one of its options from reaching the toolbar button that renders the popover, which would otherwise close it (#4264). */
   const containTap = (e: React.MouseEvent | React.TouchEvent) => {
@@ -26,26 +81,22 @@ const Popover: FC<PopoverProps> = ({ ariaLabel, children, show, size = 18 }) => 
     e.preventDefault()
   }
 
-  return (
+  const popover = (
     // nodeRef avoids FadeTransition's wrapper span, which would make this div a block-in-inline. WebKit relayouts that
     // case inconsistently, applying marginTop above the line box and shifting the whole toolbar button down (#4263).
     <FadeTransition type='fast' in={show} exit={false} unmountOnExit nodeRef={ref}>
       <div
         ref={ref}
         className={css({
-          position: 'relative',
+          position: layer ? 'absolute' : 'relative',
           zIndex: 'stack',
-          // position fixed or absolute causes the Popover to get clipped by the toolbar's overflow-x: scroll
-          // ideally we want overflow-x:scroll and overflow-y:visible, but Safari does not differing allow overflow-x and overflow-y
-          // instead, keep position:static but set the width to 0
-          // this will increase the height of the toolbar so the Popover does not get clipped without taking up horizontal space
+          // keep a do-nothing transform, so that following the toolbar's scroll only has to change its value
+          transform: 'translateX(0)',
+          // the width is 0 so that the content can be centered under the anchor with translate(-50%)
           width: 0,
         })}
-        style={{
-          // eyeballing it to get font sizes 14–24 to look right
-          left: (size * (size + 90)) / 200 + 600 / (size * size),
-          marginTop: size * 1.2 - 10,
-        }}
+        // in the dropdown layer, left and top are set when the popover is measured
+        style={layer ? undefined : { left, marginTop }}
       >
         <div
           aria-label={ariaLabel}
@@ -75,6 +126,14 @@ const Popover: FC<PopoverProps> = ({ ariaLabel, children, show, size = 18 }) => 
         </div>
       </div>
     </FadeTransition>
+  )
+
+  return (
+    <>
+      {/* Marks where the popover opens: absolutely positioned without an offset, it sits at the static position the popover would have in flow, below the icon, without taking up any space. */}
+      <div ref={anchorRef} className={css({ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' })} />
+      {layer ? createPortal(popover, layer) : popover}
+    </>
   )
 }
 

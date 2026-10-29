@@ -71,9 +71,11 @@ const useBodyAttributeSelector = <T,>(name: string, selector: (state: State) => 
 //   )
 // }
 
-/** Returns true if the given touch point is within the toolbar's bounds. Used to prevent a swipe on the toolbar from being captured as a thoughtspace gesture (which disables scroll), so the toolbar can scroll horizontally. The toolbar can render below the static TOOLBAR_HEIGHT that isInGestureZone excludes (e.g. pushed down by the iOS safe-area inset), so its actual bounds are checked here. */
+/** Returns true if the given touch point is within the toolbar's bounds or on an open toolbar dropdown. Used to prevent a swipe on the toolbar from being captured as a thoughtspace gesture (which disables scroll), so the toolbar can scroll horizontally. The toolbar can render below the static TOOLBAR_HEIGHT that isInGestureZone excludes (e.g. pushed down by the iOS safe-area inset), so its actual bounds are checked here. */
 const isOnToolbar = (x?: number, y?: number): boolean => {
   if (x == null || y == null || typeof document === 'undefined') return false
+  // An open dropdown is portaled below the toolbar, outside its bounds (see Popover). The thoughts beside it remain a gesture zone.
+  if (document.elementFromPoint(x, y)?.closest('[data-toolbar-dropdowns]')) return true
   const toolbar = document.getElementById('toolbar')
   if (!toolbar) return false
   const rect = toolbar.getBoundingClientRect()

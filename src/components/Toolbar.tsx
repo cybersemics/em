@@ -10,8 +10,7 @@ Test:
 */
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
-import { css, cva, cx } from '../../styled-system/css'
-import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
+import { css, cva } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import CommandType from '../@types/Command'
 import CommandId from '../@types/CommandId'
@@ -93,6 +92,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
   const lastHapticScrollPosition = useRef<number>(0)
+  const containerRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [leftArrowIsShown, setLeftArrowIsShown] = useState(false)
   const [rightArrowIsShown, setRightArrowIsShown] = useState(true)
@@ -180,7 +180,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     if (customize || !showColorPicker) return
 
     const toolbar = toolbarRef.current
-    const colorPicker = toolbar?.querySelector<HTMLElement>('[aria-label="Color Picker"]')
+    // The picker is portaled into the dropdown layer, outside #toolbar (see Popover), so search the whole container.
+    const colorPicker = containerRef.current?.querySelector<HTMLElement>('[aria-label="Color Picker"]')
     if (!toolbar || !colorPicker) return
 
     const toolbarRect = toolbar.getBoundingClientRect()
@@ -235,26 +236,23 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     <FadeTransition in={!distractionFreeTyping || showDropdown} type='distractionFreeTyping' unmountOnExit>
       <div
         aria-label='toolbar'
-        className={cx(
-          // When a dropdown like ColorPicker or LetterCase is open, set pointer-events: none, otherwise the toolbar will block the editor. This will be overridden by the toolbar buttons to allow interaction.
-          showDropdown && toolbarPointerEventsRecipe(),
-          css({
-            right: 0,
-            textAlign: 'right',
-            // Prevent horizontal scroll bar when keyboard is up.
-            // overFlowX: 'hidden' does not work, as it breaks box-shadow on the child when the keyboard is up.
-            // https://github.com/cybersemics/em/pull/2760#issuecomment-2701329862
-            maxWidth: '100%',
-            userSelect: 'none',
-            WebkitTapHighlightColor: 'bgTransparent',
-            whiteSpace: 'nowrap',
-            ...(!customize && {
-              zIndex: 'toolbarContainer',
-              marginTop: '-500px',
-              paddingTop: '500px',
-            }),
+        ref={containerRef}
+        className={css({
+          right: 0,
+          textAlign: 'right',
+          // Prevent horizontal scroll bar when keyboard is up.
+          // overFlowX: 'hidden' does not work, as it breaks box-shadow on the child when the keyboard is up.
+          // https://github.com/cybersemics/em/pull/2760#issuecomment-2701329862
+          maxWidth: '100%',
+          userSelect: 'none',
+          WebkitTapHighlightColor: 'bgTransparent',
+          whiteSpace: 'nowrap',
+          ...(!customize && {
+            zIndex: 'toolbarContainer',
+            marginTop: '-500px',
+            paddingTop: '500px',
           }),
-        )}
+        })}
         style={{
           ...(!customize ? positionFixedStyles : null),
           // make toolbar flush with left padding
@@ -346,6 +344,9 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             <TriangleRight width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
           </span>
         </div>
+
+        {/* The layer that toolbar dropdowns are portaled into (see Popover). It has no height, so an open dropdown does not stretch the toolbar's box across the thoughts beside it. */}
+        <div data-toolbar-dropdowns className={css({ position: 'relative', zIndex: 'toolbar' })} />
       </div>
     </FadeTransition>
   )

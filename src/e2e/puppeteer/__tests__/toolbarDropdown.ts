@@ -107,7 +107,7 @@ it('tapping another toolbar button closes the open toolbar dropdown', async () =
 })
 
 // https://github.com/cybersemics/em/issues/5977
-it.skip('tapping a thought beside an open toolbar dropdown moves the cursor to it', async () => {
+it('tapping a thought beside an open toolbar dropdown moves the cursor to it', async () => {
   await paste(`
     - aaa
     - bbb
