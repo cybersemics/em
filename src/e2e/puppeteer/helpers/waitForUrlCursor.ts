@@ -12,7 +12,9 @@ const waitForUrlCursor = (value: string) =>
       const id = editable?.getAttribute('aria-label')?.replace(/^editable-/, '')
       return !!id && window.location.pathname.split('/').at(-1) === id
     },
-    {},
+    // A throttled write lands within about 100 ms. Bounding the wait well below the test timeout makes a url that never
+    // names the thought fail here, at the wait, rather than as a test timeout.
+    { timeout: 5000 },
     value,
   )
 

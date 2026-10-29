@@ -1,10 +1,11 @@
 /* eslint-disable import/prefer-default-export */
 import chalk from 'chalk'
 import { Browser, BrowserContext, ConsoleMessage, Device, Page } from 'puppeteer'
-import type { PreloadedEmWindow } from '../../@types'
 import type { ThoughtspaceStorage } from '../../data-providers/thoughtspace'
 import createId from '../../util/createId'
 import deviceEmulation from './helpers/deviceEmulation'
+import preloadTestFlags from './helpers/preloadTestFlags'
+import { suiteTestFlags } from './helpers/useTestFlags'
 import { page, setPage } from './session'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -15,26 +16,13 @@ declare namespace global {
 let context: BrowserContext
 let activeThoughtspaceStorage: ThoughtspaceStorage = 'memory'
 
-/** Selects thoughtspace storage before a Puppeteer page starts the app. */
-const preloadThoughtspaceStorage = (target: Page, storage: ThoughtspaceStorage) =>
-  target.evaluateOnNewDocument(storage => {
-    const preloadedWindow: PreloadedEmWindow = window
-    preloadedWindow.em = {
-      ...preloadedWindow.em,
-      testFlags: {
-        ...preloadedWindow.em?.testFlags,
-        thoughtspaceStorage: storage,
-      },
-    }
-  }, storage)
-
 /** Opens an additional page with the requested thoughtspace storage. */
 export const createTreecrdtTestPage = async (
   browserContext: BrowserContext,
   storage: ThoughtspaceStorage,
 ): Promise<Page> => {
   const target = await browserContext.newPage()
-  await preloadThoughtspaceStorage(target, storage)
+  await preloadTestFlags(target, { thoughtspaceStorage: storage })
   return target
 }
 
@@ -88,7 +76,7 @@ const setup = async ({
     localStorage.setItem('accessToken', sessionId)
   }, sessionId)
 
-  await preloadThoughtspaceStorage(page, activeThoughtspaceStorage)
+  await preloadTestFlags(page, { ...suiteTestFlags(), thoughtspaceStorage: activeThoughtspaceStorage })
 
   page.on('dialog', async dialog => dialog.accept())
 
