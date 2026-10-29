@@ -386,3 +386,67 @@ it('keeps a boundary return through a measurement update when the boundary is be
     Object.assign(window, { innerHeight: originalHeight, scrollY: originalScrollY })
   }
 })
+
+// https://github.com/cybersemics/em/pull/5400#issuecomment-6277201205
+it.skip.each([
+  { delivery: 'touchmove', lastMoveY: 258.25, releasedScrollY: 1341 },
+  { delivery: 'touchend', lastMoveY: 260.25, releasedScrollY: 1339 },
+])('stops a settled drag despite a small release movement in $delivery', async ({ lastMoveY, releasedScrollY }) => {
+  const originalScrollY = window.scrollY
+  const originalHeight = window.innerHeight
+  Object.assign(window, { innerHeight: 800, scrollY: 1300 })
+  viewportStore.update({ innerHeight: 800 })
+  vi.spyOn(document.documentElement, 'scrollHeight', 'get').mockReturnValue(5000)
+  vi.spyOn(window, 'scrollTo').mockImplementation((options: ScrollToOptions | number, y?: number) => {
+    Object.assign(window, { scrollY: typeof options === 'object' ? options.top : y })
+  })
+  vi.mocked(usePositionedThoughts).mockReturnValue({
+    treeThoughtsPositioned: [
+      { key: 'visible', y: 1600, x: 0, height: 1000, autofocus: 'show' } as TreeThoughtPositioned,
+    ],
+    indentCursorAncestorTables: 0,
+    hoverArrowVisibility: null,
+  })
+  const content = document.createElement('div')
+  content.id = 'content-wrapper'
+  document.body.append(content)
+  const { container, unmount } = render(createElement(Provider, { store, children: createElement(LayoutTree) }), {
+    container: content,
+  })
+  const tree = container.firstElementChild as HTMLElement
+
+  try {
+    const start = createEvent.touchStart(tree, { touches: [{ clientY: 300 }] })
+    Object.defineProperty(start, 'timeStamp', { value: 0 })
+    fireEvent(tree, start)
+    const moves = [
+      { y: 280, time: 20 },
+      { y: 260.25, time: 40 },
+      { y: 260.25, time: 60 },
+      { y: 260.25, time: 80 },
+      { y: 260.25, time: 100 },
+      { y: lastMoveY, time: 110 },
+    ]
+    moves.forEach(({ y, time }, index) => {
+      vi.advanceTimersByTime(time - (moves[index - 1]?.time ?? 0))
+      const move = createEvent.touchMove(tree, { touches: [{ clientY: y }] })
+      Object.defineProperty(move, 'timeStamp', { value: time })
+      fireEvent(tree, move)
+    })
+    expect(window.scrollY).toBe(releasedScrollY)
+    expect(document.documentElement.style.getPropertyValue('--layout-tree-scroll-remainder')).toBe('-0.75px')
+
+    vi.advanceTimersByTime(10)
+    const end = createEvent.touchEnd(tree, { touches: [], changedTouches: [{ clientY: 258.25 }] })
+    Object.defineProperty(end, 'timeStamp', { value: 120 })
+    fireEvent(tree, end)
+    await act(() => vi.advanceTimersByTimeAsync(2000))
+
+    expect(window.scrollY).toBe(releasedScrollY)
+    expect(document.documentElement.style.getPropertyValue('--layout-tree-scroll-remainder')).toBe('-0.75px')
+  } finally {
+    unmount()
+    content.remove()
+    Object.assign(window, { innerHeight: originalHeight, scrollY: originalScrollY })
+  }
+})
