@@ -113,8 +113,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   scrolling = false
   sequence: Gesture = ''
   touchTarget: Element | null = null
+  // the responder identifier of the finger that is drawing the gesture, set when it first moves
+  touchIdentifier: string | null = null
   // the number of touchmove events since the first finger landed, logged on touchend
   touchMoves = 0
+  // the touch path of the current gesture for the debug log, as [ms since touchstart, x, y]; null while logging is off
+  trace: { t: number; start: number; identifier: number; points: [number, number, number][] } | null = null
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -141,6 +145,18 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           })
         }
         this.touchMoves++
+        // Recorded here rather than in onPanResponderMove, which misses the moves before the responder is granted.
+        const trace = this.trace
+        if (trace) {
+          const touch = Array.from(e.touches).find(touch => touch.identifier === trace.identifier)
+          if (touch) {
+            trace.points.push([
+              Math.round(performance.now() - trace.start),
+              Math.round(touch.clientX),
+              Math.round(touch.clientY),
+            ])
+          }
+        }
         if (this.disableScroll) {
           e.preventDefault()
         }
@@ -161,25 +177,23 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         this.reset()
       }
 
-      // Latch as soon as a second finger lands, before the in-progress check below, so that a finger joining a
-      // gesture already underway is caught too. It stays latched until every finger is up.
       if (e.touches.length > 1) {
+        // Any finger that lands once the first finger has begun a gesture is ignored for the rest of the touch:
+        // onPanResponderMove follows only the first finger, and the gesture still executes when the first finger lifts.
+        // The gesture has begun once its first swipe is recognized rather than at the first touchmove, since the first
+        // finger of a two-finger trace or of the iOS three-finger undo swipe can move slightly before the others land.
+        // See #5966.
+        if (this.sequence.length > 0) return
+
+        // Otherwise the touch is multi-touch, which is never a gesture. That covers two-finger tracing and pinching
+        // (#4233), and the iOS three-finger swipe that undoes and redoes, which must not also execute an em gesture
+        // (#5575). Abandoning makes onPanResponderMove and onPanResponderRelease bail out, so there is no trace, no
+        // gesture menu, and no command. A gesture that has already begun is cancelled so that its gesture menu does
+        // not stay on screen (#3887). The latch stays set until every finger is up.
+        if (this.currentStart) {
+          this.props.onCancel?.({ clientStart: this.clientStart, e })
+        }
         this.multitouch = true
-      }
-
-      // If a gesture is already in progress (this.currentStart is set in onPanResponderMove),
-      // ignore additional touchstarts. Otherwise a stray finger landing outside the gesture zone
-      // would set this.abandon = true, which causes onPanResponderRelease to skip props.onEnd —
-      // leaving the gesture menu and transparent overlay stuck on screen. See #3887.
-      if (this.currentStart) return
-
-      // Two-finger tracing must not be interpreted as a gesture. If a second finger touches down
-      // before any gesture has begun, abandon the sequence so nothing happens: onPanResponderMove
-      // and onPanResponderRelease both bail out when this.abandon is set, preventing the trace,
-      // the gesture menu, and any command from being triggered. This runs after the currentStart
-      // guard above so a stray finger during an already-recognized single-finger gesture is still
-      // ignored rather than abandoning it (see #3887). See #4233.
-      if (e.touches.length > 1) {
         this.abandon = true
         this.disableScroll = false
         clearGesture()
@@ -220,6 +234,14 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           })
         }
         this.clientStart = { x, y }
+        this.trace = debugLog.isEnabled()
+          ? {
+              t: Date.now(),
+              start: performance.now(),
+              identifier: e.touches[0].identifier,
+              points: [[0, Math.round(x), Math.round(y)]],
+            }
+          : null
         // Remember the element the browser pinned this touch to, so a release can still be detected
         // if that element unmounts mid-gesture. See the pointerup listener below.
         this.touchTarget = e.target instanceof Element ? e.target : null
@@ -247,12 +269,13 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           moves: this.touchMoves,
         }
       })
-      // Only clear the multitouch latch once every finger is up. Fingers leave one at a time, so clearing it on the
-      // first touchend would let the last finger still down be tracked as a new single-finger gesture.
+      // Only reset once every finger is up. Fingers leave one at a time, so resetting on the first touchend would clear
+      // the multitouch latch and let the last finger still down be tracked as a new single-finger gesture, or would
+      // clear the gesture of a first finger that is still down after an ignored second finger lifts.
       if (e.touches.length === 0) {
         this.multitouch = false
+        this.reset()
       }
-      this.reset()
     })
 
     // touchcancel is fired when the user switches apps by swiping from the bottom of the screen
@@ -322,7 +345,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             shouldCancelGesture: this.props.shouldCancelGesture?.(),
           })
         }
-        return !this.props.shouldCancelGesture?.()
+        return !this.multitouch && !this.props.shouldCancelGesture?.()
       },
 
       onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
@@ -356,11 +379,21 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           return
         }
 
+        // Follow the finger that began the gesture, so that a finger that joins once the gesture is underway cannot
+        // move it (#5966). gestureState cannot be used, since its moveX and moveY are the centroid of every finger that
+        // moved.
+        const touch = this.currentStart
+          ? e.nativeEvent.touches.find(touch => touch.identifier === this.touchIdentifier)
+          : e.nativeEvent.touches[0] || e.nativeEvent
+        if (!touch) return
+
         // React Native Web reports page coordinates. Measure finger movement in the viewport so
         // momentum scrolling cannot turn an upward swipe into a downward or stationary gesture.
+        // isInGestureZone also takes viewport coordinates. Otherwise the zone's viewport-relative bounds are compared
+        // against scroll-offset coordinates and the check breaks when the page is scrolled.
         const clientPoint = {
-          x: gestureState.moveX - window.scrollX,
-          y: gestureState.moveY - window.scrollY,
+          x: touch.pageX - window.scrollX,
+          y: touch.pageY - window.scrollY,
         }
 
         // initialize this.currentStart on the the first trigger of the move event
@@ -368,13 +401,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         if (!this.currentStart) {
           // Check if we're in the gesture zone before deciding whether to disable scrolling
           // This ensures we only prevent scrolling in the gesture zone, but allow it elsewhere
-          const touchLocation = e.nativeEvent.touches[0] || e.nativeEvent
-          // isInGestureZone takes viewport coordinates, so convert from page coordinates. Otherwise the zone's viewport-relative bounds are compared against scroll-offset coordinates and the check breaks when the page is scrolled.
-          const inGestureZone = isInGestureZone(
-            touchLocation.pageX - window.scrollX,
-            touchLocation.pageY - window.scrollY,
-            this.leftHanded,
-          )
+          const inGestureZone = isInGestureZone(clientPoint.x, clientPoint.y, this.leftHanded)
 
           // Only keep disableScroll=true if we're actually in the gesture zone
           // This addresses both issues: prevents scrolling in gesture zone during gestures,
@@ -384,6 +411,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           }
 
           this.currentStart = clientPoint
+          this.touchIdentifier = touch.identifier
           this.scrollYStart = window.scrollY
           if (this.props.onStart) {
             this.props.onStart({ clientStart: this.clientStart!, e })
@@ -417,6 +445,16 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         }
       },
 
+      // A gesture ends when the finger that drew it lifts, even if fingers that joined it are still down, which
+      // onPanResponderRelease waits for. The rest of the touch is then ignored. See #5966.
+      onPanResponderEnd: (e: GestureResponderEvent) => {
+        if (e.nativeEvent.touches.length === 0) return
+        const touch = e.nativeEvent.changedTouches.find(touch => touch.identifier === this.touchIdentifier)
+        if (!touch) return
+        this.release(e, { x: touch.pageX - window.scrollX, y: touch.pageY - window.scrollY })
+        this.abandon = true
+      },
+
       // not called on touchcancel
       onPanResponderRelease: (e: GestureResponderEvent, gestureState: GestureState) => {
         if (testFlags.logMultigesture) {
@@ -425,25 +463,10 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             abandon: this.abandon,
           })
         }
-        const clientEnd = {
+        this.release(e, {
           x: gestureState.moveX - window.scrollX,
           y: gestureState.moveY - window.scrollY,
-        }
-        // Log the start and end coordinates so that a false gesture, such as an OS app switcher swipe misread as a command gesture, can be diagnosed from the debug log. innerHeight and safeAreaBottom determine the bottom system-gesture exclusion that was in effect (see isInGestureZone), so the log also reveals if the exclusion was inert because the safe area inset read as zero.
-        debugLog.log('gesture', () => ({
-          sequence: this.sequence,
-          x: this.clientStart && Math.round(this.clientStart.x),
-          y: this.clientStart && Math.round(this.clientStart.y),
-          endX: Math.round(clientEnd.x),
-          endY: Math.round(clientEnd.y),
-          abandon: this.abandon,
-          innerHeight: viewportStore.getState().innerHeight,
-          safeAreaBottom: getSafeAreaBottom(),
-        }))
-        if (!this.abandon) {
-          this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
-        }
-        this.reset()
+        })
       },
 
       onPanResponderTerminationRequest: () => !this.disableScroll,
@@ -456,6 +479,36 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.leftHanded = !!nextProps.leftHanded
   }
 
+  /** Ends the gesture, executing it unless it was abandoned. */
+  release(e: GestureResponderEvent, clientEnd: Point) {
+    // Log the start and end coordinates so that a false gesture, such as an OS app switcher swipe misread as a command gesture, can be diagnosed from the debug log. innerHeight and safeAreaBottom determine the bottom system-gesture exclusion that was in effect (see isInGestureZone), so the log also reveals if the exclusion was inert because the safe area inset read as zero.
+    debugLog.log('gesture', () => ({
+      sequence: this.sequence,
+      x: this.clientStart && Math.round(this.clientStart.x),
+      y: this.clientStart && Math.round(this.clientStart.y),
+      endX: Math.round(clientEnd.x),
+      endY: Math.round(clientEnd.y),
+      abandon: this.abandon,
+      innerHeight: viewportStore.getState().innerHeight,
+      safeAreaBottom: getSafeAreaBottom(),
+    }))
+    // A touch abandoned before its first swipe, such as a scroll outside the gesture zone, is not a gesture, and would
+    // push the gestures worth diagnosing out of the five traces the log keeps.
+    if (this.trace && (this.sequence || !this.abandon)) {
+      debugLog.logGestureTrace({
+        t: this.trace.t,
+        sequence: this.sequence,
+        abandon: this.abandon,
+        points: this.trace.points,
+      })
+    }
+    this.trace = null
+    if (!this.abandon) {
+      this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
+    }
+    this.reset()
+  }
+
   reset() {
     this.abandon = false
     this.currentStart = null
@@ -463,6 +516,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.disableScroll = false
     this.sequence = ''
     this.touchTarget = null
+    this.touchIdentifier = null
     clearGesture()
   }
 
