@@ -172,9 +172,6 @@ const UndoSlider: FC = () => {
   return (
     <FadeTransition in={showUndoSlider} type='medium' unmountOnExit>
       <div
-        // The slider stays mounted while it fades out, so data-open distinguishes an open slider from one that is closing.
-        data-testid='undo-slider'
-        data-open={showUndoSlider}
         className={css({
           position: 'fixed',
           width: `calc(100% - 6em)`,
