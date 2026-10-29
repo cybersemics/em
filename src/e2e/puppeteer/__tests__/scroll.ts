@@ -1,5 +1,4 @@
 import { KnownDevices } from 'puppeteer'
-import type { PreloadedEmWindow } from '../../../@types'
 import cursorBackCommand from '../../../commands/cursorBack'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
@@ -10,6 +9,7 @@ import getThoughtTop from '../helpers/getThoughtTop'
 import getVisibleThoughtBounds from '../helpers/getVisibleThoughtBounds'
 import hideFooterMetadata from '../helpers/hideFooterMetadata'
 import paste from '../helpers/paste'
+import preloadTestFlags from '../helpers/preloadTestFlags'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import screenshot from '../helpers/screenshot'
@@ -104,16 +104,7 @@ describe('scrollCursorIntoView', () => {
     await clickThought('t')
 
     // Simulate slow TreeCRDT reads during app startup after refresh.
-    await page.evaluateOnNewDocument(value => {
-      const preloadedWindow = window as unknown as PreloadedEmWindow
-      preloadedWindow.em = {
-        ...preloadedWindow.em,
-        testFlags: {
-          ...preloadedWindow.em?.testFlags,
-          replicationDelay: value,
-        },
-      }
-    }, MOCK_REPLICATION_DELAY)
+    await preloadTestFlags(page, { replicationDelay: MOCK_REPLICATION_DELAY })
 
     await refresh()
 

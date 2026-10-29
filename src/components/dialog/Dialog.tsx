@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useEffect, useRef } from 'react'
+import React, { PropsWithChildren, useCallback, useEffect, useRef } from 'react'
 import { dialogRecipe } from '../../../styled-system/recipes'
 import useOnClickOutside from '../../hooks/useOnClickOutside'
 
@@ -14,8 +14,16 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const dialog = dialogRecipe()
 
-  // Close the dialog when the user clicks or taps outside of it.
-  useOnClickOutside(dialogRef, onClose)
+  // Close the dialog when the user clicks or taps outside of it. A press on a surface layered above the dialog, marked
+  // data-above-dialog, is not outside it: the dialog is still what the user is working in.
+  const closeUnlessAbove = useCallback(
+    (event: MouseEvent | TouchEvent) => {
+      if (event.target instanceof Element && event.target.closest('[data-above-dialog]')) return
+      onClose()
+    },
+    [onClose],
+  )
+  useOnClickOutside(dialogRef, closeUnlessAbove)
 
   /**
    * Disable swipe-to-go-back.

@@ -11,7 +11,15 @@ This skill is only for static artifacts built outside the app. It never applies 
 
 ## Glow
 
-Publish em's `public/img/glow/glow-3a.avif` next to the page as `glow.avif` (for an Artifact, pass it in `files`). Put the glow layer first in the body and lift the content above it:
+The glow is `glow.avif` in this skill's directory: em's `public/img/glow/glow-3a.avif` at half the width and height, 18 KB instead of 1.2 MB. Embed it in the page rather than publishing it beside the page. With the full-size image as a separate file, the Artifact could not be shared publicly.
+
+Write the CSS below with `url("glow.avif")`, then embed it as the last step before publishing:
+
+```bash
+.github/skills/liminal/embed-glow.mjs page.html
+```
+
+Put the glow layer first in the body and lift the content above it:
 
 ```html
 <div class="glow" aria-hidden="true"></div>

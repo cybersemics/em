@@ -84,7 +84,8 @@ const getDirections = (gestureOrCommand: Gesture | Command): Direction[] => {
 
 /**
  * Start a touch and return controls for moving it through one or more gestures before ending it.
- * This allows other real input, such as scrolling, to occur between phases of the same touch.
+ * This allows other real input, such as scrolling or another finger, to occur between phases of the same touch.
+ * Each call starts a separate touch point, so two active gestures move two fingers independently.
  */
 export const startGesture = async ({ target, xStart, yStart }: GesturePositionOptions = {}): Promise<ActiveGesture> => {
   // Starting position more reliably in gesture zone

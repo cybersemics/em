@@ -25,27 +25,27 @@ import TreeNode from './TreeNode'
 /** The padding-bottom of the .content element. Make sure it matches the CSS. */
 const CONTENT_PADDING_BOTTOM = 153
 /** Calculates the height of a single-line thought. Initially uses an estimated height, then uses the height measured from thn DOM. */
-const useSingleLineHeight = (sizes: Index<{ height: number; width?: number; isVisible: boolean }>) => {
+const useSingleLineHeight = (heights: Index<{ height: number; isVisible: boolean }>) => {
   const fontSize = useSelector(state => state.fontSize)
   // singleLineHeight is the measured height of a single line thought.
-  // If no sizes have been measured yet, use the estimated height.
-  // Cache the last measured value in a ref in case sizes no longer contains any single line thoughts.
+  // If no heights have been measured yet, use the estimated height.
+  // Cache the last measured value in a ref in case heights no longer contains any single line thoughts.
   // Then do not update it again.
   const singleLineHeightPrev = useRef<number | null>(null)
   const singleLineHeight = useMemo(() => {
     // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
-    // If estimatedHeight is off, then totalHeight will fluctuate as actual sizes are saved (due to estimatedHeight differing from the actual single-line height).
+    // If estimatedHeight is off, then totalHeight will fluctuate as actual heights are saved (due to estimatedHeight differing from the actual single-line height).
     const estimatedHeight = fontSize * 2
 
-    const singleLineHeightMeasured = Object.values(sizes).find(
-      // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different sizes.
+    const singleLineHeightMeasured = Object.values(heights).find(
+      // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different heights.
       ({ height }) => Math.abs(height - estimatedHeight) < height / 2,
     )?.height
     if (singleLineHeightMeasured) {
       singleLineHeightPrev.current = singleLineHeightMeasured
     }
     return singleLineHeightPrev.current || estimatedHeight
-  }, [fontSize, sizes])
+  }, [fontSize, heights])
 
   return singleLineHeight
 }
@@ -80,7 +80,10 @@ const useNavAndFooterHeight = () => {
 
 /** A hook that returns a ref to the content div and updates the viewport store's layoutTreeTop property on mount. */
 const useLayoutTreeTop = (ref: RefObject<HTMLElement | null>) => {
-  useEffect(() => {
+  // A layout effect, so that layoutTreeTop is set before the cursor overlay's scrollCursorIntoView effect runs on mount.
+  // Child effects run before their parent's, so a passive effect here would leave layoutTreeTop at 0 for that first
+  // check, and a cursor in plain view would be measured as behind the toolbar and scrolled.
+  useLayoutEffect(() => {
     if (!ref.current) return
     viewportStore.update({ layoutTreeTop: ref.current.offsetTop || 0 })
   }, [ref])
@@ -91,7 +94,7 @@ const useLayoutTreeTop = (ref: RefObject<HTMLElement | null>) => {
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const editing = useSelector(state => state.isKeyboardOpen)
-  const { sizes, setSize } = useSizeTracking()
+  const { heights, widths, setSize, removeWidth } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
@@ -118,7 +121,7 @@ const LayoutTree = () => {
     }
   }, [dragInProgress, ref])
 
-  const singleLineHeight = useSingleLineHeight(sizes)
+  const singleLineHeight = useSingleLineHeight(heights)
 
   // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
   const autofocusDepth = useSelector(state => {
@@ -151,22 +154,22 @@ const LayoutTree = () => {
     // Hidden layout height above the cursor, used to extend the virtualization boundary.
     spaceAbove,
 
-    // Sum all the sizes to get the total height of the containing div.
-    // Use estimated single-line height for the thoughts that do not have sizes yet.
+    // Sum all the heights to get the total height of the containing div.
+    // Use estimated single-line height for the thoughts that do not have heights yet.
     // Exclude hidden thoughts below the cursor to reduce empty scroll space.
     totalHeight,
   } = treeThoughts.reduce(
     (accum, node) => {
       const heightNext =
-        node.key in sizes
-          ? sizes[node.key].isVisible || !node.belowCursor
-            ? sizes[node.key].height
+        node.key in heights
+          ? heights[node.key].isVisible || !node.belowCursor
+            ? heights[node.key].height
             : 0
           : singleLineHeight
       return {
         totalHeight: accum.totalHeight + heightNext,
         spaceAbove:
-          accum.spaceAbove + (sizes[node.key] && !sizes[node.key].isVisible && !node.belowCursor ? heightNext : 0),
+          accum.spaceAbove + (heights[node.key] && !heights[node.key].isVisible && !node.belowCursor ? heightNext : 0),
       }
     },
     {
@@ -191,7 +194,8 @@ const LayoutTree = () => {
     {
       maxVisibleY: viewportHeight - (layoutTop + navbarHeight),
       singleLineHeight,
-      sizes,
+      heights,
+      widths,
     },
   )
 
@@ -302,6 +306,7 @@ const LayoutTree = () => {
                 bulletWidth,
                 cursorUncleId,
                 setSize,
+                removeWidth,
                 cliffPaddingStyle,
                 dragInProgress,
                 autofocusDepth,
