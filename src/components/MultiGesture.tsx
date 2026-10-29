@@ -59,7 +59,7 @@ type MultiGestureProps = PropsWithChildren<{
   shouldBlockScroll?: () => boolean
 }>
 
-/** Milliseconds into a press on the caret after which touchmove is no longer prevented. IOS raises the text magnifier 100–200ms into the press, and preventing touchmove after that stops the magnifier from moving the caret on BrowserStack's devices, and no longer stops the scroll on a physical iPhone or iPad, so the overflow lock takes over. */
+/** Milliseconds into a press on the caret after which touchmove is no longer prevented. IOS raises the text magnifier 100–200ms into the press. On BrowserStack's devices, preventing the small moves of a held press before then keeps the magnifier from appearing, while preventing moves after it has appeared does not stop it from moving the caret. On a physical iPhone or iPad, preventing touchmove no longer stops the scroll once the magnifier is up, so the overflow lock takes over. */
 const MAGNIFIER_DELAY = 150
 
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
