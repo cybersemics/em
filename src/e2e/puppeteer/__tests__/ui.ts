@@ -37,17 +37,15 @@ const STUB_COMMANDS: NonNullable<PreloadedTestFlags['stubCommands']> = [
 /** A fixed list of commands with keyboard shortcuts, enough to overflow the Desktop Command Universe panel. Every command but one has an icon, so that the snapshot covers the position of an icon and of the placeholder that keeps the row layout without one. One description is long enough to wrap onto a second line. Open Command Universe is kept, since the command that opens the panel has to exist for the test to open it; it hides itself from the list. */
 const DESKTOP_STUB_COMMANDS: NonNullable<PreloadedTestFlags['stubCommands']> = [
   'openDesktopCommandUniverse',
-  ...(['cursorBack', 'help', undefined, 'home', 'newThought', 'indent', 'outdent', 'favorite'] as const).map(
-    (icon, i) => ({
-      label: `Command ${i + 1}`,
-      keyboard: { key: (i + 1).toString(), meta: true },
-      description:
-        i === 3
-          ? `Description of command ${i + 1}, long enough to wrap onto a second line so that the snapshot covers multiline descriptions.`
-          : `Description of command ${i + 1}.`,
-      icon,
-    }),
-  ),
+  ...Array.from({ length: 8 }, (_, i) => ({
+    label: `Command ${i + 1}`,
+    keyboard: { key: (i + 1).toString(), meta: true },
+    description:
+      i === 3
+        ? `Description of command ${i + 1}, long enough to wrap onto a second line so that the snapshot covers multiline descriptions.`
+        : `Description of command ${i + 1}.`,
+    icon: i !== 2,
+  })),
 ]
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
