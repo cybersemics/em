@@ -15,6 +15,8 @@ const DECELERATION_TIME_CONSTANT = -1 / Math.log(0.998)
 const LAYOUT_TREE_ELASTIC_OFFSET = '--layout-tree-elastic-offset'
 const LAYOUT_TREE_SCROLL_REMAINDER = '--layout-tree-scroll-remainder'
 const TOUCH_VELOCITY_WINDOW = 80
+// Minimum CSS pixels of recent finger travel needed to start momentum.
+const MIN_INERTIA_DISTANCE = 5
 
 interface TouchSample {
   /** The finger's viewport coordinate. */
@@ -424,6 +426,12 @@ const useClampScroll = ({
         // Continue a controlled or interrupted drag with the normal UIScrollView decay.
         setElasticOffset(0)
         setScrollPosition(clampedScrollY)
+        // Lifting a settled finger can produce a tiny, fast movement in touchmove or touchend.
+        // Its fitted velocity must not turn that release jitter into a new coast.
+        if (recentTouches.length < 2 || Math.abs(recentTouches[0].y - lastTouch.y) < MIN_INERTIA_DISTANCE) {
+          momentumInProgress.current = false
+          return
+        }
         animationScrollY.current = window.scrollY
         const target = clampedScrollY + (velocity * DECELERATION_TIME_CONSTANT) / 1000
         const controls = animate(clampedScrollY, target, {

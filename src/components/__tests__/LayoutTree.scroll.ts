@@ -388,7 +388,7 @@ it('keeps a boundary return through a measurement update when the boundary is be
 })
 
 // https://github.com/cybersemics/em/pull/5400#issuecomment-6277201205
-it.skip.each([
+it.each([
   { delivery: 'touchmove', lastMoveY: 258.25, releasedScrollY: 1341 },
   { delivery: 'touchend', lastMoveY: 260.25, releasedScrollY: 1339 },
 ])('stops a settled drag despite a small release movement in $delivery', async ({ lastMoveY, releasedScrollY }) => {
