@@ -62,13 +62,21 @@ A command bound to an array of keyboard shortcuts also receives `keyboardIndex`,
 
 ### Discovery and indexing
 
-At startup, [`commands.ts`](../src/commands.ts) flattens the barrel into `globalCommands: Command[]` and builds three indices via `index()`:
+At startup, [`commands.ts`](../src/commands.ts) flattens the barrel into `registeredCommands: Command[]`. Everything that lists commands or matches input against them reads `globalCommands` instead, which is the registered commands unless a test has stubbed them (see [Stubbing the global commands](#stubbing-the-global-commands)). `index()` builds three indices:
 
 - **`commandKeyIndex`** — `hash(keyboard) → Command`. Used by `keyDown` for O(1) shortcut lookup.
 - **`commandIdIndex`** — `id → Command`. Used by `commandById(id)`. Use this only when the id is dynamic; otherwise prefer a static import.
 - **`commandGestureIndex`** — `gestureSequence → Command`. Used by `handleGestureEnd` for O(1) gesture lookup.
 
+The key and gesture indices are built from `globalCommands`. The id index is built from the registered commands, since `commandById` is only called with the ids of registered commands.
+
 If two commands share the same keyboard hash, `index()` logs a `console.error` at startup naming both — so collisions surface early.
+
+### Stubbing the global commands
+
+A snapshot of a command list, such as the Gesture Menu, would otherwise change whenever a command is added, removed, or renamed. A Puppeteer test can replace the global commands with a fixed list by preloading [`testFlags.stubCommands`](../src/e2e/testFlags.ts) with plain data (`label`, `gesture`, `keyboard`, `description`), from which `commands.ts` builds inert commands. An entry can instead be the id of a registered command to keep, such as `cancel` and `openMobileCommandUniverse`, which the Gesture Menu always lists after the commands that match the gesture. `globalCommands` is computed once when `commands.ts` loads, so the flag must be set before the app starts; [`useTestFlags`](../src/e2e/puppeteer/helpers/useTestFlags.ts) preloads it for every test in a describe block, before shared setup opens the page. The stubs replace the registered commands everywhere `globalCommands` is read: the Gesture Menu, Command Universe search results, keyboard shortcuts, and gestures. The Command Universe's default views, grouped by category or sorted by label, are built from `COMMAND_DIFFICULTIES` at startup and still show the registered commands.
+
+Two readers keep using the registered commands: `commandById`, as above, and the guard in [`useCommandList`](../src/hooks/useCommandList.ts) that every visible registered command belongs to a group in `COMMAND_DIFFICULTIES`, since it checks the code rather than what a test displays.
 
 ### Keyboard activation
 

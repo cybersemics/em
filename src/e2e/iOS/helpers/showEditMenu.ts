@@ -1,3 +1,5 @@
+import getScreenOffsetY from './getScreenOffsetY.js'
+
 interface ShowEditMenuOptions {
   /**
    * Milliseconds to let WebKit lay out the selection before tapping. A freshly-changed selection isn't
@@ -33,7 +35,8 @@ const showEditMenu = async ({ settleMs = 500 }: ShowEditMenuOptions = {}): Promi
   if (target.error) throw new Error(target.error)
 
   await browser.pause(settleMs)
-  await browser.execute('mobile: tap', { x: target.cx, y: target.cy })
+  // the selection rect is viewport-relative while touches are delivered in screen coordinates
+  await browser.execute('mobile: tap', { x: target.cx, y: target.cy + (await getScreenOffsetY()) })
 }
 
 export default showEditMenu

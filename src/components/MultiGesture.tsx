@@ -117,6 +117,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   touchIdentifier: string | null = null
   // the number of touchmove events since the first finger landed, logged on touchend
   touchMoves = 0
+  // the touch path of the current gesture for the debug log, as [ms since touchstart, x, y]; null while logging is off
+  trace: { t: number; start: number; identifier: number; points: [number, number, number][] } | null = null
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -143,6 +145,18 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           })
         }
         this.touchMoves++
+        // Recorded here rather than in onPanResponderMove, which misses the moves before the responder is granted.
+        const trace = this.trace
+        if (trace) {
+          const touch = Array.from(e.touches).find(touch => touch.identifier === trace.identifier)
+          if (touch) {
+            trace.points.push([
+              Math.round(performance.now() - trace.start),
+              Math.round(touch.clientX),
+              Math.round(touch.clientY),
+            ])
+          }
+        }
         if (this.disableScroll) {
           e.preventDefault()
         }
@@ -220,6 +234,14 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           })
         }
         this.clientStart = { x, y }
+        this.trace = debugLog.isEnabled()
+          ? {
+              t: Date.now(),
+              start: performance.now(),
+              identifier: e.touches[0].identifier,
+              points: [[0, Math.round(x), Math.round(y)]],
+            }
+          : null
         // Remember the element the browser pinned this touch to, so a release can still be detected
         // if that element unmounts mid-gesture. See the pointerup listener below.
         this.touchTarget = e.target instanceof Element ? e.target : null
@@ -470,6 +492,17 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       innerHeight: viewportStore.getState().innerHeight,
       safeAreaBottom: getSafeAreaBottom(),
     }))
+    // A touch abandoned before its first swipe, such as a scroll outside the gesture zone, is not a gesture, and would
+    // push the gestures worth diagnosing out of the five traces the log keeps.
+    if (this.trace && (this.sequence || !this.abandon)) {
+      debugLog.logGestureTrace({
+        t: this.trace.t,
+        sequence: this.sequence,
+        abandon: this.abandon,
+        points: this.trace.points,
+      })
+    }
+    this.trace = null
     if (!this.abandon) {
       this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
     }
