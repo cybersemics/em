@@ -147,7 +147,7 @@ describe('scrollCursorIntoView', () => {
 
 describe('scroll clamp', () => {
   // https://github.com/cybersemics/em/pull/5400#issuecomment-6512974749
-  it.skip('clamps to displayed content with safe-area insets', async () => {
+  it('clamps to displayed content with safe-area insets', async () => {
     await page.setViewport({ width: 393, height: 852, isMobile: true, hasTouch: true, deviceScaleFactor: 3 })
     await deviceEmulation.setSafeAreaInsets({ top: 59, bottom: 34, left: 0, right: 0 })
     await paste(`

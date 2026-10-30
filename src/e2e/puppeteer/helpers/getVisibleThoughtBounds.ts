@@ -30,9 +30,12 @@ const getVisibleThoughtBounds = async (): Promise<{
     const visibleTopDocument = Math.min(...visibleRects.map(rect => rect.top + window.scrollY))
     const visibleBottomDocument = Math.max(...visibleRects.map(rect => rect.bottom + window.scrollY))
     const viewportTopBoundary = document.getElementById('toolbar')?.getBoundingClientRect().bottom || 0
-    const navHeight = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect().height || 0
+    const navRect = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect()
     const footerRect = document.querySelector('[aria-label="footer"]')?.getBoundingClientRect()
-    const viewportBottomBoundary = window.innerHeight - navHeight
+    const viewportBottomBoundary = Math.min(
+      window.innerHeight - (navRect?.height || 0),
+      navRect?.top ?? window.innerHeight,
+    )
     const viewportUsableHeight = Math.max(1, viewportBottomBoundary - viewportTopBoundary)
     const viewportAllowance = viewportUsableHeight * 0.8
     const nativeMax = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)

@@ -177,11 +177,19 @@ const useClampScroll = ({
           dragCarry.current
         : window.scrollY - scrollRemainder.current
       const nativeMax = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
-      const layoutTreeTop = ref.current?.offsetTop || 0
+      // offsetTop is relative to the offset parent and omits outer safe-area padding.
+      // Remove our transforms so elastic displacement and pixel rounding cannot move the bounds.
+      const layoutTreeTop = ref.current
+        ? ref.current.getBoundingClientRect().top + window.scrollY - elasticOffset.current - scrollRemainder.current
+        : 0
       const toolbarBottom = document.getElementById('toolbar')?.getBoundingClientRect().bottom || 0
-      const navHeight = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect().height || 0
+      const navRect = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect()
       const footerRect = document.querySelector('[aria-label="footer"]')?.getBoundingClientRect()
-      const viewportBottomBoundary = viewportHeight - navHeight
+      // Respect the nav's bottom inset, while retaining space for it when editing puts it below the viewport.
+      const viewportBottomBoundary = Math.min(
+        viewportHeight - (navRect?.height || 0),
+        navRect ? navRect.top - Math.min(0, elasticOffset.current) : viewportHeight,
+      )
       const viewportUsableHeight = Math.max(1, viewportBottomBoundary - toolbarBottom)
       const viewportAllowance = viewportUsableHeight * 0.8
       const minScrollY = Math.min(
