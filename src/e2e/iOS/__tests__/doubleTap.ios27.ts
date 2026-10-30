@@ -5,6 +5,7 @@
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../../constants'
 import getCaretOffset from '../helpers/getCaretOffset'
 import getEditingText from '../helpers/getEditingText'
+import getScreenOffsetY from '../helpers/getScreenOffsetY'
 import getSelection from '../helpers/getSelection'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import isKeyboardShown from '../helpers/isKeyboardShown'
@@ -65,6 +66,54 @@ describe('Double tap', () => {
     )
     expect(alertText).not.toBe('Drag and drop to move thought')
     expect(await isKeyboardShown()).toBe(true)
+  })
+
+  // https://github.com/cybersemics/em/issues/5895
+  it('a long press near the caret after a double tap does not leave drag and drop active', async () => {
+    await newThought('One two')
+    await hideKeyboardByTappingDone()
+    const editable = await waitForEditable('One two')
+    await tap(editable, { pointerType: 'touch' })
+    await waitUntil(isKeyboardShown)
+
+    await tap(editable, { offset: 'One'.length, pointerType: 'touch', count: 2 })
+    await waitUntil(async () => (await getSelection().toString()) === 'One')
+    await setSelection('One two'.length, 'One two'.length)
+    // em withholds the long press handlers while a word is selected, and learns that it is not on a throttle
+    await waitUntil(() => browser.$('[data-editing=true] [aria-label="thought"][draggable=true]').isExisting())
+
+    const caret = await browser.execute(() => {
+      const rect = document.getSelection()!.getRangeAt(0).getBoundingClientRect()
+      return { x: rect.x, y: rect.y + rect.height / 2 }
+    })
+    // on the text, within WebKit's 44pt around the caret but outside the caret's own touch target
+    await browser.performActions([
+      {
+        type: 'pointer',
+        id: 'finger1',
+        parameters: { pointerType: 'touch' },
+        actions: [
+          {
+            type: 'pointerMove',
+            duration: 0,
+            x: Math.round(caret.x - 25),
+            y: Math.round(caret.y + (await getScreenOffsetY())),
+            origin: 'viewport',
+          },
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: TIMEOUT_LONG_PRESS_THOUGHT * 3 },
+          { type: 'pointerUp', button: 0 },
+        ],
+      },
+    ])
+
+    // where the touchend arrives, the alert fades out after the lift
+    await browser.waitUntil(
+      async () =>
+        (await browser.execute(() => document.querySelector('[data-testid="alert-content"]')?.textContent ?? null)) !==
+        'Drag and drop to move thought',
+      { timeout: 3000, timeoutMsg: 'Drag and drop was still active 3s after the finger lifted.' },
+    )
   })
 
   // https://github.com/cybersemics/em/issues/5761
