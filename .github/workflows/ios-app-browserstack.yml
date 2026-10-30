@@ -1,0 +1,202 @@
+name: iOS app to BrowserStack
+
+# Builds the Capacitor iOS app from any ref and uploads it to BrowserStack App Automate, which also makes it
+# available in App Live. It is the CI counterpart of scripts/build-em-browserstack-ipa.sh, for testing native
+# changes on a real device without a Mac. Dispatch only: every run takes a macOS runner.
+#
+# The app is built in server mode, so it loads its web layer from server_url instead of bundling it. The default,
+# https://bs-local.com:3000, resolves to whichever machine runs BrowserStack Local next to a dev server, as
+# browser-control-ios expects. A public URL such as https://main.emthought.space needs no tunnel, which suits a
+# change confined to the native app.
+#
+# Signing uses an Apple Development certificate and a development provisioning profile for the app's bundle id,
+# stored as secrets. BrowserStack re-signs the app on upload, so the profile does not need to list any devices.
+#   IOS_DEVELOPMENT_CERTIFICATE            base64 of the .p12 export of the certificate and its private key
+#   IOS_DEVELOPMENT_CERTIFICATE_PASSWORD   password of that .p12
+#   IOS_DEVELOPMENT_PROVISIONING_PROFILE   base64 of the .mobileprovision, created in the Apple Developer portal
+#                                          rather than by Xcode, since Xcode-managed profiles cannot be used for
+#                                          manual signing
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag or commit to build
+        required: true
+        default: main
+      custom_id:
+        description: BrowserStack custom_id to upload under. em-server-mode replaces the app browser-control-ios uses.
+        required: true
+        default: em-ci-build
+      server_url:
+        description: URL the app loads its web layer from
+        required: true
+        default: https://bs-local.com:3000
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check secrets
+        env:
+          CERTIFICATE: ${{ secrets.IOS_DEVELOPMENT_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.IOS_DEVELOPMENT_CERTIFICATE_PASSWORD }}
+          PROFILE: ${{ secrets.IOS_DEVELOPMENT_PROVISIONING_PROFILE }}
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        run: |
+          missing=()
+          [ -n "$CERTIFICATE" ] || missing+=(IOS_DEVELOPMENT_CERTIFICATE)
+          [ -n "$CERTIFICATE_PASSWORD" ] || missing+=(IOS_DEVELOPMENT_CERTIFICATE_PASSWORD)
+          [ -n "$PROFILE" ] || missing+=(IOS_DEVELOPMENT_PROVISIONING_PROFILE)
+          [ -n "$BROWSERSTACK_USERNAME" ] || missing+=(BROWSERSTACK_USERNAME)
+          [ -n "$BROWSERSTACK_ACCESS_KEY" ] || missing+=(BROWSERSTACK_ACCESS_KEY)
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing secrets: ${missing[*]}. See the comment at the top of this workflow."
+            exit 1
+          fi
+
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set Node.js version
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install npm dependencies
+        uses: ./.github/actions/install
+
+      - name: Install signing certificate and provisioning profile
+        id: signing
+        env:
+          CERTIFICATE: ${{ secrets.IOS_DEVELOPMENT_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.IOS_DEVELOPMENT_CERTIFICATE_PASSWORD }}
+          PROFILE: ${{ secrets.IOS_DEVELOPMENT_PROVISIONING_PROFILE }}
+        run: |
+          # a throwaway keychain, unlocked for the length of the job
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD=$(openssl rand -hex 24)
+          echo "$CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -t 3600 -u "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$KEYCHAIN" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+
+          echo "$PROFILE" | base64 --decode > "$RUNNER_TEMP/profile.mobileprovision"
+          security cms -D -i "$RUNNER_TEMP/profile.mobileprovision" > "$RUNNER_TEMP/profile.plist"
+          UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" "$RUNNER_TEMP/profile.plist")
+          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" "$RUNNER_TEMP/profile.plist")
+          # Xcode 16 reads profiles from UserData, earlier versions from MobileDevice
+          for dir in "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" "$HOME/Library/MobileDevice/Provisioning Profiles"; do
+            mkdir -p "$dir"
+            cp "$RUNNER_TEMP/profile.mobileprovision" "$dir/$UUID.mobileprovision"
+          done
+
+          BUNDLE_ID=$(grep -m1 'PRODUCT_BUNDLE_IDENTIFIER' ios/App/App.xcodeproj/project.pbxproj | sed -E 's/.*= *([^;]+);.*/\1/')
+          echo "Bundle id $BUNDLE_ID, team $TEAM_ID, profile $UUID"
+          {
+            echo "keychain=$KEYCHAIN"
+            echo "uuid=$UUID"
+            echo "team_id=$TEAM_ID"
+            echo "bundle_id=$BUNDLE_ID"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Sync Capacitor (server mode)
+        env:
+          SERVER_URL: ${{ inputs.server_url }}
+        run: BUILD_MODE=server NODE_ENV=development CAPACITOR_SERVER_URL="$SERVER_URL" npx cap sync ios
+
+      - name: Install CocoaPods
+        working-directory: ios/App
+        run: pod install
+
+      # Archived unsigned and signed at export, since a signing override on the command line would also apply to
+      # the CocoaPods library targets, which cannot carry a profile. Debug, so that DevServerCertPlugin trusts the
+      # dev server's self-signed certificate behind bs-local.com.
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Export IPA
+        env:
+          UUID: ${{ steps.signing.outputs.uuid }}
+          TEAM_ID: ${{ steps.signing.outputs.team_id }}
+          BUNDLE_ID: ${{ steps.signing.outputs.bundle_id }}
+        run: |
+          cat > "$RUNNER_TEMP/exportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>development</string>
+            <key>teamID</key>
+            <string>$TEAM_ID</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>signingCertificate</key>
+            <string>Apple Development</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>$BUNDLE_ID</key>
+              <string>$UUID</string>
+            </dict>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist "$RUNNER_TEMP/exportOptions.plist"
+
+      - name: Upload to BrowserStack
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+          CUSTOM_ID: ${{ inputs.custom_id }}
+          REF: ${{ inputs.ref }}
+          SERVER_URL: ${{ inputs.server_url }}
+        run: |
+          RESPONSE=$(curl -sS --fail-with-body -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
+            -X POST "https://api-cloud.browserstack.com/app-automate/upload" \
+            -F "file=@$RUNNER_TEMP/export/App.ipa" \
+            -F "custom_id=$CUSTOM_ID")
+          echo "$RESPONSE"
+          APP_URL=$(echo "$RESPONSE" | jq -r '.app_url // empty')
+          if [ -z "$APP_URL" ]; then
+            echo "::error::The upload response had no app_url."
+            exit 1
+          fi
+          {
+            echo "### Uploaded to BrowserStack"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Ref | \`$REF\` ($(git rev-parse --short HEAD)) |"
+            echo "| custom_id | \`$CUSTOM_ID\` |"
+            echo "| app_url | \`$APP_URL\` |"
+            echo "| Server URL | $SERVER_URL |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove signing keychain
+        if: always() && steps.signing.outputs.keychain != ''
+        env:
+          KEYCHAIN: ${{ steps.signing.outputs.keychain }}
+        run: security delete-keychain "$KEYCHAIN"
