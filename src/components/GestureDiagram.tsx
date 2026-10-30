@@ -13,9 +13,6 @@ import getGestureViewBox from './GestureDiagram/getGestureViewBox'
 import GestureArrowhead from './GestureDiagram/types/GestureArrowhead'
 import GestureGradient from './GestureDiagram/types/GestureGradient'
 
-// A base slightly wider than the chevron is deep matches the design's squat arrowhead.
-const FILLED_CHEVRON_APEX_ANGLE = 2 * Math.atan(1 / 1.7) * (180 / Math.PI)
-
 interface GestureDiagramBaseProps {
   /** Length of the SVG arrowhead marker. */
   arrowSize?: number
@@ -57,12 +54,10 @@ interface GestureDiagramBaseProps {
   glow?: boolean
   /** Radius used to soften corners in line-based gradient gestures. */
   cornerRadius?: number
-  /** Interior angle of the geometry-based wide chevron. Default 80. */
+  /** Interior angle of the 'outlined-wide' and 'filled-wide' chevrons. Default 80. */
   chevronApexAngle?: number
-  /** Chevron half-span as a multiple of the rendered stroke width. Default 2.2. */
+  /** Half-span of the 'outlined-wide' and 'filled-wide' chevrons as a multiple of the rendered stroke width. Default 2.2. */
   chevronSize?: number
-  /** Half-span of the 'filled-wide' chevron as a multiple of the rendered stroke width. Default 1.3. */
-  triangleSize?: number
   /** Stroke color for highlighted directions. Default: token('colors.vividHighlight'). */
   highlightColor?: string
 }
@@ -114,7 +109,6 @@ const GestureDiagram = ({
   cornerRadius = 0,
   chevronApexAngle = 80,
   chevronSize = 2.2,
-  triangleSize = 1.3,
   highlightColor,
   preserveAspectRatio,
 }: GestureDiagramProps) => {
@@ -140,11 +134,9 @@ const GestureDiagram = ({
         ? null
         : getGestureGeometry(path, {
             chevron:
-              gradient && arrowhead === 'outlined-wide'
-                ? { apexAngle: chevronApexAngle, halfSpan: strokeWidth * 1.5 * chevronSize }
-                : filledChevron
-                  ? { apexAngle: FILLED_CHEVRON_APEX_ANGLE, halfSpan: strokeWidth * 1.5 * triangleSize, filled: true }
-                  : undefined,
+              (gradient && arrowhead === 'outlined-wide') || filledChevron
+                ? { apexAngle: chevronApexAngle, halfSpan: strokeWidth * 1.5 * chevronSize, filled: filledChevron }
+                : undefined,
             cornerRadius: gradient ? cornerRadius : 0,
             reversalOffset: reversalOffset!,
             rounded,
@@ -162,7 +154,6 @@ const GestureDiagram = ({
       gradient,
       strokeWidth,
       filledChevron,
-      triangleSize,
     ],
   )
 
@@ -219,8 +210,8 @@ const GestureDiagram = ({
           arrowhead: resolvedArrowhead,
           strokeWidth,
           size,
-          chevronSize: resolvedArrowhead === 'filled-wide' ? triangleSize : chevronSize,
-          chevronApexAngle: resolvedArrowhead === 'filled-wide' ? FILLED_CHEVRON_APEX_ANGLE : chevronApexAngle,
+          chevronSize,
+          chevronApexAngle,
         })
       }
     >

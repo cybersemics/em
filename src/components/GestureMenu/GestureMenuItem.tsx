@@ -91,6 +91,8 @@ const GestureMenuItem: FC<{
           useGradient={false}
           color={token('colors.dim')}
           highlightColor={token('colors.fg')}
+          chevronSize={2.5}
+          chevronApexAngle={60}
           strokeWidth={3}
           maxHeight={18}
           maxWidth={18}
