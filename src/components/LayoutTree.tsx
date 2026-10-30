@@ -199,6 +199,10 @@ const LayoutTree = () => {
     },
   )
 
+  // The top and bottom of the visible (autofocus show/dim) thoughts, used to clamp scrolling.
+  // treeThoughtsPositioned also contains hidden thoughts, so its first and last nodes cannot be used directly.
+  // The top is always the first visible thought's y, since y never decreases from one thought to the next.
+  // The bottom is not always the last visible thought's bottom: a table col1 thought does not advance y, so if it is taller than its col2, it extends below the thoughts that follow it. Take the max bottom across all visible thoughts instead.
   const visibleThoughtExtrema = useMemo(
     () =>
       treeThoughtsPositioned.reduce<{ top: number; bottom: number } | null>((accum, thought) => {
