@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { isSafari, isTouch } from '../../browser'
 import getCaretOffset from '../../device/getCaretOffset'
-import * as selection from '../../device/selection'
+import caretStore, { ObservedSelection, placeCaret } from '../../stores/caretStore'
 import multitouchStore from '../../stores/multitouchStore'
 
 /**
@@ -30,7 +30,8 @@ const useRevertCorrection = ({
       const touch = e.changedTouches[0]
       // iOS moves the caret for a tap only after its touchend, so this is still the offset from before the tap. A drag
       // or long press has already moved the caret by now, and nothing moves it back.
-      const before = selection.isCollapsed() ? selection.offsetFromNode(editable) : null
+      const observed = caretStore.getState().selection
+      const before = observed.focused === editable && observed.collapsed ? observed.offset : null
       watch =
         touch && before !== null && e.touches.length === 0 && !multitouchStore.getState()
           ? { clientX: touch.clientX, clientY: touch.clientY, before, moved: false }
@@ -41,10 +42,8 @@ const useRevertCorrection = ({
     const endWatch = () => (watch = null)
 
     /** Notes a move away from the offset before the tap, and corrects a return to it after one. */
-    const onSelectionChange = () => {
-      if (!watch || document.activeElement !== editable || !selection.isCollapsed()) return
-      const offset = selection.offsetFromNode(editable)
-      if (offset === null) return
+    const onSelectionChange = ({ focused, offset, collapsed }: ObservedSelection) => {
+      if (!watch || focused !== editable || !collapsed || offset === null) return
       if (offset !== watch.before) {
         watch = { ...watch, moved: true }
         return
@@ -57,9 +56,10 @@ const useRevertCorrection = ({
       // a tap on the caret
       if (tapped === null || tapped === before) return
 
-      // iOS does not move the caret again after the revert, so it can be set synchronously. The cursor offset in Redux
-      // is left alone, as it is for a tap that iOS places itself: nothing writes it during a tap without mouse events.
-      selection.set(editable, { offset: tapped })
+      // iOS does not move the caret again after the revert, so it can be placed synchronously. The cursor offset in
+      // Redux is left alone, as it is for a tap that iOS places itself: nothing writes it during a tap without mouse
+      // events.
+      placeCaret(editable, { offset: tapped, source: 'revert' })
     }
 
     editable.addEventListener('touchend', onTouchEnd)
@@ -68,7 +68,7 @@ const useRevertCorrection = ({
     document.addEventListener('mousedown', endWatch, { capture: true })
     document.addEventListener('keydown', endWatch, { capture: true })
     document.addEventListener('beforeinput', endWatch, { capture: true })
-    document.addEventListener('selectionchange', onSelectionChange)
+    const unsubscribe = caretStore.subscribeSelector(state => state.selection, onSelectionChange)
 
     return () => {
       editable.removeEventListener('touchend', onTouchEnd)
@@ -76,7 +76,7 @@ const useRevertCorrection = ({
       document.removeEventListener('mousedown', endWatch, { capture: true })
       document.removeEventListener('keydown', endWatch, { capture: true })
       document.removeEventListener('beforeinput', endWatch, { capture: true })
-      document.removeEventListener('selectionchange', onSelectionChange)
+      unsubscribe()
     }
   }, [editableRef, enabled])
 }

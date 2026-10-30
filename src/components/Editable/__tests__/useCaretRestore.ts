@@ -5,6 +5,7 @@ import { importTextActionCreator as importText } from '../../../actions/importTe
 import { keyboardOpenActionCreator as keyboardOpen } from '../../../actions/keyboardOpen'
 import * as selection from '../../../device/selection'
 import store from '../../../stores/app'
+import { observeSelection } from '../../../stores/caretStore'
 import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
 import head from '../../../util/head'
@@ -23,6 +24,10 @@ vi.mock('../../../browser', async importOriginal => {
 })
 
 beforeEach(initStore)
+
+// initEvents feeds the caret store from its selectionchange handler in the app.
+beforeEach(() => document.addEventListener('selectionchange', observeSelection))
+afterEach(() => document.removeEventListener('selectionchange', observeSelection))
 
 afterEach(() => {
   document.body.innerHTML = ''
