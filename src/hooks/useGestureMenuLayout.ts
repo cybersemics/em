@@ -101,6 +101,26 @@ export const ESTIMATED_SELECTED_ITEM_EXTRA_HEIGHT_REM =
   SELECTED_ITEM_DESCRIPTION_MAX_LINES * SELECTED_ITEM_DESCRIPTION_LINE_HEIGHT_REM +
   SELECTED_ITEM_PADDING_BOTTOM_REM
 
+/**************************************************************
+ * Gesture Menu fog
+ **************************************************************/
+
+/**
+ * The fog depths a row can be rendered at, shallowest first. Indexing this tuple is what turns a raw
+ * row offset into a GestureMenuFogDepth without a type assertion, since TypeScript cannot narrow a
+ * number to a range on its own.
+ */
+export type GestureMenuFogDepth = 0 | 1 | 2 | 3 | 4
+
+const FOG_DEPTHS = [0, 1, 2, 3, 4] as const satisfies readonly GestureMenuFogDepth[]
+
+/** Number of trailing single-column rows that fade into the fog when the list overflows. */
+export const GESTURE_MENU_FOG_ROW_COUNT = FOG_DEPTHS.length - 1
+
+/** The fog depth of a row, given how many rows separate it from the last visible one. Rows further than GESTURE_MENU_FOG_ROW_COUNT from the end are not fogged. */
+export const fogDepthAt = (distanceFromEnd: number): GestureMenuFogDepth =>
+  FOG_DEPTHS[Math.max(0, GESTURE_MENU_FOG_ROW_COUNT - distanceFromEnd)]
+
 /**
  * Calculates how many columns of at least `minColumnWidthPx` can fit within the
  * viewport after accounting for horizontal padding and gaps between columns.
