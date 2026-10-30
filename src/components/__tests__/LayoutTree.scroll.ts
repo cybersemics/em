@@ -23,7 +23,16 @@ vi.mock('../../browser', async importOriginal => {
 vi.mock('../../hooks/usePositionedThoughts', () => ({ default: vi.fn() }))
 vi.mock('../TreeNode', () => ({ default: () => null }))
 
-beforeEach(initStore)
+beforeEach(async () => {
+  await initStore()
+  // JSDOM has no layout. Represent the tree's viewport position as scrolling and its transforms change.
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+    const style = document.documentElement.style
+    const elastic = parseFloat(style.getPropertyValue('--layout-tree-elastic-offset')) || 0
+    const remainder = parseFloat(style.getPropertyValue('--layout-tree-scroll-remainder')) || 0
+    return new DOMRect(0, this.offsetTop - window.scrollY + elastic + remainder, 0, 0)
+  })
+})
 afterEach(async () => {
   // Drain the cancelled frame so Motion can schedule again after Vitest resets the clock for the next test.
   await act(vi.runAllTimersAsync)

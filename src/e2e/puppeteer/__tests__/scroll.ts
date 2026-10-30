@@ -2,6 +2,7 @@ import { KnownDevices } from 'puppeteer'
 import cursorBackCommand from '../../../commands/cursorBack'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import closeKeyboard from '../helpers/closeKeyboard'
 import deviceEmulation from '../helpers/deviceEmulation'
 import gesture, { startGesture } from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
@@ -145,6 +146,92 @@ describe('scrollCursorIntoView', () => {
 })
 
 describe('scroll clamp', () => {
+  // https://github.com/cybersemics/em/pull/5400#issuecomment-6512974749
+  it.skip('clamps to displayed content with safe-area insets', async () => {
+    await page.setViewport({ width: 393, height: 852, isMobile: true, hasTouch: true, deviceScaleFactor: 3 })
+    await deviceEmulation.setSafeAreaInsets({ top: 59, bottom: 34, left: 0, right: 0 })
+    await paste(`
+      - preceding 1
+      - preceding 2
+      - preceding 3
+      - preceding 4
+      - preceding 5
+      - preceding 6
+      - preceding 7
+      - preceding 8
+      - preceding 9
+      - preceding 10
+      - A
+      - B
+      - C
+      - D
+      - E
+      - F
+      - G
+      - H
+      - I
+      - J
+      - K
+      - L
+      - M
+      - N
+      - O
+      - P
+      - Q
+      - R
+      - S
+      - T
+        - U
+          - V
+            - W
+              - X
+                - Y
+                  - Z
+    `)
+
+    await clickThought('T')
+    await waitForCursor('T')
+    await closeKeyboard()
+    await waitForBrowserSettled()
+    await scrollTo(0)
+    await waitForBrowserSettled()
+
+    // Earlier displayed siblings stay reachable even when the selected thought leaves the viewport.
+    const toolbarBottom = await page.$eval('#toolbar', element => element.getBoundingClientRect().bottom)
+    expect(await getThoughtTop('preceding 1')).toBeGreaterThanOrEqual(toolbarBottom)
+    expect(await getThoughtTop('T')).toBeGreaterThan(await page.evaluate(() => window.innerHeight))
+
+    await clickThought('T')
+    await press('ArrowDown')
+    await waitForCursor('U')
+    await waitForBrowserSettled()
+    await press('ArrowDown')
+    await waitForCursor('V')
+    await waitForBrowserSettled()
+    await press('ArrowDown')
+    await waitForCursor('W')
+    await waitForBrowserSettled()
+    await press('ArrowDown')
+    await waitForCursor('X')
+    await waitForBrowserSettled()
+    await press('ArrowDown')
+    await waitForCursor('Y')
+    await waitForBrowserSettled()
+    await press('ArrowDown')
+    await waitForCursor('Z')
+    await closeKeyboard()
+    await waitForBrowserSettled()
+    await scrollTo(0)
+    await waitForBrowserSettled()
+
+    const leafBottom = await page.$$eval(
+      '[data-editable]',
+      elements => elements.find(element => element.textContent === 'Z')!.getBoundingClientRect().bottom,
+    )
+    const navTop = await page.$eval('[aria-label="nav"]', element => element.getBoundingClientRect().top)
+    expect(leafBottom).toBeLessThanOrEqual(navTop)
+  })
+
   it('limits empty space above the visible thoughts', async () => {
     await paste(OVERSCROLL_DOCUMENT)
 
