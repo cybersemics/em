@@ -32,7 +32,7 @@ const viewportStore = reactMinistore<ViewportState>({
     window.innerHeight > window.innerWidth
       ? keyboardHeightCacheStore.getState().portrait
       : keyboardHeightCacheStore.getState().landscape,
-  /** The y position of the layout tree element relative to the document. Includes autocrop, i.e. this value changes when space above is cropped away as you navigate deeper. This ensures that scrollCursorIntoView can properly calculate the position of the cursor relative to the viewport. */
+  /** The y position of the layout tree element relative to the document. Used to convert LayoutTree-local thought y coordinates into document coordinates for cursor scrolling and visible-thought scroll clamping. */
   layoutTreeTop: 0,
 })
 
