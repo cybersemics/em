@@ -16,6 +16,8 @@ The repo's `commit-msg` hook adds this automatically for Claude Code, Codex, Ope
 
 **5. Leave commit hashes bare on GitHub.** In issues, comments, and pull request descriptions, write a commit hash as plain text — no backticks and no code block. GitHub autolinks a bare hash to the commit; wrapping it in code formatting suppresses the link.
 
+**6. Use `write-pr` for a pull request's title and description.** A description tells the reviewer what the diff, the linked issue, and CI do not: the cause, the changes as behaviour, and the decisions they would otherwise ask about. The skill has the shape and what to leave out, and applies when you revise a description as much as when you open one.
+
 ## Accessing documentation
 
 - `docs/` contains comprehensive documentation on the codebase. Start from [`docs/readme.md`](docs/readme.md), which indexes every subsystem doc.
