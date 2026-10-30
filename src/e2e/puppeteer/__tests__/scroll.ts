@@ -185,8 +185,10 @@ describe('scroll clamp', () => {
     await scrollTo(100000)
     await waitForBrowserSettled()
 
-    await hideFooterMetadata()
-    expect(await screenshot()).toMatchImageSnapshot()
+    const { maxScrollY } = await getVisibleThoughtBounds()
+    expect(Math.abs((await page.evaluate(() => window.scrollY)) - maxScrollY)).toBeLessThan(1)
+    const footerBottom = await page.$eval('[aria-label="footer"]', element => element.getBoundingClientRect().bottom)
+    expect(footerBottom).toBeLessThanOrEqual((await page.evaluate(() => window.innerHeight)) + 1)
   })
 })
 
