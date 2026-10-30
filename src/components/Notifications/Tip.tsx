@@ -5,12 +5,11 @@ import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import { isTouch } from '../../browser'
 import fastClick from '../../util/fastClick'
-import preloadImage from '../../util/preloadImage'
 import CloseIcon from '../icons/CloseIcon'
 import NotificationSurface from './NotificationSurface'
 
 /** Sets the image behind the tip's rainbow glow. */
-const glowClassName = css({ backgroundImage: preloadImage('/img/tip/tip-glow-alpha.webp') })
+const glowClassName = css({ backgroundImage: 'url(/img/tip/tip-glow-alpha.webp)' })
 
 /** A tip notification with its own visibility rules, message, and Clear control. */
 const Tip: FC<PropsWithChildren<{ tipId: TipId }>> = ({ tipId, children }) => {

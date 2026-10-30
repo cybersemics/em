@@ -8,11 +8,7 @@ import { isTouch } from '../../browser'
 import { executeCommandWithMulticursor } from '../../commands'
 import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
-import preloadImage from '../../util/preloadImage'
 import FadeTransition from '../FadeTransition'
-
-/** The glow behind an active command. */
-const activeGlowImage = preloadImage('/img/command-center/active-glow.png')
 
 interface PanelCommandProps {
   /** The command to execute when the button is tapped. */
@@ -46,7 +42,7 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive }) => 
           gridArea: 'command',
           margin: -40,
           pointerEvents: 'none',
-          backgroundImage: activeGlowImage,
+          backgroundImage: 'url(/img/command-center/active-glow.png)',
           backgroundSize: '100% 100%',
           backgroundRepeat: 'no-repeat',
           mixBlendMode: 'plus-lighter',

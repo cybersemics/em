@@ -17,7 +17,7 @@ interface NotificationSurfaceProps {
   anchor: Anchor | { base: Anchor; lg?: Anchor }
   /** The decorative image treatment. */
   glow: Glow
-  /** Sets the glow's image: a className from css({ backgroundImage: preloadImage(...) }) at the call site, so the notification that shows the image also preloads it. */
+  /** Sets the glow's image: a className from css({ backgroundImage: 'url(...)' }) at the call site, so the image is in the CSS, where it is preloaded with the app's other background images. */
   glowClassName: string
   /** Whether the consumer wants the surface visible. Hidden surfaces still mount for the fade. */
   isVisible: boolean

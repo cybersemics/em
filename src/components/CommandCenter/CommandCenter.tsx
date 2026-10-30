@@ -22,12 +22,8 @@ import isTutorial from '../../selectors/isTutorial'
 import backgroundGlowStore from '../../stores/backgroundGlowStore'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
-import preloadImage from '../../util/preloadImage'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
-
-/** The glow overlay behind the open Command Center. */
-const overlayImage = preloadImage('/img/command-center/overlay.webp')
 
 /** Close to MUI easeOut, but with a 20% head start to catch up with the finger. Otherwise it feels sluggish. The animation can't start until touchend, so we can't afford to smoothly animate from 0. */
 const easeOpen = [0.1, 0.2, 0.2, 1] as const
@@ -231,7 +227,7 @@ const CommandCenter = () => {
             className={css({
               position: 'fixed',
               pointerEvents: 'none',
-              backgroundImage: overlayImage,
+              backgroundImage: 'url(/img/command-center/overlay.webp)',
               backgroundSize: 'cover',
               backgroundPosition: 'center bottom',
               height: '100vh',

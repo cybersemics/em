@@ -21,14 +21,10 @@ import gestureStore, {
   startGestureMenuExit,
 } from '../../stores/gestureStore'
 import storageModel from '../../stores/storageModel'
-import preloadImage from '../../util/preloadImage'
 import FadeTransition from '../FadeTransition'
 import PopupBase from '../PopupBase'
 import GestureContentBlur from './GestureContentBlur'
 import GestureMenuItem from './GestureMenuItem'
-
-/** The glow behind the gesture menu. */
-const glowImage = preloadImage('/img/gesture-menu/glow.avif')
 
 /**********************************************************************
  * Components
@@ -218,7 +214,7 @@ function Glow() {
       <div
         data-testid='glow-background'
         className={css({
-          backgroundImage: glowImage,
+          backgroundImage: 'url(/img/gesture-menu/glow.avif)',
           backgroundRepeat: 'no-repeat',
           mixBlendMode: 'screen',
           position: 'absolute',

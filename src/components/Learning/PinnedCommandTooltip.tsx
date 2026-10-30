@@ -8,7 +8,6 @@ import { isTouch } from '../../browser'
 import { formatKeyboardShortcut, gestureString } from '../../commands'
 import gestureStore from '../../stores/gestureStore'
 import fastClick from '../../util/fastClick'
-import preloadImage from '../../util/preloadImage'
 import GestureDiagram from '../GestureDiagram'
 import NotificationSurface from '../Notifications/NotificationSurface'
 import CircleButton from '../dialog/CircleButton'
@@ -38,9 +37,7 @@ interface PinnedCommandTooltipProps {
 }
 
 /** Sets the image behind the tooltip's surface glow. */
-const surfaceGlowClassName = css({ backgroundImage: preloadImage('/img/pinned-command/pinned-command-glow.avif') })
-/** The glow behind the gesture diagram, separate from the surface glow because the diagram can be absent. */
-const gestureGlowImage = preloadImage('/img/pinned-command/pinned-command-gesture-glow.avif')
+const surfaceGlowClassName = css({ backgroundImage: 'url(/img/pinned-command/pinned-command-glow.avif)' })
 
 /**
  * Dismisses the tooltip when the user taps outside it, while it is open.
@@ -123,7 +120,7 @@ const PinnedCommandGestureDiagram = ({ gesture }: { gesture: string }) => (
         width: '290%',
         aspectRatio: '1765 / 1459',
         transform: 'translate(-50%, -50%)',
-        backgroundImage: gestureGlowImage,
+        backgroundImage: 'url(/img/pinned-command/pinned-command-gesture-glow.avif)',
         backgroundSize: '100% 100%',
         filter: 'blur(0px)',
         opacity: '1',

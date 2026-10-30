@@ -14,6 +14,7 @@ import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
 import { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
+import preloadBackgroundImages from './device/preloadBackgroundImages'
 import scrollTo from './device/scrollTo'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -79,6 +80,10 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
   }
 
   const eventHandlers = initEvents(store)
+
+  // Preload all background images used in the app, so they don't visibly "pop in" during use.
+  // Preload waits until the first sync pull finishes to avoid interfering with any initial data fetch.
+  preloadBackgroundImages()
 
   const { clientId, storage: storageInUse } = await thoughtspaceRuntime.init({
     storage,

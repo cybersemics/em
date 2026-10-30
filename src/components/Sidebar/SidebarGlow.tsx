@@ -2,7 +2,6 @@ import { MotionValue, motion } from 'framer-motion'
 import { css, cx } from '../../../styled-system/css'
 import { isAndroid, isSafari } from '../../browser'
 import useBreakpoint from '../../hooks/useBreakpoint'
-import preloadImage from '../../util/preloadImage'
 import safeY from '../../util/safeY'
 import { EASE_OUT, SLOW_DURATION, cssEaseOut } from './constants'
 import { SECTIONS, SidebarSectionId } from './sidebarSections'
@@ -15,16 +14,16 @@ import { SECTIONS, SidebarSectionId } from './sidebarSections'
 
 /** Sets each section's primary glow image. */
 const overlay1ImageClassName = {
-  favorites: css({ backgroundImage: preloadImage('/img/sidebar/overlay-layer-1-favorites.avif') }),
-  recentlyEdited: css({ backgroundImage: preloadImage('/img/sidebar/overlay-layer-1-recentlyEdited.avif') }),
-  recentlyDeleted: css({ backgroundImage: preloadImage('/img/sidebar/overlay-layer-1-recentlyDeleted.avif') }),
+  favorites: css({ backgroundImage: 'url(/img/sidebar/overlay-layer-1-favorites.avif)' }),
+  recentlyEdited: css({ backgroundImage: 'url(/img/sidebar/overlay-layer-1-recentlyEdited.avif)' }),
+  recentlyDeleted: css({ backgroundImage: 'url(/img/sidebar/overlay-layer-1-recentlyDeleted.avif)' }),
 } satisfies Record<SidebarSectionId, string>
 
 /** Sets each section's secondary glow image. */
 const overlay2ImageClassName = {
-  favorites: css({ backgroundImage: preloadImage('/img/sidebar/overlay-layer-2-favorites.avif') }),
-  recentlyEdited: css({ backgroundImage: preloadImage('/img/sidebar/overlay-layer-2-recentlyEdited.avif') }),
-  recentlyDeleted: css({ backgroundImage: preloadImage('/img/sidebar/overlay-layer-2-recentlyDeleted.avif') }),
+  favorites: css({ backgroundImage: 'url(/img/sidebar/overlay-layer-2-favorites.avif)' }),
+  recentlyEdited: css({ backgroundImage: 'url(/img/sidebar/overlay-layer-2-recentlyEdited.avif)' }),
+  recentlyDeleted: css({ backgroundImage: 'url(/img/sidebar/overlay-layer-2-recentlyDeleted.avif)' }),
 } satisfies Record<SidebarSectionId, string>
 
 /**
