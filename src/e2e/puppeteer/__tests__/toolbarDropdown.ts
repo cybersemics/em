@@ -105,3 +105,27 @@ it('tapping another toolbar button closes the open toolbar dropdown', async () =
     throw new Error('Expected the Text Color dropdown to close after tapping Bold, but it is still open.')
   }
 })
+
+// https://github.com/cybersemics/em/issues/5977
+it('tapping a thought beside an open toolbar dropdown moves the cursor to it', async () => {
+  await paste(`
+    - aaa
+    - bbb
+  `)
+
+  await clickThought('bbb')
+
+  await clickToolbar('Sort Picker')
+  const sortOptions = await waitForSelector('[aria-label="sort options"]')
+
+  // The tap only has something to fall through if the thought is in the horizontal band of the open dropdown.
+  const thoughtBox = await (await waitForSelector('::-p-text(aaa)'))!.boundingBox()
+  const sortOptionsBox = await sortOptions!.boundingBox()
+  const thoughtCenterY = thoughtBox!.y + thoughtBox!.height / 2
+  expect(thoughtCenterY).toBeGreaterThan(sortOptionsBox!.y)
+  expect(thoughtCenterY).toBeLessThan(sortOptionsBox!.y + sortOptionsBox!.height)
+
+  await click('::-p-text(aaa)')
+
+  expect(await getEditingText()).toBe('aaa')
+})

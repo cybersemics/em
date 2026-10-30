@@ -42,7 +42,7 @@ const ColorSwatch: FC<{
     dispatch(formatSelectionColor({ color, backgroundColor }))
   }
 
-  /** Suppresses the Text Color toolbar button's press, which starts on tap down. The picker is rendered inside that button, so a tap that reaches it dips the button by 0.25em, and the tap up that would undo the dip is stopped below. On desktop it also preserves the browser selection, which the toolbar button's own tap down was preventing default to do. */
+  /** Suppresses the Text Color toolbar button's press, which starts on tap down. The picker is rendered by that button, so a tap that reaches it dips the button by 0.25em, and the tap up that would undo the dip is stopped below. On desktop it also preserves the browser selection, which the toolbar button's own tap down was preventing default to do. */
   const tapDown = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
     // Only on desktop, since preventing default on touchstart would stop the toolbar from being scrolled by a swipe that starts on a swatch.
@@ -72,7 +72,7 @@ const ColorSwatch: FC<{
       className={css({
         alignItems: 'center',
         cursor: 'pointer',
-        // fill the swatch's cell so that the tap targets tile the row, otherwise a tap on the space around the icon falls through to the toolbar button that contains the picker and closes it (#4264)
+        // fill the swatch's cell so that the tap targets tile the row, otherwise a tap on the space around the icon falls through to the toolbar button that renders the picker and closes it (#4264)
         display: 'flex',
         // the space around the icon, as padding rather than a margin on the icon so that it is part of the tap target
         padding: '3px 5px 5px',

@@ -27,8 +27,7 @@ it('Text Color applies to the selected text when invoked from the Command Univer
   // Universe closing and stay alive until a swatch is clicked.
   await command('Text Color', { inputType: 'commandPalette' })
 
-  const swatchSelector =
-    '[data-testid="toolbar-icon"][aria-label="Text Color"] [aria-label="text color swatches"] [aria-label="blue"]'
+  const swatchSelector = '[aria-label="Color Picker"] [aria-label="text color swatches"] [aria-label="blue"]'
   await waitForSelector(swatchSelector)
   await click(swatchSelector)
 
