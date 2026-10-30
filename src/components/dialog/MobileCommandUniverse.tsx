@@ -38,8 +38,8 @@ const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
   (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
 
-/** Displays the keyboard controls for moving through the list and between pages. */
-const CommandUniverseFooter = () => (
+/** Displays the keyboard controls for moving through the list and between pages. Back and Details only appear when there is a page in that direction to go to. */
+const CommandUniverseFooter = ({ canGoBack, canGoDeeper }: { canGoBack: boolean; canGoDeeper: boolean }) => (
   <div
     className={css({
       display: 'flex',
@@ -57,16 +57,24 @@ const CommandUniverseFooter = () => (
       <Kbd size={21}>↓</Kbd>
       <span className={css({ marginLeft: '6px', fontSize: '0.9em' })}>Navigate</span>
     </div>
-    <div className={css({ display: 'flex', alignItems: 'center', gap: '8px' })}>
-      <div className={css({ display: 'flex', gap: '2px' })}>
-        <Kbd size={21}>⇧</Kbd>
-        <Kbd size={21} isText>
-          Tab
-        </Kbd>
-      </div>
-      <Kbd size={21} isText>
-        Tab
-      </Kbd>
+    <div className={css({ display: 'flex', alignItems: 'center', gap: '16px' })}>
+      {canGoBack && (
+        <div className={css({ display: 'flex', alignItems: 'center', gap: '2px' })}>
+          <Kbd size={21}>⇧</Kbd>
+          <Kbd size={21} isText>
+            Tab
+          </Kbd>
+          <span className={css({ marginLeft: '6px', fontSize: '0.9em' })}>Back</span>
+        </div>
+      )}
+      {canGoDeeper && (
+        <div className={css({ display: 'flex', alignItems: 'center', gap: '2px' })}>
+          <Kbd size={21} isText>
+            Tab
+          </Kbd>
+          <span className={css({ marginLeft: '6px', fontSize: '0.9em' })}>Details</span>
+        </div>
+      )}
     </div>
   </div>
 )
@@ -269,7 +277,11 @@ const CommandUniverseSession = ({
       </div>
       {isDesktop && (
         <DialogFooter>
-          <CommandUniverseFooter />
+          <CommandUniverseFooter
+            canGoBack={nav.index > 0}
+            // On the list, Tab opens the focused row's details. On a detail page, it replays the forward history.
+            canGoDeeper={isCommandsPage ? focusedRow !== null : nav.index < nav.entries.length - 1}
+          />
         </DialogFooter>
       )}
     </Dialog>
