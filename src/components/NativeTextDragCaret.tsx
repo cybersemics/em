@@ -9,10 +9,45 @@ import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import thoughtToPath from '../selectors/thoughtToPath'
+import enclosingColorElement from '../util/enclosingColorElement'
+import isFormattingElement from '../util/isFormattingElement'
+import removeEmptyFormatting from '../util/removeEmptyFormatting'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
+import wrapInFormattingAncestors from '../util/wrapInFormattingAncestors'
 
 /** How far above the finger, in px, to draw the drop caret of a native text drag on Android, so that it is not hidden under the finger. See onAndroidDragOver. */
 const NATIVE_TEXT_DRAG_CARET_OFFSET = 40
+
+/**
+ * Moves an element that carries a color out of the color element that encloses it, splitting the color element around
+ * it, so that the enclosing color does not apply to it. This produces the markup that applyColor does when it colors
+ * text inside another color (#5505). The formatting elements between the two are re-applied inside the moved element,
+ * also as applyColor does, so that a <u> or <strike> draws its line in the moved element's color (#4018).
+ */
+const moveOutOfColor = (element: HTMLElement, colorElement: HTMLElement) => {
+  const range = document.createRange()
+  range.selectNode(element)
+  element.remove()
+
+  for (let ancestor = range.startContainer; ancestor !== colorElement; ancestor = ancestor.parentNode!) {
+    const wrapper = ancestor.cloneNode(false) as Element
+    wrapper.append(...Array.from(element.childNodes))
+    element.append(wrapper)
+  }
+
+  const tail = document.createRange()
+  tail.setStart(range.startContainer, range.startOffset)
+  tail.setEnd(colorElement, colorElement.childNodes.length)
+  const after = colorElement.cloneNode(false)
+  after.appendChild(tail.extractContents())
+  if (after.textContent) colorElement.after(after)
+
+  if (colorElement.textContent) {
+    colorElement.after(element)
+  } else {
+    colorElement.replaceWith(element)
+  }
+}
 
 /**
  * Handles a native drag of selected text on Android: dismisses the selection menu, replaces the drag image, and moves
@@ -202,8 +237,7 @@ const useNativeTextDrag = () => {
         const targetThought = getThoughtById(state, target.id)
         if (!sourceThought || !targetThought) return
 
-        // Edit detached copies of the values. The partially selected formatting elements are split by extractContents,
-        // so the dragged text keeps its formatting, as with a native drop.
+        // Edit detached copies of the values.
         const sourceCopy = document.createElement('div')
         sourceCopy.innerHTML = sourceThought.value
         const targetCopy = isSameThought ? sourceCopy : document.createElement('div')
@@ -213,14 +247,70 @@ const useNativeTextDrag = () => {
         const endRange = selection.collapsedRangeAtOffset(sourceCopy, source.end)
         if (!startRange || !endRange) return
         startRange.setEnd(endRange.startContainer, endRange.startOffset)
-        const dragged = startRange.extractContents()
 
-        // the text after the dragged text shifts back by its length once it is cut out
+        // The partially selected formatting elements are split by extractContents, but the formatting elements that
+        // wholly contain the dragged text are left behind, so they are re-applied to keep the dragged text's formatting.
+        const ancestor = startRange.commonAncestorContainer
+        const dragged = startRange.extractContents()
+        wrapInFormattingAncestors(dragged, ancestor instanceof Element ? ancestor : ancestor.parentElement)
+
+        // Cutting out a word between two spaces leaves both spaces behind, so remove one of them.
+        const text = sourceCopy.textContent ?? ''
+        const spaceRemoved = /\s/.test(text.charAt(source.start - 1)) && /\s/.test(text.charAt(source.start))
+        if (spaceRemoved) {
+          const spaceRange = selection.collapsedRangeAtOffset(sourceCopy, source.start)!
+          const spaceEnd = selection.collapsedRangeAtOffset(sourceCopy, source.start + 1)!
+          spaceRange.setEnd(spaceEnd.startContainer, spaceEnd.startOffset)
+          spaceRange.deleteContents()
+        }
+
+        // the text after the dragged text shifts back by its length, and the removed space, once it is cut out
         const offset =
-          isSameThought && target.offset > source.end ? target.offset - (source.end - source.start) : target.offset
+          isSameThought && target.offset > source.end
+            ? target.offset - (source.end - source.start) - (spaceRemoved ? 1 : 0)
+            : target.offset
         const insertRange = selection.collapsedRangeAtOffset(targetCopy, offset)
         if (!insertRange) return
+
+        // Unwrap the formatting tags that the drop point is already in from the dragged text, rather than nesting them in
+        // copies of themselves, which the toolbar does not recognize as applied and cannot toggle off. Colors are
+        // resolved after the dragged text is inserted, since the nearest color, not any enclosing one, is what applies.
+        const insertContainer = insertRange.startContainer
+        for (
+          let ancestor = insertContainer instanceof Element ? insertContainer : insertContainer.parentElement;
+          isFormattingElement(ancestor);
+          ancestor = ancestor.parentElement
+        ) {
+          if (ancestor.localName === 'font' || ancestor.localName === 'span') continue
+          dragged
+            .querySelectorAll(ancestor.localName)
+            .forEach(element => element.replaceWith(...Array.from(element.childNodes)))
+        }
+
+        const colorElements = Array.from(dragged.querySelectorAll<HTMLElement>('font, span')).filter(
+          element => enclosingColorElement(element, dragged) === element,
+        )
         insertRange.insertNode(dragged)
+
+        // Text has a single color, a text color or a background but never both (#3877, #3930), and a color redetermines
+        // both, as applyColor does. So each dragged color is moved out of every different color that encloses it, whether
+        // that is the drop point's or a copy of a source color that wrapped it, and unwrapped if it is in the same color.
+        colorElements.forEach(element => {
+          for (
+            let colorElement = enclosingColorElement(element.parentNode!, targetCopy);
+            colorElement;
+            colorElement = enclosingColorElement(element.parentNode!, targetCopy)
+          ) {
+            if (colorElement.cloneNode(false).isEqualNode(element.cloneNode(false))) {
+              element.replaceWith(...Array.from(element.childNodes))
+              return
+            }
+            moveOutOfColor(element, colorElement)
+          }
+        })
+
+        removeEmptyFormatting(sourceCopy)
+        removeEmptyFormatting(targetCopy)
 
         const sourceValue = stripEmptyFormattingTags(sourceCopy.innerHTML)
         const targetValue = stripEmptyFormattingTags(targetCopy.innerHTML)
