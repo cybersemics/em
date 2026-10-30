@@ -20,11 +20,9 @@ export const isAndroid =
 /** Returns true if the navigator platform contains 'MacIntel'. */
 export const isMac = typeof navigator !== 'undefined' && navigator.platform === 'MacIntel'
 
-/** Returns true on iOS, including iPadOS identifying itself as a Mac in Safari's desktop browsing mode. */
+/** Returns true on Apple devices, which rubber-band scrolling past the page edge: iOS, iPadOS, and macOS. */
 export const hasElasticOverscroll =
-  isIOS ||
-  (typeof navigator !== 'undefined' &&
-    (/iP(ad|hone|od)/.test(navigator.userAgent) || (isMac && navigator.maxTouchPoints > 1)))
+  isIOS || isMac || (typeof navigator !== 'undefined' && /iP(ad|hone|od)/.test(navigator.userAgent))
 
 /** Returns true if the navigator platform contains 'iPhone'. */
 export const isiPhone = typeof navigator !== 'undefined' && navigator.platform === 'iPhone'
