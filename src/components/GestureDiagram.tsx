@@ -54,9 +54,9 @@ interface GestureDiagramBaseProps {
   glow?: boolean
   /** Radius used to soften corners in line-based gradient gestures. */
   cornerRadius?: number
-  /** Interior angle of the 'outlined-wide' and 'filled-wide' chevrons. Default 80. */
+  /** Interior angle of the 'outlined-wide' chevron and the solid 'filled' chevron. Default 80. */
   chevronApexAngle?: number
-  /** Half-span of the 'outlined-wide' and 'filled-wide' chevrons as a multiple of the rendered stroke width. Default 2.2. */
+  /** Half-span of the 'outlined-wide' chevron and the solid 'filled' chevron as a multiple of the rendered stroke width. Default 2.2. */
   chevronSize?: number
   /** Stroke color for highlighted directions. Default: token('colors.vividHighlight'). */
   highlightColor?: string
@@ -124,9 +124,9 @@ const GestureDiagram = ({
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
 
-  // Only the solid renderer paints a filled chevron. Elsewhere 'filled-wide' falls back to the filled marker.
-  const filledChevron = arrowhead === 'filled-wide' && !gradient && !useGradient && !rounded
-  const resolvedArrowhead = arrowhead === 'filled-wide' && !filledChevron ? 'filled' : arrowhead
+  // Only the solid renderer paints 'filled' as a chevron. The gradient renderers draw the filled marker.
+  // Rounded gestures end in an arc, so getGestureGeometry returns no chevron and the marker comes back.
+  const filledChevron = arrowhead === 'filled' && !gradient && !useGradient
 
   const geometry = useMemo(
     () =>
@@ -207,7 +207,7 @@ const GestureDiagram = ({
         viewBox ??
         getGestureViewBox(geometry!, {
           arrowSize: arrowSize!,
-          arrowhead: resolvedArrowhead,
+          arrowhead,
           strokeWidth,
           size,
           chevronSize,
@@ -223,7 +223,7 @@ const GestureDiagram = ({
           highlightColor={highlightColor}
           highlighted={highlight != null && highlight >= path.length}
           instanceId={instanceId}
-          kind={geometry!.chevron ? 'none' : resolvedArrowhead}
+          kind={geometry!.chevron ? 'none' : arrowhead}
           rounded={rounded}
           strokeWidth={strokeWidth}
         />
@@ -231,7 +231,7 @@ const GestureDiagram = ({
 
       {gradient ? (
         <ContinuousGradientGestureRenderer
-          arrowhead={resolvedArrowhead}
+          arrowhead={arrowhead}
           dropShadow={dropShadow}
           geometry={geometry!}
           gradient={gradient}
@@ -242,7 +242,7 @@ const GestureDiagram = ({
         />
       ) : useGradient ? (
         <SegmentedGradientGestureRenderer
-          arrowhead={resolvedArrowhead}
+          arrowhead={arrowhead}
           color={color}
           dropShadow={dropShadow}
           geometry={geometry!}
@@ -252,7 +252,7 @@ const GestureDiagram = ({
         />
       ) : (
         <SolidGestureRenderer
-          arrowhead={resolvedArrowhead}
+          arrowhead={arrowhead}
           color={color}
           dropShadow={dropShadow}
           geometry={geometry!}

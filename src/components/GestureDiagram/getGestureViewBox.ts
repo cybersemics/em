@@ -28,8 +28,10 @@ const getGestureViewBox = (
   },
 ): `${number} ${number} ${number} ${number}` => {
   const strokeRadius = (strokeWidth * 1.5) / 2
+  // 'filled' is a chevron only when the geometry built one. Otherwise it is the conventional marker.
+  const filledChevron = arrowhead === 'filled' && geometry.chevron !== null
   // Retain the conventional-marker allowance. Arrowhead-free and filled-chevron diagrams need only stroke padding here.
-  const markerPadding = arrowhead === 'none' || arrowhead === 'filled-wide' ? strokeRadius : arrowSize + strokeWidth * 4
+  const markerPadding = arrowhead === 'none' || filledChevron ? strokeRadius : arrowSize + strokeWidth * 4
   const halfSpan = strokeWidth * 1.5 * chevronSize
   // getChevron places each leg half the depth behind the centerline endpoint.
   const halfDepth = halfSpan / (2 * Math.max(Math.tan((chevronApexAngle * Math.PI) / 360), 0.01))
@@ -39,7 +41,7 @@ const getGestureViewBox = (
   const chevronPadding =
     arrowhead === 'outlined-wide'
       ? Math.hypot(halfSpan, halfDepth) + strokeRadius
-      : arrowhead === 'filled-wide'
+      : filledChevron
         ? Math.max(halfSpan, halfDepth) / 2 + strokeRadius
         : 0
   const side = size + 2 * Math.max(markerPadding, chevronPadding)

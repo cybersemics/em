@@ -33,7 +33,7 @@ it('frames every filled chevron and shaft end without clipping', () => {
       const geometry = getGestureGeometry(path, { size: 50, reversalOffset: 15, chevron })
       const [x, y, width, height] = getGestureViewBox(geometry, {
         arrowSize: 1,
-        arrowhead: 'filled-wide',
+        arrowhead: 'filled',
         strokeWidth,
         size: 50,
         chevronSize,

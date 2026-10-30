@@ -222,8 +222,8 @@ describe('geometry-based framing', () => {
   })
 })
 
-describe('filled-wide arrowhead', () => {
-  const props = { path: 'rd' as const, size: 100, arrowhead: 'filled-wide' as const, useGradient: false as const }
+describe('solid filled arrowhead', () => {
+  const props = { path: 'rd' as const, size: 100, arrowhead: 'filled' as const, useGradient: false as const }
 
   it('paints a filled chevron in place of the marker', () => {
     const markup = render({ ...props, color: 'dim', highlightColor: 'bright' })
@@ -246,6 +246,17 @@ describe('filled-wide arrowhead', () => {
 
     expect(markup).not.toContain('<polygon')
     expect(markup).toContain('marker-end')
+  })
+
+  // A rounded gesture ends in an arc, which has no filled chevron, so the marker and its viewBox padding return.
+  it('falls back to the filled marker for rounded gestures', () => {
+    const rounded = render({ ...props, path: 'rul', rounded: true })
+    const straight = render({ ...props, path: 'rul' })
+    const viewBoxSide = (markup: string) => +markup.match(/viewBox="[^"]+ ([^" ]+)"/)![1]
+
+    expect(rounded).not.toContain('<polygon')
+    expect(rounded).toContain('marker-end')
+    expect(viewBoxSide(rounded)).toBeGreaterThan(viewBoxSide(straight))
   })
 })
 
