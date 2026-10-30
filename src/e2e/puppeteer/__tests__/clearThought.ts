@@ -425,7 +425,9 @@ describe('mobile', () => {
       { timeout: 6000 },
     )
 
-    await gesture(clearThoughtCommand)
+    // Start above the open Command Center and away from the selected thoughts. Its sheet owns touches inside its
+    // bounds for scrolling, so they do not reach the thoughtspace gesture handler.
+    await gesture(clearThoughtCommand, { yStart: 250 })
 
     // The Command Center sheet is dismissed so the keyboard has the screen. The sheet's container unmounts when it
     // closes, while the multiselection stays active.
@@ -475,7 +477,9 @@ describe('mobile', () => {
     // Indent moves both selected thoughts into aaa, which becomes a parent.
     await waitUntil(() => !!document.querySelector('[data-bullet="parent"]'), { timeout: 6000 })
 
-    await gesture(clearThoughtCommand)
+    // Start above the open Command Center. Its sheet owns touches inside its bounds for scrolling, so they do not
+    // reach the thoughtspace gesture handler.
+    await gesture(clearThoughtCommand, { yStart: 250 })
     await waitForEditable('')
 
     // Typing mirrors the new value across the selected thoughts even though they were moved while selected.

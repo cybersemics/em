@@ -5,7 +5,7 @@ const modalTextRecipe = defineSlotRecipe({
   className: 'modal-text',
   base: {
     subtitle: {
-      fontFamily: "'Helvetica Neue'",
+      fontFamily: "'Helvetica'",
       fontSize: '0.9em',
       marginBlock: '0.9em 0px',
       fontWeight: 700,
