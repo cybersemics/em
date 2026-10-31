@@ -68,6 +68,8 @@ Three companion fields ride alongside it:
 
 These are what `DropHover` and other UI components subscribe to.
 
+Each drop target element (the thought rows, `DropChild`, `DropEnd` and `DropUncle`) renders `data-drop-over`: react-dnd's `isOver({ shallow: true })` for that target, which is true even on a target that rejects the drop. It names the target a drop lands on, and it is set in the same commit as the target's `isHovering`, from which `DropChild`, `DropEnd` and `DropUncle` draw their drop hover. A thought row's drop hover also needs `state.hoveringPath`, which the same hover writes first, but only when the pointer has moved (`throttleByMousePosition`). react-dnd itself moves its hover only on a `dragover`, and a drag driven by Puppeteer dispatches `dragover` only when the pointer moves. So when a hover changes the layout under a stationary pointer, e.g. by expanding a thought, the drop target that ends up under the pointer is not hovered until the pointer moves again. The Puppeteer helper [`dragAndDropThought`](../src/e2e/puppeteer/helpers/dragAndDropThought.ts) therefore records `data-drop-over` on the drop target under the pointer as it is rendered, and waits for that record before it holds or drops.
+
 ### Drag sources
 
 There are four drag sources in the app, each implemented as a hook:
@@ -94,7 +96,7 @@ The drop targets in the UI are:
 - [`DropChild`](../src/components/DropChild.tsx) — a `SubthoughtsDrop` zone rendered inside a thought when it's empty or collapsed.
 - [`DropEnd`](../src/components/DropEnd.tsx) — a `SubthoughtsDrop` zone at the end of a subthought list.
 - [`DropCliff`](../src/components/DropCliff.tsx) — renders one `DropEnd` per cliff level when depth decreases by more than 1, so a thought can be dropped at any of the intermediate levels exposed by the cliff.
-- [`DropUncle`](../src/components/DropUncle.tsx) — a `ThoughtDrop` zone for inserting before the next hidden uncle, when the immediate parent is hidden by autofocus.
+- [`DropUncle`](../src/components/DropUncle.tsx) — a `SubthoughtsDrop` zone for inserting before the next hidden uncle, when the immediate parent is hidden by autofocus.
 - [`Favorites`](../src/components/Favorites.tsx) — its own zone, handled by `useDragDropFavorites`.
 - [`DropGutter`](../src/components/DropGutter.tsx) — the right-edge invisible quick-delete panel; see [Quick drops](#quick-drops).
 
