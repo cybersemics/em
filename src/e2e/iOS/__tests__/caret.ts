@@ -22,6 +22,7 @@ import setSelection from '../helpers/setSelection'
 import showEditMenu from '../helpers/showEditMenu'
 import tap from '../helpers/tap'
 import tapEditMenuItem from '../helpers/tapEditMenuItem'
+import waitForCaretOffset from '../helpers/waitForCaretOffset'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
@@ -444,5 +445,21 @@ describe('Caret', () => {
 
     // A non-cursor thought must not open the virtual keyboard.
     expect(keyboard).toBe(false)
+  })
+
+  // https://github.com/cybersemics/em/issues/4220
+  it('Tap moves the caret to a word a few characters away', async () => {
+    const value = 'Hello beautiful people in the world'
+    await newThought(value)
+    const editable = await waitForEditable(value)
+    await waitUntil(isKeyboardShown)
+
+    // place the caret before "the"
+    await tap(editable, { offset: 26, pointerType: 'touch' })
+    await waitForCaretOffset(26)
+
+    // tap the "i" of "in", four characters to the left of the caret
+    await tap(editable, { offset: 23, pointerType: 'touch' })
+    await waitForCaretOffset(23)
   })
 })
