@@ -142,9 +142,11 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         haptics.light()
 
         if (!isPressedRef.current) {
-          // Tapping any other toolbar button closes an open toolbar dropdown (#3625). A dropdown command toggles its own dropdown and closes the others itself (see toggleDropdown). The Command Center and the multiselect are kept, since the command may act on the selected thoughts.
+          // Tapping any other toolbar button closes an open toolbar dropdown (#3625). A dropdown command toggles its own dropdown and closes the others itself (see toggleDropdown). The Command Center and the multiselect are kept, since the command may act on the selected thoughts. Undo and Redo keep the Undo Slider open, since they move through the history it shows (#6155).
           if (!command.isDropdownOpen) {
-            dispatch(closeDropdowns({ keepCommandCenter: true }))
+            dispatch(
+              closeDropdowns({ keepCommandCenter: true, keepUndoSlider: commandId === 'undo' || commandId === 'redo' }),
+            )
           }
 
           executeCommandWithMulticursor(command, { store, type: 'toolbar', event: e })

@@ -205,6 +205,7 @@ const Note = React.memo(
                 noteOffset: noteOffset ?? undefined,
                 path: targetPath,
                 values,
+                undoLabel: 'Edit Note',
               }),
             )
             return
@@ -228,6 +229,7 @@ const Note = React.memo(
                 newValue: wrappedValue,
                 noteOffset: noteOffset ?? undefined,
                 force: wrappedValue !== value,
+                undoLabel: 'Edit Note',
               }),
             )
           } else {
@@ -235,6 +237,7 @@ const Note = React.memo(
               setDescendant({
                 path: targetPath,
                 values: [value],
+                undoLabel: 'Edit Note',
               }),
             )
           }
@@ -266,6 +269,7 @@ const Note = React.memo(
                   path: appendToPath(targetPath, thought.id) as SimplePath,
                   oldValue: thought.value,
                   newValue: value,
+                  undoLabel: 'Edit Note',
                 }),
               )
             }
@@ -273,7 +277,7 @@ const Note = React.memo(
             const children = getChildrenSorted(state, head(targetPath))
             const values = children.map(child => trimHtml(child.value))
             if (values.some((value, index) => value !== children[index].value)) {
-              dispatch(editNotePath({ path: targetPath, values }))
+              dispatch(editNotePath({ path: targetPath, values, undoLabel: 'Edit Note' }))
             }
           }
         })

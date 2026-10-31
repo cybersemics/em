@@ -30,6 +30,7 @@ import { undoActionCreator as undo } from './actions/undo'
 import { isCapacitor, isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
+import FavoritesIcon from './components/icons/FavoritesIcon'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, HOME_TOKEN, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
@@ -65,7 +66,7 @@ import saveDebugLog from './util/saveDebugLog'
 /** The commands registered in src/commands/index.ts. */
 export const registeredCommands: Command[] = Object.values(commandsObject)
 
-/** The commands that the app lists and matches against keyboard shortcuts and gestures: the registered commands, or the commands that a test preloaded into testFlags.stubCommands so that a snapshot of a command list does not change whenever a command is added, removed, or renamed. A stub given as an id keeps that registered command; any other stub becomes an inert command. */
+/** The commands that the app lists and matches against keyboard shortcuts and gestures: the registered commands, or the commands that a test preloaded into testFlags.stubCommands so that a snapshot of a command list does not change whenever a command is added, removed, or renamed. A stub given as an id keeps that registered command; any other stub becomes an inert command, drawn with the Favorites icon if it has an icon. */
 export const globalCommands: Command[] =
   testFlags.stubCommands?.map(stub =>
     typeof stub === 'string'
@@ -73,6 +74,7 @@ export const globalCommands: Command[] =
       : {
           ...stub,
           id: stub.label as CommandId,
+          svg: stub.icon ? FavoritesIcon : undefined,
           multicursor: false,
           exec: () => {},
         },

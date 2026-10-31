@@ -300,6 +300,55 @@ describe('=note', () => {
 
     expectPathToEqual(store.getState(), store.getState().cursor, ['b'])
   })
+
+  // https://github.com/cybersemics/em/issues/3679
+  test('names adding and editing a note in the undo and redo alerts', async () => {
+    await dispatch([importText({ text: '- a' }), setCursor(['a'])])
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'n', metaKey: true, altKey: true })
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    await act(async () => {
+      fireEvent.input(screen.getByLabelText('note-editable'), { target: { innerHTML: 'Redoo' } })
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.getByLabelText('note-editable').textContent).toBe('Redoo')
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true })
+    })
+    expect(screen.getByTestId('alert-content').textContent).toBe('Undo: Edit Note')
+    expect(screen.getByTestId('alert-content')).toBeVisible()
+    expect(screen.getByLabelText('note-editable').textContent).toBe('')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true })
+    })
+    expect(screen.getByTestId('alert-content').textContent).toBe('Undo: Add Note')
+    expect(screen.getByTestId('alert-content')).toBeVisible()
+    expect(screen.queryByLabelText('note-editable')).toBeNull()
+    expect(screen.getByText('a', { selector: '[contenteditable="true"]' })).toBeVisible()
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true, shiftKey: true })
+    })
+    expect(screen.getByTestId('alert-content').textContent).toBe('Redo: Add Note')
+    expect(screen.getByTestId('alert-content')).toBeVisible()
+    expect(screen.getByLabelText('note-editable').textContent).toBe('')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true, shiftKey: true })
+    })
+    expect(screen.getByTestId('alert-content').textContent).toBe('Redo: Edit Note')
+    expect(screen.getByTestId('alert-content')).toBeVisible()
+    expect(screen.getByLabelText('note-editable').textContent).toBe('Redoo')
+  })
 })
 
 describe('=note/=path', () => {

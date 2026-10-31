@@ -1,9 +1,11 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { outdentActionCreator as outdent } from '../../actions/outdent'
 import { toggleSidebarActionCreator as toggleSidebar } from '../../actions/toggleSidebar'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -32,4 +34,25 @@ it('does not list a thought whose =favorite has been formatted into a normal tho
   await act(vi.runOnlyPendingTimersAsync)
 
   expect(favorites()).toEqual(['bbb'])
+})
+
+// https://github.com/cybersemics/em/issues/6169
+it('does not list the root when =favorite is outdented to the root', async () => {
+  await dispatch([
+    importText({
+      text: `
+- a
+  - =favorite
+- b
+  - =favorite
+`,
+    }),
+    setCursor(['a', '=favorite']),
+    outdent(),
+    toggleSidebar({ value: true }),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(favorites()).toEqual(['b'])
 })
