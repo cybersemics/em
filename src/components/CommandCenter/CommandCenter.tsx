@@ -18,6 +18,8 @@ import note from '../../commands/note'
 import outdent from '../../commands/outdent'
 import swapParent from '../../commands/swapParent'
 import uncategorize from '../../commands/uncategorize'
+import useFitText from '../../hooks/useFitText'
+import useRemAsPx from '../../hooks/useRemAsPx'
 import isTutorial from '../../selectors/isTutorial'
 import backgroundGlowStore from '../../stores/backgroundGlowStore'
 import durations from '../../util/durations'
@@ -49,19 +51,27 @@ const useNonzeroNumMulticursors = () => {
 /** Shows a message with the number of thoughts selected, and a cancel button to deselect all. */
 const MultiselectMessage: FC = () => {
   const displayNumMulticursors = useNonzeroNumMulticursors()
+  const message = `${displayNumMulticursors} ${pluralize('thought', displayNumMulticursors, false)} selected`
+  const ref = useRef<HTMLDivElement>(null)
+  // The message follows the user's font size for as long as it fits beside the Done button, and holds the largest size that fits beyond that.
+  useFitText(ref, { text: message, maxFontSize: useRemAsPx(1.3) })
   return (
-    <div>
-      <span
-        className={css({
-          color: 'fg',
-          fontWeight: 700,
-          letterSpacing: '-0.011em',
-          opacity: 0.6,
-          fontSize: '1.3em',
-        })}
-      >
-        {displayNumMulticursors} {pluralize('thought', displayNumMulticursors, false)} selected
-      </span>
+    <div
+      ref={ref}
+      className={css({
+        flex: 1,
+        minWidth: 0,
+        whiteSpace: 'nowrap',
+        // A last resort in case the measurement and the rendered text disagree by a pixel.
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        color: 'fg',
+        fontWeight: 700,
+        letterSpacing: '-0.011em',
+        opacity: 0.6,
+      })}
+    >
+      {message}
     </div>
   )
 }
@@ -272,10 +282,11 @@ const CommandCenter = () => {
               })}
             >
               <div
+                // The first level of the Command Center has to fit the width of the screen without scrolling or wrapping, so its horizontal spacing is fixed rather than growing with the font size. The values are what the rem values were at the default font size. Vertical spacing grows with the text.
                 className={css({
                   display: 'flex',
                   flexDirection: 'column',
-                  margin: '0 1.333rem calc(1.333rem + env(safe-area-inset-bottom)) 1.333rem',
+                  margin: '0 21.328px calc(1.333rem + env(safe-area-inset-bottom)) 21.328px',
                   gap: '0.889rem',
                 })}
               >
@@ -284,6 +295,7 @@ const CommandCenter = () => {
                     display: 'flex',
                     alignItems: 'flex-end',
                     justifyContent: 'space-between',
+                    gap: '14.222px',
                   })}
                 >
                   <MultiselectMessage />
@@ -292,7 +304,9 @@ const CommandCenter = () => {
                     data-testid='command-center-done'
                     className={css({
                       all: 'unset',
-                      fontSize: '0.85em',
+                      flex: 'none',
+                      // Grows with the font size only as far as 17px, its size at font size 20, so that it leaves the room beside it to the message, which is what the user is reading.
+                      fontSize: 'min(0.85rem, 17px)',
                       fontWeight: 500,
                       letterSpacing: '-0.011em',
                       color: 'fg',
@@ -312,8 +326,10 @@ const CommandCenter = () => {
                     gridTemplateColumns: 'repeat(4, 1fr)',
                     gridTemplateRows: 'auto',
                     gridAutoFlow: 'row',
-                    gap: '0.622rem',
+                    gap: '9.952px',
                     gridRowGap: '0.889rem',
+                    // Lets the buttons cap their height at the width of one column (see panelCommandRecipe).
+                    containerType: 'inline-size',
                   })}
                 >
                   <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
