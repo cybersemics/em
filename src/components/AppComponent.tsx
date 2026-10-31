@@ -100,7 +100,14 @@ const shouldCancelGesture = (
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
-    !!state.showMobileCommandUniverse
+    // Over the Mobile Command Universe, only a trace over the open pinned command tooltip is a gesture: a dry run of
+    // the pinned command. A touch anywhere else there belongs to the Command Universe. Calls without coordinates come
+    // from the responder, which only sees touches on the pinned command while the Command Universe covers the rest.
+    (!!state.showMobileCommandUniverse &&
+      !(
+        state.showPinnedCommandTooltip &&
+        (x === undefined || y === undefined || !!document.elementFromPoint(x, y)?.closest('[data-above-dialog]'))
+      ))
   )
 }
 
@@ -240,6 +247,8 @@ const AppComponent: FC = () => {
                 <Content />
               </div>
             }
+            {/* Inside MultiGesture so that a trace over the pinned command's tooltip is recognized and drawn even where the tooltip sits over the Mobile Command Universe, which is outside it. Its own fixed z-index orders it against the NavBar. */}
+            {isDocumentEditable() && <PinnedCommand />}
           </>
         )}
       </MultiGestureIfTouch>
@@ -248,7 +257,6 @@ const AppComponent: FC = () => {
         <>
           {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
           <NavBar position='bottom' />
-          <PinnedCommand />
 
           <CommandCenter />
           <div style={{ fontSize }}>

@@ -1,7 +1,16 @@
-import { MotionValue, motion, useMotionValue, useMotionValueEvent, useTransform } from 'motion/react'
-import { PropsWithChildren, useId, useState } from 'react'
+import {
+  MotionValue,
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useTransform,
+} from 'motion/react'
+import { PropsWithChildren, useEffect, useId, useRef, useState } from 'react'
 import { css } from '../../../styled-system/css'
 import { PINNED_COMMAND_RING_SIZE } from '../../constants'
+import durations from '../../util/durations'
 import ringGeometry from './ringGeometry'
 import useRingFill from './useRingFill'
 import useRingFlourish from './useRingFlourish'
@@ -11,6 +20,7 @@ import useRingFlourish from './useRingFlourish'
  *
  * PinnedCommandRing
  * ├─ RingTrack: dim background circle with its gradient, blur, and shadow.
+ * ├─ RingBurst: a colorful ripple that leaves the ring to celebrate a dry run, without touching the fill.
  * ├─ RingProgress: the fill, colored and spun; useRingFill and useRingFlourish animate it.
  * │  └─ BlurredProgressArc: the gradient arc, split into overlapping blur bands.
  * │     └─ RingBlurBand: the mask and blur for one band of the arc.
@@ -51,6 +61,9 @@ const STOPS_COLORFUL: Stop[] = [
   [0.803, 'rgba(255, 215, 215, 1)'],
   [0.976, 'rgba(255, 237, 231, 1)'],
 ]
+
+/** The colorful palette with no tail or head, so the burst reads as a ring of color rather than a progress arc. */
+const BURST_BACKGROUND = `conic-gradient(from 0deg at ${CENTER_X}px ${CENTER_Y}px, rgba(255, 166, 166, 0.9), rgba(255, 237, 231, 1), rgba(255, 166, 166, 0.9))`
 
 /** Restricts a layer to the ring's annulus. Applied before the layer's blur, so the blur softens the ring edges. */
 const ANNULUS_MASK = `radial-gradient(circle at ${CENTER_X}px ${CENTER_Y}px, transparent ${FILL_RADIUS - STROKE_WIDTH / 2 - 0.3}px, black ${FILL_RADIUS - STROKE_WIDTH / 2}px, black ${FILL_RADIUS + STROKE_WIDTH / 2}px, transparent ${FILL_RADIUS + STROKE_WIDTH / 2 + 0.3}px)`
@@ -157,6 +170,48 @@ const BlurredProgressArc = ({ progress, stops }: { progress: number; stops: Stop
   )
 }
 
+/** Expands a colorful copy of the whole ring outward and fades it, celebrating a success that earns no progress. */
+const RingBurst = ({ burst }: { burst: number }) => {
+  const prefersReducedMotion = useReducedMotion()
+  const previousBurst = useRef(burst)
+  const [isPlaying, setIsPlaying] = useState(false)
+  // One timeline from 0 to 1. The ripple starts just outside the ring and grows away from it, so a full colorful
+  // circle never rests on the ring where it could read as a full fill; it rises quickly and fades as it grows.
+  // Reduced motion keeps the fade only.
+  const t = useMotionValue(0)
+  const scale = useTransform(t, value => (prefersReducedMotion ? 1.08 : 1.08 + 0.52 * value))
+  const opacity = useTransform(t, value => Math.min(1, value * 5) * (1 - value))
+
+  useEffect(() => {
+    if (burst === previousBurst.current) return
+    previousBurst.current = burst
+    setIsPlaying(true)
+    t.set(0)
+    const animation = animate(t, [0, 1], {
+      duration: durations.get('slow') / 1000,
+      ease: 'easeOut',
+      onComplete: () => setIsPlaying(false),
+    })
+    return () => animation.stop()
+  }, [burst, t])
+
+  return isPlaying ? (
+    <motion.div
+      className={css({ position: 'absolute', inset: 0, transformOrigin: '36.42px 36.16px' })}
+      style={{ scale, opacity }}
+    >
+      {/* One blurred annulus rather than the fill's banded arc, whose bands overlap where a full circle meets itself
+      and would brighten 12 o'clock into something like a head. */}
+      <div className={css({ position: 'absolute', inset: 0, filter: 'blur(4px)' })}>
+        <div
+          className={css({ position: 'absolute', inset: 0 })}
+          style={{ background: BURST_BACKGROUND, maskImage: ANNULUS_MASK, WebkitMaskImage: ANNULUS_MASK }}
+        />
+      </div>
+    </motion.div>
+  ) : null
+}
+
 /**
  * Draws the fill, and colors and spins it. The fill and the flourish are animated by their own hooks: useRingFill
  * tweens the fill to the supplied progress, and useRingFlourish plays the spin and color pulse. The two meet in two
@@ -222,12 +277,22 @@ const RingIcon = ({ children }: PropsWithChildren) => (
 )
 
 /** Composes the background track, animated progress, and centered command icon. */
-const PinnedCommandRing = ({ children, ...progressProps }: PropsWithChildren<RingProgressProps>) => (
+const PinnedCommandRing = ({
+  children,
+  burst = 0,
+  ...progressProps
+}: PropsWithChildren<
+  RingProgressProps & {
+    /** Increment to play the burst, which celebrates a success without changing progress. Only changes matter. */
+    burst?: number
+  }
+>) => (
   <div
     className={css({ position: 'relative', flex: 'none' })}
     style={{ width: PINNED_COMMAND_RING_SIZE, height: PINNED_COMMAND_RING_SIZE }}
   >
     <RingTrack />
+    <RingBurst burst={burst} />
     <RingProgress {...progressProps} />
     <RingIcon>{children}</RingIcon>
   </div>
