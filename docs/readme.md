@@ -16,6 +16,10 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 - [Help Genie Architecture](help-genie.md) — Diagrams of how the help genie's modules fit together: its place in the app, its module dependencies, and one frame of its animation.
 - [iOS Safari Viewport](ios-safari-viewport.md) — How mobile Safari places fixed elements while the keyboard is open, what it reports to the page, overscroll and stale-rendering bugs, and the approaches that failed.
 
+## Liminal UI
+
+- [Accessibility](liminal-ui/a11y.md) — How the UI follows the user's font size: which sizes grow with the text and which stay fixed, long text that cannot wrap, and icons.
+
 ## Agents
 
 - [Agent Infrastructure](agents/readme.md) — How coding agents work on this repo: what the Copilot cloud agent reads, the skills they run, the environment and MCP servers behind them, the TDD workflow, how Codex and Claude Code share the same suite, and commit attribution hooks.
