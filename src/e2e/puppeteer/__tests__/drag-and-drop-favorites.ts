@@ -4,7 +4,9 @@ import dragAndDropFavorite from '../helpers/dragAndDropFavorite'
 import openSidebar from '../helpers/openSidebar'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import refresh from '../helpers/refresh'
 import { page } from '../session'
+import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -28,13 +30,12 @@ const selectFavoritesText = async () => {
 }
 
 describe('favorites drag and drop', () => {
-  it('should reorder favorites by dragging and dropping', async () => {
+  usePersistentTreecrdtStorage()
+
+  it('should preserve dragged favorite order after refresh', async () => {
     await paste(`
       - a
       - b
-      - c
-      - d
-      - e
     `)
 
     // Add thoughts to favorites
@@ -44,22 +45,21 @@ describe('favorites drag and drop', () => {
     await clickThought('b')
     await click('[aria-label="Add to Favorites"]')
 
-    await clickThought('c')
-    await click('[aria-label="Add to Favorites"]')
-
-    await clickThought('d')
-    await click('[aria-label="Add to Favorites"]')
-
     // Open favorites in sidebar
     await openSidebar()
 
     // Verify initial order
-    expect(await selectFavoritesText()).toEqual(['a', 'b', 'c', 'd'])
+    expect(await selectFavoritesText()).toEqual(['a', 'b'])
 
-    await dragAndDropFavorite('d', 'b', { position: 'before' })
+    await dragAndDropFavorite('b', 'a', { position: 'before' })
 
-    // Verify new order - d should now be before b
-    expect(await selectFavoritesText()).toEqual(['a', 'd', 'b', 'c'])
+    // Verify new order - b should now be before a
+    expect(await selectFavoritesText()).toEqual(['b', 'a'])
+
+    await refresh()
+    await openSidebar()
+    await page.waitForFunction(() => document.querySelectorAll('[data-testid="drag-and-drop-favorite"]').length === 2)
+    expect(await selectFavoritesText()).toEqual(['b', 'a'])
   })
 
   it('should reorder favorites by dragging to the end or top of the list', async () => {
