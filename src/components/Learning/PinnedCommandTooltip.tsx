@@ -252,7 +252,7 @@ const PinnedCommandTooltipTitle = ({ label, onClick }: { label: string; onClick:
 const PinnedCommandTooltipSubtitle = ({ command }: { command: Command }) => {
   const gesture = gestureString(command)
   const keyboard = command.keyboardDisplay ?? command.keyboard
-  const inCommandUniverse = useSelector(state => !!state.showMobileCommandUniverse)
+  const inCommandUniverse = useSelector(state => !!state.showCommandUniverse)
   const shortcut = keyboard ? formatKeyboardShortcut(keyboard) : null
   const instruction =
     isTouch && gesture
@@ -338,7 +338,7 @@ const PinnedCommandTooltip = ({
   const dismiss = useCallback(() => surfaceRef.current?.dismiss(), [])
   useDismissOnOutsideTap(isOpen, insideRefs, dismiss)
 
-  const inCommandUniverse = useSelector(state => !!state.showMobileCommandUniverse)
+  const inCommandUniverse = useSelector(state => !!state.showCommandUniverse)
   // A gesture is in progress on the page beneath: the user is practicing. Dim everything but the diagram.
   const isTracing = gestureStore.useSelector(state => state.gesture !== '')
 

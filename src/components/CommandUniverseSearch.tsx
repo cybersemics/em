@@ -5,7 +5,7 @@ import useDismissKeyboardOnScroll from '../hooks/useDismissKeyboardOnScroll'
 import CommandsSearchIcon from './icons/CommandsSearchIcon'
 
 /**
- * Search input used by the Mobile Command Universe dialog. Sits flush against the
+ * Search input used by the Command Universe dialog. Sits flush against the
  * surrounding panel with no border or background, and the search glyph left-aligns
  * with the section headers and command titles down the panel.
  *

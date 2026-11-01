@@ -38,7 +38,7 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
   // Read separately rather than the whole navigation object, which also holds the search, so typing does not re-render the pages.
   const entries = useSelector(state => state.commandUniverseNavigation.entries)
   const index = useSelector(state => state.commandUniverseNavigation.index)
-  const isOpen = useSelector(state => !!state.showMobileCommandUniverse)
+  const isOpen = useSelector(state => !!state.showCommandUniverse)
   const activeEntryId = entries[index].entryId
   const [shownEntryId, setShownEntryId] = useState(activeEntryId)
   const [transition, setTransition] = useState<Transition | null>(null)

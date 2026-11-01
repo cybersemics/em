@@ -167,7 +167,7 @@ export const FONT_SCALE_INCREMENT = 1
 // to detect if field has multiline
 export const MIN_LINE_HEIGHT = 26
 
-// delay after gesture hint is activated before desktop command universe appears
+// delay after a gesture starts before the gesture menu appears
 export const COMMAND_PALETTE_TIMEOUT = 400
 
 // delay to show executed command after gesture is completed
@@ -559,7 +559,6 @@ export const COMMAND_DIFFICULTIES = [
           'moveCursorForward',
           'navigateBack',
           'navigateForward',
-          'openDesktopCommandUniverse',
           'home',
           'selectAll',
           'selectBetween',

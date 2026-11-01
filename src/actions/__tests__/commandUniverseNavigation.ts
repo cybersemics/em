@@ -10,7 +10,7 @@ import commandUniverseForward from '../commandUniverseForward'
 import commandUniverseNavigate, { commandUniverseNavigateActionCreator } from '../commandUniverseNavigate'
 import commandUniverseSearch from '../commandUniverseSearch'
 import commandUniverseSort from '../commandUniverseSort'
-import toggleMobileCommandUniverse, { toggleMobileCommandUniverseActionCreator } from '../toggleMobileCommandUniverse'
+import toggleCommandUniverse, { toggleCommandUniverseActionCreator } from '../toggleCommandUniverse'
 
 const command: Command = { id: 'newThought', label: 'New Thought', exec: () => {}, multicursor: false }
 const origin = { x: 0.25, y: 0.5 }
@@ -28,7 +28,7 @@ it('derives page ids, props, and navigation options from the registered componen
 })
 
 it('starts at the commands root with no history', () => {
-  const state = toggleMobileCommandUniverse(initialState(), { value: true })
+  const state = toggleCommandUniverse(initialState(), { value: true })
   expect(commandUniverseBack(state)).toBe(state)
   expect(commandUniverseForward(state)).toBe(state)
   expect(state.commandUniverseNavigation).toEqual({
@@ -40,7 +40,7 @@ it('starts at the commands root with no history', () => {
 })
 
 it('records each entry arrival and keeps it through Back and Forward', () => {
-  const state = toggleMobileCommandUniverse(initialState(), { value: true })
+  const state = toggleCommandUniverse(initialState(), { value: true })
   const visited = commandUniverseNavigate(state, {
     entryId: 'detail-a',
     page: { pageId: 'detail', props: { command } },
@@ -60,7 +60,7 @@ it('records each entry arrival and keeps it through Back and Forward', () => {
 })
 
 it('accepts an explicit zoom transition', () => {
-  const state = toggleMobileCommandUniverse(initialState(), { value: true })
+  const state = toggleCommandUniverse(initialState(), { value: true })
   const visited = commandUniverseNavigate(state, {
     entryId: 'zoom-detail',
     page: { pageId: 'detail', props: { command } },
@@ -72,7 +72,7 @@ it('accepts an explicit zoom transition', () => {
 })
 
 it('supports no transition for a direct detail visit while retaining its Back history', () => {
-  const state = toggleMobileCommandUniverse(initialState(), { value: true })
+  const state = toggleCommandUniverse(initialState(), { value: true })
   const visited = commandUniverseNavigate(state, {
     entryId: 'direct-detail',
     page: { pageId: 'detail', props: { command } },
@@ -87,7 +87,7 @@ it('supports no transition for a direct detail visit while retaining its Back hi
 })
 
 it('drops the abandoned forward branch while keeping the reachable history', () => {
-  const state = toggleMobileCommandUniverse(initialState(), { value: true })
+  const state = toggleCommandUniverse(initialState(), { value: true })
   const first = commandUniverseNavigate(state, {
     entryId: 'first',
     page: { pageId: 'detail', props: { command: { ...command, label: 'A' } } },
@@ -115,7 +115,7 @@ it('drops the abandoned forward branch while keeping the reachable history', () 
 
 it('routes page visits through the global Redux store with distinct entry ids', async () => {
   await initStore()
-  store.dispatch(toggleMobileCommandUniverseActionCreator({ value: true }))
+  store.dispatch(toggleCommandUniverseActionCreator({ value: true }))
   const rootId = store.getState().commandUniverseNavigation.entries[0].entryId
 
   store.dispatch(commandUniverseNavigateActionCreator('detail', { command }, { origin }))
@@ -139,14 +139,14 @@ it('ignores navigation while closed and resets history when reopened', () => {
   expect(commandUniverseBack(closed)).toBe(closed)
   expect(commandUniverseForward(closed)).toBe(closed)
 
-  const open = toggleMobileCommandUniverse(closed, { value: true, entryId: 'first-root' })
+  const open = toggleCommandUniverse(closed, { value: true, entryId: 'first-root' })
   const visited = commandUniverseNavigate(open, {
     entryId: 'visited',
     page: { pageId: 'detail', props: { command } },
     arrival: { zoom: 'in', origin: null },
   })
-  const closedAgain = toggleMobileCommandUniverse(visited, { value: false })
-  const reopened = toggleMobileCommandUniverse(closedAgain, { value: true, entryId: 'second-root' })
+  const closedAgain = toggleCommandUniverse(visited, { value: false })
+  const reopened = toggleCommandUniverse(closedAgain, { value: true, entryId: 'second-root' })
 
   expect(reopened.commandUniverseNavigation).toEqual({
     entries: [{ entryId: 'second-root', page: { pageId: 'commands', props: {} }, arrival: null }],
@@ -157,7 +157,7 @@ it('ignores navigation while closed and resets history when reopened', () => {
 })
 
 it('retains search and sorting through Navigate, Back, and Forward', () => {
-  const open = toggleMobileCommandUniverse(initialState(), { value: true })
+  const open = toggleCommandUniverse(initialState(), { value: true })
   const searched = commandUniverseSearch(commandUniverseSort(open, { value: 'alphabetical' }), { value: 'indent' })
   const detail = commandUniverseNavigate(searched, {
     entryId: 'search-detail',
@@ -172,16 +172,16 @@ it('retains search and sorting through Navigate, Back, and Forward', () => {
 })
 
 it('clears the search on a fresh open', () => {
-  const open = toggleMobileCommandUniverse(initialState(), { value: true })
-  const closed = toggleMobileCommandUniverse(commandUniverseSearch(open, { value: 'indent' }), { value: false })
-  const reopened = toggleMobileCommandUniverse(closed, { value: true })
+  const open = toggleCommandUniverse(initialState(), { value: true })
+  const closed = toggleCommandUniverse(commandUniverseSearch(open, { value: 'indent' }), { value: false })
+  const reopened = toggleCommandUniverse(closed, { value: true })
   expect(reopened.commandUniverseNavigation.search).toBe('')
 })
 
 it('keeps the chosen sort order across opens', () => {
-  const open = toggleMobileCommandUniverse(initialState(), { value: true })
-  const closed = toggleMobileCommandUniverse(commandUniverseSort(open, { value: 'alphabetical' }), { value: false })
-  const reopened = toggleMobileCommandUniverse(closed, { value: true })
+  const open = toggleCommandUniverse(initialState(), { value: true })
+  const closed = toggleCommandUniverse(commandUniverseSort(open, { value: 'alphabetical' }), { value: false })
+  const reopened = toggleCommandUniverse(closed, { value: true })
   expect(reopened.commandUniverseNavigation.sortOrder).toBe('alphabetical')
 })
 

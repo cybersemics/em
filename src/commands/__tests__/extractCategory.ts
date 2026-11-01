@@ -1,9 +1,9 @@
 import { screen } from '@testing-library/react'
 import { act } from 'react'
-import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../../actions/desktopCommandUniverse'
 import { extractCategoryActionCreator as extractCategory } from '../../actions/extractCategory'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { toggleCommandUniverseActionCreator as toggleCommandUniverse } from '../../actions/toggleCommandUniverse'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
@@ -333,11 +333,11 @@ describe('Extract category', () => {
     // Opening the Command Universe snapshots the selection; its search input then takes it. Executing a command
     // closes the Command Universe first, so the snapshot has to survive the close.
     act(() => {
-      store.dispatch(desktopCommandUniverse())
+      store.dispatch(toggleCommandUniverse({ value: true }))
     })
     moveSelectionToSearchInput()
     act(() => {
-      store.dispatch([desktopCommandUniverse(), extractCategory()])
+      store.dispatch([toggleCommandUniverse({ value: false }), extractCategory()])
     })
 
     // Let the Command Universe's fade-out complete so that it unmounts before the test ends. Otherwise its animated

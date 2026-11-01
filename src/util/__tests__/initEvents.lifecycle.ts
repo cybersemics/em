@@ -1,5 +1,5 @@
-import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../../actions/desktopCommandUniverse'
 import { longPressActionCreator as longPress } from '../../actions/longPress'
+import { toggleCommandUniverseActionCreator as toggleCommandUniverse } from '../../actions/toggleCommandUniverse'
 import { LongPressState } from '../../constants'
 import * as selection from '../../device/selection'
 import store from '../../stores/app'
@@ -50,6 +50,8 @@ vi.mock('../../device/selection', async importOriginal => {
 
 beforeEach(async () => {
   await initStore()
+  // Opening the Command Universe clears the selection, so a test that opens it must not leak that call into the next.
+  vi.mocked(selection.clear).mockClear()
 })
 
 afterEach(() => {
@@ -66,11 +68,11 @@ it('allows cursor events again when a new touch starts', () => {
 })
 
 // https://github.com/cybersemics/em/issues/1596
-it('keeps desktop command universe open when the app is hidden and restored', () => {
+it('keeps the Command Universe open when the app is hidden and restored', () => {
   initEvents(store)
 
-  store.dispatch(desktopCommandUniverse())
-  expect(store.getState().showDesktopCommandUniverse).toBe(true)
+  store.dispatch(toggleCommandUniverse({ value: true }))
+  expect(store.getState().showCommandUniverse).toBe(true)
   expect(stateChangeListenerRef.current).toBeTruthy()
 
   stateChangeListenerRef.current!({
@@ -82,7 +84,7 @@ it('keeps desktop command universe open when the app is hidden and restored', ()
     newState: 'active',
   })
 
-  expect(store.getState().showDesktopCommandUniverse).toBe(true)
+  expect(store.getState().showCommandUniverse).toBe(true)
 })
 
 // Clear Thought moves the caret through a hidden input (asyncFocus), which briefly leaves nothing focused and thus
