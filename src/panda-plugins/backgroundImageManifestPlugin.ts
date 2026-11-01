@@ -1,6 +1,8 @@
 import { definePlugin } from '@pandacss/dev'
 import fs from 'node:fs'
 import path from 'node:path'
+import postcss from 'postcss'
+import valueParser from 'postcss-value-parser'
 
 /**
  * This PandaCSS plugin reads the compiled CSS after generation (`cssgen:done`), and extracts an array of *all* of the background images
@@ -18,23 +20,29 @@ const backgroundImageManifestPlugin = definePlugin({
   name: 'background-image-manifest',
   hooks: {
     'cssgen:done': ({ artifact, content, cwd }) => {
-      /** Regular expression which matches each background or background-image declaration. */
-      const BACKGROUND_DECLARATION_REGEX = /background(?:-image)?:([^;}]*)/g
-
-      /** Regular expression which matches url() in a value, capturing the path.
+      /** This array contains the image paths in a CSS string's background and background-image declarations.
+       * The CSS is parsed rather than matched with a regular expression, so a url() in a comment or a string is ignored, and a
+       * quoted path may contain a parenthesis or semicolon. A data: URI is skipped, since there is nothing to fetch.
        * There's an ESLint rule which makes sure that background image URLs start with `/` (root-relative) or `http://` / `https://`.
-       * This ensures that the preloading logic can correctly resolve the URLs against the root of the site or an absolute URL. */
-      const URL_REGEX = /url\(\s*['"]?([^'")]+)['"]?\s*\)/g
-
-      /** This array contains the image paths in a CSS string's background declarations. It's sorted so that the list only changes when the images do. */
-      const backgroundImages = (css: string) =>
-        [
-          ...new Set(
-            [...css.matchAll(BACKGROUND_DECLARATION_REGEX)].flatMap(([, value]) =>
-              [...value.matchAll(URL_REGEX)].map(([, url]) => url),
-            ),
-          ),
-        ].sort()
+       * This ensures that the preloading logic can correctly resolve the URLs against the root of the site or an absolute URL.
+       * It's sorted so that the list only changes when the images do. */
+      const backgroundImages = (css: string) => {
+        const urls = new Set<string>()
+        postcss.parse(css).walkDecls(/^background(-image)?$/, decl => {
+          valueParser(decl.value).walk(node => {
+            if (node.type !== 'function' || node.value.toLowerCase() !== 'url') return
+            // A quoted path is a single string node. An unquoted one is a single word, except in an uppercase URL(),
+            // which the value parser splits into words at each slash.
+            const url = (
+              node.nodes.length === 1 && node.nodes[0].type === 'string'
+                ? node.nodes[0].value
+                : valueParser.stringify(node.nodes)
+            ).trim()
+            if (url && !url.startsWith('data:')) urls.add(url)
+          })
+        })
+        return [...urls].sort()
+      }
 
       if (artifact !== 'styles.css') return
       const file = path.join(cwd ?? process.cwd(), 'styled-system', 'background-images.json')
