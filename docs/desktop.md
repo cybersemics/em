@@ -8,6 +8,8 @@ The desktop app is a [Tauri 2](https://tauri.app) shell in [`desktop/`](../deskt
 | [`tauri-release-prod.yml`](../.github/workflows/tauri-release-prod.yml) | Publishes a permanent, versioned release for the same platforms when a `v*` tag is pushed |
 | [`tauri-check.yml`](../.github/workflows/tauri-check.yml) | Compiles the Rust side on pull requests that could break it (see [Testing](testing.md#tauri-npm-packages-and-crates)) |
 
+No workflow builds the app for a pull request. To let a reviewer try a branch, build it locally with `yarn tauri:build` and attach the bundle to the pull request. Dispatching `tauri-release-main.yml` on a branch would replace the `pre` prerelease's assets with that branch's build.
+
 Drag and drop needs `dragDropEnabled: false` on the window; see [Drag and Drop](drag-and-drop.md#tauri-desktop-shell).
 
 ## The window is a webview, not a browser
