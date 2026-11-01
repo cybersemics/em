@@ -8379,9 +8379,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/browserstack-service@npm:^9.41.0":
-  version: 9.41.0
-  resolution: "@wdio/browserstack-service@npm:9.41.0"
+"@wdio/browserstack-service@npm:^9.42.0":
+  version: 9.42.0
+  resolution: "@wdio/browserstack-service@npm:9.42.0"
   dependencies:
     "@browserstack/ai-sdk-node": "npm:1.5.17"
     "@bufbuild/protobuf": "npm:^2.5.2"
@@ -8407,7 +8407,7 @@ __metadata:
     yauzl: "npm:^3.4.0"
   peerDependencies:
     "@wdio/cli": ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/bf676a43ffea66b5af683eecddfeaf47bec851cb25858a965ad464b1d1b3a30357b646a238bbd52f4717ce4569e7645527bb45f7c3ba5335fe1c126229d585ed
+  checksum: 10c0/4991fdb1358fe7f2a84991824b47ced7e554caeed17f770841f2ec77f633d8c0f87a2c7277db7a4a38af89ba9f82c08c4ac0994554e701d1e35c9d8e5c40c2c6
   languageName: node
   linkType: hard
 
@@ -11933,7 +11933,7 @@ __metadata:
     "@typescript/native": "npm:typescript@7.0.2"
     "@vitejs/plugin-basic-ssl": "npm:^2.3.0"
     "@vitejs/plugin-react": "npm:^6.1.2"
-    "@wdio/browserstack-service": "npm:^9.41.0"
+    "@wdio/browserstack-service": "npm:^9.42.0"
     "@wdio/cli": "npm:^10.1.0"
     "@wdio/globals": "npm:^10.1.0"
     "@wdio/local-runner": "npm:^10.1.0"
