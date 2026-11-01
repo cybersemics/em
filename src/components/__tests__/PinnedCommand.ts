@@ -1,7 +1,7 @@
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
-import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
+import { toggleCommandUniverseActionCreator as toggleCommandUniverse } from '../../actions/toggleCommandUniverse'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import useViewportForSuite from '../../test-helpers/useViewportForSuite'
@@ -23,7 +23,7 @@ afterEach(async () => {
 
 it('show the pinned command in the corner widget after pressing Pin Command on its detail page', async () => {
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -41,7 +41,7 @@ it('show the pinned command in the corner widget after pressing Pin Command on i
 
 it('replace the pinned command when another command is pinned', async () => {
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -66,7 +66,7 @@ it('replace the pinned command when another command is pinned', async () => {
 
 it('remove the corner widget after pressing Unpin Command', async () => {
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })

@@ -7,7 +7,7 @@ import State from '../../@types/State'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { commandUniverseBackActionCreator as commandUniverseBack } from '../../actions/commandUniverseBack'
 import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from '../../actions/commandUniverseNavigate'
-import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
+import { toggleCommandUniverseActionCreator } from '../../actions/toggleCommandUniverse'
 import { executeCommandWithMulticursor } from '../../commands'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import useCommandList from '../../hooks/useCommandList'
@@ -23,7 +23,7 @@ import DialogContent from '../dialog/DialogContent'
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
-  (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
+  (command.allowExecuteFromModal || !state.showModal || !state.showCommandUniverse)
 
 /**
  * The command collection page, presented as a mobile grid or desktop list. Split out so that useCommandList only runs
@@ -59,7 +59,7 @@ const CommandUniverseCommandPage = ({
         return
       }
       onBeforeExecute?.()
-      dispatch(toggleMobileCommandUniverseActionCreator({ value: false }))
+      dispatch(toggleCommandUniverseActionCreator({ value: false }))
       executeCommandWithMulticursor(command, { store: commandStore, type: 'commandUniverse' })
       const recent = storageModel.get('recentCommands')
       storageModel.set('recentCommands', [command.id, ...recent.filter(id => id !== command.id)].slice(0, 5))

@@ -21,7 +21,7 @@ const GESTURE_GRADIENT = {
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
-  (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
+  (command.allowExecuteFromModal || !state.showModal || !state.showCommandUniverse)
 
 interface CommandUniverseGridItemProps {
   command: Command

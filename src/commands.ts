@@ -758,13 +758,9 @@ export const executeCommandWithMulticursor = (
 export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: Gesture }) => {
   const state = store.getState()
 
-  // Over the Mobile Command Universe the only gesture is a dry run of the pinned command, traced over its tooltip.
-  const isDryRun = state.showMobileCommandUniverse && state.showPinnedCommandTooltip
-  if (
-    state.showModal ||
-    state.longPress === LongPressState.DragInProgress ||
-    (state.showMobileCommandUniverse && !isDryRun)
-  )
+  // Over the Command Universe the only gesture is a dry run of the pinned command, traced over its tooltip.
+  const isDryRun = state.showCommandUniverse && state.showPinnedCommandTooltip
+  if (state.showModal || state.longPress === LongPressState.DragInProgress || (state.showCommandUniverse && !isDryRun))
     return
 
   // Stop gesture segment haptics when there are no more possible commands that can be completed from the current sequence.
@@ -823,7 +819,7 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     sequence === DOWNLOAD_DEBUG_LOG_GESTURE &&
     debugLog.isEnabled() &&
     !state.showModal &&
-    !state.showMobileCommandUniverse &&
+    !state.showCommandUniverse &&
     state.longPress !== LongPressState.DragInProgress
   ) {
     handleGestureCancel()
@@ -842,16 +838,13 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
   // Otherwise use the normal command lookup.
   let command: Command | null = null
 
-  // mobile command universe
+  // command universe
   if (sequence?.toString().endsWith(openMobileCommandUniverseGesture)) {
     command = openMobileCommandUniverseCommand
   }
   // normal command
   else {
-    command =
-      !state.showDesktopCommandUniverse || !commandGestureIndex[sequence as string]?.hideFromHelp
-        ? commandGestureIndex[sequence as string]
-        : null
+    command = commandGestureIndex[sequence as string]
   }
 
   // The chainable command that is in progress (only if there is at least one additional swipe). Otherwise null.
@@ -882,7 +875,7 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
 
   // Over the Mobile Command Universe a trace over the pinned command's tooltip is a dry run: nothing executes and no
   // rep is earned, but tracing the pinned command's own gesture plays the ring's burst.
-  if (state.showMobileCommandUniverse && state.showPinnedCommandTooltip) {
+  if (state.showCommandUniverse && state.showPinnedCommandTooltip) {
     if (isPinnedGesture) commandEmitter.trigger('pinnedGestureDryRun')
     return
   }
@@ -896,12 +889,7 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
 
   // execute command
   // do not execute when modal is displayed or a drag is in progress
-  if (
-    command &&
-    !state.showModal &&
-    !state.showMobileCommandUniverse &&
-    state.longPress !== LongPressState.DragInProgress
-  ) {
+  if (command && !state.showModal && !state.showCommandUniverse && state.longPress !== LongPressState.DragInProgress) {
     commandEmitter.trigger('command', command)
     if (chainableCommandInProgressExclusive) {
       const commandMetadata = createCommandMetadata(command, { type: 'gesture', event: e })
@@ -1046,14 +1034,11 @@ export const keyDown = (e: KeyboardEvent) => {
     return
   }
 
-  // disable if desktop command universe is displayed
-  if (state.showDesktopCommandUniverse) return
-
   const command = commandKeyIndex[hashKeyDown(e)]
   keyCommandIdStore.update({ id: command?.id ?? null })
 
   // disable if modal is shown, except for navigation commands
-  if (!command || state.showMobileCommandUniverse || (state.showModal && !command.allowExecuteFromModal)) return
+  if (!command || state.showCommandUniverse || (state.showModal && !command.allowExecuteFromModal)) return
 
   // A space typed in a note is text. Space-to-indent applies only when the caret is in the thought itself, so reject it
   // here rather than in indent's exec: executeCommandWithMulticursor sets the cursor on each selected thought before

@@ -165,7 +165,6 @@ interface State {
   showBulletPicker: boolean
   showColorPicker: boolean
   showLetterCase: boolean
-  showDesktopCommandUniverse: boolean
   showGestureMenu: boolean
   showHiddenThoughts: boolean
   showSortPicker: boolean
@@ -179,7 +178,7 @@ interface State {
   /** Whether the pinned command's tooltip is expanded. Only ever true while a command is pinned: changing the pin closes it. */
   showPinnedCommandTooltip: boolean
   showSidebar: boolean
-  showMobileCommandUniverse?: boolean
+  showCommandUniverse?: boolean
   showUndoSlider: boolean
   /* Status:
       'disconnected'   Logged out or yet to connect, but not in explicit offline mode.

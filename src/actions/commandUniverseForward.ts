@@ -4,7 +4,7 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Moves to the next Command Universe history entry when one is available. */
 const commandUniverseForward = (state: State): State =>
-  !state.showMobileCommandUniverse ||
+  !state.showCommandUniverse ||
   state.commandUniverseNavigation.index === state.commandUniverseNavigation.entries.length - 1
     ? state
     : {

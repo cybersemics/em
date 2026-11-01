@@ -37,7 +37,7 @@ interface Transition {
 const CommandUniversePageTransitions = ({ children }: { children: ReactElement[] }) => {
   const entries = useSelector(state => state.commandUniverseNavigation.entries)
   const index = useSelector(state => state.commandUniverseNavigation.index)
-  const isOpen = useSelector(state => !!state.showMobileCommandUniverse)
+  const isOpen = useSelector(state => !!state.showCommandUniverse)
   const activeEntryId = entries[index].entryId
   const [shownEntryId, setShownEntryId] = useState(activeEntryId)
   const [transition, setTransition] = useState<Transition | null>(null)

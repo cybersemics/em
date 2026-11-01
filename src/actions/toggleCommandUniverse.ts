@@ -8,16 +8,16 @@ import commandUniverseSearchSortStore from '../stores/commandUniverseSearchSortS
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import { saveSelectionOffsetsActionCreator as saveSelectionOffsets } from './saveSelectionOffsets'
 
-/** Toggles (hide/show) the mobile command universe. Opening it starts a fresh session at the commands root with the search cleared. The sort order the user chose is kept until the app reloads. */
-const toggleMobileCommandUniverse = (
+/** Toggles (hide/show) the Command Universe. Opening it starts a fresh session at the commands root with the search cleared. The sort order the user chose is kept until the app reloads. */
+const toggleCommandUniverse = (
   state: State,
   { value, entryId = 'root' }: { value?: boolean; entryId?: string },
 ): State => {
-  const isOpen = value == null ? !state.showMobileCommandUniverse : value
-  const isOpening = isOpen && !state.showMobileCommandUniverse
+  const isOpen = value == null ? !state.showCommandUniverse : value
+  const isOpening = isOpen && !state.showCommandUniverse
   return {
     ...state,
-    showMobileCommandUniverse: isOpen,
+    showCommandUniverse: isOpen,
     ...(isOpening
       ? {
           commandUniverseNavigation: {
@@ -29,13 +29,13 @@ const toggleMobileCommandUniverse = (
   }
 }
 
-/** Action-creator for toggleMobileCommandUniverse. */
-export const toggleMobileCommandUniverseActionCreator =
+/** Action-creator for toggleCommandUniverse. */
+export const toggleCommandUniverseActionCreator =
   ({ value, preserveSelectionOffsets = false }: { value?: boolean; preserveSelectionOffsets?: boolean }): Thunk =>
   (dispatch, getState) => {
     const state = getState()
-    const isOpen = value == null ? !state.showMobileCommandUniverse : value
-    const isOpening = isOpen && !state.showMobileCommandUniverse
+    const isOpen = value == null ? !state.showCommandUniverse : value
+    const isOpening = isOpen && !state.showCommandUniverse
     const isDesktop = window.matchMedia(`(min-width: ${token('breakpoints.lg')})`).matches
     if (isOpening) {
       commandUniverseSearchSortStore.update({ search: '' })
@@ -44,11 +44,11 @@ export const toggleMobileCommandUniverseActionCreator =
       if (!preserveSelectionOffsets) dispatch(saveSelectionOffsets())
       if (!isDesktop) selection.clear()
     }
-    dispatch({ type: 'toggleMobileCommandUniverse', value, entryId: isOpening ? nanoid() : undefined })
+    dispatch({ type: 'toggleCommandUniverse', value, entryId: isOpening ? nanoid() : undefined })
   }
 
-export default _.curryRight(toggleMobileCommandUniverse)
+export default _.curryRight(toggleCommandUniverse)
 
-registerActionMetadata('toggleMobileCommandUniverse', {
+registerActionMetadata('toggleCommandUniverse', {
   undoable: false,
 })

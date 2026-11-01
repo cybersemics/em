@@ -15,7 +15,7 @@ interface CommandUniverseSortButtonProps {
 }
 
 /**
- * Group/sort button used by the Mobile Command Universe dialog. Flush styling (no
+ * Group/sort button used by the Command Universe dialog. Flush styling (no
  * border or background) with the new 24×24 list glyph.
  *
  * Controlled, so the sort order has a single owner in the session ministore.

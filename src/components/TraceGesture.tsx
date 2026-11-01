@@ -44,7 +44,7 @@ interface SignaturePadOverride {
   removeEventListener: (event: SignaturePadEventType, listener: (e: Event) => void) => void
 }
 
-/** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and: DesktopCommandUniverseGesture which have different ways of showing a cancelled gesture. */
+/** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint, which has its own way of showing a cancelled gesture. */
 const useGestureCancelled = () => {
   const invalidGesture = gestureStore.useSelector(
     state =>
@@ -257,12 +257,12 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     </div>
   )
 }
-/** Renders the TraceGesture component unless a modal or the mobile command universe is shown. Over the mobile command universe it still draws a dry run traced over the pinned command's tooltip. */
+/** Renders the TraceGesture component unless a modal or the Command Universe is shown. Over the Command Universe it still draws a dry run traced over the pinned command's tooltip. */
 const TraceGestureWrapper = (props: TraceGestureProps) => {
   const showModal = useSelector(state => state.showModal)
-  const showMobileCommandUniverse = useSelector(state => state.showMobileCommandUniverse)
+  const showCommandUniverse = useSelector(state => state.showCommandUniverse)
   const pinnedCommandTooltipOpen = useSelector(state => state.showPinnedCommandTooltip)
-  return <>{!showModal && (!showMobileCommandUniverse || pinnedCommandTooltipOpen) && <TraceGesture {...props} />}</>
+  return <>{!showModal && (!showCommandUniverse || pinnedCommandTooltipOpen) && <TraceGesture {...props} />}</>
 }
 
 export default TraceGestureWrapper

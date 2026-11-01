@@ -49,7 +49,7 @@ it('a collapsed caret survives a command run from the Command Universe', async (
   await command('Move Thought Up', { inputType: 'commandPalette' })
 
   // wait for the Command Universe to leave the DOM, so that nothing it does as it closes can still move the caret
-  await waitForSelector('[data-testid=desktop-command-universe]', { hidden: true })
+  await waitForSelector('input[aria-label="Search for a command"]', { hidden: true })
 
   // moveThoughtUp reads selection.offset() unguarded, which reports 0 while the search input holds focus. The caret
   // lands correctly because the Command Universe hands it back before the command runs, so this pins that hand-back
@@ -65,7 +65,7 @@ it('Note keeps the caret in the new note when invoked from the Command Universe'
   await command('Note', { inputType: 'commandPalette' })
 
   // wait for the Command Universe to leave the DOM, so that nothing it does as it closes can still move the focus
-  await waitForSelector('[data-testid=desktop-command-universe]', { hidden: true })
+  await waitForSelector('input[aria-label="Search for a command"]', { hidden: true })
 
   const focused = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'))
   expect(focused).toBe('note-editable')
@@ -84,7 +84,7 @@ it('Select All leaves the selection out of edit mode when invoked from the Comma
   await command('Select All', { inputType: 'commandPalette' })
 
   // wait for the Command Universe to leave the DOM, so that nothing it does as it closes can still move the focus
-  await waitForSelector('[data-testid=desktop-command-universe]', { hidden: true })
+  await waitForSelector('input[aria-label="Search for a command"]', { hidden: true })
 
   // faux carets render on the frame after the caret lands in a selected thought
   await page.evaluate(() => new Promise(requestAnimationFrame))
