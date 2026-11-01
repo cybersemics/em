@@ -3,6 +3,7 @@ import clickThought from '../helpers/clickThought'
 import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import paste from '../helpers/paste'
+import useTestFlags from '../helpers/useTestFlags'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
@@ -25,5 +26,22 @@ describe('gesture menu', () => {
     const paddingLeft = await page.$eval('[data-testid=gesture-menu-content]', el => getComputedStyle(el).paddingLeft)
 
     expect(parseFloat(paddingLeft)).toBeGreaterThan(70)
+  })
+
+  describe('with stubbed commands', () => {
+    useTestFlags({ stubCommands: [{ label: 'Stub Command', gesture: 'rl' }] })
+
+    it('lists stubbed commands in place of the registered commands', async () => {
+      await paste('Hello')
+      await clickThought('Hello')
+      await gesture('r', { hold: true, yStart: 150 })
+      await waitForSelector('[data-testid=popup-value]')
+
+      const menuText = await page.$eval('[data-testid=gesture-menu-content]', el => el.textContent)
+
+      expect(menuText).toContain('Stub Command')
+      // New Thought (rd) would be listed if the registered commands were not stubbed
+      expect(menuText).not.toContain('New Thought')
+    })
   })
 })

@@ -190,7 +190,8 @@ jobs:
   run:
     name: BrowserStack Android
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request_target' || github.event.pull_request.changed_files > 0
+    # A `prototype` pull request skips the suite; see docs/testing.md § Prototype pull requests.
+    if: (github.event_name != 'pull_request_target' || github.event.pull_request.changed_files > 0) && !contains(github.event.pull_request.labels.*.name, 'prototype')
     env:
       BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
       BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}

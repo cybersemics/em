@@ -9,9 +9,11 @@ import gesture from '../helpers/gesture'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
+import { PreloadedTestFlags } from '../helpers/preloadTestFlags'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
+import useTestFlags from '../helpers/useTestFlags'
 import waitForBackgroundImage from '../helpers/waitForBackgroundImage'
 import waitForSelector from '../helpers/waitForSelector'
 
@@ -19,23 +21,55 @@ expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
+/** A fixed list of commands, enough to fill every column of the Gesture Menu at a wide viewport. Cancel and Command Universe are kept, since the Gesture Menu always lists them after the matching commands. */
+const STUB_COMMANDS: NonNullable<PreloadedTestFlags['stubCommands']> = [
+  'cancel',
+  'openMobileCommandUniverse',
+  ...(['r', 'rd', 'ru', 'rl', 'rdr', 'rdl', 'rur', 'rul', 'rdu', 'rud', 'rld', 'rlu', 'rdrd'] as const).map(
+    (gesture, i) => ({
+      label: `Command ${i + 1}`,
+      gesture,
+      description: `Description of command ${i + 1}.`,
+    }),
+  ),
+]
+
+/** A fixed list of commands with keyboard shortcuts, enough to overflow the Desktop Command Universe panel. Every command but one has an icon, so that the snapshot covers the position of an icon and of the placeholder that keeps the row layout without one. One description is long enough to wrap onto a second line. Open Command Universe is kept, since the command that opens the panel has to exist for the test to open it; it hides itself from the list. */
+const DESKTOP_STUB_COMMANDS: NonNullable<PreloadedTestFlags['stubCommands']> = [
+  'openDesktopCommandUniverse',
+  ...Array.from({ length: 8 }, (_, i) => ({
+    label: `Command ${i + 1}`,
+    keyboard: { key: (i + 1).toString(), meta: true },
+    description:
+      i === 3
+        ? `Description of command ${i + 1}, long enough to wrap onto a second line so that the snapshot covers multiline descriptions.`
+        : `Description of command ${i + 1}.`,
+    icon: i !== 2,
+  })),
+]
+
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
-it('DesktopCommandUniverse', async () => {
-  // hide the HUD so that the snapshot only includes the command universe and is not affected by unrelated toolbar or navbar changes
-  await hideHUD()
+describe('DesktopCommandUniverse', () => {
+  // stub the commands so that the snapshot covers only the appearance of the command list and does not change whenever a command is added, removed, or renamed
+  useTestFlags({ stubCommands: DESKTOP_STUB_COMMANDS })
 
-  await press('P', { meta: true })
+  it('standard view', async () => {
+    // hide the HUD so that the snapshot only includes the command universe and is not affected by unrelated toolbar or navbar changes
+    await hideHUD()
 
-  // wait for the desktop command universe to appear before taking screenshot
-  await waitForSelector('[data-testid=desktop-command-universe]')
+    await press('P', { meta: true })
 
-  expect(await screenshot()).toMatchImageSnapshot({
-    customSnapshotIdentifier: 'desktopCommandUniverse',
-  })
-  await setTheme('Light')
-  expect(await screenshot()).toMatchImageSnapshot({
-    customSnapshotIdentifier: 'desktopCommandUniverse-light',
+    // wait for the desktop command universe to appear before taking screenshot
+    await waitForSelector('[data-testid=desktop-command-universe]')
+
+    expect(await screenshot()).toMatchImageSnapshot({
+      customSnapshotIdentifier: 'desktopCommandUniverse',
+    })
+    await setTheme('Light')
+    expect(await screenshot()).toMatchImageSnapshot({
+      customSnapshotIdentifier: 'desktopCommandUniverse-light',
+    })
   })
 })
 
@@ -74,6 +108,9 @@ describe('GestureMenu', () => {
   describe('wider viewport (>= 400px)', () => {
     // Use iPad Mini landscape to test a viewport wide enough for multiple columns
     deviceEmulation.useForSuite(KnownDevices['iPad Mini landscape'])
+
+    // replace the registered commands with a fixed list so that the snapshot does not need to be updated every time a command is added, removed, or renamed
+    useTestFlags({ stubCommands: STUB_COMMANDS })
 
     it('render possible commands in multiple columns', async () => {
       await hideHUD()

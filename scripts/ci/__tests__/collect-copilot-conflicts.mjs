@@ -142,6 +142,7 @@ const testSkipLabels = async () => {
   for (const [number, label] of [
     [15, 'skip-auto-resolve-conflicts'],
     [21, 'hold'],
+    [26, 'prototype'],
   ]) {
     const skipped = makePr({ number, updatedAt: '2026-09-06T10:00:00Z', state: dueState(2), labels: [label] })
     const before = skipped.comments[0].body

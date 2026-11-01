@@ -45,7 +45,7 @@ The app cannot repair the corruption (see dead ends below), so it keeps the bad 
 - **Rewriting the viewport meta tag to clear the corrupt viewport after an app switch.** Adding `shrink-to-fit=no` and restoring it on the next frame, at the settled snapshot after resume and at the end of each scroll ([#6024](https://github.com/cybersemics/em/pull/6024)), ran five times in one session on a device and left `visualViewport.height` at -59 each time. `visualViewport.scale` stayed 1, so the corruption is not a zoom glitch.
 - **Keeping the page still across the app switcher snapshot.** Measuring autocrop against the long edge of the screen so that the landscape snapshot did not shift or scroll the page ([#6062](https://github.com/cybersemics/em/pull/6062)) left the corruption in place: the next capture broke with `scrollY` unchanged throughout. It was reverted.
 - **Hooking a repair to `visualViewport` resize.** It fires dozens of times a second while scrolling with the keyboard up.
-- **A taller background image instead of the mirror.** Each glow is about 1.25 MB at 1179×2556; hanging 200pt more off the bottom adds roughly 290 KB to download and 2.8 MB decoded per image, and every artwork has to be redrawn to continue the glow. The mirror costs neither.
+- **A taller background image instead of the mirror.** Each glow is drawn at 1179×2556; hanging 200pt more off the bottom adds roughly 8% to every image's download and 2.8 MB decoded at that size, and every artwork has to be redrawn to continue the glow. The mirror costs neither.
 
 ## Techniques
 

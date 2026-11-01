@@ -308,3 +308,29 @@ describe('multicursor', () => {
 </ul>`)
   })
 })
+
+describe('metaprogramming attributes', () => {
+  // https://github.com/cybersemics/em/pull/6056#issuecomment-6283026463
+  it('applies and removes a color on a metaprogramming attribute without error', async () => {
+    act(() => {
+      store.dispatch([
+        importText({
+          text: `
+            - aaa
+              - =favorite
+          `,
+        }),
+        setCursor(['aaa', '=favorite']),
+      ])
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Command + Option + 3 is the fourth swatch, yellow
+    await keyDown('3', { meta: true, alt: true })
+    expect(cursorValue()).toBe('<font color="#ffd014">=favorite</font>')
+
+    // the same color again removes it
+    await keyDown('3', { meta: true, alt: true })
+    expect(cursorValue()).toBe('=favorite')
+  })
+})

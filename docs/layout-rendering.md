@@ -11,8 +11,8 @@ The whole pipeline lives in [`src/components/LayoutTree.tsx`](../src/components/
 Thoughts have variable heights — they wrap, they have notes, they are taller at cliffs. The browser is the only authority on their measured height. So rendering happens in two passes:
 
 1. **Estimate pass.** The first render places every thought at a y position computed from `singleLineHeight` (an estimate based on `fontSize`, refined to the measured single-line height once any single-line thought has been rendered).
-2. **Measurement pass.** Each [`VirtualThought`](../src/components/VirtualThought.tsx) measures its rendered height in a `useLayoutAnimationFrameEffect` and calls `onResize → setSize` with the actual value. [`useSizeTracking`](../src/hooks/useSizeTracking.ts) updates a `sizes` map.
-3. **Reposition.** The state change in `sizes` triggers a re-render. [`usePositionedThoughts`](../src/hooks/usePositionedThoughts.ts) recomputes y positions using the measured heights. CSS transitions animate the y deltas into place smoothly.
+2. **Measurement pass.** Each [`VirtualThought`](../src/components/VirtualThought.tsx) measures its rendered height in a `useLayoutAnimationFrameEffect` and calls `onResize → setSize` with the actual value. [`useSizeTracking`](../src/hooks/useSizeTracking.ts) updates a `heights` map.
+3. **Reposition.** The state change in `heights` triggers a re-render. [`usePositionedThoughts`](../src/hooks/usePositionedThoughts.ts) recomputes y positions using the measured heights. CSS transitions animate the y deltas into place smoothly.
 
 The estimate is rarely far enough off to be visible, so the user almost never sees the intermediate position. The two-pass model is what lets the layout converge without snapping.
 
@@ -21,7 +21,7 @@ The estimate is rarely far enough off to be visible, so the user almost never se
 Each render produces two parallel lists, both indexed by the same key:
 
 - **`treeThoughts: TreeThought[]`** — produced by the [`linearizeTree`](../src/selectors/linearizeTree.ts) selector. An in-order traversal of all currently visible thoughts. Each entry carries depth, table-cell flags, autofocus state, the `Path` and `SimplePath`, accumulated styles, etc. Recalculated whenever Redux state changes.
-- **`treeThoughtsPositioned: TreeThoughtPositioned[]`** — produced by `usePositionedThoughts`. Same shape but with `x`, `y`, `width`, `height`, `cliff`, `isLastVisible`. Recalculated when widths or heights change in the `sizes` map.
+- **`treeThoughtsPositioned: TreeThoughtPositioned[]`** — produced by `usePositionedThoughts`. Same shape but with `x`, `y`, `width`, `height`, `cliff`, `isLastVisible`. Recalculated when the `heights` or `widths` map changes.
 
 The render walks `treeThoughtsPositioned`, wrapping each entry in a `TreeNode` (which mounts a `VirtualThought` plus the appropriate drop targets) inside a `TransitionGroup` so removed thoughts can fade out.
 
@@ -36,7 +36,7 @@ const crossContextualKey = (contextChain, id) =>
   `${(contextChain || []).map(head).join('')}|${id}`
 ```
 
-So the key is the concatenation of every context-view boundary's `id` plus the thought's own `id`. The `sizes` map and TreeThought entries are both keyed this way.
+So the key is the concatenation of every context-view boundary's `id` plus the thought's own `id`. The `heights` map and TreeThought entries are both keyed this way.
 
 ## `linearizeTree` (the in-order traversal)
 
@@ -56,7 +56,7 @@ The result is a flat array, in document order, with one entry per visible though
 
 ## `usePositionedThoughts` (x and y)
 
-[`usePositionedThoughts`](../src/hooks/usePositionedThoughts.ts) walks `treeThoughts` once and produces the positioned list. It runs in a `useMemo` keyed on the inputs (sizes, single-line height, viewport height, etc.).
+[`usePositionedThoughts`](../src/hooks/usePositionedThoughts.ts) walks `treeThoughts` once and produces the positioned list. It runs in a `useMemo` keyed on the inputs (heights, single-line height, viewport height, etc.).
 
 Per thought:
 
@@ -67,7 +67,7 @@ const cliff = next ? Math.min(0, next.depth - node.depth) : -node.depth - 1
 `cliff` is the number of levels dropped after this thought (negative). `cliff = 0` means the next thought is at the same depth or deeper; `cliff = -3` means the next thought is three levels shallower (the visible structure has fallen off a "cliff"). `cliff` drives both the cliff-padding (`cliffPadding = fontSize / 4` of extra height to make room for the trailing `DropCliff`) and how many `DropEnd`s to render between this thought and the next.
 
 ```ts
-const height = sizes[node.key]?.height ?? singleLineHeight + (cliff < 0 ? cliffPadding : 0)
+const height = heights[node.key]?.height ?? singleLineHeight + (cliff < 0 ? cliffPadding : 0)
 ```
 
 Use the measured height; fall back to the estimate.
@@ -82,7 +82,7 @@ const x = fontSize * node.depth + ancestorTableWidths
 
 - **Table col1**: do *not* increment `yaccum`, so col2 starts at the same y as col1. Push `{ depth, y: yaccum + height }` onto `ycol1Ancestors`. This stack remembers the bottom of each col1 thought so a sibling that follows a tall col1 can clear it.
 - **Returning out of a col2**: if the top of `ycol1Ancestors` is at or above the current depth, pop it and bump `yaccum` to its bottom y if needed (so the next sibling clears col1, even when col2 was shorter).
-- **New-cliff anticipation**: when a brand-new thought (`!sizes[node.key]`) appears at a cliff, the previous sibling is about to lose its cliff padding but hasn't been re-measured yet. Subtract `cliffPadding` from the new thought's y to anticipate the impending shift; otherwise the new thought renders at the wrong y for one frame and visibly slides up.
+- **New-cliff anticipation**: when a brand-new thought (`!heights[node.key]`) appears at a cliff, the previous sibling is about to lose its cliff padding but hasn't been re-measured yet. Subtract `cliffPadding` from the new thought's y to anticipate the impending shift; otherwise the new thought renders at the wrong y for one frame and visibly slides up.
 
 ```ts
 y = yaccum - (isNewCliff ? cliffPadding : 0)
@@ -91,7 +91,7 @@ yaccum += height (unless table col1)
 
 After the loop:
 
-- `tableCol1Widths: Map<ThoughtId, number>` — the widths of every table's col1, used as inputs to `ancestorTableWidths` further down the loop.
+- `tableCol1Widths: Map<ThoughtId, number>` — the widths of every table's col1, used as inputs to `ancestorTableWidths` further down the loop. A col1 is as wide as its widest thought, and a col1 thought that [virtualization](#virtualization) has unmounted still counts at its last measured width, since its width is kept until it leaves the tree (see [`useSizeTracking`](#usesizetracking-heights-and-widths)). Without that, the column would narrow whenever its widest thought fell below the cutoff, the col2 thoughts above it would unwrap and shorten, and the widest thought would move back above the cutoff and remount, widening the column again. That cycle never settles.
 - `indentCursorAncestorTables` — captured when the cursor node is visited; drives the global horizontal autocrop (see [Indent](#indent-horizontal-autocrop)).
 - `hoverArrowVisibility` — `'above' | 'below' | null`, set when the user is dragging into a sorted context and the drop position is outside the currently-rendered range. Drives the [`HoverArrow`](../src/components/HoverArrow.tsx) component.
 
@@ -101,7 +101,7 @@ When the cursor is deep, many ancestors and ancestor-siblings are hidden by auto
 
 [`useAutocrop`](../src/components/LayoutTree.tsx) crops this empty space and counter-scrolls so the visible thoughts stay put under the user's finger:
 
-1. `LayoutTree` sums the heights of every thought above the cursor where `sizes[key].isVisible === false && !belowCursor`. Result: `spaceAbove`.
+1. `LayoutTree` sums the heights of every thought above the cursor where `heights[key].isVisible === false && !belowCursor`. Result: `spaceAbove`.
 2. `useAutocrop` extends that to at least one viewport height (so there's still room to scroll up): `spaceAboveExtended = max(spaceAbove, viewportHeight)`.
 3. The hook returns `autocrop = -spaceAboveExtended + viewportHeight`, applied as `transform: translateY(...)` on the outer container.
 4. When `autocrop` changes, `window.scrollTo({ top: window.scrollY + delta })` keeps visible thoughts positionally stable. The counter-scroll tracks the translation, not `spaceAboveExtended`: a viewport height change (e.g. rotating the device) moves `spaceAboveExtended` without shifting the thoughts when `spaceAbove` is less than the viewport, and scrolling by it would push the cursor off screen ([#3990](https://github.com/cybersemics/em/issues/3990)).
@@ -135,18 +135,18 @@ viewportBottom = max(scrollTop, 0)
                + (singleLineHeight * 5) // overshoot, so a small scroll doesn't reveal blanks
 ```
 
-Each `TreeNode` subscribes to `scrollTopStore` with a selector that returns only whether that thought is beyond the boundary. Most scroll updates leave this boolean unchanged, so they do not rerender `LayoutTree`, `TransitionGroup`, or the full thought list. A `TreeNode` returns `null` only when it is below the cursor, is not the cursor itself, and its `y` is more than one estimated thought height beyond `viewportBottom`. It remains in `treeThoughtsPositioned` so crossing the boundary can render it without rebuilding the list, while the fixed container height keeps the document height stable. (Above the cursor, autocrop already handles the blank space.)
+Each `TreeNode` subscribes to `scrollTopStore` with a selector that returns only whether that thought is beyond the boundary. Most scroll updates leave this boolean unchanged, so they do not rerender `LayoutTree`, `TransitionGroup`, or the full thought list. A `TreeNode` returns `null` only when it is below the cursor, is not the cursor itself, and its `y` is more than one estimated thought height beyond `viewportBottom`. A thought that was virtualized and then rendered again while `scrollTop` and `innerHeight` stayed the same is not virtualized again until one of them changes. That guard keeps a layout feedback loop from forming: when the layout above a thought depends on whether that thought is rendered, as a table's col1 width once did, unmounting it can move it back above the cutoff, and remounting it can push it back below, indefinitely, until React aborts with "Maximum update depth exceeded" (error #185). Every such cycle needs a second unmount at the same viewport, so the guard breaks it whatever closes it. It remains in `treeThoughtsPositioned` so crossing the boundary can render it without rebuilding the list, while the fixed container height keeps the document height stable. (Above the cursor, autocrop already handles the blank space.)
 
-## `useSizeTracking` and the `sizes` map
+## `useSizeTracking`, `heights` and `widths`
 
-[`useSizeTracking`](../src/hooks/useSizeTracking.ts) keeps a state map of `{ height, width, isVisible, cliff }` keyed by `crossContextualKey`. `setSize` is the entry point — it's passed into every `VirtualThought` as `onResize`.
+[`useSizeTracking`](../src/hooks/useSizeTracking.ts) keeps two state maps keyed by `crossContextualKey`: `heights` holds `{ height, isVisible, cliff }`, and `widths` holds the measured width of each thought. Widths are kept apart because only table col1 reads them, to size the column (see `tableCol1Widths` above), while every other consumer reads heights and treats an entry in `heights` as a measured thought. `setSize` is the entry point — it's passed into every `VirtualThought` as `onResize`.
 
 Two details:
 
 - **Height clipping by `fontSize / 8`.** Each measured height is reduced by `fontSize / 8` before storage. Why: thoughts use a `clipPath` to avoid accidental caret-snap to the line above/below when a click lands on a 1px boundary. The clipPath leaves a gap; the small height reduction overlaps thoughts by exactly that gap, eliminating it visually.
-- **Unmount cleanup.** When a `VirtualThought` unmounts, it calls `onResize` with `height: null`, and `useSizeTracking.removeSize` deletes the entry. An `unmounted` ref prevents racing setState after the parent has already gone.
+- **Unmount cleanup.** When a `VirtualThought` unmounts, it calls `onResize` with `height: null`, and `useSizeTracking.removeSize` deletes its entry from `heights`. Its width stays in `widths` until its `TreeNode` unmounts and calls `removeWidth`, which happens only when the thought leaves the tree: a virtualized thought keeps its `TreeNode` and only unmounts the `VirtualThought` inside it. An `unmounted` ref prevents racing setState after the parent has already gone.
 
-`useSingleLineHeight` (in `LayoutTree.tsx`) finds the smallest measured height in `sizes` that's close to `fontSize * 2` and uses that as the canonical single-line height for unmeasured thoughts. Cached in a ref so it doesn't reset to the estimate when single-line thoughts scroll out of view.
+`useSingleLineHeight` (in `LayoutTree.tsx`) finds the smallest measured height in `heights` that's close to `fontSize * 2` and uses that as the canonical single-line height for unmeasured thoughts. Cached in a ref so it doesn't reset to the estimate when single-line thoughts scroll out of view.
 
 ## `VirtualThought` — when does it re-measure?
 
@@ -207,7 +207,7 @@ When `b` is positioned, `yaccum` is *not* incremented; `b1` is placed at `(x = f
 
 ## `useLayoutTreeTop`
 
-A small effect that writes the LayoutTree's top y (offset + autocrop) into `viewportStore.layoutTreeTop`. Used by `scrollCursorIntoView` to figure out where thoughts actually start on the page (vs. the toolbar above).
+A small layout effect that writes the LayoutTree's top y (offset + autocrop) into `viewportStore.layoutTreeTop`. Used by `scrollCursorIntoView` to figure out where thoughts actually start on the page (vs. the toolbar above). It is a layout effect so that the value is set before the cursor overlay, a child of LayoutTree, checks the cursor on mount: React runs a child's passive effects before its parent's, so a passive effect here would leave `layoutTreeTop` at 0 for that check, and a cursor in plain view would be measured as behind the toolbar and scrolled.
 
 ## Scrolling the cursor into view
 
