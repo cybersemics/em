@@ -9,6 +9,8 @@ import ClockIcon from './icons/ClockIcon'
 import CommandsListIcon from './icons/CommandsListIcon'
 
 interface CommandUniverseSortButtonProps {
+  /** The order the commands page is showing, read by the parent from `commandUniverseNavigation` in Redux. */
+  sortOrder: CommandSortType
   onSortChange: (sortOrder: CommandSortType) => void
 }
 
@@ -16,12 +18,14 @@ interface CommandUniverseSortButtonProps {
  * Group/sort button used by the Mobile Command Universe dialog. Flush styling (no
  * border or background) with the new 24×24 list glyph.
  *
+ * Controlled, so the sort order has a single owner. It lives in Redux, and a copy kept here
+ * would have to be kept in step with it by hand.
+ *
  * Distinct from SortButton (used by Help / CustomizeToolbar via CommandTable),
  * which keeps the legacy bordered look.
  */
-const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonProps) => {
+const CommandUniverseSortButton = ({ sortOrder: selectedSort, onSortChange }: CommandUniverseSortButtonProps) => {
   const [isDropdownOpen, setDropdownOpen] = useState(false)
-  const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
   const buttonRef = useRef<HTMLButtonElement>(null)
   const closeDropdown = useCallback(() => setDropdownOpen(false), [])
 
@@ -41,7 +45,6 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
 
   /** Selects a sort order, propagates the change, and closes the dropdown. */
   const handleSortChange = (sortOrder: CommandSortType) => {
-    setSelectedSort(sortOrder)
     onSortChange(sortOrder)
     setDropdownOpen(false)
   }
