@@ -130,22 +130,16 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
   await initializeCursor()
 
   // Preload all background images used in the app, so they don't visibly "pop in" during use.
-  // Wait until the first sync pull has finished, so the images load strictly behind the visible thoughts.
   // The list of images is generated from the CSS by backgroundImageManifestPlugin.
-  syncStatusStore
-    .once(({ isPulling }) => isPulling)
-    .then(() => syncStatusStore.once(({ isPulling }) => !isPulling))
-    .then(() =>
-      taskQueue<void>({ concurrency: 4 }).add(
-        backgroundImages.map(src => () => {
-          const image = new Image()
-          image.fetchPriority = 'low'
-          image.src = src
-          // If the image fails, swallow it silently. The image will try to load again when it is shown.
-          return image.decode().catch(() => {})
-        }),
-      ),
-    )
+  taskQueue<void>({ concurrency: 4 }).add(
+    backgroundImages.map(src => () => {
+      const image = new Image()
+      image.fetchPriority = 'low'
+      image.src = src
+      // If the image fails, swallow it silently. The image will try to load again when it is shown.
+      return image.decode().catch(() => {})
+    }),
+  )
 
   return eventHandlers
 }
