@@ -109,8 +109,10 @@ describe('Gestures', () => {
       - c
     `)
 
-    await clickThought('b')
-    await tap(await waitForEditable('b'), { pointerType: 'touch' })
+    // c rather than a higher thought: on iOS 18 and below, preventAutoscroll's padding makes Safari scroll the page after
+    // the tap focuses a or b, lifting it into the band at the top that isInGestureZone leaves to the toolbar
+    await clickThought('c')
+    await tap(await waitForEditable('c'), { pointerType: 'touch' })
     await waitUntil(isKeyboardShown)
     expect(await setSelection(1, 1)).toMatchObject({ type: 'Caret' })
 
@@ -122,11 +124,6 @@ describe('Gestures', () => {
       lastScrollY = scrollY
       return settled
     })
-    // On BrowserStack's iOS 17 device, Safari scrolls the page shortly after the tap focuses b, lifting b into the band at
-    // the top that isInGestureZone leaves to the toolbar. The visual viewport's offsetTop returns to 0 with the scroll,
-    // so the drag below still lands on the caret, measured with a touchstart listener.
-    await browser.execute(() => window.scrollTo(0, 0))
-    expect(await waitUntil(async () => (await browser.execute(() => window.scrollY)) === 0)).toBeTruthy()
     // an upward drag scrolls down, so there must be room below
     expect(
       await browser.execute(() => window.scrollY + window.innerHeight < document.documentElement.scrollHeight),
