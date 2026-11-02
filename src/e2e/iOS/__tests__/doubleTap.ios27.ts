@@ -8,6 +8,7 @@ import getEditingText from '../helpers/getEditingText'
 import getScreenOffsetY from '../helpers/getScreenOffsetY'
 import getSelection from '../helpers/getSelection'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
+import holdAndSwipe from '../helpers/holdAndSwipe'
 import isKeyboardShown from '../helpers/isKeyboardShown'
 import newThought from '../helpers/newThought'
 import setSelection from '../helpers/setSelection'
@@ -106,6 +107,56 @@ describe('Double tap', () => {
         ],
       },
     ])
+
+    // where the touchend arrives, the alert fades out after the lift
+    await browser.waitUntil(
+      async () =>
+        (await browser.execute(() => document.querySelector('[data-testid="alert-content"]')?.textContent ?? null)) !==
+        'Drag and drop to move thought',
+      { timeout: 3000, timeoutMsg: 'Drag and drop was still active 3s after the finger lifted.' },
+    )
+  })
+
+  // https://github.com/cybersemics/em/pull/5954#discussion_r4429346668
+  it('a long press on the bullet of a cursor with no caret after a double tap does not leave drag and drop active', async () => {
+    await newThought('A')
+    await newThought('B')
+    await newThought('C')
+    const a = await waitForEditable('A')
+    await tap(a, { pointerType: 'touch' })
+    await waitUntil(async () => (await getEditingText()) === 'A')
+
+    await tap(a, { offset: 'A'.length, pointerType: 'touch', count: 2 })
+    await waitUntil(async () => (await getSelection().toString()) === 'A')
+    await setSelection('A'.length, 'A'.length)
+    // em withholds the long press handlers while a word is selected, and learns that it is not on a throttle
+    await waitUntil(() => browser.$('[data-editing=true] [aria-label="thought"][draggable=true]').isExisting())
+
+    // blank space to the right of A keeps the cursor on A but removes the caret
+    await tap(a, { horizontalTapLine: 'right', x: 150, pointerType: 'touch' })
+    await waitUntil(async () => !(await browser.execute(() => !!document.getSelection()?.focusNode)))
+
+    // the alert can fade out before the swipe returns, so record whether it appeared while the finger was down
+    await browser.execute(() => {
+      const w = window as unknown as { dragHoldAlertShown?: boolean }
+      w.dragHoldAlertShown = false
+      new MutationObserver((_records, observer) => {
+        if (document.querySelector('[data-testid="alert-content"]')?.textContent === 'Drag and drop to move thought') {
+          w.dragHoldAlertShown = true
+          observer.disconnect()
+        }
+      }).observe(document.body, { childList: true, subtree: true, characterData: true })
+    })
+
+    // the long press activates during the hold, then the finger moves downward before it lifts
+    await holdAndSwipe(await browser.$('[data-editing=true] [aria-label="bullet"]').getElement(), {
+      dy: 200,
+      holdMs: TIMEOUT_LONG_PRESS_THOUGHT * 3,
+    })
+
+    expect(
+      await browser.execute(() => !!(window as unknown as { dragHoldAlertShown?: boolean }).dragHoldAlertShown),
+    ).toBe(true)
 
     // where the touchend arrives, the alert fades out after the lift
     await browser.waitUntil(
