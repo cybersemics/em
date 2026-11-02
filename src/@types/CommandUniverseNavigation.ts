@@ -17,7 +17,7 @@ interface CommandUniverseNavigation {
   index: number
   /** The search query typed into the commands page. */
   search: string
-  /** The order the commands page lists commands in when there is no search. */
+  /** The order the commands page lists commands in when there is no search. Starts at the platform default when the app loads, and is kept across opens. */
   sortOrder: CommandSortType
 }
 

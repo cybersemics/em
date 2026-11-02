@@ -55,6 +55,7 @@ const CommandUniverseSortButton = ({ sortOrder: selectedSort, onSortChange }: Co
       type='button'
       aria-label='Group commands'
       onClick={() => setDropdownOpen(!isDropdownOpen)}
+      onBlur={closeDropdown}
       className={css({
         border: 'none',
         fontFamily: 'inherit',

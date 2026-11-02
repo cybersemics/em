@@ -3,8 +3,9 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 
 /** A border around special keys. */
-const Kbd: FC<PropsWithChildren<{ isText?: boolean }>> = ({ children, isText }) => {
-  const size = useSelector(state => state.fontSize * 1.1)
+const Kbd: FC<PropsWithChildren<{ isText?: boolean; size?: number }>> = ({ children, isText, size }) => {
+  const fontSize = useSelector(state => state.fontSize)
+  const keySize = size ?? fontSize * 1.1
 
   return (
     <kbd
@@ -19,7 +20,7 @@ const Kbd: FC<PropsWithChildren<{ isText?: boolean }>> = ({ children, isText }) 
         alignItems: 'center',
         borderRadius: 3,
       })}
-      style={{ width: size, height: size }}
+      style={{ width: keySize, height: keySize }}
     >
       {children}
     </kbd>
