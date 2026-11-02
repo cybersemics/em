@@ -252,6 +252,7 @@ describe('solid filled arrowhead', () => {
   it('falls back to the filled marker for rounded gestures', () => {
     const rounded = render({ ...props, path: 'rul', rounded: true })
     const straight = render({ ...props, path: 'rul' })
+    /** Extracts the side length of the square viewBox from static markup. */
     const viewBoxSide = (markup: string) => +markup.match(/viewBox="[^"]+ ([^" ]+)"/)![1]
 
     expect(rounded).not.toContain('<polygon')
