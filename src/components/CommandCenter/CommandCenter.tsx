@@ -201,7 +201,7 @@ const CommandCenter = () => {
                   backgroundRepeat: 'no-repeat',
                 })}
                 style={{
-                  // eslint-disable-next-line no-restricted-syntax -- The debug glows are about 5 MB, so they are not preloaded for every user.
+                  // eslint-disable-next-line no-restricted-syntax -- The debug glows are about 3.6 MB, so they are not preloaded for every user.
                   backgroundImage: `url(/img/glow/${backgroundGlow.image})`,
                   opacity: backgroundGlow.opacity,
                 }}
