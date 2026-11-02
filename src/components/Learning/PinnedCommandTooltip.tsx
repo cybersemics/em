@@ -36,9 +36,6 @@ interface PinnedCommandTooltipProps {
   ringFootprint: number
 }
 
-/** Sets the image behind the tooltip's surface glow. */
-const surfaceGlowClassName = css({ backgroundImage: 'url(/img/pinned-command/pinned-command-glow.avif)' })
-
 /**
  * Dismisses the tooltip when the user taps outside it, while it is open.
  *
@@ -341,7 +338,7 @@ const PinnedCommandTooltip = ({
       ref={surfaceRef}
       anchor={{ base: 'bottom-full', lg: 'bottom-right' }}
       glow='pinnedCommand'
-      glowClassName={surfaceGlowClassName}
+      glowClassName={css({ backgroundImage: 'url(/img/pinned-command/pinned-command-glow.avif)' })}
       isVisible={isOpen}
       onDismiss={onClose}
       onOpacityChange={onOpacityChange}
