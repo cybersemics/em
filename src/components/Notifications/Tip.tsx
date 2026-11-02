@@ -8,9 +8,6 @@ import fastClick from '../../util/fastClick'
 import CloseIcon from '../icons/CloseIcon'
 import NotificationSurface from './NotificationSurface'
 
-/** Sets the image behind the tip's rainbow glow. */
-const glowClassName = css({ backgroundImage: 'url(/img/tip/tip-glow-alpha.webp)' })
-
 /** A tip notification with its own visibility rules, message, and Clear control. */
 const Tip: FC<PropsWithChildren<{ tipId: TipId }>> = ({ tipId, children }) => {
   const surfaceRef = useRef<{ dismiss: () => void }>(null)
@@ -30,7 +27,7 @@ const Tip: FC<PropsWithChildren<{ tipId: TipId }>> = ({ tipId, children }) => {
       key={tipId}
       anchor={{ base: 'bottom-full', lg: 'bottom-right' }}
       glow='rainbow'
-      glowClassName={glowClassName}
+      glowClassName={css({ backgroundImage: 'url(/img/tip/tip-glow-alpha.webp)' })}
       isVisible={!isHidden}
       swipeToDismiss
       onDismiss={() => dispatch(dismissTip())}
