@@ -166,7 +166,7 @@ const GestureDiagram = ({
         className={cx(css(inGestureContainer && { position: 'relative', top: '10px' }), className)}
         style={{
           ...style,
-          ...(arrowhead === 'none'
+          ...(arrowhead === 'none' || filledChevron
             ? {}
             : styleCancelAsRegularGesture
               ? { paddingLeft: size / 10, paddingRight: size / 3 }

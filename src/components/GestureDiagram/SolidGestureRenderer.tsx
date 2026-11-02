@@ -61,7 +61,7 @@ const SolidGestureRenderer = ({
 
   // The chevron belongs to the final direction, so it lights up only once the whole gesture is traced.
   // The mask removes the shaft's round cap under the chevron. Translucent colors would otherwise darken the overlap.
-  const chevronOverlay = chevron && (
+  const chevronElement = chevron && (
     <>
       <defs>
         <mask id={`${instanceId}-chevron`} maskUnits='userSpaceOnUse' x={-1e4} y={-1e4} width={2e4} height={2e4}>
@@ -90,7 +90,7 @@ const SolidGestureRenderer = ({
             mask={shaftMask}
             {...commonPathProps}
           />
-          {chevronOverlay}
+          {chevronElement}
         </>
       )
     }
@@ -108,7 +108,7 @@ const SolidGestureRenderer = ({
           mask={shaftMask}
           {...commonPathProps}
         />
-        {chevronOverlay}
+        {chevronElement}
       </>
     )
   }
