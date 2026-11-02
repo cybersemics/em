@@ -81,10 +81,6 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
 
   const eventHandlers = initEvents(store)
 
-  // Preload all background images used in the app, so they don't visibly "pop in" during use.
-  // Preload waits until the first sync pull finishes to avoid interfering with any initial data fetch.
-  preloadBackgroundImages()
-
   const { clientId, storage: storageInUse } = await thoughtspaceRuntime.init({
     storage,
     materialization: {
@@ -131,6 +127,10 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
   await thoughtsLocalPromise
 
   await initializeCursor()
+
+  // Preload all background images used in the app, so they don't visibly "pop in" during use.
+  // Start after the thoughtspace runtime has loaded, so the images do not compete with its download on a cold load.
+  preloadBackgroundImages()
 
   return eventHandlers
 }

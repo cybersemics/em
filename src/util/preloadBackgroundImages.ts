@@ -1,5 +1,4 @@
 import backgroundImages from '../../styled-system/background-images.json'
-import syncStatusStore from '../stores/syncStatusStore'
 import taskQueue from './taskQueue'
 
 /** How many images should we preload at once? */
@@ -14,14 +13,11 @@ const preload = async (src: string) => {
 }
 
 /**
- * Preloads every background image in the app's CSS once the first sync pull has finished.
+ * Preloads every background image in the app's CSS.
  * This prevents background images from visibly "popping in" when a component first shows them.
- * Because we wait until the first sync pull has finished, images load strictly behind visible thoughts.
  * The list of images is generated from the CSS by `backgroundImageManifestPlugin`.
  */
 const preloadBackgroundImages = async () => {
-  await syncStatusStore.once(({ isPulling }) => isPulling)
-  await syncStatusStore.once(({ isPulling }) => !isPulling)
   await taskQueue<void>({ concurrency: CONCURRENCY }).add(backgroundImages.map(src => () => preload(src)))
 }
 
