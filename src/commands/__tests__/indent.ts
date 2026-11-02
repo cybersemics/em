@@ -1,6 +1,7 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
-import { executeCommandWithMulticursor } from '../../commands'
+import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
+import { beforeInput, executeCommandWithMulticursor, keyDown } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
@@ -9,6 +10,7 @@ import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import indentCommand from '../indent'
 import moveCursorForward from '../moveCursorForward'
+import noteCommand from '../note'
 
 beforeEach(initStore)
 
@@ -63,6 +65,90 @@ describe('space-to-indent', () => {
     - c
       - `
 
+    expect(exported).toEqual(expectedOutput)
+  })
+
+  // https://github.com/cybersemics/em/issues/5969
+  it('do nothing on an empty thought when a space is typed in its note', () => {
+    store.dispatch(
+      importText({
+        text: `
+          - a
+        `,
+      }),
+    )
+    store.dispatch([setCursor(['a']), newThought({ value: '' }), toggleNote()])
+
+    const event = new KeyboardEvent('keydown', { key: ' ', cancelable: true })
+    keyDown(event)
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    const expectedOutput = `- ${HOME_TOKEN}
+  - a
+  - 
+    - =note
+      - `
+
+    expect(event.defaultPrevented).toBe(false)
+    expect(exported).toEqual(expectedOutput)
+  })
+
+  // https://github.com/cybersemics/em/issues/5969
+  it('do nothing on a multiselected empty thought when a space is typed in its note', () => {
+    store.dispatch(
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+    )
+    store.dispatch([setCursor(['b']), newThought({ value: '' }), addMulticursor(['b']), addMulticursor([''])])
+    executeCommandWithMulticursor(noteCommand, { store, type: 'keyboard' })
+
+    const event = new KeyboardEvent('keydown', { key: ' ', cancelable: true })
+    keyDown(event)
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    const expectedOutput = `- ${HOME_TOKEN}
+  - a
+  - b
+    - =note
+      - 
+  - 
+    - =note
+      - `
+
+    expect(event.defaultPrevented).toBe(false)
+    expect(exported).toEqual(expectedOutput)
+  })
+
+  // https://github.com/cybersemics/em/issues/5969
+  it('inserts a space delivered as a beforeinput insertText into the note of an empty thought', () => {
+    store.dispatch(
+      importText({
+        text: `
+          - a
+        `,
+      }),
+    )
+    store.dispatch([setCursor(['a']), newThought({ value: '' }), toggleNote()])
+
+    // Android soft keyboards deliver the space only as a beforeinput insertText
+    const event = new InputEvent('beforeinput', { inputType: 'insertText', data: ' ', cancelable: true })
+    beforeInput(event)
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    const expectedOutput = `- ${HOME_TOKEN}
+  - a
+  - 
+    - =note
+      - `
+
+    expect(event.defaultPrevented).toBe(false)
     expect(exported).toEqual(expectedOutput)
   })
 

@@ -19,12 +19,13 @@ const MARKER = '<!-- copilot-conflicts -->'
 /**
  * Labels that opt a pull request out of conflict resolution. `skip-auto-resolve-conflicts` is this
  * workflow's own opt-out; `hold` pauses development on the pull request generally, and a pull
- * request nobody intends to advance is not worth spending a task on. Either one excludes the
+ * request nobody intends to advance is not worth spending a task on; nor is a `prototype`, a design
+ * experiment that is never merged (docs/testing.md § Prototype pull requests). Any one excludes the
  * pull request from the scan entirely, so no comment is written or updated and its retry state
  * stays frozen until the label is removed — or until a dispatch names the pull request, which
  * overrides the opt-out because a human asking for a task is the thing the label said was absent.
  */
-const SKIP_LABELS = ['skip-auto-resolve-conflicts', 'hold']
+const SKIP_LABELS = ['skip-auto-resolve-conflicts', 'hold', 'prototype']
 
 /** The state record hidden in that comment, as base64url-encoded JSON. */
 const STATE_PATTERN = /<!-- copilot-conflicts-state: ([A-Za-z0-9_-]+) -->/

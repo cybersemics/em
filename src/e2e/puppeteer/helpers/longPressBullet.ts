@@ -35,6 +35,10 @@ const longPressBullet = async (nodeHandle: ElementHandle<Element> | JSHandle<und
   )
 
   await page.mouse.up()
+
+  // The app ends the long press on a timer after the release, and only then commits the selection and leaves DragHold.
+  // Wait for the body's data-drag-hold attribute, which mirrors state.longPress, to return to 'false'.
+  await page.waitForFunction(() => document.body.getAttribute('data-drag-hold') === 'false', { timeout: 5000 })
 }
 
 export default longPressBullet

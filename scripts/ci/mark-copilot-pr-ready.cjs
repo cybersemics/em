@@ -87,6 +87,13 @@ const markCopilotPrReady = async ({ github, context, core }) => {
     core.info(`#${pr.number} is authored by ${pr.user.login}, not ${COPILOT}; leaving its draft status alone.`)
     return
   }
+  // A prototype skips CI, so its checks are all green without testing anything, and its draft is
+  // what keeps it from being merged (docs/testing.md § Prototype pull requests). Returning before
+  // the `ready` output also keeps the merge step off it.
+  if (pr.labels.some(label => label.name === 'prototype')) {
+    core.info(`#${pr.number} is a prototype; leaving its draft status alone.`)
+    return
+  }
 
   // The agent pushes several commits over a session and each one runs the full suite, so green
   // checks alone would undraft a pull request the agent is still working on. `copilot_work_started`

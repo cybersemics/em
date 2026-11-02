@@ -1,20 +1,11 @@
-import type { PreloadedEmWindow } from '../../../@types'
 import getEditingText from '../helpers/getEditingText'
+import preloadTestFlags from '../helpers/preloadTestFlags'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 30000, hookTimeout: 20000 })
 
 it('handles keyboard commands while thoughtspace initialization is delayed', async () => {
-  await page.evaluateOnNewDocument(() => {
-    const preloadedWindow = window as unknown as PreloadedEmWindow
-    preloadedWindow.em = {
-      ...preloadedWindow.em,
-      testFlags: {
-        ...preloadedWindow.em?.testFlags,
-        preventInitialize: true,
-      },
-    }
-  })
+  await preloadTestFlags(page, { preventInitialize: true })
 
   await page.reload({ waitUntil: 'domcontentloaded' })
 

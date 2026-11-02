@@ -35,9 +35,8 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
 
   const animateHover = useSelector(state => {
     const parent = parentOf(simplePath)
-    const autofocus = calculateAutofocus(state, simplePath)
-    const autofocusParent = calculateAutofocus(state, parent)
-    return autofocus === 'dim' && autofocusParent === 'hide'
+    const autofocus = calculateAutofocus(state)
+    return autofocus(simplePath) === 'dim' && autofocus(parent) === 'hide'
   })
   const thoughtId = head(simplePath)
 

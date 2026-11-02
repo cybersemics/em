@@ -29,7 +29,7 @@ flowchart TD
     TDD --> RT["<b>run-test</b><br/>run one test for real"]
     REP --> RT
 
-    CM --> TD["<b>test-diagnosis</b><br/>what kind of failure is this?"]
+    CM --> TD["<b>test-diagnosis</b><br/>whose failure, and what kind?"]
     TD --> PUS["<b>puppeteer-update-snapshots</b><br/>regenerate screenshots"]
 
     CM --> ES["<b>end-session</b><br/>checklist before stopping"]
@@ -71,7 +71,7 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`tdd-write-failing-test`](#tdd-write-failing-test) | Turn a reproduction into a permanent test that fails for the right reason | [SKILL.md](../../.github/skills/tdd-write-failing-test/SKILL.md) |
 | [`run-test`](#run-test) | Run one test in the real harness and report what happened | [SKILL.md](../../.github/skills/run-test/SKILL.md) |
 | [`ci-monitor`](#ci-monitor) | Wait for every CI check and report which passed | [SKILL.md](../../.github/skills/ci-monitor/SKILL.md) |
-| [`test-diagnosis`](#test-diagnosis) | Classify a CI failure and decide how to fix it | [SKILL.md](../../.github/skills/test-diagnosis/SKILL.md) |
+| [`test-diagnosis`](#test-diagnosis) | Classify a CI failure, decide whether the pull request caused it, and decide how to handle it | [SKILL.md](../../.github/skills/test-diagnosis/SKILL.md) |
 | [`puppeteer-update-snapshots`](#puppeteer-update-snapshots) | Regenerate screenshot comparisons after an intended visual change | [SKILL.md](../../.github/skills/puppeteer-update-snapshots/SKILL.md) |
 | [`end-session`](#end-session) | Work through the exit checklist before stopping for any reason | [SKILL.md](../../.github/skills/end-session/SKILL.md) |
 | [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
@@ -250,7 +250,7 @@ So: only use it when the visual change was intentional, never to silence a failu
 
 Lists the workflow runs for the current branch and waits for all of them to finish before reporting. Derives the repository from the git remote rather than assuming, and filters by the current branch. Because the main workflows cancel a run the moment a newer push supersedes it (see [Superseded runs](../testing.md#superseded-runs)), it judges each workflow by its run on the current head sha — a `cancelled` run on an older commit is not a failure to chase.
 
-Its central instruction: **never claim tests pass without checking.** The skill says outright that hallucinating test results is the worst thing it can do. If CI still fails after five fix-and-push cycles, stop and hand back to a human.
+Its central instruction: **never claim tests pass without checking.** The skill says outright that hallucinating test results is the worst thing it can do. If CI still fails after five fix-and-push cycles, or only failures attributed to `main` remain, stop and hand back to a human.
 
 ### test-diagnosis
 
@@ -258,9 +258,11 @@ Its central instruction: **never claim tests pass without checking.** The skill 
 
 Sorts a CI failure into one of: a build error, a lint or formatting error, a failed unit test, a mismatched screenshot, a timeout, or a known flaky test. Then fixes them in that order — nothing else matters if the code does not build, and lint failures are quick and mechanical.
 
+Before fixing anything it decides whose failure it is, from `main`'s own runs of the same workflow. A failure the pull request caused is fixed there. One that fails consistently on `main` is a blocker, tracked by the [`main-fix`](../testing.md#failing-ci-on-main) issue that Main Fix files rather than one filed by hand, and fixed in its own pull request. One that is flaky on `main` gets a single unchanged re-run, its evidence cited, and a tracking issue if it has none. The pull request carries no code for either, because a request to address a failing check asks for a diagnosis, not for the pull request's scope to grow around whatever happened to be red.
+
 The rule that matters most is for failing tests: **fix the code, not the test**, unless you are genuinely certain the test is wrong. Never edit a test into passing without understanding why it failed.
 
-For suspected flakiness it checks the project's open issues labelled "test" for known cases. If a test looks flaky but is not on that list, stop and say so rather than deciding for yourself.
+For suspected flakiness it checks the project's open issues labelled "test" for known cases. A flake that is not on that list is tracked — filed as `Flaky test: <file> > <full name>`, or reported to the user when the agent cannot file issues — rather than fixed in the pull request it happened to fail on.
 
 ## Ending the session
 
@@ -272,7 +274,7 @@ The exit gate. The [`reproduce`](#reproduce) and [`plan`](#plan) skills control 
 
 It exists because the last action of a run is the one nobody supervises, and its two worst failures are silent ones. A session that ends with the fix still sitting in the working tree has destroyed the work rather than delivered it: the runner is disposable, so the branch looks untouched and the effort is gone. A session that ends while CI is still running has reported a result it never watched. Both read as success from inside the transcript, which is why this is a checklist rather than a principle.
 
-It opens by asking whether the agent is entitled to stop at all — not straight after a gate confirmation line, not mid fix-validate loop, not with CI still running — because the more common failure is not a messy ending but a premature one, stopping to wait for a human who is not there. An earlier version of this system had agents printing a gate line and then yielding mid-task. Only four endings are legitimate: the work is green, a documented attempt limit was hit, the bug would not reproduce, or the path is genuinely ambiguous.
+It opens by asking whether the agent is entitled to stop at all — not straight after a gate confirmation line, not mid fix-validate loop, not with CI still running — because the more common failure is not a messy ending but a premature one, stopping to wait for a human who is not there. An earlier version of this system had agents printing a gate line and then yielding mid-task. Only five endings are legitimate: the work is green, a documented attempt limit was hit, the bug would not reproduce, the path is genuinely ambiguous, or the only red checks are failures `test-diagnosis` attributed to `main`.
 
 From there the order is load-bearing, and each step is placed where it is for a reason. Documentation is repaired first, through [`docs-sync`](#docs-sync), because a doc edit is itself a file change and anything done after the tree is taken stock of misses the commit. Then every changed file is accounted for — each line of `git status --porcelain` is part of the work, scratch to delete, or something the agent did not write, which it must leave alone and mention rather than quietly discard. Then everything is committed and pushed, verified by `git status --porcelain` and `git log @{u}..HEAD` both coming back empty. Only then is CI examined, because committing restarts it. Regression tests are checked for a leftover `.skip` against what this branch added rather than the whole suite, the pull request is checked for its draft status, issue reference, plan, and a description that says each thing once and claims no test results GitHub's own CI status already shows, and the final report carries the `docs:` line along with whatever was deliberately left undone.
 
@@ -321,7 +323,7 @@ The escalation rule is the interesting one. If a change contradicts **design int
 
 **Source: [`.github/skills/liminal/SKILL.md`](../../.github/skills/liminal/SKILL.md)**
 
-Runs on demand — when someone asks for a static artifact, such as a report page built outside the app, in em's look. It is never used to change the app's own UI. It gives the colour tokens, base CSS and conventions for em's Liminal UI: white on pure black, translucent surfaces, and the background glow from `public/img/glow/`, published next to the page. It has a single dark theme, and it keeps long links and code blocks wrapped so nothing scrolls sideways on a phone.
+Runs on demand — when someone asks for a static artifact, such as a report page built outside the app, in em's look. It is never used to change the app's own UI. It gives the colour tokens, base CSS and conventions for em's Liminal UI: white on pure black, translucent surfaces, and a small copy of the background glow, embedded in the page so the Artifact stays a single file that can be shared. It has a single dark theme, and it keeps long links and code blocks wrapped so nothing scrolls sideways on a phone.
 
 ### report-review-gaps
 

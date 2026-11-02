@@ -58,7 +58,7 @@ const DropEnd = ({
     attributeEquals(state, head(rootedParentOf(state, path)), '=view', 'Table'),
   )
 
-  const { isHovering, dropTarget } = useDragAndDropSubThought({ path })
+  const { isHovering, isOver, dropTarget } = useDragAndDropSubThought({ path })
 
   // a boolean indicating if the drop-hover component is shown
   // true if hovering and the context is not sorted
@@ -128,6 +128,7 @@ const DropEnd = ({
         transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
       }}
       ref={dndRef(dropTarget)}
+      data-drop-over={isOver}
     >
       {testFlags.simulateDrop && (
         <span

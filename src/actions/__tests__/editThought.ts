@@ -527,3 +527,60 @@ describe('changing thought with duplicate descendent', () => {
     expect(lexeme?.contexts).toHaveLength(1)
   })
 })
+
+describe('metaprogramming attributes', () => {
+  // https://github.com/cybersemics/em/issues/6009
+  it('edits a thought into an attribute and back', () => {
+    const steps = [
+      importText({ text: `- aaa\n  - =favorite` }),
+      setCursor(['aaa', '=favorite']),
+      editThought(['aaa', '=favorite'], 'x'),
+      editThought(['aaa', 'x'], '=favorite'),
+    ]
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - aaa
+    - =favorite`)
+    expectPathToEqual(stateNew, stateNew.cursor, ['aaa', '=favorite'])
+  })
+
+  it('does not delete a thought that a stale childrenMap entry lists as its own duplicate', () => {
+    const stateImported = reducerFlow([importText({ text: `- aaa\n  - =favorite` })])(initialState())
+    const favorite = contextToThought(stateImported, ['aaa', '=favorite'])!
+
+    // Leave the parent's '=favorite' key pointing at a thought whose value is no longer =favorite, as an edit that
+    // skipped rebuilding the parent's childrenMap would.
+    const stateStale = {
+      ...stateImported,
+      thoughts: {
+        ...stateImported.thoughts,
+        thoughtIndex: {
+          ...stateImported.thoughts.thoughtIndex,
+          [favorite.id]: { ...favorite, value: 'x' },
+        },
+      },
+    }
+
+    const stateNew = reducerFlow([setCursor(['aaa', 'x']), editThought(['aaa', 'x'], '=favorite')])(stateStale)
+
+    expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - aaa
+    - =favorite`)
+    expectPathToEqual(stateNew, stateNew.cursor, ['aaa', '=favorite'])
+  })
+
+  it('moves the cursor to an existing attribute instead of creating a duplicate', () => {
+    const steps = [
+      importText({ text: `- aaa\n  - =favorite\n  - x` }),
+      setCursor(['aaa', 'x']),
+      editThought(['aaa', 'x'], '=favorite'),
+    ]
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - aaa
+    - =favorite`)
+    expectPathToEqual(stateNew, stateNew.cursor, ['aaa', '=favorite'])
+  })
+})

@@ -441,6 +441,82 @@ describe('format', () => {
   })
 })
 
+describe('gesture traces', () => {
+  /** Records a gesture trace with a single point. */
+  const logTrace = (sequence: string, t = 1700000000000) =>
+    debugLog.logGestureTrace({ t, sequence, abandon: false, points: [[0, 10, 20]] })
+
+  it('renders each trace as one line with every point as ms:x,y', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.logGestureTrace({
+      t: 1700000000000,
+      sequence: 'ld',
+      abandon: false,
+      points: [
+        [0, 225, 424],
+        [17, 214, 430],
+        [33, 200, 445],
+      ],
+    })
+    const lines = debugLog.format().split('\n')
+    const heading = lines.findIndex(line => line.startsWith('--- gestures:'))
+    expect(lines[heading]).toBe('--- gestures: last 1, points as ms:x,y from touchstart')
+    expect(lines[heading + 1]).toBe('22:13:20.000 "ld" 0:225,424 17:214,430 33:200,445')
+  })
+
+  it('keeps only the five most recent traces', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    ;['r', 'l', 'u', 'd', 'rd', 'ld', 'ldl'].forEach(sequence => logTrace(sequence))
+    const text = debugLog.format()
+    expect(text).toContain('--- gestures: last 5,')
+    expect(text.match(/^22:13:20\.000 "\w+"/gm)).toEqual([
+      '22:13:20.000 "u"',
+      '22:13:20.000 "d"',
+      '22:13:20.000 "rd"',
+      '22:13:20.000 "ld"',
+      '22:13:20.000 "ldl"',
+    ])
+  })
+
+  it('does not append entries to the buffer', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    logTrace('ld')
+    expect(debugLog.read()).toEqual([])
+  })
+
+  it('marks an abandoned gesture', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.logGestureTrace({ t: 1700000000000, sequence: 'r', abandon: true, points: [[0, 10, 20]] })
+    expect(debugLog.format()).toContain('22:13:20.000 "r" abandoned 0:10,20')
+  })
+
+  it('is a no-op when logging is disabled', () => {
+    logTrace('ld')
+    expect(debugLog.format()).not.toContain('--- gestures:')
+    expect(storage.getItem('debugLog-gestures')).toBeNull()
+  })
+
+  it('hydrates the traces from a prior session on module load', async () => {
+    debugLog.setEnabled(true)
+    logTrace('ldl')
+    vi.resetModules()
+    const { default: reloaded } = await import('../debugLog')
+    expect(reloaded.format()).toContain('22:13:20.000 "ldl" 0:10,20')
+  })
+
+  it('is emptied by clear', () => {
+    debugLog.setEnabled(true)
+    logTrace('ld')
+    debugLog.clear()
+    expect(debugLog.format()).not.toContain('--- gestures:')
+    expect(storage.getItem('debugLog-gestures')).toBeNull()
+  })
+})
+
 describe('logError', () => {
   it('records the name, message and stack of an Error', () => {
     debugLog.setEnabled(true)

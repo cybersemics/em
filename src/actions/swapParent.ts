@@ -50,15 +50,20 @@ const swapParent = (state: State): State => {
 
   // Get siblings (other children of parent excluding the child being swapped)
   const parentChildren = getChildrenRanked(state, parentId)
-  const siblings = parentChildren.filter(sibling => sibling.id !== childId)
+
+  // The children keep their position while the two thoughts trade places, except =done, which marks the thought itself
+  // as completed rather than describing its children. It is left out of both moves so that it stays with its thought.
+  const siblings = parentChildren.filter(sibling => sibling.id !== childId && sibling.value !== '=done')
+  const movedChildChildren = childChildren.filter(grandchild => grandchild.value !== '=done')
 
   // The parent and the siblings arrive under the child before the child's own children have left it, so giving them
   // the ranks they held under the parent can collide with the ranks already in place. moveThought reranks a context
   // whose ranks collide, and rerank resolves an exact tie in whatever order the tied thoughts happen to enumerate,
   // reordering thoughts the swap should have left alone. Ranking them past everything the child currently holds keeps
   // them clear of it, and once the child's own children have moved out, all that remains is their order relative to
-  // each other — the parent taking the slot the child vacated. The reverse move needs no such offset: the parent has
-  // been emptied by the time the child's children arrive, so they keep the ranks they already had.
+  // each other — the parent taking the slot the child vacated. The reverse move needs no such offset: the parent holds
+  // nothing but its own =done by the time the child's children arrive, so they keep the ranks they already had. A tie
+  // with that hidden attribute only decides where it falls among them, which leaves their visible order unchanged.
   const ranksUnderChild = keyValueBy(parentChildren, (parentChild, i) => ({
     [parentChild.id === childId ? parentId : parentChild.id]: (childChildren.at(-1)?.rank ?? -1) + 1 + i,
   }))
@@ -94,7 +99,7 @@ const swapParent = (state: State): State => {
     ),
 
     // Move grandchildren under the parent's new position
-    ...childChildren.map(grandchild =>
+    ...movedChildChildren.map(grandchild =>
       moveThought({
         oldPath: simplifyPath(state, [...cursor, grandchild.id]),
         newPath: simplifyPath(state, [...grandparent, childId, parentId, grandchild.id]),

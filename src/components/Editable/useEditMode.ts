@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { useStore } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
+import State from '../../@types/State'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
 import { isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
@@ -16,6 +17,7 @@ import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
 import isMulticursorPath from '../../selectors/isMulticursorPath'
 import multitouchStore from '../../stores/multitouchStore'
+import osVersionStore from '../../stores/osVersionStore'
 import touchStore from '../../stores/touchStore'
 import debugLog from '../../util/debugLog'
 import equalPath from '../../util/equalPath'
@@ -58,6 +60,8 @@ const useEditMode = ({
   const store = useStore()
   const dispatch = useDispatch()
   const pressingRef = useRef(false)
+  // Where the touch in progress on this editable began.
+  const touchStartRef = useRef<{ clientX: number; clientY: number } | null>(null)
 
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
@@ -215,7 +219,24 @@ const useEditMode = ({
     }
 
     /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
-    const onTouchStart = () => (pressingRef.current = true)
+    const onTouchStart = (e: TouchEvent) => {
+      pressingRef.current = true
+      const touch = e.touches[0]
+      touchStartRef.current = touch ? { clientX: touch.clientX, clientY: touch.clientY } : null
+    }
+
+    /** Whether a tap on this thought may move the cursor onto it while the keyboard is open on another thought. */
+    const canTapMoveCursor = (state: State) =>
+      state.isKeyboardOpen &&
+      !equalPath(state.cursor, path) &&
+      !hasMulticursor(state) &&
+      !touchStore.getState().suppressCursorAfterTouch &&
+      state.longPress === LongPressState.Inactive &&
+      // Do not move the cursor when the tap is part of a multi-touch gesture (e.g. pinch or two-finger
+      // trace): the caret must stay where it was. The latch persists through the terminating touchend of
+      // the gesture and resets on the next single-finger touchstart. See #4233.
+      !multitouchStore.getState() &&
+      style?.visibility !== 'hidden'
 
     /** Ends the touch, records it for ghost-click detection, and sets the cursor on the tapped thought. */
     const onTouchEnd = (e: TouchEvent) => {
@@ -228,19 +249,7 @@ const useEditMode = ({
       // that ghost), so onFocus cannot be relied on to move the cursor. Set the cursor here.
       dispatch((dispatch, getState) => {
         const state = getState()
-        const move =
-          willRetarget &&
-          state.isKeyboardOpen &&
-          !equalPath(state.cursor, path) &&
-          !hasMulticursor(state) &&
-          !touchStore.getState().suppressCursorAfterTouch &&
-          state.longPress === LongPressState.Inactive &&
-          // Do not move the cursor when the tap is part of a multi-touch gesture (e.g. pinch or two-finger
-          // trace): the caret must stay where it was. The latch persists through the terminating touchend of
-          // the gesture and resets on the next single-finger touchstart. See #4233.
-          !multitouchStore.getState() &&
-          style?.visibility !== 'hidden'
-        if (!move) return
+        if (!willRetarget || !canTapMoveCursor(state)) return
 
         // Place the caret where the user tapped. getCaretOffset is coordinate-based, so it resolves the offset
         // even though the synthesized mousedown/focus retargeted away.
@@ -352,9 +361,37 @@ const useEditMode = ({
 
     /** Prevents the thought from autoscrolling to the bottom of the screen when the keyboard is open.
      * Autoscroll must be prevented until focus handling is complete, so preventAutoscrollEnd is deferred
-     * using queueMicrotask without introducing any additional delay.
+     * using queueMicrotask without introducing any additional delay. Also places the caret for a tap whose touchend
+     * iOS withholds.
      */
-    const onFocus = () => queueMicrotask(() => preventAutoscrollEnd(editable))
+    const onFocus = () => {
+      queueMicrotask(() => preventAutoscrollEnd(editable))
+
+      // #5761: iOS 27 can withhold a tap's touchend until the next touch, so the tap's mousedown arrives while the
+      // touch still looks like a press in progress, and onMouseDown leaves the caret to the browser. The focus that
+      // follows would then set the cursor without an offset, which puts the caret at the start of the thought.
+      // Place it where the touch landed instead, before Editable's onFocus runs. A focus on iOS 26 and earlier
+      // never arrives mid-touch, since their touchend precedes the tap's synthesized events.
+      const touchStart = touchStartRef.current
+      if (!pressingRef.current || !touchStart || (osVersionStore.getState() ?? 0) < 27) return
+
+      dispatch((dispatch, getState) => {
+        if (!canTapMoveCursor(getState())) return
+
+        const { offset } = getCaretOffset(editable, touchStart)
+
+        // Dispatch only the Redux cursor; the declarative selection effect places the caret on the next render.
+        dispatch(
+          setCursor({
+            path,
+            offset,
+            cursorHistoryClear: true,
+            isKeyboardOpen: true,
+            preserveMulticursor: true,
+          }),
+        )
+      })
+    }
 
     editable.addEventListener('mousedown', onMouseDown)
     if (isTouch && isSafari()) {

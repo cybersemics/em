@@ -27,7 +27,9 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // window.visualViewport.height excludes the virtual keyboard height (i.e. it changes when the keyboard is open/closed).
   // It changes in a single step (before the virtual keyboard animation completes), so we can use it to determine if the element will be below the visible area.
   // On desktop or when the virtual keyboard is down, it is equivalent to window.innerHeight.
-  const visualViewportHeight = window.visualViewport?.height ?? window.innerHeight
+  // After the app switcher's landscape snapshot, iOS can report a visualViewport.height of zero or less for the rest of the session (#5972). Scrolling against it would push the cursor far down the page and pan the visible area below the nav bar, so fall back to innerHeight.
+  const visualViewportHeight =
+    window.visualViewport && window.visualViewport.height > 0 ? window.visualViewport.height : window.innerHeight
 
   // On iOS Capacitor the Keyboard plugin is configured with resize: 'none', so the WebView stays full-screen
   // and window.visualViewport.height does NOT shrink when the keyboard opens. We therefore derive the effective
