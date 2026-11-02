@@ -1,3 +1,4 @@
+import { isSafari, isTouch } from '../browser'
 import * as selection from '../device/selection'
 import debugLog from '../util/debugLog'
 import reactMinistore from './react-ministore'
@@ -45,15 +46,18 @@ const caretStore = reactMinistore<{ selection: ObservedSelection; target: CaretT
   target: null,
 })
 
-/** Reads the browser selection into the store. Skips the update when nothing changed, so that subscribers see only real moves. */
+/**
+ * Reads the browser selection into the store, for useCaretRestore and useRevertCorrection, which run only on iOS Safari.
+ * Every selectionchange is passed on, even when the selection reads the same as the last one: two escapes from the
+ * editable read the same, and the second must still be restored if the first restore's selectionchange never came.
+ * Each observation is a new object, so a component should select a single field rather than the whole selection.
+ */
 export const observeSelection = () => {
+  if (!isTouch || !isSafari()) return
   const focused = document.activeElement instanceof HTMLElement ? document.activeElement : null
   // Measured only on an editable, since measuring the focus of a selection within the body would walk the whole page.
   const offset = focused?.hasAttribute('contenteditable') ? selection.offsetFromNode(focused) : null
-  const collapsed = selection.isCollapsed()
-  const old = caretStore.getState().selection
-  if (old.focused === focused && old.offset === offset && old.collapsed === collapsed) return
-  caretStore.update({ selection: { focused, offset, collapsed } })
+  caretStore.update({ selection: { focused, offset, collapsed: selection.isCollapsed() } })
 }
 
 /** Asks for the caret to be placed in the given editable. Applied synchronously. */
