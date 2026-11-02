@@ -3,12 +3,14 @@ import {
   Fragment,
   KeyboardEvent,
   forwardRef,
+  startTransition,
   useCallback,
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
 } from 'react'
 import { useListBox } from 'react-aria'
 import { useSelector } from 'react-redux'
@@ -16,11 +18,15 @@ import { Item, Section, useListState } from 'react-stately'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import useCommandList from '../hooks/useCommandList'
+import durations from '../util/durations'
 import CommandUniverseListItem from './CommandUniverseListItem'
 
 type CommandGroup = ReturnType<typeof useCommandList>['sections'][number]
 type OriginRect = Pick<DOMRectReadOnly, 'x' | 'y' | 'width' | 'height'>
 const SCROLL_ANIM_KEY = '__cuScrollAnim'
+
+const INITIAL_ROW_LIMIT = 12
+const REMAINING_ROWS_DELAY = durations.get('fast') + 50
 
 interface CommandUniverseListHandle {
   /**
@@ -125,7 +131,20 @@ const CommandUniverseList = forwardRef<CommandUniverseListHandle, CommandUnivers
       )),
     })
 
-    const visibleSections = [...state.collection].map(section => ({ section, items: [...section.childNodes] }))
+    // Render INITIAL_ROW_LIMIT rows on mount and the rest once the opening animation has finished. The transition
+    // lets React split that work across frames if anything else is animating.
+    const [rowLimit, setRowLimit] = useState(INITIAL_ROW_LIMIT)
+    useEffect(() => {
+      const timeout = window.setTimeout(() => startTransition(() => setRowLimit(Infinity)), REMAINING_ROWS_DELAY)
+      return () => clearTimeout(timeout)
+    }, [])
+    // Sections trimmed to rowLimit rows in total, dropping any section left with none.
+    let rowsLeft = rowLimit
+    const visibleSections = [...state.collection].flatMap(section => {
+      const items = [...section.childNodes].slice(0, rowsLeft)
+      rowsLeft -= items.length
+      return items.length > 0 ? [{ section, items }] : []
+    })
 
     const listRef = useRef<HTMLUListElement>(null)
     const { listBoxProps } = useListBox(
