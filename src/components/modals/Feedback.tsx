@@ -488,7 +488,8 @@ const Feedback = () => {
               </div>
             )}
             <p className={css({ margin: 0, color: 'dim', fontSize: '0.85rem' })}>
-              Feedback is shared privately with the em team and includes the app version, build, browser, and platform.
+              Feedback is shared privately with the <strong>em</strong> team and includes the app version, build,
+              browser, and platform.
             </p>
           </fieldset>
           {error && <p role='alert'>{error}</p>}
