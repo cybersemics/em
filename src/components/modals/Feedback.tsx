@@ -29,6 +29,7 @@ const Feedback = () => {
   const nodeRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const messageRef = useRef<HTMLTextAreaElement>(null)
   const busyRef = useRef(false)
   const attemptRef = useRef<{ id: string; token: string; key: string } | null>(null)
@@ -72,7 +73,7 @@ const Feedback = () => {
       }
       if (event.key !== 'Tab') return
       const controls = formRef.current?.querySelectorAll<HTMLElement>(
-        'input:not(:disabled),textarea:not(:disabled),button:not(:disabled),summary',
+        'input:not(:disabled):not([type="file"]),textarea:not(:disabled),button:not(:disabled),summary',
       )
       if (!controls?.length) {
         event.preventDefault()
@@ -384,22 +385,33 @@ const Feedback = () => {
                 onChange={event => setMessage(event.target.value)}
               />
             </label>
-            <label>
+            <div>
               Attachments (optional)
+              <div className={css({ marginTop: '0.5em' })}>
+                <button
+                  type='button'
+                  className={anchorButtonRecipe({ actionButton: true, thin: true })}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Add attachment
+                </button>
+              </div>
               <input
+                ref={fileInputRef}
                 type='file'
+                hidden
+                tabIndex={-1}
                 multiple
                 aria-label='Add attachments'
                 accept={Object.keys(feedbackConfig.fileTypes)
                   .map(extension => `.${extension}`)
                   .join(',')}
-                className={css({ display: 'block', width: '100%', marginTop: '0.5em' })}
                 onChange={event => {
                   addFiles(Array.from(event.target.files ?? []))
                   event.target.value = ''
                 }}
               />
-            </label>
+            </div>
             <p className={css({ margin: 0, color: 'dim', fontSize: '0.85rem' })}>
               Images, text/logs, JSON, or PDF. Up to 5 files, 10 MB each, 25 MB total.
             </p>
@@ -411,6 +423,7 @@ const Feedback = () => {
                     <button
                       type='button'
                       aria-label={`Remove ${file.name}`}
+                      className={anchorButtonRecipe({ actionButton: true, thin: true })}
                       onClick={() => setFiles(files.filter((_, i) => i !== index))}
                     >
                       Remove
