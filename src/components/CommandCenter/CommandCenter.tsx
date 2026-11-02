@@ -4,7 +4,7 @@ import pluralize from 'pluralize'
 import { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { Sheet, SheetRef } from 'react-modal-sheet'
 import { useDispatch, useSelector } from 'react-redux'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../../actions/clearMulticursors'
 import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
@@ -22,6 +22,7 @@ import isTutorial from '../../selectors/isTutorial'
 import backgroundGlowStore from '../../stores/backgroundGlowStore'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
+import backgroundGlowImageClassName from '../backgroundGlowImageClassName'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
 
@@ -193,18 +194,17 @@ const CommandCenter = () => {
               }}
             >
               <div
-                className={css({
-                  position: 'absolute',
-                  inset: 0,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'bottom center',
-                  backgroundRepeat: 'no-repeat',
-                })}
-                style={{
-                  // eslint-disable-next-line no-restricted-syntax -- The debug glows are about 3.6 MB, so they are not preloaded for every user.
-                  backgroundImage: `url(/img/glow/${backgroundGlow.image})`,
-                  opacity: backgroundGlow.opacity,
-                }}
+                className={cx(
+                  backgroundGlowImageClassName[backgroundGlow.image],
+                  css({
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'bottom center',
+                    backgroundRepeat: 'no-repeat',
+                  }),
+                )}
+                style={{ opacity: backgroundGlow.opacity }}
               />
             </motion.div>
           ) : (
