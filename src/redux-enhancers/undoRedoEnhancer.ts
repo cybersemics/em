@@ -96,6 +96,7 @@ const statePropertiesToOmit: (keyof State)[] = [
   'alert',
   'cursorCleared',
   'editableNonce',
+  'helpGenie',
   'isKeyboardOpen',
   'learning',
   'pushQueue',
@@ -426,6 +427,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       const { redoPatches, undoPatches } = state as State
       const actionType = action.type
       const commandMetadata = (action as A & CommandAttributedAction).commandMetadata
+      // An action may name its undo step, e.g. setIsMulticursorExecuting for the batch it opens, formatSelection for a
+      // color change, or toggleNote for the note that the Note command adds. It takes precedence over the label of the
+      // command that dispatched it, since it describes what the command actually did.
+      const undoLabel = (action as UnknownAction).undoLabel
+      const actionLabel = typeof undoLabel === 'string' ? { label: undoLabel } : null
 
       // Clear the last edit thought direction when the clear action is executed.
       if (actionType === 'clear') {
@@ -502,6 +508,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions within an explicit command transaction are merged under that command's metadata.
       // - Direct action batches guarded by isMulticursorExecuting are merged into one action patch.
+      // - An action flagged mergeNext is merged with the action that follows it, e.g. the two edits of a text drag between thoughts.
       const lastUndoPatch = nthLast(state.undoPatches, 1)
       // A resumed invocation may extend its latest patch, but never reach back across another edit or undo/redo.
       // Its identity survives await; only contiguous history is eligible for merging.
@@ -535,12 +542,12 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
             console.error(e.message, { state, lastUndoPatch })
             // The throw unwinds the dispatch before loggerMiddleware records the action, so the Debug Log would
             // otherwise show the error with no trace of what triggered it.
-            debugLog.log('undoPatchError', {
+            debugLog.log('undoPatchError', () => ({
               actionType,
               message: e.message,
               patchActionTypes: lastUndoPatch.metadata.actionTypes,
               opPaths: lastUndoPatch.ops.map(op => `${op.op} ${op.path}`),
-            })
+            }))
             throw new Error('Error applying patch')
           }
         }
@@ -565,7 +572,10 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
                   {
                     ops: combinedUndoPatch,
                     metadata: {
-                      ...(commandMetadata ?? lastUndoPatch?.metadata ?? { source: 'action' as const }),
+                      // A command that continues its own patch keeps the label that one of its actions gave it.
+                      ...((continuesCommand ? lastUndoPatch?.metadata : commandMetadata) ??
+                        lastUndoPatch?.metadata ?? { source: 'action' as const }),
+                      ...actionLabel,
                       actionTypes,
                       isNavigation: lastUndoPatch
                         ? lastUndoPatch.metadata.isNavigation && isNavigation(actionType)
@@ -596,14 +606,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
               ...newState.undoPatches,
               createPatch(
                 undoPatch,
-                commandMetadata ?? {
-                  source: 'action',
-                  // An action may name its undo step, e.g. setIsMulticursorExecuting for the batch it opens, or
-                  // formatSelection for a color change.
-                  ...(typeof (action as UnknownAction).undoLabel === 'string'
-                    ? { label: (action as UnknownAction).undoLabel as string }
-                    : null),
-                },
+                { ...(commandMetadata ?? { source: 'action' as const }), ...actionLabel },
                 actionType,
               ),
             ],

@@ -57,7 +57,9 @@ const uncategorize = (state: State, { at }: Options): State => {
       setCursor({ path: contextPath }),
       state => uncategorize(state, {}),
       setCursor({
-        path: appendToPath(parentOf(path), head(parentOf(parentOf(simplePath)))),
+        // The thought is moved into the context's parent, which becomes its new context in the context view.
+        // A top-level context is moved into the home context, so the cursor is set on the home context.
+        path: appendToPath(parentOf(path), head(rootedParentOf(state, parentOf(simplePath)))),
         isKeyboardOpen: state.isKeyboardOpen,
         offset: 0,
       }),

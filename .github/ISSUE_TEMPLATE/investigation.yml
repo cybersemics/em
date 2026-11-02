@@ -1,0 +1,34 @@
+name: Investigation
+description: An open-ended question handed to someone to drive until it exposes a decision.
+type: Investigation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        An investigation is done when it exposes a decision, not when it answers the question. Its owner reassigns it to whoever makes that decision, with the options, their tradeoffs and a recommendation in the last comment. Work that follows from the decision goes in sub-issues.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: The open question to answer.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: The decision this feeds, and what is blocked until it is made.
+    validations:
+      required: true
+  - type: textarea
+    id: known
+    attributes:
+      label: Known so far
+      description: What has been tried, what has been ruled out, and the threads still open. When an agent session started the investigation, paste its handoff here so the next person's agent starts from it.
+  - type: textarea
+    id: ready
+    attributes:
+      label: Ready for a decision when
+      description: What the decision looks like once it is exposed — the choice to be made, and what has to be known about each option first (capabilities, feasibility, cost).
+    validations:
+      required: true

@@ -31,7 +31,7 @@ const ModalTestPinnedCommandRing = () => {
             className={css({ margin: 0, display: 'grid', justifyItems: 'center', gap: '0.25rem' })}
           >
             <PinnedCommandRing progress={state.progress} activeOpacity={state.colorful ? activeOpacity : undefined}>
-              <ContextViewIcon size={14} fill={token('colors.gray50')} cssRaw={css.raw({ flex: 'none' })} />
+              <ContextViewIcon size={14} fill={token('colors.gray50')} className={css({ flex: 'none' })} />
             </PinnedCommandRing>
             <figcaption className={css({ fontSize: '0.7rem', color: 'gray50' })}>{state.label}</figcaption>
           </figure>

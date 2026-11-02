@@ -1,11 +1,11 @@
 import { useId } from 'react'
-import { css, cx } from '../../../styled-system/css'
+import { cx } from '../../../styled-system/css'
 import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 
 /** Document icon for the Pin Command row. */
-const PinnedCommandPinIcon = ({ cssRaw, fill, size = 24, style }: IconType) => {
+const PinnedCommandPinIcon = ({ className, fill, size = 24, style }: IconType) => {
   const maskId = useId()
   const strokeColor = fill || token('colors.fg')
 
@@ -16,7 +16,7 @@ const PinnedCommandPinIcon = ({ cssRaw, fill, size = 24, style }: IconType) => {
       height={size}
       viewBox='0 0 24 24'
       fill='none'
-      className={cx(iconRecipe(), css(cssRaw))}
+      className={cx(iconRecipe(), className)}
       style={style}
       aria-hidden='true'
     >

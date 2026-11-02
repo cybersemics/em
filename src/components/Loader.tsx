@@ -1,11 +1,10 @@
 import { CSSProperties } from 'react'
-import { css } from '../../styled-system/css'
-import { SystemStyleObject } from '../../styled-system/types'
+import { css, cx } from '../../styled-system/css'
 
 interface LoaderProps {
   size?: number
   style?: CSSProperties
-  cssRaw?: SystemStyleObject
+  className?: string
 }
 
 const rippleLoaderChild = {
@@ -21,10 +20,10 @@ const rippleLoaderChild = {
 /**
  * Loading component.
  */
-const Loader = ({ size = 32, style, cssRaw }: LoaderProps) => {
+const Loader = ({ size = 32, style, className }: LoaderProps) => {
   return (
     <div
-      className={css({ display: 'inline-block', overflow: 'hidden', background: 'fgTransparent' }, cssRaw)}
+      className={cx(css({ display: 'inline-block', overflow: 'hidden', background: 'fgTransparent' }), className)}
       style={{ ...style, height: size, width: size }}
     >
       <div

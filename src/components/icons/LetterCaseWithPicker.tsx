@@ -3,10 +3,10 @@ import LetterCasePicker from '../LetterCasePicker'
 import LetterCaseIcon from './LetterCaseIcon'
 
 /** Letter Case Icon Component with popup Picker. */
-const Icon = ({ size = 20, style, fill, cssRaw }: IconType) => {
+const Icon = ({ size = 20, style, fill, className }: IconType) => {
   return (
     <div>
-      <LetterCaseIcon size={size} style={style} fill={fill} cssRaw={cssRaw} />
+      <LetterCaseIcon size={size} style={style} fill={fill} className={className} />
       <LetterCasePicker size={size} />
     </div>
   )

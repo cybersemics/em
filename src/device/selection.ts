@@ -591,7 +591,7 @@ export const split = (el: HTMLElement): SplitResult | null => {
  * the caret is not in a thought. The editable's rect is returned rather than the element so that callers needing it
  * do not measure it again.
  */
-const caretRectViewport = (): { editableRect: DOMRect; x: number; y: number; height: number } | null => {
+export const caretRectViewport = (): { editableRect: DOMRect; x: number; y: number; height: number } | null => {
   const editable = document.activeElement
   if (!isHTMLElement(editable) || !isContentEditable(editable)) return null
 
@@ -706,6 +706,16 @@ export const getBoundingClientRect = () => {
   if (selection && selection.rangeCount && isText()) return selection.getRangeAt(0).getBoundingClientRect()
 
   return null
+}
+
+/** Returns the client rects of a non-collapsed browser selection that lies within a single thought or note, with zero-width rects removed. Returns an empty array otherwise. */
+export const editableClientRects = (): DOMRect[] => {
+  const selection = window.getSelection()
+  const range = selection && selection.rangeCount > 0 && !selection.isCollapsed ? selection.getRangeAt(0) : null
+  const ancestor = range?.commonAncestorContainer
+  const ancestorElement = ancestor instanceof Element ? ancestor : ancestor?.parentElement
+  const editable = ancestorElement?.closest('[data-editable], [aria-label=note-editable]')
+  return range && editable ? [...range.getClientRects()].filter(rect => rect.width > 0) : []
 }
 
 /** Returns true if the point is within the given number of pixels of the bounds, on every side. */

@@ -6,6 +6,7 @@ import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
+import testFlags from '../e2e/testFlags'
 import useCachedThoughtHtml from '../hooks/useCachedThoughtHtml'
 import useChangeRef from '../hooks/useChangeRef'
 import attributeEquals from '../selectors/attributeEquals'
@@ -16,6 +17,8 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import store from '../stores/app'
+import equalPath from '../util/equalPath'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
 import once from '../util/once'
@@ -61,8 +64,13 @@ const Subthought = ({
   const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
   // Cache the thought HTML before it is deleted so that we can animate on unmount
   const cachedThoughtHtmlRef = useCachedThoughtHtml({ thought, elementRef: ref })
+  // Only show the placeholder when the thought is expanded, since linearizeTree does not render the context view of a collapsed thought.
   const noOtherContexts = useSelector(
-    state => thought && isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
+    state =>
+      thought &&
+      (!!state.expanded[hashPath(path)] || equalPath(state.expandHoverDownPath, path)) &&
+      isContextViewActive(state, simplePath) &&
+      getContexts(state, thought.value).length <= 1,
   )
   const grandparentId = simplePath[simplePath.length - 3]
   const isVisible = autofocus === 'show' || autofocus === 'dim'
@@ -131,12 +139,12 @@ const Subthought = ({
         ref={ref}
         className={css({
           // Start opacity at 0 on initial render and set to actual opacity in useEffect to fade in. See useEffect above.
-          // Do not fade in during integration tests. The useEffect can be flaky and cause the test to fail on GitHub Actions.
+          // Skip the fade when animations are disabled. The useEffect can be flaky in integration tests on GitHub Actions.
           //   See: https://github.com/cybersemics/em/actions/runs/14115358795?pr=2872
           // Do not fade in empty thoughts. An instant snap in feels better here.
           // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropChild. Otherwise subsequent DropChild will be obscured.
           // Do not fade in when a split creates a new thought; it should snap in instantly.
-          opacity: thought.value === '' || navigator.webdriver || isSplitThought ? opacity : '0',
+          opacity: thought.value === '' || !testFlags.animationEnabled || isSplitThought ? opacity : '0',
           // When autofocus changes, use a slow (750ms) ease-out to provide a gentle transition to non-focal thoughts.
           // If autofocus has not changed, it means that the thought is being rendered for the first time, such as the children of a thought that was just expanded. In this case, match the tree-node top animation (150ms) to ensure that the newly rendered thoughts fade in to fill the space that is being opened up from the next uncle animating down.
           // Note that ease-in is used in contrast to the tree-node's ease-out. This gives a little more time for the next uncle to animate down and clear space before the newly rendered thought fades in. Otherwise they overlap too much during the transition.

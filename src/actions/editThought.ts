@@ -44,6 +44,8 @@ export interface editThoughtPayload {
   path: SimplePath
   /** Isolate the edit in the undo history: it never merges with a contiguous edit on either side, so it is always its own undo step. Set on programmatic edits such as a generated thought, which are not part of the user's typing stream. */
   preventMerge?: boolean
+  /** Names the undo step. Read by undoRedoEnhancer rather than by the reducer. */
+  undoLabel?: string
 }
 
 /** Changes the text of an existing thought. */
@@ -81,11 +83,14 @@ const editThought = (
   }
 
   // only calculate decendant thought when current edited thought is a metaprogramming attribute
-  const thoughtIdForExistingMetaProgrammingThought =
+  const existingMetaProgrammingThoughtId =
     isAttribute(newValue) &&
     state.cursor &&
     head(state.cursor) === editedThought.id &&
     findDescendant(state, editedThought.parentId, newValue)
+  // the edited thought is not a duplicate of itself, which a stale childrenMap entry could otherwise suggest
+  const thoughtIdForExistingMetaProgrammingThought =
+    existingMetaProgrammingThoughtId !== editedThought.id && existingMetaProgrammingThoughtId
 
   // We do not want to create a duplicate metaprogramming thought within the same context. Instead this logic ensures we delete the current cursor thought and move the cursor to the existing one
   if (thoughtIdForExistingMetaProgrammingThought) {
@@ -190,7 +195,9 @@ const editThought = (
       : null
 
   const thoughtIndexUpdates: Index<Thought | null> = {
-    ...(isAttribute(newValue)
+    // childrenMap keys attributes by value, so it is rebuilt when a thought becomes an attribute or stops being one,
+    // e.g. when =favorite is bolded to <b>=favorite</b>
+    ...(isAttribute(oldValue) || isAttribute(newValue)
       ? {
           [parentOfEditedThought.id]: {
             ...parentOfEditedThought,

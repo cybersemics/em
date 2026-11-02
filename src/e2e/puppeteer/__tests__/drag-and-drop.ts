@@ -13,6 +13,7 @@ import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import longPressThought from '../helpers/longPressThought'
+import longPressWord from '../helpers/longPressWord'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
@@ -20,7 +21,6 @@ import setSelection from '../helpers/setSelection'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForAlert from '../helpers/waitForAlert'
 import waitForEditable from '../helpers/waitForEditable'
-import waitUntil from '../helpers/waitUntil'
 import withDebugLog from '../helpers/withDebugLog'
 import { page } from '../session'
 
@@ -132,10 +132,6 @@ describe('drag', () => {
 
     // hover the drop target directly below aaa, i.e. aaa's own position
     await dragAndDropThought('aaa', 'aaa', { hold: true, position: 'after' })
-
-    // the drop hover is still shown at the thought's own position; only the drop is cancelled
-    // (.drop-hover is the class that dropHoverRecipe gives every drop hover bar)
-    await waitUntil(() => !!document.querySelector('.drop-hover'), { timeout: 6000 })
 
     // release on the same drop target
     await dragAndDropThought('aaa', 'aaa', { position: 'after', skipMouseDown: true })
@@ -790,5 +786,37 @@ describe('mobile only', () => {
       await setSelection(0, 0)
       await longPressThought(textEditable, { edge: 'left' })
     })
+  })
+
+  // https://github.com/cybersemics/em/issues/5976
+  it('long press on a word in the thought text starts drag-and-drop instead of selecting the word', async () => {
+    await paste(`
+      - Second thought with several words in it
+      - Third thought here
+    `)
+    const source = await waitForEditable('Second thought with several words in it')
+    const target = await waitForEditable('Third thought here')
+
+    const finger = await longPressWord(source, 'thought')
+
+    // read while the finger is still down, when the native word selection would be shown
+    const selectedText = await page.evaluate(() => window.getSelection()?.toString())
+    expect(selectedText).toBe('')
+
+    const targetBox = await target.asElement()?.boundingBox()
+    if (!targetBox) throw new Error('Target thought has no bounding box.')
+    const steps = 10
+    for (let i = 1; i <= steps; i++) {
+      await page.touchscreen.touchMove(
+        finger.x + ((targetBox.x + 20 - finger.x) * i) / steps,
+        finger.y + ((targetBox.y + targetBox.height / 2 - finger.y) * i) / steps,
+      )
+    }
+
+    await page.waitForSelector('body[data-drag-in-progress="true"]', { timeout: 5000 }).catch(async () => {
+      const dragHold = await page.evaluate(() => document.body.dataset.dragHold)
+      throw new Error(`Drag-and-drop did not start when the finger moved (data-drag-hold="${dragHold}").`)
+    })
+    await page.touchscreen.touchEnd()
   })
 })

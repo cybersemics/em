@@ -5,6 +5,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import store from '../../stores/app'
 import freeThoughtsThresholdStore from '../../stores/freeThoughtsThresholdStore'
+import click from '../../test-helpers/click'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -100,6 +101,45 @@ it('render home icon as breadcrumbs for each context whose parent is the home co
     { value: 'b', homeBreadcrumbs: true },
     { value: 'b', homeBreadcrumbs: false },
   ])
+})
+
+// https://github.com/cybersemics/em/issues/5857
+it('show the no-other-contexts placeholder only while its thought is expanded', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - aaa
+        - aaa
+      `,
+    }),
+  ])
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const user = userEvent.setup({ delay: null })
+  const [first, second] = await findAllThoughtsByText('aaa')
+
+  // turn on the context view of the first aaa
+  await user.click(first)
+  await click('[data-testid="toolbar-icon"][aria-label="Context View"]')
+  await act(vi.runOnlyPendingTimersAsync)
+
+  // set the cursor on the second aaa and edit it to aaap, which leaves the first aaa with no other contexts
+  await user.click(second)
+  await user.type(second, 'p', { initialSelectionStart: 'aaa'.length })
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const aaap = (await findThoughtByText('aaap'))!
+  expect(screen.queryByText('This thought is not found in any other contexts', { exact: false })).toBeNull()
+
+  // the placeholder returns when the first aaa is expanded
+  await user.click(first)
+  await act(vi.runOnlyPendingTimersAsync)
+  expect(screen.getByText('This thought is not found in any other contexts', { exact: false })).toBeInTheDocument()
+
+  // the placeholder disappears again when the cursor leaves the first aaa
+  await user.click(aaap)
+  await act(vi.runOnlyPendingTimersAsync)
+  expect(screen.queryByText('This thought is not found in any other contexts', { exact: false })).toBeNull()
 })
 
 describe('freeThoughts', () => {

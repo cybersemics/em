@@ -24,7 +24,7 @@ const TutorialStepSecondThoughtEnter = () => {
             <GestureDiagram
               path={gestureString(newThoughtCommand)}
               size={28}
-              cssRaw={css.raw({ margin: '-10px -4px -6px' })}
+              className={css({ margin: '-10px -4px -6px' })}
             />
           </>
         ) : (

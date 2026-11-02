@@ -1340,6 +1340,90 @@ describe('copula splitting', () => {
   })
 })
 
+describe('vs and or splitting', () => {
+  it('splits by "vs" into siblings', () => {
+    const value = 'A vs B vs C'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+  - B
+  - C`)
+  })
+
+  it('splits by "or" into siblings', () => {
+    const value = 'Tea or coffee or juice'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Tea
+  - coffee
+  - juice`)
+  })
+
+  it('splits by "vs" rather than by "and"', () => {
+    const value = 'Cats and dogs vs birds'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Cats and dogs
+  - birds`)
+  })
+
+  it('splits by "vs" rather than by "or"', () => {
+    const value = 'Cats or dogs vs birds'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Cats or dogs
+  - birds`)
+  })
+
+  it('splits by "or" rather than by "and"', () => {
+    const value = 'Cats and dogs or birds'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Cats and dogs
+  - birds`)
+  })
+
+  it('splits by "or" rather than by a hyphenated "and" compound', () => {
+    const value = 'Cats or rock-and-roll'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Cats
+  - rock-and-roll`)
+  })
+
+  it('splits by comma rather than by "vs"', () => {
+    const value = 'Cats vs dogs, birds'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Cats vs dogs
+  - birds`)
+  })
+
+  it('does not split within a word', () => {
+    const value = 'Canvas for Oregon'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Canvas for Oregon`)
+  })
+
+  it('does not split a hyphenated word by "or"', () => {
+    const value = 'Retreat or do-or-die'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Retreat
+  - do-or-die`)
+  })
+})
+
 describe('formatting', () => {
   // https://github.com/cybersemics/em/issues/4229
   it('preserves formatting on every comma-delimited segment, including segments in the middle', () => {

@@ -153,19 +153,37 @@ function punctuationSubSentenceDelimiter(plainValue: string): { split: RegExp; l
 }
 
 /**
+ * The words that delimit sub-sentences, in the order they are split. Like operators, "vs" binds more loosely than "or", which binds more loosely than "and", so the loosest is split first, e.g. "A and B vs C" -> "- A and B - C".
+ * Each is matched with word boundaries so that it does not split within a word, e.g. "Standard" (#4810), "Oregon", or "canvas". "vs" and "or" also do not split a hyphenated word, e.g. "do-or-die", which "and" leaves to the hyphenated "and" compound split.
+ */
+const wordDelimiters = [
+  { split: /(?<![\w-])vs(?![\w-])/i, leading: /^vs(?![\w-])/i },
+  { split: /(?<![\w-])or(?![\w-])/i, leading: /^or(?![\w-])/i },
+  { split: /\band\b/i, leading: /^and\b/i },
+]
+
+/**
+ * Returns the word delimiter that splits a single sentence into sub-sentences: "vs", or "or" when there is no "vs", or "and" when there is neither. Returns null when the value contains none of them.
+ *
+ * @param plainValue The plain text thought value.
+ */
+function wordSubSentenceDelimiter(plainValue: string): { split: RegExp; leading: RegExp } | null {
+  return wordDelimiters.find(delimiter => delimiter.split.test(plainValue)) ?? null
+}
+
+/**
  * Returns the delimiter to split a single sentence into sub-sentences, as a regex that matches the delimiter anywhere and a regex that matches it at the beginning of the remaining text.
- * Comma takes priority over the symbols ↑↓←→+, which take priority over "and". Each is only used when the value contains none of the delimiters above it.
- * "and" is matched with word boundaries so that it does not split within a word, e.g. "Standard" (#4810).
+ * Comma takes priority over the symbols ↑↓←→+, which take priority over the words "vs", "or", and "and". Each is only used when the value contains none of the delimiters above it.
  *
  * @param plainValue The plain text thought value.
  */
 function subSentenceDelimiter(plainValue: string): { split: RegExp; leading: RegExp } {
-  return punctuationSubSentenceDelimiter(plainValue) ?? { split: /\band\b/i, leading: /^and\b/i }
+  return punctuationSubSentenceDelimiter(plainValue) ?? wordSubSentenceDelimiter(plainValue) ?? wordDelimiters[2]
 }
 
 /**
  * Inserts separators in place of the punctuation sub-sentence delimiter, unless the delimiter is part of a style within a font tag (#3455).
- * The word "and" is deliberately not a delimiter here: this runs on a value whose periods turned out not to be sentence boundaries, where "and" routinely joins the parts of a single sentence, e.g. "Fruit cost: apple $10.23 and pear $10.70".
+ * The words "vs", "or", and "and" are deliberately not delimiters here: this runs on a value whose periods turned out not to be sentence boundaries, where such a word routinely joins the parts of a single sentence, e.g. "Fruit cost: apple $10.23 and pear $10.70".
  */
 function separateBySubSentenceDelimiter(str: string) {
   const delimiter = punctuationSubSentenceDelimiter(str)
@@ -357,9 +375,11 @@ const splitSentenceByDelimiters = (value: string): SplitResult[] => {
   // 2. a copula splits into a subject and its predicate as a child, e.g. "Attention is the most valuable resource" -> "- Attention   - Most valuable resource"
   // 3. a slash splits into a chain of descendants, e.g. "one/two/three" -> "- one   - two   - three"
   // 4. a comma or one of the symbols ↑↓←→+ splits into siblings, e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
-  // 5. a hyphenated "and" compound at the end of the value splits into a child per word, e.g. "Implies set-and-forget" -> "- Implies   - set   - forget"
-  // 6. the word "and" splits into siblings, e.g. "Alice and the Lion" -> "- Alice - the Lion"
-  // 7. a dash without surrounding whitespace splits into a child, e.g. "one-1" -> "- one   - 1"
+  // 5. the word "vs" splits into siblings, e.g. "A vs B vs C" -> "- A - B - C"
+  // 6. the word "or" splits into siblings, e.g. "Tea or coffee" -> "- Tea - coffee"
+  // 7. a hyphenated "and" compound at the end of the value splits into a child per word, e.g. "Implies set-and-forget" -> "- Implies   - set   - forget"
+  // 8. the word "and" splits into siblings, e.g. "Alice and the Lion" -> "- Alice - the Lion"
+  // 9. a dash without surrounding whitespace splits into a child, e.g. "one-1" -> "- one   - 1"
   // A dash without surrounding whitespace is usually part of a compound word, e.g. "Jean-Michel", so it has the lowest precedence of all: it only splits when the value contains no other delimiter (#3525).
   // e.g. "Jeff Koons, Jean-Michel Basquiat" splits at the comma and "a → b-c" splits at the arrow.
   if (!sentenceSplitters || hasOnlyPeriodAtEnd()) {
@@ -400,17 +420,17 @@ const splitSentenceByDelimiters = (value: string): SplitResult[] => {
       }
     }
 
-    // A hyphenated "and" compound at the end of the value, e.g. "set-and-forget", is a list of single words rather than a sentence joined by "and", so it is split before the word "and" is. A comma or a symbol still takes priority, e.g. "set-and-forget, fire-and-forget" splits at the comma (#5215).
-    const compoundValues = punctuationSubSentenceDelimiter(plainValue)
-      ? null
-      : splitHyphenatedAndCompound(value, plainValue)
+    // A hyphenated "and" compound at the end of the value, e.g. "set-and-forget", is a list of single words rather than a sentence joined by "and", so it is split before the word "and" is. A comma, a symbol, "vs", or "or" still takes priority, e.g. "set-and-forget, fire-and-forget" splits at the comma (#5215).
+    const delimiter = subSentenceDelimiter(plainValue)
+    const compoundValues = delimiter === wordDelimiters[2] ? splitHyphenatedAndCompound(value, plainValue) : null
     if (compoundValues) return compoundValues
 
-    // split by comma, or by the symbols ↑↓←→+ if there is no comma, or by the word "and" if there is neither
+    // split by comma, or by the symbols ↑↓←→+ if there is no comma, or by the words "vs", "or", or "and" if there is neither
     // e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
+    // e.g. "A vs B vs C" -> "- A - B - C"
     // e.g. "Alice and the Lion" -> "- Alice - the Lion"
     const splitValues = plainValue
-      .split(subSentenceDelimiter(plainValue).split)
+      .split(delimiter.split)
       .map(s => s.trim())
       .filter(s => s !== '')
     const values = plainValue !== value ? splitFormattedHtmlBySubSentence(value, plainValue) : splitValues

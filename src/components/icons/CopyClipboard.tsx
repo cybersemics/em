@@ -1,17 +1,17 @@
-import { css, cx } from '../../../styled-system/css'
+import { cx } from '../../../styled-system/css'
 import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 import { ICON_SCALING_FACTOR } from '../../constants'
 
 /** Copy Clipboard icon. */
-const CopyClipboard = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
+const CopyClipboard = ({ fill, size = 20, style = {}, className }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const fillColor = style.fill || fill || token('colors.fg')
 
   return (
     <svg
-      className={cx(iconRecipe(), css(cssRaw))}
+      className={cx(iconRecipe(), className)}
       xmlns='http://www.w3.org/2000/svg'
       viewBox='0 0 15 18'
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}

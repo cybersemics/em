@@ -59,6 +59,18 @@ it('reports the last measured keyboard height after the keyboard closes', () => 
   expect(viewportStore.getState().virtualKeyboardHeight).toBe(300)
 })
 
+// https://github.com/cybersemics/em/issues/5972
+it('does not take a negative visual viewport height after an app switch as an open keyboard', () => {
+  const initialHeight = viewportStore.getState().virtualKeyboardHeight
+
+  // after the app switcher's landscape snapshot, iOS reports innerHeight minus the landscape width for the rest of the session
+  Object.defineProperty(window, 'visualViewport', { configurable: true, value: { height: -59 } })
+  updateSize()
+  vi.advanceTimersByTime(20)
+
+  expect(viewportStore.getState().virtualKeyboardHeight).toBe(initialHeight)
+})
+
 it('recalculates the scroll zone width when the viewport changes', () => {
   window.innerWidth = 400
   window.innerHeight = 800

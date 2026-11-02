@@ -1,10 +1,11 @@
-import type { Element } from 'webdriverio'
-
 /**
  * Returns the page coordinates of a character offset within an element's first text node, or undefined if it has none.
  * Uses the global browser object from WDIO.
  */
-const getTextOffsetCoordinates = (nodeHandle: Element, offset: number): Promise<{ x: number; y: number } | undefined> =>
+const getTextOffsetCoordinates = (
+  nodeHandle: WebdriverIO.Element,
+  offset: number,
+): Promise<{ x: number; y: number } | undefined> =>
   browser.execute(
     function (ele, offset) {
       // Element does not contain native properties like nodeName, textContent, etc

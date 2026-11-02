@@ -97,6 +97,45 @@ describe('normal view', () => {
     - b`)
   })
 
+  // https://github.com/cybersemics/em/issues/3491
+  it('do not alert when archiving the meta attributes of an empty thought', () => {
+    const steps = [
+      importText({
+        text: `
+        - b
+        -
+          - =favorite
+          - =pin
+            - true`,
+      }),
+      setCursor(['']),
+      deleteEmptyThought,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.alert).toBeUndefined()
+  })
+
+  // https://github.com/cybersemics/em/issues/5883
+  it('do not alert when archiving the note of an empty thought', () => {
+    const steps = [
+      importText({
+        text: `
+        - b
+        -
+          - =note
+            - hello`,
+      }),
+      setCursor(['']),
+      deleteEmptyThought,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.alert).toBeUndefined()
+  })
+
   it('do nothing if there is no cursor', () => {
     const steps = [newThought('a'), newThought('b'), setCursor(null), deleteEmptyThought]
 
@@ -249,6 +288,51 @@ describe('context view', () => {
 
     // cursor should be on the next context
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
+  })
+
+  // https://github.com/cybersemics/em/issues/5858
+  it('archive the hidden children of an empty thought whose context view is open', () => {
+    const steps = [
+      importText({
+        text: `
+        -
+          - =favorite`,
+      }),
+      setCursor(['']),
+      toggleContextView,
+      deleteEmptyThought,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - =archive
+    - =favorite`)
+    expect(stateNew.alert).toBeUndefined()
+  })
+
+  // https://github.com/cybersemics/em/issues/5858
+  it.skip('archive the empty note of an empty thought whose context view is open', () => {
+    const steps = [
+      importText({
+        text: `
+        -
+          - =note
+            -`,
+      }),
+      setCursor(['']),
+      toggleContextView,
+      deleteEmptyThought,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - =archive
+    - =note
+      - `)
   })
 })
 

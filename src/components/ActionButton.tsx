@@ -44,7 +44,7 @@ const ActionButton = ({
       {...restProps}
     >
       {/* TODO: Animate on loader toggle. */}
-      {isLoading && <Loader size={35} cssRaw={css.raw({ marginRight: '15px' })} />}
+      {isLoading && <Loader size={35} className={css({ marginRight: '15px' })} />}
       {title}
     </a>
   )

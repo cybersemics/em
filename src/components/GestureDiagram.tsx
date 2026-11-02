@@ -1,8 +1,7 @@
 import { nanoid } from 'nanoid'
 import React, { useMemo, useState } from 'react'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
-import { SystemStyleObject } from '../../styled-system/types'
 import Gesture from '../@types/Gesture'
 import { GESTURE_GLOW_BLUR, GESTURE_GLOW_COLOR } from '../constants'
 import ArrowheadMarker from './GestureDiagram/ArrowheadMarker'
@@ -35,12 +34,16 @@ interface GestureDiagramBaseProps {
   style?: React.CSSProperties
   /** Explicit SVG viewBox. When omitted, framing is calculated from the gesture geometry. */
   viewBox?: `${number} ${number} ${number} ${number}`
+  /** How the drawing sits in a box of a different aspect ratio. Defaults to the SVG default, centered. Since the viewBox follows each gesture's own bounds, pass e.g. `xMinYMax meet` to keep one edge stable across gestures. */
+  preserveAspectRatio?: string
   /** Maximum rendered width in pixels. */
   maxWidth?: number
   /** Applies the positional adjustment used by GestureContainer. */
   inGestureContainer?: boolean
+  /** The svg's display. Given as a prop rather than through className because the component sets display itself, and cx does not resolve a conflict between two classes that set the same property. */
+  display?: 'block' | 'inline-block'
   /** Panda CSS overrides applied to the outer element. */
-  cssRaw?: SystemStyleObject
+  className?: string
   /** Whether to render the gesture with rounded corners. */
   rounded?: boolean
   /** If true, the cancel gesture will have the same styling as the other gestures. Otherwise, there are additional sizing and margin styles applied. */
@@ -95,7 +98,8 @@ const GestureDiagram = ({
   viewBox,
   maxWidth,
   inGestureContainer,
-  cssRaw,
+  className,
+  display = 'inline-block',
   rounded,
   styleCancelAsRegularGesture,
   arrowhead = 'filled',
@@ -106,6 +110,7 @@ const GestureDiagram = ({
   chevronApexAngle = 80,
   chevronSize = 2.2,
   highlightColor,
+  preserveAspectRatio,
 }: GestureDiagramProps) => {
   // One stable prefix keeps this diagram's marker, masks, and gradients unique in the document.
   const [instanceId] = useState(nanoid)
@@ -153,7 +158,7 @@ const GestureDiagram = ({
       <svg
         width={styleCancelAsRegularGesture ? size / 2 : 20}
         height={styleCancelAsRegularGesture ? size / 2 : 24}
-        className={css(inGestureContainer && { position: 'relative', top: '10px' }, cssRaw)}
+        className={cx(css(inGestureContainer && { position: 'relative', top: '10px' }), className)}
         style={{
           ...style,
           ...(arrowhead === 'none'
@@ -184,12 +189,15 @@ const GestureDiagram = ({
     <svg
       width={maxWidth ?? size}
       height={maxHeight ?? size}
-      className={css(
-        { display: 'inline-block', maxWidth: '100%', height: 'auto' },
-        inGestureContainer && { position: 'relative', top: '10px' },
-        cssRaw,
+      className={cx(
+        display === 'block'
+          ? css({ display: 'block', maxWidth: '100%', height: 'auto' })
+          : css({ display: 'inline-block', maxWidth: '100%', height: 'auto' }),
+        css(inGestureContainer && { position: 'relative', top: '10px' }),
+        className,
       )}
       style={{ aspectRatio: `${maxWidth ?? size} / ${maxHeight ?? size}`, ...style }}
+      preserveAspectRatio={preserveAspectRatio}
       viewBox={
         viewBox ??
         getGestureViewBox(geometry!, {

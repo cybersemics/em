@@ -123,6 +123,7 @@ const rules = {
   'prefer-arrow-callback': 0,
   'em/no-direct-durations-config-import': 2,
   'em/ministore-store-suffix': 2,
+  'em/no-precomputed-debug-log-fields': 2,
 }
 
 export default [

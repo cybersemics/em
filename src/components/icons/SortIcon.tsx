@@ -1,11 +1,11 @@
 import { FC } from 'react'
-import { css, cx } from '../../../styled-system/css'
+import { cx } from '../../../styled-system/css'
 import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 
 /** Sort icon, used in the search input. */
-const SortIcon: FC<IconType> = ({ size = 48, fill, cssRaw }) => {
+const SortIcon: FC<IconType> = ({ size = 48, fill, className }) => {
   const fillColor = fill || token('colors.fg')
 
   return (
@@ -15,7 +15,7 @@ const SortIcon: FC<IconType> = ({ size = 48, fill, cssRaw }) => {
       width={size}
       height={size}
       fill={fillColor}
-      className={cx(iconRecipe(), css(cssRaw))}
+      className={cx(iconRecipe(), className)}
     >
       <path
         xmlns='http://www.w3.org/2000/svg'

@@ -1,5 +1,5 @@
 import { FC } from 'react'
-import { css, cx } from '../../../styled-system/css'
+import { cx } from '../../../styled-system/css'
 import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
@@ -10,7 +10,7 @@ interface AToZIconProps extends IconType {
 }
 
 /** A-to-Z icon — shown by the Command Universe group/sort button when alphabetical sort is selected. */
-const AToZIcon: FC<AToZIconProps> = ({ size = 24, fill, cssRaw, strokeWidth = 0.25 }) => {
+const AToZIcon: FC<AToZIconProps> = ({ size = 24, fill, className, strokeWidth = 0.25 }) => {
   const color = fill || token('colors.fg')
 
   return (
@@ -20,7 +20,7 @@ const AToZIcon: FC<AToZIconProps> = ({ size = 24, fill, cssRaw, strokeWidth = 0.
       height={size}
       viewBox='0 0 24 24'
       fill='none'
-      className={cx(iconRecipe(), css(cssRaw))}
+      className={cx(iconRecipe(), className)}
     >
       <g clipPath='url(#a-to-z-clip)'>
         <path

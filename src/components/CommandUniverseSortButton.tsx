@@ -90,9 +90,9 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
       >
         {/* Reflect the active sort mode: A→Z glyph for alphabetical, list/group glyph for type. */}
         {selectedSort === 'alphabetical' ? (
-          <AToZIcon size={28} fill='#D9D3D5' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
+          <AToZIcon size={28} fill='#D9D3D5' strokeWidth={0} className={css({ flex: 'none' })} />
         ) : (
-          <CommandsListIcon size={28} fill='#D9D3D5' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
+          <CommandsListIcon size={28} fill='#D9D3D5' strokeWidth={0} className={css({ flex: 'none' })} />
         )}
       </div>
       <FadeTransition in={isDropdownOpen} type='fast' unmountOnExit>
