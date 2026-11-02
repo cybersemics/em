@@ -2,6 +2,7 @@
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import breakpointsConfig from './src/breakpoints.config'
 import durationsConfig from './src/durations.config'
+import backgroundImageManifestPlugin from './src/panda-plugins/backgroundImageManifestPlugin'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
@@ -535,13 +536,17 @@ export default defineConfig({
             'helpGenie',
             // Above dialogs so the pinned command stays visible over the Mobile Command Universe. See docs/learning.md.
             'pinnedCommandExpanded',
+            // Keep the menu above the trace without raising generic popups above dialogs.
+            'gestureMenu',
+            // Above dialogs so a dry run traced over the pinned command's tooltip is drawn over the Mobile Command
+            // Universe, and below the tooltip, as in the thoughtspace.
+            'gestureTrace',
             'dialog',
             'dialogContainer',
             'popup',
             'notification',
             'cloneDroppedThought',
             'hoverArrow',
-            'gestureTrace',
             'gestureContentBlur',
             'hamburgerMenu',
             'sidebar',
@@ -660,4 +665,6 @@ export default defineConfig({
   // The output directory for your css system
   outdir: 'styled-system',
   presets: ['@pandacss/preset-base'],
+
+  plugins: [backgroundImageManifestPlugin],
 })

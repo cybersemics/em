@@ -30,10 +30,13 @@ import { undoActionCreator as undo } from './actions/undo'
 import { isCapacitor, isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
-import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
+import FavoritesIcon from './components/icons/FavoritesIcon'
+import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, HOME_TOKEN, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
+import testFlags from './e2e/testFlags'
 import documentSort from './selectors/documentSort'
 import filterCursors from './selectors/filterCursors'
+import getChildren from './selectors/getChildren'
 import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
@@ -57,9 +60,25 @@ import head from './util/head'
 import isAttribute from './util/isAttribute'
 import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
+import parentOf from './util/parentOf'
 import saveDebugLog from './util/saveDebugLog'
 
-export const globalCommands: Command[] = Object.values(commandsObject)
+/** The commands registered in src/commands/index.ts. */
+export const registeredCommands: Command[] = Object.values(commandsObject)
+
+/** The commands that the app lists and matches against keyboard shortcuts and gestures: the registered commands, or the commands that a test preloaded into testFlags.stubCommands so that a snapshot of a command list does not change whenever a command is added, removed, or renamed. A stub given as an id keeps that registered command; any other stub becomes an inert command, drawn with the Favorites icon if it has an icon. */
+export const globalCommands: Command[] =
+  testFlags.stubCommands?.map(stub =>
+    typeof stub === 'string'
+      ? registeredCommands.find(command => command.id === stub)!
+      : {
+          ...stub,
+          id: stub.label as CommandId,
+          svg: stub.icon ? FavoritesIcon : undefined,
+          multicursor: false,
+          exec: () => {},
+        },
+  ) ?? registeredCommands
 
 export { commandEmitter }
 
@@ -274,7 +293,8 @@ const index = (): {
   })
 
   // index command for O(1) lookup by id
-  const commandIdIndex: Index<Command> = keyValueBy(globalCommands, command =>
+  // Look up ids among the registered commands even when a test has stubbed the global commands, since commandById is only called with ids of registered commands.
+  const commandIdIndex: Index<Command> = keyValueBy(registeredCommands, command =>
     command.id ? { [command.id]: command } : null,
   )
 
@@ -620,13 +640,30 @@ export const executeCommandWithMulticursor = (
 
         // A command tapped in the Command Center that ends with an empty selection (e.g. delete, whose thoughts no
         // longer exist to be restored above) would dismiss the Command Center, since multicursorAlertMiddleware
-        // closes it when nothing is selected. Select the thought the cursor landed on instead, the same way the
-        // Command Center is opened in the first place, so that it stays open and can be used again. When the last
-        // thought was deleted there is no cursor left to select and it closes as usual.
+        // closes it when nothing is selected. Select a thought instead, the same way the Command Center is opened in
+        // the first place, so that it stays open and can be used again. If the command removed thoughts, stay open
+        // only while a sibling of a removed thought is left: select the cursor if it is such a sibling, otherwise the
+        // first one. When no siblings are left anywhere, the cursor has fallen back to a parent (or to nothing at the
+        // root) that the user did not select, so leave the selection empty and let the Command Center close.
         if (commandType === 'commandCenter') {
           const state = commandStore.getState()
-          if (!hasMulticursor(state) && state.cursor) {
-            dispatch(addMulticursor({ path: state.cursor }))
+          if (!hasMulticursor(state)) {
+            const removedPaths = execPaths.filter(path => !equalPath(recomputePath(state, path), path))
+            if (removedPaths.length === 0) {
+              if (state.cursor) dispatch(addMulticursor({ path: state.cursor }))
+            } else {
+              /** True if the path is a sibling of a removed thought that is still there. */
+              const isRemainingSibling = (path: Path) =>
+                removedPaths.some(removed => equalPath(parentOf(removed), parentOf(path)) && !equalPath(removed, path))
+              let sibling = state.cursor && isRemainingSibling(state.cursor) ? state.cursor : null
+              for (const removed of removedPaths) {
+                if (sibling) break
+                const parentId = removed.length > 1 ? removed[removed.length - 2] : HOME_TOKEN
+                const firstChild = getChildren(state, parentId)[0]
+                if (firstChild) sibling = [...parentOf(removed), firstChild.id] as Path
+              }
+              if (sibling) dispatch(addMulticursor({ path: sibling }))
+            }
           }
         }
 
@@ -721,7 +758,14 @@ export const executeCommandWithMulticursor = (
 export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: Gesture }) => {
   const state = store.getState()
 
-  if (state.showModal || state.longPress === LongPressState.DragInProgress || state.showMobileCommandUniverse) return
+  // Over the Mobile Command Universe the only gesture is a dry run of the pinned command, traced over its tooltip.
+  const isDryRun = state.showMobileCommandUniverse && state.showPinnedCommandTooltip
+  if (
+    state.showModal ||
+    state.longPress === LongPressState.DragInProgress ||
+    (state.showMobileCommandUniverse && !isDryRun)
+  )
+    return
 
   // Stop gesture segment haptics when there are no more possible commands that can be completed from the current sequence.
   // useFilteredCommands updates the possibleCommands in a back channel for efficiency.
@@ -827,9 +871,20 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     const chainedGestureCollapsed = sequence!.toString().slice(chainedGesture1.length - 1)
     const chainedGesture = sequence!.toString().slice(chainedGesture1.length)
     const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
-    if (commandMatch) {
+    // only chain a command that the first command allows to follow it, as the gesture menu does
+    if (commandMatch && chainableCommandInProgressExclusive.isChainable?.(commandMatch)) {
       command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
     }
+  }
+
+  // Whether the user drew one of the pinned command's own gestures, exactly.
+  const isPinnedGesture = !!sequence && commandGestureIndex[sequence]?.id === state.learning.pinnedCommandId
+
+  // Over the Mobile Command Universe a trace over the pinned command's tooltip is a dry run: nothing executes and no
+  // rep is earned, but tracing the pinned command's own gesture plays the ring's burst.
+  if (state.showMobileCommandUniverse && state.showPinnedCommandTooltip) {
+    if (isPinnedGesture) commandEmitter.trigger('pinnedGestureDryRun')
+    return
   }
 
   // In training mode, show the command's label as a gesture hint.

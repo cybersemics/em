@@ -18,6 +18,8 @@ interface Payload {
   noteOffset?: number
   path: Path
   values: string[]
+  /** Names the undo step. Read by undoRedoEnhancer rather than by the reducer. */
+  undoLabel?: string
 }
 
 /** Reconciles the visible children referenced by a path-based note in a single undoable action. */

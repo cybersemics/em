@@ -86,7 +86,7 @@ flowchart TD
     E1 --> F["Open a draft pull request"]
     F --> G["ci-monitor — wait for every check to finish"]
     G --> H{"All green?"}
-    H -- no --> I["test-diagnosis — work out what kind of failure it is"]
+    H -- no --> I["test-diagnosis — did this PR cause it, and what kind of failure is it?"]
     I --> E
     H -- yes --> J["<b>Exit gate</b> — end-session skill"]
     J --> J1["Nothing left untrue, nothing left behind,<br/>nothing claimed that was not observed"]

@@ -28,6 +28,8 @@ Meta-attribute children are hidden in normal view. Toggle the **Show Hidden Thou
 
 This shape lets attribute lookups skip the linear scan that regular value-based lookups need.
 
+Attributes are ordinary thoughts that can be edited like any other while hidden thoughts are shown. An edit that makes a value stop being an attribute, such as bolding `=favorite` into `<b>=favorite</b>`, simply turns it into a normal thought that configures nothing. [`editThought`](../src/actions/editThought.ts) rebuilds the parent's `childrenMap` whenever a thought becomes an attribute or stops being one, so no key is left pointing at a thought with a different value. Lexeme keys are normalized and ignore formatting, so `<b>=favorite</b>` still shares the `=favorite` Lexeme. The lists that are built from an attribute's Lexeme, Favorites ([`Favorites`](../src/components/Favorites.tsx)) and Recently Deleted ([`RecentlyDeleted`](../src/components/RecentlyDeleted.tsx)), include only thoughts whose value is exactly the attribute.
+
 The four selectors most code uses:
 
 - [`attribute(state, id, name)`](../src/selectors/attribute.ts) — returns the *value of the first visible child* of the named attribute, or `null`. So `attribute(state, parent.id, '=pin')` returns `'true'` (when set to `=pin/true`), `'false'`, or `null`. Use this when an attribute carries a string payload.
@@ -91,7 +93,7 @@ Not every attribute is propagable. Currently the `=children`/`=grandchildren` in
 
 - **`=archive`** — marks the thought (and, semantically, its descendants) as archived. Archived thoughts are hidden from normal views but kept for recovery; the user surfaces them via the **Recently Deleted** UI. The `=archive` attribute is special-cased in many filters (e.g. it survives `isAttribute`-based hiding so the recently-deleted view can find it). See [`archiveThought`](../src/actions/archiveThought.ts) and [`isThoughtArchived`](../src/util/isThoughtArchived.ts).
 - **`=done`** — marks a thought as completed. The thought is rendered grayed out and struck through. Consumed by [`Bullet`](../src/components/Bullet.tsx), [`Editable`](../src/components/Editable.tsx), and the **Mark as done** command.
-- **`=favorite`** — marks the thought for inclusion in the Favorites panel. The Favorites Lexeme (`=favorite`) tracks every context that has this attribute.
+- **`=favorite`** — marks the thought for inclusion in the Favorites panel. The Favorites Lexeme (`=favorite`) tracks every context that has this attribute. A `=favorite` directly under the root, such as one outdented there, does not list the root in Favorites.
 
 ### Linking & cross-references
 
