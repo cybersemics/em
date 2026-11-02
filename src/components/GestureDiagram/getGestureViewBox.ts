@@ -28,21 +28,23 @@ const getGestureViewBox = (
   },
 ): `${number} ${number} ${number} ${number}` => {
   const strokeRadius = (strokeWidth * 1.5) / 2
-  // 'filled' is a chevron only when the geometry built one. Otherwise it is the conventional marker.
+  // A filled arrowhead can be either a chevron drawn in the gesture geometry or an SVG marker at the line end.
+
+  // check if the arrowhead filled variant is drawn with gesture geometry or not. Currently it only support for SolidGestureRenderer with arrowhead='filled'
   const filledChevron = arrowhead === 'filled' && geometry.chevron !== null
   // Retain the conventional-marker allowance. Arrowhead-free and filled-chevron diagrams need only stroke padding here.
   const markerPadding = arrowhead === 'none' || filledChevron ? strokeRadius : arrowSize + strokeWidth * 4
   const halfSpan = strokeWidth * 1.5 * chevronSize
   // getChevron places each leg half the depth behind the centerline endpoint.
   const halfDepth = halfSpan / (2 * Math.max(Math.tan((chevronApexAngle * Math.PI) / 360), 0.01))
-  // The frame centers on bounds that already include the chevron, so a filled chevron needs only half its overhang
-  // on each side. Gesture lines run horizontally or vertically, so the overhang along either axis is at most
-  // halfDepth past the end or halfSpan to the side.
+  // Add space around the SVG so chevron tips are not cut off. The viewBox stays centered, so both edges get the same padding.
   const chevronPadding =
     arrowhead === 'outlined-wide'
-      ? Math.hypot(halfSpan, halfDepth) + strokeRadius
+      ? // The two outlined legs can extend beyond opposite sides of an axis. Reserve a full tip-distance at each edge.
+        Math.hypot(halfSpan, halfDepth) + strokeRadius
       : filledChevron
-        ? Math.max(halfSpan, halfDepth) / 2 + strokeRadius
+        ? // The filled triangle extends beyond one side only. Split its tip-distance between both edges.
+          Math.hypot(halfSpan, halfDepth) / 2 + strokeRadius
         : 0
   const side = size + 2 * Math.max(markerPadding, chevronPadding)
   const bounds = getGestureBounds(geometry)
