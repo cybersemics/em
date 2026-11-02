@@ -1,9 +1,9 @@
 import { findAllByLabelText, screen } from '@testing-library/react'
 import { act } from 'react'
-import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../../actions/desktopCommandUniverse'
 import { extractSubthoughtActionCreator as extractSubthought } from '../../actions/extractSubthought'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { toggleCommandUniverseActionCreator as toggleCommandUniverse } from '../../actions/toggleCommandUniverse'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
@@ -465,11 +465,11 @@ describe('Extract Subthought', () => {
       // Opening the Command Universe snapshots the selection; its search input then takes it. Executing a command
       // closes the Command Universe first, so the snapshot has to survive the close.
       act(() => {
-        store.dispatch(desktopCommandUniverse())
+        store.dispatch(toggleCommandUniverse({ value: true }))
       })
       moveSelectionToSearchInput()
       act(() => {
-        store.dispatch([desktopCommandUniverse(), extractSubthought()])
+        store.dispatch([toggleCommandUniverse({ value: false }), extractSubthought()])
       })
 
       // Let the Command Universe's fade-out complete so that it unmounts before the test ends. Otherwise its animated
@@ -500,14 +500,14 @@ describe('Extract Subthought', () => {
       selectRange(thought!, 6, 11)
 
       act(() => {
-        store.dispatch(desktopCommandUniverse())
+        store.dispatch(toggleCommandUniverse({ value: true }))
       })
       moveSelectionToSearchInput()
 
       // A command executed from the Command Universe can move the cursor. Slicing the thought it lands on at offsets
       // that index into the thought the snapshot came from would mangle its value.
       act(() => {
-        store.dispatch([desktopCommandUniverse(), setCursor(['charlie delta']), extractSubthought()])
+        store.dispatch([toggleCommandUniverse({ value: false }), setCursor(['charlie delta']), extractSubthought()])
       })
 
       // Let the Command Universe's fade-out complete so that it unmounts before the test ends. Otherwise its animated

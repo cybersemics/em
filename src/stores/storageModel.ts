@@ -72,7 +72,7 @@ const storageModel = storage.model({
     },
     encode: (value: LearningState) => JSON.stringify(value),
   },
-  // recent commands executed from the desktop command universe
+  // recent commands, listed by the Command Universe's Recently used sort and the gesture menu
   recentCommands: {
     default: [] as CommandId[],
   },

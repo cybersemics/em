@@ -18,8 +18,10 @@ import { commandUniverseBackActionCreator as commandUniverseBack } from '../../a
 import { commandUniverseForwardActionCreator as commandUniverseForward } from '../../actions/commandUniverseForward'
 import { commandUniverseSearchActionCreator } from '../../actions/commandUniverseSearch'
 import { commandUniverseSortActionCreator } from '../../actions/commandUniverseSort'
-import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
+import { toggleCommandUniverseActionCreator } from '../../actions/toggleCommandUniverse'
+import { hashCommand, hashKeyDown } from '../../commands'
 import { commandById } from '../../commands'
+import openMobileCommandUniverse from '../../commands/openMobileCommandUniverse'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import useCommandUniverseSelection from '../../hooks/useCommandUniverseSelection'
 import durations from '../../util/durations'
@@ -38,7 +40,7 @@ import DialogGlass from './DialogGlass'
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
-  (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
+  (command.allowExecuteFromModal || !state.showModal || !state.showCommandUniverse)
 
 /** Preloads the decorative dialog images before the user opens Commands. */
 const HiddenDialogAssets = () => (
@@ -218,7 +220,7 @@ const CommandUniverseSession = ({
   const sortOrder = useSelector(state => state.commandUniverseNavigation.sortOrder)
   const isCommandsPage = nav.entries[nav.index].page.pageId === 'commands'
   const onClose = useCallback(() => {
-    dispatch(toggleMobileCommandUniverseActionCreator({ value: false }))
+    dispatch(toggleCommandUniverseActionCreator({ value: false }))
   }, [dispatch])
   const onBack = useCallback(() => dispatch(commandUniverseBack()), [dispatch])
   const onForward = useCallback(() => dispatch(commandUniverseForward()), [dispatch])
@@ -228,7 +230,7 @@ const CommandUniverseSession = ({
     /** Routes dialog keys without changing ordinary search text editing. */
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.isComposing) return
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' || hashKeyDown(event) === hashCommand(openMobileCommandUniverse.keyboard)) {
         event.preventDefault()
         event.stopImmediatePropagation()
         onClose()
@@ -343,8 +345,8 @@ const CommandUniverseSession = ({
 }
 
 /** Mounts one browsing session for each opening and owns its shared fade/scale lifecycle. */
-const MobileCommandUniverse = () => {
-  const isOpen = useSelector(state => !!state.showMobileCommandUniverse)
+const CommandUniverse = () => {
+  const isOpen = useSelector(state => !!state.showCommandUniverse)
   const rootEntryId = useSelector(state => state.commandUniverseNavigation.entries[0].entryId)
   const isDesktop = useBreakpoint('lg')
   return (
@@ -359,4 +361,4 @@ const MobileCommandUniverse = () => {
   )
 }
 
-export default MobileCommandUniverse
+export default CommandUniverse

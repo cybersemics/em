@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from '../../actions/commandUniverseNavigate'
 import { saveSelectionOffsetsActionCreator as saveSelectionOffsets } from '../../actions/saveSelectionOffsets'
-import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
+import { toggleCommandUniverseActionCreator as toggleCommandUniverse } from '../../actions/toggleCommandUniverse'
 import { commandById } from '../../commands'
 import commandEmitter from '../../stores/commandEmitter'
 import PinnedCommandIcon from './PinnedCommandIcon'
@@ -55,7 +55,7 @@ const PinnedCommand = () => {
   const { isOpen, close, toggle } = usePinnedCommandTooltip({ reps })
   // The pinned command stays visible over the Mobile Command Universe, the dialog the user pins from, by keeping the
   // ring on its raised layer there. Under every other overlay it stays docked beneath.
-  const inCommandUniverse = useSelector(state => !!state.showMobileCommandUniverse)
+  const inCommandUniverse = useSelector(state => !!state.showCommandUniverse)
   // A dry run over the Command Universe earns no rep, so the ring bursts with color instead of filling. The gesture
   // handler announces each one on commandEmitter; the count only exists to tell the ring to play again.
   const [burst, setBurst] = useState(0)
@@ -79,7 +79,7 @@ const PinnedCommand = () => {
   const revealCommand = useCallback(() => {
     if (!command) return
     close()
-    dispatch(toggleMobileCommandUniverse({ value: true, preserveSelectionOffsets: true }))
+    dispatch(toggleCommandUniverse({ value: true, preserveSelectionOffsets: true }))
     dispatch(commandUniverseNavigate('detail', { command }, { transition: 'none' }))
   }, [close, command, dispatch])
   const hold = useRingHold(revealCommand)

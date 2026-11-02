@@ -34,7 +34,7 @@ const commandUniverseNavigate = (
     transition,
   }: { entryId: string; page: CommandUniversePage; arrival: Arrival; transition?: NavigationOptions['transition'] },
 ): State => {
-  if (!state.showMobileCommandUniverse) return state
+  if (!state.showCommandUniverse) return state
 
   const entries = [
     ...state.commandUniverseNavigation.entries.slice(0, state.commandUniverseNavigation.index + 1),

@@ -2,7 +2,8 @@ import { cleanup, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { commandUniverseSortActionCreator as commandUniverseSort } from '../../actions/commandUniverseSort'
-import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
+import { toggleCommandUniverseActionCreator as toggleCommandUniverse } from '../../actions/toggleCommandUniverse'
+import { isMac } from '../../browser'
 import store from '../../stores/app'
 import storageModel from '../../stores/storageModel'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -23,17 +24,17 @@ beforeEach(async () => {
 })
 afterEach(async () => {
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: false }))
+    store.dispatch(toggleCommandUniverse({ value: false }))
   })
   cleanup()
   await cleanupTestApp()
   vi.restoreAllMocks()
 })
 
-it('navigates a disabled command to details, and retains search on Back', async () => {
+it('opens with the desktop shortcut and navigates a disabled command to details, and retains search on Back', async () => {
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    fireEvent.keyDown(window, { key: 'p', [isMac ? 'metaKey' : 'ctrlKey']: true })
     await vi.runAllTimersAsync()
   })
   const search = screen.getByRole('textbox', { name: 'Search for a command' })
@@ -53,7 +54,7 @@ it('navigates a disabled command to details, and retains search on Back', async 
 
 it('executes a command from the list and refreshes recent commands on a fresh open', async () => {
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -63,7 +64,7 @@ it('executes a command from the list and refreshes recent commands on a fresh op
   await act(vi.runAllTimersAsync)
   expect(screen.queryByRole('listbox', { name: 'Commands' })).not.toBeInTheDocument()
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   expect(screen.getByRole('textbox', { name: 'Search for a command' })).toHaveValue('')
@@ -73,7 +74,7 @@ it('executes a command from the list and refreshes recent commands on a fresh op
 it('moves between recent commands with arrows, preserves caret keys, and closes with Escape', async () => {
   storageModel.set('recentCommands', ['newThought', 'settings'])
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -91,7 +92,7 @@ it('moves between recent commands with arrows, preserves caret keys, and closes 
 
 it('keeps sorting controlled, restores search focus, and handles empty results and composition', async () => {
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -112,7 +113,7 @@ it('keeps sorting controlled, restores search focus, and handles empty results a
 it('moves focus by page with PageDown and PageUp', async () => {
   storageModel.set('recentCommands', ['newThought', 'settings'])
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -126,7 +127,7 @@ it('moves focus by page with PageDown and PageUp', async () => {
 it('keeps arrow keys on the list when focus is on the sort button, closing its dropdown', async () => {
   storageModel.set('recentCommands', ['newThought', 'settings'])
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -143,7 +144,7 @@ it('keeps arrow keys on the list when focus is on the sort button, closing its d
 it('finds commands without keyboard shortcuts by name and in recently used commands', async () => {
   storageModel.set('recentCommands', ['defineTerm'])
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -159,7 +160,7 @@ it('finds commands without keyboard shortcuts by name and in recently used comma
 
 it.each(['Type', 'Alphabetical'])('finds commands without keyboard shortcuts when sorting by %s', async sort => {
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })

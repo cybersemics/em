@@ -10,9 +10,7 @@ import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import { PreloadedTestFlags } from '../helpers/preloadTestFlags'
-import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
-import setTheme from '../helpers/setTheme'
 import useTestFlags from '../helpers/useTestFlags'
 import waitForBackgroundImage from '../helpers/waitForBackgroundImage'
 import waitForSelector from '../helpers/waitForSelector'
@@ -34,44 +32,7 @@ const STUB_COMMANDS: NonNullable<PreloadedTestFlags['stubCommands']> = [
   ),
 ]
 
-/** A fixed list of commands with keyboard shortcuts, enough to overflow the Desktop Command Universe panel. Every command but one has an icon, so that the snapshot covers the position of an icon and of the placeholder that keeps the row layout without one. One description is long enough to wrap onto a second line. Open Command Universe is kept, since the command that opens the panel has to exist for the test to open it; it hides itself from the list. */
-const DESKTOP_STUB_COMMANDS: NonNullable<PreloadedTestFlags['stubCommands']> = [
-  'openDesktopCommandUniverse',
-  ...Array.from({ length: 8 }, (_, i) => ({
-    label: `Command ${i + 1}`,
-    keyboard: { key: (i + 1).toString(), meta: true },
-    description:
-      i === 3
-        ? `Description of command ${i + 1}, long enough to wrap onto a second line so that the snapshot covers multiline descriptions.`
-        : `Description of command ${i + 1}.`,
-    icon: i !== 2,
-  })),
-]
-
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
-
-describe('DesktopCommandUniverse', () => {
-  // stub the commands so that the snapshot covers only the appearance of the command list and does not change whenever a command is added, removed, or renamed
-  useTestFlags({ stubCommands: DESKTOP_STUB_COMMANDS })
-
-  it('standard view', async () => {
-    // hide the HUD so that the snapshot only includes the command universe and is not affected by unrelated toolbar or navbar changes
-    await hideHUD()
-
-    await press('P', { meta: true })
-
-    // wait for the desktop command universe to appear before taking screenshot
-    await waitForSelector('[data-testid=desktop-command-universe]')
-
-    expect(await screenshot()).toMatchImageSnapshot({
-      customSnapshotIdentifier: 'desktopCommandUniverse',
-    })
-    await setTheme('Light')
-    expect(await screenshot()).toMatchImageSnapshot({
-      customSnapshotIdentifier: 'desktopCommandUniverse-light',
-    })
-  })
-})
 
 describe('GestureMenu', () => {
   describe('smaller viewport (< 400px)', () => {

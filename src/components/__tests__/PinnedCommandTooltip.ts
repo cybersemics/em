@@ -2,7 +2,7 @@ import { cleanup, fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { pinCommandActionCreator as pinCommand } from '../../actions/pinCommand'
-import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
+import { toggleCommandUniverseActionCreator as toggleCommandUniverse } from '../../actions/toggleCommandUniverse'
 import { HOME_TOKEN } from '../../constants'
 import * as selection from '../../device/selection'
 import exportContext from '../../selectors/exportContext'
@@ -54,7 +54,7 @@ it('expands the pinned gesture and reveals its command without changing the pin'
 it('reveals the pinned command even after a different Command Universe search', async () => {
   await act(async () => {
     store.dispatch(pinCommand({ commandId: 'newThought' }))
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -223,7 +223,7 @@ it('keeps the editor selection snapshot when the ring is tapped over the Command
   const thoughtId = head(store.getState().cursor!)
   // Opening the Command Universe records the editor selection and then clears it.
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
 
@@ -238,7 +238,7 @@ it('keeps the editor selection snapshot when the ring is tapped over the Command
 it('asks the user to close the Command Universe before pressing the shortcut', async () => {
   await act(async () => {
     store.dispatch(pinCommand({ commandId: 'settings' }))
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
