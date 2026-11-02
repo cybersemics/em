@@ -19,28 +19,7 @@
     <link href="/fonts/lora.css" rel="stylesheet" />
     <link
       rel="preload"
-      href="/fonts/RadioCanadaBig/RadioCanadaBig-Regular.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-    <link
-      rel="preload"
-      href="/fonts/RadioCanadaBig/RadioCanadaBig-Medium.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-    <link
-      rel="preload"
-      href="/fonts/RadioCanadaBig/RadioCanadaBig-SemiBold.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-    <link
-      rel="preload"
-      href="/fonts/RadioCanadaBig/RadioCanadaBig-Bold.woff2"
+      href="/fonts/RadioCanadaBig/RadioCanadaBig-Variable.woff2"
       as="font"
       type="font/woff2"
       crossorigin
@@ -80,7 +59,8 @@
       // zero faces (the stylesheet has not been parsed yet) and silently does nothing.
       if (document.fonts && document.fonts.load) {
         window.addEventListener('load', () =>
-          ['400', '500', '600', '700'].forEach(weight => document.fonts.load(weight + ' 1em "Radio Canada Big"')),
+          // A single variable face covers every weight from 400 to 700, so one load is enough.
+          document.fonts.load('400 1em "Radio Canada Big"'),
         )
       }
     </script>
