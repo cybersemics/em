@@ -14,7 +14,6 @@ import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
 import { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
-import preloadBackgroundImages from './device/preloadBackgroundImages'
 import scrollTo from './device/scrollTo'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -37,6 +36,7 @@ import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
 import owner from './util/owner'
+import preloadBackgroundImages from './util/preloadBackgroundImages'
 
 /**
  * Decode cursor from url, pull and initialize the cursor.
