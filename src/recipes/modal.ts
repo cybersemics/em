@@ -68,7 +68,13 @@ const modalRecipe = defineSlotRecipe({
         actions: { fontSize: '0.75em' },
       },
       auth: {},
-      customizeToolbar: {},
+      customizeToolbar: {
+        root: {
+          /** Disables text selection in the modal. */
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+        },
+      },
       devices: {},
       export: {},
       feedback: {},
