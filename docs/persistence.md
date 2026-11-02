@@ -180,7 +180,7 @@ reducer → state.pushQueue → pushQueue enhancer
 
 When the cursor moves, the previous pull's `cancelRef.canceled` is set to `true`. Already-replicating thoughts complete; their not-yet-fetched descendants are left as pending and become the responsibility of the next flush.
 
-`syncStatusStore.isPulling` tracks pull state for the UI (does not include the favorites pull, which runs in the background). When it first turns false, [`preloadBackgroundImages`](../src/util/preloadBackgroundImages.ts) starts preloading the background images, so they load behind the visible thoughts.
+`syncStatusStore.isPulling` tracks pull state for the UI (does not include the favorites pull, which runs in the background). When it first turns false, [`initialize`](../src/initialize.ts) starts preloading the background images, so they load behind the visible thoughts.
 
 ### `fetchDescendants` (the actual pull engine)
 

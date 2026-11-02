@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 import { Device } from '@capacitor/device'
 import moize from 'moize'
+import backgroundImages from '../styled-system/background-images.json'
 import CommandId from './@types/CommandId'
 import Context from './@types/Context'
 import MimeType from './@types/MimeType'
@@ -36,7 +37,7 @@ import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
 import owner from './util/owner'
-import preloadBackgroundImages from './util/preloadBackgroundImages'
+import taskQueue from './util/taskQueue'
 
 /**
  * Decode cursor from url, pull and initialize the cursor.
@@ -129,8 +130,22 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
   await initializeCursor()
 
   // Preload all background images used in the app, so they don't visibly "pop in" during use.
-  // Start after the thoughtspace runtime has loaded, so the images do not compete with its download on a cold load.
-  preloadBackgroundImages()
+  // Wait until the first sync pull has finished, so the images load strictly behind the visible thoughts.
+  // The list of images is generated from the CSS by backgroundImageManifestPlugin.
+  syncStatusStore
+    .once(({ isPulling }) => isPulling)
+    .then(() => syncStatusStore.once(({ isPulling }) => !isPulling))
+    .then(() =>
+      taskQueue<void>({ concurrency: 4 }).add(
+        backgroundImages.map(src => () => {
+          const image = new Image()
+          image.fetchPriority = 'low'
+          image.src = src
+          // If the image fails, swallow it silently. The image will try to load again when it is shown.
+          return image.decode().catch(() => {})
+        }),
+      ),
+    )
 
   return eventHandlers
 }

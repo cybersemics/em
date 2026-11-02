@@ -8,7 +8,7 @@ import valueParser from 'postcss-value-parser'
  * This PandaCSS plugin reads the compiled CSS after generation (`cssgen:done`), and extracts an array of *all* of the background images
  * used in the app.
  *
- * It then writes this list to a JSON file in the `styled-system` directory, where `preloadBackgroundImages` can import it
+ * It then writes this list to a JSON file in the `styled-system` directory, where `initialize` can import it
  * to preload the background images at runtime.
  *
  * The JSON file is written to `styled-system/background-images.json`, and is bundled within the app by Vite.

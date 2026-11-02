@@ -67,10 +67,10 @@ const rules = {
         'JSXAttribute[name.name="style"] Property[key.name="background"] > TemplateLiteral > TemplateElement[value.raw=/url\\(/]',
       ].join(', '),
       message:
-        "Please set a background image using PandaCSS' `css()` helper, rather than an inline `style`. Background images in the CSS are pre-loaded by `preloadBackgroundImages.ts`, but images in `style` attributes can't be pre-loaded. If you need to choose which image to load at runtime, prepare an object of `css()` classes and use a key at runtime to select the appropriate class.",
+        "Please set a background image using PandaCSS' `css()` helper, rather than an inline `style`. Background images in the CSS are pre-loaded by `initialize.ts`, but images in `style` attributes can't be pre-loaded. If you need to choose which image to load at runtime, prepare an object of `css()` classes and use a key at runtime to select the appropriate class.",
     },
     {
-      // preloadBackgroundImages loads each url() with new Image(), which resolves a relative path against the page's
+      // initialize preloads each url() with new Image(), which resolves a relative path against the page's
       // URL rather than the stylesheet's, so a relative path would preload the wrong file. The rule below makes sure
       // every url() is written out where this rule can see it.
       selector: [
@@ -78,7 +78,7 @@ const rules = {
         'Property[key.name=/^background(Image)?$/] TemplateElement[value.raw=/url\\(\\s*[\'"]?(?!\\/|https?:\\/\\/)[^\\s\'")]/]',
       ].join(', '),
       message:
-        'A background image url() must start with `/` (a path from the root of the site, e.g. `url(/img/glow.avif)`) or `http://` / `https://`. `preloadBackgroundImages.ts` preloads every background image, and it needs an absolute path in order to resolve images consistently.',
+        'A background image url() must start with `/` (a path from the root of the site, e.g. `url(/img/glow.avif)`) or `http://` / `https://`. `initialize.ts` preloads every background image, and it needs an absolute path in order to resolve images consistently.',
     },
     {
       // Lint cannot see what a variable holds, so the rule above could not check a url() built from one. The
@@ -91,7 +91,7 @@ const rules = {
         'Property[key.name="backgroundImage"] > LogicalExpression[right.type=/^(Identifier|MemberExpression|CallExpression)$/]',
       ].join(', '),
       message:
-        "Write a background image url() out in full, e.g. `backgroundImage: 'url(/img/glow.avif)'`, rather than building it from a variable. `preloadBackgroundImages.ts` preloads every background image, and it needs an absolute path in order to resolve images consistently. If you need to choose which image to load at runtime, prepare an object of `css()` classes and use a key at runtime to select the appropriate class.",
+        "Write a background image url() out in full, e.g. `backgroundImage: 'url(/img/glow.avif)'`, rather than building it from a variable. `initialize.ts` preloads every background image, and it needs an absolute path in order to resolve images consistently. If you need to choose which image to load at runtime, prepare an object of `css()` classes and use a key at runtime to select the appropriate class.",
     },
   ],
   'no-restricted-properties': [
