@@ -355,6 +355,8 @@ const dragCollect = (monitor: DragSourceMonitor) => ({
 /** Collects props from the DropTarget. */
 const dropCollect = (monitor: DropTargetMonitor) => ({
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
+  // hovered irrespective of whether the dragged thought can be dropped here
+  isOver: monitor.isOver({ shallow: true }),
   isDeepHovering: monitor.isOver(),
   canDropThought: monitor.canDrop(),
 })
@@ -380,7 +382,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     collect: dragCollect,
   })
 
-  const [{ isHovering, isDeepHovering, canDropThought }, dropTarget] = useDrop({
+  const [{ isHovering, isOver, isDeepHovering, canDropThought }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     canDrop: (item, monitor) => !dropRejection(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
@@ -439,6 +441,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     dragSourceEditable,
     dragPreview,
     isHovering: isHoveringPinned,
+    isOver,
     isDeepHovering,
     canDropThought,
     dropTarget,

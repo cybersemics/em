@@ -30,6 +30,7 @@ import { undoActionCreator as undo } from './actions/undo'
 import { isCapacitor, isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
+import FavoritesIcon from './components/icons/FavoritesIcon'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, HOME_TOKEN, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
@@ -65,7 +66,7 @@ import saveDebugLog from './util/saveDebugLog'
 /** The commands registered in src/commands/index.ts. */
 export const registeredCommands: Command[] = Object.values(commandsObject)
 
-/** The commands that the app lists and matches against keyboard shortcuts and gestures: the registered commands, or the commands that a test preloaded into testFlags.stubCommands so that a snapshot of a command list does not change whenever a command is added, removed, or renamed. A stub given as an id keeps that registered command; any other stub becomes an inert command. */
+/** The commands that the app lists and matches against keyboard shortcuts and gestures: the registered commands, or the commands that a test preloaded into testFlags.stubCommands so that a snapshot of a command list does not change whenever a command is added, removed, or renamed. A stub given as an id keeps that registered command; any other stub becomes an inert command, drawn with the Favorites icon if it has an icon. */
 export const globalCommands: Command[] =
   testFlags.stubCommands?.map(stub =>
     typeof stub === 'string'
@@ -73,6 +74,7 @@ export const globalCommands: Command[] =
       : {
           ...stub,
           id: stub.label as CommandId,
+          svg: stub.icon ? FavoritesIcon : undefined,
           multicursor: false,
           exec: () => {},
         },
@@ -756,7 +758,14 @@ export const executeCommandWithMulticursor = (
 export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: Gesture }) => {
   const state = store.getState()
 
-  if (state.showModal || state.longPress === LongPressState.DragInProgress || state.showMobileCommandUniverse) return
+  // Over the Mobile Command Universe the only gesture is a dry run of the pinned command, traced over its tooltip.
+  const isDryRun = state.showMobileCommandUniverse && state.showPinnedCommandTooltip
+  if (
+    state.showModal ||
+    state.longPress === LongPressState.DragInProgress ||
+    (state.showMobileCommandUniverse && !isDryRun)
+  )
+    return
 
   // Stop gesture segment haptics when there are no more possible commands that can be completed from the current sequence.
   // useFilteredCommands updates the possibleCommands in a back channel for efficiency.
@@ -866,6 +875,16 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     if (commandMatch && chainableCommandInProgressExclusive.isChainable?.(commandMatch)) {
       command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
     }
+  }
+
+  // Whether the user drew one of the pinned command's own gestures, exactly.
+  const isPinnedGesture = !!sequence && commandGestureIndex[sequence]?.id === state.learning.pinnedCommandId
+
+  // Over the Mobile Command Universe a trace over the pinned command's tooltip is a dry run: nothing executes and no
+  // rep is earned, but tracing the pinned command's own gesture plays the ring's burst.
+  if (state.showMobileCommandUniverse && state.showPinnedCommandTooltip) {
+    if (isPinnedGesture) commandEmitter.trigger('pinnedGestureDryRun')
+    return
   }
 
   // In training mode, show the command's label as a gesture hint.
