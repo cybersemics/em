@@ -22,6 +22,7 @@ import head from '../../util/head'
 import CircleButton from '../dialog/CircleButton'
 import Dialog from '../dialog/Dialog'
 import DialogContent from '../dialog/DialogContent'
+import DeleteIcon from '../icons/DeleteIcon'
 
 /** A feedback form with explicit previews for optional private data. */
 const Feedback = () => {
@@ -415,16 +416,15 @@ const Feedback = () => {
             {files.length > 0 && (
               <ul className={css({ margin: 0, paddingLeft: '1em' })}>
                 {files.map((file, index) => (
-                  <li key={index}>
-                    {file.name}{' '}
-                    <button
-                      type='button'
-                      aria-label={`Remove ${file.name}`}
-                      className={anchorButtonRecipe({ actionButton: true, thin: true })}
+                  <li key={index} className={css({ display: 'flex', alignItems: 'center', gap: '0.5em' })}>
+                    <span className={css({ overflowWrap: 'anywhere', minWidth: 0 })}>{file.name}</span>
+                    <CircleButton
+                      ariaLabel={`Remove ${file.name}`}
+                      disabled={isSubmitting}
                       onClick={() => setFiles(files.filter((_, i) => i !== index))}
                     >
-                      Remove
-                    </button>
+                      <DeleteIcon />
+                    </CircleButton>
                   </li>
                 ))}
               </ul>
