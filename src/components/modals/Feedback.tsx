@@ -332,7 +332,9 @@ const Feedback = () => {
           </CircleButton>
         </div>
         <DialogContent scrollRef={scrollRef}>
-          <p className={css({ fontSize: '1rem', color: 'dim', marginTop: 0 })}>Send us your bugs, hopes, and dreams.</p>
+          <p className={css({ fontSize: '1rem', color: 'dim', marginTop: 0 })}>
+            Send us a bug report, feature request, or other feedback.
+          </p>
           <fieldset
             disabled={isSubmitting}
             className={css({
