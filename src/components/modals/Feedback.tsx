@@ -492,7 +492,11 @@ const Feedback = () => {
               browser, and platform.
             </p>
           </fieldset>
-          {error && <p role='alert'>{error}</p>}
+          {error && (
+            <p role='alert' className={css({ color: 'error' })}>
+              {error}
+            </p>
+          )}
           <div className={css({ display: 'flex', gap: '0.5em', justifyContent: 'center', paddingBlock: '1rem' })}>
             <button
               type='button'
