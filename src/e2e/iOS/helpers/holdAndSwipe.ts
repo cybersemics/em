@@ -1,4 +1,3 @@
-import type { Element } from 'webdriverio'
 import getElementRectByScreen from './getElementRectByScreen.js'
 
 /**
@@ -10,7 +9,7 @@ import getElementRectByScreen from './getElementRectByScreen.js'
  * Uses the global browser object from WDIO.
  */
 const holdAndSwipe = async (
-  element: Element,
+  element: WebdriverIO.Element,
   {
     dx,
     holdMs,

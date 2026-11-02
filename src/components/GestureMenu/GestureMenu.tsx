@@ -326,7 +326,7 @@ const GestureMenuWithTransition: FC = () => {
 
   return (
     <>
-      <PopupBase background='transparent' ref={popupRef} fullScreen>
+      <PopupBase background='transparent' ref={popupRef} fullScreen layer='gestureMenu'>
         <div
           data-testid='popup-value'
           className={css({
@@ -368,7 +368,7 @@ const GestureMenuWithTransition: FC = () => {
       </PopupBase>
       {/* Sibling of PopupBase (not a child) so its gestureContentBlur z-index is ordered in the shared
           <View> stacking context — below the trace, above the content — rather than being trapped inside
-          PopupBase's higher 'popup' stacking context. */}
+          PopupBase's higher 'gestureMenu' stacking context. */}
       <GestureContentBlur />
     </>
   )
