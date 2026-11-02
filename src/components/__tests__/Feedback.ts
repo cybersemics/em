@@ -2,6 +2,7 @@ import { fireEvent, screen } from '@testing-library/dom'
 import { act } from 'react'
 import FeedbackPayload from '../../../packages/feedback/shared/FeedbackPayload'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
+import viewportStore from '../../stores/viewportStore'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
@@ -81,6 +82,40 @@ it('remembers identity but discards the cancelled message', async () => {
   expect(fetchMock).not.toHaveBeenCalled()
 })
 
+it('sends the display resolution shown in the opted-in preview even after resizing', async () => {
+  await act(async () => {
+    viewportStore.update({ innerWidth: 1280, innerHeight: 720 })
+  })
+  await dispatch(showModal({ id: 'feedback' }))
+  expect(screen.getByRole('checkbox', { name: 'Include my display resolution' })).not.toBeChecked()
+  expect(screen.queryByLabelText('Display resolution preview')).not.toBeInTheDocument()
+  await act(async () => {
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Include my display resolution' }))
+  })
+  expect(screen.getByLabelText('Display resolution preview')).toHaveTextContent(
+    '1280 × 720 CSS pixels Device pixel ratio: 1',
+  )
+  await act(async () => {
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Include my display resolution' }))
+  })
+  expect(screen.queryByLabelText('Display resolution preview')).not.toBeInTheDocument()
+  await act(async () => {
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Include my display resolution' }))
+    viewportStore.update({ innerWidth: 720, innerHeight: 1280 })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), { target: { value: 'See my display size' } })
+  })
+  expect(screen.getByLabelText('Display resolution preview')).toHaveTextContent(
+    '1280 × 720 CSS pixels Device pixel ratio: 1',
+  )
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }))
+    await vi.dynamicImportSettled()
+    await vi.runAllTimersAsync()
+  })
+  const request = JSON.parse(fetchMock.mock.calls[0][1]!.body as string) as { payload: FeedbackPayload }
+  expect(request.payload.metadata.resolution).toEqual({ width: 1280, height: 720, pixelRatio: 1 })
+})
+
 it('previews all selected descendants in the issue outline format without overlapping duplicates', async () => {
   await dispatch(
     importToContext(`- aaa
@@ -96,7 +131,7 @@ it('previews all selected descendants in the issue outline format without overla
     showModal({ id: 'feedback' }),
   ])
   await act(async () => {
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Attach my current selection' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Include my current selected thought context' }))
     await vi.runAllTimersAsync()
   })
   expect(screen.getByLabelText('Selected thoughts preview').textContent).toBe(
@@ -109,9 +144,9 @@ it('previews an opted-in event log without the page URL or whole thoughtspace du
   debugLog.log('example', { value: 'Private example text' })
   debugLog.setEnabled(false)
   await dispatch(showModal({ id: 'feedback' }))
-  expect(screen.getByRole('checkbox', { name: 'Attach debug log' })).not.toBeChecked()
+  expect(screen.getByRole('checkbox', { name: 'Include my debug log' })).not.toBeChecked()
   await act(async () => {
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Attach debug log' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Include my debug log' }))
   })
   const text = screen.getByLabelText('Debug log preview').textContent!
   expect(text).toContain('Private example text')
@@ -171,7 +206,7 @@ it('uploads selected files privately before completing the submission', async ()
 it('rejects unsupported attachments and disables thought attachment without a selection', async () => {
   await dispatch(setCursor(null))
   await dispatch(showModal({ id: 'feedback' }))
-  expect(screen.getByRole('checkbox', { name: 'Attach my current selection' })).toBeDisabled()
+  expect(screen.getByRole('checkbox', { name: 'Include my current selected thought context' })).toBeDisabled()
   await act(async () => {
     fireEvent.change(screen.getByLabelText('Add attachments'), { target: { files: [new File(['x'], 'run.exe')] } })
   })

@@ -917,6 +917,8 @@ an indented plain-text export of the selected subtrees in document order, includ
 descendants. Overlapping selections are deduplicated and descendants are read from persistence before a preview is
 shown. With no selection, thought attachment is disabled. The debug-log preview omits the page URL header and the
 full thoughtspace dump, but event entries can contain thought text. Attaching it does not enable logging.
+The display-resolution preview shows the viewport width and height in CSS pixels and the device pixel ratio captured
+when checked. The submission includes those previewed values even if the viewport is resized before sending.
 
 The form also accepts private image, text/log, JSON, and PDF uploads (five files, 10 MiB each, 25 MiB combined).
 The server receives app version, build commit, browser user agent, and platform with each submission. Collection,

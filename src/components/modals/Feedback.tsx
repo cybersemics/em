@@ -53,7 +53,7 @@ const Feedback = () => {
   const [includeThoughts, setIncludeThoughts] = useState(false)
   const [thoughts, setThoughts] = useState<string | null>(null)
   const [log, setLog] = useState<string | null>(null)
-  const [includeResolution, setIncludeResolution] = useState(false)
+  const [resolution, setResolution] = useState<FeedbackPayload['metadata']['resolution']>()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -149,7 +149,7 @@ const Feedback = () => {
   // An unchanged retry reuses its submission id and immutable upload paths.
   useEffect(() => {
     attemptRef.current = null
-  }, [name, email, message, files, thoughts, log, includeResolution])
+  }, [name, email, message, files, thoughts, log, resolution])
 
   /** Saves optional identity locally without making storage availability a submission requirement. */
   const changeIdentity = (key: 'feedbackName' | 'feedbackEmail', value: string) => {
@@ -212,7 +212,6 @@ const Feedback = () => {
     busyRef.current = true
     setIsSubmitting(true)
     setError(null)
-    const { innerWidth, innerHeight } = viewportStore.getState()
     const payload: FeedbackPayload = {
       name: name.trim(),
       email: email.trim(),
@@ -224,9 +223,7 @@ const Feedback = () => {
         commit: __COMMIT_HASH__,
         userAgent: navigator.userAgent,
         platform: isTauri() ? 'tauri' : Capacitor.getPlatform(),
-        ...(includeResolution
-          ? { resolution: { width: innerWidth, height: innerHeight, pixelRatio: window.devicePixelRatio } }
-          : {}),
+        ...(resolution ? { resolution } : {}),
       },
       files: files.map(file => ({
         name: file.name,
@@ -439,7 +436,7 @@ const Feedback = () => {
                 disabled={!hasSelection || isSubmitting}
                 onChange={event => setIncludeThoughts(event.target.checked)}
               />{' '}
-              Attach my current selection
+              Include my current selected thought context
             </label>
             {includeThoughts && (
               <div>
@@ -459,13 +456,25 @@ const Feedback = () => {
             <label>
               <input
                 type='checkbox'
-                checked={includeResolution}
-                onChange={event => setIncludeResolution(event.target.checked)}
+                checked={!!resolution}
+                onChange={event => {
+                  const { innerWidth, innerHeight } = viewportStore.getState()
+                  setResolution(
+                    event.target.checked
+                      ? { width: innerWidth, height: innerHeight, pixelRatio: window.devicePixelRatio }
+                      : undefined,
+                  )
+                }}
               />{' '}
-              Include display resolution
+              Include my display resolution
             </label>
+            {resolution && (
+              <pre aria-label='Display resolution preview' className={previewClass}>
+                {`${resolution.width} × ${resolution.height} CSS pixels\nDevice pixel ratio: ${resolution.pixelRatio}`}
+              </pre>
+            )}
             <label>
-              <input type='checkbox' checked={log !== null} onChange={toggleLog} /> Attach debug log
+              <input type='checkbox' checked={log !== null} onChange={toggleLog} /> Include my debug log
             </label>
             {log !== null && (
               <div>
