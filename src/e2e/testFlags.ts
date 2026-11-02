@@ -3,6 +3,8 @@ import type CommandId from '../@types/CommandId'
 import type { ThoughtspaceStorage } from '../data-providers/thoughtspace'
 
 type TestFlags = {
+  /** Play production animations. Preload before startup so cached durations and CSS agree. */
+  animationEnabled: boolean
   logActions: boolean
   logMultigesture: boolean
   /** Delay in ms before expanding the hovering thought. */
@@ -30,6 +32,7 @@ const preloadedTestFlags = typeof window === 'undefined' ? null : (window.em?.te
 
 /** Test flags that are injected into window.em.testFlags. */
 const testFlags: TestFlags = {
+  animationEnabled: preloadedTestFlags?.animationEnabled ?? !(typeof navigator !== 'undefined' && navigator.webdriver),
   logActions: false,
   logMultigesture: false,
   expandHoverDelay: null,
