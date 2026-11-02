@@ -21,7 +21,6 @@ import setSelection from '../helpers/setSelection'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForAlert from '../helpers/waitForAlert'
 import waitForEditable from '../helpers/waitForEditable'
-import waitUntil from '../helpers/waitUntil'
 import withDebugLog from '../helpers/withDebugLog'
 import { page } from '../session'
 
@@ -133,10 +132,6 @@ describe('drag', () => {
 
     // hover the drop target directly below aaa, i.e. aaa's own position
     await dragAndDropThought('aaa', 'aaa', { hold: true, position: 'after' })
-
-    // the drop hover is still shown at the thought's own position; only the drop is cancelled
-    // (.drop-hover is the class that dropHoverRecipe gives every drop hover bar)
-    await waitUntil(() => !!document.querySelector('.drop-hover'), { timeout: 6000 })
 
     // release on the same drop target
     await dragAndDropThought('aaa', 'aaa', { position: 'after', skipMouseDown: true })

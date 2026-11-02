@@ -21,8 +21,9 @@ type TestFlags = {
   simulateDrag: boolean
   /** Render drop targets as blocks of color. */
   simulateDrop: boolean
-  /** Replaces the commands the app lists and matches against keyboard shortcuts and gestures. Each entry is either plain data that an inert command is built from, or the id of a registered command to keep, such as cancel or openMobileCommandUniverse, which the Gesture Menu always lists. Read once at startup, so it must be preloaded before the app loads. See globalCommands in commands.ts. */
-  stubCommands: (CommandId | Pick<Command, 'label' | 'gesture' | 'keyboard' | 'description'>)[] | null
+  /** Replaces the commands the app lists and matches against keyboard shortcuts and gestures. Each entry is either plain data that an inert command is built from, or the id of a registered command to keep, such as cancel or openMobileCommandUniverse, which the Gesture Menu always lists. Plain data with icon set to true is drawn with the Favorites icon, since an icon is a component and cannot be preloaded. Read once at startup, so it must be preloaded before the app loads. See globalCommands in commands.ts. */
+  stubCommands:
+    (CommandId | (Pick<Command, 'label' | 'gesture' | 'keyboard' | 'description'> & { icon?: boolean }))[] | null
 }
 
 const preloadedTestFlags = typeof window === 'undefined' ? null : (window.em?.testFlags ?? null)

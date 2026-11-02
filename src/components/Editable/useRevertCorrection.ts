@@ -68,6 +68,7 @@ const useRevertCorrection = ({
     document.addEventListener('mousedown', endWatch, { capture: true })
     document.addEventListener('keydown', endWatch, { capture: true })
     document.addEventListener('beforeinput', endWatch, { capture: true })
+
     const unsubscribe = caretStore.subscribeSelector(state => state.selection, onSelectionChange)
 
     return () => {
