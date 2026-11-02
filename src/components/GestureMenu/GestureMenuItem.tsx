@@ -79,14 +79,15 @@ const GestureMenuItem: FC<{
           justifyContent: 'flex-start',
           alignItems: selected ? 'flex-start' : 'center',
           flexShrink: 0,
-          width: '1rem',
-          height: '1rem',
+          width: '1.2rem',
+          height: '1.2rem',
+          margin: '-0.1rem',
         })}
       >
         <GestureDiagram
           path={command.id === 'cancel' ? null : gestureString(command)}
           highlight={gestureHighlight}
-          arrowhead={command.id === 'cancel' ? 'none' : 'filled'}
+          arrowhead='filled'
           glow={false}
           useGradient={false}
           color={token('colors.dim')}
@@ -94,8 +95,8 @@ const GestureMenuItem: FC<{
           chevronSize={2.5}
           chevronApexAngle={60}
           strokeWidth={3}
-          maxHeight={18}
-          maxWidth={18}
+          maxHeight={21.6}
+          maxWidth={21.6}
         />
       </div>
 
