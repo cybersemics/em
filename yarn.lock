@@ -12031,6 +12031,8 @@ __metadata:
     page-lifecycle: "npm:^0.1.2"
     pixi.js: "npm:^8.21.0"
     pluralize: "npm:^8.0.0"
+    postcss: "npm:^8.5.30"
+    postcss-value-parser: "npm:^4.2.0"
     postinstall-postinstall: "npm:^2.1.0"
     prettier: "npm:^3.9.10"
     puppeteer: "npm:^25.15.0"

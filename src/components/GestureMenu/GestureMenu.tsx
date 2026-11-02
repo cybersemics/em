@@ -284,8 +284,6 @@ const GestureMenuWithTransition: FC = () => {
     sortActiveCommandsFirst: true,
   })
 
-  const [isGlowBackgroundLoaded, setIsGlowBackgroundLoaded] = useState(false)
-
   useHideSelection(showGestureMenu)
 
   // Sync Redux showGestureMenu to gestureStore animation state
@@ -306,17 +304,6 @@ const GestureMenuWithTransition: FC = () => {
       onGestureMenuEntered()
     }
   }, [animationState])
-
-  useEffect(() => {
-    /** Prefetch the gesture menu glow background image to improve initial menu appearance. */
-    const prefetchGlowBackground = async () => {
-      const img = new Image()
-      img.src = '/img/gesture-menu/glow.avif'
-      await img.decode()
-    }
-
-    prefetchGlowBackground().finally(() => setIsGlowBackgroundLoaded(true))
-  }, [])
 
   // fadeIn is true only when 'visible' - this gives CSSTransition a frame with in={false} when mounting
   const fadeIn = animationState === 'visible'
@@ -358,7 +345,7 @@ const GestureMenuWithTransition: FC = () => {
               })}
             >
               <Overlay />
-              {isGlowBackgroundLoaded && <Glow />}
+              <Glow />
               <div style={{ position: 'relative', zIndex: 1 }}>
                 <GestureMenu commands={commands} />
               </div>

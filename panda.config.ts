@@ -2,6 +2,7 @@
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import breakpointsConfig from './src/breakpoints.config'
 import durationsConfig from './src/durations.config'
+import backgroundImageManifestPlugin from './src/panda-plugins/backgroundImageManifestPlugin'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import bulletRecipe from './src/recipes/bullet'
 import buttonRecipe from './src/recipes/button'
@@ -664,4 +665,6 @@ export default defineConfig({
   // The output directory for your css system
   outdir: 'styled-system',
   presets: ['@pandacss/preset-base'],
+
+  plugins: [backgroundImageManifestPlugin],
 })

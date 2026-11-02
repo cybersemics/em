@@ -6,7 +6,6 @@ import Command from '../../@types/Command'
 import { toggleHelpGenieActionCreator as toggleHelpGenie } from '../../actions/toggleHelpGenie'
 import { isTouch } from '../../browser'
 import { formatKeyboardShortcut, gestureString } from '../../commands'
-import usePrefetchImages from '../../hooks/usePrefetchImages'
 import gestureStore from '../../stores/gestureStore'
 import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
@@ -36,13 +35,6 @@ interface PinnedCommandTooltipProps {
   /** How far the enlarged ring reaches in from the right edge of the screen, in px. The row keeps its text clear of it. */
   ringFootprint: number
 }
-
-/** The image behind the tooltip's surface glow. */
-const SURFACE_GLOW_IMAGE = '/img/pinned-command/pinned-command-glow.avif'
-/** The glow behind the gesture diagram, separate from the surface glow because the diagram can be absent. */
-const GESTURE_GLOW_IMAGE = '/img/pinned-command/pinned-command-gesture-glow.avif'
-/** Both glow images. Stable, so usePrefetchImages does not re-run every render. */
-const GLOW_IMAGES = [SURFACE_GLOW_IMAGE, GESTURE_GLOW_IMAGE]
 
 /**
  * Dismisses the tooltip when the user taps outside it, while it is open.
@@ -125,11 +117,11 @@ const PinnedCommandGestureDiagram = ({ gesture }: { gesture: string }) => (
         width: '290%',
         aspectRatio: '1765 / 1459',
         transform: 'translate(-50%, -50%)',
+        backgroundImage: 'url(/img/pinned-command/pinned-command-gesture-glow.avif)',
         backgroundSize: '100% 100%',
         filter: 'blur(0px)',
         opacity: '1',
       })}
-      style={{ backgroundImage: `url(${GESTURE_GLOW_IMAGE})` }}
     />
     <GestureDiagram
       path={gesture}
@@ -332,7 +324,6 @@ const PinnedCommandTooltip = ({
   // A press on the tooltip or the ring is not a press outside.
   const insideRefs = useMemo(() => [tooltipRef, ringRef], [ringRef])
   const gesture = gestureString(command)
-  usePrefetchImages(GLOW_IMAGES)
 
   /** Fades the surface out, then closes the tooltip. */
   const dismiss = useCallback(() => surfaceRef.current?.dismiss(), [])
@@ -347,7 +338,7 @@ const PinnedCommandTooltip = ({
       ref={surfaceRef}
       anchor={{ base: 'bottom-full', lg: 'bottom-right' }}
       glow='pinnedCommand'
-      glowImage={SURFACE_GLOW_IMAGE}
+      glowClassName={css({ backgroundImage: 'url(/img/pinned-command/pinned-command-glow.avif)' })}
       isVisible={isOpen}
       onDismiss={onClose}
       onOpacityChange={onOpacityChange}

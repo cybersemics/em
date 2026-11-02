@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 import { Device } from '@capacitor/device'
 import moize from 'moize'
+import backgroundImages from '../styled-system/background-images.json'
 import CommandId from './@types/CommandId'
 import Context from './@types/Context'
 import MimeType from './@types/MimeType'
@@ -36,6 +37,7 @@ import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
 import owner from './util/owner'
+import taskQueue from './util/taskQueue'
 
 /**
  * Decode cursor from url, pull and initialize the cursor.
@@ -126,6 +128,18 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
   await thoughtsLocalPromise
 
   await initializeCursor()
+
+  // Preload all background images used in the app, so they don't visibly "pop in" during use.
+  // The list of images is generated from the CSS by backgroundImageManifestPlugin.
+  taskQueue<void>({ concurrency: 4 }).add(
+    backgroundImages.map(src => () => {
+      const image = new Image()
+      image.fetchPriority = 'low'
+      image.src = src
+      // If the image fails, swallow it silently. The image will try to load again when it is shown.
+      return image.decode().catch(() => {})
+    }),
+  )
 
   return eventHandlers
 }
