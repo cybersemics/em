@@ -268,7 +268,9 @@ const ROOT_PAYLOAD = encodeThoughtPayload({
 const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: Uint8Array): Promise<void> => {
   await ensureLexemesSchema(client)
   // Ensure root has payload so getThoughtById can use the generic path.
-  await client.local.payload(replicaId, GLOBAL_ROOT_TOKEN, ROOT_PAYLOAD, createTreecrdtLocalWriteOptions())
+  if ((await client.tree.root.payload()) === null) {
+    await client.local.payload(replicaId, GLOBAL_ROOT_TOKEN, ROOT_PAYLOAD, createTreecrdtLocalWriteOptions())
+  }
   for (const id of SYSTEM_ROOT_THOUGHT_IDS) {
     if (!(await client.tree.get(id))) {
       const now = Date.now()
