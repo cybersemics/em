@@ -53,6 +53,9 @@ const WINDOW_SCROLLATEDGE_SPEED = 2
 /** How often to save the selection offset to storage when it changes. */
 const SELECTION_CHANGE_THROTTLE = 200
 
+/** Set in sessionStorage once a selection has been shown in the tab on WebKit 27, after which WebKit withholds touches near the caret for the life of the tab, across reloads (#5895). */
+const WITHHOLDS_TOUCHES_KEY = 'em-withholds-touches'
+
 /** The pending selection.clear that fires if the device stays in the passive state (see onStateChange). A ministore whose dispose clears the timer, so that cleanup and a reset between tests cancel it rather than leaving it to fire later. */
 const passiveTimeoutStore = ministore<{ timer: Timer | null }>(
   { timer: null },
@@ -253,6 +256,9 @@ const initEvents = (store: Store<State, any>) => {
     () => {
       // editables are not long-pressable on desktop, so the range will only be a concern on mobile
       if (isTouch) selectionRangeStore.update(!selection.isCollapsed())
+      if (isTouch && !selection.isCollapsed() && (osVersionStore.getState() ?? 0) >= 27) {
+        sessionStorage.setItem(WITHHOLDS_TOUCHES_KEY, 'true')
+      }
       storageModel.set('cursor', value => ({
         path: value?.path || store.getState().cursor,
         offset: selection.offsetThought(),
@@ -369,7 +375,13 @@ const initEvents = (store: Store<State, any>) => {
     const isEmptyThought = !!state.cursor && getThoughtById(state, head(state.cursor))?.value === ''
     touchStore.update({
       pressOnCaret:
-        isTouch && (isSafari() || isEmptyThought) && !!touch && selection.isCaretNear(touch.clientX, touch.clientY),
+        isTouch &&
+        (isSafari() || isEmptyThought) &&
+        !!touch &&
+        (selection.isCaretNear(touch.clientX, touch.clientY) ||
+          // a long press here could start a drag whose touchend never arrives
+          (!!sessionStorage.getItem(WITHHOLDS_TOUCHES_KEY) &&
+            selection.isInWithheldCaretZone(touch.clientX, touch.clientY))),
       pressInEmptyThought:
         isTouch &&
         isEmptyThought &&

@@ -778,3 +778,26 @@ export const isCaretNear = (x: number, y: number): boolean => {
     DEFAULT_FONT_SIZE,
   )
 }
+
+/** WebKit's hit-test padding around the caret, in CSS px. */
+const WITHHELD_TOUCH_DISTANCE = 44
+
+/**
+ * Returns true if the point is within the padding around the collapsed caret in which WebKit 27, once the tab has
+ * shown a selection, withholds a touch's touchmove and touchend until the next touch begins (#5895). Unlike
+ * isCaretNear, the point need not be inside the editable, since WebKit withholds a touch on the bullet or a
+ * neighboring thought just the same.
+ */
+export const isInWithheldCaretZone = (x: number, y: number): boolean => {
+  if (!isActive() || !isCollapsed()) return false
+
+  const caret = caretRectViewport()
+  if (!caret) return false
+
+  return isNearBounds(
+    x,
+    y,
+    { left: caret.x, right: caret.x, top: caret.y, bottom: caret.y + caret.height },
+    WITHHELD_TOUCH_DISTANCE,
+  )
+}
