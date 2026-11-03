@@ -81,6 +81,11 @@ const describeCommandInvocation = (patch: Patch): string => {
       return `Tap ${command.label} in the Command Center.`
     case 'desktopCommandUniverse':
       return `Choose ${command.label} in the Command Universe.`
+    case 'systemMenu':
+      // Repeat records the command that it repeated, which may not be in the menu.
+      if (!command.systemMenu) return `Run ${command.label}.`
+      // The App menu is titled with the app's name.
+      return `Choose ${command.systemMenu === 'App' ? 'em' : command.systemMenu} > ${command.label} in the menu bar.`
   }
 
   return `Run ${command.label}.`

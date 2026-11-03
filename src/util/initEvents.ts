@@ -1,3 +1,4 @@
+import { isTauri } from '@tauri-apps/api/core'
 import _ from 'lodash'
 import lifecycle from 'page-lifecycle'
 import { Store } from 'redux'
@@ -10,12 +11,13 @@ import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isSafari, isTouch } from '../browser'
+import { isMac, isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, DEFAULT_FONT_SIZE, LongPressState } from '../constants'
 import initKeyboardSelection from '../device/initKeyboardSelection'
 import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
+import systemMenu from '../device/systemMenu'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import getThoughtById from '../selectors/getThoughtById'
@@ -635,6 +637,11 @@ const initEvents = (store: Store<State, any>) => {
   // Route iOS native undo/redo gestures through em's undo/redo in the Capacitor app
   nativeHistory.init()
 
+  // Connect the commands to the system menu, which the desktop app only installs on macOS
+  if (isTauri() && isMac) {
+    systemMenu.init()
+  }
+
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
   lifecycle.addEventListener('statechange', onStateChange)
@@ -676,6 +683,7 @@ const initEvents = (store: Store<State, any>) => {
     unsubscribeKeyboardSelection()
     virtualKeyboardHandler.destroy()
     nativeHistory.destroy()
+    systemMenu.destroy()
     untrackHistoryState()
     eventHandlers = null
   }

@@ -49,6 +49,7 @@ const multicursor: Command['multicursor'] = {
 const newSubthoughtCommand = {
   id: 'newSubthought',
   label: 'New Subthought' as const,
+  systemMenu: 'Edit',
   description: 'Create a new subthought in the current thought. Adds it to the bottom of any existing subthoughts.',
   longDescription: (
     <>

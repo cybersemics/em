@@ -9,6 +9,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const underline = {
   id: 'underline',
   label: 'Underline' as const,
+  systemMenu: 'Edit',
   description: 'Underlines the current thought or selected text.',
   descriptionInverse: 'Removes the underline from the current thought or selected text.',
   svg: Icon,

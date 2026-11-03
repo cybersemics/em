@@ -12,6 +12,8 @@ import deleteEmptyThoughtOrOutdentCommand from '../../commands/deleteEmptyThough
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
 import newThoughtAboveCommand from '../../commands/newThoughtAbove'
+import repeatCommand from '../../commands/repeat'
+import swapGrandparentCommand from '../../commands/swapGrandparent'
 import toggleSortCommand from '../../commands/toggleSort'
 import { HOME_PATH } from '../../constants'
 import store from '../../stores/app'
@@ -238,12 +240,34 @@ it.each([
   ['gesture', 'Swipe `dud`.'],
   ['commandCenter', 'Tap Move Thought Down in the Command Center.'],
   ['desktopCommandUniverse', 'Choose Move Thought Down in the Command Universe.'],
+  ['systemMenu', 'Choose Edit > Move Thought Down in the menu bar.'],
 ] as const)('describe the %s input method of a command', (type, sentence) => {
   store.dispatch([importText({ text: '- a\n- b' }), setCursor(['a'])])
 
   executeCommandWithMulticursor(moveThoughtDownCommand, { store, type })
 
   expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toContain(sentence)
+})
+
+// Repeat records the command that it repeated, so a command that is not in the system menu can still be run from it.
+it('describe a command that was repeated from the system menu but is not in it as run', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+            - c
+              - d
+                - e
+      `,
+    }),
+    setCursor(['a', 'b', 'c', 'd', 'e']),
+  ])
+  executeCommandWithMulticursor(swapGrandparentCommand, { store, type: 'gesture' })
+
+  executeCommandWithMulticursor(repeatCommand, { store, type: 'systemMenu' })
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toContain('Run Swap Grandparent.')
 })
 
 it('describe a toggled attribute by its path', () => {

@@ -9,6 +9,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const codeCommand = {
   id: 'code',
   label: 'Code' as const,
+  systemMenu: 'Edit',
   description: 'Formats the current thought or selected text as code.',
   descriptionInverse: 'Removes code formatting from the current thought or selected text.',
   multicursor: { toggle: true },

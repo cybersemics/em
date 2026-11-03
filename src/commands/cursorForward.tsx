@@ -16,6 +16,7 @@ const cursorForwardCommand = {
   ),
   hideAlert: true,
   label: 'Forward' as const,
+  systemMenu: 'Cursor',
   multicursor: false,
   gesture: 'l',
   svg: CursorForwardIcon,

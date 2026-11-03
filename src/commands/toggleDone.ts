@@ -11,6 +11,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const toggleDone = {
   id: 'toggleDone',
   label: 'Mark as done' as const,
+  systemMenu: 'Edit',
   labelInverse: 'Unmark as done',
   description: 'Crosses out a thought to mark it as completed.',
   descriptionInverse: 'Unmarks a thought as done.',

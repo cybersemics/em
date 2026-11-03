@@ -9,6 +9,7 @@ import parentOf from '../util/parentOf'
 const moveThoughtDownCommand = {
   id: 'moveThoughtDown',
   label: 'Move Thought Down' as const,
+  systemMenu: 'Edit',
   description: 'Move the current thought down.',
   gesture: 'dud',
   keyboard: { key: 'ArrowDown', meta: true, shift: true },

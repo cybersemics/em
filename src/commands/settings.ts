@@ -5,6 +5,7 @@ import SettingsIcon from '../components/icons/SettingsIcon'
 const command = {
   id: 'settings',
   label: 'Settings' as const,
+  systemMenu: 'App',
   description: 'Customize your experience of em.',
   keyboard: { key: ',', meta: true },
   multicursor: false,

@@ -5,6 +5,7 @@ import JumpForwardIcon from '../components/icons/JumpForwardIcon'
 const jumpForwardCommand = {
   id: 'jumpForward',
   label: 'Jump Forward' as const,
+  systemMenu: 'Cursor',
   description: 'Move the cursor to the next edit point. Reverses jump back.',
   keyboard: { key: 'j', shift: true, meta: true },
   gesture: 'rur',
