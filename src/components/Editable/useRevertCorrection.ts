@@ -5,9 +5,9 @@ import caretStore, { ObservedSelection, placeCaret } from '../../stores/caretSto
 import multitouchStore from '../../stores/multitouchStore'
 
 /**
- * Puts the caret where a tap landed when iOS moves it back. A tap a few characters from the caret gets no mouse
- * events, so onMouseDown never places the caret, and after the touchend iOS moves the caret to the tapped word and
- * then, within about 150ms, back to where it was before the tap (#4220).
+ * Puts the caret where a tap landed when iOS moves it back. A slow tap a few characters from the caret, held about
+ * 80ms or longer, gets no mouse events, so onMouseDown never places the caret, and after the touchend iOS moves the
+ * caret to the tapped word and then, within about 150ms, back to where it was before the tap (#4220).
  */
 const useRevertCorrection = ({
   editableRef,
