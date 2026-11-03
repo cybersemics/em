@@ -40,7 +40,7 @@ let snapshot: ThoughtspaceMaterializationSnapshot
 const apply = vi.fn()
 
 beforeEach(async () => {
-  client = await createTreecrdtClient({ storage: { type: 'memory' }, runtime: { type: 'direct' } })
+  client = await createTreecrdtClient({ docId: 'materialization-context' })
   provider = createTreecrdtDataProvider()
   snapshot = { thoughtIndex: {}, lexemeIndex: {} }
   apply.mockReset().mockImplementation(updates => {
@@ -60,16 +60,16 @@ afterEach(async () => {
 
 it('coalesces local events into one membership read without reading back local thoughts', async () => {
   const reader = vi.spyOn(client.runner, 'getText')
-  const readPayload = vi.spyOn(client.tree, 'getPayload')
+  const readNode = vi.spyOn(client.tree, 'node')
   await withTreecrdtWriteBarrier(async () => {
     await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } })
     await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('b') } })
   })
-  readPayload.mockClear()
+  readNode.mockClear()
   await waitForMaterializedThoughtsToStore()
 
   expect(reader.mock.calls.filter(([sql]) => sql.includes("'key', lexeme_hash"))).toHaveLength(1)
-  expect(readPayload).not.toHaveBeenCalled()
+  expect(readNode).not.toHaveBeenCalled()
   expect(apply).toHaveBeenCalledTimes(1)
   expect(apply.mock.calls[0][0].thoughtIndex).toEqual({})
   expect(snapshot.lexemeIndex[hashThought('b')].contexts).toEqual([THOUGHT_ID])

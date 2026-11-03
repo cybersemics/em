@@ -228,7 +228,7 @@ it('keeps separately created thoughtspace instances isolated', async () => {
 })
 
 it('rebuilds memberships and preserves favorite order when opening a database with the old lexeme table', async () => {
-  const client = await createTreecrdtClient({ storage: { type: 'memory' }, runtime: { type: 'direct' } })
+  const client = await createTreecrdtClient({ docId: 'old-lexeme-table' })
   const replicaId = new Uint8Array(32).fill(1)
   const provider = createTreecrdtDataProvider()
   const close = await provider.bindClient(client, replicaId)
@@ -273,7 +273,7 @@ it('rebuilds memberships and preserves favorite order when opening a database wi
 })
 
 it('keeps favorite order independent of membership changes and preserves it when reopening', async () => {
-  const client = await createTreecrdtClient({ storage: { type: 'memory' }, runtime: { type: 'direct' } })
+  const client = await createTreecrdtClient({ docId: 'favorite-order' })
   const replicaId = new Uint8Array(32).fill(1)
   const provider = createTreecrdtDataProvider()
   const close = await provider.bindClient(client, replicaId)
@@ -318,7 +318,7 @@ it('keeps favorite order independent of membership changes and preserves it when
 })
 
 it('does not checkpoint a partial index update and repairs both indexes on reopening', async () => {
-  const client = await createTreecrdtClient({ storage: { type: 'memory' }, runtime: { type: 'direct' } })
+  const client = await createTreecrdtClient({ docId: 'partial-index-update' })
   const replicaId = new Uint8Array(32).fill(1)
   const provider = createTreecrdtDataProvider()
   const close = await provider.bindClient(client, replicaId)

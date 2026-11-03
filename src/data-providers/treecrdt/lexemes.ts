@@ -47,7 +47,7 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
   const reindex = async (id: ThoughtId): Promise<string[]> => {
     if (ROOT_IDS.has(id)) return []
     const previous = await client.runner.getText(`SELECT lexeme_hash FROM ${TABLE} WHERE thought_id = ?1`, [id])
-    const payloadBytes = (await client.tree.exists(id)) ? await client.tree.getPayload(id) : null
+    const payloadBytes = await client.tree.node(id).payload()
     if (!payloadBytes) {
       await client.runner.getText(`DELETE FROM ${TABLE} WHERE thought_id = ?1`, [id])
       return previous ? [previous] : []

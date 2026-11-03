@@ -244,7 +244,7 @@ const ROOT_PAYLOAD = encodeThoughtPayload({
 /** Seeds TreeCRDT storage for an em thoughtspace. */
 const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: Uint8Array): Promise<void> => {
   // Ensure root has payload so getThoughtById can use the generic path.
-  if ((await client.tree.getPayload(GLOBAL_ROOT_TOKEN)) === null) {
+  if ((await client.tree.root.payload()) === null) {
     await client.local.payload(replicaId, GLOBAL_ROOT_TOKEN, ROOT_PAYLOAD, createTreecrdtLocalWriteOptions())
   }
   for (const id of SYSTEM_ROOT_THOUGHT_IDS) {
