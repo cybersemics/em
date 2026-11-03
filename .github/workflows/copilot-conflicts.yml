@@ -33,7 +33,9 @@ permissions:
 
 jobs:
   resolve:
-    name: Scan conflicting Copilot PRs
+    name: Resolve merge conflicts on Copilot PRs
+    # A pull request event only matters when it is a Copilot PR's own; any other would scan every Copilot PR for nothing.
+    if: github.event_name != 'pull_request_target' || github.event.pull_request.user.login == 'Copilot'
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
