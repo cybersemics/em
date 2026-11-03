@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
+import ContentEditableModule, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
@@ -36,6 +36,12 @@ import trimHtml from '../util/trimHtml'
 import useCaretRestore from './Editable/useCaretRestore'
 import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
+
+// react-contenteditable is CommonJS that sets __esModule. Because em's package.json has "type": "module", Vite resolves
+// its default import to module.exports rather than module.exports.default, while Vitest unwraps it to the component.
+// See https://vite.dev/guide/migration#consistent-commonjs-interop.
+const ContentEditable =
+  (ContentEditableModule as unknown as { default?: typeof ContentEditableModule }).default ?? ContentEditableModule
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = React.memo(
@@ -199,6 +205,7 @@ const Note = React.memo(
                 noteOffset: noteOffset ?? undefined,
                 path: targetPath,
                 values,
+                undoLabel: 'Edit Note',
               }),
             )
             return
@@ -222,6 +229,7 @@ const Note = React.memo(
                 newValue: wrappedValue,
                 noteOffset: noteOffset ?? undefined,
                 force: wrappedValue !== value,
+                undoLabel: 'Edit Note',
               }),
             )
           } else {
@@ -229,6 +237,7 @@ const Note = React.memo(
               setDescendant({
                 path: targetPath,
                 values: [value],
+                undoLabel: 'Edit Note',
               }),
             )
           }
@@ -260,6 +269,7 @@ const Note = React.memo(
                   path: appendToPath(targetPath, thought.id) as SimplePath,
                   oldValue: thought.value,
                   newValue: value,
+                  undoLabel: 'Edit Note',
                 }),
               )
             }
@@ -267,7 +277,7 @@ const Note = React.memo(
             const children = getChildrenSorted(state, head(targetPath))
             const values = children.map(child => trimHtml(child.value))
             if (values.some((value, index) => value !== children[index].value)) {
-              dispatch(editNotePath({ path: targetPath, values }))
+              dispatch(editNotePath({ path: targetPath, values, undoLabel: 'Edit Note' }))
             }
           }
         })
@@ -358,10 +368,24 @@ const Note = React.memo(
           // Text copied from a note and pasted on a thought should not bring along the note's default color and italicization. (#3779)
           onCopy={onCopy}
           onCut={onCut}
-          onPaste={() => {
-            // set justPasted so onChange can strip HTML from the new value
-            // the default onPaste behavior is maintained for easier caret and selection management
-            setJustPasted(true)
+          onPaste={(e: React.ClipboardEvent) => {
+            // mobile Safari copies URLs as 'text/uri-list' when the share button is used
+            const text = e.clipboardData.getData('text/plain') || e.clipboardData.getData('text/uri-list')
+
+            // Pasting from mobile copy (e.g. Choose "Share" in Twitter and select "Copy") can result in a blank clipboard
+            // that the browser still pastes, so fall back to the default paste and strip the HTML it inserts in onChange.
+            // See: https://github.com/cybersemics/em/issues/286
+            if (!text) {
+              setJustPasted(true)
+              return
+            }
+
+            // Insert the plain text rather than letting the browser paste HTML. WebKit wraps pasted text in a span with
+            // inline styles and a trailing newline, and stripping them in onChange leaves a value that no longer matches
+            // the DOM, so the note re-renders and the caret jumps to the end on iOS and is dropped on Android (#3828).
+            // insertText leaves the caret after the pasted text and the DOM in sync with the value.
+            e.preventDefault()
+            document.execCommand('insertText', false, text)
           }}
           onBlur={onBlur}
           onFocus={onFocus}

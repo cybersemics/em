@@ -8,10 +8,11 @@ import ministore from './ministore'
  * Latching — rather than tracking the live touch count — is essential for three reasons: (1) during a pinch or
  * two-finger trace one finger frequently lifts slightly before the other, so a live count would momentarily
  * drop to 1 and let react-dnd's TouchBackend begin a drag from the remaining finger; (2) a second finger can
- * join *after* a single-finger gesture has begun, and the gesture must then be abandoned; (3) the terminating
- * tap/click of a multi-touch gesture must still read `true` so it does not move the cursor. The latch is only
- * reset when a brand-new interaction begins: the first finger of a fresh touch, or a mouse or pen, neither of
- * which can be part of a multi-touch gesture. Consumed by the drag, gesture, and cursor-set subsystems. See #4233.
+ * join *after* a single-finger gesture has begun, and while the gesture continues it must not begin a drag or long
+ * press, or move the cursor, of its own; (3) the terminating tap/click of a multi-touch gesture must still read
+ * `true` so it does not move the cursor. The latch is only reset when a brand-new interaction begins: the first
+ * finger of a fresh touch, or a mouse or pen, neither of which can be part of a multi-touch gesture. Consumed by the
+ * drag, long press, and cursor-set subsystems. See #4233 and #5966.
  */
 const multitouchStore = ministore(false)
 

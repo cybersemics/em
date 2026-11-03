@@ -47,6 +47,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import isMultiEditing from '../selectors/isMultiEditing'
 import isMulticursorPath from '../selectors/isMulticursorPath'
+import isUndoEnabled from '../selectors/isUndoEnabled'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -844,7 +845,9 @@ const Editable = ({
 
         // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
         // run it immediately is there is a style wrapper that needs to be applied to the editable after a clearThought action (#3673)
+        // run it immediately if there is nothing to undo yet, so that the Undo button is enabled as soon as the first edit is typed rather than after the throttle (#5994)
         if (
+          !isUndoEnabled(state) ||
           wrappedValue !== incomingValue ||
           emojiSpaceAdded ||
           transient ||

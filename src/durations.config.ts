@@ -32,6 +32,10 @@ const durationsConfig = {
   nodeFadeOut: 80,
   /* A dissolve animation that is triggered when a node is deleted. */
   nodeDissolve: 80,
+  /** How long Show Touches keeps each touch point on screen while it fades out. */
+  touchFade: 1000,
+  /** How long Show Touches takes to fade out the last touch when the next one starts, while Auto Fade is off. */
+  touchFadeOut: 300,
   /* TraceGesture needs to fade in medium-fast so that it does not appear for quickly entered gestures like → and ←, but is snappy otherwise. */
   traceGestureIn: 300,
   /* Duration for context view disappearing text animations */

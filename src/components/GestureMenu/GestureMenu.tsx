@@ -284,8 +284,6 @@ const GestureMenuWithTransition: FC = () => {
     sortActiveCommandsFirst: true,
   })
 
-  const [isGlowBackgroundLoaded, setIsGlowBackgroundLoaded] = useState(false)
-
   useHideSelection(showGestureMenu)
 
   // Sync Redux showGestureMenu to gestureStore animation state
@@ -307,17 +305,6 @@ const GestureMenuWithTransition: FC = () => {
     }
   }, [animationState])
 
-  useEffect(() => {
-    /** Prefetch the gesture menu glow background image to improve initial menu appearance. */
-    const prefetchGlowBackground = async () => {
-      const img = new Image()
-      img.src = '/img/gesture-menu/glow.avif'
-      await img.decode()
-    }
-
-    prefetchGlowBackground().finally(() => setIsGlowBackgroundLoaded(true))
-  }, [])
-
   // fadeIn is true only when 'visible' - this gives CSSTransition a frame with in={false} when mounting
   const fadeIn = animationState === 'visible'
 
@@ -326,7 +313,7 @@ const GestureMenuWithTransition: FC = () => {
 
   return (
     <>
-      <PopupBase background='transparent' ref={popupRef} fullScreen>
+      <PopupBase background='transparent' ref={popupRef} fullScreen layer='gestureMenu'>
         <div
           data-testid='popup-value'
           className={css({
@@ -358,7 +345,7 @@ const GestureMenuWithTransition: FC = () => {
               })}
             >
               <Overlay />
-              {isGlowBackgroundLoaded && <Glow />}
+              <Glow />
               <div style={{ position: 'relative', zIndex: 1 }}>
                 <GestureMenu commands={commands} />
               </div>
@@ -368,7 +355,7 @@ const GestureMenuWithTransition: FC = () => {
       </PopupBase>
       {/* Sibling of PopupBase (not a child) so its gestureContentBlur z-index is ordered in the shared
           <View> stacking context — below the trace, above the content — rather than being trapped inside
-          PopupBase's higher 'popup' stacking context. */}
+          PopupBase's higher 'gestureMenu' stacking context. */}
       <GestureContentBlur />
     </>
   )

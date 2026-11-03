@@ -12,6 +12,7 @@ The main directory structure is organized as follows. Tests are located in a sub
 - [`/src/device`](../src/device) — Device/DOM-level helpers for selection, scrolling, clipboard, focus, and platform detection. The selection wrapper [`device/selection.ts`](../src/device/selection.ts) is the single point of access to `window.getSelection()` (enforced by lint). See [cursor-and-caret.md](cursor-and-caret.md).
 - [`/src/e2e`](../src/e2e) — End-to-end test setup, including the Puppeteer, iOS, and Android environments. See [testing.md](testing.md).
 - [`/src/hooks`](../src/hooks) — React hooks.
+- [`/src/panda-plugins`](../src/panda-plugins) — Panda CSS plugins, registered in [`panda.config.ts`](../panda.config.ts). [`backgroundImageManifestPlugin`](../src/panda-plugins/backgroundImageManifestPlugin.ts) writes the list of background images in the generated CSS, which [`initialize`](../src/initialize.ts) preloads once the app has initialized.
 - [`/src/recipes`](../src/recipes) — Panda CSS recipes that define styled component variants. New components should use these or inline styles.
 - [`/src/redux-enhancers`](../src/redux-enhancers) — Redux enhancers (e.g. the [`pushQueue`](../src/redux-enhancers/pushQueue.ts) that flushes state mutations to thoughtspace persistence).
 - [`/src/redux-middleware`](../src/redux-middleware) — Redux middleware (e.g. the [`pullQueue`](../src/redux-middleware/pullQueue.ts) that loads thoughts on demand, or [`clearSelection`](../src/redux-middleware/clearSelection.ts) that clears the browser caret on cursor changes).
@@ -24,7 +25,7 @@ The main directory structure is organized as follows. Tests are located in a sub
 
 - [`/src/index.tsx`](../src/index.tsx) — App entry point: mounts `<App />` into the DOM.
 - [`/src/initialize.ts`](../src/initialize.ts) — Bootstraps the thoughtspace, the offline-status store, the cursor from URL, and global event handlers. Called by `index.tsx`.
-- [`/src/commands.ts`](../src/commands.ts) — Builds the `globalCommands` array, three lookup indices (by id, keyboard, gesture), and the global `keyDown` / `keyUp` / gesture handlers. See [commands.md](commands.md).
+- [`/src/commands.ts`](../src/commands.ts) — Builds the registered command list, the global commands that tests can stub, three lookup indices (by id, keyboard, gesture), and the global `keyDown` / `keyUp` / gesture handlers. See [commands.md](commands.md).
 - [`/src/constants.ts`](../src/constants.ts) — App-wide constants (root tokens, timeouts, settings enum, `LongPressState`, `COMMAND_DIFFICULTIES`, etc.). For constants used in only one module, define them locally; promote here when shared.
 - [`/src/browser.ts`](../src/browser.ts) — Platform detection (`isTouch`, `isSafari`, `isMac`, `isMobile`).
 - [`/src/colors.config.ts`](../src/colors.config.ts), [`/src/durations.config.ts`](../src/durations.config.ts) — Design-token configuration consumed by Panda CSS.

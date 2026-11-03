@@ -1,8 +1,9 @@
-import { fireEvent } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { act } from 'react'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
+import { undoActionCreator as undo } from '../../actions/undo'
 import { HOME_TOKEN } from '../../constants'
 import * as copyModule from '../../device/copy'
 import exportContext from '../../selectors/exportContext'
@@ -11,6 +12,7 @@ import click from '../../test-helpers/click'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import importToContext from '../../test-helpers/importToContext'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
@@ -50,6 +52,47 @@ const press = async (label: 'undo slider start' | 'undo slider end', key: 'Arrow
     fireEvent.keyDown(handle(label), { key, keyCode: key === 'ArrowLeft' ? 37 : 39 })
   })
 }
+
+// https://github.com/cybersemics/em/issues/6155
+it('keep the Undo Slider open when Undo is tapped', async () => {
+  await dispatch([
+    importToContext('- hello'),
+    setCursor(['hello']),
+    editThought(['hello'], 'hello world'),
+    toggleDropdown({ dropDownType: 'undoSlider', value: true }),
+  ])
+  await act(vi.runAllTimersAsync)
+
+  expect(screen.getByText('hello world', { selector: '[data-editable]' })).toBeInTheDocument()
+  expect(screen.getByRole('slider', { name: 'undo slider start' })).toBeInTheDocument()
+
+  await click('[data-testid="toolbar-icon"][aria-label="Undo"]')
+  await act(vi.runAllTimersAsync)
+
+  expect(screen.getByText('hello', { selector: '[data-editable]' })).toBeInTheDocument()
+  expect(screen.queryByRole('slider', { name: 'undo slider start' })).toBeInTheDocument()
+})
+
+// https://github.com/cybersemics/em/issues/6155
+it('keep the Undo Slider open when Redo is tapped', async () => {
+  await dispatch([
+    importToContext('- hello'),
+    setCursor(['hello']),
+    editThought(['hello'], 'hello world'),
+    undo(),
+    toggleDropdown({ dropDownType: 'undoSlider', value: true }),
+  ])
+  await act(vi.runAllTimersAsync)
+
+  expect(screen.getByText('hello', { selector: '[data-editable]' })).toBeInTheDocument()
+  expect(screen.getByRole('slider', { name: 'undo slider start' })).toBeInTheDocument()
+
+  await click('[data-testid="toolbar-icon"][aria-label="Redo"]')
+  await act(vi.runAllTimersAsync)
+
+  expect(screen.getByText('hello world', { selector: '[data-editable]' })).toBeInTheDocument()
+  expect(screen.queryByRole('slider', { name: 'undo slider start' })).toBeInTheDocument()
+})
 
 it('move the thoughtspace to the point in time under the start handle', async () => {
   await arrange()

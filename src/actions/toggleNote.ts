@@ -40,9 +40,10 @@ export const toggleNoteActionCreator = (): Thunk => (dispatch, getState) => {
       ? null
       : state.noteFocus && targetThought
         ? deleteThought({ pathParent: path, thoughtId: targetThought.id })
-        : setDescendant(
-            notePathId && targetPath ? { path: targetPath, values: [''] } : { path, values: [noteKey, ''] },
-          ),
+        : setDescendant({
+            ...(notePathId && targetPath ? { path: targetPath, values: [''] } : { path, values: [noteKey, ''] }),
+            undoLabel: 'Add Note',
+          }),
     { type: 'toggleNote' },
   ])
 }

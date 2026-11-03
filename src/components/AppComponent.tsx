@@ -16,7 +16,6 @@ import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
-import multitouchStore from '../stores/multitouchStore'
 import touchStore from '../stores/touchStore'
 import debugLog from '../util/debugLog'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -36,6 +35,7 @@ import MultiGesture from './MultiGesture'
 import NativeTextDragCaret from './NativeTextDragCaret'
 import NavBar from './NavBar'
 import SelectionStems from './SelectionStems'
+import ShowTouches from './ShowTouches'
 import Sidebar from './Sidebar/Sidebar'
 import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
@@ -90,10 +90,6 @@ const shouldCancelGesture = (
   const state = store.getState()
   const distance = state.fontSize * 2
   return (
-    // Reject two-finger gestures (pinch-to-zoom / two-finger trace): the multitouch latch stays set for the
-    // rest of the touch interaction, so a second finger joining after a single-finger gesture has begun also
-    // cancels it (the touchstart guard in MultiGesture is skipped once a gesture is in progress). See #4233.
-    multitouchStore.getState() ||
     isOnToolbar(x, y) ||
     // Cancel when the touch starts on a range input (e.g. the background glow debug sliders). Otherwise the gesture disables scrolling by calling preventDefault on touchmove, which blocks the slider's native drag.
     !!(x && y && document.elementFromPoint(x, y)?.closest('input[type="range"]')) ||
@@ -104,7 +100,14 @@ const shouldCancelGesture = (
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
-    !!state.showMobileCommandUniverse
+    // Over the Mobile Command Universe, only a trace over the open pinned command tooltip is a gesture: a dry run of
+    // the pinned command. A touch anywhere else there belongs to the Command Universe. Calls without coordinates come
+    // from the responder, which only sees touches on the pinned command while the Command Universe covers the rest.
+    (!!state.showMobileCommandUniverse &&
+      !(
+        state.showPinnedCommandTooltip &&
+        (x === undefined || y === undefined || !!document.elementFromPoint(x, y)?.closest('[data-above-dialog]'))
+      ))
   )
 }
 
@@ -244,6 +247,8 @@ const AppComponent: FC = () => {
                 <Content />
               </div>
             }
+            {/* Inside MultiGesture so that a trace over the pinned command's tooltip is recognized and drawn even where the tooltip sits over the Mobile Command Universe, which is outside it. Its own fixed z-index orders it against the NavBar. */}
+            {isDocumentEditable() && <PinnedCommand />}
           </>
         )}
       </MultiGestureIfTouch>
@@ -252,7 +257,6 @@ const AppComponent: FC = () => {
         <>
           {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
           <NavBar position='bottom' />
-          <PinnedCommand />
 
           <CommandCenter />
           <div style={{ fontSize }}>
@@ -263,6 +267,8 @@ const AppComponent: FC = () => {
 
       {/* Outside the modal condition so the genie keeps flying over dialogs and modals once it is out. */}
       <HelpGenie />
+      {/* Outside the modal condition so touches are drawn over dialogs and modals too. */}
+      <ShowTouches />
     </div>
   )
 }

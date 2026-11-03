@@ -11,11 +11,13 @@ import thoughtToPath from './thoughtToPath'
  * rank is therefore placed above every rank that sorts before the value and below every rank that sorts at or after it
  * — rather than between adjacent array positions — so that the resulting rank order contains no inversion relative to
  * the sort condition. For a well-formed monotonic array this is equivalent to the midpoint between the neighboring
- * ranks. */
+ * ranks. Likewise a value that sorts after every thought is ranked above all of their ranks, not just above the last
+ * one: a hidden attribute such as =children is inserted above its siblings but created after them, so under Created it
+ * sorts last while holding the lowest rank (#5854). */
 const calculateRank = (thoughts: { rank: number }[], index: number): number => {
-  // if there is no such child, return the rank of the last child + 1
+  // if there is no such child, return the highest rank + 1
   if (index === -1) {
-    return (thoughts[thoughts.length - 1]?.rank || 0) + 1
+    return thoughts.length > 0 ? Math.max(...thoughts.map(thought => thought.rank)) + 1 : 1
   }
   // if the value is less than all children, return the rank of the first child - 1
   if (index === 0) {

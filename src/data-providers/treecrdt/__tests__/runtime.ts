@@ -49,7 +49,7 @@ it.each([
 
 it('maps em persistent storage to TreeCRDT OPFS client options', async () => {
   const stopAfterOptions = new Error('stop after capturing client options')
-  mockCreateTreecrdtClient.mockRejectedValueOnce(stopAfterOptions)
+  mockCreateTreecrdtClient.mockRejectedValue(stopAfterOptions)
   const treecrdtThoughtspace = createTreecrdtThoughtspace()
 
   await expect(
@@ -57,15 +57,29 @@ it('maps em persistent storage to TreeCRDT OPFS client options', async () => {
       storage: 'persistent',
     }),
   ).rejects.toBe(stopAfterOptions)
-  expect(mockCreateTreecrdtClient).toHaveBeenCalledWith({
-    storage: {
-      type: 'opfs',
-      filename: `/treecrdt-em-${tsid}.db`,
-      fallback: 'memory',
-    },
-    runtime: { type: 'dedicated-worker' },
+  expect(mockCreateTreecrdtClient).toHaveBeenNthCalledWith(1, {
     docId: tsid,
+    persistent: true,
+    filename: `/treecrdt-em-${tsid}.db`,
   })
+})
+
+it('falls back to memory when persistent storage fails to open', async () => {
+  mockCreateTreecrdtClient.mockRejectedValueOnce(new Error('OPFS unavailable'))
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const treecrdtThoughtspace = createTreecrdtThoughtspace()
+
+  await expect(treecrdtThoughtspace.init({ storage: 'persistent' })).resolves.toEqual({
+    clientId: expect.any(String),
+    storage: 'memory',
+  })
+  expect(mockCreateTreecrdtClient).toHaveBeenLastCalledWith({ docId: tsid })
+  expect(warn).toHaveBeenCalledWith(
+    'Persistent thoughtspace storage is unavailable. em is using temporary in-memory storage; changes will be lost when this page reloads or closes.',
+  )
+
+  warn.mockRestore()
+  await treecrdtThoughtspace.drop()
 })
 
 it('creates the client lazily', async () => {
@@ -78,11 +92,7 @@ it('creates the client lazily', async () => {
 
   await treecrdtThoughtspace.init({ storage: 'memory' })
   expect(mockCreateTreecrdtClient).toHaveBeenCalledTimes(1)
-  expect(mockCreateTreecrdtClient).toHaveBeenCalledWith({
-    storage: { type: 'memory' },
-    runtime: { type: 'direct' },
-    docId: tsid,
-  })
+  expect(mockCreateTreecrdtClient).toHaveBeenCalledWith({ docId: tsid })
 
   await treecrdtThoughtspace.drop()
 })
@@ -167,10 +177,7 @@ it('rejects writes queued before each settled drop and creates a fresh gate for 
 })
 
 it('discards a terminal client when drop reports an error', async () => {
-  const client = await createRealTreecrdtClient({
-    storage: { type: 'memory' },
-    runtime: { type: 'direct' },
-  })
+  const client = await createRealTreecrdtClient({ docId: tsid })
   const dropError = new Error('client drop failed')
   const originalDrop = client.drop.bind(client)
   // Model wa-sqlite 0.4: drop may report an error after making the client terminal.

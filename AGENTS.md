@@ -20,6 +20,7 @@ The repo's `commit-msg` hook adds this automatically for Claude Code, Codex, Ope
 
 - `docs/` contains comprehensive documentation on the codebase. Start from [`docs/readme.md`](docs/readme.md), which indexes every subsystem doc.
 - `grep` across `docs/**/*.md` when investigating, and keep querying it — especially when you meet something you do not understand. [`docs/glossary.md`](docs/glossary.md) defines the project's vocabulary; if a term is unfamiliar, resolve it there first.
+- When you `grep` source for any task, including an issue or a question, match both `.ts` and `.tsx`. The extension does not separate commands from components: `src/commands/newThought.tsx` is a command, so a search of `src/commands/*.ts` silently misses it. Narrow to `.ts` only when you mean to exclude components.
 - **Documentation is a two-way obligation: you read it, and you keep it true.** When a change makes something in `docs/` wrong, `docs-sync` will find and repair it — on its own if you invoke it, or as the first step of `end-session`. Landing the doc fix in the same commit as the change is what keeps the two from drifting apart.
 - This matters more here than in most projects, because `docs/` is the fastest way into an unfamiliar subsystem — for you, for the next person, and for the next agent, which may plan a change against whatever it says. Docs describe how the project works **now**, not how it changed, so a doc your change outdated is better rewritten than annotated with what it used to say.
 

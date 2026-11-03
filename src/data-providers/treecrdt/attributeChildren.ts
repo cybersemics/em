@@ -3,7 +3,6 @@ import type { Change } from '@treecrdt/interface/engine'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Index from '../../@types/IndexType'
 import type ThoughtId from '../../@types/ThoughtId'
-import { GLOBAL_ROOT_TOKEN } from '../../constants'
 import isAttribute from '../../util/isAttribute'
 import { decodeThoughtPayload } from './payload'
 
@@ -108,15 +107,16 @@ export async function moveAttributeChild(
 /** Reindexes a single child from TreeCRDT's current materialized state. */
 export async function reindexAttributeChild(client: TreecrdtClient, childId: ThoughtId): Promise<void> {
   await ensureAttributeChildrenSchema(client)
-  const [payloadBytes, parentIdRaw] = await Promise.all([client.tree.getPayload(childId), client.tree.parent(childId)])
+  const node = client.tree.node(childId)
+  const [payloadBytes, parent] = await Promise.all([node.payload(), node.parent()])
 
-  if (!payloadBytes || parentIdRaw === null) {
+  if (!payloadBytes || !parent) {
     await deleteAttributeChild(client, childId)
     return
   }
 
   const payload = decodeThoughtPayload(payloadBytes)
-  await syncAttributeChild(client, parentIdRaw as ThoughtId, childId, payload.value)
+  await syncAttributeChild(client, parent.id as ThoughtId, childId, payload.value)
 }
 
 /** Deletes all derived attribute-child rows. */
@@ -130,14 +130,11 @@ export async function rebuildAttributeChildrenIndex(client: TreecrdtClient): Pro
   await ensureAttributeChildrenSchema(client)
   await deleteAllAttributeChildren(client)
 
-  const parentQueue = [GLOBAL_ROOT_TOKEN]
+  const parentQueue = [client.tree.root]
   for (let i = 0; i < parentQueue.length; i++) {
-    const parentId = parentQueue[i]
-    const childIds = (await client.tree.children(parentId)) as ThoughtId[]
-
-    for (const childId of childIds) {
-      await reindexAttributeChild(client, childId)
-      parentQueue.push(childId)
+    for (const child of await parentQueue[i].children()) {
+      await reindexAttributeChild(client, child.id as ThoughtId)
+      parentQueue.push(child)
     }
   }
 }
@@ -175,11 +172,11 @@ export async function refreshAttributeChildrenFromChanges(
           await deleteAttributeChild(client, childId)
           break
         }
-        const parentIdRaw = await client.tree.parent(childId)
-        if (parentIdRaw === null) {
+        const parent = await client.tree.node(childId).parent()
+        if (!parent) {
           await deleteAttributeChild(client, childId)
         } else {
-          await upsertAttributeChild(client, parentIdRaw as ThoughtId, childId, payload.value)
+          await upsertAttributeChild(client, parent.id as ThoughtId, childId, payload.value)
         }
         break
       }
