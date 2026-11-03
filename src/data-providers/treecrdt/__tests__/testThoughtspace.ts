@@ -179,10 +179,7 @@ it('excludes the moving thought from stale rank placement', async () => {
 
 // https://github.com/cybersemics/em/pull/4325#issuecomment-5248342036
 it('reads sibling order once per thought when inserting a wide batch', async () => {
-  const client = await createTreecrdtClient({
-    storage: { type: 'memory' },
-    runtime: { type: 'direct' },
-  })
+  const client = await createTreecrdtClient({ docId: 'wide-batch' })
   const provider = createTreecrdtDataProvider()
 
   try {
@@ -190,15 +187,17 @@ it('reads sibling order once per thought when inserting a wide batch', async () 
     await persistThoughtsTo(provider.db, [thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
 
     const childIds = Array.from({ length: 40 }, (_, index) => (index + 512).toString(16).padStart(32, '0') as ThoughtId)
-    const childrenSpy = vi.spyOn(client.tree, 'children')
+    const getSpy = vi.spyOn(client.tree, 'get')
 
     await persistThoughtsTo(
       provider.db,
       childIds.map((id, index) => thought(id, PARENT_ID, `child-${index}`, index + 0.5)),
     )
 
-    expect(childrenSpy).toHaveBeenCalledTimes(childIds.length)
-    await expect(client.tree.children(PARENT_ID)).resolves.toEqual(childIds)
+    // Each sibling-order read goes through the parent's node.
+    expect(getSpy.mock.calls.filter(([id]) => id === PARENT_ID)).toHaveLength(childIds.length)
+    const children = (await (await client.tree.get(PARENT_ID))?.children()) ?? []
+    expect(children.map(child => child.id)).toEqual(childIds)
   } finally {
     await client.drop()
   }

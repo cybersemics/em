@@ -1,4 +1,5 @@
 import type { Operation } from '@treecrdt/interface'
+import type { TreecrdtNode } from '@treecrdt/interface/engine'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Index from '../../@types/IndexType'
 import type Thought from '../../@types/Thought'
@@ -77,19 +78,24 @@ const waitForTestReplicationDelay = async (): Promise<void> => {
   }
 }
 
+/** Ids of a TreeCRDT node's visible children in order, or none when the node isn't visible. */
+const getChildIds = async (node: TreecrdtNode | undefined): Promise<string[]> =>
+  node ? (await node.children()).map(child => child.id) : []
+
 /** Fetches a thought by ID from the given TreeCRDT client. */
 const getThoughtByIdFromClient = async (client: TreecrdtClient, id: ThoughtId): Promise<Thought | undefined> => {
-  const payloadBytes = await client.tree.getPayload(id)
-  if (payloadBytes === null) return undefined
+  const node = await client.tree.get(id)
+  const payloadBytes = node ? await node.payload() : null
+  if (!node || payloadBytes === null) return undefined
 
   const payload = decodeThoughtPayload(payloadBytes)
 
-  const parentIdRaw = await client.tree.parent(id)
-  const parentId: ThoughtId = parentIdRaw === null ? (ROOT_PARENT_ID as ThoughtId) : (parentIdRaw as ThoughtId)
-  const siblingIds = parentIdRaw === null ? [] : await client.tree.children(parentIdRaw)
-  const rank = parentIdRaw === null ? 0 : Math.max(0, siblingIds.indexOf(id))
+  const parent = await node.parent()
+  const parentId: ThoughtId = parent ? (parent.id as ThoughtId) : (ROOT_PARENT_ID as ThoughtId)
+  const siblingIds = await getChildIds(parent)
+  const rank = parent ? Math.max(0, siblingIds.indexOf(id)) : 0
 
-  const childIds = (await client.tree.children(id)) as ThoughtId[]
+  const childIds = (await getChildIds(node)) as ThoughtId[]
   const childrenMap = createIndexedChildrenMap(childIds, await getAttributeChildrenByParent(client, id))
 
   const thought: Thought = {
@@ -121,7 +127,7 @@ const getRankPlacement = async (
   thoughtId: ThoughtId,
   rank: number,
 ): Promise<TreecrdtPlacement> => {
-  const childIds = await client.tree.children(parentId)
+  const childIds = await getChildIds(await client.tree.get(parentId))
   const afterId = childIds.reduce<ThoughtId | undefined>(
     (previousId, childId, index) => (childId !== thoughtId && index < rank ? (childId as ThoughtId) : previousId),
     undefined,
@@ -151,7 +157,7 @@ const getTreecrdtPlacement = async (
   if (afterId == null) return { type: 'first' }
   if (afterId === thoughtId) throw new Error(`TreeCRDT move for ${thoughtId} cannot be placed after itself.`)
 
-  const childIds = await client.tree.children(parentId)
+  const childIds = await getChildIds(await client.tree.get(parentId))
   if (!childIds.includes(afterId)) {
     return getRankPlacement(client, parentId, thoughtId, thought.rank)
   }
@@ -201,7 +207,7 @@ const updateThoughtsForClient = async (
       ...(thought.archived !== undefined && { archived: thought.archived }),
     })
 
-    const exists = await client.tree.exists(thoughtId)
+    const exists = (await client.tree.get(thoughtId)) !== undefined
     const parentId = treeParentId(thought.parentId)
 
     if (!exists) {
@@ -270,7 +276,7 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
   // Ensure root has payload so getThoughtById can use the generic path.
   await client.local.payload(replicaId, GLOBAL_ROOT_TOKEN, ROOT_PAYLOAD, createTreecrdtLocalWriteOptions())
   for (const id of SYSTEM_ROOT_THOUGHT_IDS) {
-    if (!(await client.tree.exists(id))) {
+    if (!(await client.tree.get(id))) {
       const now = Date.now()
       await client.local.insert(
         replicaId,
@@ -289,21 +295,17 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
   }
 
   let settingsId: ThoughtId | null = null
-  for (const childId of await client.tree.children(EM_TOKEN)) {
-    const payloadBytes = await client.tree.getPayload(childId)
+  for (const child of (await (await client.tree.get(EM_TOKEN))?.children()) ?? []) {
+    const payloadBytes = await child.payload()
     if (!payloadBytes) continue
     const payload = decodeThoughtPayload(payloadBytes)
     if (payload.value === SETTINGS_VALUE) {
-      settingsId = childId as ThoughtId
+      settingsId = child.id as ThoughtId
       break
     }
   }
 
-  if (
-    !settingsId &&
-    (await client.tree.exists(SETTINGS_TOKEN)) &&
-    (await client.tree.parent(SETTINGS_TOKEN)) === EM_TOKEN
-  ) {
+  if (!settingsId && (await (await client.tree.get(SETTINGS_TOKEN))?.parent())?.id === EM_TOKEN) {
     settingsId = SETTINGS_TOKEN
   }
 
