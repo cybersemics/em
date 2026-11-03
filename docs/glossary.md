@@ -46,7 +46,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **clientId** — Public key of the writer, derived as base64(SHA-256(accessToken)). Stamped on every Thought/Lexeme write as `updatedBy`. Available asynchronously via the `clientIdReady` promise. See [persistence.md → Identity & sharing](persistence.md#identity--sharing).
 
-**command** — A user-triggered operation (keyboard shortcut, gesture, toolbar button, or Command Universe entry). Single-file definition under [`/src/commands`](../src/commands) implementing the [`Command`](../src/@types/Command.ts) interface; auto-registered via the barrel import in [`commands.ts`](../src/commands.ts). The legacy name *shortcut* still appears in some places. See [commands.md](commands.md).
+**command** — A user-triggered operation (keyboard shortcut, gesture, toolbar button, Command Universe entry, or system menu item). Single-file definition under [`/src/commands`](../src/commands) implementing the [`Command`](../src/@types/Command.ts) interface; auto-registered via the barrel import in [`commands.ts`](../src/commands.ts). The legacy name *shortcut* still appears in some places. See [commands.md](commands.md).
 
 **Command Universe** — Searchable list of all commands, opened with `Command/Ctrl + P` on desktop.
 
@@ -187,6 +187,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 **splitChain** — [`splitChain.ts`](../src/selectors/splitChain.ts) — splits a `Path` into `SimplePath[]` at every context-view boundary. Inverse: [`contextChainToPath`](../src/util/contextChainToPath.ts).
 
 **=style** — Meta-attribute carrying CSS styles. Variants: `=children/=style` (apply to direct children), `=grandchildren/=style` (one level deeper).
+
+**system menu** — The menu bar of the macOS desktop app. It lists every command with a `systemMenu`, under the top level menu that the property names, with the command's keyboard shortcut as the accelerator. Built natively from [`desktop/menu.json`](../desktop/menu.json), which is generated from the commands. See [commands.md](commands.md#system-menu).
 
 ## T
 
