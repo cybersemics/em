@@ -132,6 +132,21 @@ it('uses indexed attribute values as childrenMap keys without changing TreeCRDT 
   expect(Object.values(childrenMap)).toEqual([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID])
 })
 
+it('places a thought after an explicit sibling that is still under the parent', async () => {
+  await initTestThoughtspace()
+
+  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
+  await persistThoughts([thought(THOUGHT_A_ID, PARENT_ID, 'a', 0)])
+  await persistThoughts([thought(THOUGHT_B_ID, PARENT_ID, 'b', 1)])
+  await persistThoughts([thought(THOUGHT_X_ID, PARENT_ID, 'x', 2)])
+
+  // Rank 0 alone would place x first, so this only passes if the explicit placement is used.
+  await persistThoughts([thought(THOUGHT_X_ID, PARENT_ID, 'x', 0)], { [THOUGHT_X_ID]: THOUGHT_A_ID })
+
+  const parent = await treecrdtThoughtspace.getThoughtById(PARENT_ID)
+  expect(Object.values(parent?.childrenMap ?? {})).toEqual([THOUGHT_A_ID, THOUGHT_X_ID, THOUGHT_B_ID])
+})
+
 it('falls back to rank placement when explicit afterId is stale', async () => {
   await initTestThoughtspace()
 

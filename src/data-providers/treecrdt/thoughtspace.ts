@@ -152,8 +152,7 @@ const getTreecrdtPlacement = async (
   if (afterId == null) return { type: 'first' }
   if (afterId === thoughtId) throw new Error(`TreeCRDT move for ${thoughtId} cannot be placed after itself.`)
 
-  const childIds = (await client.tree.node(parentId).children()).map(child => child.id)
-  if (!childIds.includes(afterId)) {
+  if ((await client.tree.node(afterId).parent())?.id !== parentId) {
     return getRankPlacement(client, parentId, thoughtId, thought.rank)
   }
 
