@@ -9,6 +9,7 @@ import parentOf from '../util/parentOf'
 const newUncleCommand = {
   id: 'newUncle',
   label: 'New Subthought (next)' as const,
+  systemMenu: 'Edit',
   description: 'Add a new thought one level up. Same as creating a new thought and then outdenting it.',
   gesture: 'dl',
   keyboard: { key: 'Enter', meta: true, alt: true },

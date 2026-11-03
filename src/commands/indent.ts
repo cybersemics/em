@@ -11,6 +11,7 @@ import moveCursorForward from './moveCursorForward'
 const indentCommand = {
   id: 'indent',
   label: 'Indent' as const,
+  systemMenu: 'Edit',
   description: 'Indent the current thought one level deeper.',
   overlay: {
     keyboard: moveCursorForward.keyboard,

@@ -5,6 +5,7 @@ import JoinThoughtsIcon from '../components/icons/JoinThoughtsIcon'
 const joinThoughts = {
   id: 'join',
   label: 'Join Thoughts' as const,
+  systemMenu: 'Edit',
   description: 'Join all thoughts at the same level into a single thought.',
   keyboard: { key: 'j', alt: true },
   multicursor: {

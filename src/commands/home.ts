@@ -7,6 +7,7 @@ import HomeToolbarIcon from '../components/icons/HomeToolbarIcon'
 const homeCommand = {
   id: 'home',
   label: 'Home' as const,
+  systemMenu: 'Cursor',
   description: 'Navigate to Home.',
   keyboard: { key: 'h', meta: true, alt: true },
   multicursor: false,

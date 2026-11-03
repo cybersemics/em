@@ -13,6 +13,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const favorite = {
   id: 'favorite',
   label: 'Add to Favorites' as const,
+  systemMenu: 'Edit',
   labelInverse: 'Remove from Favorites',
   description: 'Add the current thought to your Favorites list.',
   descriptionInverse: 'Remove the current thought from your Favorites list.',

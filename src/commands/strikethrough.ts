@@ -9,6 +9,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const strikethrough = {
   id: 'strikethrough',
   label: 'Strikethrough' as const,
+  systemMenu: 'Edit',
   description: 'Formats the current thought or selected text with strikethrough.',
   descriptionInverse: 'Removes strikethrough from the current thought or selected text.',
   svg: Icon,

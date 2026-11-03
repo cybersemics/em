@@ -7,6 +7,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const newThoughtAboveCommand = {
   id: 'newThoughtAbove',
   label: 'New Thought (above)' as const,
+  systemMenu: 'Edit',
   description: 'Create a new thought immediately above the current thought.',
   gesture: 'rul',
   multicursor: {
