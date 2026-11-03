@@ -21,7 +21,31 @@ const REPORT_DIR = 'copilot-conflicts'
 const REPORT_FILE = `${REPORT_DIR}/report.json`
 const COPILOT = 'Copilot'
 const BASE_BRANCH = 'main'
-const MAX_DISPATCHES = 5
+/**
+ * Tasks started per scan. One, because each task's push runs the full CI suite, BrowserStack
+ * included: several at once would fill the account's device sessions together, ahead of anybody's
+ * work. Scans are frequent — every push to main, every pull request event, and every BrowserStack
+ * run that finishes — so the next due task waits only for the next one.
+ */
+const MAX_DISPATCHES = 1
+
+/** The BrowserStack workflows, whose runs share the account's device sessions with a task's CI. */
+const BROWSERSTACK_WORKFLOWS = ['ios.yml', 'android.yml']
+
+/**
+ * Returns whether any BrowserStack run is queued or in progress. A task's CI would then compete with
+ * somebody's work for the account's device sessions, so the scan starts nothing and leaves the task
+ * to a later scan; the BrowserStack workflows finishing is itself what triggers one.
+ */
+const isBrowserStackBusy = async ({ github, owner, repo }) => {
+  for (const workflow_id of BROWSERSTACK_WORKFLOWS) {
+    for (const status of ['queued', 'in_progress']) {
+      const { data } = await github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id, status, per_page: 1 })
+      if (data.total_count || data.workflow_runs.length) return true
+    }
+  }
+  return false
+}
 
 /**
  * Creates or updates the state comment, unless the scan is read-only. A pull request that has never
@@ -168,8 +192,11 @@ const collectCopilotConflicts = async ({ github, context, core }) => {
   }
 
   // Oldest first, the order pull requests are reviewed in, so the next one up is never left waiting
-  // for a later scan behind newer ones.
-  const tasks = due.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).slice(0, MAX_DISPATCHES)
+  // for a later scan behind newer ones. Nothing starts while BrowserStack is busy, unless a human
+  // named the pull request.
+  const busy = !requestedPr && due.length > 0 && (await isBrowserStackBusy({ github, owner, repo }))
+  if (busy) core.info('BrowserStack is busy; leaving due tasks to a later scan.')
+  const tasks = busy ? [] : due.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).slice(0, MAX_DISPATCHES)
   fs.mkdirSync(REPORT_DIR, { recursive: true })
   // `requested` travels with the report so the dispatch step, which re-checks the opt-outs against
   // a pull request that may have changed since the scan, honors the same override the scan did.
@@ -179,7 +206,7 @@ const collectCopilotConflicts = async ({ github, context, core }) => {
   )
   await core.summary
     .addHeading('Copilot conflict resolution')
-    .addRaw(`Due: ${due.length}; selected: ${tasks.length}.`)
+    .addRaw(`Due: ${due.length}; selected: ${tasks.length}${busy ? ' (BrowserStack busy)' : ''}.`)
     .write()
   core.info(`Selected ${tasks.length} due Copilot conflict-resolution task(s).`)
 }

@@ -47,7 +47,7 @@ const makePr = ({
 })
 
 /** Runs the collector against in-memory REST responses and returns its dispatch report. */
-const run = async (prs, requestedPr) => {
+const run = async (prs, requestedPr, { browserStackBusy = false } = {}) => {
   const byNumber = new Map(prs.map(pr => [pr.number, pr]))
   /** Lists all fixture pull requests. */
   const list = async () => ({ data: prs })
@@ -57,6 +57,11 @@ const run = async (prs, requestedPr) => {
   const listComments = async ({ issue_number }) => ({ data: byNumber.get(issue_number).comments })
   const github = {
     rest: {
+      actions: {
+        listWorkflowRuns: async () => ({
+          data: browserStackBusy ? { total_count: 1, workflow_runs: [{}] } : { total_count: 0, workflow_runs: [] },
+        }),
+      },
       pulls: { list, get },
       issues: {
         listComments,
@@ -111,7 +116,7 @@ const dueState = tasks => ({
 /** Reads back the state the scan left in a fixture pull request's comment. */
 const savedState = pr => parseState(pr.comments[0].body)
 
-/** Verifies six retry delays and the five-task cap, filled oldest pull request first. */
+/** Verifies six retry delays, one task per scan, and the oldest due pull request going first. */
 const testRetryPolicy = async () => {
   const report = await run([
     makePr({ number: 1, updatedAt: '2026-09-06T15:00:00Z', createdAt: '2026-09-01T10:00:00Z', state: dueState(0) }),
@@ -123,7 +128,28 @@ const testRetryPolicy = async () => {
   ])
   assert.deepEqual(
     report.tasks.map(task => task.number),
-    [1, 2, 3, 4, 5],
+    [1],
+  )
+  const later = await run([
+    makePr({ number: 2, updatedAt: '2026-09-06T14:00:00Z', createdAt: '2026-09-01T11:00:00Z', state: dueState(1) }),
+    makePr({ number: 3, updatedAt: '2026-09-06T13:00:00Z', createdAt: '2026-09-01T12:00:00Z', state: dueState(2) }),
+    makePr({ number: 4, updatedAt: '2026-09-06T12:00:00Z', createdAt: '2026-09-01T13:00:00Z', state: dueState(3) }),
+    makePr({ number: 5, updatedAt: '2026-09-06T11:00:00Z', createdAt: '2026-09-01T14:00:00Z', state: dueState(4) }),
+    makePr({ number: 6, updatedAt: '2026-09-06T10:00:00Z', createdAt: '2026-09-01T15:00:00Z', state: dueState(5) }),
+  ])
+  assert.deepEqual(
+    later.tasks.map(task => task.number),
+    [2],
+  )
+}
+
+/** Verifies no task starts while BrowserStack is busy, unless a human named the pull request. */
+const testBrowserStackBusy = async () => {
+  const due = makePr({ number: 32, updatedAt: '2026-09-06T10:00:00Z', state: dueState(1) })
+  assert.deepEqual((await run([due], undefined, { browserStackBusy: true })).tasks, [])
+  assert.deepEqual(
+    (await run([due], 32, { browserStackBusy: true })).tasks.map(task => task.number),
+    [32],
   )
 }
 
@@ -344,6 +370,7 @@ const testNamedDispatchOverridesWaitAndCap = async () => {
 }
 
 await testRetryPolicy()
+await testBrowserStackBusy()
 await testQuietPeriod()
 await testWorkRestartsBackoff()
 await testExclusions()
