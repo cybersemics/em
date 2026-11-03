@@ -10,12 +10,8 @@ import { childrenMapKey } from '../../util/createChildrenMap'
 import sleep from '../../util/sleep'
 import type { DataProvider } from '../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../thoughtspace'
-import {
-  getAttributeChildrenByParent,
-  rebuildAttributeChildrenIndex,
-  refreshAttributeChildrenFromChanges,
-} from './attributeChildren'
-import createLexemeIndex from './lexemes'
+import { getAttributeChildrenByParent } from './attributeChildren'
+import createDerivedIndexes from './derivedIndexes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
 import { enqueueMaterializedThoughtsToStore } from './sync'
 import type { MaterializationContext } from './sync/applyMaterializedThoughtsToStore'
@@ -341,37 +337,9 @@ const createTreecrdtDataProvider = () => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
-    const lexemes = await createLexemeIndex(client)
-    await client.runner.exec(`CREATE TABLE IF NOT EXISTS em_derived_indexes_meta (
-      id INTEGER PRIMARY KEY CHECK (id = 1), version INTEGER NOT NULL, head_seq INTEGER NOT NULL
-    )`)
-    /** Saves the index checkpoint only after both derived indexes are updated. */
-    const checkpointIndexes = (headSeq: number) =>
-      client.runner.getText(
-        'INSERT OR REPLACE INTO em_derived_indexes_meta (id, version, head_seq) VALUES (1, 1, ?1)',
-        [headSeq],
-      )
-    const { headSeq } = JSON.parse((await client.runner.getText('SELECT treecrdt_ensure_materialized()'))!) as {
-      headSeq: number
-    }
-    const indexedHead = await client.runner.getText('SELECT head_seq FROM em_derived_indexes_meta WHERE version = 1')
-    if (indexedHead === null || Number(indexedHead) !== headSeq) {
-      await client.runner.exec('DELETE FROM em_derived_indexes_meta')
-      await rebuildAttributeChildrenIndex(client)
-      await lexemes.rebuild()
-      await checkpointIndexes(headSeq)
-    }
+    const { lexemes, updateIndexes, waitForIndexes } = await createDerivedIndexes(client)
 
     let subscribed = true
-    let indexQueue = Promise.resolve()
-    /** Waits for all indexing, including events produced by a recovering storage read. */
-    const waitForIndexes = async () => {
-      let pending: Promise<void>
-      do {
-        pending = indexQueue
-        await pending
-      } while (pending !== indexQueue)
-    }
     const clientDb: TreecrdtClientDataProvider = {
       getLexemeById: async key => {
         await waitForIndexes()
@@ -403,15 +371,7 @@ const createTreecrdtDataProvider = () => {
     let publicationFailed = false
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
-      // A failed update poisons this binding's queue: later events must not checkpoint over incomplete indexes.
-      const keys = indexQueue.then(async () => {
-        await refreshAttributeChildrenFromChanges(client, event.changes)
-        const keys = await lexemes.applyChanges(event.changes)
-        await checkpointIndexes(event.headSeq)
-        return keys
-      })
-      indexQueue = keys.then(() => undefined)
-      void indexQueue.catch(err => console.error('TreeCRDT derived indexing failed', err))
+      const keys = updateIndexes(event)
       if (!materializationContext) return
       materializationContext.pending.push({ event, keys })
       // A failed publication retains its events, so the next event must retry even when the buffer was not empty.

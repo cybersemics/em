@@ -317,7 +317,7 @@ it('keeps favorite order independent of membership changes and preserves it when
   }
 })
 
-it('does not checkpoint a partial index update and repairs both indexes on reopening', async () => {
+it('resumes from its cursor after an interrupted index update', async () => {
   const client = await createTreecrdtClient({ docId: 'partial-index-update' })
   const replicaId = new Uint8Array(32).fill(1)
   const provider = createTreecrdtDataProvider()
@@ -329,22 +329,19 @@ it('does not checkpoint a partial index update and repairs both indexes on reope
     return getText(sql, params)
   })
   try {
-    const checkpoint = await getText('SELECT head_seq FROM em_derived_indexes_meta')
-    await expect(persistThoughtsTo(provider.db, [thought(PIN_ID, EM_TOKEN, '=pin', 0)])).rejects.toThrow(
-      'interrupted index update',
-    )
-    // Even a later event cannot mark the failed frontier complete.
-    await client.local.delete(replicaId, PIN_ID)
-    await expect(close()).rejects.toThrow('interrupted index update')
-    expect(await getText('SELECT head_seq FROM em_derived_indexes_meta')).toBe(checkpoint)
+    const cursor = await getText('SELECT head_seq FROM em_derived_indexes_meta')
+    // The write still succeeds; the failed update only leaves the cursor where it was.
+    await persistThoughtsTo(provider.db, [thought(PIN_ID, EM_TOKEN, '=pin', 0)])
+    expect(await getText('SELECT head_seq FROM em_derived_indexes_meta')).toBe(cursor)
     runner.mockRestore()
+    await close()
 
     const reopened = createTreecrdtDataProvider()
     const closeReopened = await reopened.bindClient(client, replicaId)
     try {
-      await expect(reopened.db.getLexemeById(hashThought('=pin'))).resolves.toBeUndefined()
-      expect((await reopened.db.getThoughtById(EM_TOKEN))?.childrenMap['=pin']).toBeUndefined()
-      const { headSeq } = JSON.parse((await getText('SELECT treecrdt_ensure_materialized()'))!) as { headSeq: number }
+      await expect(reopened.db.getLexemeById(hashThought('=pin'))).resolves.toMatchObject({ contexts: [PIN_ID] })
+      expect((await reopened.db.getThoughtById(EM_TOKEN))?.childrenMap['=pin']).toBe(PIN_ID)
+      const { headSeq } = await client.tree.changedSince(0, { limit: 1 })
       expect(await getText('SELECT head_seq FROM em_derived_indexes_meta')).toBe(String(headSeq))
     } finally {
       await closeReopened()
