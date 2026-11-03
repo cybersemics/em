@@ -115,8 +115,8 @@ export async function moveAttributeChild(
 /** Reindexes a single child from TreeCRDT's current materialized state. */
 export async function reindexAttributeChild(client: TreecrdtClient, childId: ThoughtId): Promise<void> {
   await ensureAttributeChildrenSchema(client)
-  const node = await client.tree.get(childId)
-  const [payloadBytes, parent] = node ? await Promise.all([node.payload(), node.parent()]) : [null, undefined]
+  const node = client.tree.node(childId)
+  const [payloadBytes, parent] = await Promise.all([node.payload(), node.parent()])
 
   if (!payloadBytes || !parent) {
     await deleteAttributeChild(client, childId)
@@ -205,7 +205,7 @@ export async function refreshAttributeChildrenFromChanges(
           await deleteAttributeChild(client, childId)
           break
         }
-        const parent = await (await client.tree.get(childId))?.parent()
+        const parent = await client.tree.node(childId).parent()
         if (!parent) {
           await deleteAttributeChild(client, childId)
         } else {

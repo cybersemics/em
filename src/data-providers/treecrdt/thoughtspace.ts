@@ -84,9 +84,9 @@ const getChildIds = async (node: TreecrdtNode | undefined): Promise<string[]> =>
 
 /** Fetches a thought by ID from the given TreeCRDT client. */
 const getThoughtByIdFromClient = async (client: TreecrdtClient, id: ThoughtId): Promise<Thought | undefined> => {
-  const node = await client.tree.get(id)
-  const payloadBytes = node ? await node.payload() : null
-  if (!node || payloadBytes === null) return undefined
+  const node = client.tree.node(id)
+  const payloadBytes = await node.payload()
+  if (payloadBytes === null) return undefined
 
   const payload = decodeThoughtPayload(payloadBytes)
 
@@ -127,7 +127,7 @@ const getRankPlacement = async (
   thoughtId: ThoughtId,
   rank: number,
 ): Promise<TreecrdtPlacement> => {
-  const childIds = await getChildIds(await client.tree.get(parentId))
+  const childIds = await getChildIds(client.tree.node(parentId))
   const afterId = childIds.reduce<ThoughtId | undefined>(
     (previousId, childId, index) => (childId !== thoughtId && index < rank ? (childId as ThoughtId) : previousId),
     undefined,
@@ -157,7 +157,7 @@ const getTreecrdtPlacement = async (
   if (afterId == null) return { type: 'first' }
   if (afterId === thoughtId) throw new Error(`TreeCRDT move for ${thoughtId} cannot be placed after itself.`)
 
-  const childIds = await getChildIds(await client.tree.get(parentId))
+  const childIds = await getChildIds(client.tree.node(parentId))
   if (!childIds.includes(afterId)) {
     return getRankPlacement(client, parentId, thoughtId, thought.rank)
   }
@@ -295,7 +295,7 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
   }
 
   let settingsId: ThoughtId | null = null
-  for (const child of (await (await client.tree.get(EM_TOKEN))?.children()) ?? []) {
+  for (const child of await client.tree.node(EM_TOKEN).children()) {
     const payloadBytes = await child.payload()
     if (!payloadBytes) continue
     const payload = decodeThoughtPayload(payloadBytes)
@@ -305,7 +305,7 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
     }
   }
 
-  if (!settingsId && (await (await client.tree.get(SETTINGS_TOKEN))?.parent())?.id === EM_TOKEN) {
+  if (!settingsId && (await client.tree.node(SETTINGS_TOKEN).parent())?.id === EM_TOKEN) {
     settingsId = SETTINGS_TOKEN
   }
 
