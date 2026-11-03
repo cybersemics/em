@@ -35,7 +35,7 @@ const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
 type DurationToken = {
   value: {
     base: string
-    _test: string
+    _animationsDisabled: string
   }
 }
 
@@ -44,7 +44,7 @@ const durationsReducer = (pv: Record<string, DurationToken>, [key, duration]: [s
   pv[key] = {
     value: {
       base: `${duration}ms`,
-      _test: '0ms',
+      _animationsDisabled: '0ms',
     },
   }
 
@@ -649,6 +649,7 @@ export default defineConfig({
     light: '[data-color-mode=light] &',
     dark: '[data-color-mode=dark] &',
     test: '[data-env=test] &',
+    animationsDisabled: '[data-animation-enabled=false] &',
     chrome: '[data-browser=chrome] &',
     safari: '[data-browser=safari] &',
     mobile: '[data-device=mobile] &',

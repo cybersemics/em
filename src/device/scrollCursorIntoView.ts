@@ -1,6 +1,7 @@
 import { isCapacitor, isIOS, isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
+import testFlags from '../e2e/testFlags'
 import viewportStore from '../stores/viewportStore'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import debugLog from '../util/debugLog'
@@ -119,7 +120,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
 
   window.scrollTo({
     top,
-    behavior: navigator.webdriver ? 'instant' : behavior,
+    behavior: !testFlags.animationEnabled ? 'instant' : behavior,
   })
 }
 

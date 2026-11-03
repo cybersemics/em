@@ -3,6 +3,8 @@ import { page } from '../session'
 import waitForSelector from './waitForSelector'
 
 interface Options {
+  /** Hold a mobile touch at the element's center. Release it with page.touchscreen.touchEnd. */
+  hold?: boolean
   /** Click on the inside edge of the editable. Default: left. */
   edge?: 'left' | 'right'
   /** Specify specific node on editable to click on. Overrides edge. */
@@ -18,9 +20,11 @@ interface Options {
  */
 const click = async (
   nodeHandleOrSelector: JSHandle | string,
-  { edge = 'left', offset, x = 0, y = 0 }: Options = {},
+  { edge = 'left', offset, x = 0, y = 0, hold = false }: Options = {},
 ) => {
   const isMobile = page.viewport()?.isMobile
+
+  if (hold && !isMobile) throw new Error('Holding a touch requires mobile emulation.')
 
   if (isMobile && (offset || x || y)) {
     throw new Error(
@@ -35,13 +39,18 @@ const click = async (
       : nodeHandleOrSelector.asElement()
 
   // if nodeHandleOrSelector is a selector and there is no text offset or x,y offset, simply call page.click or page.tap without having to fetch the bounding box and click on specific coordinates
-  if (typeof nodeHandleOrSelector === 'string' && !offset && !x && !y) {
+  if (typeof nodeHandleOrSelector === 'string' && !offset && !x && !y && !hold) {
     return page[isMobile ? 'tap' : 'click'](nodeHandleOrSelector)
   }
 
   const boundingBox = await nodeHandle?.boundingBox()
 
   if (!boundingBox) throw new Error('Bounding box of element not found.')
+
+  if (hold) {
+    await page.touchscreen.touchStart(boundingBox.x + boundingBox.width / 2, boundingBox.y + boundingBox.height / 2)
+    return
+  }
 
   /** Get cordinates for specific text node if the given node has text child. */
   const offsetCoordinates = (): Promise<{ x: number; y: number } | undefined> =>
