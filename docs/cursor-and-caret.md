@@ -66,7 +66,7 @@ The two reads worth calling out:
 - **`isOnFirstLine()` / `isOnLastLine()`** — used by the `cursorUp` and `cursorDown` commands so that pressing arrow at the bounds of a multi-line thought moves to the next thought rather than re-positioning the caret within the same thought.
 - **`isThought()`** — true if the focus node is inside a thought editable; used pervasively as a guard before dispatching selection-changing actions.
 
-Caret position is set via [`Editable`](../src/components/Editable.tsx)'s use of `selection.set`. The hook that actually decides *when* to set the selection is [`useEditMode`](#useeditmode), described below.
+Caret position is set through [`caretStore`](#caretstore)'s `placeCaret`, which a lint rule requires in place of calling `selection.set`. The hook that actually decides *when* to set the selection is [`useEditMode`](#useeditmode), described below.
 
 Notes own a separate contenteditable in [`Note`](../src/components/Note.tsx), so they place their caret directly instead of using `useEditMode`. Each note edit captures the post-edit character offset relative to the note root with `offsetFromNode()` and carries it on the note's edit action (`editThought` for a literal note or `editNotePath` for a path-based note). The undo enhancer uses the edit's plain-text length change to retain the corresponding pre-edit offset. Undo and redo force the note to render, then `Note` reads the requested `state.noteOffset` non-reactively, places the caret, and clears that one-shot request with a `setNoteFocus` that `undoRedoEnhancer` keeps out of the undo history. Placing the caret also focuses the note, which is why `onFocus` bails when state already has the caret on this note: that focus is the app's own, so there is no cursor to move, and the `setCursor` it would otherwise dispatch is an undoable navigation action — it would clear the offset the effect is in the middle of honoring, recompute `cursorOffset`, and discard the redo stack the moment an undo restores a note caret, leaving the note edit that was just undone with no redo step. Keeping the offset non-reactive prevents an ordinary click or text selection from being overwritten by a render. A paste into a note inserts the clipboard's plain text with `execCommand('insertText')` instead of the browser's own paste, which on WebKit wraps the text in a styled span and a trailing newline: the caret stays after the pasted text, and the value the note saves matches its DOM, so the note does not re-render and lose the caret ([issue #3828](https://github.com/cybersemics/em/issues/3828)).
 
@@ -211,7 +211,7 @@ The retarget runs only once a replacement has been accepted with a space, and on
 
 There is also a small effect that re-focuses the editable when the sidebar closes on desktop, so editing resumes seamlessly.
 
-**Prefer `useEditMode` over manually calling `selection.set`.** The hook handles ordering, edge cases, and platform quirks; manual calls tend to introduce subtle inconsistencies. There are still cases where manual selection is unavoidable (e.g. after a programmatic content edit), but those are minimized.
+**Prefer `useEditMode` over manually calling `placeCaret`.** The hook handles ordering, edge cases, and platform quirks; manual calls tend to introduce subtle inconsistencies. There are still cases where manual selection is unavoidable (e.g. after a programmatic content edit), but those are minimized.
 
 ## Philosophy
 

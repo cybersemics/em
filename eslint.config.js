@@ -102,6 +102,12 @@ const rules = {
       message:
         'Please import the appropriate helper function from /src/device/selection.ts to access the browser selection. This is done to abstract the browser selection API from the rest of the codebase.',
     },
+    {
+      object: 'selection',
+      property: 'set',
+      message:
+        'Please place the caret with placeCaret from /src/stores/caretStore.ts, so that it goes through the one place that applies a caret placement and appears in the Debug Log.',
+    },
   ],
   'export-default-identifier/export-default-identifier': 0,
 
@@ -315,6 +321,13 @@ export default [
     files: ['./src/e2e/**/*.ts'],
     rules: {
       'jsdoc/check-tag-names': 0,
+    },
+  },
+  // caretStore is the one place that applies a caret placement.
+  {
+    files: ['./src/stores/caretStore.ts'],
+    rules: {
+      'no-restricted-properties': 0,
     },
   },
   // Allow direct localStorage access only in the storage abstraction layer
