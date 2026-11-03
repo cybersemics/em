@@ -6890,16 +6890,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@treecrdt/sync-server-core@npm:0.1.4":
-  version: 0.1.4
-  resolution: "@treecrdt/sync-server-core@npm:0.1.4"
-  dependencies:
-    "@treecrdt/sync-protocol": "npm:0.2.1"
-    ws: "npm:^8.18.3"
-  checksum: 10c0/cc03851e29bac52a24816e295e577c01488f9b66c07d9d3fac16715f72ec5b3c1618f3001ea9135aa886ed51517688b259ed4917bddb900f6a98535f71b87798
-  languageName: node
-  linkType: hard
-
 "@treecrdt/sync-sqlite@npm:0.1.4":
   version: 0.1.4
   resolution: "@treecrdt/sync-sqlite@npm:0.1.4"
@@ -11961,14 +11951,8 @@ __metadata:
     "@testing-library/react": "npm:^16.3.3"
     "@testing-library/user-event": "npm:^14.6.8"
     "@total-typescript/ts-reset": "npm:^0.6.1"
-    "@treecrdt/auth": "npm:0.2.1"
-    "@treecrdt/discovery": "npm:0.1.0"
     "@treecrdt/interface": "npm:0.4.0"
-    "@treecrdt/riblt-wasm": "npm:0.1.0"
     "@treecrdt/sync": "npm:0.2.1"
-    "@treecrdt/sync-protocol": "npm:0.2.1"
-    "@treecrdt/sync-server-core": "npm:0.1.4"
-    "@treecrdt/sync-sqlite": "npm:0.1.4"
     "@treecrdt/wa-sqlite": "npm:1.1.0"
     "@trivago/prettier-plugin-sort-imports": "npm:^6.0.2"
     "@types/clipboard": "npm:^2.0.10"
@@ -24783,21 +24767,6 @@ __metadata:
     utf-8-validate:
       optional: true
   checksum: 10c0/bd7d5f4aaf04fae7960c23dcb6c6375d525e00f795dd20b9385902bd008c40a94d3db3ce97d878acc7573df852056ca546328b27b39f47609f80fb22a0a9b61d
-  languageName: node
-  linkType: hard
-
-"ws@npm:^8.18.3":
-  version: 8.18.3
-  resolution: "ws@npm:8.18.3"
-  peerDependencies:
-    bufferutil: ^4.0.1
-    utf-8-validate: ">=5.0.2"
-  peerDependenciesMeta:
-    bufferutil:
-      optional: true
-    utf-8-validate:
-      optional: true
-  checksum: 10c0/eac918213de265ef7cb3d4ca348b891a51a520d839aa51cdb8ca93d4fa7ff9f6ccb339ccee89e4075324097f0a55157c89fa3f7147bde9d8d7e90335dc087b53
   languageName: node
   linkType: hard
 
