@@ -1,5 +1,4 @@
 import type { Operation } from '@treecrdt/interface'
-import type { TreecrdtNode } from '@treecrdt/interface/engine'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Index from '../../@types/IndexType'
 import type Thought from '../../@types/Thought'
@@ -70,10 +69,6 @@ const waitForTestReplicationDelay = async (): Promise<void> => {
   }
 }
 
-/** Ids of a TreeCRDT node's visible children in order, or none when the node isn't visible. */
-const getChildIds = async (node: TreecrdtNode | undefined): Promise<string[]> =>
-  node ? (await node.children()).map(child => child.id) : []
-
 /** Fetches a thought by ID from the given TreeCRDT client. */
 const getThoughtByIdFromClient = async (client: TreecrdtClient, id: ThoughtId): Promise<Thought | undefined> => {
   const node = client.tree.node(id)
@@ -84,10 +79,10 @@ const getThoughtByIdFromClient = async (client: TreecrdtClient, id: ThoughtId): 
 
   const parent = await node.parent()
   const parentId: ThoughtId = parent ? (parent.id as ThoughtId) : (ROOT_PARENT_ID as ThoughtId)
-  const siblingIds = await getChildIds(parent)
-  const rank = parent ? Math.max(0, siblingIds.indexOf(id)) : 0
+  const siblingIds = parent ? (await parent.children()).map(sibling => sibling.id) : []
+  const rank = Math.max(0, siblingIds.indexOf(id))
 
-  const childIds = (await getChildIds(node)) as ThoughtId[]
+  const childIds = (await node.children()).map(child => child.id as ThoughtId)
   const childrenMap = createIndexedChildrenMap(childIds, await getAttributeChildrenByParent(client, id))
 
   const thought: Thought = {
@@ -119,7 +114,7 @@ const getRankPlacement = async (
   thoughtId: ThoughtId,
   rank: number,
 ): Promise<TreecrdtPlacement> => {
-  const childIds = await getChildIds(client.tree.node(parentId))
+  const childIds = (await client.tree.node(parentId).children()).map(child => child.id)
   const afterId = childIds.reduce<ThoughtId | undefined>(
     (previousId, childId, index) => (childId !== thoughtId && index < rank ? (childId as ThoughtId) : previousId),
     undefined,
@@ -149,7 +144,7 @@ const getTreecrdtPlacement = async (
   if (afterId == null) return { type: 'first' }
   if (afterId === thoughtId) throw new Error(`TreeCRDT move for ${thoughtId} cannot be placed after itself.`)
 
-  const childIds = await getChildIds(client.tree.node(parentId))
+  const childIds = (await client.tree.node(parentId).children()).map(child => child.id)
   if (!childIds.includes(afterId)) {
     return getRankPlacement(client, parentId, thoughtId, thought.rank)
   }
