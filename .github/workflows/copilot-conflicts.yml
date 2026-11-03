@@ -34,8 +34,6 @@ permissions:
 jobs:
   resolve:
     name: Resolve merge conflicts on Copilot PRs
-    # A pull request event only matters when it is a Copilot PR's own; any other would scan every Copilot PR for nothing.
-    if: github.event_name != 'pull_request_target' || github.event.pull_request.user.login == 'Copilot'
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -49,6 +47,9 @@ jobs:
           PR_NUMBER: ${{ inputs.pr }}
           DRY_RUN: ${{ inputs.dry_run }}
         with:
+          # The scan makes several API calls per Copilot PR, so a single 5xx from GitHub would
+          # otherwise fail it — and show red on whichever pull request triggered it.
+          retries: 3
           script: |
             await require('./scripts/ci/collect-copilot-conflicts.cjs')({ github, context, core })
 
