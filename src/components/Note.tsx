@@ -25,6 +25,7 @@ import noteValue from '../selectors/noteValue'
 import resolveNoteKey from '../selectors/resolveNoteKey'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
+import { placeCaret } from '../stores/caretStore'
 import editableSyncStore from '../stores/editableSyncStore'
 import appendToPath from '../util/appendToPath'
 import applyOuterTags from '../util/applyOuterTags'
@@ -119,7 +120,7 @@ const Note = React.memo(
       const { noteOffset } = store.getState()
       // cursor must be true if note is focused
       if (hasFocus && noteOffset !== null) {
-        selection.set(noteRef.current!, { offset: noteOffset })
+        placeCaret(noteRef.current!, { offset: noteOffset, source: 'noteOffset' })
         // Clear noteOffset after placing the caret so it acts as a one-shot request. Otherwise repeatedly
         // restoring the caret to the same offset (e.g. applying a font color over a background color multiple
         // times) would set noteOffset to an unchanged value, the effect would not re-run, and the caret would

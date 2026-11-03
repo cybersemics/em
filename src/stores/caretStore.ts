@@ -23,6 +23,14 @@ export type CaretSource =
   | 'restore'
   // useRevertCorrection, putting the caret back where a tap landed after iOS moved it back.
   | 'revert'
+  // Editable, restoring the caret after the generating emoji wrap rewrites the editable's HTML.
+  | 'generatingEmoji'
+  // Editable, restoring the caret after the focus retarget that follows an iOS autocomplete.
+  | 'autocomplete'
+  // Note, placing the caret at state.noteOffset.
+  | 'noteOffset'
+  // NativeTextDragCaret, placing the caret after text dropped from a native drag.
+  | 'textDrag'
 
 /** A caret placement the app has asked for. */
 export interface CaretTarget {
