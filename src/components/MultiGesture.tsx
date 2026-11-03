@@ -55,7 +55,12 @@ type MultiGestureProps = PropsWithChildren<{
   minDistance?: number
   /** A hook that is called on touchstart if the user is in the gesture zone. If it returns true, the gesture is abandoned. Otherwise scrolling is disabled and a gesture may be entered. */
   shouldCancelGesture?: (x?: number, y?: number) => boolean
+  /** Called on touchstart in the gesture zone when shouldCancelGesture abandons the gesture. If it returns true, the document is kept from scrolling until the touch ends, so that a touch handed to native behavior such as caret repositioning does not scroll it. */
+  shouldBlockScroll?: () => boolean
 }>
+
+/** Milliseconds after a press on the caret reaches the page after which touchmove is no longer prevented. IOS raises the text magnifier 100–200ms into the press. On BrowserStack's devices, preventing the small moves of a held press before then keeps the magnifier from appearing, while preventing moves after it has appeared does not stop it from moving the caret. On a physical iPhone or iPad, preventing touchmove no longer stops the scroll once the magnifier is up, so the overflow lock takes over. */
+const MAGNIFIER_DELAY = 150
 
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
 const dirToRad = {
@@ -102,6 +107,8 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number, bias: BiasTyp
 /** A component that handles touch gestures composed of sequential swipes. */
 class MultiGesture extends React.Component<MultiGestureProps> {
   abandon = false
+  /** When the touchstart handler ran, if shouldBlockScroll is keeping an abandoned touch from scrolling. Each touchmove compares its own timeStamp, which shares this clock, against it. */
+  blockScrollStart: number | null = null
   clientStart: Point | null = null
   currentStart: Point | null = null
   leftHanded = false
@@ -157,7 +164,10 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             ])
           }
         }
-        if (this.disableScroll) {
+        if (
+          this.disableScroll &&
+          !(this.blockScrollStart !== null && e.timeStamp - this.blockScrollStart >= MAGNIFIER_DELAY)
+        ) {
           e.preventDefault()
         }
       },
@@ -251,6 +261,15 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           this.disableScroll = true
         } else {
           this.abandon = true
+          const blockScroll = inGestureZone && !!props.shouldBlockScroll?.()
+          this.disableScroll = blockScroll
+          // Measured from when the handler runs rather than from the touchstart's timeStamp, since iOS can deliver a touch
+          // well after it began, when the main thread is busy or Touch Accommodations' Hold Duration is on. The first move
+          // it delivers then can already be stamped past MAGNIFIER_DELAY from the touchstart's timeStamp, and once a few
+          // moves are let through iOS takes the touch as a pan.
+          this.blockScrollStart = blockScroll ? performance.now() : null
+          // outlasts disableScroll, which has to let the magnifier's touchmoves through once it appears
+          document.documentElement.style.overflow = blockScroll ? 'hidden' : ''
         }
       }
     })
@@ -514,6 +533,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.currentStart = null
     this.scrollYStart = null
     this.disableScroll = false
+    this.blockScrollStart = null
+    document.documentElement.style.overflow = ''
     this.sequence = ''
     this.touchTarget = null
     this.touchIdentifier = null

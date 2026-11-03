@@ -122,6 +122,7 @@ const MultiGestureIfTouch: FC<PropsWithChildren> = ({ children }) => {
       onGesture={handleGestureSegment}
       onEnd={handleGestureEnd}
       shouldCancelGesture={shouldCancelGesture}
+      shouldBlockScroll={() => touchStore.getState().pressOnCaret}
       onCancel={handleGestureCancel}
     >
       {children}
