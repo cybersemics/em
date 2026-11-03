@@ -259,6 +259,14 @@ describe('solid filled arrowhead', () => {
     expect(rounded).toContain('marker-end')
     expect(viewBoxSide(rounded)).toBeGreaterThan(viewBoxSide(straight))
   })
+
+  // The rdld glyph draws no arrowhead, but it must share the scale of the chevron gestures listed beside it.
+  it('frames the rdld glyph at the same scale as filled chevron gestures', () => {
+    /** Extracts the side length of the square viewBox from static markup. */
+    const viewBoxSide = (markup: string) => +markup.match(/viewBox="[^"]+ ([^" ]+)"/)![1]
+
+    expect(viewBoxSide(render({ ...props, path: 'rdld' }))).toBe(viewBoxSide(render(props)))
+  })
 })
 
 describe('automatic viewBox', () => {
@@ -274,7 +282,7 @@ describe('automatic viewBox', () => {
 })
 
 it('applies the same geometry and framing independently of the paint renderer', () => {
-  const props = { path: 'rdld' as const, size: 150, strokeWidth: 12, arrowSize: 1 }
+  const props = { path: 'rdld' as const, size: 150, strokeWidth: 12, arrowSize: 1, arrowhead: 'none' as const }
   const markups = [
     render({ ...props, useGradient: false }),
     render(props),
@@ -286,7 +294,7 @@ it('applies the same geometry and framing independently of the paint renderer', 
       .match(/viewBox="([^"]+)"/)![1]
       .split(' ')
       .map(Number)
-    expect(viewBox[0]).toBeCloseTo(((29.7 + 36.3 / 2) / 67.5) * 150 - 124)
-    expect(viewBox.slice(1)).toEqual([-39, 248, 248])
+    expect(viewBox[0]).toBeCloseTo(((29.7 + 36.3 / 2) / 67.5) * 150 - 84)
+    expect(viewBox.slice(1)).toEqual([1, 168, 168])
   })
 })

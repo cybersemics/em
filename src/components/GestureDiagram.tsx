@@ -212,6 +212,7 @@ const GestureDiagram = ({
           size,
           chevronSize,
           chevronApexAngle,
+          filledChevron,
         })
       }
     >
