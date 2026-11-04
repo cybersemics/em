@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { css } from '../../styled-system/css'
 import * as selection from '../device/selection'
 import selectionMenuStore from '../stores/selectionMenuStore'
@@ -6,12 +6,16 @@ import selectionMenuStore from '../stores/selectionMenuStore'
 /** How far the menu sits from the selection, in px. */
 const GAP = 10
 
+/** The smallest distance between the menu and the left or right edge of the viewport, in px. */
+const EDGE_MARGIN = 8
+
 /** Below this distance from the top of the viewport, in px, the menu would cover the toolbar, so it is placed under the selection instead of over it. */
 const MIN_TOP = 120
 
 /** The position of the menu in document coordinates, so that the page scroll moves it with the selection without an update. */
 interface MenuPosition {
-  left: number
+  /** The horizontal center of the selection the menu points at. */
+  center: number
   top: number
   placement: 'above' | 'below'
 }
@@ -33,7 +37,7 @@ const measure = (): { position: MenuPosition; key: string } | null => {
   return {
     key,
     position: {
-      left: anchor.left + anchor.width / 2 + window.scrollX,
+      center: anchor.left + anchor.width / 2 + window.scrollX,
       top: (placement === 'above' ? anchor.top - GAP : anchor.bottom + GAP) + window.scrollY,
       placement,
     },
@@ -93,6 +97,8 @@ const SelectionMenu = () => {
   const show = selectionMenuStore.useState()
   const [position, setPosition] = useState<MenuPosition | null>(null)
   const ref = useRef<HTMLDivElement>(null)
+  // The menu's rendered width, measured before paint so that it can be kept inside the viewport.
+  const [width, setWidth] = useState(0)
 
   useEffect(() => {
     if (!show) {
@@ -130,6 +136,10 @@ const SelectionMenu = () => {
     }
   }, [show])
 
+  useLayoutEffect(() => {
+    if (position && ref.current) setWidth(ref.current.offsetWidth)
+  }, [position])
+
   if (!show || !position) return null
 
   return (
@@ -151,9 +161,13 @@ const SelectionMenu = () => {
         WebkitUserSelect: 'none',
       })}
       style={{
-        left: position.left,
+        // centered on the selection, but kept inside the viewport, where a selection near an edge would push it off screen
+        left: Math.min(
+          Math.max(position.center - width / 2, window.scrollX + EDGE_MARGIN),
+          window.scrollX + window.innerWidth - EDGE_MARGIN - width,
+        ),
         top: position.top,
-        transform: position.placement === 'above' ? 'translate(-50%, -100%)' : 'translate(-50%, 0)',
+        transform: position.placement === 'above' ? 'translateY(-100%)' : undefined,
       }}
     >
       {actions.map(({ label, run }, i) => (
