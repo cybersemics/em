@@ -11,9 +11,9 @@ This skill is only for static artifacts built outside the app. It never applies 
 
 ## Glow
 
-The glow is `glow.avif` in this skill's directory: em's `public/img/glow/glow-3a.avif` at half the width and height, 18 KB instead of 1.2 MB. Embed it in the page rather than publishing it beside the page. With the full-size image as a separate file, the Artifact could not be shared publicly.
+The glow is `glow.jpg` in this skill's directory: em's `public/img/glow/glow-3a.avif` at half the width and height, re-encoded as a JPEG, 23 KB instead of 1.2 MB. Embed it in the page rather than publishing it beside the page. Public sharing of an Artifact refuses an embedded AVIF ("embeds a file type that can't be reviewed for public sharing"), so keep the embedded glow a JPEG. Don't swap it for a CSS gradient either: a gradient doesn't look like the glow.
 
-Write the CSS below with `url("glow.avif")`, then embed it as the last step before publishing:
+Write the CSS below with `url("glow.jpg")`, then embed it as the last step before publishing:
 
 ```bash
 .github/skills/liminal/embed-glow.mjs page.html
@@ -44,7 +44,7 @@ Put the glow layer first in the body and lift the content above it:
 html, body { background: var(--bg); }
 body { color: var(--fg); font: 16px/1.6 var(--font-body); }
 .glow { position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background: url("glow.avif") bottom center / cover no-repeat; opacity: 0.6; }
+  background: url("glow.jpg") bottom center / cover no-repeat; opacity: 0.6; }
 main { position: relative; z-index: 1; max-width: 760px; margin: 0 auto;
   padding-inline: 20px; padding-block: 48px 96px; }
 a { color: var(--highlight); }
