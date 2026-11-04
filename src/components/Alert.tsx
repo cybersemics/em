@@ -74,6 +74,8 @@ const Alert: FC = () => {
       transitionKey={transitionKey}
       onClose={alert?.clearDelay != null ? onClose : undefined}
       value={alert ? value : null}
+      // center the cancel controls below the message, which otherwise inherit the popup's start alignment
+      textAlign='center'
       icon={Icon ? <Icon className={css({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null}
       // Pause the auto-dismiss timer while the user is engaging with the alert. Touch has to be tracked
       // separately: a touch browser synthesizes mouseover from a tap but no mouseout until the user taps

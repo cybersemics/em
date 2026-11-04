@@ -8,7 +8,7 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('alert', () => {
   // https://github.com/cybersemics/em/issues/6233
-  it.skip('centers the Cancel label in the multiselect alert', async () => {
+  it('centers the Cancel label in the multiselect alert', async () => {
     await paste(`
       - a
       - b
