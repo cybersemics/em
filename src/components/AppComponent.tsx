@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux'
 import { WebviewBackground } from 'webview-background'
 import { css } from '../../styled-system/css'
 import State from '../@types/State'
-import { isAndroid, isCapacitor, isMac, isSafari, isTouch, isiPhone } from '../browser'
+import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { handleGestureCancel, handleGestureEnd, handleGestureSegment } from '../commands'
 import { LongPressState, Settings } from '../constants'
 import * as selection from '../device/selection'
@@ -34,7 +34,6 @@ import PinnedCommand from './Learning/PinnedCommand'
 import MultiGesture from './MultiGesture'
 import NativeTextDragCaret from './NativeTextDragCaret'
 import NavBar from './NavBar'
-import SelectionMenu from './SelectionMenu'
 import SelectionStems from './SelectionStems'
 import ShowTouches from './ShowTouches'
 import Sidebar from './Sidebar/Sidebar'
@@ -234,8 +233,6 @@ const AppComponent: FC = () => {
       )}
       <DropGutter />
       {isAndroid && <SelectionStems />}
-      {/* Mobile Safari only: the iOS app presents WebKit's own edit menu again through the native plugin instead. */}
-      {isTouch && isSafari() && !isCapacitor() && <SelectionMenu />}
       <NativeTextDragCaret />
 
       <MultiGestureIfTouch>
