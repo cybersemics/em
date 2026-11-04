@@ -222,6 +222,53 @@ describe('geometry-based framing', () => {
   })
 })
 
+describe('solid filled arrowhead', () => {
+  const props = { path: 'rd' as const, size: 100, arrowhead: 'filled' as const, useGradient: false as const }
+
+  it('paints a filled chevron in place of the marker', () => {
+    const markup = render({ ...props, color: 'dim', highlightColor: 'bright' })
+
+    expect(markup).toContain('<polygon points="')
+    expect(markup).toContain('fill="dim"')
+    expect(markup).not.toContain('marker-end')
+  })
+
+  it('keeps the chevron dim until the whole gesture is traced', () => {
+    const partial = render({ ...props, color: 'dim', highlightColor: 'bright', highlight: 1 })
+    const complete = render({ ...props, color: 'dim', highlightColor: 'bright', highlight: 2 })
+
+    expect(partial).toMatch(/<polygon points="[^"]+" fill="dim"/)
+    expect(complete).toMatch(/<polygon points="[^"]+" fill="bright"/)
+  })
+
+  it('falls back to the filled marker in gradient renderers', () => {
+    const markup = render({ ...props, useGradient: true })
+
+    expect(markup).not.toContain('<polygon')
+    expect(markup).toContain('marker-end')
+  })
+
+  // A rounded gesture ends in an arc, which has no filled chevron, so the marker and its viewBox padding return.
+  it('falls back to the filled marker for rounded gestures', () => {
+    const rounded = render({ ...props, path: 'rul', rounded: true })
+    const straight = render({ ...props, path: 'rul' })
+    /** Extracts the side length of the square viewBox from static markup. */
+    const viewBoxSide = (markup: string) => +markup.match(/viewBox="[^"]+ ([^" ]+)"/)![1]
+
+    expect(rounded).not.toContain('<polygon')
+    expect(rounded).toContain('marker-end')
+    expect(viewBoxSide(rounded)).toBeGreaterThan(viewBoxSide(straight))
+  })
+
+  // The rdld glyph draws no arrowhead, but it must share the scale of the chevron gestures listed beside it.
+  it('frames the rdld glyph at the same scale as filled chevron gestures', () => {
+    /** Extracts the side length of the square viewBox from static markup. */
+    const viewBoxSide = (markup: string) => +markup.match(/viewBox="[^"]+ ([^" ]+)"/)![1]
+
+    expect(viewBoxSide(render({ ...props, path: 'rdld' }))).toBe(viewBoxSide(render(props)))
+  })
+})
+
 describe('automatic viewBox', () => {
   it('includes geometry-derived framing in static markup', () => {
     const props = { arrowhead: 'none' as const, strokeWidth: 2, useGradient: false as const }
@@ -235,7 +282,7 @@ describe('automatic viewBox', () => {
 })
 
 it('applies the same geometry and framing independently of the paint renderer', () => {
-  const props = { path: 'rdld' as const, size: 150, strokeWidth: 12, arrowSize: 1 }
+  const props = { path: 'rdld' as const, size: 150, strokeWidth: 12, arrowSize: 1, arrowhead: 'none' as const }
   const markups = [
     render({ ...props, useGradient: false }),
     render(props),
@@ -247,7 +294,7 @@ it('applies the same geometry and framing independently of the paint renderer', 
       .match(/viewBox="([^"]+)"/)![1]
       .split(' ')
       .map(Number)
-    expect(viewBox[0]).toBeCloseTo(((29.7 + 36.3 / 2) / 67.5) * 150 - 124)
-    expect(viewBox.slice(1)).toEqual([-39, 248, 248])
+    expect(viewBox[0]).toBeCloseTo(((29.7 + 36.3 / 2) / 67.5) * 150 - 84)
+    expect(viewBox.slice(1)).toEqual([1, 168, 168])
   })
 })

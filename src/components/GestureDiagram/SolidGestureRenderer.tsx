@@ -44,7 +44,7 @@ const SolidGestureRenderer = ({
   instanceId,
   strokeWidth,
 }: SolidGestureRendererProps) => {
-  const { path, segments } = geometry
+  const { path, segments, chevron } = geometry
   const commonPathProps = {
     strokeWidth: strokeWidth * 1.5,
     strokeLinecap: 'round' as const,
@@ -54,20 +54,44 @@ const SolidGestureRenderer = ({
   }
   const allHighlighted = highlight != null && highlight >= path.length
   const noneHighlighted = highlight == null || highlight === 0
-  const markerEnd = arrowhead === 'none' ? undefined : `url(#${instanceId}-arrowhead)`
+  const markerEnd = arrowhead === 'none' || chevron ? undefined : `url(#${instanceId}-arrowhead)`
   const activeColor = highlightColor ?? token('colors.vividHighlight')
   const inactiveColor = color ?? token('colors.fg')
+  const chevronPoints = chevron?.map(point => `${point.x},${point.y}`).join(' ')
+
+  // The chevron belongs to the final direction, so it lights up only once the whole gesture is traced.
+  // The mask removes the shaft's round cap under the chevron. Translucent colors would otherwise darken the overlap.
+  const chevronElement = chevron && (
+    <>
+      <defs>
+        <mask id={`${instanceId}-chevron`} maskUnits='userSpaceOnUse' x={-1e4} y={-1e4} width={2e4} height={2e4}>
+          <rect x={-1e4} y={-1e4} width={2e4} height={2e4} fill='white' />
+          <polygon points={chevronPoints} fill='black' />
+        </mask>
+      </defs>
+      <polygon
+        points={chevronPoints}
+        fill={allHighlighted ? activeColor : inactiveColor}
+        style={dropShadow ? { filter: dropShadow } : undefined}
+      />
+    </>
+  )
+  const shaftMask = chevron ? `url(#${instanceId}-chevron)` : undefined
 
   // A single path prevents rounded caps from overlapping into visible beads at joins.
   if (segments[0]?.kind === 'line' && path !== 'rdld') {
     if (allHighlighted || noneHighlighted) {
       return (
-        <path
-          d={serializeGesturePath(segments)}
-          stroke={allHighlighted ? activeColor : inactiveColor}
-          markerEnd={markerEnd}
-          {...commonPathProps}
-        />
+        <>
+          <path
+            d={serializeGesturePath(segments)}
+            stroke={allHighlighted ? activeColor : inactiveColor}
+            markerEnd={markerEnd}
+            mask={shaftMask}
+            {...commonPathProps}
+          />
+          {chevronElement}
+        </>
       )
     }
 
@@ -77,7 +101,14 @@ const SolidGestureRenderer = ({
     return (
       <>
         <path d={serializeGesturePath(highlighted)} stroke={activeColor} {...commonPathProps} />
-        <path d={serializeGesturePath(remaining)} stroke={inactiveColor} markerEnd={markerEnd} {...commonPathProps} />
+        <path
+          d={serializeGesturePath(remaining)}
+          stroke={inactiveColor}
+          markerEnd={markerEnd}
+          mask={shaftMask}
+          {...commonPathProps}
+        />
+        {chevronElement}
       </>
     )
   }

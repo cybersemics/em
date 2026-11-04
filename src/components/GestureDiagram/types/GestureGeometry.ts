@@ -10,7 +10,10 @@ interface GestureGeometry {
   extendedPath: Gesture
   /** Ordered geometric segments associated with their semantic directions. */
   segments: readonly GestureSegment[]
-  /** Wide chevron points, or null when the arrowhead uses an SVG marker. */
+  /**
+   * Chevron points as leg, apex, leg, or null when the arrowhead uses an SVG marker.
+   * SolidGestureRenderer fills them for 'filled'. ContinuousGradientGestureRenderer strokes them for 'outlined-wide'.
+   */
   chevron: readonly [GesturePoint, GesturePoint, GesturePoint] | null
 }
 
