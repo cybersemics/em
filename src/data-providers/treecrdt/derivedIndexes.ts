@@ -9,6 +9,8 @@ import createLexemeIndex, { payloadKeys } from './lexemes'
 
 const INDEX_VERSION = 1
 const PAGE_SIZE = 500
+/** How long index updates must pause before the cursor row is written. Longer than EDIT_THROTTLE, so typing writes it once. */
+const CURSOR_SAVE_DELAY_MS = 2000
 
 /**
  * Keeps em's derived SQLite indexes (attribute children and lexeme memberships) in step with one TreeCRDT client.
@@ -26,22 +28,38 @@ const createDerivedIndexes = async (client: TreecrdtClient) => {
     INDEX_VERSION,
   ])
   let cursor = stored === null ? 0 : Number(stored)
+  let savedCursor = cursor
   if (stored === null) {
     await lexemes.clear()
     await clearAttributeChildren(client)
   }
+  let stale = false
+  let indexQueue = Promise.resolve()
+  let saveTimer: ReturnType<typeof setTimeout> | undefined
 
-  /** Saves how far both indexes have read. Applying a node twice is harmless, so this is written after the rows. */
-  const advance = async (headSeq: number) => {
-    if (headSeq <= cursor) return
-    cursor = headSeq
+  /** Writes the cursor row if the cursor moved since the last write. */
+  const saveCursor = async () => {
+    if (cursor === savedCursor) return
+    const headSeq = cursor
     await client.runner.getText(
       'INSERT OR REPLACE INTO em_derived_indexes_meta (id, version, head_seq) VALUES (1, ?1, ?2)',
       [INDEX_VERSION, headSeq],
     )
+    savedCursor = headSeq
   }
 
-  /** Applies every node changed after the cursor, then advances it; resolves with the affected lexeme keys. */
+  /**
+   * Writes the cursor once updates pause instead of after every event. The row may lag behind the index, which only
+   * means the next catch-up re-applies a few nodes, but it is never written ahead of the rows it covers.
+   */
+  const scheduleSave = () => {
+    clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => {
+      indexQueue = indexQueue.then(saveCursor).catch(err => console.error('TreeCRDT derived indexing failed', err))
+    }, CURSOR_SAVE_DELAY_MS)
+  }
+
+  /** Applies every node changed after the cursor, then saves it; resolves with the affected lexeme keys. */
   const catchUp = async (): Promise<string[]> => {
     const keys = new Set<string>()
     let page = await client.tree.changedSince(cursor, { payloads: true, limit: PAGE_SIZE })
@@ -51,13 +69,13 @@ const createDerivedIndexes = async (client: TreecrdtClient) => {
       if (!page.next) break
       page = await client.tree.changedSince(page.next, { payloads: true, limit: PAGE_SIZE })
     }
-    await advance(page.headSeq)
+    cursor = Math.max(cursor, page.headSeq)
+    // A catch-up can cover many nodes, so its cursor is written right away.
+    await saveCursor()
     return [...keys]
   }
 
   await catchUp()
-  let stale = false
-  let indexQueue = Promise.resolve()
 
   /** Applies one event, or catches up from the cursor after a failed update. */
   const apply = async (event: MaterializationEvent): Promise<string[]> => {
@@ -70,7 +88,8 @@ const createDerivedIndexes = async (client: TreecrdtClient) => {
     if (event.headSeq <= cursor) return payloadKeys(event.changes)
     await refreshAttributeChildrenFromChanges(client, event.changes)
     const keys = await lexemes.applyChanges(event.changes)
-    await advance(event.headSeq)
+    cursor = event.headSeq
+    scheduleSave()
     return keys
   }
 
@@ -98,7 +117,14 @@ const createDerivedIndexes = async (client: TreecrdtClient) => {
     } while (pending !== indexQueue)
   }
 
-  return { lexemes, updateIndexes, waitForIndexes }
+  /** Drains the queue and writes the cursor, so a clean shutdown leaves nothing to re-read. */
+  const close = async () => {
+    await waitForIndexes()
+    clearTimeout(saveTimer)
+    await saveCursor()
+  }
+
+  return { lexemes, updateIndexes, waitForIndexes, close }
 }
 
 export default createDerivedIndexes
