@@ -384,7 +384,7 @@ const createTreecrdtDataProvider = () => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
-    const { updateIndexes, waitForIndexes } = await createDerivedIndexes(client)
+    const { updateIndexes, waitForIndexes, close: closeIndexes } = await createDerivedIndexes(client)
     const clientDb = createClientDataProvider({ client, replicaId }, waitForIndexes)
     const materializationContext = materialization ? { bridge: materialization, db: clientDb, waitForIndexes } : null
 
@@ -406,7 +406,7 @@ const createTreecrdtDataProvider = () => {
       if (!subscribed) return
       subscribed = false
       unsubscribeMaterialized()
-      await waitForIndexes()
+      await closeIndexes()
     }
   }
 
