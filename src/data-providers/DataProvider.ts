@@ -14,8 +14,9 @@ export interface DataProvider {
   /** Resolved value is provider-specific; the treecrdt provider returns `readonly Operation[]` for local tree mutations. */
   updateThoughts: (args: {
     thoughtIndexUpdates: Index<Thought | null>
-    lexemeIndexUpdates: Index<Lexeme | null>
     movePlacements?: Index<ThoughtId | null>
+    /** Explicit Favorites ordering preference, independent of derived membership. */
+    favoriteOrder?: ThoughtId[]
   }) => Promise<unknown>
   freeThought: (id: ThoughtId) => Promise<void>
   freeLexeme: (key: string) => Promise<void>

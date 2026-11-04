@@ -7,23 +7,16 @@ import type Timestamp from '../../@types/Timestamp'
 import { EM_TOKEN, GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../constants'
 import testFlags from '../../e2e/testFlags'
 import { childrenMapKey } from '../../util/createChildrenMap'
-import hashThought from '../../util/hashThought'
 import sleep from '../../util/sleep'
 import type { DataProvider } from '../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../thoughtspace'
 import { getAttributeChildrenByParent } from './attributeChildren'
 import createDerivedIndexes from './derivedIndexes'
-import {
-  deleteLexeme as deleteLexemeRow,
-  ensureLexemesSchema,
-  getLexemeById as getLexemeByIdSql,
-  getLexemesByIds as getLexemesByIdsSql,
-  upsertLexeme,
-} from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
 import { enqueueMaterializedThoughtsToStore } from './sync'
+import type { MaterializationContext } from './sync/applyMaterializedThoughtsToStore'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
-import { createTreecrdtLocalWriteOptions, isTreecrdtLocalMaterialization } from './writeBarrier'
+import { createTreecrdtLocalWriteOptions } from './writeBarrier'
 
 type TreecrdtPlacement = { type: 'first' } | { type: 'last' } | { type: 'after'; after: ThoughtId }
 
@@ -157,17 +150,9 @@ const getTreecrdtPlacement = async (
 /** Applies thought index updates and move placements to one exact TreeCRDT client. */
 const updateThoughtsForClient = async (
   { client, replicaId }: TreecrdtClientIdentity,
-  { thoughtIndexUpdates, lexemeIndexUpdates, movePlacements }: Parameters<DataProvider['updateThoughts']>[0],
+  { thoughtIndexUpdates, movePlacements }: Parameters<DataProvider['updateThoughts']>[0],
 ): Promise<readonly Operation[]> => {
   const ops: Operation[] = []
-
-  for (const [id, lexeme] of Object.entries(lexemeIndexUpdates)) {
-    if (lexeme === null) {
-      await deleteLexemeRow(client, id)
-    } else {
-      await upsertLexeme(client, id, lexeme)
-    }
-  }
 
   const updates: Index<Thought> = {}
   const deletes: ThoughtId[] = []
@@ -248,7 +233,6 @@ const ROOT_PAYLOAD = encodeThoughtPayload({
 
 /** Seeds TreeCRDT storage for an em thoughtspace. */
 const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: Uint8Array): Promise<void> => {
-  await ensureLexemesSchema(client)
   // Ensure root has payload so getThoughtById can use the generic path.
   if ((await client.tree.root.payload()) === null) {
     await client.local.payload(replicaId, GLOBAL_ROOT_TOKEN, ROOT_PAYLOAD, createTreecrdtLocalWriteOptions())
@@ -302,39 +286,8 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
       }),
       createTreecrdtLocalWriteOptions(),
     )
-    settingsId = SETTINGS_TOKEN
-  }
-
-  if (settingsId) {
-    const now = Date.now()
-    await upsertLexeme(client, hashThought(SETTINGS_VALUE), {
-      contexts: [settingsId],
-      created: now as Timestamp,
-      lastUpdated: now as Timestamp,
-      updatedBy: '',
-    })
   }
 }
-
-/** Creates a data provider whose operations are permanently bound to one TreeCRDT client. */
-const createClientDataProvider = (
-  { client, replicaId }: TreecrdtClientIdentity,
-  waitForIndexes: () => Promise<void>,
-): TreecrdtClientDataProvider => ({
-  getLexemeById: key => getLexemeByIdSql(client, key),
-  getLexemesByIds: keys => getLexemesByIdsSql(client, keys),
-  getThoughtById: id => getThoughtByIdFromClient(client, id),
-  getThoughtsByIds: async ids => {
-    await waitForTestReplicationDelay()
-    return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
-  },
-  updateThoughts: async updates => {
-    const operations = await updateThoughtsForClient({ client, replicaId }, updates)
-    // The attribute index follows this write's materialization events.
-    await waitForIndexes()
-    return operations
-  },
-})
 
 /**
  * Creates the stable app-facing TreeCRDT data provider.
@@ -384,24 +337,55 @@ const createTreecrdtDataProvider = () => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
-    const { updateIndexes, waitForIndexes, close: closeIndexes } = await createDerivedIndexes(client)
-    const clientDb = createClientDataProvider({ client, replicaId }, waitForIndexes)
-    const materializationContext = materialization ? { bridge: materialization, db: clientDb, waitForIndexes } : null
+    const { lexemes, updateIndexes, waitForIndexes, close: closeIndexes } = await createDerivedIndexes(client)
+
+    let subscribed = true
+    const clientDb: TreecrdtClientDataProvider = {
+      getLexemeById: async key => {
+        await waitForIndexes()
+        return lexemes.getLexemeById(key)
+      },
+      getLexemesByIds: async keys => {
+        await waitForIndexes()
+        return lexemes.getLexemesByIds(keys)
+      },
+      getThoughtById: id => getThoughtByIdFromClient(client, id),
+      getThoughtsByIds: async ids => {
+        await waitForTestReplicationDelay()
+        return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
+      },
+      updateThoughts: async updates => {
+        await waitForIndexes()
+        if (updates.favoriteOrder) await lexemes.setFavoriteOrder(updates.favoriteOrder)
+        const operations = await updateThoughtsForClient({ client, replicaId }, updates)
+        await waitForIndexes()
+        return operations
+      },
+    }
+    const materializationContext: MaterializationContext | undefined = materialization && {
+      bridge: materialization,
+      db: clientDb,
+      pending: [],
+      isActive: () => subscribed && activeDb === clientDb,
+    }
+    let publicationFailed = false
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
-      updateIndexes(event)
-      // Local writes are already reflected optimistically. Other materialization uses the exact provider and client
-      // that created this subscription, even if the app later binds a new client.
-      if (isTreecrdtLocalMaterialization(event) || !materializationContext) return
-
-      void enqueueMaterializedThoughtsToStore(event, materializationContext).catch(err =>
-        console.error('TreeCRDT materialized UI sync failed', err),
-      )
+      const keys = updateIndexes(event)
+      if (!materializationContext) return
+      materializationContext.pending.push({ event, keys })
+      // A failed publication retains its events, so the next event must retry even when the buffer was not empty.
+      if (materializationContext.pending.length === 1 || publicationFailed) {
+        publicationFailed = false
+        void enqueueMaterializedThoughtsToStore(materializationContext).catch(err => {
+          publicationFailed = true
+          console.error('TreeCRDT materialized UI sync failed', err)
+        })
+      }
     })
 
     activeDb = clientDb
     providerReadiness.resolve(clientDb)
-    let subscribed = true
     return async () => {
       if (!subscribed) return
       subscribed = false

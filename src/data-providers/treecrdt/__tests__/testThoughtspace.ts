@@ -46,7 +46,6 @@ const persistThoughtsTo = (
 ) =>
   db.updateThoughts({
     thoughtIndexUpdates: Object.fromEntries(thoughts.map(thought => [thought.id, thought])),
-    lexemeIndexUpdates: {},
     movePlacements,
   })
 
@@ -94,14 +93,6 @@ it('preserves requested order, duplicates, and missing entries when reading pers
   await initTestThoughtspace()
   await treecrdtThoughtspace.updateThoughts({
     thoughtIndexUpdates: { [PARENT_ID]: thought(PARENT_ID, EM_TOKEN, 'parent', 0) },
-    lexemeIndexUpdates: {
-      [hashThought('parent')]: {
-        contexts: [PARENT_ID],
-        created: 1 as Timestamp,
-        lastUpdated: 1 as Timestamp,
-        updatedBy: 'test',
-      },
-    },
   })
 
   await expect(treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID)).resolves.toBeUndefined()
@@ -249,6 +240,96 @@ it('keeps separately created thoughtspace instances isolated', async () => {
   }
 })
 
+it('rebuilds memberships and preserves favorite order when opening a database with the old lexeme table', async () => {
+  const client = await createTreecrdtClient({ docId: 'old-lexeme-table' })
+  const replicaId = new Uint8Array(32).fill(1)
+  const provider = createTreecrdtDataProvider()
+  const close = await provider.bindClient(client, replicaId)
+  try {
+    await persistThoughtsTo(provider.db, [
+      thought(THOUGHT_A_ID, EM_TOKEN, 'a', 0),
+      thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1),
+      thought(THOUGHT_Y_ID, EM_TOKEN, '=favorite', 2),
+      thought(THOUGHT_X_ID, EM_TOKEN, '=favorite', 3),
+    ])
+    await close()
+    // Model an existing database: only the old, incomplete cache exists beside the authoritative tree.
+    await client.runner.exec(`
+      DROP TABLE em_lexeme_memberships;
+      DROP TABLE em_derived_indexes_meta;
+      DROP TABLE IF EXISTS em_favorite_order;
+      CREATE TABLE em_lexemes (id TEXT PRIMARY KEY, payload_json TEXT NOT NULL);
+      INSERT INTO em_lexemes VALUES ('stale', '{}');
+    `)
+    await client.runner.getText('INSERT INTO em_lexemes VALUES (?1, ?2)', [
+      hashThought('=favorite'),
+      JSON.stringify({ contexts: [THOUGHT_B_ID, THOUGHT_Y_ID, PARENT_ID] }),
+    ])
+    const operations = await client.ops.all()
+    const reopened = createTreecrdtDataProvider()
+    const closeReopened = await reopened.bindClient(client, replicaId)
+    try {
+      await expect(reopened.db.getLexemeById(hashThought('a'))).resolves.toMatchObject({ contexts: [THOUGHT_A_ID] })
+      await expect(reopened.db.getLexemeById('stale')).resolves.toBeUndefined()
+      await expect(reopened.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+        contexts: [THOUGHT_B_ID, THOUGHT_Y_ID, THOUGHT_X_ID],
+      })
+      // Rebuilding a local index must not rewrite the replicated data.
+      await expect(client.ops.all()).resolves.toEqual(operations)
+    } finally {
+      await closeReopened()
+    }
+  } finally {
+    await close()
+    await client.drop()
+  }
+})
+
+it('keeps favorite order independent of membership changes and preserves it when reopening', async () => {
+  const client = await createTreecrdtClient({ docId: 'favorite-order' })
+  const replicaId = new Uint8Array(32).fill(1)
+  const provider = createTreecrdtDataProvider()
+  const close = await provider.bindClient(client, replicaId)
+  try {
+    await persistThoughtsTo(provider.db, [
+      thought(THOUGHT_A_ID, EM_TOKEN, '=favorite', 0),
+      thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1),
+    ])
+    await provider.db.updateThoughts({
+      thoughtIndexUpdates: {},
+      favoriteOrder: [THOUGHT_B_ID, THOUGHT_A_ID, PARENT_ID],
+    })
+    await persistThoughtsTo(provider.db, [thought(THOUGHT_Y_ID, EM_TOKEN, '=favorite', 2)])
+    await expect(provider.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+      contexts: [THOUGHT_B_ID, THOUGHT_A_ID, THOUGHT_Y_ID],
+    })
+    await persistThoughtsTo(provider.db, [thought(THOUGHT_B_ID, EM_TOKEN, 'not a favorite', 1)])
+    await expect(provider.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+      contexts: [THOUGHT_A_ID, THOUGHT_Y_ID],
+    })
+    await persistThoughtsTo(provider.db, [thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1)])
+    await close()
+    // An already migrated order takes precedence over a stale legacy row on reopening.
+    await client.runner.exec('CREATE TABLE em_lexemes (id TEXT PRIMARY KEY, payload_json TEXT NOT NULL)')
+    await client.runner.getText('INSERT INTO em_lexemes VALUES (?1, ?2)', [
+      hashThought('=favorite'),
+      JSON.stringify({ contexts: [THOUGHT_A_ID, THOUGHT_B_ID] }),
+    ])
+    const reopened = createTreecrdtDataProvider()
+    const closeReopened = await reopened.bindClient(client, replicaId)
+    try {
+      await expect(reopened.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+        contexts: [THOUGHT_B_ID, THOUGHT_A_ID, THOUGHT_Y_ID],
+      })
+    } finally {
+      await closeReopened()
+    }
+  } finally {
+    await close()
+    await client.drop()
+  }
+})
+
 it('resumes from its cursor after an interrupted index update', async () => {
   const client = await createTreecrdtClient({ docId: 'partial-index-update' })
   const replicaId = new Uint8Array(32).fill(1)
@@ -272,6 +353,7 @@ it('resumes from its cursor after an interrupted index update', async () => {
     const reopened = createTreecrdtDataProvider()
     const closeReopened = await reopened.bindClient(client, replicaId)
     try {
+      await expect(reopened.db.getLexemeById(hashThought('=pin'))).resolves.toMatchObject({ contexts: [PIN_ID] })
       expect((await reopened.db.getThoughtById(EM_TOKEN))?.childrenMap['=pin']).toBe(PIN_ID)
       const { headSeq } = await client.tree.changedSince(0, { limit: 1 })
       expect(await getText('SELECT head_seq FROM em_derived_indexes_meta')).toBe(String(headSeq))

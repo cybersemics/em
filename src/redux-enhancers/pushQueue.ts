@@ -72,7 +72,9 @@ const pushQueue: StoreEnhancer<any> =
       if (
         dbQueue?.some(
           batch =>
-            Object.keys(batch.thoughtIndexUpdates).length > 0 || Object.keys(batch.lexemeIndexUpdates).length > 0,
+            batch.favoriteOrder !== undefined ||
+            Object.keys(batch.thoughtIndexUpdates).length > 0 ||
+            Object.keys(batch.lexemeIndexUpdates).length > 0,
         )
       ) {
         // cache updated settings
@@ -115,8 +117,8 @@ const pushQueue: StoreEnhancer<any> =
         const applyDbQueue = async () => {
           await thoughtspaceRuntime.persistPushQueueBatches(
             (dbQueue ?? []).map(batch => ({
+              favoriteOrder: batch.favoriteOrder,
               thoughtIndexUpdates: batch.thoughtIndexUpdates,
-              lexemeIndexUpdates: batch.lexemeIndexUpdates,
               movePlacements: batch.movePlacements,
               local: batch.local,
             })),
