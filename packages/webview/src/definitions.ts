@@ -18,6 +18,13 @@ export interface WebviewBackgroundPlugin {
   setHistoryAvailability(options: { canUndo: boolean; canRedo: boolean }): Promise<void>
 
   /**
+   * Presents WebKit's own edit menu (Cut, Copy, Paste, …) for the current text selection. WebKit dismisses the
+   * menu when the rendered rects of the selection change, and the web layer has no way to present it again, so
+   * the app calls this after an edit of its own moves the selected text. Does nothing before iOS 17.4.
+   */
+  presentEditMenu(): Promise<void>
+
+  /**
    * Emitted when the user performs a native undo/redo gesture on iOS (three-finger swipe, shake-to-undo,
    * or the Edit menu). The webview's own undo is never run, so the app is free to apply its own.
    */
