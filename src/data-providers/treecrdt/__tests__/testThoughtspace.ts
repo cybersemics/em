@@ -240,8 +240,8 @@ it('keeps separately created thoughtspace instances isolated', async () => {
   }
 })
 
-it('rebuilds memberships and preserves favorite order when opening a database with the old lexeme table', async () => {
-  const client = await createTreecrdtClient({ docId: 'old-lexeme-table' })
+it('rebuilds memberships and keeps favorite order when opening a database indexed by an older version', async () => {
+  const client = await createTreecrdtClient({ docId: 'older-index-version' })
   const replicaId = new Uint8Array(32).fill(1)
   const provider = createTreecrdtDataProvider()
   const close = await provider.bindClient(client, replicaId)
@@ -250,29 +250,22 @@ it('rebuilds memberships and preserves favorite order when opening a database wi
       thought(THOUGHT_A_ID, EM_TOKEN, 'a', 0),
       thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1),
       thought(THOUGHT_Y_ID, EM_TOKEN, '=favorite', 2),
-      thought(THOUGHT_X_ID, EM_TOKEN, '=favorite', 3),
     ])
+    // Differs from the default order (created, then id), so losing the saved order would show.
+    await provider.db.updateThoughts({ thoughtIndexUpdates: {}, favoriteOrder: [THOUGHT_B_ID, THOUGHT_Y_ID] })
     await close()
-    // Model an existing database: only the old, incomplete cache exists beside the authoritative tree.
+    // Model a database indexed by an older version: a version-1 cursor and no memberships table.
     await client.runner.exec(`
       DROP TABLE em_lexeme_memberships;
-      DROP TABLE em_derived_indexes_meta;
-      DROP TABLE IF EXISTS em_favorite_order;
-      CREATE TABLE em_lexemes (id TEXT PRIMARY KEY, payload_json TEXT NOT NULL);
-      INSERT INTO em_lexemes VALUES ('stale', '{}');
+      UPDATE em_derived_indexes_meta SET version = 1;
     `)
-    await client.runner.getText('INSERT INTO em_lexemes VALUES (?1, ?2)', [
-      hashThought('=favorite'),
-      JSON.stringify({ contexts: [THOUGHT_B_ID, THOUGHT_Y_ID, PARENT_ID] }),
-    ])
     const operations = await client.ops.all()
     const reopened = createTreecrdtDataProvider()
     const closeReopened = await reopened.bindClient(client, replicaId)
     try {
       await expect(reopened.db.getLexemeById(hashThought('a'))).resolves.toMatchObject({ contexts: [THOUGHT_A_ID] })
-      await expect(reopened.db.getLexemeById('stale')).resolves.toBeUndefined()
       await expect(reopened.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
-        contexts: [THOUGHT_B_ID, THOUGHT_Y_ID, THOUGHT_X_ID],
+        contexts: [THOUGHT_B_ID, THOUGHT_Y_ID],
       })
       // Rebuilding a local index must not rewrite the replicated data.
       await expect(client.ops.all()).resolves.toEqual(operations)
@@ -309,12 +302,6 @@ it('keeps favorite order independent of membership changes and preserves it when
     })
     await persistThoughtsTo(provider.db, [thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1)])
     await close()
-    // An already migrated order takes precedence over a stale legacy row on reopening.
-    await client.runner.exec('CREATE TABLE em_lexemes (id TEXT PRIMARY KEY, payload_json TEXT NOT NULL)')
-    await client.runner.getText('INSERT INTO em_lexemes VALUES (?1, ?2)', [
-      hashThought('=favorite'),
-      JSON.stringify({ contexts: [THOUGHT_A_ID, THOUGHT_B_ID] }),
-    ])
     const reopened = createTreecrdtDataProvider()
     const closeReopened = await reopened.bindClient(client, replicaId)
     try {

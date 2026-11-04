@@ -38,15 +38,6 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
       id INTEGER PRIMARY KEY CHECK (id = 1), contexts_json TEXT NOT NULL
     );
   `)
-  // The old lexeme cache owned the manual order. Import only that preference, never its membership.
-  if (await client.runner.getText("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'em_lexemes'")) {
-    await client.runner.getText(
-      `INSERT OR IGNORE INTO em_favorite_order (id, contexts_json)
-       SELECT 1, json_extract(payload_json, '$.contexts') FROM em_lexemes
-       WHERE id = ?1 AND json_type(payload_json, '$.contexts') = 'array'`,
-      [FAVORITE_KEY],
-    )
-  }
 
   /** Saves explicit ordering intent separately from membership updates, which must not prune it. */
   const setFavoriteOrder = (contexts: ThoughtId[]) =>

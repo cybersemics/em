@@ -7,7 +7,8 @@ import {
 } from './attributeChildren'
 import createLexemeIndex, { payloadKeys } from './lexemes'
 
-const INDEX_VERSION = 1
+/** Bump when an index is added or changes, so databases indexed by an older version are rebuilt once. */
+const INDEX_VERSION = 2
 const PAGE_SIZE = 500
 /** How long index updates must pause before the cursor row is written. Longer than EDIT_THROTTLE, so typing writes it once. */
 const CURSOR_SAVE_DELAY_MS = 2000
