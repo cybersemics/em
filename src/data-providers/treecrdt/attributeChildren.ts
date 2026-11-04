@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import type { Change } from '@treecrdt/interface/engine'
+import type { Change, TreecrdtChangedNode } from '@treecrdt/interface/engine'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Index from '../../@types/IndexType'
 import type ThoughtId from '../../@types/ThoughtId'
@@ -8,8 +8,6 @@ import { decodeThoughtPayload } from './payload'
 
 /** Application-owned child value index used to restore em's attribute-keyed childrenMap contract. */
 const TABLE = 'em_attribute_children'
-const META_TABLE = 'em_attribute_children_meta'
-const INDEX_VERSION = '1'
 const schemaReady = new WeakSet<TreecrdtClient>()
 
 const CREATE_TABLE_SQL = `CREATE TABLE IF NOT EXISTS ${TABLE} (
@@ -19,11 +17,6 @@ const CREATE_TABLE_SQL = `CREATE TABLE IF NOT EXISTS ${TABLE} (
 );`
 
 const CREATE_PARENT_INDEX_SQL = `CREATE INDEX IF NOT EXISTS idx_${TABLE}_parent ON ${TABLE} (parent_id);`
-
-const CREATE_META_TABLE_SQL = `CREATE TABLE IF NOT EXISTS ${META_TABLE} (
-  key TEXT PRIMARY KEY NOT NULL,
-  value TEXT NOT NULL
-);`
 
 /**
  * Injects bound parameters into SQL for `runner.exec`, which does not accept bind args.
@@ -44,7 +37,6 @@ export async function ensureAttributeChildrenSchema(client: TreecrdtClient): Pro
   if (schemaReady.has(client)) return
   await client.runner.exec(CREATE_TABLE_SQL)
   await client.runner.exec(CREATE_PARENT_INDEX_SQL)
-  await client.runner.exec(CREATE_META_TABLE_SQL)
   schemaReady.add(client)
 }
 
@@ -112,64 +104,35 @@ export async function moveAttributeChild(
   await client.runner.exec(bindParams(`UPDATE ${TABLE} SET parent_id = ?1 WHERE child_id = ?2`, [parentId, childId]))
 }
 
-/** Reindexes a single child from TreeCRDT's current materialized state. */
-export async function reindexAttributeChild(client: TreecrdtClient, childId: ThoughtId): Promise<void> {
+/** Replaces the rows of changed nodes from their current parent and value. */
+export async function applyAttributeChildren(
+  client: TreecrdtClient,
+  nodes: readonly TreecrdtChangedNode[],
+): Promise<void> {
+  if (nodes.length === 0) return
   await ensureAttributeChildrenSchema(client)
-  const node = client.tree.node(childId)
-  const [payloadBytes, parent] = await Promise.all([node.payload(), node.parent()])
-
-  if (!payloadBytes || !parent) {
-    await deleteAttributeChild(client, childId)
-    return
+  const rows: [string, string, string][] = []
+  for (const node of nodes) {
+    if (node.tombstone || !node.payload || node.parent === null) continue
+    const { value } = decodeThoughtPayload(node.payload)
+    if (isAttribute(value)) rows.push([node.node, node.parent, value])
   }
-
-  const payload = decodeThoughtPayload(payloadBytes)
-  await syncAttributeChild(client, parent.id as ThoughtId, childId, payload.value)
+  // getText also executes parameterized writes (returning null); exec does not accept bind parameters.
+  await client.runner.getText(`DELETE FROM ${TABLE} WHERE child_id IN (SELECT value FROM json_each(?1))`, [
+    JSON.stringify(nodes.map(node => node.node)),
+  ])
+  if (rows.length > 0) {
+    await client.runner.getText(
+      `INSERT INTO ${TABLE} (child_id, parent_id, value) SELECT value->>0, value->>1, value->>2 FROM json_each(?1)`,
+      [JSON.stringify(rows)],
+    )
+  }
 }
 
-/** Deletes all derived attribute-child rows. */
-async function deleteAllAttributeChildren(client: TreecrdtClient): Promise<void> {
+/** Removes every row before a full read rebuilds the index. */
+export async function clearAttributeChildren(client: TreecrdtClient): Promise<void> {
   await ensureAttributeChildrenSchema(client)
   await client.runner.exec(`DELETE FROM ${TABLE}`)
-}
-
-/** Returns true when the persisted attribute-child index has been initialized for this schema version. */
-async function isAttributeChildrenIndexReady(client: TreecrdtClient): Promise<boolean> {
-  await ensureAttributeChildrenSchema(client)
-  const version = await client.runner.getText(`SELECT value FROM ${META_TABLE} WHERE key = ?1`, [
-    'attribute_children_index_version',
-  ])
-  return version === INDEX_VERSION
-}
-
-/** Marks the persisted attribute-child index initialized for this schema version. */
-async function setAttributeChildrenIndexReady(client: TreecrdtClient): Promise<void> {
-  const sql = `INSERT INTO ${META_TABLE} (key, value) VALUES (?1, ?2)
-    ON CONFLICT(key) DO UPDATE SET value = excluded.value`
-  await client.runner.exec(bindParams(sql, ['attribute_children_index_version', INDEX_VERSION]))
-}
-
-/** Rebuilds the derived attribute-child index by walking the materialized TreeCRDT tree once. */
-async function rebuildAttributeChildrenIndex(client: TreecrdtClient): Promise<void> {
-  await ensureAttributeChildrenSchema(client)
-  await deleteAllAttributeChildren(client)
-
-  const parentQueue = [client.tree.root]
-  for (let i = 0; i < parentQueue.length; i++) {
-    for (const child of await parentQueue[i].children()) {
-      await reindexAttributeChild(client, child.id as ThoughtId)
-      parentQueue.push(child)
-    }
-  }
-
-  await setAttributeChildrenIndexReady(client)
-}
-
-/** Initializes the persisted attribute-child index once, then keeps it for fast cold-start reads. */
-export async function ensureAttributeChildrenIndexReady(client: TreecrdtClient): Promise<void> {
-  if (!(await isAttributeChildrenIndexReady(client))) {
-    await rebuildAttributeChildrenIndex(client)
-  }
 }
 
 /** Updates the derived attribute-child index for a materialized TreeCRDT change batch. */

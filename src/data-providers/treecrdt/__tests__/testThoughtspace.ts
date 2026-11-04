@@ -248,3 +248,40 @@ it('keeps separately created thoughtspace instances isolated', async () => {
     await second.drop()
   }
 })
+
+it('resumes from its cursor after an interrupted index update', async () => {
+  const client = await createTreecrdtClient({ docId: 'partial-index-update' })
+  const replicaId = new Uint8Array(32).fill(1)
+  const provider = createTreecrdtDataProvider()
+  const close = await provider.bindClient(client, replicaId)
+  const getText = client.runner.getText.bind(client.runner)
+  const exec = client.runner.exec.bind(client.runner)
+  const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const runner = vi.spyOn(client.runner, 'exec').mockImplementation(sql => {
+    if (sql.includes('INSERT INTO em_attribute_children')) throw new Error('interrupted index update')
+    return exec(sql)
+  })
+  try {
+    const cursor = await getText('SELECT head_seq FROM em_derived_indexes_meta')
+    // The write still succeeds; the failed update only leaves the cursor where it was.
+    await persistThoughtsTo(provider.db, [thought(PIN_ID, EM_TOKEN, '=pin', 0)])
+    expect(await getText('SELECT head_seq FROM em_derived_indexes_meta')).toBe(cursor)
+    runner.mockRestore()
+    await close()
+
+    const reopened = createTreecrdtDataProvider()
+    const closeReopened = await reopened.bindClient(client, replicaId)
+    try {
+      expect((await reopened.db.getThoughtById(EM_TOKEN))?.childrenMap['=pin']).toBe(PIN_ID)
+      const { headSeq } = await client.tree.changedSince(0, { limit: 1 })
+      expect(await getText('SELECT head_seq FROM em_derived_indexes_meta')).toBe(String(headSeq))
+    } finally {
+      await closeReopened()
+    }
+  } finally {
+    runner.mockRestore()
+    await close()
+    await client.drop()
+    report.mockRestore()
+  }
+})
