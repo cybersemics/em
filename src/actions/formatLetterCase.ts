@@ -2,6 +2,7 @@
 import LetterCaseType from '../@types/LetterCaseType'
 import Thunk from '../@types/Thunk'
 import { commandEmitter } from '../commands'
+import { replaceTextInPlace } from '../device/editInPlace'
 import restoreEditMenu from '../device/restoreEditMenu'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
@@ -21,49 +22,6 @@ const plainText = (html: string): string => {
   const el = document.createElement('div')
   el.innerHTML = html
   return el.textContent ?? ''
-}
-
-/** Returns the text nodes under a node in document order. */
-const textNodes = (root: Node): Text[] => {
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
-  const nodes: Text[] = []
-  while (walker.nextNode()) nodes.push(walker.currentNode as Text)
-  return nodes
-}
-
-/** Rewrites an editable to the given HTML by changing its existing text nodes character by character, so that the
- * browser selection is never torn down. Android dismisses its native selection menu (Cut, Copy, Paste) as soon as the
- * text under the selection is replaced, and re-selecting the same text does not bring the menu back (#5641).
- * Replacing a character with insertData followed by deleteData leaves every boundary of a live range where it was,
- * whereas assigning innerHTML or a text node's data collapses it. Only possible when the new HTML differs from the
- * editable's only in characters, with the same markup and the same length for each text node, which is what a letter
- * case change usually produces. Returns false, without changing anything, otherwise, e.g. when 'ß' becomes 'SS'. */
-const replaceTextInPlace = (editable: HTMLElement, html: string): boolean => {
-  const template = document.createElement('template')
-  template.innerHTML = html
-  const newNodes = textNodes(template.content)
-  const liveNodes = textNodes(editable)
-  if (liveNodes.length !== newNodes.length || liveNodes.some((node, i) => node.length !== newNodes[i].length)) {
-    return false
-  }
-
-  // Compare against the HTML exactly as given, since ContentEditable skips re-rendering only when its live innerHTML
-  // is identical to the new value. Anything else would be overwritten by the re-render and lose the selection anyway.
-  const clone = editable.cloneNode(true) as HTMLElement
-  textNodes(clone).forEach((node, i) => (node.data = newNodes[i].data))
-  if (clone.innerHTML !== html) return false
-
-  liveNodes.forEach((node, i) => {
-    const newData = newNodes[i].data
-    Array.from({ length: newData.length }, (_, offset) => offset)
-      .filter(offset => node.data[offset] !== newData[offset])
-      .forEach(offset => {
-        node.insertData(offset, newData[offset])
-        node.deleteData(offset + 1, 1)
-      })
-  })
-
-  return true
 }
 
 /** Format the browser selection or cursor thought based on the specified letter case change. */
