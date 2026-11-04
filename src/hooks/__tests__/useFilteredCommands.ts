@@ -535,6 +535,43 @@ describe('useFilteredCommands', () => {
       })
     })
 
+    describe('Search during a gesture', () => {
+      beforeEach(() => {
+        act(() => {
+          gestureStore.update({ gesture: '' })
+        })
+      })
+
+      afterEach(() => {
+        act(() => {
+          gestureStore.update({ gesture: '' })
+        })
+      })
+
+      it('should not change the results of a typed search while a gesture is in progress', () => {
+        const { result } = renderHook(() => useFilteredCommands('back', { platformCommandsOnly: true }), { wrapper })
+        const commandIdsBeforeGesture = result.current.map(cmd => cmd.id)
+
+        act(() => {
+          gestureStore.update({ gesture: 'lu' })
+        })
+
+        expect(result.current.map(cmd => cmd.id)).toEqual(commandIdsBeforeGesture)
+      })
+
+      // The Gesture Menu's list must stay in possibleCommands because onGestureSegment reads it to decide whether haptics fire.
+      it('should keep the Gesture Menu commands in possibleCommands during a gesture when a search is active', () => {
+        const { result: gestureMenuResult } = renderHook(() => useFilteredCommands('', {}), { wrapper })
+        renderHook(() => useFilteredCommands('back', { platformCommandsOnly: true }), { wrapper })
+
+        act(() => {
+          gestureStore.update({ gesture: 'lu' })
+        })
+
+        expect(gestureStore.getState().possibleCommands).toEqual(gestureMenuResult.current)
+      })
+    })
+
     describe('Select All chaining', () => {
       it('should show additional commands when Select All is active', () => {
         act(() => {

@@ -28,7 +28,8 @@ const useFilteredCommands = (
     sortActiveCommandsFirst?: boolean
   },
 ): Command[] => {
-  const gestureInProgress = gestureStore.useSelector(state => state.gesture as string)
+  // A typed search takes priority over the gesture in progress, so search results do not change while a gesture is drawn.
+  const gestureInProgress = gestureStore.useSelector(state => (search ? '' : (state.gesture as string)))
   // The chainable command that is in progress (including when there are no other swipes). Otherwise null.
   const chainableCommandInProgressInclusive: Command | undefined = globalCommands.find(
     command => command.isChainable && gestureInProgress.startsWith(gestureString(command)),
