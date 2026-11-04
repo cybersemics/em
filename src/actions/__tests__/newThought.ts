@@ -2,10 +2,13 @@ import { importText, toggleContextView } from '../../actions'
 import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
+import findDescendant from '../../selectors/findDescendant'
 import { getLexeme } from '../../selectors/getLexeme'
+import getThoughtById from '../../selectors/getThoughtById'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import head from '../../util/head'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import newThought from '../newThought'
@@ -328,6 +331,11 @@ describe('context view', () => {
 
     // cursor should be on the new context
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', ''])
+
+    // the new context is keyed by its id in the new thought's childrenMap, which findDescendant, repairThought, and cursorForward read by key
+    const newThoughtId = head(stateNew.cursor!)
+    const contextId = findDescendant(stateNew, newThoughtId, 'm')
+    expect(getThoughtById(stateNew, newThoughtId)?.childrenMap).toEqual({ [contextId!]: contextId })
   })
 
   // https://github.com/cybersemics/em/issues/5445
@@ -406,6 +414,11 @@ describe('context view', () => {
 
     // cursor should be on the new context
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', ''])
+
+    // the new context is keyed by its id in the new thought's childrenMap, which findDescendant, repairThought, and cursorForward read by key
+    const newThoughtId = head(stateNew.cursor!)
+    const contextId = findDescendant(stateNew, newThoughtId, 'm')
+    expect(getThoughtById(stateNew, newThoughtId)?.childrenMap).toEqual({ [contextId!]: contextId })
   })
 
   it('new subthought of context', () => {
