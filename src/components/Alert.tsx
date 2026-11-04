@@ -88,15 +88,14 @@ const Alert: FC = () => {
     >
       {alert?.importFileId && (
         <a
-          // inline-block so the bottom margin applies, otherwise the link sits flush against the popup border
-          className={css({ display: 'inline-block', marginBottom: '1rem' })}
+          className={cx(anchorButtonRecipe(), css({ margin: '0 1rem 1rem' }))}
           onClick={() => {
             deleteResumableFile(alert.importFileId!)
             syncStatusStore.update({ importProgress: 1 })
             onClose?.()
           }}
         >
-          cancel
+          Cancel
         </a>
       )}
 
