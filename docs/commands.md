@@ -421,6 +421,8 @@ Opening it from a note first dismisses the keyboard with [`dismissKeyboard`](../
 
 The sheet is lifted above the keyboard only while it is open (`avoidKeyboard={isOpen}` in [`CommandCenter`](../src/components/CommandCenter/CommandCenter.tsx)). On Chromium react-modal-sheet pads the sheet with the live `env(keyboard-inset-height)`, so a keyboard that rises while the sheet is closing — as it does after Note — would otherwise grow the sheet back into view in the middle of its exit. The prop only takes effect because of the [react-modal-sheet patch](../.yarn/patches/react-modal-sheet-npm-5.6.0-f2ff243f4a.patch): with `unstyled`, the unpatched library writes that padding into its shared, module-level scroller style object rather than a copy, so after the first open every render would keep it regardless of `avoidKeyboard`. The patch copies the style before padding it.
 
+A swipe on the sheet while the keyboard is open only dismisses the keyboard, and the sheet stays on its current stage. React-modal-sheet turns off its own drag when it detects the keyboard, but it reads the keyboard from `visualViewport`, which `resize: 'none'` holds constant in the iOS app. [`CommandCenter`](../src/components/CommandCenter/CommandCenter.tsx) therefore also passes `disableDrag` from [`virtualKeyboardStore`](../src/stores/virtualKeyboardStore.ts).
+
 Swiping up with no cursor and nothing selected cannot open the Command Center, and swiping up while it is already open is more likely to be an attempt to scroll; both show the scroll zone help alert on the second attempt within ten seconds.
 
 ### Close Command Center

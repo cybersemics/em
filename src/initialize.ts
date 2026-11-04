@@ -29,6 +29,7 @@ import offlineStatusStore, { init as initOfflineStatusStore } from './stores/off
 import osVersionStore from './stores/osVersionStore'
 import storageStatusStore from './stores/storageStatusStore'
 import syncStatusStore from './stores/syncStatusStore'
+import virtualKeyboardStore from './stores/virtualKeyboardStore'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
 import debugLog from './util/debugLog'
@@ -241,6 +242,7 @@ const windowEm = {
   store,
   offlineStatusStore,
   syncStatusStore,
+  virtualKeyboardStore,
   // helper functions that will be used by puppeteer tests
   testFlags,
   testHelpers,

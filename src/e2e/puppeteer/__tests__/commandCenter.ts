@@ -317,4 +317,28 @@ describe('command center', () => {
 - b
 `)
   })
+
+  // https://github.com/cybersemics/em/pull/5263#issuecomment-6419981477
+  it('stays expanded when the command list is swiped down with the keyboard open', async () => {
+    await paste('- a')
+    await clickThought('a')
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+
+    await click('[aria-label="Expand Command Center"]')
+    await waitForSelector('[data-testid=command-menu-panel][data-stage=expanded]')
+
+    // Reproduces the iOS app, where only virtualKeyboardStore knows that the keyboard is open.
+    // - `resize: 'none'` keeps visualViewport constant, so the Sheet cannot detect the keyboard from it.
+    // - Focusing the search field here would let the Sheet detect the keyboard through Chromium's VirtualKeyboard API.
+    await page.evaluate(() => window.em.virtualKeyboardStore.update({ open: true }))
+    await waitForBrowserSettled()
+
+    await gesture('d', { target: '[data-testid=command-center-expanded-content]' })
+    await waitForBrowserSettled()
+
+    const stage = await page.$eval('[data-testid=command-menu-panel]', el => el.getAttribute('data-stage'))
+    expect(stage).toBe('expanded')
+  })
 })

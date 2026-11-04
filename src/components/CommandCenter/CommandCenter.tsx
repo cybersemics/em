@@ -437,6 +437,7 @@ const CommandCenter = () => {
   const isTutorialOn = useSelector(isTutorial)
   const fontSize = useSelector(state => state.fontSize)
   const sheetRef = useRef<SheetRef>(null)
+  const isKeyboardOpen = virtualKeyboardStore.useSelector(state => state.open)
 
   /** Lift above the expanded stage, driven by the bounce. Owned here because the falloff gradient derives from it as well. */
   const bounceY = useMotionValue(0)
@@ -651,6 +652,11 @@ const CommandCenter = () => {
            */
           onCloseStart={onCloseStart}
           disableDismiss={stage === 'expanded'}
+          /**
+           * A swipe with the keyboard open only dismisses the keyboard, so it must not also move the drawer to another stage.
+           * The Sheet turns off its own drag when it detects the keyboard, but it cannot detect it on iOS Capacitor, where `resize: 'none'` keeps `visualViewport` constant.
+           */
+          disableDrag={isKeyboardOpen}
           tweenConfig={tweenConfig}
           style={{
             /** Override default Sheet zIndex. */
