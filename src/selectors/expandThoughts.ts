@@ -26,18 +26,13 @@ import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
 import { anyChild, getAllChildrenAsThoughts } from './getChildren'
 import getContexts from './getContexts'
+import childrenPinned from './isChildrenPinned'
 import pinned from './isPinned'
 import rootedParentOf from './rootedParentOf'
 
 /** Returns true if a thought is marked as done. */
 const isDone = (state: State, id: ThoughtId | null): boolean => {
   return !!findDescendant(state, id, '=done')
-}
-
-/** Returns true if a thought's children are pinned with =children/=pin/true, false if =children/=pin/false, and null if not pinned. */
-const childrenPinned = (state: State, id: ThoughtId): boolean | null => {
-  const childrenAttributeId = findDescendant(state, id, '=children')
-  return pinned(state, childrenAttributeId)
 }
 
 /** Returns true if the context is in table view. */
