@@ -21,6 +21,19 @@ it('keeps the message field non-resizable across platforms', async () => {
   expect(await page.$eval('textarea', element => getComputedStyle(element).resize)).toBe('none')
 })
 
+// https://github.com/cybersemics/em/pull/6073#issuecomment-6593989895
+it.skip('dims unavailable thought attachment controls', async () => {
+  await gesture('rdldr')
+  await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
+  await waitForSelector('input[type="checkbox"]:disabled')
+  expect(
+    await page.$eval(
+      '::-p-text(Include my current selected thought context)',
+      element => getComputedStyle(element).opacity,
+    ),
+  ).toBe('0.5')
+})
+
 // https://github.com/cybersemics/em/pull/6073#issuecomment-6593671502
 it.each(['input[autocomplete="name"]', 'input[type="email"]', 'textarea'])(
   'highlights the focused feedback field with its foreground border: %s',
