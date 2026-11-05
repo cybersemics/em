@@ -1,5 +1,6 @@
 import Autofocus from '../@types/Autofocus'
 import Thought from '../@types/Thought'
+import ContextViewExpansion from './ContextViewExpansion'
 import LazyEnv from './LazyEnv'
 import Path from './Path'
 import SimplePath from './SimplePath'
@@ -29,6 +30,11 @@ type TreeThought = {
   prevChild: Thought
   rank: number
   showContexts?: boolean
+  contextEntry?: ContextViewExpansion
+  /** An independently positioned collapsed ancestor. */
+  breadcrumb?: boolean
+  /** The portal that owns this displayed occurrence. */
+  portalPath?: Path
   simplePath: SimplePath
   // style inherited from parents with =children/=style and grandparents with =grandchildren/=style
   style?: React.CSSProperties | null

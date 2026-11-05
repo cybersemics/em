@@ -6,9 +6,11 @@ import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
+import getContextViewExpansion from '../selectors/getContextViewExpansion'
 import getNextRank from '../selectors/getNextRank'
 import isContextViewActive from '../selectors/isContextViewActive'
 import prevSibling from '../selectors/prevSibling'
+import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
@@ -28,6 +30,11 @@ const indent = (state: State, { selectionOffset }: indentPayload = {}): State =>
   const { cursor } = state
 
   if (!cursor) return state
+  const expansion = getContextViewExpansion(state, cursor)
+  if (expansion && cursor.length === expansion.contextViewPath.length + 2) {
+    const result = indent({ ...state, cursor: simplifyPath(state, cursor) }, { selectionOffset })
+    return result.thoughts === state.thoughts ? { ...result, cursor } : result
+  }
 
   const prev = prevSibling(state, cursor)
 

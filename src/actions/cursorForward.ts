@@ -5,30 +5,17 @@ import addMulticursor from '../actions/addMulticursor'
 import removeMulticursor from '../actions/removeMulticursor'
 import setCursor from '../actions/setCursor'
 import { HOME_PATH } from '../constants'
+import displayedChildPaths from '../selectors/displayedChildPaths'
 import expandThoughts from '../selectors/expandThoughts'
-import { firstVisibleChild, getChildrenSorted } from '../selectors/getChildren'
-import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
-import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isContextViewActive from '../selectors/isContextViewActive'
-import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import appendToPath from '../util/appendToPath'
-import head from '../util/head'
-import headValue from '../util/headValue'
-import isRoot from '../util/isRoot'
+import equalPath from '../util/equalPath'
 import reducerFlow from '../util/reducerFlow'
-import unroot from '../util/unroot'
 
 /** Replaces the multiselect with the thoughts one level forward of each selected thought, i.e. the contexts of a thought whose context view is active, otherwise its visible children. */
 const multicursorForward = (state: State): State => {
   const paths = Object.values(state.multicursors)
-  const forwardPaths = paths.flatMap(path => {
-    const contextViewValue = isContextViewActive(state, path) ? headValue(state, path) : undefined
-    return contextViewValue !== undefined
-      ? getContextsSortedAndRanked(state, contextViewValue).map(cx => appendToPath(path, cx.parentId))
-      : getChildrenSorted(state, head(simplifyPath(state, path))).map(child => appendToPath(path, child.id))
-  })
+  const forwardPaths = paths.flatMap(path => displayedChildPaths(state, path))
 
   // do nothing if none of the selected thoughts have children, just as the cursor does not move forward from a leaf
   if (forwardPaths.length === 0) return state
@@ -56,31 +43,9 @@ const cursorForward = (state: State): State => {
 
   const cursorFromHistory = last(state.cursorHistory)
   const cursor = state.cursor || HOME_PATH
-  const showContexts = isContextViewActive(state, cursor)
-
-  // context view
-  let cursorNew, isValidChild
-  if (showContexts) {
-    const cursorValue = headValue(state, cursor)
-    const contexts = cursorValue !== undefined ? getContextsSortedAndRanked(state, cursorValue) : []
-    const firstContext = contexts[0]
-    isValidChild = cursorFromHistory && contexts.some(cx => cx.parentId === head(cursorFromHistory))
-    cursorNew = isValidChild ? cursorFromHistory : appendToPath(cursor, firstContext.parentId)
-  }
-  // normal view
-  else {
-    const simplePath = simplifyPath(state, cursor)
-    const firstChild = firstVisibleChild(state, head(simplePath))
-    isValidChild = cursorFromHistory && !!getThoughtById(state, head(cursor))?.childrenMap[head(cursorFromHistory)]
-    cursorNew =
-      isValidChild && cursorFromHistory
-        ? appendToPath(cursor, head(cursorFromHistory))
-        : firstChild
-          ? unroot([...cursor, firstChild.id])
-          : isRoot(cursor)
-            ? null
-            : cursor
-  }
+  const children = displayedChildPaths(state, cursor)
+  const isValidChild = !!cursorFromHistory && children.some(child => equalPath(child, cursorFromHistory))
+  const cursorNew = isValidChild ? cursorFromHistory : children[0]
 
   return cursorNew
     ? setCursor(state, {

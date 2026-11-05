@@ -1,14 +1,14 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { HOME_PATH } from '../constants'
+import displayedParentOf from '../selectors/displayedParentOf'
 import { firstVisibleChild } from '../selectors/getChildren'
-import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
-import getThoughtById from '../selectors/getThoughtById'
+import getContextViewEntries from '../selectors/getContextViewEntries'
 import isContextViewActive from '../selectors/isContextViewActive'
 import nextSibling from '../selectors/nextSibling'
-import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
+import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
@@ -16,35 +16,21 @@ import parentOf from '../util/parentOf'
 
 /** Gets the next context in a context view. */
 const nextContext = (state: State, path: Path): Path | null => {
-  // use rootedParentOf(path) instead of thought.parentId since we need to cross the context view
-  const parent = getThoughtById(state, head(rootedParentOf(state, path)))
-  const contexts = parent ? getContextsSortedAndRanked(state, parent.value) : []
-  // find the thought in the context view
-  const index = contexts.findIndex(cx => getThoughtById(state, cx.id)?.parentId === head(path))
-  // get the next context
-  const nextContextId = contexts[index + 1]?.id
-  const nextContext = nextContextId ? getThoughtById(state, nextContextId) : null
-  // if next does not exist (i.e. path is the last context), call nextThought on the parent and ignore the context view to move to the next uncle in the normal view
-  return nextContext
-    ? appendToPath(parentOf(path), nextContext.parentId)
-    : nextThought(state, rootedParentOf(state, path), { ignoreChildren: true }) // eslint-disable-line @typescript-eslint/no-use-before-define
+  const parentPath = displayedParentOf(state, path)
+  const entries = getContextViewEntries(state, parentPath)
+  const index = entries.findIndex(entry => equalPath(entry.path, path))
+  return entries[index + 1]?.path || nextThought(state, parentPath, { ignoreChildren: true }) // eslint-disable-line @typescript-eslint/no-use-before-define
 }
 
 /** Gets the first context in a context view. */
 const firstContext = (state: State, path: Path): Path | null => {
-  const thought = getThoughtById(state, head(path))
-  const contexts = thought ? getContextsSortedAndRanked(state, thought.value) : []
-
-  // if context view is empty, move to the next thought
-  const firstContext = getThoughtById(state, contexts[0]?.id)
-  return firstContext && contexts.length > 1
-    ? appendToPath(path, firstContext.parentId)
-    : nextThought(state, path, { ignoreChildren: true }) // eslint-disable-line @typescript-eslint/no-use-before-define
+  const entries = getContextViewEntries(state, path)
+  return entries.length > 1 ? entries[0].path : nextThought(state, path, { ignoreChildren: true }) // eslint-disable-line @typescript-eslint/no-use-before-define
 }
 
 /** Returns the next uncle. */
 const nextUncle = (state: State, path: Path): Path | null => {
-  const pathParent = rootedParentOf(state, path)
+  const pathParent = displayedParentOf(state, path)
 
   // the thought is a root child, then there is no uncle
   // otherwise, recursively call nextThought on the parent and prevent traversing children
@@ -58,7 +44,7 @@ const nextUncle = (state: State, path: Path): Path | null => {
  */
 const nextThought = (state: State, path?: Path, { ignoreChildren }: { ignoreChildren?: boolean } = {}): Path | null => {
   path = path || state.cursor || HOME_PATH
-  const pathParent = rootedParentOf(state, path)
+  const pathParent = displayedParentOf(state, path)
   const showContexts = isContextViewActive(state, path)
   const showContextsParent = isContextViewActive(state, pathParent)
 

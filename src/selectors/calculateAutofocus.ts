@@ -5,8 +5,8 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
 import isRoot from '../util/isRoot'
+import displayedParentOf from './displayedParentOf'
 import { hasChildren } from './getChildren'
-import rootedParentOf from './rootedParentOf'
 import zoomPath from './zoomPath'
 
 /** Prepares autofocus calculations for paths in one synchronous traversal of the current tree. */
@@ -30,8 +30,8 @@ const calculateAutofocus = (state: State): ((path: Path) => Autofocus) => {
 
   // =focus/Zoom gives the zoomed thought the full screen by hiding everything outside its subtree, i.e. its parent, its siblings, and their descendants.
   const zoom = zoomPath(state)
-  const cursorParent = rootedParentOf(state, state.cursor)
-  const cursorGrandparent = rootedParentOf(state, cursorParent)
+  const cursorParent = displayedParentOf(state, state.cursor)
+  const cursorGrandparent = displayedParentOf(state, cursorParent)
 
   // Generally if the cursor is on a leaf, the autofocus should be the same as its parent.
   // This avoids a visual shift when there are no additional descendants to focus on.
@@ -44,7 +44,7 @@ const calculateAutofocus = (state: State): ((path: Path) => Autofocus) => {
       return isDescendantPath(state.cursor, path) ? 'hide-parent' : 'hide'
     }
 
-    const parent = rootedParentOf(state, path)
+    const parent = displayedParentOf(state, path)
     const isParentOrSibling = equalPath(cursorParent, path) || equalPath(cursorParent, parent)
     const isGrandparent = equalPath(cursorGrandparent, path)
     const isUncle = equalPath(cursorGrandparent, parent)

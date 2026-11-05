@@ -758,6 +758,22 @@ Opens the context view of the current thought. The context view shows all contex
 
 https://github.com/user-attachments/assets/3592bcca-031d-40a0-b463-3424712e59d1
 
+### Exit Portal
+
+Returns to the entrance of the nearest traversed context view, including a nested
+portal. The view and its unfolded ancestry remain open. Available through the
+Command Universe when the cursor is inside a context view.
+
+### Close Portal
+
+Continues at the selected visible thought in its ordinary hierarchy while closing
+the context-view route behind it. The caret offset is captured before the route
+changes. Views elsewhere in the thoughtspace remain open. Unlike Exit Portal,
+this leaves the cursor at the destination rather than returning to the entrance.
+
+This is an explicit navigation command. It does not introduce automatic portal
+closing or decide the unresolved cleanup behavior on leaving an unfolded subtree.
+
 ### Prose View
 
 Display subthoughts of the current thought as indented paragraphs.

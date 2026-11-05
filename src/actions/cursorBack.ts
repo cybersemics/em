@@ -5,11 +5,12 @@ import cursorHistory from '../actions/cursorHistory'
 import removeMulticursor from '../actions/removeMulticursor'
 import searchReducer from '../actions/search'
 import setCursor from '../actions/setCursor'
+import displayedParentOf from '../selectors/displayedParentOf'
 import expandThoughts from '../selectors/expandThoughts'
 import hasMulticursor from '../selectors/hasMulticursor'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import isAbsolute from '../util/isAbsolute'
-import parentOf from '../util/parentOf'
+import isRoot from '../util/isRoot'
 import reducerFlow from '../util/reducerFlow'
 import toggleAbsoluteContext from './toggleAbsoluteContext'
 
@@ -18,7 +19,7 @@ const multicursorBack = (state: State): State => {
   const paths = Object.values(state.multicursors)
 
   // Root-level thoughts contribute no parent, since the root cannot be selected.
-  const backPaths = paths.filter(path => path.length > 1).map(parentOf)
+  const backPaths = paths.map(path => displayedParentOf(state, path)).filter(path => !isRoot(path))
 
   // do nothing if all selected thoughts are at the root level, so that an extra Back gesture does not destroy the selection
   if (backPaths.length === 0) return state
@@ -48,7 +49,7 @@ const cursorBack = (state: State): State => {
 
   const isAbsoluteRoot = isAbsolute(rootContext)
 
-  const cursorNew = cursorOld && parentOf(cursorOld)
+  const cursorNew = cursorOld && displayedParentOf(state, cursorOld)
 
   return reducerFlow(
     // if there is a cursor, move it to its parent
@@ -58,7 +59,7 @@ const cursorBack = (state: State): State => {
           setCursor({
             // offset shouldn't be null if we want useEditMode to set the selection to the new thought
             offset: 0,
-            path: cursorNew!.length > 0 ? cursorNew : null,
+            path: cursorNew && !isRoot(cursorNew) ? cursorNew : null,
             isKeyboardOpen,
             preserveMulticursor: true,
           }),
