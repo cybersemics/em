@@ -2,8 +2,12 @@ import { renderHook } from '@testing-library/react'
 import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import { importTextActionCreator as importText } from '../../../actions/importText'
+import { keyboardOpenActionCreator as keyboardOpen } from '../../../actions/keyboardOpen'
+import { setCursorActionCreator } from '../../../actions/setCursor'
+import * as selection from '../../../device/selection'
 import store from '../../../stores/app'
 import touchStore from '../../../stores/touchStore'
+import dispatchTouchEvent from '../../../test-helpers/dispatchTouchEvent'
 import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
 import lastTouch from '../lastTouch'
@@ -115,4 +119,114 @@ it('allow mousedown on the cursor thought when no cursor-moving tap preceded it'
   })
 
   expect(mousedown.defaultPrevented).toBe(false)
+})
+
+// https://github.com/cybersemics/em/issues/4220
+it('keeps the caret where a tap landed and records it while iOS moves the caret', async () => {
+  const value = 'Hello beautiful people in the world'
+  store.dispatch([importText({ text: `- ${value}` }), setCursor([value]), keyboardOpen({ value: true })])
+
+  const editable = document.createElement('div')
+  editable.setAttribute('contenteditable', 'true')
+  editable.setAttribute('data-editable', '')
+  editable.appendChild(document.createTextNode(value))
+  document.body.appendChild(editable)
+
+  // Lay out the text at 10px per character for the range geometry that getCaretOffset hit-tests, which JSDOM lacks.
+  /** Returns the rect of a range within the text. */
+  const rectOf = (range: Range) =>
+    new DOMRect(range.startOffset * 10, 0, (range.endOffset - range.startOffset) * 10, 20)
+  Object.defineProperty(Range.prototype, 'getBoundingClientRect', {
+    configurable: true,
+    /** Measures the range. */
+    value(this: Range) {
+      return rectOf(this)
+    },
+  })
+  Object.defineProperty(Range.prototype, 'getClientRects', {
+    configurable: true,
+    /** Measures the range. */
+    value(this: Range) {
+      return [rectOf(this)]
+    },
+  })
+  onTestFinished(() => {
+    delete (Range.prototype as { getBoundingClientRect?: unknown }).getBoundingClientRect
+    delete (Range.prototype as { getClientRects?: unknown }).getClientRects
+  })
+
+  renderHook(
+    () =>
+      useEditMode({
+        contentRef: { current: editable as unknown as HTMLInputElement },
+        isEditing: true,
+        path: store.getState().cursor!,
+        // The hook is rendered on the cursor thought, where a tap only places the caret.
+        setCursorForTap: ({ offset }) => {
+          if (offset !== undefined)
+            store.dispatch(setCursorActionCreator({ path: store.getState().cursor, offset, preserveMulticursor: true }))
+        },
+        style: undefined,
+        transient: undefined,
+      }),
+    { wrapper: ({ children }) => createElement(Provider, { store, children }) },
+  )
+  act(() => editable.focus())
+  await act(vi.runOnlyPendingTimersAsync)
+
+  /** Moves the browser caret, as iOS does, and fires the selectionchange that the browser would fire. */
+  const moveCaretTo = (offset: number) =>
+    act(() => {
+      selection.set(editable, { offset })
+      document.dispatchEvent(new Event('selectionchange'))
+    })
+
+  const offsetBeforeThe = 'Hello beautiful people in '.length
+  const offsetBeforeIn = 'Hello beautiful people '.length
+  moveCaretTo(offsetBeforeThe)
+  await act(vi.runOnlyPendingTimersAsync)
+
+  // a slow tap gets no mouse events
+  const finger = { identifier: 0, clientX: offsetBeforeIn * 10 + 2, clientY: 10 }
+  act(() => {
+    dispatchTouchEvent('touchstart', [finger], { target: editable })
+    dispatchTouchEvent('touchend', [finger], { touches: [], target: editable })
+  })
+
+  // iOS moves the caret to the tapped word, and then back to where it was
+  moveCaretTo(offsetBeforeIn)
+  moveCaretTo(offsetBeforeThe)
+
+  expect(selection.offsetFromNode(editable)).toBe(offsetBeforeIn)
+  expect(store.getState().cursorOffset).toBe(offsetBeforeIn)
+
+  // a jump to the start of the thought is put back too, as for a tap at the top edge (#6178)
+  moveCaretTo(0)
+  expect(selection.offsetFromNode(editable)).toBe(offsetBeforeIn)
+
+  // iOS can also extend the selection from the caret back to where it was
+  act(() => {
+    selection.setRange(editable, { start: offsetBeforeIn, end: offsetBeforeThe })
+    document.dispatchEvent(new Event('selectionchange'))
+  })
+  expect(selection.isCollapsed()).toBe(true)
+  expect(selection.offsetFromNode(editable)).toBe(offsetBeforeIn)
+
+  // the second touch of a double tap ends the correction, so that its word selection stays
+  act(() => {
+    dispatchTouchEvent('touchstart', [finger], { target: editable })
+    selection.setRange(editable, { start: offsetBeforeIn, end: offsetBeforeThe })
+    document.dispatchEvent(new Event('selectionchange'))
+  })
+  expect(selection.isCollapsed()).toBe(false)
+  act(() => {
+    dispatchTouchEvent('touchend', [finger], { touches: [], target: editable })
+  })
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+  moveCaretTo(0)
+
+  // the caret is left alone once the tap has settled
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+  moveCaretTo(0)
+  expect(selection.offsetFromNode(editable)).toBe(0)
 })

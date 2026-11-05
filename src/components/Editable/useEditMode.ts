@@ -11,6 +11,7 @@ import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import virtualKeyboard from '../../device/virtual-keyboard'
+import useFreshCallback from '../../hooks/useFreshCallback'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
@@ -75,17 +76,28 @@ const useEditMode = ({
   const editMode = !isTouch || editing
   const editingOrOnCursor = isCursor || editing
 
-  /** Updates the Redux cursor state for a tap and has the selection effect place the caret there. */
-  const setCaretOffset = useCallback(
+  /** Records the offset of a tap in the Redux cursor state, through Editable's setCursorForTap, which flushes the edit throttle first and applies what a tap does to the cursor. */
+  // A fresh callback rather than useCallback, because useRevertCorrection keeps the tap it is watching inside an effect
+  // that depends on it. setCursorForTap changes identity whenever the thought's edit state or path does, and a new
+  // identity here would tear that effect down and lose the watch in the middle of a tap.
+  const recordCaretOffset = useFreshCallback(
     (offset: number) => {
       setCursorForTap({ offset })
-      bumpCaretNonce()
     },
     [setCursorForTap],
   )
 
+  /** Records the offset of a tap and has the selection effect place the caret there. */
+  const setCaretOffset = useCallback(
+    (offset: number) => {
+      recordCaretOffset(offset)
+      bumpCaretNonce()
+    },
+    [recordCaretOffset],
+  )
+
   useCaretRestore({ editableRef: contentRef, enabled: isCursor && !!editing })
-  useRevertCorrection({ editableRef: contentRef, enabled: isCursor && !!editing })
+  useRevertCorrection({ editableRef: contentRef, enabled: isCursor && !!editing, recordCaretOffset })
 
   useEffect(
     () => {
