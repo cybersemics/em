@@ -6,19 +6,16 @@ mod menu;
 /// `tauri.conf.json`), so the entire em UI runs unchanged inside the native shell.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let builder = tauri::Builder::default()
+    tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![menu::update_system_menu])
-        .on_menu_event(menu::on_event);
-
-    // The system menu is macOS only for now (#5219). On Windows and Linux the window keeps no menu bar.
-    let builder = if cfg!(target_os = "macos") {
-        builder.menu(menu::build)
-    } else {
-        builder
-    };
-
-    builder
+        .menu(menu::build)
+        .on_menu_event(menu::on_event)
+        .setup(|_app| {
+            #[cfg(target_os = "linux")]
+            menu::show_accelerators_only(_app)?;
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running em");
 }

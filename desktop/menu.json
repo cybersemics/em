@@ -8,49 +8,73 @@
     {
       "id": "archive",
       "label": "Archive",
-      "accelerator": "Cmd+Shift+Backspace",
+      "accelerator": {
+        "macos": "Cmd+Shift+Backspace",
+        "windowsLinux": "Ctrl+Shift+Backspace"
+      },
       "checkable": false
     },
     {
       "id": "bold",
       "label": "Bold",
-      "accelerator": "Cmd+B",
+      "accelerator": {
+        "macos": "Cmd+B",
+        "windowsLinux": "Ctrl+B"
+      },
       "checkable": true
     },
     {
       "id": "bumpThoughtDown",
       "label": "Bump Thought Down",
-      "accelerator": "Cmd+Shift+D",
+      "accelerator": {
+        "macos": "Cmd+Shift+D",
+        "windowsLinux": "Ctrl+Shift+D"
+      },
       "checkable": false
     },
     {
       "id": "categorize",
       "label": "Categorize",
-      "accelerator": "Cmd+Alt+O",
+      "accelerator": {
+        "macos": "Cmd+Alt+O",
+        "windowsLinux": "Ctrl+Alt+O"
+      },
       "checkable": false
     },
     {
       "id": "removeFormat",
       "label": "Clear Formatting",
-      "accelerator": "Cmd+0",
+      "accelerator": {
+        "macos": "Cmd+0",
+        "windowsLinux": "Ctrl+0"
+      },
       "checkable": false
     },
     {
       "id": "clearThought",
       "label": "Clear Thought",
-      "accelerator": "Cmd+Alt+Shift+C",
+      "accelerator": {
+        "macos": "Cmd+Alt+Shift+C",
+        "windowsLinux": "Ctrl+Alt+Shift+C"
+      },
       "checkable": false
     },
     {
       "id": "code",
       "label": "Code",
-      "accelerator": "Cmd+K",
+      "accelerator": {
+        "macos": "Cmd+K",
+        "windowsLinux": "Ctrl+K"
+      },
       "checkable": true
     },
     {
       "id": "delete",
       "label": "Delete",
-      "accelerator": "Cmd+Alt+Shift+Backspace",
+      "accelerator": {
+        "macos": "Cmd+Alt+Shift+Backspace",
+        "windowsLinux": "Ctrl+Alt+Shift+Backspace"
+      },
       "checkable": false
     },
     {
@@ -61,31 +85,46 @@
     {
       "id": "italic",
       "label": "Italic",
-      "accelerator": "Cmd+I",
+      "accelerator": {
+        "macos": "Cmd+I",
+        "windowsLinux": "Ctrl+I"
+      },
       "checkable": true
     },
     {
       "id": "join",
       "label": "Join Thoughts",
-      "accelerator": "Alt+J",
+      "accelerator": {
+        "macos": "Alt+J",
+        "windowsLinux": "Alt+J"
+      },
       "checkable": false
     },
     {
       "id": "toggleDone",
       "label": "Mark as done",
-      "accelerator": "Alt+Shift+Enter",
+      "accelerator": {
+        "macos": "Alt+Shift+Enter",
+        "windowsLinux": "Alt+Shift+Enter"
+      },
       "checkable": false
     },
     {
       "id": "moveThoughtDown",
       "label": "Move Thought Down",
-      "accelerator": "Cmd+Shift+ArrowDown",
+      "accelerator": {
+        "macos": "Cmd+Shift+ArrowDown",
+        "windowsLinux": "Ctrl+Shift+ArrowDown"
+      },
       "checkable": false
     },
     {
       "id": "moveThoughtUp",
       "label": "Move Thought Up",
-      "accelerator": "Cmd+Shift+ArrowUp",
+      "accelerator": {
+        "macos": "Cmd+Shift+ArrowUp",
+        "windowsLinux": "Ctrl+Shift+ArrowUp"
+      },
       "checkable": false
     },
     {
@@ -96,19 +135,28 @@
     {
       "id": "newSubthought",
       "label": "New Subthought",
-      "accelerator": "Cmd+Enter",
+      "accelerator": {
+        "macos": "Cmd+Enter",
+        "windowsLinux": "Ctrl+Enter"
+      },
       "checkable": false
     },
     {
       "id": "newSubthoughtTop",
       "label": "New Subthought (above)",
-      "accelerator": "Cmd+Shift+Enter",
+      "accelerator": {
+        "macos": "Cmd+Shift+Enter",
+        "windowsLinux": "Ctrl+Shift+Enter"
+      },
       "checkable": false
     },
     {
       "id": "newUncle",
       "label": "New Subthought (next)",
-      "accelerator": "Cmd+Alt+Enter",
+      "accelerator": {
+        "macos": "Cmd+Alt+Enter",
+        "windowsLinux": "Ctrl+Alt+Enter"
+      },
       "checkable": false
     },
     {
@@ -124,7 +172,10 @@
     {
       "id": "note",
       "label": "Note",
-      "accelerator": "Cmd+Alt+N",
+      "accelerator": {
+        "macos": "Cmd+Alt+N",
+        "windowsLinux": "Ctrl+Alt+N"
+      },
       "checkable": true
     },
     {
@@ -135,25 +186,37 @@
     {
       "id": "repeat",
       "label": "Repeat",
-      "accelerator": "Cmd+.",
+      "accelerator": {
+        "macos": "Cmd+.",
+        "windowsLinux": "Ctrl+."
+      },
       "checkable": false
     },
     {
       "id": "splitSentences",
       "label": "Split Sentences",
-      "accelerator": "Cmd+Shift+S",
+      "accelerator": {
+        "macos": "Cmd+Shift+S",
+        "windowsLinux": "Ctrl+Shift+S"
+      },
       "checkable": false
     },
     {
       "id": "strikethrough",
       "label": "Strikethrough",
-      "accelerator": "Cmd+S",
+      "accelerator": {
+        "macos": "Cmd+S",
+        "windowsLinux": "Ctrl+S"
+      },
       "checkable": true
     },
     {
       "id": "swapNote",
       "label": "Swap Note",
-      "accelerator": "Alt+Shift+N",
+      "accelerator": {
+        "macos": "Alt+Shift+N",
+        "windowsLinux": "Alt+Shift+N"
+      },
       "checkable": false
     },
     {
@@ -164,13 +227,19 @@
     {
       "id": "uncategorize",
       "label": "Uncategorize",
-      "accelerator": "Cmd+Alt+C",
+      "accelerator": {
+        "macos": "Cmd+Alt+C",
+        "windowsLinux": "Ctrl+Alt+C"
+      },
       "checkable": false
     },
     {
       "id": "underline",
       "label": "Underline",
-      "accelerator": "Cmd+U",
+      "accelerator": {
+        "macos": "Cmd+U",
+        "windowsLinux": "Ctrl+U"
+      },
       "checkable": true
     }
   ],
@@ -178,13 +247,19 @@
     {
       "id": "openDesktopCommandUniverse",
       "label": "Command Universe",
-      "accelerator": "Cmd+P",
+      "accelerator": {
+        "macos": "Cmd+P",
+        "windowsLinux": "Ctrl+P"
+      },
       "checkable": false
     },
     {
       "id": "toggleContextView",
       "label": "Context View",
-      "accelerator": "Alt+Shift+S",
+      "accelerator": {
+        "macos": "Alt+Shift+S",
+        "windowsLinux": "Alt+Shift+S"
+      },
       "checkable": true
     },
     {
@@ -200,49 +275,73 @@
     {
       "id": "pin",
       "label": "Pin",
-      "accelerator": "Cmd+Alt+P",
+      "accelerator": {
+        "macos": "Cmd+Alt+P",
+        "windowsLinux": "Ctrl+Alt+P"
+      },
       "checkable": false
     },
     {
       "id": "pinAll",
       "label": "Pin All",
-      "accelerator": "Cmd+Shift+P",
+      "accelerator": {
+        "macos": "Cmd+Shift+P",
+        "windowsLinux": "Ctrl+Shift+P"
+      },
       "checkable": false
     },
     {
       "id": "pinDescendants",
       "label": "Pin Descendants",
-      "accelerator": "Cmd+Alt+Shift+P",
+      "accelerator": {
+        "macos": "Cmd+Alt+Shift+P",
+        "windowsLinux": "Ctrl+Alt+Shift+P"
+      },
       "checkable": false
     },
     {
       "id": "proseView",
       "label": "Prose View",
-      "accelerator": "Alt+Shift+P",
+      "accelerator": {
+        "macos": "Alt+Shift+P",
+        "windowsLinux": "Alt+Shift+P"
+      },
       "checkable": true
     },
     {
       "id": "toggleHiddenThoughts",
       "label": "Show Hidden Thoughts",
-      "accelerator": "Alt+Shift+H",
+      "accelerator": {
+        "macos": "Alt+Shift+H",
+        "windowsLinux": "Alt+Shift+H"
+      },
       "checkable": false
     },
     {
       "id": "toggleSort",
       "label": "Sort",
-      "accelerator": "Cmd+Alt+S",
+      "accelerator": {
+        "macos": "Cmd+Alt+S",
+        "windowsLinux": "Ctrl+Alt+S"
+      },
       "checkable": true
     },
     {
       "id": "toggleTableView",
       "label": "Table View",
-      "accelerator": "Alt+Shift+T",
+      "accelerator": {
+        "macos": "Alt+Shift+T",
+        "windowsLinux": "Alt+Shift+T"
+      },
       "checkable": true
     },
     {
       "id": "toggleSidebar",
       "label": "Toggle Recently Edited",
-      "accelerator": "Alt+R",
+      "accelerator": {
+        "macos": "Alt+R",
+        "windowsLinux": "Alt+R"
+      },
       "checkable": false
     }
   ],
@@ -260,42 +359,63 @@
     {
       "id": "home",
       "label": "Home",
+      "accelerator": {
+        "windowsLinux": "Ctrl+Alt+H"
+      },
       "checkable": false
     },
     {
       "id": "jumpBack",
       "label": "Jump Back",
-      "accelerator": "Cmd+J",
+      "accelerator": {
+        "macos": "Cmd+J",
+        "windowsLinux": "Ctrl+J"
+      },
       "checkable": false
     },
     {
       "id": "jumpForward",
       "label": "Jump Forward",
-      "accelerator": "Cmd+Shift+J",
+      "accelerator": {
+        "macos": "Cmd+Shift+J",
+        "windowsLinux": "Ctrl+Shift+J"
+      },
       "checkable": false
     },
     {
       "id": "navigateBack",
       "label": "Navigate Back",
-      "accelerator": "Cmd+[",
+      "accelerator": {
+        "macos": "Cmd+[",
+        "windowsLinux": "Ctrl+["
+      },
       "checkable": false
     },
     {
       "id": "navigateForward",
       "label": "Navigate Forward",
-      "accelerator": "Cmd+]",
+      "accelerator": {
+        "macos": "Cmd+]",
+        "windowsLinux": "Ctrl+]"
+      },
       "checkable": false
     },
     {
       "id": "cursorNext",
       "label": "Next Thought",
-      "accelerator": "Cmd+ArrowDown",
+      "accelerator": {
+        "macos": "Cmd+ArrowDown",
+        "windowsLinux": "Ctrl+ArrowDown"
+      },
       "checkable": false
     },
     {
       "id": "cursorPrev",
       "label": "Previous Thought",
-      "accelerator": "Cmd+ArrowUp",
+      "accelerator": {
+        "macos": "Cmd+ArrowUp",
+        "windowsLinux": "Ctrl+ArrowUp"
+      },
       "checkable": false
     }
   ],
@@ -310,7 +430,10 @@
     {
       "id": "help",
       "label": "Help",
-      "accelerator": "Cmd+/",
+      "accelerator": {
+        "macos": "Cmd+/",
+        "windowsLinux": "Ctrl+/"
+      },
       "checkable": false
     }
   ],
@@ -318,7 +441,10 @@
     {
       "id": "settings",
       "label": "Settings",
-      "accelerator": "Cmd+,",
+      "accelerator": {
+        "macos": "Cmd+,",
+        "windowsLinux": "Ctrl+,"
+      },
       "checkable": false
     }
   ]
