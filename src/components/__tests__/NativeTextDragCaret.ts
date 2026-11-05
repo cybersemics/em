@@ -255,6 +255,22 @@ it('keeps the formatting that encloses dragged text and leaves a single space wh
   ])
 })
 
+// https://github.com/cybersemics/em/issues/5952
+it.skip('keeps a source space when moving a word leaves whitespace-only formatting', async () => {
+  await importOutline(`- foo<b> bar</b> baz
+- qux`)
+  const source = getEditable('foo bar baz')
+  const target = getEditable('qux')
+  layOutCaretAtEnd(target)
+  selectWord(source, 'bar')
+  await startDrag(source)
+
+  await dropBelowCaret(target)
+
+  expect(source.textContent).toBe('foo baz')
+  expect(target.innerHTML).toBe('qux<b>bar</b>')
+})
+
 // https://github.com/cybersemics/em/pull/5967#discussion_r4299621368
 it('does not nest formatting when dragged text is dropped into the same formatting', async () => {
   await importOutline('- <b>Foo Bar Baz Qux</b>')
