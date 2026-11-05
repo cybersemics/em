@@ -75,6 +75,20 @@ const useEditMode = ({
   /** Updates the Redux cursor state for a tap and has the selection effect place the caret there. */
   const setCaretOffset = useFreshCallback(
     (offset: number) => {
+      // Move the focus from another editable or a note before setCursor, as placing the caret synchronously used to.
+      // Their blur handlers dispatch actions of their own, such as a note's whitespace trim and setNoteFocus, and an
+      // Undo restores the note only if they come before setCursor. Focusing the editable directly rather than blurring
+      // gives the blur a relatedTarget, so that Editable's onBlur does not end edit mode.
+      const focused = document.activeElement
+      if (
+        contentRef.current &&
+        focused instanceof HTMLElement &&
+        focused !== document.body &&
+        focused !== contentRef.current
+      ) {
+        contentRef.current.focus({ preventScroll: true })
+      }
+
       const state = store.getState()
       tapPlacementRef.current = true
       dispatch(
@@ -84,8 +98,8 @@ const useEditMode = ({
           // While a multiselection is being edited (Clear Thought), a tap moves the caret as usual. The multiselection is
           // preserved when the tapped thought belongs to it, so that edits keep mirroring to the other selected thoughts.
           preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path),
-          // Enter edit mode here rather than leaving it to Editable's onFocus, which runs when the placement focuses the
-          // editable. It would otherwise set the cursor with no offset, and the effect would place the caret at the
+          // Enter edit mode here rather than leaving it to Editable's onFocus, which runs when the editable takes the
+          // focus. It would otherwise set the cursor with no offset, and the effect would place the caret at the
           // start of the thought. The Command Center stays open, since onFocus dismisses the keyboard while it is open.
           ...(state.showCommandCenter ? null : { isKeyboardOpen: true }),
         }),
@@ -292,7 +306,7 @@ const useEditMode = ({
     /**
      * Handles the mousedown event for the editable element.
      * Prevents focus on non-cursor thoughts or during multiselect clicks.
-     * When editing or cursor is present (and multicursor is not active), computes the caret position manually so that it can be set on mouseup.
+     * When editing or cursor is present (and multicursor is not active), computes the caret position manually and places it through setCaretOffset.
      * Prevents default behavior and manages autoscroll for certain edge cases where browser selection would be incorrect.
      */
     const onMouseDown = (e: MouseEvent) => {
