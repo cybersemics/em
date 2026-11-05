@@ -14,7 +14,7 @@ export const toolbarTapOptions = { pointerType: 'touch' } as const
 /**
  * Tap a toolbar button by its label, and optionally a value in the dropdown that it opens, e.g. `tapToolbar('Bold')` or `tapToolbar('Text Color', 'background color swatches', 'blue')`.
  *
- * An open picker is portaled into the toolbar's dropdown layer (see Popover), and only one is open at a time, so values are matched by aria-label within that layer. Nested values are given as a path, which is required when a value is ambiguous on its own, e.g. the Text Color dropdown contains both a text and a background swatch labeled "blue", so `tapToolbar('Text Color', 'background color swatches', 'blue')`.
+ * Only one toolbar picker is open at a time, so values are matched by aria-label within the toolbar's dropdown scope. Nested values are given as a path, which is required when a value is ambiguous on its own, e.g. the Text Color dropdown contains both a text and a background swatch labeled "blue", so `tapToolbar('Text Color', 'background color swatches', 'blue')`.
  */
 const tapToolbar = async (label: CommandLabel, ...values: string[]) => {
   const toolbarSelector = `[data-testid="toolbar-icon"][aria-label="${label}"]`

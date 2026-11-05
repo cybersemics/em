@@ -135,7 +135,7 @@ it('tapping a thought beside an open toolbar dropdown moves the cursor to it', a
 })
 
 // https://github.com/cybersemics/em/issues/5977
-it.skip('keeps the rightmost color reachable at the end of a customized toolbar', async () => {
+it('keeps the rightmost color reachable at the end of a customized toolbar', async () => {
   await paste('- One')
   await paste(
     [EM_TOKEN, 'Settings'],
@@ -164,7 +164,7 @@ it.skip('keeps the rightmost color reachable at the end of a customized toolbar'
 })
 
 // https://github.com/cybersemics/em/issues/5977
-it.skip('scrolls the toolbar when a swipe starts on a color swatch', async () => {
+it('scrolls the toolbar when a swipe starts on a color swatch', async () => {
   await paste('- One')
   await clickThought('One')
   await clickToolbar('Text Color')

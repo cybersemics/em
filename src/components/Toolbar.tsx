@@ -50,6 +50,7 @@ const arrow = cva({
     display: 'inline-block',
     lineHeight: '20px',
     zIndex: 'toolbarArrow',
+    pointerEvents: 'auto',
   },
   variants: {
     isHidden: {
@@ -92,7 +93,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
   const lastHapticScrollPosition = useRef<number>(0)
-  const containerRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [leftArrowIsShown, setLeftArrowIsShown] = useState(false)
   const [rightArrowIsShown, setRightArrowIsShown] = useState(true)
@@ -157,6 +157,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       }
 
       updateArrows()
+      if (el.style.clipPath) el.style.setProperty('--toolbar-scroll-left', `${el.scrollLeft}px`)
     },
     [fontSize, updateArrows, deselectPressingToolbarId],
   )
@@ -180,8 +181,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     if (customize || !showColorPicker) return
 
     const toolbar = toolbarRef.current
-    // The picker is portaled into the dropdown layer, outside #toolbar (see Popover), so search the whole container.
-    const colorPicker = containerRef.current?.querySelector<HTMLElement>('[aria-label="Color Picker"]')
+    const colorPicker = toolbar?.querySelector<HTMLElement>('[aria-label="Color Picker"]')
     if (!toolbar || !colorPicker) return
 
     const toolbarRect = toolbar.getBoundingClientRect()
@@ -236,8 +236,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     <FadeTransition in={!distractionFreeTyping || showDropdown} type='distractionFreeTyping' unmountOnExit>
       <div
         aria-label='toolbar'
-        ref={containerRef}
         className={css({
+          pointerEvents: 'none',
           right: 0,
           textAlign: 'right',
           // Prevent horizontal scroll bar when keyboard is up.
@@ -293,11 +293,13 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           </span>
           <div
             id='toolbar'
+            data-toolbar-dropdowns
             data-testid='toolbar'
             ref={toolbarRef}
             className={css({
               maxWidth: '100%',
               position: 'relative',
+              pointerEvents: 'auto',
               // Constrain the horizontally-scrolling toolbar to horizontal panning only. Without this, a diagonal
               // (~45°) or vertical drag beginning on the toolbar is treated as a vertical pan and scrolls/overscrolls
               // the page; because the toolbar is position: fixed (usePositionFixed), that overscroll visually drags
@@ -344,9 +346,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             <TriangleRight width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
           </span>
         </div>
-
-        {/* The layer that toolbar dropdowns are portaled into (see Popover). It has no height, so an open dropdown does not stretch the toolbar's box across the thoughts beside it. */}
-        <div data-toolbar-dropdowns className={css({ position: 'relative', zIndex: 'toolbar' })} />
       </div>
     </FadeTransition>
   )
