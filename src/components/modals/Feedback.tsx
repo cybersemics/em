@@ -294,6 +294,7 @@ const Feedback = () => {
     padding: '0.6em',
     fontFamily: 'inherit',
     fontSize: '1rem',
+    resize: 'none',
   })
   const previewClass = css({
     whiteSpace: 'pre-wrap',

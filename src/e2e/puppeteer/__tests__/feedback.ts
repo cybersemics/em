@@ -15,7 +15,7 @@ import { page } from '../session'
 deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
 // https://github.com/cybersemics/em/pull/6073#issuecomment-6593428901
-it.skip('keeps the message field non-resizable across platforms', async () => {
+it('keeps the message field non-resizable across platforms', async () => {
   await gesture('rdldr')
   await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
   expect(await page.$eval('textarea', element => getComputedStyle(element).resize)).toBe('none')
