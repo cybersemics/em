@@ -499,7 +499,15 @@ const Feedback = () => {
               {error}
             </p>
           )}
-          <div className={css({ display: 'flex', gap: '0.5em', justifyContent: 'center', paddingBlock: '1rem' })}>
+          <div
+            className={css({
+              display: 'flex',
+              gap: '0.5em',
+              justifyContent: 'center',
+              paddingBlock: '1rem',
+              fontSize: '1rem',
+            })}
+          >
             <button
               type='button'
               className={anchorButtonRecipe({ actionButton: true, thin: true })}
