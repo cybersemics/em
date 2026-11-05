@@ -60,6 +60,9 @@ const target = (state: State, path: Path | null): string => {
 const touchedIds = (patch: Patch): ThoughtId[] =>
   uniq(patch.ops.flatMap(op => op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)/)?.[1] ?? [])) as ThoughtId[]
 
+/** The arrow for each swipe direction of a gesture. */
+const ARROWS: Record<string, string> = { l: '←', r: '→', u: '↑', d: '↓' }
+
 /** Describes how a command was invoked. */
 const describeCommandInvocation = (patch: Patch): string => {
   if (patch.metadata.source !== 'command') return ''
@@ -74,7 +77,7 @@ const describeCommandInvocation = (patch: Patch): string => {
       return `Press \`${formatKeyboardShortcut(shortcut)}\`.`
     }
     case 'gesture':
-      return `Swipe \`${gestureString(command)}\`.`
+      return `${command.label} (${Array.from(gestureString(command), direction => ARROWS[direction] ?? direction).join('')}).`
     case 'toolbar':
       return `Tap the ${command.label} button.`
     case 'commandCenter':

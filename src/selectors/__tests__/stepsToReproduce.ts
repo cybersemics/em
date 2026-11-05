@@ -237,7 +237,7 @@ it('name a multicursor command by its label, preceded by the selection it acts o
 it.each([
   [undefined, 'Run Move Thought Down.'],
   ['toolbar', 'Tap the Move Thought Down button.'],
-  ['gesture', 'Swipe `dud`.'],
+  ['gesture', 'Move Thought Down (↓↑↓).'],
   ['commandCenter', 'Tap Move Thought Down in the Command Center.'],
   ['desktopCommandUniverse', 'Choose Move Thought Down in the Command Universe.'],
   ['systemMenu', 'Choose Edit > Move Thought Down in the menu bar.'],

@@ -24,6 +24,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  delete process.env.BROWSERSTACK_SESSIONS_RESERVED
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
   vi.useRealTimers()
@@ -67,6 +68,33 @@ it('waits when parallels are free but the session-create queue cannot take this 
   await waiting
 
   expect(fetchMock).toHaveBeenCalledTimes(2)
+})
+
+it('waits for the reserved sessions to be free as well when the run is low priority', async () => {
+  process.env.BROWSERSTACK_SESSIONS_RESERVED = '3'
+  const fetchMock = vi
+    .fn()
+    // Room for this run's 2 sessions, but not for a developer's push on top of them.
+    .mockResolvedValueOnce(planResponse(1))
+    .mockResolvedValue(planResponse(0))
+  vi.stubGlobal('fetch', fetchMock)
+  vi.useFakeTimers()
+
+  const waiting = waitForBrowserStackSlots(2)
+  await vi.advanceTimersByTimeAsync(30000)
+  await waiting
+
+  expect(fetchMock).toHaveBeenCalledTimes(2)
+})
+
+it('caps the reserve so that a low-priority run still fits an idle account', async () => {
+  process.env.BROWSERSTACK_SESSIONS_RESERVED = '10'
+  const fetchMock = vi.fn().mockResolvedValue(planResponse(0))
+  vi.stubGlobal('fetch', fetchMock)
+
+  await waitForBrowserStackSlots(2)
+
+  expect(fetchMock).toHaveBeenCalledTimes(1)
 })
 
 it('throws as starvation, naming the observed usage, when the pool never frees up', async () => {
