@@ -9,6 +9,7 @@ import store from '../../../stores/app'
 import touchStore from '../../../stores/touchStore'
 import dispatchTouchEvent from '../../../test-helpers/dispatchTouchEvent'
 import initStore from '../../../test-helpers/initStore'
+import layOutText from '../../../test-helpers/layOutText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
 import lastTouch from '../lastTouch'
 import useEditMode from '../useEditMode'
@@ -132,28 +133,7 @@ it('keeps the caret where a tap landed and records it while iOS moves the caret'
   editable.appendChild(document.createTextNode(value))
   document.body.appendChild(editable)
 
-  // Lay out the text at 10px per character for the range geometry that getCaretOffset hit-tests, which JSDOM lacks.
-  /** Returns the rect of a range within the text. */
-  const rectOf = (range: Range) =>
-    new DOMRect(range.startOffset * 10, 0, (range.endOffset - range.startOffset) * 10, 20)
-  Object.defineProperty(Range.prototype, 'getBoundingClientRect', {
-    configurable: true,
-    /** Measures the range. */
-    value(this: Range) {
-      return rectOf(this)
-    },
-  })
-  Object.defineProperty(Range.prototype, 'getClientRects', {
-    configurable: true,
-    /** Measures the range. */
-    value(this: Range) {
-      return [rectOf(this)]
-    },
-  })
-  onTestFinished(() => {
-    delete (Range.prototype as { getBoundingClientRect?: unknown }).getBoundingClientRect
-    delete (Range.prototype as { getClientRects?: unknown }).getClientRects
-  })
+  layOutText()
 
   renderHook(
     () =>
