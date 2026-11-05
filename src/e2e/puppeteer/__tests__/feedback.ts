@@ -22,7 +22,7 @@ it('keeps the message field non-resizable across platforms', async () => {
 })
 
 // https://github.com/cybersemics/em/pull/6073#issuecomment-6593671502
-it.skip.each(['input[autocomplete="name"]', 'input[type="email"]', 'textarea'])(
+it.each(['input[autocomplete="name"]', 'input[type="email"]', 'textarea'])(
   'highlights the focused feedback field with its foreground border: %s',
   async selector => {
     await gesture('rdldr')

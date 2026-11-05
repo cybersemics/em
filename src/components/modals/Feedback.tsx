@@ -295,6 +295,7 @@ const Feedback = () => {
     fontFamily: 'inherit',
     fontSize: '1rem',
     resize: 'none',
+    _focus: { borderColor: 'fg', outline: '0 none' },
   })
   const previewClass = css({
     whiteSpace: 'pre-wrap',
