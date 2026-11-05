@@ -1,9 +1,9 @@
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
-import command from '../helpers/command'
 import exportThoughts from '../helpers/exportThoughts'
 import getCaretOffset from '../helpers/getCaretOffset'
+import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import waitForCursor from '../helpers/waitForCursor'
@@ -35,7 +35,11 @@ it('Close Portal from the Command Universe preserves the destination thought and
   await waitForCursor('Target detail')
   expect(await getCaretOffset()).toBe(4)
 
-  await command('Close Portal', { inputType: 'commandPalette' })
+  // Query the real palette by text so this test also compiles against the pre-command TDD base.
+  await press('P', { meta: true })
+  await waitForSelector('[data-testid=desktop-command-universe]')
+  await keyboard.type('Close Portal')
+  await press('Enter')
   // The Command Universe restores selection when its closing animation unmounts it.
   await waitForSelector('[data-testid=desktop-command-universe]', { hidden: true })
   await waitForCursor('Target detail')
