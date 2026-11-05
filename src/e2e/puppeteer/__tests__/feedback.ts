@@ -21,6 +21,22 @@ it('keeps the message field non-resizable across platforms', async () => {
   expect(await page.$eval('textarea', element => getComputedStyle(element).resize)).toBe('none')
 })
 
+// https://github.com/cybersemics/em/pull/6073#issuecomment-6593671502
+it.skip.each(['input[autocomplete="name"]', 'input[type="email"]', 'textarea'])(
+  'highlights the focused feedback field with its foreground border: %s',
+  async selector => {
+    await gesture('rdldr')
+    await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
+    await click(selector)
+    const style = await page.$eval(selector, element => {
+      const style = getComputedStyle(element)
+      return { border: style.borderColor, foreground: style.color, outline: style.outlineStyle }
+    })
+    expect(style.border).toBe(style.foreground)
+    expect(style.outline).toBe('none')
+  },
+)
+
 it('opens feedback with rdldr and returns to the unchanged thoughtspace on cancel', async () => {
   await paste('- aaa\n  - bbb')
   await clickThought('aaa')
