@@ -2,7 +2,7 @@ import getCaretOffset from './getCaretOffset'
 
 /**
  * Waits for the caret to come to rest at the given offset in the thought being edited. A caret that iOS places at a
- * tap can be moved back within about 150ms, so the offset must match on two samples taken further apart than that.
+ * tap can be moved back within about 70ms, so the offset must match on two samples taken further apart than that.
  * Uses the global browser object from WDIO.
  */
 const waitForCaretOffset = async (offset: number): Promise<void> => {

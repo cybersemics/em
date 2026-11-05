@@ -22,7 +22,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
 import { updateCaretRect } from '../stores/caretRectStore'
-import { observeSelection } from '../stores/caretStore'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
 import ministore from '../stores/ministore'
@@ -265,8 +264,6 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Selection change event listener; save selection offset to storage, update command state store. */
   const onSelectionChange = () => {
-    observeSelection()
-
     // save selection offset to storage, throttled
     saveSelectionOffset()
 

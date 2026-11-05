@@ -16,7 +16,6 @@ import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
 import isMulticursorPath from '../../selectors/isMulticursorPath'
-import { placeCaret } from '../../stores/caretStore'
 import multitouchStore from '../../stores/multitouchStore'
 import osVersionStore from '../../stores/osVersionStore'
 import touchStore from '../../stores/touchStore'
@@ -103,7 +102,7 @@ const useEditMode = ({
             contentRef.current.focus()
           }
 
-          if (contentRef.current) placeCaret(contentRef.current, { offset: cursorOffset ?? 0, source: 'cursorOffset' })
+          selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
         }
       }
 
@@ -217,7 +216,7 @@ const useEditMode = ({
       offset: number,
       { cursorHistoryClear, preserveMulticursor }: { cursorHistoryClear?: boolean; preserveMulticursor?: boolean } = {},
     ) => {
-      placeCaret(editable, { offset, source: 'mouseDown' })
+      selection.set(editable, { offset })
       dispatch(setCursor({ path, offset, cursorHistoryClear, preserveMulticursor }))
     }
 

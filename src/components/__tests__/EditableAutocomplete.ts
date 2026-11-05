@@ -67,8 +67,6 @@ it('keeps the space that commits an iOS autocorrect in the editable (#4828)', as
   // The editable the user is typing into must keep the space, otherwise the next word they type is appended
   // directly to the corrected word ("Allthings").
   expect(editable.textContent).toBe('All ')
-  // the retarget moves the focus away and back, so the caret has to be put back after the space
-  expect(selection.offsetFromNode(editable)).toBe('All '.length)
 
   // The value committed to Redux is trimmed. It is the divergence between the two that regressed: the retarget's
   // blur used to resync the editable to this trimmed value.

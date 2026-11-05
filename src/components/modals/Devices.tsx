@@ -300,8 +300,6 @@ const EditableName = React.memo(
         />
         <a
           {...fastClick(() => {
-            // A device name is not a thought, so this cannot compete with the placements in caretStore.
-            // eslint-disable-next-line no-restricted-properties
             selection.set(ref.current, { end: true })
           })}
           className={css({

@@ -9,7 +9,6 @@ import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import thoughtToPath from '../selectors/thoughtToPath'
-import { placeCaret } from '../stores/caretStore'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 
 /** How far above the finger, in px, to draw the drop caret of a native text drag on Android, so that it is not hidden under the finger. See onAndroidDragOver. */
@@ -253,7 +252,7 @@ const useNativeTextDrag = () => {
           isSameThought ? null : setCursor({ path: thoughtToPath(state, target.id), offset: cursorOffset }),
         ])
 
-        placeCaret(target.editable, { offset: cursorOffset, source: 'textDrag' })
+        selection.set(target.editable, { offset: cursorOffset })
       })
     }
 

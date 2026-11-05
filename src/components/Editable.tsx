@@ -52,7 +52,6 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import caretRectStore from '../stores/caretRectStore'
-import { placeCaret } from '../stores/caretStore'
 import editableSyncStore from '../stores/editableSyncStore'
 import editingValueStore from '../stores/editingValueStore'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmedStore'
@@ -156,7 +155,7 @@ const applyGeneratingEmojiWrap = (editable: HTMLElement, generating: boolean): b
 const restoreThoughtCaret = (editable: HTMLElement, range: { start: number; end: number } | null): void => {
   if (!range || document.activeElement !== editable) return
   if (range.start === range.end) {
-    placeCaret(editable, { offset: range.start, source: 'generatingEmoji' })
+    selection.set(editable, { offset: range.start })
     return
   }
   selection.setRange(editable, range)
@@ -556,7 +555,7 @@ const Editable = ({
         editable.focus({ preventScroll: true })
         // Restore the selection offset captured when insertText(' ') arrived.
         debugLog.log('retarget', { step: 'selection.set', savedOffset: savedCharOffset })
-        placeCaret(editable, { offset: savedCharOffset, source: 'autocomplete' })
+        selection.set(editable, { offset: savedCharOffset })
         preventAutoscrollEnd(editable)
       })
 

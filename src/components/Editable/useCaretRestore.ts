@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { isSafari, isTouch } from '../../browser'
-import caretStore, { ObservedSelection, placeCaret } from '../../stores/caretStore'
+import * as selection from '../../device/selection'
 import lastTouch from './lastTouch'
 
 /**
@@ -43,37 +43,37 @@ const useCaretRestore = ({
     const restore = () => {
       // selectionchange is queued rather than dispatched synchronously, so this cannot recurse; and a set that
       // the browser declines fires no event at all, so it cannot spin either.
-      placeCaret(editable, { end, source: 'restore' })
+      selection.set(editable, { end })
       scrubbingRef.current = true
     }
 
     /** Pulls the selection back into the editable when the trackpad has dragged it out. */
-    const onSelectionChange = ({ focused, offset, collapsed }: ObservedSelection) => {
-      if (focused !== editable) return
+    const onSelectionChange = () => {
+      if (document.activeElement !== editable) return
       // The trackpad moves the selection without generating a single touch event in the page, so anything the
       // user did with a finger is not this. A press still in progress is a long press dragging a selection
       // within this editable; a recently ended one is a tap, which may deliberately have moved the selection to
       // a thought that is about to become the cursor.
       if (pressingRef.current || lastTouch.isRecent()) return
-      // The offset is null when the selection is no longer inside the editable, or is gone entirely.
-      if (offset === null) return restore()
+      // offsetFromNode is null when the selection is no longer inside the editable, or is gone entirely.
+      if (selection.offsetFromNode(editable) === null) return restore()
       // The caret we just restored becomes the anchor the still-running drag extends from, selecting everything
       // between it and the finger. Only a drag we have already pulled back once can do this, so the latch keeps
       // Select All and the drag handles — neither of which is collapsed either — out of it.
-      if (scrubbingRef.current && !collapsed) restore()
+      if (scrubbingRef.current && !selection.isCollapsed()) restore()
     }
 
     editable.addEventListener('touchstart', onTouchStart)
     editable.addEventListener('touchend', onTouchEnd)
     editable.addEventListener('touchcancel', onTouchEnd)
-    const unsubscribe = caretStore.subscribeSelector(state => state.selection, onSelectionChange)
+    document.addEventListener('selectionchange', onSelectionChange)
 
     return () => {
-      unsubscribe()
       scrubbingRef.current = false
       editable.removeEventListener('touchstart', onTouchStart)
       editable.removeEventListener('touchend', onTouchEnd)
       editable.removeEventListener('touchcancel', onTouchEnd)
+      document.removeEventListener('selectionchange', onSelectionChange)
     }
   }, [editableRef, enabled, end])
 }
