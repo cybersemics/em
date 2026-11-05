@@ -311,6 +311,29 @@ describe('context view', () => {
     - =favorite`)
     expect(stateNew.alert).toBeUndefined()
   })
+
+  // https://github.com/cybersemics/em/issues/5858
+  it.skip('archive the empty note of an empty thought whose context view is open', () => {
+    const steps = [
+      importText({
+        text: `
+        -
+          - =note
+            -`,
+      }),
+      setCursor(['']),
+      toggleContextView,
+      deleteEmptyThought,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - =archive
+    - =note
+      - `)
+  })
 })
 
 it('merge thought should respect space if any (whitespace at end of left splitted value)', () => {

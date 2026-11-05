@@ -31,7 +31,7 @@ it('paints shimmering text over its background color while defining a term', asy
   expect(pixels.filter(([r, g, b]) => r < 20 && g > 80 && b > g).length).toBeGreaterThan(100)
 
   await completeDefinition()
-  await waitForEditable('A sample definition.')
+  await waitForEditable('A sample definition')
   await page.waitForFunction(() => !document.querySelector('[data-generating]'))
 })
 
@@ -51,7 +51,7 @@ it('keeps red text red while defining a term', async () => {
   expect(pixels.filter(([r, g, b]) => r > 80 && r > g * 1.5 && r > b * 1.5).length).toBeGreaterThan(50)
 
   await completeDefinition()
-  await waitForEditable('A sample definition.')
+  await waitForEditable('A sample definition')
   await page.waitForFunction(() => !document.querySelector('[data-generating]'))
 })
 
@@ -95,7 +95,7 @@ it('shimmers the note without moving its caret when defining a term', async () =
   expect(offset).toBe(7)
 
   await completeDefinition()
-  await waitForEditable('A sample definition.')
+  await waitForEditable('A sample definition')
   await page.waitForFunction(() => !document.querySelector('[data-generating]'))
   expect(await page.$eval('[aria-label="note-editable"]', element => getComputedStyle(element).animationName)).toBe(
     'none',

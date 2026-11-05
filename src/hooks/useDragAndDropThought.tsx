@@ -138,12 +138,12 @@ const canDropPath = moize((from: Path, to: Path) => !isDescendantPath(to, from, 
   profileName: 'canDropPath',
 })
 
-/** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
-const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
+/** Returns the reason the ThoughtContainer cannot be dropped at the given DropTarget, or null if it can. The reason is recorded in the debug log when the drop target is hovered. */
+const dropRejection = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
-  if (state.longPress !== LongPressState.DragInProgress) return false
+  if (state.longPress !== LongPressState.DragInProgress) return 'dragInactive'
 
   const item = monitor.getItem() as DragThoughtOrFiles
   const draggedItems = isDraggedFile(item) ? [] : item
@@ -153,7 +153,9 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   // Disallow dropping on context view.
   // This condition must be matched in isChildHovering to correctly highlight the hovering parent.
-  return !showContexts && draggedItems.every(thoughtItem => canDropPath(thoughtItem.path, thoughtsTo))
+  if (showContexts) return 'contextView'
+  if (!draggedItems.every(thoughtItem => canDropPath(thoughtItem.path, thoughtsTo))) return 'descendant'
+  return null
 }
 
 /** Handles dropping a thought on a DropTarget. */
@@ -322,7 +324,10 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 }
 
 /** Handles drag end. Resets longPress to Inactive so that gestures, alerts, and the multicursor are restored once the drag concludes, and re-enables native scrolling. This react-dnd callback is guaranteed to fire whenever a drag ends (dropped or not), which is more reliable than the touchend-based reset in useDragHold that may not fire (e.g. multicursor drop onto a subthought). Scrolling is re-enabled here because useLongPress disables it via allowTouchToScroll(false) on long-press start and only restores it on touchend, which does not fire once a drag has begun (see useLongPress.stop). */
-const endDrag = () => {
+const endDrag = (monitor: DragSourceMonitor) => {
+  // Distinguishes a release over a drop target that accepted the drop from one that rejected it or was over no drop target at all.
+  debugLog.log('dragEnd', () => ({ didDrop: monitor.didDrop() }))
+
   // Re-enable native scrolling. allowTouchToScroll(false) attaches an unconditional preventDefault touchmove listener on
   // long-press start that blocks all scrolling; it is only removed on touchend, which does not fire after a drag (e.g. a
   // multiselect drop onto a subthought), leaving scrolling frozen until it is explicitly re-enabled here.
@@ -350,6 +355,8 @@ const dragCollect = (monitor: DragSourceMonitor) => ({
 /** Collects props from the DropTarget. */
 const dropCollect = (monitor: DropTargetMonitor) => ({
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
+  // hovered irrespective of whether the dragged thought can be dropped here
+  isOver: monitor.isOver({ shallow: true }),
   isDeepHovering: monitor.isOver(),
   canDropThought: monitor.canDrop(),
 })
@@ -363,7 +370,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     type: DragAndDropType.Thought,
     item: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
-    end: () => endDrag(),
+    end: (item, monitor) => endDrag(monitor),
     collect: dragCollect,
   })
 
@@ -371,13 +378,13 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     type: DragAndDropType.Thought,
     item: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
-    end: () => endDrag(),
+    end: (item, monitor) => endDrag(monitor),
     collect: dragCollect,
   })
 
-  const [{ isHovering, isDeepHovering, canDropThought }, dropTarget] = useDrop({
+  const [{ isHovering, isOver, isDeepHovering, canDropThought }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
-    canDrop: (item, monitor) => canDrop(propsTypes, monitor),
+    canDrop: (item, monitor) => !dropRejection(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
     collect: dropCollect,
     hover: (_, monitor) =>
@@ -394,6 +401,18 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
             (state.hoveringPath === props.path && state.hoverZone === props.hoverZone)
           )
             return
+
+          // Records whether the newly hovered drop target accepts the drop, since a rejected target is hovered without showing a drop hover.
+          debugLog.log('dropTarget', () => {
+            const offset = monitor.getClientOffset()
+            const reason = dropRejection(propsTypes, monitor)
+            return {
+              zone: props.hoverZone,
+              targetId: props.path && head(props.path),
+              ...(offset ? { x: Math.round(offset.x), y: Math.round(offset.y) } : null),
+              ...(reason ? { canDrop: false, reason } : { canDrop: true }),
+            }
+          })
 
           dispatch(
             longPress({
@@ -422,6 +441,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     dragSourceEditable,
     dragPreview,
     isHovering: isHoveringPinned,
+    isOver,
     isDeepHovering,
     canDropThought,
     dropTarget,

@@ -46,7 +46,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **clientId** — Public key of the writer, derived as base64(SHA-256(accessToken)). Stamped on every Thought/Lexeme write as `updatedBy`. Available asynchronously via the `clientIdReady` promise. See [persistence.md → Identity & sharing](persistence.md#identity--sharing).
 
-**command** — A user-triggered operation (keyboard shortcut, gesture, toolbar button, or Command Universe entry). Single-file definition under [`/src/commands`](../src/commands) implementing the [`Command`](../src/@types/Command.ts) interface; auto-registered via the barrel import in [`commands.ts`](../src/commands.ts). The legacy name *shortcut* still appears in some places. See [commands.md](commands.md).
+**command** — A user-triggered operation (keyboard shortcut, gesture, toolbar button, Command Universe entry, or system menu item). Single-file definition under [`/src/commands`](../src/commands) implementing the [`Command`](../src/@types/Command.ts) interface; auto-registered via the barrel import in [`commands.ts`](../src/commands.ts). The legacy name *shortcut* still appears in some places. See [commands.md](commands.md).
 
 **Command Universe** — Searchable list of all commands, opened with `Command/Ctrl + P` on desktop.
 
@@ -99,6 +99,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 **gesture** — Swipe pattern for command activation on touch. Defined per command via the `gesture` field on [`Command`](../src/@types/Command.ts). See [commands.md → Gesture activation](commands.md#gesture-activation).
 
 ## H
+
+**help genie** — A glowing orb with a tapering, sparkling trail that flies over the app. The Help button in the Command Universe header and the learning genie button in the pinned command tooltip let it out and put it back. For now it follows the pointer or a finger, and can be sent to a point with `moveHelpGenie`. See [learning.md → Help genie](learning.md#help-genie).
 
 **HOME_TOKEN** — Sentinel `ThoughtId` for the home root. The path `[HOME_TOKEN]` represents the root thought itself; every regular `Path` starts with a child of HOME (or ABSOLUTE) and the root token is implied. See [data-model.md → Path](data-model.md#path).
 
@@ -185,6 +187,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 **splitChain** — [`splitChain.ts`](../src/selectors/splitChain.ts) — splits a `Path` into raw route segments at each context-view boundary, retaining registered unfolded occurrence anchors. Inverse: [`contextChainToPath`](../src/util/contextChainToPath.ts).
 
 **=style** — Meta-attribute carrying CSS styles. Variants: `=children/=style` (apply to direct children), `=grandchildren/=style` (one level deeper).
+
+**system menu** — The menu bar of the macOS desktop app. It lists every command with a `systemMenu`, under the top level menu that the property names, with the command's keyboard shortcut as the accelerator. Built natively from [`desktop/menu.json`](../desktop/menu.json), which is generated from the commands. See [commands.md](commands.md#system-menu).
 
 ## T
 

@@ -43,7 +43,9 @@ export const updateSize = _.throttle(
     // It can be detected by ensuring the visualViewport portrait mode matches window portrait mode.
     // If it is invalid, go back to the default
     const isPortrait = window.innerHeight > window.innerWidth
-    const currentKeyboardHeight = window.visualViewport ? window.innerHeight - window.visualViewport.height : 0
+    // After the app switcher's landscape snapshot, iOS can report a visualViewport.height of zero or less for the rest of the session, which would read as a keyboard taller than the screen (#5972). Treat it as no keyboard.
+    const currentKeyboardHeight =
+      window.visualViewport && window.visualViewport.height > 0 ? window.innerHeight - window.visualViewport.height : 0
 
     // Only update the cached keyboard height when the keyboard is actually open (nonzero height).
     // When the keyboard closes, currentKeyboardHeight is 0 — preserving the cache ensures

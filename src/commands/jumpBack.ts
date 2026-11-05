@@ -5,6 +5,7 @@ import JumpBackIcon from '../components/icons/JumpBackIcon'
 const jumpBackCommand = {
   id: 'jumpBack',
   label: 'Jump Back' as const,
+  systemMenu: 'Cursor',
   description: 'Move the cursor to the last thought that was edited.',
   keyboard: { key: 'j', meta: true },
   gesture: 'lul',

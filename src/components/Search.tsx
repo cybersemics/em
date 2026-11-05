@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React, { FC, useRef } from 'react'
-import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
+import ContentEditableModule, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { childRecipe, editableRecipe, thoughtRecipe } from '../../styled-system/recipes'
@@ -10,6 +10,12 @@ import store from '../stores/app'
 import strip from '../util/strip'
 import SearchIcon from './SearchIcon'
 import SearchSubthoughts from './SearchSubthoughts'
+
+// react-contenteditable is CommonJS that sets __esModule. Because em's package.json has "type": "module", Vite resolves
+// its default import to module.exports rather than module.exports.default, while Vitest unwraps it to the component.
+// See https://vite.dev/guide/migration#consistent-commonjs-interop.
+const ContentEditable =
+  (ContentEditableModule as unknown as { default?: typeof ContentEditableModule }).default ?? ContentEditableModule
 
 // milliseconds to delay the search function for performance
 const SEARCH_DEBOUNCE_WAIT = 180

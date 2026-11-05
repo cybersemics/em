@@ -2,7 +2,6 @@
  * IOS Safari text magnifier (loupe) tests.
  * Uses WDIO test runner with Mocha framework.
  */
-import type { Element } from 'webdriverio'
 import getScreenOffsetY from '../helpers/getScreenOffsetY.js'
 import getSelection from '../helpers/getSelection'
 import getTextOffsetCoordinates from '../helpers/getTextOffsetCoordinates.js'
@@ -36,7 +35,7 @@ interface Options {
  *
  * @param dx Horizontal distance to drag, in pixels. Negative drags left.
  */
-const dragMagnifier = async (nodeHandle: Element, dx: number, { offset }: Options = {}) => {
+const dragMagnifier = async (nodeHandle: WebdriverIO.Element, dx: number, { offset }: Options = {}) => {
   const elementId = nodeHandle.elementId
   if (!elementId) throw new Error('Element does not have an elementId.')
 

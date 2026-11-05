@@ -1,12 +1,12 @@
 ---
 name: create-issue
 description: >-
-  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another. Triggers on "create issue", "write issue", "file an issue", "open an issue", "make an issue", "report a bug", and any request to draft or edit issue text.
+  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another. Also covers the description of a pull request with no linked issue, which carries Steps to Reproduce, Current Behavior and Expected Behavior itself. Triggers on "create issue", "write issue", "file an issue", "open an issue", "make an issue", "report a bug", and any request to draft or edit issue text.
 allowed-tools:
   - bash
 ---
 
-Issues reporting broken behaviour in this repo follow a fixed format.
+Issues reporting broken behaviour in this repo follow a fixed format. A pull request with no linked issue reports the behaviour it fixes in its own description, using the same three sections, and everything below about them applies there too. A pull request that links an issue leaves them to the issue.
 
 ## Ask before posting
 
@@ -72,6 +72,29 @@ Exactly these headings, at `##`, in this order:
 
 ```
 
+A brand new feature omits `## Current Behavior`. Nothing exists yet to observe, and a line saying so ("Settings has no such link") restates the title. Keep Steps to Reproduce and Expected Behavior: the steps are how the feature will be used, and Expected Behavior is what it should do.
+
+Every thought tree in these sections is a fenced code block in em's outline format: the starting state in Steps to Reproduce, and the result in Current and Expected Behavior. Never write one as Markdown bullets in the body. GitHub renders those as the issue's own list, where a thought cannot be told apart from a step, a requirement or a note, and the outline can no longer be pasted into em to reproduce it.
+
+````markdown
+## Current Behavior
+
+```
+- antelucan
+  - Occurring before dawn; relating to the period immediately preceding sunrise.
+```
+
+## Expected Behavior
+
+The definition should be split into one subthought per sentence:
+
+```
+- antelucan
+  - Occurring before dawn
+  - Relating to the period immediately preceding sunrise
+```
+````
+
 ### Steps to Reproduce
 
 Numbered, imperative, one action per line. Name settings by their exact label in the UI and give the exact value — "Increase the app font size to 32", not "make the font bigger". A step that leaves the reader a choice will be followed differently than it was meant.
@@ -96,11 +119,34 @@ The tree is the starting state, so it already says to create it. Do not add a st
 
 The same holds for anything the outline itself shows: which thoughts are children of which, that the last one is empty, that a thought carries a `=note`. A step is for what the outline cannot show — a caret position, a setting, a device width, a collapsed thought.
 
+The reverse holds too: a thought is content, never a step. A request often lists the content and leaves the action implied, as in "Steps: - antelucan" for a bug in Define Term. Read that as a tree and an action, not as a step named `antelucan`. The thought goes in the outline, and the steps say where the cursor is and which command runs on it:
+
+````markdown
+```
+- antelucan
+```
+
+1. Set the cursor on `antelucan`.
+2. Define Term (`↑→←`).
+````
+
 Every reproduction starts from a fresh app with no saved data, so that goes unsaid. "Open **em** with no saved data" is not a step. Number the steps from the first action taken in the app. Name a starting state only when it departs from a fresh app, such as a returning user or a setting already changed.
 
 Write a keyboard shortcut as `<kbd>` elements, one per key, with no separator between them: `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>`, not `(Shift + Alt + S)`. GitHub renders them as keys, which is what the reader is looking for while scanning the steps. Name the command alongside it — "Move Thought Down (<kbd>Cmd</kbd><kbd>Shift</kbd><kbd>ArrowDown</kbd>)".
 
 Write a gesture as arrows, not as the letters the code uses: `←↓→`, not `ldr`. `l` → `←`, `r` → `→`, `u` → `↑`, `d` → `↓`. The reader is following the steps with a finger on a screen, and the arrows are the swipe; the letters are an implementation detail they have to translate first. Name the command alongside it where the gesture has one — "Swipe New Subthought (`→↓→`)".
+
+#### Reduce to the minimal case
+
+The thoughts a reporter gives are the text they happened to be writing when they noticed the bug, rather than the input the bug needs. Where the bug depends only on the structure of the text, reduce it to the smallest input that still reproduces: the punctuation, the nesting and the order of the parts, with every word replaced by a single letter. Drop each part in turn and keep it only if the bug goes away without it. Run the reduced case and the original, and post only once both fail the same way.
+
+[#6119](https://github.com/cybersemics/em/issues/6119) was reported with a long, personal sentence naming two people. The bug needs only two parentheticals separated by a comma, so its steps give `a (b), c (d)`. That case also showed that one parenthetical alone splits correctly, which the original text could not show.
+
+Keep the original text, anonymized, where the bug depends on the text itself:
+
+- **Width**, where wrapping, truncation or layout is involved.
+- **Lexemes and contexts**, where thoughts must share a Lexeme or appear in each other's contexts.
+- **Particular characters or words**, such as emoji, a URL, or a word a command matches on.
 
 Include preconditions that are awkward but load-bearing — a specific device width, a wrapped line, a particular sort order — as steps rather than assuming they are obvious.
 
@@ -202,6 +248,8 @@ Lead with the area where the issue belongs to one — `Note:`, `Context View:`, 
 ## Labels
 
 `bug` for broken behaviour, `feature` for new user-facing behaviour, `refactor` for work no user could observe (a cleanup, or internal machinery only other code uses), `test` for test and CI work, `agent` for agent configuration and ops.
+
+An open-ended question handed to someone to drive until it exposes a decision is an investigation, not a bug or feature. Give it the `Investigation` issue type and the sections of [`.github/ISSUE_TEMPLATE/investigation.yml`](../../ISSUE_TEMPLATE/investigation.yml) — Question, Why it matters, Known so far, Ready for a decision when — instead of Steps to Reproduce.
 
 Leave priority and triage labels — `hold`, `low-priority`, `unable-to-reproduce`, `human` — to the maintainers.
 
@@ -338,9 +386,12 @@ New issues often originate in a comment thread on another issue or PR.
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
 - A step telling the reader to create the thoughts the outline above already gives.
+- A thought listed as a step, as in `- antelucan` under Steps to Reproduce, with no outline and no command named.
+- A thought tree in Steps to Reproduce, Current Behavior or Expected Behavior written as Markdown bullets rather than an outline in a fenced code block.
 - A first step telling the reader to open a fresh app, which every reproduction already assumes.
 - A gesture written as letters — `ldr` where `←↓→` is what the reader swipes.
 - A keyboard shortcut written as plain text — `(Shift + Alt + S)` where `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>` is what renders as keys.
+- A Current Behavior on a brand new feature, describing that the feature does not exist yet.
 - A Current Behavior carrying a qualifier about the reproduction — "No drag is needed" — where the condition belongs in the steps.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
@@ -351,6 +402,7 @@ New issues often originate in a comment thread on another issue or PR.
 - A screenshot with no steps.
 - A personal thought (a name, a place, a feeling) quoted from a reporter's Debug Log or thoughtspace instead of a placeholder, including one spelled out a keystroke at a time across `input` or `keydown` entries.
 - Generic text replaced with placeholders that it did not need, making the steps harder to follow.
+- A reporter's text copied verbatim into the steps where the bug depends only on its structure, and a minimal case would reproduce it.
 - Placeholders that merge or split Lexemes the originals did not, in an issue that involves Lexemes.
 - A `Blocked by` line in the body with no relationship configured on GitHub.
 - A piece of a larger feature opened as a sibling with `Part of #5481` in the body, where a sub-issue relationship is what tracks it.

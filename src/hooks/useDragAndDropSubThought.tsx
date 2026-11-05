@@ -52,9 +52,9 @@ interface DroppableSubthoughts {
 /** Returns true if the path is expanded. */
 const isPathExpanded = (state: State, path: Path) => !!state.expanded[hashPath(path)]
 
-/** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
+/** Returns the reason a thought cannot be dropped in this context, or null if it can. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. The reason is recorded in the debug log when the drop target is hovered. */
 // Fires much less frequently than DragAndDropThought:canDrop
-const canDrop = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTargetMonitor): boolean => {
+const dropRejection = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
   const item = monitor.getItem() as DragThoughtOrFiles
@@ -81,18 +81,17 @@ const canDrop = ({ path: thoughtsTo }: DroppableSubthoughts, monitor: DropTarget
     return distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
   }
 
-  return (
-    // dragInProgress can be set to false to abort the drag (e.g. by shaking)
-    state.longPress === LongPressState.DragInProgress &&
-    // do not drop on thoughts hidden by autofocus
-    (!isHidden() || isClosestHiddenParent()) &&
-    // do not drop on descendants
-    draggedItems.every(item => !isDescendantPath(thoughtsTo, item.path)) &&
-    // do not drop on dividers
-    !isDivider(getThoughtById(state, head(thoughtsTo))?.value) &&
-    // do not drop on context view
-    !isContextViewActive(state, thoughtsTo)
-  )
+  // dragInProgress can be set to false to abort the drag (e.g. by shaking)
+  if (state.longPress !== LongPressState.DragInProgress) return 'dragInactive'
+  // do not drop on thoughts hidden by autofocus
+  if (isHidden() && !isClosestHiddenParent()) return 'hidden'
+  // do not drop on descendants
+  if (draggedItems.some(item => isDescendantPath(thoughtsTo, item.path))) return 'descendant'
+  // do not drop on dividers
+  if (isDivider(getThoughtById(state, head(thoughtsTo))?.value)) return 'divider'
+  // do not drop on context view
+  if (isContextViewActive(state, thoughtsTo)) return 'contextView'
+  return null
 }
 
 /** Moves a thought on drop, or imports a file on drop. */
@@ -283,8 +282,8 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
 /** Creates the props for drop. */
 const dropCollect = (monitor: DropTargetMonitor) => ({
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
-  // is being hovered over current thought irrespective of whether the given item is droppable
-  isBeingHoveredOver: monitor.isOver({ shallow: true }),
+  // hovered irrespective of whether the dragged thought can be dropped here
+  isOver: monitor.isOver({ shallow: true }),
   isDeepHovering: monitor.isOver(),
   canDropThought: monitor.canDrop(),
 })
@@ -293,9 +292,9 @@ const dropCollect = (monitor: DropTargetMonitor) => ({
 const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
   const dispatch = useDispatch()
 
-  const [{ isHovering, isDeepHovering, canDropThought }, dropTarget] = useDrop({
+  const [{ isHovering, isOver, isDeepHovering, canDropThought }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
-    canDrop: (item, monitor) => canDrop(props, monitor),
+    canDrop: (item, monitor) => !dropRejection(props, monitor),
     drop: (item, monitor) => drop(props, monitor),
     collect: dropCollect,
     hover: (_, monitor) =>
@@ -309,6 +308,18 @@ const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
             (state.hoveringPath === props.path && state.hoverZone === DropThoughtZone.SubthoughtsDrop)
           )
             return
+
+          // Records whether the newly hovered drop target accepts the drop, since a rejected target is hovered without showing a drop hover.
+          debugLog.log('dropTarget', () => {
+            const offset = monitor.getClientOffset()
+            const reason = dropRejection(props, monitor)
+            return {
+              zone: DropThoughtZone.SubthoughtsDrop,
+              targetId: head(props.path),
+              ...(offset ? { x: Math.round(offset.x), y: Math.round(offset.y) } : null),
+              ...(reason ? { canDrop: false, reason } : { canDrop: true }),
+            }
+          })
 
           dispatch(
             longPress({
@@ -327,7 +338,7 @@ const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
 
   const isHoveringPinned = usePinDropHover(isHovering)
 
-  return { isHovering: isHoveringPinned, isDeepHovering, dropTarget }
+  return { isHovering: isHoveringPinned, isOver, isDeepHovering, dropTarget }
 }
 
 export default useDragAndDropSubThought

@@ -5,7 +5,77 @@ import hide from './hide'
 import showMousePointer from './showMousePointer'
 import waitUntil from './waitUntil'
 
-/** Performs Drag and Drop functionality on a thought in Puppeteer browser. */
+/** The page-side record of whether react-dnd has hovered the drop target under the drop point. */
+interface DropTargetHoverWatch {
+  /** Returns true if react-dnd hovers the drop target under the drop point now. */
+  check: () => boolean
+  observer: MutationObserver
+  hovered: boolean
+}
+
+declare global {
+  interface Window {
+    /** Set by dragAndDropThought for the length of a move. */
+    __dropTargetHoverWatch?: DropTargetHoverWatch
+  }
+}
+
+/**
+ * Starts recording whether react-dnd hovers the drop target under the given point: the innermost element with
+ * data-drop-over, which every drop target element renders from react-dnd's isOver({ shallow: true }). That is the
+ * target a drop there lands on. It is set in the same commit as the target's isHovering, from which DropChild, DropEnd
+ * and DropUncle draw their drop hover. A thought row's drop hover also needs state.hoveringPath, which the same hover
+ * writes before it whenever the pointer has moved. It is true even on a target that rejects the drop, so this also
+ * covers a drop that shows no drop hover.
+ *
+ * The hover is recorded as it is rendered rather than polled for. A drag driven by Puppeteer dispatches dragover only
+ * when the pointer moves, so when a hover changes the layout under the stationary pointer, e.g. by expanding a
+ * thought, nothing hovers the drop target that is under it afterwards, and a poll would wait for it forever.
+ */
+const watchDropTargetHover = (point: { x: number; y: number }) =>
+  page.evaluate(({ x, y }) => {
+    window.__dropTargetHoverWatch?.observer.disconnect()
+
+    /** Returns true if react-dnd hovers the drop target under the point. */
+    const check = () =>
+      document.elementFromPoint(x, y)?.closest('[data-drop-over]')?.getAttribute('data-drop-over') === 'true'
+
+    const watch: DropTargetHoverWatch = {
+      check,
+      observer: new MutationObserver(() => {
+        watch.hovered = watch.hovered || check()
+      }),
+      hovered: false,
+    }
+    watch.observer.observe(document.body, { attributes: true, attributeFilter: ['data-drop-over'], subtree: true })
+    window.__dropTargetHoverWatch = watch
+  }, point)
+
+/** Waits until react-dnd has hovered the drop target under the point since watchDropTargetHover, or hovers it now, which covers a target that was already hovered before the move. Throws if it never does. */
+const waitForDropTargetHover = async (point: { x: number; y: number }) => {
+  try {
+    await page.waitForFunction(
+      () => !!window.__dropTargetHoverWatch?.hovered || !!window.__dropTargetHoverWatch?.check(),
+      { timeout: 5000 },
+    )
+  } catch (e) {
+    const targetFound = await page.evaluate(
+      ({ x, y }) => !!document.elementFromPoint(x, y)?.closest('[data-drop-over]'),
+      point,
+    )
+    throw new Error(
+      targetFound
+        ? 'The drop target under the pointer was never hovered.'
+        : `There is no drop target under the pointer at (${point.x}, ${point.y}).`,
+      { cause: e },
+    )
+  }
+}
+
+/** Stops recording the hover. */
+const unwatchDropTargetHover = () => page.evaluate(() => window.__dropTargetHoverWatch?.observer.disconnect())
+
+/** Performs Drag and Drop functionality on a thought in Puppeteer browser. Waits for the drop target under the pointer to render its hover before holding or dropping, so callers do not need to synchronize with drag-and-drop themselves. */
 const dragAndDropThought = async (
   sourceValue: string,
   /** The value of the thought to drop at. Use the position absolute to control whether to drop before, after, etc. If null, only initiates the drag and move the mouse. */
@@ -92,12 +162,22 @@ const dragAndDropThought = async (
       y: dropUncle ? dragEnd.y + dragEnd.height : dragEnd.y + dragEnd.height / 2 + yOffset,
     }
 
-    // A single mousemove is not registered by react-dnd when continuing an existing drag (skipMouseDown), so issue a second move one pixel away first.
-    // Both events land on the drop target, so no other drop targets are hovered in between.
-    if (skipMouseDown) {
-      await page.mouse.move(dropPosition.x, dropPosition.y - 1)
+    await watchDropTargetHover(dropPosition)
+    try {
+      // A single mousemove is not registered by react-dnd when continuing an existing drag (skipMouseDown), so issue a second move one pixel away first.
+      // Both events land on the drop target, so no other drop targets are hovered in between.
+      if (skipMouseDown) {
+        await page.mouse.move(dropPosition.x, dropPosition.y - 1)
+      }
+      await page.mouse.move(dropPosition.x, dropPosition.y)
+
+      // The drop targets other than the thought rows (DropChild, DropEnd, DropUncle) mount only once the drag is in
+      // progress, so the drop target under the pointer is only known after it.
+      await page.locator('[data-drag-in-progress="true"]').wait()
+      await waitForDropTargetHover(dropPosition)
+    } finally {
+      await unwatchDropTargetHover()
     }
-    await page.mouse.move(dropPosition.x, dropPosition.y)
   } else {
     // Trigger drag state when no explicit drop target is provided.
     // Without this move, drag-and-drop alert visibility is flaky in CI.

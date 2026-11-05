@@ -1,11 +1,12 @@
 import React, { FC, MutableRefObject, useCallback, useMemo, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import CommandId from '../@types/CommandId'
 import DragCommandZone from '../@types/DragCommandZone'
 import State from '../@types/State'
+import { closeDropdownsActionCreator as closeDropdowns } from '../actions/closeDropdowns'
 import { isTouch } from '../browser'
 import { commandById, formatKeyboardShortcut } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
@@ -46,6 +47,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   selected,
   commandId,
 }) => {
+  const dispatch = useDispatch()
   const [isAnimated, setIsAnimated] = useState(false)
 
   /** Tracks if long press was activated and the command has a longPress handler. Used to show the UndoSlider when the Undo or Redo toolbar buttons are long pressed. */
@@ -97,7 +99,8 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       () => {
         isPressedRef.current = false
       },
-      800,
+      // A toolbar button can only be dragged in customize mode, so elsewhere the toolbar must stay scrollable after a long press (#3461).
+      { delay: 800, lockScroll: !!customize },
     ),
   }
   const longPressTapUp = longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']
@@ -139,6 +142,13 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         haptics.light()
 
         if (!isPressedRef.current) {
+          // Tapping any other toolbar button closes an open toolbar dropdown (#3625). A dropdown command toggles its own dropdown and closes the others itself (see toggleDropdown). The Command Center and the multiselect are kept, since the command may act on the selected thoughts. Undo and Redo keep the Undo Slider open, since they move through the history it shows (#6155).
+          if (!command.isDropdownOpen) {
+            dispatch(
+              closeDropdowns({ keepCommandCenter: true, keepUndoSlider: commandId === 'undo' || commandId === 'redo' }),
+            )
+          }
+
           executeCommandWithMulticursor(command, { store, type: 'toolbar', event: e })
 
           // only animate from inactive -> active
@@ -167,6 +177,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
+      dispatch,
       longPressTapUp,
       customize,
       isButtonExecutable,

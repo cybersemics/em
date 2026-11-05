@@ -1,0 +1,325 @@
+{
+  "Edit": [
+    {
+      "id": "favorite",
+      "label": "Add to Favorites",
+      "checkable": false
+    },
+    {
+      "id": "archive",
+      "label": "Archive",
+      "accelerator": "Cmd+Shift+Backspace",
+      "checkable": false
+    },
+    {
+      "id": "bold",
+      "label": "Bold",
+      "accelerator": "Cmd+B",
+      "checkable": true
+    },
+    {
+      "id": "bumpThoughtDown",
+      "label": "Bump Thought Down",
+      "accelerator": "Cmd+Shift+D",
+      "checkable": false
+    },
+    {
+      "id": "categorize",
+      "label": "Categorize",
+      "accelerator": "Cmd+Alt+O",
+      "checkable": false
+    },
+    {
+      "id": "removeFormat",
+      "label": "Clear Formatting",
+      "accelerator": "Cmd+0",
+      "checkable": false
+    },
+    {
+      "id": "clearThought",
+      "label": "Clear Thought",
+      "accelerator": "Cmd+Alt+Shift+C",
+      "checkable": false
+    },
+    {
+      "id": "code",
+      "label": "Code",
+      "accelerator": "Cmd+K",
+      "checkable": true
+    },
+    {
+      "id": "delete",
+      "label": "Delete",
+      "accelerator": "Cmd+Alt+Shift+Backspace",
+      "checkable": false
+    },
+    {
+      "id": "indent",
+      "label": "Indent",
+      "checkable": false
+    },
+    {
+      "id": "italic",
+      "label": "Italic",
+      "accelerator": "Cmd+I",
+      "checkable": true
+    },
+    {
+      "id": "join",
+      "label": "Join Thoughts",
+      "accelerator": "Alt+J",
+      "checkable": false
+    },
+    {
+      "id": "toggleDone",
+      "label": "Mark as done",
+      "accelerator": "Alt+Shift+Enter",
+      "checkable": false
+    },
+    {
+      "id": "moveThoughtDown",
+      "label": "Move Thought Down",
+      "accelerator": "Cmd+Shift+ArrowDown",
+      "checkable": false
+    },
+    {
+      "id": "moveThoughtUp",
+      "label": "Move Thought Up",
+      "accelerator": "Cmd+Shift+ArrowUp",
+      "checkable": false
+    },
+    {
+      "id": "newGrandChild",
+      "label": "New Grandchild",
+      "checkable": false
+    },
+    {
+      "id": "newSubthought",
+      "label": "New Subthought",
+      "accelerator": "Cmd+Enter",
+      "checkable": false
+    },
+    {
+      "id": "newSubthoughtTop",
+      "label": "New Subthought (above)",
+      "accelerator": "Cmd+Shift+Enter",
+      "checkable": false
+    },
+    {
+      "id": "newUncle",
+      "label": "New Subthought (next)",
+      "accelerator": "Cmd+Alt+Enter",
+      "checkable": false
+    },
+    {
+      "id": "newThought",
+      "label": "New Thought",
+      "checkable": false
+    },
+    {
+      "id": "newThoughtAbove",
+      "label": "New Thought (above)",
+      "checkable": false
+    },
+    {
+      "id": "note",
+      "label": "Note",
+      "accelerator": "Cmd+Alt+N",
+      "checkable": true
+    },
+    {
+      "id": "outdent",
+      "label": "Outdent",
+      "checkable": false
+    },
+    {
+      "id": "repeat",
+      "label": "Repeat",
+      "accelerator": "Cmd+.",
+      "checkable": false
+    },
+    {
+      "id": "splitSentences",
+      "label": "Split Sentences",
+      "accelerator": "Cmd+Shift+S",
+      "checkable": false
+    },
+    {
+      "id": "strikethrough",
+      "label": "Strikethrough",
+      "accelerator": "Cmd+S",
+      "checkable": true
+    },
+    {
+      "id": "swapNote",
+      "label": "Swap Note",
+      "accelerator": "Alt+Shift+N",
+      "checkable": false
+    },
+    {
+      "id": "swapParent",
+      "label": "Swap Parent",
+      "checkable": false
+    },
+    {
+      "id": "uncategorize",
+      "label": "Uncategorize",
+      "accelerator": "Cmd+Alt+C",
+      "checkable": false
+    },
+    {
+      "id": "underline",
+      "label": "Underline",
+      "accelerator": "Cmd+U",
+      "checkable": true
+    }
+  ],
+  "View": [
+    {
+      "id": "openDesktopCommandUniverse",
+      "label": "Command Universe",
+      "accelerator": "Cmd+P",
+      "checkable": false
+    },
+    {
+      "id": "toggleContextView",
+      "label": "Context View",
+      "accelerator": "Alt+Shift+S",
+      "checkable": true
+    },
+    {
+      "id": "fontSizeDown",
+      "label": "Decrease Font Size",
+      "checkable": false
+    },
+    {
+      "id": "fontSizeUp",
+      "label": "Increase Font Size",
+      "checkable": false
+    },
+    {
+      "id": "pin",
+      "label": "Pin",
+      "accelerator": "Cmd+Alt+P",
+      "checkable": false
+    },
+    {
+      "id": "pinAll",
+      "label": "Pin All",
+      "accelerator": "Cmd+Shift+P",
+      "checkable": false
+    },
+    {
+      "id": "pinDescendants",
+      "label": "Pin Descendants",
+      "accelerator": "Cmd+Alt+Shift+P",
+      "checkable": false
+    },
+    {
+      "id": "proseView",
+      "label": "Prose View",
+      "accelerator": "Alt+Shift+P",
+      "checkable": true
+    },
+    {
+      "id": "toggleHiddenThoughts",
+      "label": "Show Hidden Thoughts",
+      "accelerator": "Alt+Shift+H",
+      "checkable": false
+    },
+    {
+      "id": "toggleSort",
+      "label": "Sort",
+      "accelerator": "Cmd+Alt+S",
+      "checkable": true
+    },
+    {
+      "id": "toggleTableView",
+      "label": "Table View",
+      "accelerator": "Alt+Shift+T",
+      "checkable": true
+    },
+    {
+      "id": "toggleSidebar",
+      "label": "Toggle Recently Edited",
+      "accelerator": "Alt+R",
+      "checkable": false
+    }
+  ],
+  "Cursor": [
+    {
+      "id": "cursorBack",
+      "label": "Back",
+      "checkable": false
+    },
+    {
+      "id": "cursorForward",
+      "label": "Forward",
+      "checkable": false
+    },
+    {
+      "id": "home",
+      "label": "Home",
+      "checkable": false
+    },
+    {
+      "id": "jumpBack",
+      "label": "Jump Back",
+      "accelerator": "Cmd+J",
+      "checkable": false
+    },
+    {
+      "id": "jumpForward",
+      "label": "Jump Forward",
+      "accelerator": "Cmd+Shift+J",
+      "checkable": false
+    },
+    {
+      "id": "navigateBack",
+      "label": "Navigate Back",
+      "accelerator": "Cmd+[",
+      "checkable": false
+    },
+    {
+      "id": "navigateForward",
+      "label": "Navigate Forward",
+      "accelerator": "Cmd+]",
+      "checkable": false
+    },
+    {
+      "id": "cursorNext",
+      "label": "Next Thought",
+      "accelerator": "Cmd+ArrowDown",
+      "checkable": false
+    },
+    {
+      "id": "cursorPrev",
+      "label": "Previous Thought",
+      "accelerator": "Cmd+ArrowUp",
+      "checkable": false
+    }
+  ],
+  "File": [
+    {
+      "id": "exportContext",
+      "label": "Export",
+      "checkable": false
+    }
+  ],
+  "Help": [
+    {
+      "id": "help",
+      "label": "Help",
+      "accelerator": "Cmd+/",
+      "checkable": false
+    }
+  ],
+  "App": [
+    {
+      "id": "settings",
+      "label": "Settings",
+      "accelerator": "Cmd+,",
+      "checkable": false
+    }
+  ]
+}

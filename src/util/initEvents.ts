@@ -1,3 +1,4 @@
+import { isTauri } from '@tauri-apps/api/core'
 import _ from 'lodash'
 import lifecycle from 'page-lifecycle'
 import { Store } from 'redux'
@@ -10,12 +11,13 @@ import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isSafari, isTouch } from '../browser'
+import { isMac, isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, DEFAULT_FONT_SIZE, LongPressState } from '../constants'
 import initKeyboardSelection from '../device/initKeyboardSelection'
 import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
+import systemMenu from '../device/systemMenu'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import dehydrateContextPath from '../selectors/dehydrateContextPath'
@@ -67,6 +69,12 @@ const RESUME_SETTLE_DELAY = 1000
 const resumeSettleTimeoutStore = ministore<{ timer: Timer | null }>(
   { timer: null },
   { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
+)
+
+/** The pending frame of the per-frame visual viewport watch that runs after the app resumes. A ministore whose dispose cancels the frame, like passiveTimeoutStore. */
+const resumeFrameWatchStore = ministore<{ frame: number | null }>(
+  { frame: null },
+  { dispose: ({ frame }) => cancelAnimationFrame(frame ?? 0) },
 )
 
 /** How long scrolling must pause before the scroll is considered finished and its end is logged. Covers the gaps between scroll events during momentum scrolling on iOS. */
@@ -422,7 +430,7 @@ const initEvents = (store: Store<State, any>) => {
   let lastViewportLogged = ''
 
   /** Logs the viewport geometry to the debug log. A resize entry is skipped when the geometry matches the last entry. Resume, settled, scrollStart and scrollEnd entries are always written, so the geometry at every resume and around every scroll is on record even when nothing changed. This makes a layout that was left at the wrong size visible in the log, such as the nav bar drawn mid-screen after returning to the app because iOS kept the keyboard-open viewport height. */
-  const logViewport = (reason: 'resize' | 'resume' | 'settled' | 'scrollStart' | 'scrollEnd') => {
+  const logViewport = (reason: 'resize' | 'resume' | 'settled' | 'scrollStart' | 'scrollEnd' | 'frame') => {
     // skip the layout reads below when nothing will be logged
     if (!debugLog.isEnabled()) return
     const visualViewport = window.visualViewport
@@ -431,15 +439,37 @@ const initEvents = (store: Store<State, any>) => {
       innerHeight: window.innerHeight,
       // height of the layout viewport, which position: fixed and position: sticky elements are laid out against
       clientHeight: document.documentElement.clientHeight,
+      visualViewportWidth: visualViewport ? Math.round(visualViewport.width) : null,
       visualViewportHeight: visualViewport ? Math.round(visualViewport.height) : null,
       visualViewportOffsetTop: visualViewport ? Math.round(visualViewport.offsetTop) : null,
       scrollY: Math.round(window.scrollY),
+      scrollHeight: document.documentElement.scrollHeight,
+      // whether the browser still considers the page landscape, since the visual viewport has been left corrupt after the app switcher's landscape snapshot (#5972)
+      orientation: window.screen.orientation?.type ?? null,
       isKeyboardOpen: store.getState().isKeyboardOpen,
     }
     const serialized = JSON.stringify(geometry)
     if (reason === 'resize' && serialized === lastViewportLogged) return
     lastViewportLogged = serialized
     debugLog.log('viewport', { reason, ...geometry })
+  }
+
+  /** Watches the visual viewport on every frame until the settled snapshot after the app resumes, and logs the viewport geometry on each frame in which the visual viewport changed. After the app switcher's landscape snapshot, visualViewport.height has gone bad a fraction of a second after resume without firing a resize event (#5972), so only a per-frame read can place the change between the entries around it. Runs for one second per resume, and only while the debug log is enabled. */
+  const watchViewportFrames = () => {
+    if (!debugLog.isEnabled() || !window.visualViewport) return
+    const visualViewport = window.visualViewport
+    let last = ''
+    /** Reads the visual viewport and logs it if it changed since the last frame. */
+    const onFrame = () => {
+      const current = `${visualViewport.width},${visualViewport.height},${visualViewport.offsetTop}`
+      // the first frame only records the starting point, which the resume entry already logged
+      if (last && current !== last) {
+        logViewport('frame')
+      }
+      last = current
+      resumeFrameWatchStore.update({ frame: requestAnimationFrame(onFrame) })
+    }
+    onFrame()
   }
 
   /** Logs the viewport geometry on resize. */
@@ -469,9 +499,16 @@ const initEvents = (store: Store<State, any>) => {
 
     // Log the viewport geometry when the app resumes and again once it has had time to settle, so that a viewport left at the wrong size by the app switch shows up in the log.
     resumeSettleTimeoutStore.reset()
+    resumeFrameWatchStore.reset()
     if (newState === 'active') {
       logViewport('resume')
-      resumeSettleTimeoutStore.update({ timer: setTimeout(logViewport, RESUME_SETTLE_DELAY, 'settled') })
+      watchViewportFrames()
+      resumeSettleTimeoutStore.update({
+        timer: setTimeout(() => {
+          resumeFrameWatchStore.reset()
+          logViewport('settled')
+        }, RESUME_SETTLE_DELAY),
+      })
     }
 
     // dismiss the gesture alert on hide
@@ -603,6 +640,11 @@ const initEvents = (store: Store<State, any>) => {
   // Route iOS native undo/redo gestures through em's undo/redo in the Capacitor app
   nativeHistory.init()
 
+  // Connect the commands to the system menu, which the desktop app only installs on macOS
+  if (isTauri() && isMac) {
+    systemMenu.init()
+  }
+
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
   lifecycle.addEventListener('statechange', onStateChange)
@@ -639,10 +681,12 @@ const initEvents = (store: Store<State, any>) => {
     resizeHost.removeEventListener('resize', onResizeLog)
     resizeHost.removeEventListener('scroll', onScrollLog)
     resumeSettleTimeoutStore.reset()
+    resumeFrameWatchStore.reset()
     scrollEndTimeoutStore.reset()
     unsubscribeKeyboardSelection()
     virtualKeyboardHandler.destroy()
     nativeHistory.destroy()
+    systemMenu.destroy()
     untrackHistoryState()
     eventHandlers = null
   }

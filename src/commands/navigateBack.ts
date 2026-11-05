@@ -4,6 +4,7 @@ import ArrowLeftIcon from '../components/icons/ArrowLeftIcon'
 const navigateBackCommand = {
   id: 'navigateBack',
   label: 'Navigate Back' as const,
+  systemMenu: 'Cursor',
   description: 'Navigate to the previous page in the browser history.',
   keyboard: { key: '[', meta: true },
   multicursor: false,

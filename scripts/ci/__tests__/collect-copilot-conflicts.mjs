@@ -4,12 +4,14 @@ import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 const collect = require('../collect-copilot-conflicts.cjs')
+const { parseState } = require('../copilot-conflicts-comment.cjs')
 const marker = '<!-- copilot-conflicts -->'
 
 /** Creates a Copilot PR fixture with configurable conflict state and comment state. */
 const makePr = ({
   number,
   updatedAt,
+  createdAt = updatedAt,
   mergeable = false,
   state,
   author = 'Copilot',
@@ -31,19 +33,21 @@ const makePr = ({
   user: { login: author, type },
   mergeable,
   updated_at: updatedAt,
+  created_at: createdAt,
   html_url: `https://example.test/${number}`,
   comments: state
     ? [
         {
           id: number,
-          body: `${marker}\n<!-- copilot-conflicts-state: ${Buffer.from(JSON.stringify(state)).toString('base64url')} -->`,
+          // The scan has already seen the current head unless the state says otherwise.
+          body: `${marker}\n<!-- copilot-conflicts-state: ${Buffer.from(JSON.stringify({ observedHeadSha: `head-${number}`, ...state })).toString('base64url')} -->`,
         },
       ]
     : [],
 })
 
 /** Runs the collector against in-memory REST responses and returns its dispatch report. */
-const run = async (prs, requestedPr) => {
+const run = async (prs, requestedPr, { browserStackBusy = false } = {}) => {
   const byNumber = new Map(prs.map(pr => [pr.number, pr]))
   /** Lists all fixture pull requests. */
   const list = async () => ({ data: prs })
@@ -53,6 +57,11 @@ const run = async (prs, requestedPr) => {
   const listComments = async ({ issue_number }) => ({ data: byNumber.get(issue_number).comments })
   const github = {
     rest: {
+      actions: {
+        listWorkflowRuns: async () => ({
+          data: browserStackBusy ? { total_count: 1, workflow_runs: [{}] } : { total_count: 0, workflow_runs: [] },
+        }),
+      },
       pulls: { list, get },
       issues: {
         listComments,
@@ -92,29 +101,97 @@ const run = async (prs, requestedPr) => {
 }
 
 const now = Date.now()
+/** Returns an ISO timestamp the given number of hours before now. */
+const hoursAgo = hours => new Date(now - hours * 60 * 60 * 1000).toISOString()
 /** Creates state that has waited past the delay before the task after the specified count. */
 const dueState = tasks => ({
   version: 2,
-  firstConflictAt: new Date(now - 200 * 60 * 60 * 1000).toISOString(),
+  firstConflictAt: hoursAgo(200),
+  lastHeadChangeAt: hoursAgo(200),
   tasks,
-  lastDispatchedAt: tasks ? new Date(now - ([3, 6, 12, 24, 48, 96][tasks] + 1) * 60 * 60 * 1000).toISOString() : null,
+  lastDispatchedAt: tasks ? hoursAgo([0, 6, 12, 24, 48, 96][tasks] + 1) : null,
   history: [],
 })
 
-/** Verifies six retry delays and the five-task recency cap. */
+/** Reads back the state the scan left in a fixture pull request's comment. */
+const savedState = pr => parseState(pr.comments[0].body)
+
+/** Verifies six retry delays, one task per scan, and the oldest due pull request going first. */
 const testRetryPolicy = async () => {
   const report = await run([
-    makePr({ number: 1, updatedAt: '2026-09-06T10:00:00Z', state: dueState(0) }),
-    makePr({ number: 2, updatedAt: '2026-09-06T11:00:00Z', state: dueState(1) }),
-    makePr({ number: 3, updatedAt: '2026-09-06T12:00:00Z', state: dueState(2) }),
-    makePr({ number: 4, updatedAt: '2026-09-06T13:00:00Z', state: dueState(3) }),
-    makePr({ number: 5, updatedAt: '2026-09-06T14:00:00Z', state: dueState(4) }),
-    makePr({ number: 6, updatedAt: '2026-09-06T15:00:00Z', state: dueState(5) }),
+    makePr({ number: 1, updatedAt: '2026-09-06T15:00:00Z', createdAt: '2026-09-01T10:00:00Z', state: dueState(0) }),
+    makePr({ number: 2, updatedAt: '2026-09-06T14:00:00Z', createdAt: '2026-09-01T11:00:00Z', state: dueState(1) }),
+    makePr({ number: 3, updatedAt: '2026-09-06T13:00:00Z', createdAt: '2026-09-01T12:00:00Z', state: dueState(2) }),
+    makePr({ number: 4, updatedAt: '2026-09-06T12:00:00Z', createdAt: '2026-09-01T13:00:00Z', state: dueState(3) }),
+    makePr({ number: 5, updatedAt: '2026-09-06T11:00:00Z', createdAt: '2026-09-01T14:00:00Z', state: dueState(4) }),
+    makePr({ number: 6, updatedAt: '2026-09-06T10:00:00Z', createdAt: '2026-09-01T15:00:00Z', state: dueState(5) }),
   ])
   assert.deepEqual(
     report.tasks.map(task => task.number),
-    [6, 5, 4, 3, 2],
+    [1],
   )
+  const later = await run([
+    makePr({ number: 2, updatedAt: '2026-09-06T14:00:00Z', createdAt: '2026-09-01T11:00:00Z', state: dueState(1) }),
+    makePr({ number: 3, updatedAt: '2026-09-06T13:00:00Z', createdAt: '2026-09-01T12:00:00Z', state: dueState(2) }),
+    makePr({ number: 4, updatedAt: '2026-09-06T12:00:00Z', createdAt: '2026-09-01T13:00:00Z', state: dueState(3) }),
+    makePr({ number: 5, updatedAt: '2026-09-06T11:00:00Z', createdAt: '2026-09-01T14:00:00Z', state: dueState(4) }),
+    makePr({ number: 6, updatedAt: '2026-09-06T10:00:00Z', createdAt: '2026-09-01T15:00:00Z', state: dueState(5) }),
+  ])
+  assert.deepEqual(
+    later.tasks.map(task => task.number),
+    [2],
+  )
+}
+
+/** Verifies no task starts while BrowserStack is busy, unless a human named the pull request. */
+const testBrowserStackBusy = async () => {
+  const due = makePr({ number: 32, updatedAt: '2026-09-06T10:00:00Z', state: dueState(1) })
+  assert.deepEqual((await run([due], undefined, { browserStackBusy: true })).tasks, [])
+  assert.deepEqual(
+    (await run([due], 32, { browserStackBusy: true })).tasks.map(task => task.number),
+    [32],
+  )
+}
+
+/** Verifies no task starts until the branch has gone an hour without a new commit. */
+const testQuietPeriod = async () => {
+  const recentCommit = makePr({
+    number: 27,
+    updatedAt: '2026-09-06T10:00:00Z',
+    state: { ...dueState(0), lastHeadChangeAt: hoursAgo(0.5) },
+  })
+  const newHead = makePr({
+    number: 28,
+    updatedAt: '2026-09-06T10:00:00Z',
+    state: { ...dueState(0), observedHeadSha: 'an-older-head' },
+  })
+  assert.deepEqual((await run([recentCommit, newHead])).tasks, [])
+  assert.equal(savedState(newHead).observedHeadSha, 'head-28')
+  // A conflict seen for the first time waits for the quiet period too.
+  const firstSeen = makePr({ number: 29, updatedAt: '2026-09-06T10:00:00Z' })
+  assert.deepEqual((await run([firstSeen])).tasks, [])
+}
+
+/** Verifies somebody's commit restarts the count of tasks, while a task's own commit does not. */
+const testWorkRestartsBackoff = async () => {
+  const worked = makePr({
+    number: 30,
+    updatedAt: '2026-09-06T10:00:00Z',
+    state: {
+      ...dueState(3),
+      lastDispatchedAt: hoursAgo(5),
+      lastTaskUrl: 'https://example.test/task/3',
+      observedHeadSha: 'an-older-head',
+    },
+  })
+  const taskCommit = makePr({
+    number: 31,
+    updatedAt: '2026-09-06T10:00:00Z',
+    state: { ...dueState(3), lastDispatchedAt: hoursAgo(0.5), observedHeadSha: 'an-older-head' },
+  })
+  await run([worked, taskCommit])
+  assert.equal(savedState(worked).tasks, 0)
+  assert.equal(savedState(taskCommit).tasks, 3)
 }
 
 /** Verifies ineligible, early, resolved, and lifetime-capped PRs are excluded. */
@@ -128,7 +205,7 @@ const testExclusions = async () => {
     makePr({
       number: 8,
       updatedAt: '2026-09-06T10:00:00Z',
-      state: { ...dueState(0), firstConflictAt: new Date(now - 2 * 60 * 60 * 1000).toISOString() },
+      state: { ...dueState(0), lastHeadChangeAt: hoursAgo(0.5) },
     }),
     makePr({ number: 9, updatedAt: '2026-09-06T10:00:00Z', mergeable: true, state: dueState(2) }),
     makePr({ number: 10, updatedAt: '2026-09-06T10:00:00Z', author: 'dependabot[bot]', state: dueState(0) }),
@@ -142,6 +219,7 @@ const testSkipLabels = async () => {
   for (const [number, label] of [
     [15, 'skip-auto-resolve-conflicts'],
     [21, 'hold'],
+    [26, 'prototype'],
   ]) {
     const skipped = makePr({ number, updatedAt: '2026-09-06T10:00:00Z', state: dueState(2), labels: [label] })
     const before = skipped.comments[0].body
@@ -206,7 +284,7 @@ const testTaskFooter = async () => {
   await run([pr])
   assert.equal(
     pr.comments[0].body.split('\n').pop(),
-    'Task 2 of 6. The next task is eligible 12 hours after this one, if the pull request still conflicts. Started by [Copilot Conflict Resolution](https://example.test/run/99).',
+    'Task 2 of 6. The next task is eligible 12 hours after this one, once the branch has had no new commits for an hour, if the pull request still conflicts. Started by [Copilot Conflict Resolution](https://example.test/run/99).',
   )
 }
 
@@ -241,7 +319,7 @@ const testScheduleBeforeFirstTask = async () => {
   await run([pr])
   assert.equal(
     pr.comments[0].body.split('\n').pop(),
-    'A merge conflict is detected. Copilot will resolve it on this branch. The next task is eligible 3 hours after the conflict was first seen, if the pull request still conflicts.',
+    'A merge conflict is detected. Copilot will resolve it on this branch. The first task is eligible once the branch has had no new commits for an hour, if the pull request still conflicts.',
   )
 }
 
@@ -292,6 +370,9 @@ const testNamedDispatchOverridesWaitAndCap = async () => {
 }
 
 await testRetryPolicy()
+await testBrowserStackBusy()
+await testQuietPeriod()
+await testWorkRestartsBackoff()
 await testExclusions()
 await testCommentOnConflictOnly()
 await testSkipLabels()

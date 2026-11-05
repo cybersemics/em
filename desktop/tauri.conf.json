@@ -4,9 +4,9 @@
   "version": "../package.json",
   "identifier": "com.thinkwithem.em",
   "build": {
-    "beforeDevCommand": "yarn start:http",
+    "beforeDevCommand": "yarn tauri:menu && yarn start:http",
     "devUrl": "http://localhost:3000",
-    "beforeBuildCommand": "yarn build",
+    "beforeBuildCommand": "yarn tauri:menu && yarn build",
     "frontendDist": "../build"
   },
   "app": {

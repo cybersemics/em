@@ -7,6 +7,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const categorizeCommand = {
   id: 'categorize',
   label: 'Categorize' as const,
+  systemMenu: 'Edit',
   description: 'Move the current thought into a new, empty thought at the same level.',
   gesture: 'lu',
   keyboard: { key: 'o', meta: true, alt: true },

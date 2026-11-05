@@ -1,7 +1,8 @@
-import { animate, useMotionValue, useTransform } from 'framer-motion'
+import { animate, useMotionValue, useTransform } from 'motion/react'
 import React, { useCallback, useRef } from 'react'
-import useSafeArea from '../../hooks/useSafeArea'
-import durations from '../../util/durations'
+import { NOTIFICATION_EASING } from '../constants'
+import durations from '../util/durations'
+import useSafeArea from './useSafeArea'
 
 // Dismiss score threshold (px-equivalent). The dismiss score is computed as
 // swipeDistance + velocity * 1.75, so a pure-distance swipe needs 175px of
@@ -22,53 +23,71 @@ const MAX_SWIPE_DISMISS_DURATION = 0.45
  * All visual outcomes (dismiss, spring-back, cancel) flow through the completion MotionValue.
  * The consumer maps completion to whatever visual property it needs (e.g. opacity = 1 - completion).
  * An imperative dismiss() method is provided for non-swipe dismiss paths (e.g. a Clear button).
+ *
+ * The hook owns dismissal: however many swipes, flicks, and dismiss() calls finish together, onDismissed is called
+ * once. After that, the surface ignores further dismissals and touches until reset() is called for its next showing.
  */
 const useSwipeToClear = ({
   threshold = DEFAULT_SWIPE_DISMISS_THRESHOLD,
   onDismissed,
 }: {
-  /** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the tip. */
+  /** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the surface. */
   threshold?: number
   /** Called when the dismiss completes — either immediately (swipe distance reached threshold) or after the dismiss animation finishes. */
-  onDismissed: () => void
+  onDismissed?: () => void
 }) => {
   const swipeDistance = useMotionValue(0)
   const completion = useTransform(swipeDistance, [0, threshold], [0, 1], { clamp: true })
   const velocity = useRef(0)
   const lastTouch = useRef<{ x: number; y: number; time: number } | null>(null)
+  // A dismiss animation is running.
   const dismissing = useRef(false)
+  // onDismissed has been called for this showing of the surface.
+  const dismissed = useRef(false)
   const safeArea = useSafeArea()
 
-  /** Animates swipeDistance to threshold (completion → 1), then calls onDismissed. When called without a duration (e.g. from a Clear button), uses the default medium duration. */
+  /** Calls onDismissed, once per showing. */
+  const finishDismiss = useCallback(() => {
+    if (dismissed.current) return
+    dismissed.current = true
+    dismissing.current = false
+    onDismissed?.()
+    // Reset so the next showing of the surface starts with completion = 0.
+    swipeDistance.set(0)
+  }, [swipeDistance, onDismissed])
+
+  /** Allows the surface to be dismissed again, for its next showing. */
+  const reset = useCallback(() => {
+    dismissed.current = false
+    dismissing.current = false
+  }, [])
+
+  /** Animates swipeDistance to threshold (completion → 1), then calls onDismissed. When called without a duration (e.g. from a Clear button), uses the default medium duration. Does nothing if the surface is already being dismissed. */
   const dismiss = useCallback(
     (duration: number = durations.get('medium') / 1000) => {
+      if (dismissing.current || dismissed.current) return
       dismissing.current = true
       animate(swipeDistance, threshold, {
         duration,
-        ease: 'easeOut',
-        onComplete: () => {
-          dismissing.current = false
-          onDismissed()
-          // Reset so the next showing of the tip starts with completion = 0.
-          swipeDistance.set(0)
-        },
+        ease: NOTIFICATION_EASING.close,
+        onComplete: finishDismiss,
       })
     },
-    [swipeDistance, threshold, onDismissed],
+    [swipeDistance, threshold, finishDismiss],
   )
 
   /** Animates swipeDistance back to 0 (completion → 0). */
   const animateSpringBack = useCallback(() => {
     animate(swipeDistance, 0, {
       duration: durations.get('fast') / 1000,
-      ease: 'easeOut',
+      ease: NOTIFICATION_EASING.open,
     })
   }, [swipeDistance])
 
   const onTouchStart = useCallback(
     (e: React.TouchEvent) => {
       e.stopPropagation()
-      if (dismissing.current) return
+      if (dismissing.current || dismissed.current) return
       const touch = e.touches[0]
 
       // Ignore touches that start in safe areas, since those are likely accidental touches from users trying to interact with system UI.
@@ -121,9 +140,7 @@ const useSwipeToClear = ({
       if (score >= threshold) {
         if (dist >= threshold) {
           // Swipe distance already reached threshold — completion is already 1, dismiss immediately.
-          onDismissed()
-          // Reset completion back to 0.
-          swipeDistance.set(0)
+          finishDismiss()
         } else {
           // Velocity-boosted dismiss — animate the remaining distance to threshold.
           const remainingPx = threshold - dist
@@ -138,7 +155,7 @@ const useSwipeToClear = ({
       }
       velocity.current = 0
     },
-    [swipeDistance, threshold, onDismissed, dismiss, animateSpringBack],
+    [swipeDistance, threshold, finishDismiss, dismiss, animateSpringBack],
   )
 
   // When the OS intercepts a touch (e.g. iOS home-indicator swipe or app-switcher swipe),
@@ -165,6 +182,7 @@ const useSwipeToClear = ({
       onTouchCancel,
     },
     dismiss,
+    reset,
   }
 }
 

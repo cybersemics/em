@@ -7,6 +7,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const swapParent = {
   id: 'swapParent',
   label: 'Swap Parent' as const,
+  systemMenu: 'Edit',
   description: 'Swap the current thought with its parent.',
   gesture: 'ul',
   multicursor: true,
