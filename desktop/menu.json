@@ -222,6 +222,12 @@
       "checkable": true
     },
     {
+      "id": "reload",
+      "label": "Reload",
+      "accelerator": "Cmd+R",
+      "checkable": false
+    },
+    {
       "id": "toggleHiddenThoughts",
       "label": "Show Hidden Thoughts",
       "accelerator": "Alt+Shift+H",
