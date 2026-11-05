@@ -464,4 +464,37 @@ describe('Caret', () => {
     await tap(editable, { offset: offsetBeforeIn, pointerType: 'touch' })
     await waitForCaretOffset(offsetBeforeIn)
   })
+
+  // https://github.com/cybersemics/em/issues/4247
+  it('Tap near the bottom edge of a non-cursor thought places the caret at the tapped word', async () => {
+    const importText = `
+    - A
+      - Beyond the Planet Earth
+        - =note
+          - Tsiolovsky (1960)
+        - B
+      - A Memory Called Empire
+        - =note
+          - Arkady Martíne (2019)
+        - C`
+    await newThought()
+    await paste([''], importText)
+    await clickThought('A')
+
+    // tap the "P" of "Planet", a little inside the glyph so that the tap does not land on the word boundary
+    const beyond = await waitForEditable('Beyond the Planet Earth')
+    await tap(beyond, { offset: 'Beyond the '.length, x: 3, pointerType: 'touch' })
+    await waitUntil(async () => (await getEditingText()) === 'Beyond the Planet Earth')
+
+    // Tap the bottom of the "C" of "Called", 7px below the middle of the line. The mousedown reaches the editable, but
+    // the mouseup and click land on the thought annotation drawn over it, so a placement that waits for either is lost
+    // and the caret goes to the start of the thought. Only about 5–7px below the middle does this on both iOS 26 and 27,
+    // since farther down the tap lands on the note.
+    const memory = await waitForEditable('A Memory Called Empire')
+    const offsetBeforeCalled = 'A Memory '.length
+    await tap(memory, { offset: offsetBeforeCalled, x: 3, y: 7, pointerType: 'touch' })
+
+    await waitUntil(async () => (await getEditingText()) === 'A Memory Called Empire')
+    await waitForCaretOffset(offsetBeforeCalled)
+  })
 })
