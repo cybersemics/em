@@ -24,7 +24,7 @@ it('groups the commands that name a system menu by menu, sorted by label', () =>
   })
 })
 
-it('writes the modifiers of a shortcut in the accelerator as Cmd, Alt, Ctrl, and Shift', () => {
+it('writes the modifiers of a shortcut as Cmd, Alt, Ctrl, and Shift on macOS, and as Ctrl, Alt, and Shift on Windows and Linux', () => {
   const commands: Command[] = [
     {
       ...inert,
@@ -43,8 +43,23 @@ it('writes the modifiers of a shortcut in the accelerator as Cmd, Alt, Ctrl, and
   ]
 
   expect(systemMenuDefinition(commands)).toEqual({
-    View: [{ id: 'pinDescendants', label: 'Pin Descendants', accelerator: 'Cmd+Alt+Shift+P', checkable: false }],
-    Edit: [{ id: 'extractSubthought', label: 'Extract Subthought', accelerator: 'Cmd+Ctrl+E', checkable: false }],
+    View: [
+      {
+        id: 'pinDescendants',
+        label: 'Pin Descendants',
+        accelerator: { macos: 'Cmd+Alt+Shift+P', windowsLinux: 'Ctrl+Alt+Shift+P' },
+        checkable: false,
+      },
+    ],
+    // Ctrl is already meta on Windows and Linux, so Control falls back to Shift there (see hashCommand).
+    Edit: [
+      {
+        id: 'extractSubthought',
+        label: 'Extract Subthought',
+        accelerator: { macos: 'Cmd+Ctrl+E', windowsLinux: 'Ctrl+Shift+E' },
+        checkable: false,
+      },
+    ],
   })
 })
 
@@ -68,9 +83,25 @@ it('writes punctuation as the character and other keys by name', () => {
   ]
 
   expect(systemMenuDefinition(commands)).toEqual({
-    App: [{ id: 'settings', label: 'Settings', accelerator: 'Cmd+,', checkable: false }],
-    Cursor: [{ id: 'cursorPrev', label: 'Previous Thought', accelerator: 'Cmd+ArrowUp', checkable: false }],
-    Edit: [{ id: 'newUncle', label: 'New Subthought (next)', accelerator: 'Cmd+Alt+Enter', checkable: false }],
+    App: [
+      { id: 'settings', label: 'Settings', accelerator: { macos: 'Cmd+,', windowsLinux: 'Ctrl+,' }, checkable: false },
+    ],
+    Cursor: [
+      {
+        id: 'cursorPrev',
+        label: 'Previous Thought',
+        accelerator: { macos: 'Cmd+ArrowUp', windowsLinux: 'Ctrl+ArrowUp' },
+        checkable: false,
+      },
+    ],
+    Edit: [
+      {
+        id: 'newUncle',
+        label: 'New Subthought (next)',
+        accelerator: { macos: 'Cmd+Alt+Enter', windowsLinux: 'Ctrl+Alt+Enter' },
+        checkable: false,
+      },
+    ],
   })
 })
 
@@ -86,15 +117,31 @@ it('gives a bare or Shift-only shortcut no accelerator', () => {
   })
 })
 
-it('gives a shortcut that a native item already has no accelerator', () => {
+it('gives a Control-only shortcut no accelerator on Windows and Linux, where it is Shift-only', () => {
   const commands: Command[] = [
-    { ...inert, id: 'home', label: 'Home', systemMenu: 'Cursor', keyboard: { key: 'h', meta: true, alt: true } },
-    { ...inert, id: 'pin', label: 'Pin', systemMenu: 'View', keyboard: { key: 'p', meta: true, alt: true } },
+    { ...inert, id: 'categorize', label: 'Categorize', systemMenu: 'Edit', keyboard: { key: 'o', control: true } },
   ]
 
   expect(systemMenuDefinition(commands)).toEqual({
-    Cursor: [{ id: 'home', label: 'Home', checkable: false }],
-    View: [{ id: 'pin', label: 'Pin', accelerator: 'Cmd+Alt+P', checkable: false }],
+    Edit: [{ id: 'categorize', label: 'Categorize', accelerator: { macos: 'Ctrl+O' }, checkable: false }],
+  })
+})
+
+it('gives a shortcut no accelerator on a platform where a native item already has it', () => {
+  const commands: Command[] = [
+    { ...inert, id: 'home', label: 'Home', systemMenu: 'Cursor', keyboard: { key: 'h', meta: true, alt: true } },
+    { ...inert, id: 'pin', label: 'Pin', systemMenu: 'View', keyboard: { key: 'p', meta: true, alt: true } },
+    { ...inert, id: 'redo', label: 'Redo', systemMenu: 'Edit', keyboard: { key: 'y', meta: true } },
+  ]
+
+  expect(systemMenuDefinition(commands)).toEqual({
+    // Hide Others has Command + Option + H on macOS.
+    Cursor: [{ id: 'home', label: 'Home', accelerator: { windowsLinux: 'Ctrl+Alt+H' }, checkable: false }],
+    View: [
+      { id: 'pin', label: 'Pin', accelerator: { macos: 'Cmd+Alt+P', windowsLinux: 'Ctrl+Alt+P' }, checkable: false },
+    ],
+    // Redo has Ctrl + Y on Windows.
+    Edit: [{ id: 'redo', label: 'Redo', accelerator: { macos: 'Cmd+Y' }, checkable: false }],
   })
 })
 
@@ -122,8 +169,18 @@ it('uses the shortcut that the app displays: the first of an array, or keyboardD
 
   expect(systemMenuDefinition(commands)).toEqual({
     Cursor: [
-      { id: 'jumpBack', label: 'Jump Back', accelerator: 'Cmd+Shift+J', checkable: false },
-      { id: 'selectAll', label: 'Select All', accelerator: 'Cmd+Alt+A', checkable: false },
+      {
+        id: 'jumpBack',
+        label: 'Jump Back',
+        accelerator: { macos: 'Cmd+Shift+J', windowsLinux: 'Ctrl+Shift+J' },
+        checkable: false,
+      },
+      {
+        id: 'selectAll',
+        label: 'Select All',
+        accelerator: { macos: 'Cmd+Alt+A', windowsLinux: 'Ctrl+Alt+A' },
+        checkable: false,
+      },
     ],
   })
 })

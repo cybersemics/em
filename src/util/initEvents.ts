@@ -11,7 +11,7 @@ import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isMac, isSafari, isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, DEFAULT_FONT_SIZE, LongPressState } from '../constants'
 import initKeyboardSelection from '../device/initKeyboardSelection'
@@ -637,8 +637,8 @@ const initEvents = (store: Store<State, any>) => {
   // Route iOS native undo/redo gestures through em's undo/redo in the Capacitor app
   nativeHistory.init()
 
-  // Connect the commands to the system menu, which the desktop app only installs on macOS
-  if (isTauri() && isMac) {
+  // Connect the commands to the system menu of the desktop app
+  if (isTauri()) {
     systemMenu.init()
   }
 

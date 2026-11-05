@@ -6,6 +6,7 @@ import Patch from '../@types/Patch'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { isMac } from '../browser'
 import { commandById, formatKeyboardShortcut, gestureString } from '../commands'
 import { HOME_TOKEN } from '../constants'
 import head from '../util/head'
@@ -87,8 +88,8 @@ const describeCommandInvocation = (patch: Patch): string => {
     case 'systemMenu':
       // Repeat records the command that it repeated, which may not be in the menu.
       if (!command.systemMenu) return `Run ${command.label}.`
-      // The App menu is titled with the app's name.
-      return `Choose ${command.systemMenu === 'App' ? 'em' : command.systemMenu} > ${command.label} in the menu bar.`
+      // The App menu is titled with the app's name on macOS. Windows and Linux have none, and list its commands in File.
+      return `Choose ${command.systemMenu === 'App' ? (isMac ? 'em' : 'File') : command.systemMenu} > ${command.label} in the menu bar.`
   }
 
   return `Run ${command.label}.`
