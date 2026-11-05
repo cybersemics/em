@@ -387,7 +387,7 @@ const useExpandBounce = ({
 }
 
 /**
- * Lifts the drawer above the virtual keyboard. Capacitor disables viewport resizing, so `avoidKeyboard`
+ * Lifts the drawer above a virtual keyboard opened from inside it. Capacitor disables viewport resizing, so `avoidKeyboard`
  * cannot detect the keyboard on iOS; its padding also targets a scroller we don't use.
  *
  * Caps the offset to keep the header onscreen in short viewports.
@@ -397,9 +397,24 @@ const useExpandBounce = ({
 const useSheetKeyboardOffset = (sheetRef: React.RefObject<SheetRef | null>) => {
   /** The virtual keyboard's live height. A MotionValue, not React state: the drawer follows the keyboard on the compositor, so the command list does not re-render on every frame. */
   const keyboardHeight = useMotionValue(0)
+
+  /** True when an input inside the sheet opened the keyboard. Other keyboards, e.g. one closing from a blurred thought, are ignored. */
+  const isKeyboardOpenedBySheet = useMotionValue(false)
+
   virtualKeyboardStore.useEffect(
-    useCallback((state: VirtualKeyboardState) => keyboardHeight.set(state.height), [keyboardHeight]),
+    useCallback(
+      (state: VirtualKeyboardState) => {
+        keyboardHeight.set(state.height)
+        // Reset only once the keyboard is fully closed, so the sheet follows it down. Not on height 0 alone, which is
+        // also reported as the keyboard starts to open.
+        if (!state.open) isKeyboardOpenedBySheet.set(false)
+      },
+      [keyboardHeight, isKeyboardOpenedBySheet],
+    ),
   )
+
+  /** Marks the keyboard as the sheet's when an input inside it gets focus. */
+  const onFocus = useCallback(() => isKeyboardOpenedBySheet.set(true), [isKeyboardOpenedBySheet])
 
   /** The offset as it was when a close began, or null while the drawer is open. */
   const keyboardOffsetSnapshot = useRef<number | null>(null)
@@ -408,8 +423,9 @@ const useSheetKeyboardOffset = (sheetRef: React.RefObject<SheetRef | null>) => {
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
 
   const keyboardOffset = useTransform(() => {
+    const height = isKeyboardOpenedBySheet.get() ? keyboardHeight.get() : 0
     const headroom = Math.max(innerHeight - safeAreaTop - (sheetRef.current?.yInverted.get() ?? 0), 0)
-    const offset = Math.min(keyboardHeight.get(), headroom)
+    const offset = Math.min(height, headroom)
     return keyboardOffsetSnapshot.current ?? offset
   })
 
@@ -421,9 +437,10 @@ const useSheetKeyboardOffset = (sheetRef: React.RefObject<SheetRef | null>) => {
   /** Discards the close-time snapshot so the offset follows the keyboard again. */
   const release = useCallback(() => {
     keyboardOffsetSnapshot.current = null
-  }, [])
+    isKeyboardOpenedBySheet.set(false)
+  }, [isKeyboardOpenedBySheet])
 
-  return { keyboardOffset, hold, release }
+  return { keyboardOffset, hold, release, onFocus }
 }
 
 /**
@@ -441,7 +458,12 @@ const CommandCenter = () => {
   /** Lift above the expanded stage, driven by the bounce. Owned here because the falloff gradient derives from it as well. */
   const bounceY = useMotionValue(0)
 
-  const { keyboardOffset, hold: holdKeyboardOffset, release: releaseKeyboardOffset } = useSheetKeyboardOffset(sheetRef)
+  const {
+    keyboardOffset,
+    hold: holdKeyboardOffset,
+    release: releaseKeyboardOffset,
+    onFocus: onSheetFocus,
+  } = useSheetKeyboardOffset(sheetRef)
 
   /** The y applied to the drawer: the expand bounce plus the keyboard offset. The falloff, glow and blur read this, so they stay attached to the drawer's top edge. */
   const drawerY = useTransform(() => bounceY.get() - keyboardOffset.get())
@@ -767,6 +789,7 @@ const CommandCenter = () => {
                 width: '100%',
               })}
               style={{ y: drawerY, willChange: 'transform' }}
+              onFocus={onSheetFocus}
             >
               <Sheet.Header
                 className={css({
