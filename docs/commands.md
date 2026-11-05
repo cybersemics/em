@@ -923,3 +923,23 @@ Add or remove devices that can access and edit this thoughtspace.
 ### Cancel
 
 Cancel the current gesture.
+
+## Send Feedback
+
+**Send Feedback** opens the feedback glass dialog from Command Universe or with the `rdldr` gesture. A link in Help
+opens the same form. The command preserves the cursor and multiselection. Name and email are optional and remembered
+only on the current device; clearing a field removes its saved value. Cancel, outside click, or Escape discards the
+unsent draft. While sending, dismissal and repeated submissions are disabled; a failed send preserves the draft for retry.
+
+Thoughts, display resolution, and debug logs each require an unchecked-by-default opt-in. The thought attachment is
+an indented plain-text export of the selected subtrees in document order, including notes, attributes, and archived
+descendants. Overlapping selections are deduplicated and descendants are read from persistence before a preview is
+shown. With no selection, thought attachment is disabled. The debug-log preview omits the page URL header and the
+full thoughtspace dump, but event entries can contain thought text. Attaching it does not enable logging.
+The display-resolution preview shows the viewport width and height in CSS pixels and the device pixel ratio captured
+when checked. The submission includes those previewed values even if the viewport is resized before sending.
+
+The form also accepts private image, text/log, JSON, and PDF uploads (five files, 10 MiB each, 25 MiB combined).
+The server receives app version, build commit, browser user agent, and platform with each submission. Collection,
+protected read-only maintainer access, setup, and deployment are documented in
+[the feedback service README](../packages/feedback/README.md).

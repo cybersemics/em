@@ -23,7 +23,7 @@ jobs:
       # block the other.
       fail-fast: false
       matrix:
-        project: [em, em-ai]
+        project: [em, em-ai, em-feedback]
 
     # Serialize production deploys per project without cancelling an in-flight
     # deploy, so overlapping pushes to main queue rather than race.
@@ -34,10 +34,10 @@ jobs:
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      # Each project has its own project ID; org and token are shared. Both
+      # Each project has its own project ID; org and token are shared. All three
       # secrets are referenced statically (no dynamic secrets indexing) and
       # selected by the matrix value.
-      VERCEL_PROJECT_ID: ${{ matrix.project == 'em' && secrets.VERCEL_PROJECT_ID_EM || secrets.VERCEL_PROJECT_ID_EM_AI }}
+      VERCEL_PROJECT_ID: ${{ matrix.project == 'em' && secrets.VERCEL_PROJECT_ID_EM || matrix.project == 'em-ai' && secrets.VERCEL_PROJECT_ID_EM_AI || secrets.VERCEL_PROJECT_ID_EM_FEEDBACK }}
       # Skip Puppeteer's Chrome download on install — the Vercel build never uses
       # the bundled browser, saving ~20s per install.
       PUPPETEER_SKIP_DOWNLOAD: true
@@ -68,8 +68,8 @@ jobs:
 
       - name: Build
         env:
-          # The AI service uses the unified backend builder so its TypeScript module graph is bundled.
-          VERCEL_EXPERIMENTAL_BACKENDS: ${{ matrix.project == 'em-ai' && '1' || '0' }}
+          # The backend services use the unified backend builder so its TypeScript module graph is bundled.
+          VERCEL_EXPERIMENTAL_BACKENDS: ${{ matrix.project != 'em' && '1' || '0' }}
         run: vercel build --prod --token="$VERCEL_TOKEN"
 
       - name: Deploy
