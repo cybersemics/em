@@ -5,6 +5,7 @@ import { Keyboard } from '@capacitor/keyboard'
 import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
 import { ALLOWED_FORMATTING_TAGS, DEFAULT_FONT_SIZE } from '../constants'
+import debugLog from '../util/debugLog'
 import isFormattingElement from '../util/isFormattingElement'
 
 export type SelectionOptionsType = {
@@ -461,6 +462,13 @@ export const set = (
   { offset = 0, end = false }: SelectionOptionsType = { offset: 0, end: false },
 ): void => {
   if (!node) return
+
+  // Every caret placement em makes, so that a log can tell em's caret moves from the browser's.
+  debugLog.log('placeCaret', () => ({
+    label: isHTMLElement(node) ? node.getAttribute('aria-label') : null,
+    offset,
+    end,
+  }))
 
   // if a numeric offset is given, convert the outer offset (relative to the thought) to the inner offset (relative to the nearest ancestor of the new selection) which is expected by Range
   // this handles nested HTML elements such as <b> or <i>.
