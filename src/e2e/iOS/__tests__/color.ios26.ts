@@ -60,7 +60,8 @@ describe('Color', () => {
     await tap(await waitForElement('[aria-label="text color swatches"] [aria-label="red"]'), toolbarTapOptions)
     await waitForElement('[data-editing=true] [data-editable] font[color="#ff573d"]')
 
-    // The toolbar growing taller means the Text Color button's contents shifted down.
+    // The picker is rendered inside the Text Color button, so the toolbar growing taller moves the button's contents and
+    // the swatches down with it.
     expect(await getToolbarHeight()).toBe(toolbarHeight)
   })
 })
