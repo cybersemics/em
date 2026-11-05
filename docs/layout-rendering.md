@@ -56,6 +56,11 @@ excludes collapsed breadcrumb nodes. Displayed indentation counts visible parent
 steps rather than hidden occurrence anchors; table offsets use physical
 `SimplePath` ancestry.
 
+The bottom navigation breadcrumbs omit hidden occurrence anchors while retaining
+each visible crumb’s original route prefix for resolution. The portal delimiter
+uses the displayed parent, and filtering or ellipsizing labels does not rewrite
+the underlying route.
+
 ## `linearizeTree` (the in-order traversal)
 
 [`linearizeTree`](../src/selectors/linearizeTree.ts) recursively walks the visible tree. For each visit it produces a `TreeThought` with everything the second pass needs.

@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash'
-import React, { createRef, useMemo } from 'react'
+import React, { createRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
@@ -9,6 +9,8 @@ import { ColorToken } from '../../styled-system/types'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
 import { HOME_TOKEN } from '../constants'
+import displayedParentOf from '../selectors/displayedParentOf'
+import getContextViewExpansion from '../selectors/getContextViewExpansion'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
@@ -17,7 +19,6 @@ import ellipsize from '../util/ellipsize'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
-import parentOf from '../util/parentOf'
 import toVisibleText from '../util/toVisibleText'
 import usePlaceholder from './Editable/usePlaceholder'
 import FadeTransition from './FadeTransition'
@@ -27,6 +28,7 @@ import Superscript from './Superscript'
 
 type OverflowChild = {
   id: ThoughtId
+  path: Path
   value: string
   nodeRef: React.RefObject<HTMLElement | null>
   label?: string
@@ -39,12 +41,12 @@ type ContextBreadcrumbsVariant = 'small' | 'default'
 
 /** Ellipsizes thoughts in a path by thoughtsLimit and charLimit. Complexity: O(n), but does not work if thoughtsLimit or charLimit are undefined. */
 const useEllipsizedThoughts = (
-  path: Path,
+  paths: Path[],
   { disabled, thoughtsLimit, charLimit }: { disabled?: boolean; thoughtsLimit?: number; charLimit?: number },
 ): OverflowPath => {
   // calculate if overflow occurs during ellipsized view
   // 0 if thoughtsLimit is not defined
-  const thoughtsOverflow = thoughtsLimit && path.length > thoughtsLimit ? path.length - thoughtsLimit + 1 : 0
+  const thoughtsOverflow = thoughtsLimit && paths.length > thoughtsLimit ? paths.length - thoughtsLimit + 1 : 0
 
   const editingValue = editingValueStore.useState()
 
@@ -52,23 +54,24 @@ const useEllipsizedThoughts = (
   // if editing, use the live editing value
   const thoughtValuesLive = useSelector(
     state =>
-      path.map(id =>
-        editingValue && state.cursor && id === head(state.cursor)
+      paths.map(path =>
+        editingValue && state.cursor && head(path) === head(state.cursor)
           ? editingValue
-          : ((getThoughtById(state, id)?.value || null) as string | null),
+          : ((getThoughtById(state, head(path))?.value || null) as string | null),
       ),
     isEqual,
   )
 
   // if charLimit is exceeded then replace the remaining characters with an ellipsis
-  const charLimitedThoughts: OverflowPath = path.map((id, i) => {
+  const charLimitedThoughts: OverflowPath = paths.map((path, i) => {
     const value = thoughtValuesLive[i] ? toVisibleText(thoughtValuesLive[i]) : null
 
     return {
       // It is possible that the thought is no longer in state, in which case value will be null.
       // The component is hopefully being unmounted, so the value shouldn't matter as long as it does not error out.
       value: value ?? '',
-      id,
+      id: head(path),
+      path,
       nodeRef: createRef(),
       // add ellipsized label
       ...(!disabled && value != null
@@ -82,9 +85,13 @@ const useEllipsizedThoughts = (
   // after character limit is applied we need to remove the overflow thoughts if any and add isOverflow flag to render ellipsis at that position
   const ellipsizedThoughts: OverflowPath =
     thoughtsOverflow && !disabled
-      ? charLimitedThoughts
-          .slice(0, charLimitedThoughts.length - 1 - thoughtsOverflow)
-          .concat({ isOverflow: true } as OverflowChild, charLimitedThoughts.slice(charLimitedThoughts.length - 1))
+      ? charLimitedThoughts.slice(0, charLimitedThoughts.length - 1 - thoughtsOverflow).concat(
+          {
+            ...charLimitedThoughts[Math.max(0, charLimitedThoughts.length - 1 - thoughtsOverflow)],
+            isOverflow: true,
+          },
+          charLimitedThoughts.slice(charLimitedThoughts.length - 1),
+        )
       : charLimitedThoughts
 
   return ellipsizedThoughts
@@ -113,7 +120,7 @@ const BreadCrumb = React.memo(
       const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
       const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
       const thoughtPlaceholder = usePlaceholder({ isEditing: false, path, simplePath })
-      const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
+      const showContexts = useSelector(state => isContextViewActive(state, displayedParentOf(state, path)))
       const delimiterStyle: React.CSSProperties = {
         fontSize: '0.8em',
         lineHeight: '16px',
@@ -191,11 +198,19 @@ const ContextBreadcrumbs = ({
 }) => {
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
-  const pathFiltered = useSelector(
-    state => (hideArchive ? (path.filter(id => getThoughtById(state, id)?.value !== '=archive') as Path) : path),
-    shallowEqual,
+  // Filter visible crumbs, not route IDs: each link still needs its complete original prefix to resolve a portal.
+  const ancestorPaths = useSelector(
+    state =>
+      path.flatMap((id, i) => {
+        const expansion = getContextViewExpansion(state, path.slice(0, i + 2) as Path)
+        const hiddenAnchor = expansion?.contextViewPath.length === i
+        return hiddenAnchor || (hideArchive && getThoughtById(state, id)?.value === '=archive')
+          ? []
+          : [path.slice(0, i + 1) as Path]
+      }),
+    isEqual,
   )
-  const ellipsizedThoughts = useEllipsizedThoughts(pathFiltered, { charLimit, disabled, thoughtsLimit })
+  const ellipsizedThoughts = useEllipsizedThoughts(ancestorPaths, { charLimit, disabled, thoughtsLimit })
 
   /** Clones the direct breadcrumb children to inject isDeleting animation state. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -207,11 +222,6 @@ const ContextBreadcrumbs = ({
 
     return React.cloneElement(child, { ...child.props }, updatedGrandChild)
   }
-
-  /** The list of ancestor paths: [a], [a, b], [a, b, c], etc. */
-  const ancestors = useMemo(() => {
-    return pathFiltered.map((id, i) => pathFiltered.slice(0, i + 1) as Path)
-  }, [pathFiltered])
 
   const homeIconStyle: React.CSSProperties = { position: 'relative', left: -1, top: 2 }
 
@@ -255,7 +265,7 @@ const ContextBreadcrumbs = ({
         />
       ) : (
         <TransitionGroup childFactory={factoryManager}>
-          {ellipsizedThoughts.map(({ isOverflow, label, nodeRef }, i) => {
+          {ellipsizedThoughts.map(({ isOverflow, label, nodeRef, path: ancestorPath }, i) => {
             // Use index as key because we actually want all segments to the right to re-render.
             // Otherwise also it incorrectly animates a changed segment when moving the cursor to a sibling, which doesn't look as good as a direct replacement.
             // This way it will only animate when the length of the cursor changes.
@@ -266,7 +276,7 @@ const ContextBreadcrumbs = ({
                   isOverflow={isOverflow}
                   label={label}
                   onClickEllipsis={() => setDisabled(true)}
-                  path={ancestors[i]}
+                  path={ancestorPath}
                   placeholder={placeholder}
                   showDivider={i > 0}
                   staticText={staticText}
