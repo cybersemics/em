@@ -8,7 +8,7 @@ Test:
   - Overlay hidden on touch "leave"
 
 */
-import React, { FC, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cva } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -50,7 +50,6 @@ const arrow = cva({
     display: 'inline-block',
     lineHeight: '20px',
     zIndex: 'toolbarArrow',
-    pointerEvents: 'auto',
   },
   variants: {
     isHidden: {
@@ -93,8 +92,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
   const lastHapticScrollPosition = useRef<number>(0)
+  const containerRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
-  const dropdownBounds = useRef<{ left: number; right: number; bottom: number; width: number } | null>(null)
   const [leftArrowIsShown, setLeftArrowIsShown] = useState(false)
   const [rightArrowIsShown, setRightArrowIsShown] = useState(true)
   const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
@@ -102,12 +101,9 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const isDraggingAny = useSelector(state => !!state.dragCommand)
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
-  const toolbarHeight = fontSize + 30
   const arrowWidth = fontSize / 3
   const showColorPicker = useSelector(state => state.showColorPicker)
   const showDropdown = useSelector(state => state.showColorPicker || state.showLetterCase)
-  const showSortPicker = useSelector(state => state.showSortPicker)
-  const showBulletPicker = useSelector(state => state.showBulletPicker)
   const positionFixedStyles = usePositionFixed()
 
   // re-render only (why?)
@@ -135,20 +131,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     setLatestPress(Date.now())
   }, [])
 
-  /** Clips the scrolling toolbar to its button row and open dropdown, leaving the thoughts beside it tappable. */
-  const updateClip = useCallback(
-    (scrollLeft: number) => {
-      const toolbar = toolbarRef.current
-      const bounds = dropdownBounds.current
-      if (!toolbar || !bounds) return
-
-      const left = Math.max(0, Math.min(bounds.width, bounds.left - scrollLeft))
-      const right = Math.max(left, Math.min(bounds.width, bounds.right - scrollLeft))
-      toolbar.style.clipPath = `polygon(0 0, 100% 0, 100% ${toolbarHeight}px, ${right}px ${toolbarHeight}px, ${right}px ${bounds.bottom}px, ${left}px ${bounds.bottom}px, ${left}px ${toolbarHeight}px, 0 ${toolbarHeight}px)`
-    },
-    [toolbarHeight],
-  )
-
   /** Shows or hides the toolbar scroll arrows depending on where the scroll bar is. */
   const updateArrows = useCallback(() => {
     const el = toolbarRef.current
@@ -175,9 +157,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       }
 
       updateArrows()
-      updateClip(el.scrollLeft)
     },
-    [fontSize, updateArrows, updateClip, deselectPressingToolbarId],
+    [fontSize, updateArrows, deselectPressingToolbarId],
   )
 
   /**********************************************************************
@@ -193,43 +174,14 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     }
   }, [updateArrows])
 
-  // Keep dropdowns in the native scroller so a swipe on an option scrolls with momentum and the picker contributes
-  // to the scroll range. Clip the empty area beside it. Cache the geometry on open/resize, never during scrolling.
-  useLayoutEffect(() => {
-    const toolbar = toolbarRef.current
-    if (!toolbar) return
-    const dropdown = toolbar.querySelector<HTMLElement>('[data-toolbar-dropdown]')
-    if (customize || !dropdown) {
-      dropdownBounds.current = null
-      toolbar.style.clipPath = ''
-      return
-    }
-
-    /** Measures the open dropdown in the toolbar's scroll coordinates. */
-    const measure = () => {
-      const toolbarRect = toolbar.getBoundingClientRect()
-      const dropdownRect = dropdown.getBoundingClientRect()
-      dropdownBounds.current = {
-        left: dropdownRect.left - toolbarRect.left + toolbar.scrollLeft,
-        right: dropdownRect.right - toolbarRect.left + toolbar.scrollLeft,
-        bottom: dropdownRect.bottom - toolbarRect.top,
-        width: toolbarRect.width,
-      }
-      updateClip(toolbar.scrollLeft)
-    }
-
-    measure()
-    window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
-  }, [customize, showColorPicker, showDropdown, showSortPicker, showBulletPicker, updateClip])
-
   // A keyboard shortcut can open the Color Picker outside the toolbar viewport. Scroll only by the clipped
   // distance after the picker renders, including when the toolbar remounts after distraction-free typing.
   useEffect(() => {
     if (customize || !showColorPicker) return
 
     const toolbar = toolbarRef.current
-    const colorPicker = toolbar?.querySelector<HTMLElement>('[aria-label="Color Picker"]')
+    // The picker is portaled into the dropdown layer, outside #toolbar (see Popover), so search the whole container.
+    const colorPicker = containerRef.current?.querySelector<HTMLElement>('[aria-label="Color Picker"]')
     if (!toolbar || !colorPicker) return
 
     const toolbarRect = toolbar.getBoundingClientRect()
@@ -284,9 +236,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     <FadeTransition in={!distractionFreeTyping || showDropdown} type='distractionFreeTyping' unmountOnExit>
       <div
         aria-label='toolbar'
+        ref={containerRef}
         className={css({
-          // The scroller's clip defines the interactive area. The larger fixed wrapper must let taps through.
-          pointerEvents: 'none',
           right: 0,
           textAlign: 'right',
           // Prevent horizontal scroll bar when keyboard is up.
@@ -329,7 +280,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           })}
           style={{
             // must scale height with fontSize, since height does not scale linearly with em or px
-            height: toolbarHeight,
+            height: fontSize + 30,
           }}
         />
         <div>
@@ -347,7 +298,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             className={css({
               maxWidth: '100%',
               position: 'relative',
-              pointerEvents: 'auto',
               // Constrain the horizontally-scrolling toolbar to horizontal panning only. Without this, a diagonal
               // (~45°) or vertical drag beginning on the toolbar is treated as a vertical pan and scrolls/overscrolls
               // the page; because the toolbar is position: fixed (usePositionFixed), that overscroll visually drags
@@ -394,6 +344,9 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             <TriangleRight width={arrowWidth} height={fontSize} fill={token('colors.gray50')} />
           </span>
         </div>
+
+        {/* The layer that toolbar dropdowns are portaled into (see Popover). It has no height, so an open dropdown does not stretch the toolbar's box across the thoughts beside it. */}
+        <div data-toolbar-dropdowns className={css({ position: 'relative', zIndex: 'toolbar' })} />
       </div>
     </FadeTransition>
   )

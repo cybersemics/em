@@ -7,7 +7,7 @@ import waitForSelector from './waitForSelector'
 /**
  * Click a toolbar button by its label, and optionally a value in the dropdown that it opens, e.g. `clickToolbar('Outdent')` or `clickToolbar('Sort Picker', 'Alphabetical')`.
  *
- * A picker is rendered inside the toolbar button that opens it (see ToolbarButton), so values are matched by aria-label within the button. Nested values are given as a path, which is required when a value is ambiguous on its own, e.g. the Text Color dropdown contains both a text and a background swatch labeled "blue", so `clickToolbar('Text Color', 'background color swatches', 'blue')`.
+ * An open picker is portaled into the toolbar's dropdown layer (see Popover), and only one is open at a time, so values are matched by aria-label within that layer. Nested values are given as a path, which is required when a value is ambiguous on its own, e.g. the Text Color dropdown contains both a text and a background swatch labeled "blue", so `clickToolbar('Text Color', 'background color swatches', 'blue')`.
  */
 const clickToolbar = async (label: CommandLabel, ...values: string[]) => {
   const toolbarSelector = `[data-testid="toolbar-icon"][aria-label="${label}"]`
@@ -20,7 +20,7 @@ const clickToolbar = async (label: CommandLabel, ...values: string[]) => {
 
   if (values.length === 0) return
 
-  const valueSelector = `${toolbarSelector} ${values.map(value => `[aria-label="${value}"]`).join(' ')}`
+  const valueSelector = `[data-toolbar-dropdowns] ${values.map(value => `[aria-label="${value}"]`).join(' ')}`
   await waitForSelector(valueSelector)
 
   // A value that matches more than one element would silently resolve to whichever comes first in the DOM, so require the caller to name the group that contains it.
