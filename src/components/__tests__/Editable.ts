@@ -5,6 +5,7 @@ import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { setCursorActionCreator as setCursorPath } from '../../actions/setCursor'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import defineTerm from '../../commands/defineTerm'
 import generateEmoji from '../../commands/generateEmoji'
@@ -240,6 +241,36 @@ describe('Generate Thought', () => {
     const editable = document.querySelector('[placeholder="Generating Thought"]')
     expect(editable).not.toBeNull()
     expect(editable).toHaveAttribute('data-generating')
+  })
+
+  it('places the caret at the end of the generated value when Generate Thought completes', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    /** Completes the Generate Thought request. */
+    let respond: (response: { json: () => Promise<{ thoughts: string[] }> }) => void = () => {}
+    mockFetch.mockReturnValueOnce(new Promise(resolve => (respond = resolve)))
+
+    await dispatch([importText({ text: '- Dog' }), setCursor(['Dog'])])
+    const editable = (await findThoughtByText('Dog'))!
+    await act(async () => {
+      editable.focus()
+      store.dispatch(setCursorPath({ path: store.getState().cursor, offset: 'Do'.length }))
+      selection.set(editable, { offset: 'Do'.length })
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      executeCommand(generateThought)
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      respond({ json: () => Promise.resolve({ thoughts: ['Dogs and cats'] }) })
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(editable.textContent).toBe('Dogs and cats')
+    expect(selection.offsetThought()).toBe('Dogs and cats'.length)
   })
 
   it('keeps the current text of a non-empty thought while Generate Thought is in flight', async () => {
@@ -538,6 +569,40 @@ describe('Define Term', () => {
     await act(vi.runAllTimersAsync)
 
     expect(selection.offsetThought()).toBe(afterEmoji + 'Red '.length)
+  })
+
+  it('keeps the caret on the same character when Generate Emoji adds a prefix', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    /** Completes the Generate Emoji request. */
+    let respond: (response: { json: () => Promise<{ emojis: string[][] }> }) => void = () => {}
+    mockFetch.mockReturnValueOnce(new Promise(resolve => (respond = resolve)))
+
+    await dispatch([importText({ text: '- Dog' }), setCursor(['Dog'])])
+    const editable = [...document.querySelectorAll('[data-editable]')].find(
+      thought => thought.textContent === 'Dog',
+    ) as HTMLElement
+    await act(async () => {
+      editable.focus()
+      store.dispatch(setCursorPath({ path: store.getState().cursor, offset: 'Do'.length }))
+      selection.set(editable, { offset: 'Do'.length })
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+    await act(async () => {
+      executeCommand(generateEmoji)
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+    expect(selection.offsetThought()).toBe('Do'.length)
+
+    await act(async () => {
+      respond({
+        json: () => Promise.resolve({ emojis: [['🐕', '🐶', '🐩', '🐺', '🦊', '🦮', '🐾', '🦴', '🏠', '🌭']] }),
+      })
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+    expect(editable.textContent).toBe('🐕 Dog')
+    // useEditMode places the shifted offset, and the generating wrap must not then restore the offset from before it
+    expect(selection.offsetThought()).toBe('🐕 Do'.length)
   })
 
   it('removes the display-only emoji wrap when Define Term completes', async () => {

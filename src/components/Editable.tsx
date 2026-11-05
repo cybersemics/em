@@ -258,7 +258,7 @@ const Editable = ({
   const multiEditing = caretRectStore.useSelector(caretRect => caretRect.x !== null)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
-  const generatingCaretRef = useRef<{ start: number; end: number } | null>(null)
+  const generatingCaretRef = useRef<{ range: { start: number; end: number } | null; text: string | null } | null>(null)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const isCursor = useSelector(state => equalPath(path, state.cursor))
@@ -1257,7 +1257,10 @@ const Editable = ({
   useLayoutEffect(() => {
     const editable = contentRef.current
     if (!editable) return
-    generatingCaretRef.current = document.activeElement === editable ? selection.offsetRange(editable) : null
+    generatingCaretRef.current =
+      document.activeElement === editable
+        ? { range: selection.offsetRange(editable), text: editable.textContent }
+        : null
     applyGeneratingEmojiWrap(editable, generating)
   }, [contentRef, generating])
 
@@ -1265,7 +1268,10 @@ const Editable = ({
     const editable = contentRef.current
     if (!editable) return
     applyGeneratingEmojiWrap(editable, generating)
-    restoreThoughtCaret(editable, generatingCaretRef.current)
+    // An offset only means something in the text it was measured against. If the text changed in this commit, e.g. a
+    // generated value arriving as generating clears, restoring it would overwrite the caret that the edit placed.
+    const caret = generatingCaretRef.current
+    if (caret?.text === editable.textContent) restoreThoughtCaret(editable, caret.range)
   }, [contentRef, generating])
 
   const contentEditable = (
