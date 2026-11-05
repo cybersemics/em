@@ -5,6 +5,7 @@ import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
+import getContextViewExpansion from '../selectors/getContextViewExpansion'
 import getRankAfter from '../selectors/getRankAfter'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
@@ -26,6 +27,11 @@ export interface outdentPayload {
 const outdent = (state: State, { selectionOffset }: outdentPayload = {}): State => {
   const { cursor } = state
   if (!cursor || cursor.length <= 1) return state
+  const expansion = getContextViewExpansion(state, cursor)
+  if (expansion && cursor.length <= expansion.contextViewPath.length + 3) {
+    const result = outdent({ ...state, cursor: simplifyPath(state, cursor) }, { selectionOffset })
+    return result.thoughts === state.thoughts ? { ...result, cursor } : result
+  }
 
   // Cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(parentOf(cursor)) || isRoot(parentOf(cursor))) {

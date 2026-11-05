@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Autofocus from '../@types/Autofocus'
+import ContextViewExpansion from '../@types/ContextViewExpansion'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -39,6 +40,7 @@ const Subthought = ({
   path,
   prevChildId,
   showContexts,
+  contextEntry,
   simplePath,
   style,
 }: {
@@ -55,6 +57,7 @@ const Subthought = ({
   path: Path
   prevChildId?: ThoughtId
   showContexts?: boolean
+  contextEntry?: ContextViewExpansion
   simplePath: SimplePath
   style?: React.CSSProperties
 }) => {
@@ -175,6 +178,7 @@ const Subthought = ({
           prevChildId={prevChildId}
           rank={thought.rank}
           showContexts={showContexts}
+          contextEntry={contextEntry}
           simplePath={simplePath}
           style={styleSelf}
         />

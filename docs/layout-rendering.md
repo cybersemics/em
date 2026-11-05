@@ -36,7 +36,25 @@ const crossContextualKey = (contextChain, id) =>
   `${(contextChain || []).map(head).join('')}|${id}`
 ```
 
-So the key is the concatenation of every context-view boundary's `id` plus the thought's own `id`. The `sizes` map and TreeThought entries are both keyed this way.
+The key includes each source context-view boundary and destination occurrence
+scope, followed by the thought's own ID. Destination scope distinguishes the same
+stored ancestor unfolded through two different entries. The `sizes` map and
+TreeThought entries use the same key.
+
+Collapsed context ancestors are independent `TreeThought` nodes marked
+`breadcrumb`. `AncestorBreadcrumb` in `TreeNode` measures the compact label and
+renders its uncollapse button. `usePositionedThoughts` arranges consecutive
+breadcrumbs from one entry horizontally and wraps them within the available
+width. When an ancestor unfolds, its owner/destination/ancestor key is retained
+and `TreeNodePositioner` moves that same outer node into the hierarchy. It becomes
+a normal `VirtualThought` with the actual editor and measurement behavior.
+
+Earlier ancestors remain compact nodes. The root/Home token supplies the Home
+breadcrumb when the full preceding ancestry is elided; it can be unfolded inside
+the portal as well. A basic scope edge marks full thoughts in the portal and
+excludes collapsed breadcrumb nodes. Displayed indentation counts visible parent
+steps rather than hidden occurrence anchors; table offsets use physical
+`SimplePath` ancestry.
 
 ## `linearizeTree` (the in-order traversal)
 
@@ -46,7 +64,7 @@ Important behaviors:
 
 - **Sibling order comes from `rank`.** Children are read with [`getChildrenRanked`](../src/selectors/getChildren.ts), never re-sorted during the walk. A context's `=sort` preference is materialized into its children's ranks when the preference is set — see [data-model.md → Visibility and sorting](data-model.md#visibility-and-sorting).
 - **Visibility gating.** A subtree is skipped entirely unless `state.expanded[hashPath(path)]` is set, so collapsed branches don't appear in `treeThoughts` at all. (The expansion model itself lives in [`expandThoughts`](../src/selectors/expandThoughts.ts).)
-- **Context-view pivot.** When a thought has its context view active, the recursion pivots from "render this thought's children" to "render the *contexts* in which this thought appears" via [`getContextsSortedAndRanked`](../src/selectors/getContextsSortedAndRanked.ts). The `contextChain` accumulator is updated, which feeds `crossContextualKey`. A special early-return: if the context view has only one context, the `NoOtherContexts` placeholder is rendered instead. [`Subthought`](../src/components/Subthought.tsx) renders the placeholder outside of `linearizeTree`, so it applies the same visibility gating itself: a collapsed thought with its context view active shows nothing beneath it, like any other collapsed thought.
+- **Context-view pivot.** When a thought has its context view active, the recursion pivots from its children to its contexts. `getContextViewEntries` resolves each sorted occurrence to its collapsed parent or registered unfolded ancestor. Collapsed entries retain the matching occurrence's child scope; unfolded entries walk the actual intervening hierarchy and restore the nominal thought. The `contextChain` accumulator includes destination occurrence scope for keys. If only one context remains, `NoOtherContexts` is rendered instead, subject to the same expansion gating.
 - **`belowCursor` propagation.** Once the cursor's `Path` is encountered during the walk, every subsequent `TreeThought` gets `belowCursor: true`. `LayoutTree` later uses this flag to exclude hidden-below-cursor thoughts from `totalHeight` so the document doesn't have a giant trailing dead zone.
 - **Style inheritance.** `=children/=style` and `=grandchildren/=style` are merged into `styleAccum` (current level) and `styleFromGrandparent` (skips one level). Specific positioning properties (`marginLeft`, `paddingLeft`) accumulate down the tree so descendants stay aligned with their ancestors.
 - **`=let` environment accumulation.** A context's `=let` bindings ([`parseLet`](../src/util/parseLet.ts)) are merged into the `env` that is passed down the recursion and carried on every `TreeThought`, so a descendant can name a binding defined by any ancestor and a nearer `=let` shadows an outer one. A level that defines no bindings passes the inherited `env` through by reference, so trees without `=let` never allocate one and `TreeNode`'s memoization is unaffected. See [metaprogramming.md → `=let`](metaprogramming.md#linking--cross-references).

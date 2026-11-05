@@ -69,6 +69,7 @@ const usePositionedThoughts = (
     // x varies, so we calculate it each time
     // (it is especially hard to determine how much x is decreased on cliffs when there are any number of tables in between)
     let yaccum = 0
+    let breadcrumbOffset = 0
     let indentCursorAncestorTables = 0
 
     // Arrow visibility based on the rank of drop target in sorted context.
@@ -147,6 +148,30 @@ const usePositionedThoughts = (
       const prevCliff = prev ? sizes[prev.key]?.cliff : 0
       const next = treeThoughts[i + 1] as TreeThought | undefined
 
+      if (node.breadcrumb) {
+        const baseX = fontSize * node.depth
+        const width = sizes[node.key]?.width ?? fontSize * 6
+        const height = sizes[node.key]?.height ?? fontSize * 1.1
+        const sameGroup =
+          prev?.breadcrumb &&
+          prev.contextEntry?.contextId === node.contextEntry?.contextId &&
+          prev.contextEntry?.contextViewPath.join('') === node.contextEntry?.contextViewPath.join('')
+        if (!sameGroup) breadcrumbOffset = baseX
+        if (breadcrumbOffset > baseX && breadcrumbOffset + width > availableTableWidth) {
+          yaccum += height + fontSize / 5
+          breadcrumbOffset = baseX
+        }
+        const x = breadcrumbOffset
+        const y = yaccum
+        breadcrumbOffset += width + fontSize / 3
+        const continues =
+          next?.breadcrumb &&
+          next.contextEntry?.contextId === node.contextEntry?.contextId &&
+          next.contextEntry?.contextViewPath.join('') === node.contextEntry?.contextViewPath.join('')
+        if (!continues) yaccum += height + fontSize / 4
+        return { ...node, x, y, width, height, cliff: 0, singleLineHeightWithCliff: height, isLastVisible: false }
+      }
+
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
       // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
       // TODO: Fix cliff across context view boundary
@@ -202,11 +227,11 @@ const usePositionedThoughts = (
               // then shift left by 3 em, which is about the most we can do without col1 getting cropped by the left edge of the screen
               // fall back to HOME_TOKEN when the table is on the root context (its col1 is not present in the Path)
               node.isTableCol2
-              ? -(tableCol1Widths.get(node.path[node.path.length - 3] ?? HOME_TOKEN) || 0) + fontSize * 3
+              ? -(tableCol1Widths.get(node.simplePath[node.simplePath.length - 3] ?? HOME_TOKEN) || 0) + fontSize * 3
               : // table col2 child: if the child is a leaf, shift right by the width of table col1 again since col1 is still visible
                 // otherwise, shift by 3 em since col1 is now hidden, but we don't want too much of a jump
                 node.isTableCol2Child && node.leaf
-                ? -(tableCol1Widths.get(node.path[node.path.length - 4] ?? HOME_TOKEN) || 0) + fontSize * 4
+                ? -(tableCol1Widths.get(node.simplePath[node.simplePath.length - 4] ?? HOME_TOKEN) || 0) + fontSize * 4
                 : 0)
       }
 

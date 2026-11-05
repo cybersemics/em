@@ -18,6 +18,7 @@ import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
+import dehydrateContextPath from '../selectors/dehydrateContextPath'
 import getThoughtById from '../selectors/getThoughtById'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
@@ -247,8 +248,10 @@ const initEvents = (store: Store<State, any>) => {
     () => {
       // editables are not long-pressable on desktop, so the range will only be a concern on mobile
       if (isTouch) selectionRangeStore.update(!selection.isCollapsed())
+      const state = store.getState()
+      const serialized = dehydrateContextPath(state, state.cursor)
       storageModel.set('cursor', value => ({
-        path: value?.path || store.getState().cursor,
+        path: serialized.unfolded ? serialized.path : dehydrateContextPath(state, value?.path || state.cursor).path,
         offset: selection.offsetThought(),
       }))
     },

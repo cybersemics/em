@@ -1,38 +1,36 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
-import { getChildrenSorted } from '../selectors/getChildren'
+import displayedChildPaths from '../selectors/displayedChildPaths'
+import displayedParentOf from '../selectors/displayedParentOf'
+import getContextViewEntries from '../selectors/getContextViewEntries'
 import isContextViewActive from '../selectors/isContextViewActive'
-import prevContext from '../selectors/prevContext'
 import prevSibling from '../selectors/prevSibling'
 import appendToPath from '../util/appendToPath'
+import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
-import head from '../util/head'
-import parentOf from '../util/parentOf'
-import simplifyPath from './simplifyPath'
 
 /** Gets the last visible descendant of a thought. */
 const lastVisibleDescendant = (state: State, path: Path): Path => {
-  const simplePath = simplifyPath(state, path)
-
   // Only traverse children if the thought or its parent is expanded
-  if (!state.expanded[hashPath(simplePath)]) return path
+  if (!state.expanded[hashPath(path)]) return path
 
   // If no children, return current path
-  const children = getChildrenSorted(state, head(simplePath))
+  const children = displayedChildPaths(state, path)
   if (children.length === 0) return path
 
   const lastChild = children[children.length - 1]
-  return lastVisibleDescendant(state, appendToPath(path, lastChild.id))
+  return lastVisibleDescendant(state, lastChild)
 }
 
 /** Gets the previous thought in visual order. */
 const prevThought = (state: State, path: Path): Path | null => {
-  const pathParent = path.length > 1 ? parentOf(path) : null
+  const pathParent = path.length > 1 ? displayedParentOf(state, path) : null
 
   // If in context view, try to get previous context first
   if (isContextViewActive(state, pathParent)) {
-    const prevContextThought = prevContext(state, path)
-    if (prevContextThought) return appendToPath(pathParent, prevContextThought.id)
+    const entries = getContextViewEntries(state, pathParent!)
+    const index = entries.findIndex(entry => equalPath(entry.path, path))
+    if (index > 0) return lastVisibleDescendant(state, entries[index - 1].path)
 
     // If no previous context, move to parent if not at root
     return pathParent

@@ -206,6 +206,16 @@ Device permissions live in [`permissionsStore.ts`](../src/data-providers/permiss
 - **delete** — removes the entry. If it's the *current* device and there are still others, dispatches `clear` (logs out). If it's the *last* device, calls `storage.clear()`, `db.clear()`, dispatches `clear`, and reloads.
 - **update** — patches name/role.
 
+## Unfolded view routes
+
+`contextViewExpansions` is in-memory view state and does not change the persisted
+Thought payload or tree schema. The cursor/selection-offset writers use
+`dehydrateContextPath` for registered unfolded routes, saving the selected visible
+thought's ordinary location without hidden anchors. Jump-history persistence also
+uses surviving actual locations for these navigation points. Restoring a saved
+cursor resumes at that real thought with the unfolded portal route closed; it
+never interprets the anchor as a stored parent.
+
 ## Cleanup
 
 `db.clear` is the runtime's `drop`. It detaches the data provider (rejecting any writes still waiting on initialization), stops WebSocket sync, unsubscribes the materialization listener, and calls `client.drop()`, which closes SQLite and — for OPFS storage — deletes the thoughtspace's database file. Used by the device-removal flow above, and by e2e tests through `em.testHelpers.dropThoughtspace`.

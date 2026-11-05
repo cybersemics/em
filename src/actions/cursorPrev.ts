@@ -7,6 +7,8 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { suppressExpansionActionCreator as suppressExpansion } from '../actions/suppressExpansion'
 import { HOME_TOKEN } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
+import displayedChildPaths from '../selectors/displayedChildPaths'
+import displayedParentOf from '../selectors/displayedParentOf'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenSorted } from '../selectors/getChildren'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -14,6 +16,7 @@ import prevContext from '../selectors/prevContext'
 import { prevSibling } from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
+import equalPath from '../util/equalPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 
@@ -35,6 +38,15 @@ export const cursorPrevActionCreator = (): Thunk => (dispatch, getState) => {
     if (children.length > 0) {
       dispatch(setCursor({ path: [children[children.length - 1].id] }))
     }
+    return
+  }
+
+  const displayedParent = displayedParentOf(state, cursor)
+  if (isContextViewActive(state, displayedParent)) {
+    const siblings = displayedChildPaths(state, displayedParent)
+    const index = siblings.findIndex(path => equalPath(path, cursor))
+    const path = siblings[index + -1]
+    if (index >= 0 && path) dispatch(setCursor({ path }))
     return
   }
 

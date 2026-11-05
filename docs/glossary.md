@@ -54,7 +54,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **context view** — A view mode that replaces a thought's children with the contexts in which the thought's value appears. Toggled with `Option + Shift + S`. The "inbound links" dual to the outbound parent-child links. State: `state.contextViews`, keyed by `hashPath(path)`. See [data-model.md → Context view](data-model.md#context-view).
 
-**contextChain** — A `Path` that crosses one or more context views, split into its `SimplePath` segments. `Path → SimplePath[]` via [`splitChain`](../src/selectors/splitChain.ts). See [data-model.md → contextChain](data-model.md#contextchain).
+**contextChain** — A `Path` that crosses one or more context views, split into raw route segments by [`splitChain`](../src/selectors/splitChain.ts). Resolve the final segment through `lastThoughtsFromContextChain` before using it as a physical `SimplePath`. See [data-model.md → contextChain](data-model.md#contextchain).
 
 **copula** — A finite form of "to be" (`is`, `are`, `was`, `were`) that Split Sentences treats as the boundary between a single sentence's subject and its predicate: the subject becomes the main thought and the predicate its child, with its leading article dropped. See [commands.md → Split Sentences](commands.md#split-sentences).
 
@@ -182,7 +182,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **=sort** — Meta-attribute that sorts a context's children, replacing their manual order by renumbering their ranks. Options: `Alphabetical`, `Created`, `Updated`, `Note` (sort by `=note` value), each `Asc` or `Desc`.
 
-**splitChain** — [`splitChain.ts`](../src/selectors/splitChain.ts) — splits a `Path` into `SimplePath[]` at every context-view boundary. Inverse: [`contextChainToPath`](../src/util/contextChainToPath.ts).
+**splitChain** — [`splitChain.ts`](../src/selectors/splitChain.ts) — splits a `Path` into raw route segments at each context-view boundary, retaining registered unfolded occurrence anchors. Inverse: [`contextChainToPath`](../src/util/contextChainToPath.ts).
 
 **=style** — Meta-attribute carrying CSS styles. Variants: `=children/=style` (apply to direct children), `=grandchildren/=style` (one level deeper).
 
@@ -207,6 +207,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 **tsid** — Thoughtspace ID. 21-char nanoid in `localStorage`. Scopes everything per-thoughtspace: the TreeCRDT `docId`, the OPFS database file (`/treecrdt-em-${tsid}.db`), the session lock, and the permissions key. Override with `?share=<tsid>`.
 
 ## U
+
+**unfolded context entry** — A context-view projection that exposes real ancestry from a selected breadcrumb onward, retaining earlier ancestors as breadcrumbs. `state.contextViewExpansions` identifies the source route, destination occurrence and start ancestor. Its displayed route includes a hidden occurrence anchor; physical edits resolve through `simplifyPath`. See [data-model.md → Unfolded context ancestry](data-model.md#unfolded-context-ancestry).
 
 **undo step** — What one Undo reverts: one patch, or a directional pair when trailing navigation belongs with the preceding change or an edit gives a newly created thought its value. A command transaction may collect several underlying actions into one patch. The undo slider uses the same grouping. See [commands.md → Undo history and the undo slider](commands.md#undo-history-and-the-undo-slider).
 

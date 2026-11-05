@@ -2,6 +2,7 @@ import { isEqual } from 'lodash'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Autofocus from '../@types/Autofocus'
+import ContextViewExpansion from '../@types/ContextViewExpansion'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -65,6 +66,7 @@ const VirtualThought = ({
   path,
   prevChildId,
   showContexts,
+  contextEntry,
   simplePath,
   singleLineHeight,
   style,
@@ -89,6 +91,7 @@ const VirtualThought = ({
   prevChildId?: ThoughtId
   onResize?: OnResize
   showContexts?: boolean
+  contextEntry?: ContextViewExpansion
   simplePath: SimplePath
   singleLineHeight: number
   style?: React.CSSProperties
@@ -265,6 +268,7 @@ const VirtualThought = ({
           path={path}
           prevChildId={prevChildId}
           showContexts={showContexts}
+          contextEntry={contextEntry}
           simplePath={simplePath}
           style={style}
         />

@@ -6,7 +6,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import TreeThought from '../@types/TreeThought'
-import { HOME_PATH } from '../constants'
+import { HOME_PATH, HOME_TOKEN } from '../constants'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
 import getChildren, { childrenFilterPredicate, getChildrenRanked, hasChildren } from '../selectors/getChildren'
@@ -27,6 +27,7 @@ import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
 import attributeEquals from './attributeEquals'
+import getContextViewEntries from './getContextViewEntries'
 
 // style properties that accumulate down the hierarchy.
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
@@ -52,6 +53,7 @@ const linearizeTree = (
     contextId,
     // accumulate the context chain in order to provide a unique key for rendering the same thought in normal view and context view
     contextChain,
+    portalPath,
     depth,
     env,
     indexDescendant,
@@ -64,6 +66,7 @@ const linearizeTree = (
     belowCursor?: boolean
     contextId?: ThoughtId
     contextChain?: SimplePath[]
+    portalPath?: Path
     depth: number
     env?: LazyEnv
     indexDescendant: number
@@ -83,6 +86,7 @@ const linearizeTree = (
   const simplePath = simplifyPath(state, path)
   const contextViewActive = isContextViewActive(state, path)
   const contextChainNew = contextViewActive ? [...(contextChain || []), simplePath] : contextChain
+  const contextEntries = contextViewActive ? getContextViewEntries(state, path) : []
   const children = contextViewActive
     ? thought
       ? getContextsSortedAndRanked(state, thought.value)
@@ -114,10 +118,12 @@ const linearizeTree = (
     // If the context view is active, render the context's parent instead of the context itself.
     // This allows the path to be accumulated correctly across the context view.
     // e.g. a/m~/b should render the children of b/m, not a/m
-    const child = contextViewActive ? getThoughtById(state, filteredChild.parentId) : filteredChild
+    const entry = contextViewActive ? contextEntries.find(entry => entry.context.id === filteredChild.id) : undefined
+    const child = contextViewActive ? entry?.thought : filteredChild
     // Context thought may still be pending
     if (!child) return accum
-    const childPath = appendToPathMemo(path, child.id)
+    const childPath = entry?.path || appendToPathMemo(path, child.id)
+    const childContextChain = entry ? [...(contextChainNew || []), [filteredChild.id] as SimplePath] : contextChainNew
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
 
@@ -153,14 +159,18 @@ const linearizeTree = (
       // In the context view, use filteredChild.id (the context) rather than child.id (the context parent), otherwise duplicate thoughts in the same context will have the same key.
       // For example, a/~m/cat and a/~m/cats need to use the ids of cat/cats rather than m.
       // filteredChild === child in normal view, so it does not matter in that case.
-      key: crossContextualKey(contextChainNew, filteredChild.id),
+      key: crossContextualKey(childContextChain, child.id),
       // must filteredChild.id to work for both normal view and context view
-      leaf: !hasChildren(state, filteredChild.id),
+      leaf: !hasChildren(state, entry?.expansion ? child.id : filteredChild.id),
       path: childPath,
       prevChild: filteredChildren[i - 1],
       rank: child.rank,
-      showContexts: contextViewActive,
-      simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
+      showContexts: contextViewActive && !entry?.expansion,
+      portalPath: contextViewActive ? path : portalPath,
+      contextEntry: entry ? { contextViewPath: path, contextId: filteredChild.id, ancestorId: child.id } : undefined,
+      simplePath:
+        entry?.simplePath ||
+        (contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id)),
       style,
       thoughtId: child.id,
       ...(isTable
@@ -168,12 +178,43 @@ const linearizeTree = (
         : null),
     }
 
+    const breadcrumbIds =
+      entry && !isRoot(entry.simplePath)
+        ? parentOf(entry.simplePath).length
+          ? parentOf(entry.simplePath)
+          : [getThoughtById(state, entry.simplePath[0])?.parentId || HOME_TOKEN]
+        : []
+    const breadcrumbNodes: TreeThought[] = breadcrumbIds.flatMap(id => {
+      const ancestor = getThoughtById(state, id)
+      return ancestor
+        ? [
+            {
+              ...node,
+              breadcrumb: true,
+              isCursor: false,
+              leaf: true,
+              showContexts: false,
+              isTableCol1: false,
+              isTableCol2: false,
+              isTableCol2Child: false,
+              isEmpty: false,
+              thoughtId: id,
+              path: [...path, filteredChild.id, id] as Path,
+              simplePath: thoughtToPath(state, id),
+              key: crossContextualKey(childContextChain, id),
+              contextEntry: { contextViewPath: path, contextId: filteredChild.id, ancestorId: id },
+            },
+          ]
+        : []
+    })
+
     // RECURSION
     const descendants = linearizeTree(state, {
       basePath: childPath,
       belowCursor,
-      contextId: contextViewActive ? filteredChild.id : undefined,
-      contextChain: contextChainNew,
+      contextId: contextViewActive && !entry?.expansion ? filteredChild.id : undefined,
+      contextChain: childContextChain,
+      portalPath: contextViewActive ? path : portalPath,
       depth: depth + 1,
       env: envNew,
       indexDescendant: virtualIndexNew,
@@ -191,7 +232,7 @@ const linearizeTree = (
       belowCursor = true
     }
 
-    return [...accum, node, ...descendants]
+    return [...accum, ...breadcrumbNodes, node, ...descendants]
   }, [])
 
   return thoughts
