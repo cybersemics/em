@@ -240,6 +240,13 @@ const useNativeTextDrag = () => {
         const dragged = startRange.extractContents()
         wrapInFormattingAncestors(dragged, ancestor instanceof Element ? ancestor : ancestor.parentElement)
 
+        // Preserve spaces in formatting left empty by the cut before the final empty-tag cleanup runs.
+        sourceCopy.querySelectorAll('*').forEach(element => {
+          if (isFormattingElement(element) && !element.textContent?.trim()) {
+            element.replaceWith(...Array.from(element.childNodes))
+          }
+        })
+
         // Cutting out a word between two spaces leaves both spaces behind, so remove one of them.
         const text = sourceCopy.textContent ?? ''
         const spaceRemoved = /\s/.test(text.charAt(source.start - 1)) && /\s/.test(text.charAt(source.start))

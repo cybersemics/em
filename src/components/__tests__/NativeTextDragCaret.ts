@@ -256,7 +256,7 @@ it('keeps the formatting that encloses dragged text and leaves a single space wh
 })
 
 // https://github.com/cybersemics/em/issues/5952
-it.skip('keeps a source space when moving a word leaves whitespace-only formatting', async () => {
+it('keeps a source space when moving a word leaves whitespace-only formatting', async () => {
   await importOutline(`- foo<b> bar</b> baz
 - qux`)
   const source = getEditable('foo bar baz')
