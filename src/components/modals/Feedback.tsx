@@ -431,7 +431,7 @@ const Feedback = () => {
                 ))}
               </ul>
             )}
-            <label>
+            <label className={css({ opacity: !hasSelection || isSubmitting ? 0.5 : 1 })}>
               <input
                 type='checkbox'
                 checked={includeThoughts}

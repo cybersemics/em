@@ -22,7 +22,7 @@ it('keeps the message field non-resizable across platforms', async () => {
 })
 
 // https://github.com/cybersemics/em/pull/6073#issuecomment-6593989895
-it.skip('dims unavailable thought attachment controls', async () => {
+it('dims unavailable thought attachment controls', async () => {
   await gesture('rdldr')
   await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
   await waitForSelector('input[type="checkbox"]:disabled')
