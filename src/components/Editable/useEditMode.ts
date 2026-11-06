@@ -99,9 +99,9 @@ const useEditMode = ({
           // preserved when the tapped thought belongs to it, so that edits keep mirroring to the other selected thoughts.
           preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path),
           // Enter edit mode here rather than leaving it to Editable's onFocus, which runs when the editable takes the
-          // focus. It would otherwise set the cursor with no offset, and the effect would place the caret at the
-          // start of the thought. The Command Center stays open, since onFocus dismisses the keyboard while it is open.
-          ...(state.showCommandCenter ? null : { isKeyboardOpen: true }),
+          // focus and would set the cursor again with no offset. The caret is already placed by then, but the cursor
+          // offset would be lost.
+          isKeyboardOpen: true,
         }),
       )
       bumpCaretNonce()
