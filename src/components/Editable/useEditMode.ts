@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useEffect, useReducer, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { useStore } from 'react-redux'
 import { useDispatch } from 'react-redux'
@@ -12,6 +12,7 @@ import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import virtualKeyboard from '../../device/virtual-keyboard'
+import useFreshCallback from '../../hooks/useFreshCallback'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
@@ -52,7 +53,10 @@ const useEditMode = ({
   const noteFocus = useSelector(state => state.noteFocus)
   const dragHold = useSelector(state => state.longPress === LongPressState.DragHold)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
-  const disabledRef = useRef(false)
+  // Bumped to place the caret for a tap, since the selection effect does not subscribe to cursorOffset.
+  const [caretNonce, bumpCaretNonce] = useReducer((nonce: number) => nonce + 1, 0)
+  // Whether the next run of the selection effect is placing the caret for a tap.
+  const tapPlacementRef = useRef(false)
   const editableNonce = useSelector(state => state.editableNonce)
   const showSidebar = useSelector(state => state.showSidebar)
   const fontSize = useSelector(state => state.fontSize)
@@ -68,20 +72,61 @@ const useEditMode = ({
   const editMode = !isTouch || editing
   const editingOrOnCursor = isCursor || editing
 
+  /** Updates the Redux cursor state for a tap and has the selection effect place the caret there. */
+  const setCaretOffset = useFreshCallback(
+    (offset: number) => {
+      // Move the focus from another editable or a note before setCursor, as placing the caret synchronously used to.
+      // Their blur handlers dispatch actions of their own, such as a note's whitespace trim and setNoteFocus, and an
+      // Undo restores the note only if they come before setCursor. Focusing the editable directly rather than blurring
+      // gives the blur a relatedTarget, so that Editable's onBlur does not end edit mode.
+      const focused = document.activeElement
+      if (
+        contentRef.current &&
+        focused instanceof HTMLElement &&
+        focused !== document.body &&
+        focused !== contentRef.current
+      ) {
+        contentRef.current.focus({ preventScroll: true })
+      }
+
+      const state = store.getState()
+      tapPlacementRef.current = true
+      dispatch(
+        setCursor({
+          path,
+          offset,
+          // While a multiselection is being edited (Clear Thought), a tap moves the caret as usual. The multiselection is
+          // preserved when the tapped thought belongs to it, so that edits keep mirroring to the other selected thoughts.
+          preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path),
+          // Enter edit mode here rather than leaving it to Editable's onFocus, which runs when the editable takes the
+          // focus and would set the cursor again with no offset. The caret is already placed by then, but the cursor
+          // offset would be lost.
+          isKeyboardOpen: true,
+        }),
+      )
+      bumpCaretNonce()
+    },
+    [dispatch, path, store],
+  )
+
   useCaretRestore({ editableRef: contentRef, enabled: isCursor && !!editing })
-  useRevertCorrection({ editableRef: contentRef, enabled: isCursor && !!editing })
+  useRevertCorrection({ editableRef: contentRef, enabled: isCursor && !!editing, setCaretOffset })
 
   useEffect(
     () => {
       // Get the cursorOffset directly from the store rather than subscribing to it reactively with useSelector.
       // Otherwise, it will try to set the selection while typing.
       const { cursorOffset, lastUndoableActionType } = store.getState()
+      // onMouseDown has already decided that this tap places the caret, so the conditions below for a placement made
+      // by side effect do not apply to it.
+      const isTapPlacement = tapPlacementRef.current
+      tapPlacementRef.current = false
 
       /** Set the selection to the current Editable at the cursor offset. */
       const setSelectionToCursorOffset = () => {
         // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
         // https://github.com/cybersemics/em/issues/1596
-        if (style?.visibility === 'hidden') {
+        if (style?.visibility === 'hidden' && !isTapPlacement) {
           selection.clear()
         } else {
           // Neither the Android WebView nor Chromium raises the virtual keyboard when a thought enters edit
@@ -109,6 +154,7 @@ const useEditMode = ({
       // allow transient editable to have focus on render
       const shouldSetSelection =
         transient ||
+        isTapPlacement ||
         (isEditing &&
           editMode &&
           !noteFocus &&
@@ -119,11 +165,11 @@ const useEditMode = ({
           // thought reaches this point (guarded by isEditing above); the other cleared thoughts show a faux caret.
           (!isMulticursor || isCursorCleared) &&
           !dragHold &&
-          !dragInProgress &&
-          !disabledRef.current)
+          !dragInProgress)
 
       if (shouldSetSelection) {
         const shouldAsyncFocus =
+          !isTapPlacement &&
           isTouch &&
           isSafari() &&
           lastUndoableActionType !== 'swapParent' &&
@@ -140,7 +186,8 @@ const useEditMode = ({
           hidden: style?.visibility === 'hidden',
         }))
 
-        preventAutoscroll(contentRef.current)
+        // onMouseDown has already prevented autoscroll for a tap, with a margin that this would replace.
+        if (!isTapPlacement) preventAutoscroll(contentRef.current)
 
         /*
         When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
@@ -190,35 +237,16 @@ const useEditMode = ({
       // Otherwise it breaks selection offset persistence on refresh on desktop.
       editing,
       editableNonce,
+      caretNonce,
       store,
       transient,
     ],
   )
 
-  // Provide an escape hatch to allow the next default selection rather than setting it.
-  // This allows the user to set the selection in the middle of a non-cursor thought when keyboard is open.
-  // Otherwise the caret is moved to the beginning of the thought.
-  const allowDefaultSelection = useCallback(() => {
-    disabledRef.current = true
-    // enable on next tick, which is long enough to skip the next setSelectionToCursorOffset
-    setTimeout(() => {
-      disabledRef.current = false
-    })
-  }, [])
-
   // Handles the caret positioning logic for the editable element.
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
-
-    /** Sets the DOM selection and updates the Redux cursor state. */
-    const setCaretOffset = (
-      offset: number,
-      { cursorHistoryClear, preserveMulticursor }: { cursorHistoryClear?: boolean; preserveMulticursor?: boolean } = {},
-    ) => {
-      selection.set(editable, { offset })
-      dispatch(setCursor({ path, offset, cursorHistoryClear, preserveMulticursor }))
-    }
 
     /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
     const onTouchStart = (e: TouchEvent) => {
@@ -278,7 +306,7 @@ const useEditMode = ({
     /**
      * Handles the mousedown event for the editable element.
      * Prevents focus on non-cursor thoughts or during multiselect clicks.
-     * When editing or cursor is present (and multicursor is not active), computes the caret position manually so that it can be set on mouseup.
+     * When editing or cursor is present (and multicursor is not active), computes the caret position manually and places it through setCaretOffset.
      * Prevents default behavior and manages autoscroll for certain edge cases where browser selection would be incorrect.
      */
     const onMouseDown = (e: MouseEvent) => {
@@ -309,11 +337,7 @@ const useEditMode = ({
         return
       }
 
-      // While a multiselection is being edited (Clear Thought), a tap moves the caret as usual. The multiselection is
-      // preserved when the tapped thought belongs to it, so that edits keep mirroring to the other selected thoughts.
-      const state = store.getState()
-      const multiEditing = isMultiEditing(state)
-      const preserveMulticursor = multiEditing && isMulticursorPath(state, path)
+      const multiEditing = isMultiEditing(store.getState())
 
       // Suppress the synthesized mousedown that iOS Safari can emit for a tap whose touchend already moved
       // the cursor without entering edit mode or a completed drag (see suppressCursorAfterTouch in stores/touchStore.ts). The cursor move
@@ -340,10 +364,7 @@ const useEditMode = ({
             bottomMargin: fontSize * 2,
           })
 
-          // Setting the caret offset will activate the declarative shouldSetSelection effect, which will call preventAutoscroll and selection.set
-          // all over again. Since the selection is managed imperatively in this handler, this duplicate behavior is undesirable.
-          allowDefaultSelection()
-          setCaretOffset(offset, { preserveMulticursor })
+          setCaretOffset(offset)
 
           // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
           // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
@@ -414,10 +435,10 @@ const useEditMode = ({
     contentRef,
     editing,
     editingOrOnCursor,
+    setCaretOffset,
     isCursor,
     isMulticursor,
     fontSize,
-    allowDefaultSelection,
     path,
     dispatch,
     store,
