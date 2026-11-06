@@ -96,6 +96,52 @@ it('preserves both notes when swapping a parent and child that each have a note'
         - child note`)
 })
 
+// https://github.com/cybersemics/em/issues/3725
+it('carries =favorite with its thought while =pin keeps its position', () => {
+  const text = `
+    - a
+      - =pin
+        - true
+      - b
+        - =favorite
+        - c
+      - d
+  `
+
+  const steps = [importText({ text }), setCursor(['a', 'b']), swapParent]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - b
+    - =favorite
+    - =pin
+      - true
+    - a
+      - c
+    - d`)
+})
+
+// https://github.com/cybersemics/em/issues/3725
+it('leaves =favorite with the parent', () => {
+  const text = `
+    - a
+      - =favorite
+      - b
+        - c
+  `
+
+  const steps = [importText({ text }), setCursor(['a', 'b']), swapParent]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - b
+    - a
+      - =favorite
+      - c`)
+})
+
 it('swaps child thought with parent', () => {
   const text = `
   - x
