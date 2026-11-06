@@ -58,6 +58,22 @@ describe('Caret', () => {
     expect(selectionTextContent).toBe('foo')
   })
 
+  // Entering edit mode focuses the thought, and Editable's onFocus would set the cursor with no offset, moving the caret
+  // to the start of the thought, unless the tap has already entered edit mode.
+  it('Enter edit mode at the tapped word', async () => {
+    const value = 'Hello world'
+    await newThought(value)
+    await hideKeyboardByTappingDone()
+
+    // tap the "w" of "world", a little inside the glyph so that the tap does not land on the word boundary, and
+    // quickly, since a slow tap near the caret gets no mouse events
+    const editable = await waitForEditable(value)
+    await tap(editable, { offset: 'Hello '.length, x: 3, pointerType: 'touch', releaseDelayMs: 30 })
+
+    await waitUntil(isKeyboardShown)
+    await waitForCaretOffset('Hello '.length)
+  })
+
   it('Preserve Editing: true', async () => {
     await newThought('foo')
     await newThought('bar', { insertNewSubthought: true })
