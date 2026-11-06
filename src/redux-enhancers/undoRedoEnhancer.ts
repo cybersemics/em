@@ -78,6 +78,14 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
       : EditThoughtDirection.Shorter
 }
 
+/** Gets where the caret was before and after an action, for a new patch to store (see Patch.cursorOffset). A formatting edit or a letter case change leaves the plain text, and so the caret, where it was, so its before is its after. Its action-creator reads the live caret, while state.cursorOffset may predate a caret move that was not recorded, such as an arrow key, which would send the caret back there on Undo (#3908). */
+function getCursorOffsets(action: UnknownAction, state: State, newState: State): Patch['cursorOffset'] {
+  const isFormattingEdit =
+    isEditThoughtAction(action) &&
+    getTextContent(action.oldValue).toLowerCase() === getTextContent(action.newValue).toLowerCase()
+  return { before: isFormattingEdit ? newState.cursorOffset : state.cursorOffset, after: newState.cursorOffset }
+}
+
 /** Properties that are ignored when generating state patches.
  * The editableNonce is a transient re-render trigger (incremented by editableRender and by force edits), not real state.
  * It must be excluded from patches, otherwise undoing a force edit reverts the nonce and editableRender re-increments
@@ -91,10 +99,13 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
  * dismissKeyboard paths may.
  * The selectionOffsets snapshot is likewise device state: it records where the browser selection was before a UI took
  * the focus, so restoring the one that happened to be current when an action was undone would resurrect a selection
- * the user has long since moved on from. */
+ * the user has long since moved on from.
+ * The cursorOffset is stored on each patch instead (see Patch.cursorOffset), so that Undo and Redo restore where the
+ * caret was when the patch's actions ran rather than wherever it was moved since. */
 const statePropertiesToOmit: (keyof State)[] = [
   'alert',
   'cursorCleared',
+  'cursorOffset',
   'editableNonce',
   'helpGenie',
   'isKeyboardOpen',
@@ -255,13 +266,18 @@ const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] => {
 /**
  * Creates a patch with user-level metadata stored once, independently of its operations.
  */
-const createPatch = (ops: Operation[], metadata: PatchMetadataInput, actionType: ActionType): Patch => ({
+const createPatch = (
+  ops: Operation[],
+  metadata: PatchMetadataInput,
+  { actionType, cursorOffset }: { actionType: ActionType; cursorOffset: Patch['cursorOffset'] },
+): Patch => ({
   ops,
   metadata: {
     ...metadata,
     actionTypes: [actionType],
     isNavigation: isNavigation(actionType),
   },
+  cursorOffset,
 })
 
 /** Actions that mutate state.multicursors. They are not undoable on their own, since selecting thoughts should not be an undo step, but they must be tracked while a multicursor command is executing. See the bail condition in the enhancer. */
@@ -283,9 +299,13 @@ const undoOneReducer = (state: State): State => {
   const correspondingRedoPatch: Patch = {
     ops: diffState(newState as Index, state),
     metadata: lastUndoPatch.metadata,
+    // Carried over rather than taken from the current state, which holds wherever the caret was moved since.
+    cursorOffset: lastUndoPatch.cursorOffset,
   }
   return {
     ...newState,
+    // When a step spans several patches, the oldest is undone last, so the caret ends where it was before the step.
+    cursorOffset: lastUndoPatch.cursorOffset.before,
     // A replay can produce no operations when a non-undoable action already wrote back the restored state. Since the
     // reverted patch restored nothing, there is nothing to redo (#5434).
     redoPatches: correspondingRedoPatch.ops.length ? [...redoPatches, correspondingRedoPatch] : redoPatches,
@@ -306,9 +326,12 @@ const redoOneReducer = (state: State): State => {
   const correspondingUndoPatch: Patch = {
     ops: diffState(newState as Index, state),
     metadata: lastRedoPatch.metadata,
+    cursorOffset: lastRedoPatch.cursorOffset,
   }
   return {
     ...newState,
+    // When a step spans several patches, the newest is redone last, so the caret ends where it was after the step.
+    cursorOffset: lastRedoPatch.cursorOffset.after,
     redoPatches: redoPatches.slice(0, -1),
     // Do not create an empty undo step when replay had no effect. See undoOneReducer.
     undoPatches: correspondingUndoPatch.ops.length ? [...undoPatches, correspondingUndoPatch] : undoPatches,
@@ -357,12 +380,6 @@ const undoReducer = (
 
   const poppedUndoPatches = undoPatches.slice(-undoCount)
 
-  // Capture the current cursor offset before applying the undo patch.
-  // When undoing a formatting-only edit, preserve this offset
-  // so the caret stays where it was at the time of undo, instead of jumping to
-  // the pre-formatting position that was stored in the patch.
-  const priorCursorOffset = state.cursorOffset
-
   return reducerFlow([
     ...Array.from({ length: undoCount }, () => undoOneReducer),
     newState =>
@@ -371,7 +388,6 @@ const undoReducer = (
         state,
         poppedUndoPatches.flatMap(patch => patch.ops),
       ),
-    undoCount === 1 && lastPatchIsFormatting ? (s: State) => ({ ...s, cursorOffset: priorCursorOffset }) : null,
     cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
@@ -462,9 +478,10 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
         // do not omit pushQueue because that includes updates added by updateThoughts
         // do not omit editableNonce because editableRender bumps it to force ContentEditable to re-render after undo/redo
+        // do not omit cursorOffset because undo/redo sets it from the patch (see Patch.cursorOffset)
         const omitted = _.pick(
           state,
-          statePropertiesToOmit.filter(k => k !== 'pushQueue' && k !== 'editableNonce'),
+          statePropertiesToOmit.filter(k => k !== 'pushQueue' && k !== 'editableNonce' && k !== 'cursorOffset'),
         )
 
         return { ...undoOrRedoState!, ...omitted }
@@ -487,6 +504,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         // selected (#4728). Other non-undoable actions are still skipped so that transient ui state (e.g. the
         // Command Center opened by the multicursor alert middleware) is not restored by undo.
         (!isUndoable(actionType) && !(state.isMulticursorExecuting && multicursorActionTypes.has(actionType))) ||
+        // A caret move within the thought being edited, such as a tap that sets the cursor on the thought it is already
+        // on, is not an undo step. Recording it would clear the redo stack and be undone along with the edit before it
+        // (#6221). Such a move changes nothing but cursorOffset, which is not diffed. Without this, a move that follows
+        // another navigation would be merged into its patch below and change where Redo puts the caret.
+        (isNavigation(actionType) && diffState(newState as Index, state).length === 0) ||
         // ignore the first importText since it is part of app initialization and should not be undoable
         // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
         // See: https://github.com/cybersemics/em/issues/1494
@@ -581,6 +603,13 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
                         ? lastUndoPatch.metadata.isNavigation && isNavigation(actionType)
                         : isNavigation(actionType),
                     },
+                    // The merged patch starts where the patch it extends started.
+                    cursorOffset: {
+                      before: lastUndoPatch
+                        ? lastUndoPatch.cursorOffset.before
+                        : getCursorOffsets(action, state, newState).before,
+                      after: newState.cursorOffset,
+                    },
                   },
                 ]
               : []),
@@ -607,7 +636,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
               createPatch(
                 undoPatch,
                 { ...(commandMetadata ?? { source: 'action' as const }), ...actionLabel },
-                actionType,
+                { actionType, cursorOffset: getCursorOffsets(action, state, newState) },
               ),
             ],
           }

@@ -497,6 +497,9 @@ it('quote a multiline paste in a code block', () => {
       text: `
         - a
       `,
+      // Leave the cursor off a, so that setting it on a is a step of its own. Otherwise the paste would be the first
+      // undoable action after the import, which the undo history ignores as part of initialization.
+      preventSetCursor: true,
     }),
     setCursor(['a']),
     (dispatch, getState) =>
@@ -543,6 +546,9 @@ it('describe a single-line paste by the pasted text', () => {
       text: `
         - a
       `,
+      // Leave the cursor off a, so that setting it on a is a step of its own. Otherwise the paste would be the first
+      // undoable action after the import, which the undo history ignores as part of initialization.
+      preventSetCursor: true,
     }),
     setCursor(['a']),
     (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['a'])!, text: 'xyz' })),

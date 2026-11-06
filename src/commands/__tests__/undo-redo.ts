@@ -10,6 +10,7 @@ import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { redoActionCreator as redo } from '../../actions/redo'
+import { setCursorActionCreator as setCursorRaw } from '../../actions/setCursor'
 import { setNoteFocusActionCreator as setNoteFocus } from '../../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
@@ -294,7 +295,14 @@ describe('undo', () => {
   it('cursor should restore correctly after undo archive', async () => {
     await initialize({ storage: 'memory' })
 
-    store.dispatch([newThought({ value: 'a' }), setCursor(['a']), { type: 'archiveThought' }, undo()])
+    // A thought created and archived with nothing in between would be removed together by one undo, since undo groups a
+    // new thought with the step that follows it. Import the thought instead, so that only the archive is undone.
+    store.dispatch([
+      importText({ text: '- a', preventSetCursor: true }),
+      setCursor(['a']),
+      { type: 'archiveThought' },
+      undo(),
+    ])
 
     const stateNew = store.getState()
     const expectedCursor = [{ value: 'a', rank: 0 }]
@@ -1042,7 +1050,7 @@ describe('grouping', () => {
     // patch that triggered undoTwice, restoring cursorOffset to the pre-setCursor value (0 on
     // desktop when editingValueStore is non-null from a prior edit).
     // Fix: formatLetterCase now passes cursorOffset directly to editThought (matching the other formatting actions),
-    // and undoReducer preserves the current cursorOffset when undoing a formatting-only edit.
+    // and the patch of a formatting-only edit records that live offset as where the caret was before the edit too.
     store.dispatch([importText({ text: `- hello` }), setCursor(['hello'])])
 
     const path = contextToPath(store.getState(), ['hello'])!
@@ -1068,6 +1076,87 @@ describe('grouping', () => {
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toContain('hello')
     expect(exported).not.toContain('HELLO')
+  })
+
+  // https://github.com/cybersemics/em/issues/6221
+  it('undo of a formatting edit should return the caret to where it was before the edit, not where it was moved since', () => {
+    store.dispatch([importText({ text: `- Hello beautiful people in the world` })])
+    const path = contextToPath(store.getState(), ['Hello beautiful people in the world'])!
+
+    // Bold the thought with the caret before "the".
+    store.dispatch(
+      editThoughtRaw({
+        oldValue: 'Hello beautiful people in the world',
+        newValue: '<b>Hello beautiful people in the world</b>',
+        path,
+        cursorOffset: 26,
+        force: true,
+      }),
+    )
+
+    // Tap before "in", which moves the caret within the thought being edited.
+    store.dispatch(setCursorRaw({ path, offset: 23 }))
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Hello beautiful people in the world`)
+    expect(store.getState().cursorOffset).toBe(26)
+  })
+
+  // https://github.com/cybersemics/em/issues/6221
+  it('undo and redo of a typed edit should place the caret where it was before and after the edit, not where it was moved since', () => {
+    store.dispatch([importText({ text: `- Hello world` })])
+    const path = contextToPath(store.getState(), ['Hello world'])!
+    store.dispatch(setCursorRaw({ path, offset: 11 }))
+
+    // Type "XYZ" at the end of the thought.
+    store.dispatch(editThoughtRaw({ oldValue: 'Hello world', newValue: 'Hello worldXYZ', path, cursorOffset: 14 }))
+
+    // Tap after "He", which moves the caret within the thought being edited.
+    store.dispatch(setCursorRaw({ path, offset: 2 }))
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Hello world`)
+    expect(store.getState().cursorOffset).toBe(11)
+
+    // Tap after "He" again before redoing.
+    store.dispatch(setCursorRaw({ path, offset: 2 }))
+
+    store.dispatch(redo())
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Hello worldXYZ`)
+    expect(store.getState().cursorOffset).toBe(14)
+  })
+
+  // https://github.com/cybersemics/em/issues/6221
+  it('redo of a formatting edit should still be available after the caret is moved within the thought', () => {
+    store.dispatch([importText({ text: `- Hello beautiful people in the world` })])
+    const path = contextToPath(store.getState(), ['Hello beautiful people in the world'])!
+
+    // Bold the thought with the caret before "the", then undo it.
+    store.dispatch(
+      editThoughtRaw({
+        oldValue: 'Hello beautiful people in the world',
+        newValue: '<b>Hello beautiful people in the world</b>',
+        path,
+        cursorOffset: 26,
+        force: true,
+      }),
+    )
+    store.dispatch(undo())
+
+    // Tap after "Hello beau", which moves the caret within the thought being edited.
+    store.dispatch(setCursorRaw({ path, offset: 10 }))
+
+    store.dispatch(redo())
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - **Hello beautiful people in the world**`)
+    expect(store.getState().cursorOffset).toBe(26)
   })
 
   // https://github.com/cybersemics/em/pull/4692
