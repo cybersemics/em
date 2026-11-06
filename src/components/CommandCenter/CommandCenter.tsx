@@ -4,6 +4,7 @@ import {
   PanInfo,
   animate,
   easeIn,
+  easeOut,
   motion,
   useMotionTemplate,
   useMotionValue,
@@ -54,8 +55,11 @@ const SNAP_STANDARD = 1
 /** Snap index of the expanded stage. */
 const SNAP_EXPANDED = 2
 
-/** The height offset between the standard and expanded stages. */
-const STAGE_OFFSET_REM = 2.78
+/** The height offset between the standard and expanded stages, as a share of the viewport height. */
+const STAGE_OFFSET_FRACTION = 0.275
+
+/** The gap that react-modal-sheet keeps above the sheet, below the top safe area. This gap limits how tall the sheet can get. */
+const SHEET_TOP_GAP_PX = 34
 
 /**************************************************************
  * Expand bounce constants
@@ -65,8 +69,8 @@ const STAGE_OFFSET_REM = 2.78
  * How far above the expanded stage a drag expand reaches before settling back onto it.
  *
  * Proportional to the font size like every other measure here, and inside the gap budget: the expanded
- * stage's command list already extends CHEVRON_SECTION_HEIGHT_REM + STAGE_OFFSET_REM below the viewport,
- * so a lift this size never opens a gap beneath the drawer.
+ * stage's command list already extends CHEVRON_SECTION_HEIGHT_REM + stageOffset below the viewport,
+ * and stageOffset never drops below MIN_STAGE_OFFSET_REM, so a lift this size never opens a gap beneath the drawer.
  */
 const MAX_EXPAND_REM = 1.71
 
@@ -99,6 +103,24 @@ const applyBounceDrag = ({ deltaY, raw, y }: { deltaY: number; raw: number; y: n
 
 /** The height of Chevron section area. */
 const CHEVRON_SECTION_HEIGHT_REM = 1.56
+
+/** The space below the chevron section, added to the bottom safe area padding. */
+const CHEVRON_BOTTOM_GAP_REM = 0.113
+
+/** The smallest bottom safe area padding, for when safeAreaBottom is smaller or not available (e.g. in a browser). */
+const CHEVRON_MIN_BOTTOM_PADDING_REM = 0.889
+
+/**
+ * The height from the drawer's top edge to the bottom of the chevron band is STANDARD_STAGE_BASE_PX + STANDARD_STAGE_REM * fontSize.
+ * Measured from the rendered standard stage, so measure it again when the layout of the header, command grid or chevron band changes.
+ * At narrow widths with a very large font, a command label wraps and the real height is about 19px taller. The chevron stays on screen.
+ */
+const STANDARD_STAGE_BASE_PX = 233
+/** The part of the standard stage height that scales with the font size. See STANDARD_STAGE_BASE_PX. */
+const STANDARD_STAGE_REM = 4
+
+/** The smallest stage offset. It keeps the command list long enough to cover the gap that the expand bounce opens below the drawer. */
+const MIN_STAGE_OFFSET_REM = MAX_EXPAND_REM - CHEVRON_SECTION_HEIGHT_REM
 
 /** Dimensions of the chevron svg in px. The rounded path is inset by half its stroke, so these are the bounds of the visible mark, not a box it is letterboxed inside. */
 const CHEVRON_WIDTH = 33
@@ -488,7 +510,22 @@ const CommandCenter = () => {
   /** Moves the glow image the opposite way so it stays aligned with the page background. */
   const glowImageTranslate = useMotionTemplate`0 calc(${height}px - 100%)`
 
-  const stageOffset = Math.round(fontSize * STAGE_OFFSET_REM)
+  const { top: safeAreaTop, bottom: safeAreaBottom } = useSafeArea()
+  const innerHeight = viewportStore.useSelector(state => state.innerHeight)
+
+  /** The height that the standard stage needs on screen, including the padding below the chevron band. */
+  const standardStageHeight =
+    STANDARD_STAGE_BASE_PX +
+    fontSize * (STANDARD_STAGE_REM + CHEVRON_BOTTOM_GAP_REM) +
+    Math.max(safeAreaBottom, fontSize * CHEVRON_MIN_BOTTOM_PADDING_REM)
+
+  // The sheet cannot grow past its maximum height. An offset larger than the space left above the standard stage
+  // would push the bottom of the standard stage, including the chevron, off the screen.
+  // This happens in landscape and with large fonts on small phones.
+  const stageOffsetLimit = innerHeight - safeAreaTop - SHEET_TOP_GAP_PX - standardStageHeight
+  const stageOffset = Math.round(
+    Math.max(Math.min(innerHeight * STAGE_OFFSET_FRACTION, stageOffsetLimit), fontSize * MIN_STAGE_OFFSET_REM),
+  )
 
   /* Negative snap points are measured from the top of the sheet, so this resolves to
    * [closed, sheetHeight - stageOffset, sheetHeight]. At the standard stage, the bottom stageOffset
@@ -620,8 +657,14 @@ const CommandCenter = () => {
   // The Standard and Expanded stage animations are controlled independently by
   // `standardViewOpacity` and `expandedViewOpacity`, but both are derived from
   // the same `stageProgress` value to ensure smooth transitions between stages.
-  const standardViewOpacity = useTransform(stageProgress, [0, 0.9], [1, 0])
-  const expandedViewOpacity = useTransform(stageProgress, [0.2, 1], [0, 1], { ease: easeIn })
+  const standardViewOpacity = useTransform(stageProgress, [0, 0.5], [1, 0])
+  const expandedViewOpacity = useTransform(stageProgress, [0.4, 1], [0, 1])
+  // The command grid moves up and shrinks as it fades out, while the command list rises into its place as it fades in.
+  const standardViewYRem = useTransform(stageProgress, [0, 0.5], [0, -2.5], { ease: easeIn })
+  const standardViewY = useMotionTemplate`${standardViewYRem}rem`
+  const standardViewScale = useTransform(stageProgress, [0, 0.5], [1, 0.94])
+  const expandedViewYRem = useTransform(stageProgress, [0.4, 1], [1.5, 0], { ease: easeOut })
+  const expandedViewY = useMotionTemplate`${expandedViewYRem}rem`
   const standardPointerEvents = useTransform(stageProgress, p => (p > 0.5 ? 'none' : 'auto')) as MotionValue<
     'none' | 'auto'
   >
@@ -884,16 +927,17 @@ const CommandCenter = () => {
                     gap: '0.889rem',
                   })}
                   style={{
-                    // Apply extra padding to the bottom of the content to account for the safe area and the chevron section.
+                    // Apply extra padding to the bottom of the content to account for the safe area and the part of
+                    // the drawer that the standard stage leaves below the screen.
                     // However, safeAreaBottom is not always available (e.g, in a browser).
                     // So we use `max()` to apply a minimum padding to prevent the chevron from sitting too close
                     // to the bottom of the screen.
-                    paddingBottom: `calc(1.333rem + max(${token('spacing.safeAreaBottom')}, 0.889rem) + ${CHEVRON_SECTION_HEIGHT_REM}rem)`,
+                    paddingBottom: `calc(${CHEVRON_BOTTOM_GAP_REM}rem + max(${token('spacing.safeAreaBottom')}, ${CHEVRON_MIN_BOTTOM_PADDING_REM}rem) + ${stageOffset}px)`,
                   }}
                 >
                   <div className={css({ position: 'relative' })}>
                     <motion.div
-                      /** The standard stage's command grid. Kept on its own compositor layer so the stage crossfade blends it rather than repainting every tile each frame. */
+                      /** The standard stage's command grid. Kept on its own compositor layer so the stage transition moves and fades it rather than repainting every tile each frame. */
                       className={css({
                         display: 'grid',
                         gridTemplateColumns: 'repeat(4, 1fr)',
@@ -901,11 +945,14 @@ const CommandCenter = () => {
                         gridAutoFlow: 'row',
                         gap: '0.622rem',
                         gridRowGap: '0.889rem',
+                        transformOrigin: 'top center',
                       })}
                       style={{
                         opacity: standardViewOpacity,
+                        y: standardViewY,
+                        scale: standardViewScale,
                         pointerEvents: standardPointerEvents,
-                        willChange: 'opacity',
+                        willChange: 'opacity, transform',
                       }}
                     >
                       <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
@@ -928,19 +975,20 @@ const CommandCenter = () => {
                         left: 0,
                         right: 0,
                         display: 'flex',
-                        minHeight: 0,
+                        // minHeight: 0,
                       })}
                       style={{
                         opacity: expandedViewOpacity,
+                        y: expandedViewY,
                         pointerEvents: expandedPointerEvents,
                         // Set a negative bottom value to allow content to extend into the hidden chevron
                         // area instead of stopping at the visible edge.
-                        bottom: `calc(-1 * (${CHEVRON_SECTION_HEIGHT_REM}rem + ${STAGE_OFFSET_REM}rem))`,
-                        // Keeps the command list on its own compositor layer, so the stage crossfade blends
-                        // it rather than repainting every row each frame. Declared statically rather than
-                        // only while the crossfade runs: the layer has to exist before the first frame of
-                        // the fade to save that frame, and this subtree only exists while the drawer is open.
-                        willChange: 'opacity',
+                        bottom: `calc(-1 * (${CHEVRON_SECTION_HEIGHT_REM}rem + ${stageOffset}px))`,
+                        // Keeps the command list on its own compositor layer, so the stage transition moves
+                        // and fades it rather than repainting every row each frame. Declared statically rather
+                        // than only while the transition runs: the layer has to exist before the first frame of
+                        // the transition to save that frame, and this subtree only exists while the drawer is open.
+                        willChange: 'opacity, transform',
                       }}
                     >
                       <div
