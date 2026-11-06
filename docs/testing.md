@@ -695,6 +695,7 @@ The helpers in [`../src/test-helpers/`](../src/test-helpers) cover store setup a
 - **Read-by-value helpers.** [`getAllChildrenByContext`](../src/test-helpers/getAllChildrenByContext.ts), [`getChildrenRankedByContext`](../src/test-helpers/getChildrenRankedByContext.ts), [`getAllChildrenAsThoughtsByContext`](../src/test-helpers/getAllChildrenAsThoughtsByContext.ts), [`attributeByContext`](../src/test-helpers/attributeByContext.ts), [`contextToThought`](../src/test-helpers/contextToThought.ts).
 - [`multicursorValues`](../src/test-helpers/multicursorValues.ts) — the sorted thought values of the current multicursor set, so multiselect assertions read as values rather than ids.
 - [`expectPathToEqual`](../src/test-helpers/expectPathToEqual.ts) — Jest matcher that compares paths by their thought *values* rather than ids, so test failures are readable.
+- [`layOutText`](../src/test-helpers/layOutText.ts) — lays out all text on one line at a fixed width per character, for the range geometry that `getCaretOffset` hit-tests a tap against, which JSDOM measures as empty. It replaces `Range.prototype.getBoundingClientRect` and `getClientRects` for the rest of the test and restores the fallbacks from `setupTests.ts` when it finishes. A click or tap whose outcome depends on the browser's own event order, such as the focus that follows a `mousedown`, belongs in a Puppeteer or iOS test instead, since JSDOM cannot produce that order.
 
 ### `src/e2e/puppeteer/helpers/` — for Puppeteer tests
 

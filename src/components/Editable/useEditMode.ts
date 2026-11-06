@@ -72,8 +72,8 @@ const useEditMode = ({
   const editMode = !isTouch || editing
   const editingOrOnCursor = isCursor || editing
 
-  /** Updates the Redux cursor state for a tap and has the selection effect place the caret there. */
-  const setCaretOffset = useFreshCallback(
+  /** Records the offset of a tap in the Redux cursor state. */
+  const recordCaretOffset = useFreshCallback(
     (offset: number) => {
       // Move the focus from another editable or a note before setCursor, as placing the caret synchronously used to.
       // Their blur handlers dispatch actions of their own, such as a note's whitespace trim and setNoteFocus, and an
@@ -90,7 +90,6 @@ const useEditMode = ({
       }
 
       const state = store.getState()
-      tapPlacementRef.current = true
       dispatch(
         setCursor({
           path,
@@ -104,13 +103,22 @@ const useEditMode = ({
           isKeyboardOpen: true,
         }),
       )
-      bumpCaretNonce()
     },
     [dispatch, path, store],
   )
 
+  /** Records the offset of a tap and has the selection effect place the caret there. */
+  const setCaretOffset = useFreshCallback(
+    (offset: number) => {
+      tapPlacementRef.current = true
+      recordCaretOffset(offset)
+      bumpCaretNonce()
+    },
+    [recordCaretOffset],
+  )
+
   useCaretRestore({ editableRef: contentRef, enabled: isCursor && !!editing })
-  useRevertCorrection({ editableRef: contentRef, enabled: isCursor && !!editing, setCaretOffset })
+  useRevertCorrection({ editableRef: contentRef, enabled: isCursor && !!editing, recordCaretOffset })
 
   useEffect(
     () => {
