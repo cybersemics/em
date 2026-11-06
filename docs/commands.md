@@ -209,7 +209,7 @@ Both take the browser selection away from the thought as they open — the deskt
 
 The macOS desktop app lists commands in the menu bar. A command's **`systemMenu`** names the top level menu it goes in (`App`, `File`, `Edit`, `Cursor`, `View`, or `Help`). `App` is the menu titled with the app's name, where Settings goes by macOS convention. A command without `systemMenu` is not in the menu bar. Windows and Linux do not have a menu bar yet.
 
-The menu is native, built in [`desktop/src/menu.rs`](../desktop/src/menu.rs), but the commands are the source of truth, so the Rust code names no command. It reads [`desktop/menu.json`](../desktop/menu.json) at compile time, which [`systemMenuDefinition`](../src/util/systemMenuDefinition.ts) generates from the registered commands: each menu's commands sorted by label, with each one's id, label, accelerator, and whether it is checkable. The file is committed, so that `cargo check` in Tauri Check builds the menu without Node. `yarn tauri:menu` regenerates it, and `tauri dev` and `tauri build` run it first, in `beforeDevCommand` and `beforeBuildCommand` ([`tauri.conf.json`](../desktop/tauri.conf.json)), so the app is always built from the current commands. It loads the commands in the unit test environment, the one place they all load outside the app, and writes the file as a [file snapshot](../src/util/__tests__/systemMenuDefinition.ts). The same test fails in `yarn test` while the committed file is out of date, since `cargo check` does not regenerate it.
+The menu is native, built in [`desktop/src/menu.rs`](../desktop/src/menu.rs), but the commands are the source of truth, so the Rust code names no command. It reads [`desktop/menu.json`](../desktop/menu.json) at compile time, which [`systemMenuDefinition`](../src/util/systemMenuDefinition.ts) generates from the registered commands: each menu's commands sorted by label, with each one's id, label, accelerator, and whether it is checkable. The file is committed, so that `cargo check` in Tauri Check builds the menu without Node. `yarn tauri:menu` regenerates it, and `tauri dev` and `tauri build` run it first, in `beforeDevCommand` and `beforeBuildCommand` ([`tauri.conf.json`](../desktop/tauri.conf.json)), so the app is always built from the current commands. It loads the commands in the unit test environment, the one place they all load outside the app, with `isTauri` stubbed to return true so that they carry the shortcuts that only the desktop app binds, and writes the file as a [file snapshot](../src/util/__tests__/systemMenuDefinition.ts). The same test fails in `yarn test` while the committed file is out of date, since `cargo check` does not regenerate it.
 
 The accelerator is the shortcut the app displays for the command: the first of a `keyboard` array, or `keyboardDisplay`. Only a shortcut with Command, Control, or Option gets one. A menu accelerator takes its key whenever the page leaves the key unhandled, so a bare or Shift-only key such as Enter, Space, Tab, or Escape gets none, to keep it from interfering with typing. Nor does a shortcut that a native item already has, which `NATIVE_ACCELERATORS` lists: Home's Command + Option + H is the shortcut of Hide Others. The page still runs such a command from its shortcut. A key that an accelerator cannot name, such as `?`, fails generation.
 
@@ -874,9 +874,15 @@ Open the recently edited sidebar.
 
 Increase the font size. Bigger is better!
 
+<kbd>Command + =</kbd> (desktop app only)
+
 ### Decrease Font Size
 
 Decrease the font size. Get your reading glasses.
+
+<kbd>Command + -</kbd> (desktop app only)
+
+In a browser tab, Command/Ctrl + = and Command/Ctrl + - are left to the browser's zoom, so the two shortcuts are bound only when `isTauri()` is true. Like browser zoom, both commands also run while a modal is open (`allowExecuteFromModal`), so a size can be tried from Settings.
 
 ### Undo
 
