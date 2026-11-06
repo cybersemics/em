@@ -116,7 +116,7 @@ it('allow mousedown on the cursor thought when no cursor-moving tap preceded it'
 })
 
 // https://github.com/cybersemics/em/issues/4220
-it('keeps the caret where a tap landed and records it while iOS moves the caret', async () => {
+it('keeps the caret where a tap landed while iOS moves the caret', async () => {
   const value = 'Hello beautiful people in the world'
   store.dispatch([importText({ text: `- ${value}` }), setCursor([value]), keyboardOpen({ value: true })])
 
@@ -150,29 +150,29 @@ it('keeps the caret where a tap landed and records it while iOS moves the caret'
     })
 
   const offsetBeforeThe = 'Hello beautiful people in '.length
+  const offsetAfterThe = 'Hello beautiful people in the'.length
   const offsetBeforeIn = 'Hello beautiful people '.length
+  const offsetAfterHello = 'Hello'.length
+
+  /** Taps the given character offset at the given height, slowly enough that it gets no mouse events. */
+  const tapAt = (offset: number, clientY = 10) => {
+    const finger = { identifier: 0, clientX: offset * 10 + 2, clientY }
+    act(() => {
+      dispatchTouchEvent('touchstart', [finger], { target: editable })
+      dispatchTouchEvent('touchend', [finger], { touches: [], target: editable })
+    })
+  }
+
   moveCaretTo(offsetBeforeThe)
   await act(vi.runOnlyPendingTimersAsync)
 
-  // a slow tap gets no mouse events
-  const finger = { identifier: 0, clientX: offsetBeforeIn * 10 + 2, clientY: 10 }
-  act(() => {
-    dispatchTouchEvent('touchstart', [finger], { target: editable })
-    dispatchTouchEvent('touchend', [finger], { touches: [], target: editable })
-  })
-
-  // iOS moves the caret to the tapped word, and then back to where it was
+  // iOS places the caret at the tapped word, and then moves it back to where it was (#4220)
+  tapAt(offsetBeforeIn)
   moveCaretTo(offsetBeforeIn)
   moveCaretTo(offsetBeforeThe)
-
-  expect(selection.offsetFromNode(editable)).toBe(offsetBeforeIn)
-  expect(store.getState().cursorOffset).toBe(offsetBeforeIn)
-
-  // a jump to the start of the thought is put back too, as for a tap at the top edge (#6178)
-  moveCaretTo(0)
   expect(selection.offsetFromNode(editable)).toBe(offsetBeforeIn)
 
-  // iOS can also extend the selection from the caret back to where it was
+  // iOS 27 can also extend the selection from the caret back to where it was
   act(() => {
     selection.setRange(editable, { start: offsetBeforeIn, end: offsetBeforeThe })
     document.dispatchEvent(new Event('selectionchange'))
@@ -180,21 +180,50 @@ it('keeps the caret where a tap landed and records it while iOS moves the caret'
   expect(selection.isCollapsed()).toBe(true)
   expect(selection.offsetFromNode(editable)).toBe(offsetBeforeIn)
 
-  // the second touch of a double tap ends the correction, so that its word selection stays
+  // after the move back, a move that iOS does not make, such as the space bar scrub, ends the watch
+  moveCaretTo(offsetBeforeIn - 1)
+  moveCaretTo(0)
+  expect(selection.offsetFromNode(editable)).toBe(0)
+
+  // a tap above the line first jumps to the start of the thought (#6178), and a move back after it is put back too
+  moveCaretTo(offsetBeforeThe)
+  tapAt(offsetAfterHello, 1)
+  moveCaretTo(0)
+  expect(selection.offsetFromNode(editable)).toBe(offsetAfterHello)
+  moveCaretTo(offsetBeforeThe)
+  expect(selection.offsetFromNode(editable)).toBe(offsetAfterHello)
+
+  // iOS can place the caret at the other end of the tapped word than getCaretOffset, which is kept instead
+  tapAt(offsetBeforeThe)
+  moveCaretTo(offsetAfterThe)
+  expect(selection.offsetFromNode(editable)).toBe(offsetAfterThe)
+  moveCaretTo(offsetAfterHello)
+  expect(selection.offsetFromNode(editable)).toBe(offsetAfterThe)
+
+  // iOS can pass through another offset on its way back
+  tapAt(offsetBeforeIn)
+  moveCaretTo(offsetBeforeIn)
+  moveCaretTo(offsetBeforeIn + 2)
+  expect(selection.offsetFromNode(editable)).toBe(offsetBeforeIn + 2)
+  moveCaretTo(offsetAfterThe)
+  expect(selection.offsetFromNode(editable)).toBe(offsetBeforeIn)
+
+  // a tap on the caret leaves nothing to move back, so its watch ends on the first move, and the space bar scrub can go
+  // on to the start of the thought
+  tapAt(offsetBeforeIn)
+  moveCaretTo(offsetBeforeIn - 1)
+  moveCaretTo(0)
+  expect(selection.offsetFromNode(editable)).toBe(0)
+
+  // the second touch of a double tap ends the watch, so that its word selection stays
+  moveCaretTo(offsetBeforeThe)
+  tapAt(offsetBeforeIn)
   act(() => {
-    dispatchTouchEvent('touchstart', [finger], { target: editable })
+    dispatchTouchEvent('touchstart', [{ identifier: 0, clientX: offsetBeforeIn * 10 + 2, clientY: 10 }], {
+      target: editable,
+    })
     selection.setRange(editable, { start: offsetBeforeIn, end: offsetBeforeThe })
     document.dispatchEvent(new Event('selectionchange'))
   })
   expect(selection.isCollapsed()).toBe(false)
-  act(() => {
-    dispatchTouchEvent('touchend', [finger], { touches: [], target: editable })
-  })
-  await act(() => vi.advanceTimersByTimeAsync(1000))
-  moveCaretTo(0)
-
-  // the caret is left alone once the tap has settled
-  await act(() => vi.advanceTimersByTimeAsync(1000))
-  moveCaretTo(0)
-  expect(selection.offsetFromNode(editable)).toBe(0)
 })
