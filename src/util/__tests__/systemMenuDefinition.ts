@@ -1,8 +1,14 @@
-import { expect, it } from 'vitest'
+import { expect, it, vi } from 'vitest'
 import Command from '../../@types/Command'
 import { registeredCommands } from '../../commands'
 import { noop } from '../../constants'
 import systemMenuDefinition from '../../util/systemMenuDefinition'
+
+// The system menu exists only in the desktop app, so the commands are loaded as the desktop app loads them, with the shortcuts that only the desktop app binds, such as Increase Font Size's.
+vi.mock('@tauri-apps/api/core', async importOriginal => ({
+  ...(await importOriginal<typeof import('@tauri-apps/api/core')>()),
+  isTauri: () => true,
+}))
 
 /** The required properties that a fixture command does not use. */
 const inert = { multicursor: false, exec: noop } as const
