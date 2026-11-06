@@ -654,6 +654,16 @@ const CommandCenter = () => {
     if (isTouch && showCommandCenter && showSidebar) onClose()
   }, [onClose, showCommandCenter, showSidebar])
 
+  const previousStageOffsetRef = useRef(stageOffset)
+
+  // stageOffset will change when the viewport size changes (e.g., due to a device rotation).
+  // When the stageOffset changes, we need to re-snap the drawer so it shows the correct position.
+  useEffect(() => {
+    if (previousStageOffsetRef.current === stageOffset) return
+    previousStageOffsetRef.current = stageOffset
+    if (isCommandTableMounted && stage === 'standard') sheetRef.current?.snapTo(SNAP_STANDARD)
+  }, [isCommandTableMounted, stage, stageOffset])
+
   // The Standard and Expanded stage animations are controlled independently by
   // `standardViewOpacity` and `expandedViewOpacity`, but both are derived from
   // the same `stageProgress` value to ensure smooth transitions between stages.

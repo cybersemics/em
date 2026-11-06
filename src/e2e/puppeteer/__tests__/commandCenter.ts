@@ -341,4 +341,40 @@ describe('command center', () => {
     const stage = await page.$eval('[data-testid=command-menu-panel]', el => el.getAttribute('data-stage'))
     expect(stage).toBe('expanded')
   })
+
+  // The stage offset must leave room for the standard stage, or the sheet's maximum height pushes the chevron off the screen.
+  it('keeps the expand chevron on screen when opened in landscape', async () => {
+    await paste('- a')
+    await clickThought('a')
+    await page.setViewport(KnownDevices['iPhone 15 Pro landscape'].viewport)
+    await waitForBrowserSettled()
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+    await waitForBrowserSettled()
+
+    const { chevronBottom, viewportBottom } = await page.$eval('[aria-label="Expand Command Center"]', el => ({
+      chevronBottom: el.getBoundingClientRect().bottom,
+      viewportBottom: window.innerHeight,
+    }))
+    expect(chevronBottom).toBeLessThanOrEqual(viewportBottom)
+  })
+
+  // The drawer's position is measured from the expanded stage, so the open standard stage must re-snap when the stage offset changes.
+  it('keeps the expand chevron on screen when rotated to landscape while open', async () => {
+    await paste('- a')
+    await clickThought('a')
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+
+    await page.setViewport(KnownDevices['iPhone 15 Pro landscape'].viewport)
+    await waitForBrowserSettled()
+
+    const { chevronBottom, viewportBottom } = await page.$eval('[aria-label="Expand Command Center"]', el => ({
+      chevronBottom: el.getBoundingClientRect().bottom,
+      viewportBottom: window.innerHeight,
+    }))
+    expect(chevronBottom).toBeLessThanOrEqual(viewportBottom)
+  })
 })
