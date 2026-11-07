@@ -67,10 +67,8 @@ const swapParent = (state: State): State => {
   // whose ranks collide, and rerank resolves an exact tie in whatever order the tied thoughts happen to enumerate,
   // reordering thoughts the swap should have left alone. Ranking them past everything the child currently holds keeps
   // them clear of it, and once the child's own children have moved out, all that remains is their order relative to
-  // each other — the parent taking the slot the child vacated. The reverse move needs no such offset: the parent holds
-  // nothing but its own kept attributes by the time the child's children arrive, so they keep the ranks they already had. A
-  // tie with one of those hidden attributes only decides where it falls among them, which leaves their visible order
-  // unchanged.
+  // each other — the parent taking the slot the child vacated. Rank the reverse moves beyond the parent's original
+  // children too, so attributes kept with the parent cannot trigger a rerank before all incoming children arrive.
   const ranksUnderChild = keyValueBy(parentChildren, (parentChild, i) => ({
     [parentChild.id === childId ? parentId : parentChild.id]: (childChildren.at(-1)?.rank ?? -1) + 1 + i,
   }))
@@ -106,11 +104,11 @@ const swapParent = (state: State): State => {
     ),
 
     // Move grandchildren under the parent's new position
-    ...movedChildChildren.map(grandchild =>
+    ...movedChildChildren.map((grandchild, i) =>
       moveThought({
         oldPath: simplifyPath(state, [...cursor, grandchild.id]),
         newPath: simplifyPath(state, [...grandparent, childId, parentId, grandchild.id]),
-        newRank: grandchild.rank,
+        newRank: (parentChildren.at(-1)?.rank ?? -1) + 1 + i,
         skipMerge: true,
       }),
     ),

@@ -143,7 +143,7 @@ it('leaves =favorite with the parent', () => {
 })
 
 // https://github.com/cybersemics/em/issues/3725
-it.skip('preserves child order when swapping into a favorited parent', () => {
+it('preserves child order when swapping into a favorited parent', () => {
   const state = reducerFlow([
     newThought({ value: 'a' }),
     newThought({ value: '=favorite', insertNewSubthought: true }),
