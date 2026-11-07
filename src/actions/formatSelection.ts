@@ -2,7 +2,7 @@ import _ from 'lodash'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
-import { isAndroid, isSafari, isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import { replaceMarkupInPlace } from '../device/editInPlace'
 import restoreEditMenu from '../device/restoreEditMenu'
@@ -269,21 +269,8 @@ export const formatSelectionActionCreator =
     // preserves the logical selection. The native undo step has already replaced the editable's contents on iOS, so
     // there is no selection left to keep then.
     if (isPartial && (registeredUndoStep || !replaceMarkupInPlace(contentEditable, newValue, range))) {
-      // Removing an existing Bold wrapper cannot keep its range through ordinary DOM moves. Let Android's editor
-      // perform that edit itself, preserving its text node and native selection. Accept only the canonical HTML.
-      const nativeBold = isAndroid && command === 'bold' && !registeredUndoStep
-      if (nativeBold) {
-        editableSyncStore.update({ suppressChange: true })
-        try {
-          document.execCommand('bold')
-        } finally {
-          editableSyncStore.update({ suppressChange: false })
-        }
-      }
-      if (!nativeBold || contentEditable.innerHTML !== newValue) {
-        contentEditable.innerHTML = newValue
-        selection.setRange(contentEditable, range)
-      }
+      contentEditable.innerHTML = newValue
+      selection.setRange(contentEditable, range)
     }
 
     dispatch({
