@@ -152,7 +152,7 @@ it('letter-cases selected text in place after applying Bold', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/5641
-it.skip('letter-cases selected text in place when its length changes', async () => {
+it('letter-cases selected text in place when its length changes', async () => {
   await paste('Walk down Straße today')
 
   await clickThought('Walk down Straße today')

@@ -41,22 +41,63 @@ const parse = (html: string): DocumentFragment | null => {
 /** Changes an editable to the given HTML by changing its existing text nodes character by character. Replacing a
  * character with insertData followed by deleteData leaves every boundary of a live range where it was, whereas
  * assigning a text node's data collapses it. Only possible when the new HTML differs from the editable's only in
- * characters, with the same markup and the same length for each text node, which is what a letter case change usually
- * produces. Returns false, without changing anything, otherwise, e.g. when 'ß' becomes 'SS'. */
+ * characters, with the same markup. A length-changing edit inserts the changed span before deleting its old text,
+ * carrying selection boundaries around that span to their new offsets. Returns false, without changing anything,
+ * when the markup differs or a selection boundary cuts through a length-changing replacement. */
 export const replaceTextInPlace = (editable: HTMLElement, html: string): boolean => {
   const fragment = parse(html)
   if (!fragment) return false
   const newNodes = textNodes(fragment)
   const liveNodes = textNodes(editable)
-  if (liveNodes.length !== newNodes.length || liveNodes.some((node, i) => node.length !== newNodes[i].length)) {
-    return false
-  }
+  if (liveNodes.length !== newNodes.length) return false
 
   const clone = editable.cloneNode(true) as HTMLElement
   textNodes(clone).forEach((node, i) => (node.data = newNodes[i].data))
   if (clone.innerHTML !== html) return false
 
+  const boundaries = selection.boundaries()
+  const replacements = liveNodes.map((node, i) => {
+    const data = newNodes[i].data
+    if (node.length === data.length) return null
+
+    let start = 0
+    while (start < Math.min(node.length, data.length) && node.data[start] === data[start]) start++
+    let suffix = 0
+    while (
+      suffix < Math.min(node.length, data.length) - start &&
+      node.data[node.length - suffix - 1] === data[data.length - suffix - 1]
+    ) {
+      suffix++
+    }
+    return { start, end: node.length - suffix, data: data.slice(start, data.length - suffix) }
+  })
+
+  // A boundary inside the replaced span needs the caller's offset-aware restore. Preflight every node before editing.
+  if (
+    boundaries &&
+    liveNodes.some((node, i) => {
+      const replacement = replacements[i]
+      return (
+        replacement &&
+        ((boundaries.startContainer === node &&
+          boundaries.startOffset > replacement.start &&
+          boundaries.startOffset < replacement.end) ||
+          (boundaries.endContainer === node &&
+            boundaries.endOffset > replacement.start &&
+            boundaries.endOffset < replacement.end))
+      )
+    })
+  ) {
+    return false
+  }
+
   liveNodes.forEach((node, i) => {
+    const replacement = replacements[i]
+    if (replacement) {
+      node.insertData(replacement.start, replacement.data)
+      node.deleteData(replacement.start + replacement.data.length, replacement.end - replacement.start)
+      return
+    }
     const newData = newNodes[i].data
     Array.from({ length: newData.length }, (_, offset) => offset)
       .filter(offset => node.data[offset] !== newData[offset])
