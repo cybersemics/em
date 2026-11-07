@@ -70,7 +70,7 @@ describe('formatting selected text on Android', () => {
   deviceEmulation.useForSuite(KnownDevices['Pixel 5'])
 
   // https://github.com/cybersemics/em/issues/5641
-  it.skip('removes Bold without replacing the selected word', async () => {
+  it('removes Bold without replacing the selected word', async () => {
     expect(await page.evaluate(() => document.body.dataset.platform)).toBe('android')
     await paste('Welcome to the world of beautiful people')
     await clickThought('Welcome to the world of beautiful people')
