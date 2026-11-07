@@ -133,7 +133,7 @@ it('letter-cases the selected text in place without replacing it', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/5641
-it.skip('letter-cases selected text in place after applying Bold', async () => {
+it('letter-cases selected text in place after applying Bold', async () => {
   await paste('Welcome to the world of beautiful people')
 
   await clickThought('Welcome to the world of beautiful people')

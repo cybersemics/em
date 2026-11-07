@@ -14,12 +14,12 @@
  */
 import * as selection from './selection'
 
-/** Returns the text nodes under a node in document order. */
+/** Returns the non-empty text nodes under a node in document order, leaving empty selection boundaries in place. */
 const textNodes = (root: Node): Text[] => {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
   const nodes: Text[] = []
   while (walker.nextNode()) nodes.push(walker.currentNode as Text)
-  return nodes
+  return nodes.filter(node => node.length > 0)
 }
 
 /** Moves nodes into a new fragment, so that they can be inserted in one mutation. */
