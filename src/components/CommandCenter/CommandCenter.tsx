@@ -925,8 +925,12 @@ const CommandCenter = () => {
                   overflow: 'visible',
                 })}
                 disableDrag={isDragDisabled}
-                /** The Sheet's own scroller is not used, and its default `pan-down` would intersect with the expanded stage's scroll container and stop it scrolling upward. */
-                scrollStyle={{ touchAction: 'auto' }}
+                /**
+                 * The Sheet's own scroller is not used, so two of its defaults are overridden.
+                 * - The default `pan-down` would intersect with the expanded stage's scroll container and stop it scrolling upward.
+                 * - The default `overflowY: auto` would clip the command grid as it rises above the scroller's top edge during the stage transition.
+                 */
+                scrollStyle={{ touchAction: 'auto', overflowY: 'visible' }}
               >
                 <div
                   className={css({
