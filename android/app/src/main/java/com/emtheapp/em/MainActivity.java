@@ -1,6 +1,8 @@
 package com.emtheapp.em;
 
+import android.os.Build;
 import android.os.Bundle;
+import android.view.textclassifier.TextClassifier;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -33,6 +35,15 @@ public class MainActivity extends BridgeActivity {
 
         if (BuildConfig.DEBUG) {
             this.bridge.setWebViewClient(new DevServerWebViewClient(this.bridge));
+        }
+
+        // Disable Smart Text Selection. After a double tap or long press selects a word, the WebView asks the system
+        // TextClassifier to suggest a selection and adopts its suggestion, which on a short single-line thought is the
+        // whole thought rather than the tapped word. NO_OP suggests the selection unchanged, so the word stays selected.
+        // TextClassifier.NO_OP and WebView.setTextClassifier exist only on Android 8 (API 26) and later.
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            this.bridge.getWebView().setTextClassifier(TextClassifier.NO_OP);
         }
     }
 }

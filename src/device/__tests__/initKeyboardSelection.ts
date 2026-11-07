@@ -9,6 +9,8 @@ import * as selection from '../selection'
 
 vi.mock('@capacitor/core', () => ({
   Capacitor: { getPlatform: () => 'android', isNativePlatform: () => true, isPluginAvailable: () => true },
+  // modules that register a Capacitor plugin, such as webview-background, call registerPlugin when they are imported
+  registerPlugin: () => ({}),
 }))
 
 vi.mock('@capacitor/keyboard', () => ({ Keyboard: { hide: async () => {} } }))
