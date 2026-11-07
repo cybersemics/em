@@ -1,10 +1,13 @@
+import { KnownDevices } from 'puppeteer'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
+import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
 import longPressBullet from '../helpers/longPressBullet'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import selectWord from '../helpers/selectWord'
 import setSelection from '../helpers/setSelection'
 import waitForAlert from '../helpers/waitForAlert'
 import waitForCursor from '../helpers/waitForCursor'
@@ -61,6 +64,29 @@ it('formats the selected text without replacing the selection', async () => {
 
   expect(await selectedRange.evaluate(range => range.toString())).toBe('beautiful')
   expect(await page.evaluate(() => window.getSelection()?.toString())).toBe('beautiful')
+})
+
+describe('formatting selected text on Android', () => {
+  deviceEmulation.useForSuite(KnownDevices['Pixel 7'])
+
+  // https://github.com/cybersemics/em/issues/5641
+  it.skip('removes Bold without replacing the selected word', async () => {
+    await paste('Welcome to the world of beautiful people')
+    await clickThought('Welcome to the world of beautiful people')
+    await setSelection(24, 33)
+    await clickToolbar('Bold')
+    await waitForEditable('Welcome to the world of <b>beautiful</b> people')
+
+    await selectWord('beautiful')
+    const selectedText = await page.evaluateHandle(() => window.getSelection()!.anchorNode!)
+
+    await clickToolbar('Bold')
+    await waitForEditable('Welcome to the world of beautiful people')
+
+    expect(await selectedText.evaluate(node => node.isConnected)).toBe(true)
+    expect(await selectedText.evaluate(node => node.textContent)).toBe('beautiful')
+    expect(await page.evaluate(() => window.getSelection()?.toString())).toBe('beautiful')
+  })
 })
 
 it('Apply code formatting to a thought with the toolbar button', async () => {
