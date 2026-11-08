@@ -209,7 +209,7 @@ Both cases return early, before any of the end-of-editing resets (`editingValueS
 
 The retarget runs only once a replacement has been accepted with a space, and on iOS 27 that is not the only time the dead zone appears: it also follows a correctly spelled word that iOS leaves uncorrected, before any `insertReplacementText`, so the retarget never runs ([issue #4222](https://github.com/cybersemics/em/issues/4222), open). A touch in it still delivers `touchstart` to the page, but no `touchmove`, and its `touchend` arrives only as the next touch begins, at the starting coordinates: the withheld-touch signature of [#5660](https://github.com/cybersemics/em/issues/5660), which the Debug Log marks with `moves: 0` on the `touchend` entry.
 
-There is also a small effect that re-focuses the editable when the sidebar closes on desktop, so editing resumes seamlessly.
+There is also a small effect that re-focuses the editable when the sidebar closes on desktop, so editing resumes seamlessly. Since it re-focuses the cursor thought even when that thought is part of a multiselection, which would read as [multi edit mode](#multi-edit-mode), closing the sidebar on desktop dismisses a multiselection first, as Escape does ([`toggleSidebar`](../src/actions/toggleSidebar.ts), [issue #6227](https://github.com/cybersemics/em/issues/6227)). Opening it does not, which would focus the cursor thought behind the open sidebar.
 
 **Prefer `useEditMode` over manually calling `selection.set`.** The hook handles ordering, edge cases, and platform quirks; manual calls tend to introduce subtle inconsistencies. There are still cases where manual selection is unavoidable (e.g. after a programmatic content edit), but those are minimized.
 
