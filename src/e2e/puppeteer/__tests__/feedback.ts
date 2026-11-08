@@ -8,11 +8,28 @@ import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import setVirtualKeyboardHeight from '../helpers/setVirtualKeyboardHeight'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
 deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+// https://github.com/cybersemics/em/pull/6073#issuecomment-6594233627
+it.skip('opens feedback with the focused message above an overlay keyboard', async () => {
+  await setVirtualKeyboardHeight(400)
+  await gesture('rdldr')
+  await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
+  const bounds = await page.$eval('textarea', element => ({
+    focused: element === document.activeElement,
+    top: element.getBoundingClientRect().top,
+    bottom: element.getBoundingClientRect().bottom,
+    visibleHeight: window.innerHeight - navigator.virtualKeyboard.boundingRect.height,
+  }))
+  expect(bounds.focused).toBe(true)
+  expect(bounds.top).toBeGreaterThanOrEqual(0)
+  expect(bounds.bottom).toBeLessThanOrEqual(bounds.visibleHeight)
+})
 
 // https://github.com/cybersemics/em/pull/6073#issuecomment-6593428901
 it('keeps the message field non-resizable across platforms', async () => {
