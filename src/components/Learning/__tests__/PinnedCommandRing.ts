@@ -1,17 +1,18 @@
 import { cleanup, render, screen } from '@testing-library/react'
-import { motionValue } from 'motion/react'
+import { MotionGlobalConfig, motionValue, processFrame, time } from 'motion/react'
 import { act, createElement } from 'react'
 import PinnedCommandRing from '../PinnedCommandRing'
 
 afterEach(() => {
   cleanup()
   vi.useRealTimers()
+  MotionGlobalConfig.useManualTiming = false
 })
 
-it('animates the fill angle when progress increases after a rep', async () => {
-  vi.useFakeTimers({
-    toFake: ['Date', 'performance', 'requestAnimationFrame', 'cancelAnimationFrame', 'setTimeout', 'clearTimeout'],
-  })
+it('animates the fill angle when progress increases after a rep', () => {
+  // Motion's frameloop runs on the requestAnimationFrame it captured at import, which fake timers do not drive, and it
+  // restarts an animation whose first frame lands late. Step its frames on a timeline the test controls instead.
+  MotionGlobalConfig.useManualTiming = true
 
   const { rerender } = render(createElement(PinnedCommandRing, { progress: 0.2 }))
   /** Returns the fill progress currently drawn, from 0 to 1. */
@@ -24,7 +25,7 @@ it('animates the fill angle when progress increases after a rep', async () => {
   expect(drawnProgress()).toBe(0.2)
 
   // Partway through the tween, the fill is between the old and new progress.
-  await act(async () => vi.advanceTimersByTimeAsync(200))
+  act(() => processFrame(time.now() + 200))
   expect(drawnProgress()).toBeGreaterThan(0.2)
   expect(drawnProgress()).toBeLessThan(0.4)
 })

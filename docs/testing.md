@@ -1308,6 +1308,8 @@ In a rendered JSDOM test, wrap timer advancement that causes React updates in `a
 
 Work deferred to the next animation frame needs only `requestAnimationFrame` faked: `vi.useFakeTimers({ toFake: ['requestAnimationFrame'] })`, then `vi.advanceTimersToNextFrame()` between asserting that the work has not happened yet and asserting that it has, as the `touchCaret` tests in [`MultiGesture.ts`](../src/components/__tests__/MultiGesture.ts) do.
 
+Fake timers do not drive Motion animations. Motion's frameloop holds the `requestAnimationFrame` it found at import, and an animation whose first frame lands more than 40ms after it started is restarted from that frame, so advancing the fake clock leaves a tween where it began. To sample a tween partway through, set `MotionGlobalConfig.useManualTiming = true` (and reset it in `afterEach`), then step a frame with `act(() => processFrame(time.now() + ms))`, as the fill test in [`PinnedCommandRing.ts`](../src/components/Learning/__tests__/PinnedCommandRing.ts) does.
+
 For asynchronous commands such as `generateThought`, `generateEmoji`, `defineTerm`, and `organizeThought`, retain the returned execution promise. With `fetch` mocked, advance any fake timers the operation depends on, then await execution before asserting the result:
 
 ```ts
