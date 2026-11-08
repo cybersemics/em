@@ -16,6 +16,9 @@ import reducerFlow from '../util/reducerFlow'
 import alert from './alert'
 import setCursor from './setCursor'
 
+/** Meta attributes that describe the thought they belong to rather than its children, so they stay with their thought when it swaps with its parent instead of keeping their position. Every other attribute (=note, =pin, =sort, =view, ...) keeps its position, since it shapes the tree and its expansion. =done marks the thought as completed (#6005), and =favorite lists the thought itself in Favorites (#3725). */
+const ATTRIBUTES_KEPT_WITH_THOUGHT = new Set(['=done', '=favorite'])
+
 /** Swaps the current cursor's thought with its parent by moving nodes. */
 const swapParent = (state: State): State => {
   const { cursor } = state
@@ -51,19 +54,21 @@ const swapParent = (state: State): State => {
   // Get siblings (other children of parent excluding the child being swapped)
   const parentChildren = getChildrenRanked(state, parentId)
 
-  // The children keep their position while the two thoughts trade places, except =done, which marks the thought itself
-  // as completed rather than describing its children. It is left out of both moves so that it stays with its thought.
-  const siblings = parentChildren.filter(sibling => sibling.id !== childId && sibling.value !== '=done')
-  const movedChildChildren = childChildren.filter(grandchild => grandchild.value !== '=done')
+  // The children keep their position while the two thoughts trade places, except the attributes in
+  // ATTRIBUTES_KEPT_WITH_THOUGHT, which describe the thought itself rather than its children. They are left out of both
+  // moves so that each stays with its thought.
+  const siblings = parentChildren.filter(
+    sibling => sibling.id !== childId && !ATTRIBUTES_KEPT_WITH_THOUGHT.has(sibling.value),
+  )
+  const movedChildChildren = childChildren.filter(grandchild => !ATTRIBUTES_KEPT_WITH_THOUGHT.has(grandchild.value))
 
   // The parent and the siblings arrive under the child before the child's own children have left it, so giving them
   // the ranks they held under the parent can collide with the ranks already in place. moveThought reranks a context
   // whose ranks collide, and rerank resolves an exact tie in whatever order the tied thoughts happen to enumerate,
   // reordering thoughts the swap should have left alone. Ranking them past everything the child currently holds keeps
   // them clear of it, and once the child's own children have moved out, all that remains is their order relative to
-  // each other — the parent taking the slot the child vacated. The reverse move needs no such offset: the parent holds
-  // nothing but its own =done by the time the child's children arrive, so they keep the ranks they already had. A tie
-  // with that hidden attribute only decides where it falls among them, which leaves their visible order unchanged.
+  // each other — the parent taking the slot the child vacated. Rank the reverse moves beyond the parent's original
+  // children too, so attributes kept with the parent cannot trigger a rerank before all incoming children arrive.
   const ranksUnderChild = keyValueBy(parentChildren, (parentChild, i) => ({
     [parentChild.id === childId ? parentId : parentChild.id]: (childChildren.at(-1)?.rank ?? -1) + 1 + i,
   }))
@@ -99,11 +104,11 @@ const swapParent = (state: State): State => {
     ),
 
     // Move grandchildren under the parent's new position
-    ...movedChildChildren.map(grandchild =>
+    ...movedChildChildren.map((grandchild, i) =>
       moveThought({
         oldPath: simplifyPath(state, [...cursor, grandchild.id]),
         newPath: simplifyPath(state, [...grandparent, childId, parentId, grandchild.id]),
-        newRank: grandchild.rank,
+        newRank: (parentChildren.at(-1)?.rank ?? -1) + 1 + i,
         skipMerge: true,
       }),
     ),
