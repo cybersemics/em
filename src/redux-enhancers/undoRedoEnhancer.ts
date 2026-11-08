@@ -504,16 +504,21 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         // selected (#4728). Other non-undoable actions are still skipped so that transient ui state (e.g. the
         // Command Center opened by the multicursor alert middleware) is not restored by undo.
         (!isUndoable(actionType) && !(state.isMulticursorExecuting && multicursorActionTypes.has(actionType))) ||
-        // A caret move within the thought being edited, such as a tap that sets the cursor on the thought it is already
-        // on, is not an undo step. Recording it would clear the redo stack and be undone along with the edit before it
-        // (#6221). Such a move changes nothing but cursorOffset, which is not diffed. Without this, a move that follows
-        // another navigation would be merged into its patch below and change where Redo puts the caret.
-        (isNavigation(actionType) && diffState(newState as Index, state).length === 0) ||
         // ignore the first importText since it is part of app initialization and should not be undoable
         // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
         // See: https://github.com/cybersemics/em/issues/1494
         (actionType === 'importText' && !newState.undoPatches.length)
       ) {
+        return newState
+      }
+
+      // A caret move within the thought being edited, such as a tap that sets the cursor on the thought it is already
+      // on, is not an undo step. Recording it would clear the redo stack and be undone along with the edit before it
+      // (#6221). Such a move changes nothing but cursorOffset, which is not diffed. Without this, a move that follows
+      // another navigation would be merged into its patch below and change where Redo puts the caret.
+      if (isNavigation(actionType) && diffState(newState as Index, state).length === 0) {
+        // It still ends a run of typing, so that typing somewhere else in the thought is an undo step of its own.
+        lastEditThoughtDirection = EditThoughtDirection.None
         return newState
       }
 

@@ -1159,6 +1159,26 @@ describe('grouping', () => {
     expect(store.getState().cursorOffset).toBe(26)
   })
 
+  // https://github.com/cybersemics/em/issues/6221
+  it('typing in a different place after a caret move within the thought should be its own undo step', () => {
+    store.dispatch([importText({ text: `- Hello world` })])
+    const path = contextToPath(store.getState(), ['Hello world'])!
+    store.dispatch(setCursorRaw({ path, offset: 11 }))
+
+    // Type "XYZ" at the end of the thought.
+    store.dispatch(editThoughtRaw({ oldValue: 'Hello world', newValue: 'Hello worldXYZ', path, cursorOffset: 14 }))
+
+    // Tap after "He", then type "Q" there.
+    store.dispatch(setCursorRaw({ path, offset: 2 }))
+    store.dispatch(editThoughtRaw({ oldValue: 'Hello worldXYZ', newValue: 'HeQllo worldXYZ', path, cursorOffset: 3 }))
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Hello worldXYZ`)
+    expect(store.getState().cursorOffset).toBe(2)
+  })
+
   // https://github.com/cybersemics/em/pull/4692
   it('undo should not close the virtual keyboard', () => {
     // newThought opens the keyboard as a side effect (setCursor with isKeyboardOpen: true), so the transition was
