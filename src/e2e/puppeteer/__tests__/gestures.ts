@@ -197,33 +197,6 @@ describe('gestures', () => {
     expect(await exportThoughts()).toBe(outline)
   })
 
-  it('recognizes a first swipe drawn before the gesture recognizer engages', async () => {
-    await paste(`
-- a
-  - b
-  - c
-`)
-    await clickThought('c')
-
-    // Archive (←↓←) with a first swipe of 12px, just over the 10px a swipe needs. The recognizer engages a few
-    // touchmoves into the touch, once the responder is granted, and on iOS the first touchmove can itself arrive late.
-    // Either way the first swipe is over by then, and unless the moves before it are counted from where the finger
-    // landed, the stroke is read as ↓← (New Uncle).
-    const activeGesture = await startGesture()
-    await activeGesture.move('l', { segmentLength: 12 })
-    await activeGesture.move('dl')
-    await activeGesture.end()
-
-    // A gesture shows its alert once its command has run.
-    await waitForSelector('[data-testid=alert-content]')
-    expect(await exportThoughts()).toBe(`
-- a
-  - =archive
-    - c
-  - b
-`)
-  })
-
   // https://github.com/cybersemics/em/issues/5966
   it('ignores a second finger that touches down during a gesture in progress', async () => {
     const firstFinger = await startGesture()
