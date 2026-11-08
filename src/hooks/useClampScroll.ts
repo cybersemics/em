@@ -1,6 +1,6 @@
 import { AnimationPlaybackControls, animate } from 'motion/react'
 import { RefObject, useEffect, useLayoutEffect, useRef } from 'react'
-import { hasElasticOverscroll } from '../browser'
+import { hasElasticOverscroll, isAndroid } from '../browser'
 
 // The observed UIScrollView rubber-band curve, with distance normalized by viewport height.
 // https://holko.pl/2014/07/06/inertia-bouncing-rubber-banding-uikit-dynamics/
@@ -112,6 +112,33 @@ const useClampScroll = ({
   }, [viewportHeight, visibleTop, visibleBottom])
 
   useEffect(() => {
+    let nativeScrollOverflowY: string | undefined
+    let nativeScrollOverflowPriority = ''
+    let nativeMomentumInProgress = false
+
+    /** Lets new input or deliberate navigation take over from a stopped Android fling. */
+    const restoreNativeScroll = () => {
+      nativeMomentumInProgress = false
+      if (nativeScrollOverflowY === undefined) return
+      document.documentElement.style.setProperty('overflow-y', nativeScrollOverflowY, nativeScrollOverflowPriority)
+      nativeScrollOverflowY = undefined
+    }
+
+    /** Marks the native coast after the last finger releases, while preserving held-touch reversals. */
+    const onNativeTouchEnd = (event: TouchEvent) => {
+      if (event.touches.length === 0) nativeMomentumInProgress = event.type !== 'touchcancel'
+    }
+
+    /** Stops Android's compositor fling rather than repeatedly correcting its next scroll frame. */
+    const stopNativeMomentum = () => {
+      if (!isAndroid || !nativeMomentumInProgress || nativeScrollOverflowY !== undefined) return
+      const { style } = document.documentElement
+      nativeScrollOverflowY = style.overflowY
+      nativeScrollOverflowPriority = style.getPropertyPriority('overflow-y')
+      // Early restoration lets Android resume its compositor fling. New input restores scrolling instead.
+      style.overflowY = 'hidden'
+    }
+
     /** Shares the elastic offset with the thought tree, footer, and navigation without rerendering them. */
     const setElasticOffset = (value: number) => {
       if (elasticOffset.current === value) return
@@ -300,6 +327,7 @@ const useClampScroll = ({
           // Momentum hits the edge at its current speed; applying the drag curve here would abruptly slow it down.
           springBack({ offset: rawOffset, velocity: -velocity, boundary: clampedScrollY })
         } else {
+          stopNativeMomentum()
           window.scrollTo({ left: window.scrollX, top: clampedScrollY, behavior: 'instant' })
           setElasticOffset(0)
         }
@@ -508,6 +536,13 @@ const useClampScroll = ({
       window.addEventListener('keydown', onIntentionalScroll)
       window.addEventListener('touchend', onTouchEnd, { passive: true })
       window.addEventListener('touchcancel', onTouchEnd, { passive: true })
+    } else if (isAndroid) {
+      window.addEventListener('touchstart', restoreNativeScroll, { passive: true })
+      window.addEventListener('touchend', onNativeTouchEnd, { passive: true })
+      window.addEventListener('touchcancel', onNativeTouchEnd, { passive: true })
+      window.addEventListener('wheel', restoreNativeScroll, { passive: true })
+      window.addEventListener('keydown', restoreNativeScroll)
+      window.addEventListener('em-scroll', restoreNativeScroll)
     }
     window.addEventListener('scroll', clampScroll, { passive: true })
     return () => {
@@ -519,6 +554,13 @@ const useClampScroll = ({
       window.removeEventListener('touchend', onTouchEnd)
       window.removeEventListener('touchcancel', onTouchEnd)
       window.removeEventListener('scroll', clampScroll)
+      window.removeEventListener('touchstart', restoreNativeScroll)
+      window.removeEventListener('touchend', onNativeTouchEnd)
+      window.removeEventListener('touchcancel', onNativeTouchEnd)
+      window.removeEventListener('wheel', restoreNativeScroll)
+      window.removeEventListener('keydown', restoreNativeScroll)
+      window.removeEventListener('em-scroll', restoreNativeScroll)
+      restoreNativeScroll()
       updateBounds.current = null
       stopAnimation()
       touchInProgress.current = false
