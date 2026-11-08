@@ -117,6 +117,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   touchIdentifier: string | null = null
   // the number of touchmove events since the first finger landed, logged on touchend
   touchMoves = 0
+  // the DOM identifier of the first finger down, whose moves are buffered in pendingPoints
+  firstFinger: number | null = null
+  // The viewport points the first finger moved through before onPanResponderMove first ran. The responder is granted a
+  // few touchmoves into the touch, and iOS can deliver the first touchmove late, so these can hold the whole first
+  // swipe. They are fed to the recognizer before the move that starts it.
+  pendingPoints: Point[] = []
   // the touch path of the current gesture for the debug log, as [ms since touchstart, x, y]; null while logging is off
   trace: { t: number; start: number; identifier: number; points: [number, number, number][] } | null = null
 
@@ -145,6 +151,13 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           })
         }
         this.touchMoves++
+        // Buffered here, since onPanResponderMove misses the moves before the responder is granted.
+        if (!this.currentStart && !this.abandon && this.firstFinger !== null) {
+          const touch = Array.from(e.touches).find(touch => touch.identifier === this.firstFinger)
+          if (touch) {
+            this.pendingPoints.push({ x: touch.clientX, y: touch.clientY })
+          }
+        }
         // Recorded here rather than in onPanResponderMove, which misses the moves before the responder is granted.
         const trace = this.trace
         if (trace) {
@@ -234,6 +247,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           })
         }
         this.clientStart = { x, y }
+        this.firstFinger = e.touches[0].identifier
         this.trace = debugLog.isEnabled()
           ? {
               t: Date.now(),
@@ -410,39 +424,20 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             this.disableScroll = false
           }
 
-          this.currentStart = clientPoint
+          // Measure from where the finger landed, and replay the moves made before this one, so that a first swipe
+          // drawn before the responder was granted is not lost.
+          this.currentStart = this.clientStart ?? clientPoint
           this.touchIdentifier = touch.identifier
           this.scrollYStart = window.scrollY
           if (this.props.onStart) {
             this.props.onStart({ clientStart: this.clientStart!, e })
           }
-          return
+          const pendingPoints = this.pendingPoints
+          this.pendingPoints = []
+          pendingPoints.forEach(point => this.swipe(point, e))
         }
 
-        const g = gesture(
-          this.currentStart,
-          clientPoint,
-          this.minDistanceSquared,
-          // The new sequence will be appended as soon as it is detected, so we need to base the bias on the second-to-last letter in the sequence
-          this.sequence.length > 1
-            ? ['u', 'd'].includes(this.sequence[this.sequence.length - 2])
-              ? 'HorizontalBias'
-              : 'VerticalBias'
-            : 'NoBias',
-        )
-
-        if (g) {
-          this.disableScroll = true
-          this.currentStart = clientPoint
-
-          if (g !== this.sequence[this.sequence.length - 1]) {
-            // append the gesture to the sequence and call the onGesture handler
-            this.sequence += g
-            debugLog.log('swipe', { dir: g, sequence: this.sequence })
-            this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
-            updateGesture(this.sequence)
-          }
-        }
+        this.swipe(clientPoint, e)
       },
 
       // A gesture ends when the finger that drew it lifts, even if fingers that joined it are still down, which
@@ -477,6 +472,34 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   // TODO: Why is the component not re-rendered automatically when a prop changes?
   UNSAFE_componentWillReceiveProps(nextProps: MultiGestureProps) {
     this.leftHanded = !!nextProps.leftHanded
+  }
+
+  /** Recognizes the swipe, if any, from the current start to a point the finger moved to, and appends it to the sequence. */
+  swipe(point: Point, e: GestureResponderEvent) {
+    const g = gesture(
+      this.currentStart!,
+      point,
+      this.minDistanceSquared,
+      // The new sequence will be appended as soon as it is detected, so we need to base the bias on the second-to-last letter in the sequence
+      this.sequence.length > 1
+        ? ['u', 'd'].includes(this.sequence[this.sequence.length - 2])
+          ? 'HorizontalBias'
+          : 'VerticalBias'
+        : 'NoBias',
+    )
+
+    if (g) {
+      this.disableScroll = true
+      this.currentStart = point
+
+      if (g !== this.sequence[this.sequence.length - 1]) {
+        // append the gesture to the sequence and call the onGesture handler
+        this.sequence += g
+        debugLog.log('swipe', { dir: g, sequence: this.sequence })
+        this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
+        updateGesture(this.sequence)
+      }
+    }
   }
 
   /** Ends the gesture, executing it unless it was abandoned. */
@@ -517,6 +540,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.sequence = ''
     this.touchTarget = null
     this.touchIdentifier = null
+    this.firstFinger = null
+    this.pendingPoints = []
     clearGesture()
   }
 
