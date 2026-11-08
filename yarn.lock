@@ -2197,16 +2197,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@browserstack/ai-sdk-node@npm:1.5.17":
-  version: 1.5.17
-  resolution: "@browserstack/ai-sdk-node@npm:1.5.17"
-  dependencies:
-    axios: "npm:^1.7.4"
-    uuid: "npm:9.0.1"
-  checksum: 10c0/cafa53c1061d78f768674bdf072aae8f3b22d40a0da99e0a5ab95b36b0be66b2ac0323e81d4043002139b7408137c6d540c928de9a4830ceff9ad8c866585bad
-  languageName: node
-  linkType: hard
-
 "@bufbuild/protobuf@npm:^2.10.2":
   version: 2.12.0
   resolution: "@bufbuild/protobuf@npm:2.12.0"
@@ -8347,11 +8337,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/browserstack-service@npm:^9.42.0":
-  version: 9.42.0
-  resolution: "@wdio/browserstack-service@npm:9.42.0"
+"@wdio/browserstack-service@npm:^9.42.3":
+  version: 9.42.3
+  resolution: "@wdio/browserstack-service@npm:9.42.3"
   dependencies:
-    "@browserstack/ai-sdk-node": "npm:1.5.17"
     "@bufbuild/protobuf": "npm:^2.5.2"
     "@grpc/grpc-js": "npm:~1.13.5"
     "@percy/appium-app": "npm:^2.0.9"
@@ -8375,7 +8364,7 @@ __metadata:
     yauzl: "npm:^3.4.0"
   peerDependencies:
     "@wdio/cli": ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/4991fdb1358fe7f2a84991824b47ced7e554caeed17f770841f2ec77f633d8c0f87a2c7277db7a4a38af89ba9f82c08c4ac0994554e701d1e35c9d8e5c40c2c6
+  checksum: 10c0/bd1a2c72accf3f09d867f0e83a38dc99d7c00649eb3ae01648448e82c805e1eb686659d80f4bc0e931740879b71f96a71383cfca6ea329c634471adf8d808647
   languageName: node
   linkType: hard
 
@@ -9460,17 +9449,6 @@ __metadata:
     https-proxy-agent: "npm:^5.0.1"
     proxy-from-env: "npm:^2.1.0"
   checksum: 10c0/976088acf532286356f4c2e65df1ef47ba7da3936d83e928d0d64357bbf5370456abd3eb5826c15df322335fcb1fe200d4a84b4fcf20ffccdd63b40d80fa495c
-  languageName: node
-  linkType: hard
-
-"axios@npm:^1.7.4":
-  version: 1.13.2
-  resolution: "axios@npm:1.13.2"
-  dependencies:
-    follow-redirects: "npm:^1.15.6"
-    form-data: "npm:^4.0.4"
-    proxy-from-env: "npm:^1.1.0"
-  checksum: 10c0/e8a42e37e5568ae9c7a28c348db0e8cf3e43d06fcbef73f0048669edfe4f71219664da7b6cc991b0c0f01c28a48f037c515263cb79be1f1ae8ff034cd813867b
   languageName: node
   linkType: hard
 
@@ -11822,7 +11800,7 @@ __metadata:
     "@typescript/native": "npm:typescript@7.0.2"
     "@vitejs/plugin-basic-ssl": "npm:^2.3.0"
     "@vitejs/plugin-react": "npm:^6.2.1"
-    "@wdio/browserstack-service": "npm:^9.42.0"
+    "@wdio/browserstack-service": "npm:^9.42.3"
     "@wdio/cli": "npm:^10.1.0"
     "@wdio/globals": "npm:^10.1.0"
     "@wdio/local-runner": "npm:^10.1.0"
@@ -13736,16 +13714,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.15.6":
-  version: 1.15.9
-  resolution: "follow-redirects@npm:1.15.9"
-  peerDependenciesMeta:
-    debug:
-      optional: true
-  checksum: 10c0/5829165bd112c3c0e82be6c15b1a58fa9dcfaede3b3c54697a82fe4a62dd5ae5e8222956b448d2f98e331525f05d00404aba7d696de9e761ef6e42fdc780244f
-  languageName: node
-  linkType: hard
-
 "follow-redirects@npm:^1.16.0":
   version: 1.16.0
   resolution: "follow-redirects@npm:1.16.0"
@@ -13791,19 +13759,6 @@ __metadata:
     cross-spawn: "npm:^7.0.6"
     signal-exit: "npm:^4.0.1"
   checksum: 10c0/8986e4af2430896e65bc2788d6679067294d6aee9545daefc84923a0a4b399ad9c7a3ea7bd8c0b2b80fdf4a92de4c69df3f628233ff3224260e9c1541a9e9ed3
-  languageName: node
-  linkType: hard
-
-"form-data@npm:^4.0.4":
-  version: 4.0.4
-  resolution: "form-data@npm:4.0.4"
-  dependencies:
-    asynckit: "npm:^0.4.0"
-    combined-stream: "npm:^1.0.8"
-    es-set-tostringtag: "npm:^2.1.0"
-    hasown: "npm:^2.0.2"
-    mime-types: "npm:^2.1.12"
-  checksum: 10c0/373525a9a034b9d57073e55eab79e501a714ffac02e7a9b01be1c820780652b16e4101819785e1e18f8d98f0aee866cc654d660a435c378e16a72f2e7cac9695
   languageName: node
   linkType: hard
 
@@ -17801,7 +17756,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mime-types@npm:^2.1.12, mime-types@npm:^2.1.27, mime-types@npm:^2.1.35, mime-types@npm:~2.1.24, mime-types@npm:~2.1.34":
+"mime-types@npm:^2.1.27, mime-types@npm:^2.1.35, mime-types@npm:~2.1.24, mime-types@npm:~2.1.34":
   version: 2.1.35
   resolution: "mime-types@npm:2.1.35"
   dependencies:
@@ -23418,15 +23373,6 @@ __metadata:
   version: 1.0.1
   resolution: "utils-merge@npm:1.0.1"
   checksum: 10c0/02ba649de1b7ca8854bfe20a82f1dfbdda3fb57a22ab4a8972a63a34553cf7aa51bc9081cf7e001b035b88186d23689d69e71b510e610a09a4c66f68aa95b672
-  languageName: node
-  linkType: hard
-
-"uuid@npm:9.0.1":
-  version: 9.0.1
-  resolution: "uuid@npm:9.0.1"
-  bin:
-    uuid: dist/bin/uuid
-  checksum: 10c0/1607dd32ac7fc22f2d8f77051e6a64845c9bce5cd3dd8aa0070c074ec73e666a1f63c7b4e0f4bf2bc8b9d59dc85a15e17807446d9d2b17c8485fbc2147b27f9b
   languageName: node
   linkType: hard
 
