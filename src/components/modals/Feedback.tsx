@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 import { isTauri } from '@tauri-apps/api/core'
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
+import _ from 'lodash'
+import { FormEvent, MouseEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import pkg from '../../../package.json'
 import FeedbackPayload from '../../../packages/feedback/shared/FeedbackPayload'
@@ -9,14 +10,17 @@ import { css } from '../../../styled-system/css'
 import { anchorButtonRecipe } from '../../../styled-system/recipes'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
+import { isCapacitor, isTouch } from '../../browser'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
+import getSafeAreaBottom from '../../device/virtual-keyboard/getSafeAreaBottom'
 import documentSort from '../../selectors/documentSort'
 import exportContext from '../../selectors/exportContext'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import simplifyPath from '../../selectors/simplifyPath'
 import storageModel from '../../stores/storageModel'
 import viewportStore from '../../stores/viewportStore'
+import virtualKeyboardStore from '../../stores/virtualKeyboardStore'
 import debugLog from '../../util/debugLog'
 import head from '../../util/head'
 import CircleButton from '../dialog/CircleButton'
@@ -57,6 +61,84 @@ const Feedback = () => {
   const [resolution, setResolution] = useState<FeedbackPayload['metadata']['resolution']>()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [availableHeight, setAvailableHeight] = useState<number>()
+
+  /** Reveals a native field by scrolling the form, leaving the thoughtspace and viewport alone. */
+  const revealField = useCallback(() => {
+    const field = document.activeElement
+    const scroller = scrollRef.current
+    if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) || !scroller?.contains(field))
+      return
+
+    const bounds = field.getBoundingClientRect()
+    const viewport = scroller.getBoundingClientRect()
+    const offset =
+      bounds.top < viewport.top + 8 ? bounds.top - viewport.top - 8 : Math.max(0, bounds.bottom - viewport.bottom + 8)
+    if (offset) scroller.scrollTop += offset
+  }, [])
+
+  useEffect(() => {
+    if (!isTouch) return
+
+    /** Reads keyboard geometry independently of the thought editor's edit mode. */
+    const updateAvailableHeight = () => {
+      if (isCapacitor()) {
+        const viewport = viewportStore.getState()
+        const height = virtualKeyboardStore.getState().open ? viewport.virtualKeyboardHeight + getSafeAreaBottom() : 0
+        setAvailableHeight(height > 0 ? Math.max(0, viewport.innerHeight - height) : undefined)
+      } else {
+        const viewport = window.visualViewport
+        const keyboardHeight = 'virtualKeyboard' in navigator ? navigator.virtualKeyboard.boundingRect.height : 0
+        // Ignore the invalid visual viewport heights WebKit can report after an app switch.
+        const height =
+          viewport && viewport.height > 0 ? Math.min(window.innerHeight, viewport.height) : window.innerHeight
+        setAvailableHeight(
+          keyboardHeight > 0
+            ? Math.max(0, window.innerHeight - keyboardHeight)
+            : height < window.innerHeight
+              ? height
+              : undefined,
+        )
+      }
+    }
+
+    // Safari emits resize while scrolling too. Wait for geometry to settle instead of measuring fields on every frame.
+    const onResize = _.debounce(updateAvailableHeight, 100)
+    const unsubscribeKeyboard = virtualKeyboardStore.subscribeSelector(state => state.open, updateAvailableHeight)
+    const unsubscribeViewport = isCapacitor()
+      ? viewportStore.subscribeSelector(
+          state => `${state.innerHeight}:${state.virtualKeyboardHeight}`,
+          updateAvailableHeight,
+        )
+      : () => {}
+    window.visualViewport?.addEventListener('resize', onResize)
+    window.addEventListener('resize', onResize)
+    const keyboard = 'virtualKeyboard' in navigator ? navigator.virtualKeyboard : null
+    keyboard?.addEventListener('geometrychange', updateAvailableHeight)
+    updateAvailableHeight()
+
+    return () => {
+      unsubscribeKeyboard()
+      unsubscribeViewport()
+      window.visualViewport?.removeEventListener('resize', onResize)
+      window.removeEventListener('resize', onResize)
+      keyboard?.removeEventListener('geometrychange', updateAvailableHeight)
+      onResize.cancel()
+    }
+  }, [])
+
+  useEffect(revealField, [availableHeight, revealField])
+
+  /** Focuses before the browser's mouse default without cancelling native tap-to-caret placement. */
+  const focusField = (event: MouseEvent<HTMLFormElement>) => {
+    const field = event.target
+    if (
+      (field instanceof HTMLTextAreaElement ||
+        (field instanceof HTMLInputElement && (field.type === 'text' || field.type === 'email'))) &&
+      field !== document.activeElement
+    )
+      field.focus({ preventScroll: true })
+  }
 
   /** Discards the draft while retaining the separately persisted identity fields. */
   const close = useCallback(() => {
@@ -64,7 +146,7 @@ const Feedback = () => {
   }, [dispatch])
 
   useEffect(() => {
-    messageRef.current?.focus()
+    messageRef.current?.focus({ preventScroll: true })
     /** Keeps Escape and Tab within the dialog instead of triggering editor commands. */
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -84,10 +166,10 @@ const Feedback = () => {
       const last = controls[controls.length - 1]
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault()
-        last.focus()
+        last.focus({ preventScroll: true })
       } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault()
-        first.focus()
+        first.focus({ preventScroll: true })
       }
     }
     window.addEventListener('keydown', onKeyDown, true)
@@ -309,15 +391,22 @@ const Feedback = () => {
   })
 
   return (
-    <Dialog nodeRef={nodeRef} onClose={close}>
+    <Dialog nodeRef={nodeRef} onClose={close} availableHeight={availableHeight}>
       <form
         ref={formRef}
         onSubmit={submit}
+        onMouseDownCapture={focusField}
+        onFocusCapture={revealField}
         role='dialog'
         aria-modal='true'
         aria-labelledby='feedback-title'
         aria-busy={isSubmitting}
-        className={css({ display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: '80dvh' })}
+        className={css({
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          maxHeight: 'var(--dialog-max-height, 80dvh)',
+        })}
       >
         <div
           className={css({ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem' })}

@@ -126,7 +126,7 @@ const dialogRecipe = defineSlotRecipe({
       mixBlendMode: 'screen',
       pointerEvents: 'none',
     },
-    /** The glass sheet itself — rounded translucent panel that hosts the dialog content and decorative layers. Lays out its in-flow content as a flex column so the scrollable region (`content`) can shrink to fill whatever space the header and search row leave, rather than overflowing this 80dvh budget and being clipped by `overflow: hidden`. Decorative layers are absolutely positioned and so sit outside this flex flow. */
+    /** The glass sheet itself — rounded translucent panel that hosts the dialog content and decorative layers. Lays out its in-flow content as a flex column so the scrollable region (`content`) can shrink to fill whatever space the header and search row leave, rather than overflowing the available height budget and being clipped by `overflow: hidden`. Defaults to 80dvh unless the caller supplies a keyboard-constrained maximum. Decorative layers are absolutely positioned and so sit outside this flex flow. */
     glassSheet: {
       color: 'fg',
       fontFamily: 'radioCanada',
@@ -135,7 +135,7 @@ const dialogRecipe = defineSlotRecipe({
       boxSizing: 'border-box',
       overflow: 'hidden',
       position: 'relative',
-      maxHeight: '80dvh',
+      maxHeight: 'var(--dialog-max-height, 80dvh)',
       display: 'flex',
       flexDirection: 'column',
     },
