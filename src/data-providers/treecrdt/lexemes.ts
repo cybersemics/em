@@ -168,14 +168,7 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
     return keys.map(key => lexemes.get(key))
   }
 
-  return {
-    applyNodes,
-    applyChanges,
-    clear,
-    setFavoriteOrder,
-    getLexemesByIds,
-    getLexemeById: async (key: string) => (await getLexemesByIds([key]))[0],
-  }
+  return { applyNodes, applyChanges, clear, setFavoriteOrder, getLexemesByIds }
 }
 
 export default createLexemeIndex

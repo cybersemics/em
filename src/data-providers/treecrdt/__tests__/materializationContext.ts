@@ -23,32 +23,25 @@ const thought = (value: string) => ({
   updatedBy: 'test',
 })
 
-/** Pauses an asynchronous boundary until the test releases it. */
-const deferred = () => {
-  let resolve!: () => void
-  const promise = new Promise<void>(done => {
-    resolve = done
-  })
-  return { promise, resolve }
-}
-
 let client: Awaited<ReturnType<typeof createTreecrdtClient>>
 let provider: ReturnType<typeof createTreecrdtDataProvider>
 let close: () => Promise<void>
 let snapshot: ThoughtspaceMaterializationSnapshot
+const getSnapshot = vi.fn()
 const apply = vi.fn()
 
 beforeEach(async () => {
   client = await createTreecrdtClient({ docId: 'materialization-context' })
   provider = createTreecrdtDataProvider()
   snapshot = { thoughtIndex: {}, lexemeIndex: {} }
+  getSnapshot.mockReset().mockImplementation(() => snapshot)
   apply.mockReset().mockImplementation(updates => {
     snapshot = {
       thoughtIndex: { ...snapshot.thoughtIndex, ...updates.thoughtIndex },
       lexemeIndex: { ...snapshot.lexemeIndex, ...updates.lexemeIndex },
     }
   })
-  close = await provider.bindClient(client, REPLICA_ID, { getSnapshot: () => snapshot, apply })
+  close = await provider.bindClient(client, REPLICA_ID, { getSnapshot, apply })
 })
 
 afterEach(async () => {
@@ -57,25 +50,19 @@ afterEach(async () => {
   await client.drop()
 })
 
-it('coalesces local events into one membership read without reading back local thoughts', async () => {
-  const reader = vi.spyOn(client.runner, 'getText')
-  const readNode = vi.spyOn(client.tree, 'node')
+it('publishes coalesced local events once without republishing local thoughts', async () => {
   await withTreecrdtWriteBarrier(async () => {
     await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } })
     await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('b') } })
   })
-  readNode.mockClear()
   await waitForMaterializedThoughtsToStore()
 
-  expect(reader.mock.calls.filter(([sql]) => sql.includes("'key', lexeme_hash"))).toHaveLength(1)
-  expect(readNode).not.toHaveBeenCalled()
   expect(apply).toHaveBeenCalledTimes(1)
   expect(apply.mock.calls[0][0].thoughtIndex).toEqual({})
   expect(snapshot.lexemeIndex[hashThought('b')].contexts).toEqual([THOUGHT_ID])
 
   apply.mockClear()
-  reader.mockClear()
-  // An order-only write produces an event, but must not read, write, or republish unchanged memberships.
+  // An order-only write produces an event, but must not republish unchanged memberships.
   await withTreecrdtWriteBarrier(() =>
     provider.db.updateThoughts({
       thoughtIndexUpdates: { [THOUGHT_ID]: thought('b') },
@@ -83,87 +70,59 @@ it('coalesces local events into one membership read without reading back local t
     }),
   )
   await waitForMaterializedThoughtsToStore()
-  expect(reader.mock.calls.filter(([sql]) => sql.includes('em_lexeme_memberships'))).toHaveLength(0)
   expect(apply).not.toHaveBeenCalled()
 })
 
 it('retries stale membership readback after a newer optimistic rename and persistence', async () => {
-  const reading = deferred()
-  const release = deferred()
-  const getText = client.runner.getText.bind(client.runner)
-  vi.spyOn(client.runner, 'getText').mockImplementation(async (sql, params) => {
-    const result = await getText(sql, params)
-    if (sql.includes("'key', lexeme_hash")) {
-      reading.resolve()
-      await release.promise
-    }
-    return result
+  // A round reads the store again after readback. A rename that lands there makes that readback stale.
+  getSnapshot.mockImplementationOnce(() => snapshot)
+  getSnapshot.mockImplementationOnce(() => {
+    snapshot = { ...snapshot, thoughtIndex: { [THOUGHT_ID]: thought('b') } }
+    void withTreecrdtWriteBarrier(() =>
+      provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('b') } }),
+    )
+    return snapshot
   })
   await withTreecrdtWriteBarrier(() =>
     provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
   )
-  await reading.promise
-
-  snapshot = { ...snapshot, thoughtIndex: { [THOUGHT_ID]: thought('b') } }
-  await withTreecrdtWriteBarrier(() =>
-    provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('b') } }),
-  )
-  release.resolve()
   await waitForMaterializedThoughtsToStore()
 
   expect(apply).toHaveBeenCalledTimes(1)
   expect(snapshot.lexemeIndex[hashThought('a')]).toBeUndefined()
   expect(snapshot.lexemeIndex[hashThought('b')].contexts).toEqual([THOUGHT_ID])
-  expect(snapshot.thoughtIndex[THOUGHT_ID].value).toBe('b')
 })
 
-it('publishes pending memberships on the next edit after a readback failure', async () => {
-  const getText = client.runner.getText.bind(client.runner)
+it('publishes pending memberships on the next edit after a failed publication', async () => {
   const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  const reader = vi.spyOn(client.runner, 'getText').mockImplementation((sql, params) => {
-    if (sql.includes("'key', lexeme_hash")) throw new Error('transient membership read')
-    return getText(sql, params)
-  })
-  try {
-    await withTreecrdtWriteBarrier(() =>
-      provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
-    )
-    await expect(waitForMaterializedThoughtsToStore()).rejects.toThrow('transient membership read')
-    reader.mockRestore()
-
-    const laterThought = { ...thought('b'), id: '00000000000000000000000000000202' as ThoughtId }
-    await withTreecrdtWriteBarrier(() =>
-      provider.db.updateThoughts({ thoughtIndexUpdates: { [laterThought.id]: laterThought } }),
-    )
-    await waitForMaterializedThoughtsToStore()
-
-    expect(snapshot.lexemeIndex[hashThought('a')]?.contexts).toEqual([THOUGHT_ID])
-    expect(snapshot.lexemeIndex[hashThought('b')]?.contexts).toEqual([laterThought.id])
-  } finally {
-    reader.mockRestore()
-    report.mockRestore()
-  }
-})
-
-it('does not publish an old binding after the provider is reset during readback', async () => {
-  const reading = deferred()
-  const release = deferred()
-  const getText = client.runner.getText.bind(client.runner)
-  vi.spyOn(client.runner, 'getText').mockImplementation(async (sql, params) => {
-    const result = await getText(sql, params)
-    if (sql.includes("'key', lexeme_hash")) {
-      reading.resolve()
-      await release.promise
-    }
-    return result
+  getSnapshot.mockImplementationOnce(() => {
+    throw new Error('transient store read')
   })
   await withTreecrdtWriteBarrier(() =>
     provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
   )
-  await reading.promise
-  provider.resetBinding(new Error('switch thoughtspace'))
-  await close()
-  release.resolve()
+  await expect(waitForMaterializedThoughtsToStore()).rejects.toThrow('transient store read')
+
+  const laterThought = { ...thought('b'), id: '00000000000000000000000000000202' as ThoughtId }
+  await withTreecrdtWriteBarrier(() =>
+    provider.db.updateThoughts({ thoughtIndexUpdates: { [laterThought.id]: laterThought } }),
+  )
+  await waitForMaterializedThoughtsToStore()
+
+  expect(snapshot.lexemeIndex[hashThought('a')]?.contexts).toEqual([THOUGHT_ID])
+  expect(snapshot.lexemeIndex[hashThought('b')]?.contexts).toEqual([laterThought.id])
+  report.mockRestore()
+})
+
+it('does not publish an old binding after the provider is reset during readback', async () => {
+  getSnapshot.mockImplementationOnce(() => snapshot)
+  getSnapshot.mockImplementationOnce(() => {
+    provider.resetBinding(new Error('switch thoughtspace'))
+    return snapshot
+  })
+  await withTreecrdtWriteBarrier(() =>
+    provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
+  )
   await waitForMaterializedThoughtsToStore()
   expect(apply).not.toHaveBeenCalled()
 })

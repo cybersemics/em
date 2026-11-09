@@ -341,10 +341,7 @@ const createTreecrdtDataProvider = () => {
 
     let subscribed = true
     const clientDb: TreecrdtClientDataProvider = {
-      getLexemeById: async key => {
-        await indexed()
-        return lexemes.getLexemeById(key)
-      },
+      getLexemeById: async key => (await clientDb.getLexemesByIds([key]))[0],
       getLexemesByIds: async keys => {
         await indexed()
         return lexemes.getLexemesByIds(keys)
@@ -367,20 +364,15 @@ const createTreecrdtDataProvider = () => {
       pending: [],
       isActive: () => subscribed && activeDb === clientDb,
     }
-    let publicationFailed = false
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
       const keys = updateIndexes(event)
       if (!materializationContext) return
       materializationContext.pending.push({ event, keys })
-      // A failed publication retains its events, so the next event must retry even when the buffer was not empty.
-      if (materializationContext.pending.length === 1 || publicationFailed) {
-        publicationFailed = false
-        void enqueueMaterializedThoughtsToStore(materializationContext).catch(err => {
-          publicationFailed = true
-          console.error('TreeCRDT materialized UI sync failed', err)
-        })
-      }
+      // Each event queues a publication; one that finds the buffer already drained returns at once.
+      void enqueueMaterializedThoughtsToStore(materializationContext).catch(err =>
+        console.error('TreeCRDT materialized UI sync failed', err),
+      )
     })
 
     activeDb = clientDb
