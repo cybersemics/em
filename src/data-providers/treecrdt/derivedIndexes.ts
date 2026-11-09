@@ -43,17 +43,6 @@ const createDerivedIndexes = async (client: TreecrdtClient) => {
     savedCursor = headSeq
   }
 
-  /**
-   * Writes the cursor once updates pause instead of after every event. The row may lag behind the index, which only
-   * means the next catch-up re-applies a few nodes, but it is never written ahead of the rows it covers.
-   */
-  const scheduleSave = () => {
-    clearTimeout(saveTimer)
-    saveTimer = setTimeout(() => {
-      indexQueue = indexQueue.then(saveCursor).catch(err => console.error('TreeCRDT derived indexing failed', err))
-    }, CURSOR_SAVE_DELAY_MS)
-  }
-
   /** Applies every node changed after the cursor, then saves it. */
   const catchUp = async (): Promise<void> => {
     let page = await client.tree.changedSince(cursor, { payloads: true, limit: PAGE_SIZE })
@@ -62,32 +51,34 @@ const createDerivedIndexes = async (client: TreecrdtClient) => {
       if (!page.next) break
       page = await client.tree.changedSince(page.next, { payloads: true, limit: PAGE_SIZE })
     }
-    cursor = Math.max(cursor, page.headSeq)
+    cursor = page.headSeq
     // A catch-up can cover many nodes, so its cursor is written right away.
     await saveCursor()
   }
 
   await catchUp()
 
-  /** Applies one event, or catches up from the cursor after a failed update. */
-  const apply = async (event: MaterializationEvent): Promise<void> => {
-    if (stale) {
-      await catchUp()
-      stale = false
-      return
-    }
-    // A catch-up may already have read this event's changes.
-    if (event.headSeq <= cursor) return
-    await refreshAttributeChildrenFromChanges(client, event.changes)
-    cursor = event.headSeq
-    scheduleSave()
-  }
-
-  /** Queues an event's index update. */
+  /** Queues an event's index update, or a catch-up from the cursor after a failed update. */
   const updateIndexes = (event: MaterializationEvent): void => {
-    // A failure leaves the cursor in place, so the next event catches up and retries the same changes.
     indexQueue = indexQueue
-      .then(() => apply(event))
+      .then(async () => {
+        if (stale) {
+          await catchUp()
+          stale = false
+          return
+        }
+        // A catch-up may already have read this event's changes.
+        if (event.headSeq <= cursor) return
+        await refreshAttributeChildrenFromChanges(client, event.changes)
+        cursor = event.headSeq
+        // Writing the row once updates pause saves a commit per event. It may lag behind the index, which only means
+        // the next catch-up re-applies a few nodes, but it is never written ahead of the rows it covers.
+        clearTimeout(saveTimer)
+        saveTimer = setTimeout(() => {
+          indexQueue = indexQueue.then(saveCursor).catch(err => console.error('TreeCRDT derived indexing failed', err))
+        }, CURSOR_SAVE_DELAY_MS)
+      })
+      // A failure leaves the cursor in place, so the next event catches up and retries the same changes.
       .catch(err => {
         stale = true
         console.error('TreeCRDT derived indexing failed', err)

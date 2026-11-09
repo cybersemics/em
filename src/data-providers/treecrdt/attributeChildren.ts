@@ -61,13 +61,13 @@ export async function getAttributeChildrenByParent(
 }
 
 /** Deletes one child from the attribute-child index. */
-export async function deleteAttributeChild(client: TreecrdtClient, childId: ThoughtId): Promise<void> {
+async function deleteAttributeChild(client: TreecrdtClient, childId: ThoughtId): Promise<void> {
   await ensureAttributeChildrenSchema(client)
   await client.runner.exec(bindParams(`DELETE FROM ${TABLE} WHERE child_id = ?1`, [childId]))
 }
 
 /** Upserts an attribute child into the derived index. */
-export async function upsertAttributeChild(
+async function upsertAttributeChild(
   client: TreecrdtClient,
   parentId: ThoughtId,
   childId: ThoughtId,
@@ -78,20 +78,6 @@ export async function upsertAttributeChild(
   const sql = `INSERT INTO ${TABLE} (child_id, parent_id, value) VALUES (?1, ?2, ?3)
     ON CONFLICT(child_id) DO UPDATE SET parent_id = excluded.parent_id, value = excluded.value`
   await client.runner.exec(bindParams(sql, [childId, parentId, value]))
-}
-
-/** Upserts or removes a child from the derived attribute-child index based on a known current value. */
-export async function syncAttributeChild(
-  client: TreecrdtClient,
-  parentId: ThoughtId,
-  childId: ThoughtId,
-  value: string,
-): Promise<void> {
-  if (isAttribute(value)) {
-    await upsertAttributeChild(client, parentId, childId, value)
-  } else {
-    await deleteAttributeChild(client, childId)
-  }
 }
 
 /** Updates the indexed parent for a moved child, if the child is indexed. */
@@ -146,13 +132,15 @@ export async function refreshAttributeChildrenFromChanges(
     const childId = ch.node as ThoughtId
     switch (ch.kind) {
       case 'insert':
-      case 'restore':
-        if (ch.payload && ch.parentAfter) {
-          await syncAttributeChild(client, ch.parentAfter as ThoughtId, childId, decodeThoughtPayload(ch.payload).value)
+      case 'restore': {
+        const value = ch.payload && decodeThoughtPayload(ch.payload).value
+        if (value && ch.parentAfter && isAttribute(value)) {
+          await upsertAttributeChild(client, ch.parentAfter as ThoughtId, childId, value)
         } else {
           await deleteAttributeChild(client, childId)
         }
         break
+      }
       case 'move':
         if (ch.parentBefore !== ch.parentAfter) {
           await moveAttributeChild(client, ch.parentAfter as ThoughtId, childId)
