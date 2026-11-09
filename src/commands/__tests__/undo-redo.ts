@@ -1,4 +1,5 @@
 import { archiveThoughtActionCreator as archiveThought } from '../../actions/archiveThought'
+import { categorizeActionCreator as categorize } from '../../actions/categorize'
 import { clearActionCreator as clear } from '../../actions/clear'
 import { cursorBackActionCreator as cursorBack } from '../../actions/cursorBack'
 import { cursorDownActionCreator as cursorDown } from '../../actions/cursorDown'
@@ -16,9 +17,11 @@ import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import { HOME_TOKEN } from '../../constants'
+import db from '../../data-providers/thoughtspace'
 import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import isUndoEnabled from '../../selectors/isUndoEnabled'
@@ -78,6 +81,24 @@ describe('undo persistence', () => {
     await vi.runAllTimersAsync()
     vi.useRealTimers()
   }, 10000 /* increase timeout to give time for two calls to initialize() */)
+
+  it('persists the removal of the empty category when undoing Categorize', async () => {
+    store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
+    await waitForThoughtspaceIdle()
+    const thoughtId = contextToThoughtId(store.getState(), ['a'])!
+
+    store.dispatch(categorize())
+    await waitForThoughtspaceIdle()
+    const categoryId = contextToThoughtId(store.getState(), [''])!
+    await expect(db.getThoughtById(thoughtId)).resolves.toMatchObject({ parentId: categoryId })
+
+    store.dispatch(undo())
+    await waitForThoughtspaceIdle()
+
+    await expect(db.getThoughtById(thoughtId)).resolves.toMatchObject({ parentId: HOME_TOKEN })
+    const home = await db.getThoughtById(HOME_TOKEN)
+    expect(Object.values(home!.childrenMap)).toEqual([thoughtId])
+  })
 
   it('persists undo move placement after reload', async () => {
     await initialize({ storage: 'memory' })

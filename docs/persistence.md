@@ -81,8 +81,8 @@ Two app-owned tables live alongside the CRDT tables in the same SQLite database.
 `updateThoughtsForClient` applies one push-queue batch:
 
 1. **Lexemes first.** Each entry in `lexemeIndexUpdates` is upserted into `em_lexemes`, or deleted when `null`.
-2. **Deletions.** Each `null` entry in `thoughtIndexUpdates` becomes a `client.local.delete`, and the thought's row is dropped from the attribute index.
-3. **Upserts.** For a thought that doesn't exist yet, a `client.local.insert` with a resolved placement (see below); for one that does, a `client.local.move` when the parent or the order changed, and a `client.local.payload` when any payload field actually changed. Redundant payload writes are skipped so no-op edits don't mint operations. The attribute index is updated whenever a thought's parent or value changed.
+2. **Upserts.** For a thought that doesn't exist yet, a `client.local.insert` with a resolved placement (see below); for one that does, a `client.local.move` when the parent or the order changed, and a `client.local.payload` when any payload field actually changed. Redundant payload writes are skipped so no-op edits don't mint operations. The attribute index is updated whenever a thought's parent or value changed.
+3. **Deletions.** Each `null` entry in `thoughtIndexUpdates` becomes a `client.local.delete`, and the thought's row is dropped from the attribute index. Moves out of the old parent's subtree are included in its delete's `knownState`.
 
 The function returns the `readonly Operation[]` it minted. That array is what the runtime forwards to remote sync.
 
