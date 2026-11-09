@@ -18,22 +18,8 @@ const CREATE_TABLE_SQL = `CREATE TABLE IF NOT EXISTS ${TABLE} (
 
 const CREATE_PARENT_INDEX_SQL = `CREATE INDEX IF NOT EXISTS idx_${TABLE}_parent ON ${TABLE} (parent_id);`
 
-/**
- * Injects bound parameters into SQL for `runner.exec`, which does not accept bind args.
- * Only `?1` ... `?n` placeholders are supported, in order.
- */
-function bindParams(sql: string, params: (string | number | null)[]): string {
-  let out = sql
-  for (let i = params.length - 1; i >= 0; i--) {
-    const p = params[i]
-    const lit = p === null ? 'NULL' : typeof p === 'number' ? String(p) : `'${String(p).replace(/'/g, "''")}'`
-    out = out.replace(new RegExp(`\\?${i + 1}\\b`, 'g'), lit)
-  }
-  return out
-}
-
 /** Ensures the derived attribute-child index schema exists. */
-export async function ensureAttributeChildrenSchema(client: TreecrdtClient): Promise<void> {
+async function ensureAttributeChildrenSchema(client: TreecrdtClient): Promise<void> {
   if (schemaReady.has(client)) return
   await client.runner.exec(CREATE_TABLE_SQL)
   await client.runner.exec(CREATE_PARENT_INDEX_SQL)
@@ -63,7 +49,8 @@ export async function getAttributeChildrenByParent(
 /** Deletes one child from the attribute-child index. */
 async function deleteAttributeChild(client: TreecrdtClient, childId: ThoughtId): Promise<void> {
   await ensureAttributeChildrenSchema(client)
-  await client.runner.exec(bindParams(`DELETE FROM ${TABLE} WHERE child_id = ?1`, [childId]))
+  // getText also executes parameterized writes (returning null); exec does not accept bind parameters.
+  await client.runner.getText(`DELETE FROM ${TABLE} WHERE child_id = ?1`, [childId])
 }
 
 /** Upserts an attribute child into the derived index. */
@@ -75,19 +62,11 @@ async function upsertAttributeChild(
 ): Promise<void> {
   await ensureAttributeChildrenSchema(client)
 
-  const sql = `INSERT INTO ${TABLE} (child_id, parent_id, value) VALUES (?1, ?2, ?3)
-    ON CONFLICT(child_id) DO UPDATE SET parent_id = excluded.parent_id, value = excluded.value`
-  await client.runner.exec(bindParams(sql, [childId, parentId, value]))
-}
-
-/** Updates the indexed parent for a moved child, if the child is indexed. */
-export async function moveAttributeChild(
-  client: TreecrdtClient,
-  parentId: ThoughtId,
-  childId: ThoughtId,
-): Promise<void> {
-  await ensureAttributeChildrenSchema(client)
-  await client.runner.exec(bindParams(`UPDATE ${TABLE} SET parent_id = ?1 WHERE child_id = ?2`, [parentId, childId]))
+  await client.runner.getText(
+    `INSERT INTO ${TABLE} (child_id, parent_id, value) VALUES (?1, ?2, ?3)
+     ON CONFLICT(child_id) DO UPDATE SET parent_id = excluded.parent_id, value = excluded.value`,
+    [childId, parentId, value],
+  )
 }
 
 /** Replaces the rows of changed nodes from their current parent and value. */
@@ -103,7 +82,6 @@ export async function applyAttributeChildren(
     const { value } = decodeThoughtPayload(node.payload)
     if (isAttribute(value)) rows.push([node.node, node.parent, value])
   }
-  // getText also executes parameterized writes (returning null); exec does not accept bind parameters.
   await client.runner.getText(`DELETE FROM ${TABLE} WHERE child_id IN (SELECT value FROM json_each(?1))`, [
     JSON.stringify(nodes.map(node => node.node)),
   ])
@@ -143,7 +121,10 @@ export async function refreshAttributeChildrenFromChanges(
       }
       case 'move':
         if (ch.parentBefore !== ch.parentAfter) {
-          await moveAttributeChild(client, ch.parentAfter as ThoughtId, childId)
+          await client.runner.getText(`UPDATE ${TABLE} SET parent_id = ?1 WHERE child_id = ?2`, [
+            ch.parentAfter,
+            childId,
+          ])
         }
         break
       case 'payload': {
