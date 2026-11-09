@@ -71,13 +71,10 @@ const useBodyAttributeSelector = <T,>(name: string, selector: (state: State) => 
 //   )
 // }
 
-/** Returns true if the given touch point is within the toolbar's bounds. Used to prevent a swipe on the toolbar from being captured as a thoughtspace gesture (which disables scroll), so the toolbar can scroll horizontally. The toolbar can render below the static TOOLBAR_HEIGHT that isInGestureZone excludes (e.g. pushed down by the iOS safe-area inset), so its actual bounds are checked here. */
+/** Returns true if a touch hits the toolbar or its dropdown, excluding the clipped empty area beside it. */
 const isOnToolbar = (x?: number, y?: number): boolean => {
   if (x == null || y == null || typeof document === 'undefined') return false
-  const toolbar = document.getElementById('toolbar')
-  if (!toolbar) return false
-  const rect = toolbar.getBoundingClientRect()
-  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+  return !!document.elementFromPoint(x, y)?.closest('#toolbar')
 }
 
 /** Cancel gesture if the touch is on the toolbar, or if there is an active text selection, drag, modal, or sidebar. */
@@ -100,7 +97,14 @@ const shouldCancelGesture = (
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
-    !!state.showMobileCommandUniverse
+    // Over the Mobile Command Universe, only a trace over the open pinned command tooltip is a gesture: a dry run of
+    // the pinned command. A touch anywhere else there belongs to the Command Universe. Calls without coordinates come
+    // from the responder, which only sees touches on the pinned command while the Command Universe covers the rest.
+    (!!state.showMobileCommandUniverse &&
+      !(
+        state.showPinnedCommandTooltip &&
+        (x === undefined || y === undefined || !!document.elementFromPoint(x, y)?.closest('[data-above-dialog]'))
+      ))
   )
 }
 
@@ -240,6 +244,8 @@ const AppComponent: FC = () => {
                 <Content />
               </div>
             }
+            {/* Inside MultiGesture so that a trace over the pinned command's tooltip is recognized and drawn even where the tooltip sits over the Mobile Command Universe, which is outside it. Its own fixed z-index orders it against the NavBar. */}
+            {isDocumentEditable() && <PinnedCommand />}
           </>
         )}
       </MultiGestureIfTouch>
@@ -248,7 +254,6 @@ const AppComponent: FC = () => {
         <>
           {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
           <NavBar position='bottom' />
-          <PinnedCommand />
 
           <CommandCenter />
           <div style={{ fontSize }}>

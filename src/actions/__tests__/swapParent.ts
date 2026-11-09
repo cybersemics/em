@@ -96,6 +96,85 @@ it('preserves both notes when swapping a parent and child that each have a note'
         - child note`)
 })
 
+// https://github.com/cybersemics/em/issues/3725
+it('carries =favorite with its thought while =pin keeps its position', () => {
+  const text = `
+    - a
+      - =pin
+        - true
+      - b
+        - =favorite
+        - c
+      - d
+  `
+
+  const steps = [importText({ text }), setCursor(['a', 'b']), swapParent]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - b
+    - =favorite
+    - =pin
+      - true
+    - a
+      - c
+    - d`)
+})
+
+// https://github.com/cybersemics/em/issues/3725
+it('leaves =favorite with the parent', () => {
+  const text = `
+    - a
+      - =favorite
+      - b
+        - c
+  `
+
+  const steps = [importText({ text }), setCursor(['a', 'b']), swapParent]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - b
+    - a
+      - =favorite
+      - c`)
+})
+
+// https://github.com/cybersemics/em/issues/3725
+it('preserves child order when swapping into a favorited parent', () => {
+  const state = reducerFlow([
+    newThought({ value: 'a' }),
+    newThought({ value: '=favorite', insertNewSubthought: true }),
+    setCursor(['a']),
+    newThought({ value: 'b', insertNewSubthought: true }),
+    newThought({ value: 'y', insertNewSubthought: true }),
+    newThought({ value: 'z' }),
+    setCursor(['a', 'b', 'y']),
+    newThought({ value: 'x', insertBefore: true }),
+    setCursor(['a', 'b']),
+  ])(initialState())
+
+  expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+    - =favorite
+    - b
+      - x
+      - y
+      - z`)
+
+  const stateNew = swapParent(state)
+
+  expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - b
+    - a
+      - =favorite
+      - x
+      - y
+      - z`)
+})
+
 it('swaps child thought with parent', () => {
   const text = `
   - x

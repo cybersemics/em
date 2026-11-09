@@ -46,7 +46,6 @@ import { toggleSidebarActionCreator } from '../../actions/toggleSidebar'
 import { LongPressState } from '../../constants'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import useLockBodyScroll from '../../hooks/useLockBodyScroll'
-import usePrefetchImages from '../../hooks/usePrefetchImages'
 import FadeTransition from '../FadeTransition'
 import SidebarBackground from './SidebarBackground'
 import SidebarContent from './SidebarContent'
@@ -57,13 +56,6 @@ import { SECTIONS, SidebarSectionId } from './sidebarSections'
 import useDrawerPosition from './useDrawerPosition'
 import useDrawerWidth from './useDrawerWidth'
 import useSidebarSwipe from './useSidebarSwipe'
-
-/** Both engines use the pre-baked per-section variants (see SidebarGlow) — prefetched below so the
- * first section switch crossfades without a fetch/decode hitch mid-animation. */
-const GLOW_OVERLAY_IMAGE_URLS = SECTIONS.flatMap(section => [
-  `/img/sidebar/overlay-layer-1-${section.id}.avif`,
-  `/img/sidebar/overlay-layer-2-${section.id}.avif`,
-])
 
 /**
  * Top-level Sidebar component. Composes the background layers, glow overlays, drawer, and
@@ -210,9 +202,6 @@ const Sidebar = () => {
       setDrawerMounted(false)
     }
   }, [showSidebar, x, width])
-
-  /** Preload glow overlay images so they appear instantly when the sidebar first opens. */
-  usePrefetchImages(GLOW_OVERLAY_IMAGE_URLS)
 
   /** Lock body scroll when sidebar is open. */
   useLockBodyScroll(showSidebar)

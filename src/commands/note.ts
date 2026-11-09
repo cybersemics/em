@@ -13,6 +13,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const noteCommand = {
   id: 'note',
   label: 'Note' as const,
+  systemMenu: 'Edit',
   description: 'Add a small note beneath a thought. Cute!',
   keyboard: { key: 'n', alt: true, meta: true },
   gesture: 'rdlr',

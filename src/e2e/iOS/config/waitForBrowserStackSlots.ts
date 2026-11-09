@@ -23,6 +23,17 @@ const POLL_JITTER_MS = 5000
 /** How often to report that we are still waiting, so a long wait does not look like a hang. */
 const PROGRESS_INTERVAL_MS = 60000
 
+/**
+ * Sessions to leave free for other runs, read from BROWSERSTACK_SESSIONS_RESERVED. A low-priority run
+ * — the CI of a merge-conflict resolution, which ios.yml and android.yml flag — sets it so that it
+ * starts only when a developer pushing to any pull request would still find room, rather than
+ * competing with them on equal terms. Capped so that a run always fits an otherwise idle account.
+ */
+const reservedSessions = (needed: number, allowed: number): number => {
+  const reserved = Number(process.env.BROWSERSTACK_SESSIONS_RESERVED || 0)
+  return Number.isFinite(reserved) && reserved > 0 ? Math.min(reserved, Math.max(allowed - needed, 0)) : 0
+}
+
 /** The account's Automate usage: running parallels, plus the separate session-create queue. */
 interface SlotUsage {
   running: number
@@ -114,10 +125,13 @@ const waitForBrowserStackSlots = async (needed: number): Promise<void> => {
     const waitedMin = Math.round((Date.now() - start) / 60000)
     const usageSummary = `${usage.running}/${usage.allowed} sessions running, ${usage.queued}/${usage.queuedMax} queued (${usage.available} available)`
 
+    const reserved = reservedSessions(needed, usage.allowed)
+    const need = reserved ? `${needed} plus ${reserved} left free for higher-priority runs` : `${needed}`
+
     // queued + needed must fit the queue cap, not only parallel headroom — see BROWSERSTACK_QUEUE_SIZE_EXCEEDED.
-    if (usage.available >= needed && usage.queued + needed <= usage.queuedMax) {
+    if (usage.available >= needed + reserved && usage.queued + needed <= usage.queuedMax) {
       console.info(
-        `BrowserStack slots: ${usageSummary}, need ${needed} — proceeding` +
+        `BrowserStack slots: ${usageSummary}, need ${need} — proceeding` +
           (waitedMin > 0 ? ` after waiting ${waitedMin} min` : ''),
       )
       return
@@ -135,7 +149,7 @@ const waitForBrowserStackSlots = async (needed: number): Promise<void> => {
     // Report on the first pass that has to wait, then periodically.
     if (lastProgress === start || Date.now() - lastProgress >= PROGRESS_INTERVAL_MS) {
       console.info(
-        `BrowserStack slots: need ${needed}, ${usageSummary} — waited ${waitedMin} min of ` +
+        `BrowserStack slots: need ${need}, ${usageSummary} — waited ${waitedMin} min of ` +
           `${Math.round(WAIT_TIMEOUT_MS / 60000)} min...`,
       )
       lastProgress = Date.now()

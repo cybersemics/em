@@ -4,7 +4,7 @@ import pluralize from 'pluralize'
 import { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { Sheet, SheetRef } from 'react-modal-sheet'
 import { useDispatch, useSelector } from 'react-redux'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../../actions/clearMulticursors'
 import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
@@ -22,6 +22,7 @@ import isTutorial from '../../selectors/isTutorial'
 import backgroundGlowStore from '../../stores/backgroundGlowStore'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
+import backgroundGlowImageClassName from '../backgroundGlowImageClassName'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
 
@@ -63,22 +64,6 @@ const MultiselectMessage: FC = () => {
         {displayNumMulticursors} {pluralize('thought', displayNumMulticursors, false)} selected
       </span>
     </div>
-  )
-}
-
-/**
- * A hidden pre-rendered overlay on mobile, used as a workaround for the
- * Command Center flicker caused by the overlay background only being loaded
- * when the Command Center opens.
- */
-const HiddenOverlay = () => {
-  return (
-    <div
-      className={css({
-        backgroundImage: 'url(/img/command-center/overlay.webp)',
-        visibility: 'hidden',
-      })}
-    />
   )
 }
 
@@ -174,7 +159,6 @@ const CommandCenter = () => {
             }}
           />
         )}
-        <HiddenOverlay />
         <Sheet
           data-testid='command-center-panel'
           ref={sheetRef}
@@ -210,17 +194,17 @@ const CommandCenter = () => {
               }}
             >
               <div
-                className={css({
-                  position: 'absolute',
-                  inset: 0,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'bottom center',
-                  backgroundRepeat: 'no-repeat',
-                })}
-                style={{
-                  backgroundImage: `url(/img/glow/${backgroundGlow.image})`,
-                  opacity: backgroundGlow.opacity,
-                }}
+                className={cx(
+                  backgroundGlowImageClassName[backgroundGlow.image],
+                  css({
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'bottom center',
+                    backgroundRepeat: 'no-repeat',
+                  }),
+                )}
+                style={{ opacity: backgroundGlow.opacity }}
               />
             </motion.div>
           ) : (

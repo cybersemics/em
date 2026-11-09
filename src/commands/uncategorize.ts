@@ -6,6 +6,7 @@ import hasMulticursor from '../selectors/hasMulticursor'
 const uncategorizeCommand = {
   id: 'uncategorize',
   label: 'Uncategorize' as const,
+  systemMenu: 'Edit',
   description: 'Deletes the current thought and moves all its subthoughts up a level.',
   gesture: 'dr',
   multicursor: {

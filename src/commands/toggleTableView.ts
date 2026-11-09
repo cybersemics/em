@@ -11,6 +11,7 @@ import isRoot from '../util/isRoot'
 const toggleTableViewCommand = {
   id: 'toggleTableView',
   label: 'Table View' as const,
+  systemMenu: 'View',
   description: 'Display the current list as a table, with subthoughts rendered in the second column.',
   gesture: 'rdlu',
   keyboard: { key: 't', alt: true, shift: true },
