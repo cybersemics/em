@@ -17,6 +17,7 @@ import { setInvalidStateActionCreator as setInvalidState } from '../actions/inva
 import { keyboardOpenActionCreator } from '../actions/keyboardOpen'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import { setCursorOffsetActionCreator as setCursorOffset } from '../actions/setCursorOffset'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isSafari, isTouch } from '../browser'
@@ -329,9 +330,48 @@ const Editable = ({
     setContentInvalidState(isInvalid)
   }
 
-  /** Set the cursor on the thought. */
+  // Set while setCursorOnThought focuses this editable, whose onFocus then calls setCursorOnThought again before the
+  // first call has set the cursor.
+  const focusingRef = useRef(false)
+
+  /**
+   * Sets the cursor on the thought, or places the caret within it when the cursor is already on it. This is the only
+   * place an Editable sets the cursor or the cursor offset: focus, a tap, and the iOS tap workarounds in useEditMode all
+   * come through it, and useEditMode places the caret from the result.
+   */
   const setCursorOnThought = useCallback(
-    ({ isKeyboardOpen }: { isKeyboardOpen?: boolean } = {}) => {
+    ({
+      focus,
+      isKeyboardOpen,
+      offset,
+      preserveMulticursor = true,
+    }: {
+      /** Moves the focus here from another editable or a note first, so that their blur handlers, such as a note's whitespace trim and setNoteFocus, dispatch before the cursor moves, and an Undo restores the note. Focusing rather than blurring gives the blur a relatedTarget, so that onBlur does not end edit mode. */
+      focus?: boolean
+      isKeyboardOpen?: boolean
+      /** The plain-text offset to place the caret at, such as where a tap landed. */
+      offset?: number
+      preserveMulticursor?: boolean
+    } = {}) => {
+      // This is onFocus running for the focus below. The call that made it sets the cursor once the focus is done.
+      if (focusingRef.current) return
+
+      const focused = document.activeElement
+      if (
+        focus &&
+        contentRef.current &&
+        focused instanceof HTMLElement &&
+        focused !== document.body &&
+        focused !== contentRef.current
+      ) {
+        focusingRef.current = true
+        try {
+          contentRef.current.focus({ preventScroll: true })
+        } finally {
+          focusingRef.current = false
+        }
+      }
+
       dispatch((dispatch, getState) => {
         const state = getState()
 
@@ -339,17 +379,24 @@ const Editable = ({
         // event if this component's path no longer points to the thought's current location. (#4680)
         if (!transient && !equalPath(thoughtToPath(state, head(simplePath)), simplePath)) return
 
-        // do not set cursor if it is unchanged and we are not entering when keyboard is open
-        if ((!isKeyboardOpen || state.isKeyboardOpen) && equalPath(state.cursor, path)) return
+        if (equalPath(state.cursor, path)) {
+          // The cursor is already here, so this only places the caret within the thought.
+          if (offset != null) {
+            dispatch(setCursorOffset({ offset, isKeyboardOpen, preserveMulticursor }))
+            return
+          }
+          // do not set cursor if it is unchanged and we are not entering when keyboard is open
+          if (!isKeyboardOpen || state.isKeyboardOpen) return
+        }
 
-        // set offset to null to allow the browser to set the position of the selection
-        let offset = null
+        // Without a given offset, set offset to null to allow the browser to set the position of the selection.
+        let restoredOffset: number | null = null
 
         // if running for the first time, restore the offset if the path matches the restored cursor
-        if (!cursorOffsetInitializedStore.getState()) {
+        if (offset == null && !cursorOffsetInitializedStore.getState()) {
           const restored: { path: Path | null; offset: number | null } = storageModel.get('cursor')
           if (path && restored.offset && equalPath(restored.path, path)) {
-            offset = restored.offset || null
+            restoredOffset = restored.offset || null
           }
         }
 
@@ -359,9 +406,9 @@ const Editable = ({
         dispatch(
           setCursor({
             cursorHistoryClear: true,
-            preserveMulticursor: true,
+            preserveMulticursor,
             isKeyboardOpen,
-            offset,
+            offset: offset ?? restoredOffset,
             path,
           }),
         )
@@ -369,7 +416,7 @@ const Editable = ({
     },
     // When isEditing changes, we need to reset the cursor on the thought.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, isEditing, path, simplePath, transient],
+    [contentRef, dispatch, isEditing, path, simplePath, transient],
   )
 
   /**
@@ -451,7 +498,7 @@ const Editable = ({
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(_.throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
-  useEditMode({ contentRef, isEditing, path, style, transient })
+  useEditMode({ contentRef, isEditing, path, setCursorOnThought, style, transient })
 
   useEffect(() => {
     /** Flushes pending edits. */

@@ -1,5 +1,6 @@
 import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
+import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
@@ -13,6 +14,7 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
 import waitForCursor from '../helpers/waitForCursor'
+import waitForEditable from '../helpers/waitForEditable'
 import waitForNoteFocus from '../helpers/waitForNoteFocus'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
@@ -229,6 +231,36 @@ it('Re-render cursor thought on undo', async () => {
 
   const thoughtValue = await getEditingText()
   expect(thoughtValue).toBe('hello')
+})
+
+// https://github.com/cybersemics/em/issues/6221
+it('redo of a click into another thought should place the caret where the click placed it', async () => {
+  await paste(`
+    - hello
+    - wonderful
+  `)
+
+  await clickThought('hello')
+  await press('b', { meta: true })
+  await waitForEditable('<b>hello</b>')
+
+  // Click after "wonderf".
+  await click(await waitForEditable('wonderful'), { offset: 7 })
+  await waitForCursor('wonderful')
+
+  // Undo removes the bold along with the click, then Redo restores the bold and Redo again restores the click.
+  await press('z', { meta: true })
+  await waitForEditable('hello')
+  await press('z', { meta: true, shift: true })
+  await waitForEditable('<b>hello</b>')
+  await press('z', { meta: true, shift: true })
+  await waitForCursor('wonderful')
+
+  try {
+    await page.waitForFunction(() => window.getSelection()?.focusOffset === 7, { timeout: 5000 })
+  } catch {
+    throw new Error(`Expected the caret after "wonderf" (7), but it is at ${await getCaretOffset()}.`)
+  }
 })
 
 /** Dispatches a native undo/redo beforeinput event on the thought currently being edited, as iOS does for a three-finger swipe or shake-to-undo. */

@@ -4,7 +4,6 @@ import { useStore } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
 import State from '../../@types/State'
-import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
 import { isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
@@ -33,6 +32,7 @@ const useEditMode = ({
   contentRef,
   isEditing,
   path,
+  setCursorOnThought,
   style,
   transient,
 }: {
@@ -41,6 +41,13 @@ const useEditMode = ({
   contentRef: React.RefObject<HTMLInputElement | null>
   isEditing: boolean
   path: Path
+  /** Editable's setter for the cursor and cursor offset of this thought, the only place either is set. The hook decides where a tap places the caret and gives it the offset, and the selection effect places the caret from the result. */
+  setCursorOnThought: (options: {
+    focus?: boolean
+    isKeyboardOpen?: boolean
+    offset?: number
+    preserveMulticursor?: boolean
+  }) => void
   style: React.CSSProperties | undefined
   transient: boolean | undefined
 }) => {
@@ -75,38 +82,22 @@ const useEditMode = ({
   /** Updates the Redux cursor state for a tap and has the selection effect place the caret there. */
   const setCaretOffset = useFreshCallback(
     (offset: number) => {
-      // Move the focus from another editable or a note before setCursor, as placing the caret synchronously used to.
-      // Their blur handlers dispatch actions of their own, such as a note's whitespace trim and setNoteFocus, and an
-      // Undo restores the note only if they come before setCursor. Focusing the editable directly rather than blurring
-      // gives the blur a relatedTarget, so that Editable's onBlur does not end edit mode.
-      const focused = document.activeElement
-      if (
-        contentRef.current &&
-        focused instanceof HTMLElement &&
-        focused !== document.body &&
-        focused !== contentRef.current
-      ) {
-        contentRef.current.focus({ preventScroll: true })
-      }
-
       const state = store.getState()
       tapPlacementRef.current = true
-      dispatch(
-        setCursor({
-          path,
-          offset,
-          // While a multiselection is being edited (Clear Thought), a tap moves the caret as usual. The multiselection is
-          // preserved when the tapped thought belongs to it, so that edits keep mirroring to the other selected thoughts.
-          preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path),
-          // Enter edit mode here rather than leaving it to Editable's onFocus, which runs when the editable takes the
-          // focus and would set the cursor again with no offset. The caret is already placed by then, but the cursor
-          // offset would be lost.
-          isKeyboardOpen: true,
-        }),
-      )
+      setCursorOnThought({
+        // Move the focus here from another editable or a note before the cursor, as placing the caret synchronously
+        // used to. See setCursorOnThought.
+        focus: true,
+        // Enter edit mode with the tap, since the editable takes the focus.
+        isKeyboardOpen: true,
+        offset,
+        // While a multiselection is being edited (Clear Thought), a tap moves the caret as usual. The multiselection is
+        // preserved when the tapped thought belongs to it, so that edits keep mirroring to the other selected thoughts.
+        preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path),
+      })
       bumpCaretNonce()
     },
-    [dispatch, path, store],
+    [path, setCursorOnThought, store],
   )
 
   useCaretRestore({ editableRef: contentRef, enabled: isCursor && !!editing })
@@ -288,18 +279,10 @@ const useEditMode = ({
           clientY: e.changedTouches[0].clientY,
         })
 
-        // Dispatch only the Redux cursor; the declarative selection effect places the caret on the next render.
+        // Set only the Redux cursor; the declarative selection effect places the caret on the next render.
         // Calling selection.set() synchronously during touchend triggers iOS's text-selection machinery, which
         // swallows the immediately-following rapid tap.
-        dispatch(
-          setCursor({
-            path,
-            offset,
-            cursorHistoryClear: true,
-            isKeyboardOpen: true,
-            preserveMulticursor: true,
-          }),
-        )
+        setCursorOnThought({ isKeyboardOpen: true, offset: offset ?? undefined })
       })
     }
 
@@ -403,16 +386,8 @@ const useEditMode = ({
 
         const { offset } = getCaretOffset(editable, touchStart)
 
-        // Dispatch only the Redux cursor; the declarative selection effect places the caret on the next render.
-        dispatch(
-          setCursor({
-            path,
-            offset,
-            cursorHistoryClear: true,
-            isKeyboardOpen: true,
-            preserveMulticursor: true,
-          }),
-        )
+        // Set only the Redux cursor; the declarative selection effect places the caret on the next render.
+        setCursorOnThought({ isKeyboardOpen: true, offset: offset ?? undefined })
       })
     }
 
@@ -436,6 +411,7 @@ const useEditMode = ({
     editing,
     editingOrOnCursor,
     setCaretOffset,
+    setCursorOnThought,
     isCursor,
     isMulticursor,
     fontSize,

@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react'
 import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import { importTextActionCreator as importText } from '../../../actions/importText'
+import { setCursorOffsetActionCreator as setCursorOffset } from '../../../actions/setCursorOffset'
 import { executeCommandWithMulticursor } from '../../../commands'
 import clearThoughtCommand from '../../../commands/clearThought'
 import store from '../../../stores/app'
@@ -52,6 +53,10 @@ it('opens the virtual keyboard when Clear Thought activates edit mode', async ()
         contentRef: { current: editable as unknown as HTMLInputElement },
         isEditing: true,
         path: store.getState().cursor!,
+        // The hook is rendered on the cursor thought, where Editable's setter only places the caret.
+        setCursorOnThought: ({ isKeyboardOpen, offset, preserveMulticursor }) => {
+          if (offset !== undefined) store.dispatch(setCursorOffset({ offset, isKeyboardOpen, preserveMulticursor }))
+        },
         style: undefined,
         transient: undefined,
       }),

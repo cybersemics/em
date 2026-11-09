@@ -3,6 +3,7 @@ import { createElement } from 'react'
 import { Provider } from 'react-redux'
 import { importTextActionCreator as importText } from '../../../actions/importText'
 import { keyboardOpenActionCreator as keyboardOpen } from '../../../actions/keyboardOpen'
+import { setCursorOffsetActionCreator as setCursorOffset } from '../../../actions/setCursorOffset'
 import store from '../../../stores/app'
 import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
@@ -33,6 +34,10 @@ it('focuses the editable when the caret is placed with no prior selection on a t
         contentRef: { current: editable as unknown as HTMLInputElement },
         isEditing: true,
         path: store.getState().cursor!,
+        // The hook is rendered on the cursor thought, where Editable's setter only places the caret.
+        setCursorOnThought: ({ isKeyboardOpen, offset, preserveMulticursor }) => {
+          if (offset !== undefined) store.dispatch(setCursorOffset({ offset, isKeyboardOpen, preserveMulticursor }))
+        },
         style: undefined,
         transient: undefined,
       }),
