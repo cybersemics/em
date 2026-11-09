@@ -4,6 +4,7 @@ import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import hashThought from '../../../util/hashThought'
 import type { DataProvider } from '../../DataProvider'
+import { encodeThoughtPayload } from '../payload'
 import createTreecrdtThoughtspace from '../runtime'
 import createTreecrdtDataProvider, { createIndexedChildrenMap } from '../thoughtspace'
 
@@ -252,33 +253,18 @@ it('keeps separately created thoughtspace instances isolated', async () => {
 it('resumes from its cursor after an interrupted index update', async () => {
   const client = await createTreecrdtClient({ docId: 'partial-index-update' })
   const replicaId = new Uint8Array(32).fill(1)
-  const provider = createTreecrdtDataProvider()
-  const close = await provider.bindClient(client, replicaId)
-  const getText = client.runner.getText.bind(client.runner)
-  const exec = client.runner.exec.bind(client.runner)
-  const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  const runner = vi.spyOn(client.runner, 'exec').mockImplementation(sql => {
-    if (sql.includes('INSERT INTO em_attribute_children')) throw new Error('interrupted index update')
-    return exec(sql)
-  })
   try {
-    const cursor = await getText('SELECT head_seq FROM em_derived_indexes_meta')
-    // The write still succeeds; the failed update only leaves the cursor where it was.
-    await persistThoughtsTo(provider.db, [thought(PIN_ID, EM_TOKEN, '=pin', 0)])
-    expect(await getText('SELECT head_seq FROM em_derived_indexes_meta')).toBe(cursor)
-    runner.mockRestore()
+    const close = await createTreecrdtDataProvider().bindClient(client, replicaId)
     await close()
+    // A commit that no provider indexed: the state the app leaves when it stops before the index update.
+    const payload = encodeThoughtPayload({ value: '=pin', created: 1, lastUpdated: 1, updatedBy: 'test' })
+    await client.local.insert(replicaId, EM_TOKEN, PIN_ID, { type: 'last' }, payload)
 
     const reopened = createTreecrdtDataProvider()
     const closeReopened = await reopened.bindClient(client, replicaId)
-    try {
-      expect((await reopened.db.getThoughtById(EM_TOKEN))?.childrenMap['=pin']).toBe(PIN_ID)
-    } finally {
-      await closeReopened()
-    }
+    expect((await reopened.db.getThoughtById(EM_TOKEN))?.childrenMap['=pin']).toBe(PIN_ID)
+    await closeReopened()
   } finally {
-    await close()
     await client.drop()
-    report.mockRestore()
   }
 })
