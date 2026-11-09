@@ -73,9 +73,7 @@ describe('Copy', () => {
     // The picker stays open, so tap the background swatch directly; tapToolbar would toggle it closed.
     await clickThought('Four')
     await tap(
-      await waitForElement(
-        '[data-testid="toolbar-icon"][aria-label="Text Color"] [aria-label="background color swatches"] [aria-label="blue"]',
-      ),
+      await waitForElement('[aria-label="Color Picker"] [aria-label="background color swatches"] [aria-label="blue"]'),
       toolbarTapOptions,
     )
 
