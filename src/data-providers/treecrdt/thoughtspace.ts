@@ -355,7 +355,6 @@ const createTreecrdtDataProvider = () => {
         return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
       },
       updateThoughts: async updates => {
-        await indexed()
         if (updates.favoriteOrder) await lexemes.setFavoriteOrder(updates.favoriteOrder)
         const operations = await updateThoughtsForClient({ client, replicaId }, updates)
         await indexed()

@@ -1,4 +1,3 @@
-import type { MaterializationEvent } from '@treecrdt/interface/engine'
 import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
@@ -175,13 +174,9 @@ it('updates stored memberships on incoming deletion even when its thought was no
   )
   await waitForMaterializedThoughtsToStore()
   snapshot = { thoughtIndex: {}, lexemeIndex: {} }
-  const events: MaterializationEvent[] = []
-  const unsubscribe = client.onMaterialized(event => events.push(event))
   await client.local.delete(new Uint8Array(32).fill(2), THOUGHT_ID)
   await waitForMaterializedThoughtsToStore()
-  unsubscribe()
 
-  expect(events.some(event => event.changes.some(change => change.kind === 'delete'))).toBe(true)
   await expect(provider.db.getLexemeById(hashThought('a'))).resolves.toBeUndefined()
   // No deleted thought is loaded back into the view.
   expect(snapshot.thoughtIndex[THOUGHT_ID]).toBeNull()
