@@ -337,16 +337,16 @@ const createTreecrdtDataProvider = () => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
-    const { lexemes, updateIndexes, waitForIndexes, close: closeIndexes } = await createDerivedIndexes(client)
+    const { lexemes, updateIndexes, indexed, close: closeIndexes } = await createDerivedIndexes(client)
 
     let subscribed = true
     const clientDb: TreecrdtClientDataProvider = {
       getLexemeById: async key => {
-        await waitForIndexes()
+        await indexed()
         return lexemes.getLexemeById(key)
       },
       getLexemesByIds: async keys => {
-        await waitForIndexes()
+        await indexed()
         return lexemes.getLexemesByIds(keys)
       },
       getThoughtById: id => getThoughtByIdFromClient(client, id),
@@ -355,10 +355,10 @@ const createTreecrdtDataProvider = () => {
         return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
       },
       updateThoughts: async updates => {
-        await waitForIndexes()
+        await indexed()
         if (updates.favoriteOrder) await lexemes.setFavoriteOrder(updates.favoriteOrder)
         const operations = await updateThoughtsForClient({ client, replicaId }, updates)
-        await waitForIndexes()
+        await indexed()
         return operations
       },
     }

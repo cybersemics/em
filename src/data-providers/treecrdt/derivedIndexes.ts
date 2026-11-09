@@ -103,23 +103,20 @@ const createDerivedIndexes = async (client: TreecrdtClient) => {
     return keys.catch(() => payloadKeys(event.changes))
   }
 
-  /** Waits for all queued updates, including ones queued while waiting. */
-  const waitForIndexes = async () => {
+  /** Drains the queue and writes the cursor, so a clean shutdown leaves nothing to re-read. */
+  const close = async () => {
+    // A cursor save that fires while draining joins the queue, so wait until it stops growing.
     let pending: Promise<void>
     do {
       pending = indexQueue
       await pending
     } while (pending !== indexQueue)
-  }
-
-  /** Drains the queue and writes the cursor, so a clean shutdown leaves nothing to re-read. */
-  const close = async () => {
-    await waitForIndexes()
     clearTimeout(saveTimer)
     await saveCursor()
   }
 
-  return { lexemes, updateIndexes, waitForIndexes, close }
+  // indexed resolves once every update queued so far has run, without waiting for ones queued later.
+  return { lexemes, updateIndexes, indexed: () => indexQueue, close }
 }
 
 export default createDerivedIndexes
