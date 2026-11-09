@@ -319,7 +319,7 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
 /** Creates a data provider whose operations are permanently bound to one TreeCRDT client. */
 const createClientDataProvider = (
   { client, replicaId }: TreecrdtClientIdentity,
-  waitForIndexes: () => Promise<void>,
+  indexed: () => Promise<void>,
 ): TreecrdtClientDataProvider => ({
   getLexemeById: key => getLexemeByIdSql(client, key),
   getLexemesByIds: keys => getLexemesByIdsSql(client, keys),
@@ -330,8 +330,8 @@ const createClientDataProvider = (
   },
   updateThoughts: async updates => {
     const operations = await updateThoughtsForClient({ client, replicaId }, updates)
-    // The attribute index follows this write's materialization events.
-    await waitForIndexes()
+    // The attribute index follows this write's materialization events, which are queued by now.
+    await indexed()
     return operations
   },
 })
@@ -384,17 +384,17 @@ const createTreecrdtDataProvider = () => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
-    const { updateIndexes, waitForIndexes, close: closeIndexes } = await createDerivedIndexes(client)
-    const clientDb = createClientDataProvider({ client, replicaId }, waitForIndexes)
-    const materializationContext = materialization ? { bridge: materialization, db: clientDb, waitForIndexes } : null
+    const { updateIndexes, indexed, close: closeIndexes } = await createDerivedIndexes(client)
+    const clientDb = createClientDataProvider({ client, replicaId }, indexed)
+    const materializationContext = materialization ? { bridge: materialization, db: clientDb } : null
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
-      updateIndexes(event)
+      const indexedEvent = updateIndexes(event)
       // Local writes are already reflected optimistically. Other materialization uses the exact provider and client
       // that created this subscription, even if the app later binds a new client.
       if (isTreecrdtLocalMaterialization(event) || !materializationContext) return
 
-      void enqueueMaterializedThoughtsToStore(event, materializationContext).catch(err =>
+      void enqueueMaterializedThoughtsToStore(event, materializationContext, indexedEvent).catch(err =>
         console.error('TreeCRDT materialized UI sync failed', err),
       )
     })

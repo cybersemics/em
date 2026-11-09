@@ -10,8 +10,6 @@ import { type MaterializationStore, refreshThoughtsFromMaterializationChanges } 
 /** Dependencies captured when a client registers its materialization listener. */
 type MaterializationContext = Readonly<{
   bridge: ThoughtspaceMaterializationBridge
-  /** Resolves once the derived indexes have applied every queued event. */
-  waitForIndexes: () => Promise<void>
   db: MaterializationStore
 }>
 
@@ -21,7 +19,8 @@ type MaterializationContext = Readonly<{
  */
 export async function applyMaterializedThoughtsToStore(
   event: MaterializationEvent,
-  { bridge, db, waitForIndexes }: MaterializationContext,
+  { bridge, db }: MaterializationContext,
+  indexed: Promise<void>,
 ): Promise<void> {
   if (event.changes.length === 0) return
 
@@ -30,7 +29,7 @@ export async function applyMaterializedThoughtsToStore(
   await waitForTreecrdtWriteBarrier()
 
   // Thought reads include attribute children, so wait until the index has applied this event.
-  await waitForIndexes()
+  await indexed
 
   const snapshot = bridge.getSnapshot()
   const { deletedIds, thoughts, lexemeIndexUpdates } = await refreshThoughtsFromMaterializationChanges(
@@ -74,6 +73,7 @@ export async function applyMaterializedThoughtsToStore(
 export function enqueueMaterializedThoughtsToStore(
   event: MaterializationEvent,
   context: MaterializationContext,
+  indexed: Promise<void>,
 ): Promise<void> {
-  return enqueueMaterializedThoughtsToStoreWork(() => applyMaterializedThoughtsToStore(event, context))
+  return enqueueMaterializedThoughtsToStoreWork(() => applyMaterializedThoughtsToStore(event, context, indexed))
 }
