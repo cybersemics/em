@@ -49,17 +49,6 @@ const createDerivedIndexes = async (client: TreecrdtClient) => {
     savedCursor = headSeq
   }
 
-  /**
-   * Writes the cursor once updates pause instead of after every event. The row may lag behind the index, which only
-   * means the next catch-up re-applies a few nodes, but it is never written ahead of the rows it covers.
-   */
-  const scheduleSave = () => {
-    clearTimeout(saveTimer)
-    saveTimer = setTimeout(() => {
-      indexQueue = indexQueue.then(saveCursor).catch(err => console.error('TreeCRDT derived indexing failed', err))
-    }, CURSOR_SAVE_DELAY_MS)
-  }
-
   /** Applies every node changed after the cursor, then saves it; resolves with the affected lexeme keys. */
   const catchUp = async (): Promise<string[]> => {
     const keys = new Set<string>()
@@ -70,7 +59,7 @@ const createDerivedIndexes = async (client: TreecrdtClient) => {
       if (!page.next) break
       page = await client.tree.changedSince(page.next, { payloads: true, limit: PAGE_SIZE })
     }
-    cursor = Math.max(cursor, page.headSeq)
+    cursor = page.headSeq
     // A catch-up can cover many nodes, so its cursor is written right away.
     await saveCursor()
     return [...keys]
@@ -78,25 +67,30 @@ const createDerivedIndexes = async (client: TreecrdtClient) => {
 
   await catchUp()
 
-  /** Applies one event, or catches up from the cursor after a failed update. */
-  const apply = async (event: MaterializationEvent): Promise<string[]> => {
-    if (stale) {
-      const keys = await catchUp()
-      stale = false
-      return [...new Set([...payloadKeys(event.changes), ...keys])]
-    }
-    // A catch-up may already have read this event's changes.
-    if (event.headSeq <= cursor) return payloadKeys(event.changes)
-    await refreshAttributeChildrenFromChanges(client, event.changes)
-    const keys = await lexemes.applyChanges(event.changes)
-    cursor = event.headSeq
-    scheduleSave()
-    return keys
-  }
-
-  /** Queues an event's index update; resolves with the lexeme keys it affected. */
+  /**
+   * Queues an event's index update, or a catch-up from the cursor after a failed update; resolves with the lexeme
+   * keys it affected.
+   */
   const updateIndexes = (event: MaterializationEvent): Promise<string[]> => {
-    const keys = indexQueue.then(() => apply(event))
+    const keys = indexQueue.then(async () => {
+      if (stale) {
+        const caughtUp = await catchUp()
+        stale = false
+        return [...new Set([...payloadKeys(event.changes), ...caughtUp])]
+      }
+      // A catch-up may already have read this event's changes.
+      if (event.headSeq <= cursor) return payloadKeys(event.changes)
+      await refreshAttributeChildrenFromChanges(client, event.changes)
+      const changed = await lexemes.applyChanges(event.changes)
+      cursor = event.headSeq
+      // Writing the row once updates pause saves a commit per event. It may lag behind the index, which only means
+      // the next catch-up re-applies a few nodes, but it is never written ahead of the rows it covers.
+      clearTimeout(saveTimer)
+      saveTimer = setTimeout(() => {
+        indexQueue = indexQueue.then(saveCursor).catch(err => console.error('TreeCRDT derived indexing failed', err))
+      }, CURSOR_SAVE_DELAY_MS)
+      return changed
+    })
     // A failure leaves the cursor in place, so the next event catches up and retries the same changes.
     indexQueue = keys.then(
       () => undefined,

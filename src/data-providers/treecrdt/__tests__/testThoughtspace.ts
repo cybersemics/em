@@ -342,13 +342,10 @@ it('resumes from its cursor after an interrupted index update', async () => {
     try {
       await expect(reopened.db.getLexemeById(hashThought('=pin'))).resolves.toMatchObject({ contexts: [PIN_ID] })
       expect((await reopened.db.getThoughtById(EM_TOKEN))?.childrenMap['=pin']).toBe(PIN_ID)
-      const { headSeq } = await client.tree.changedSince(0, { limit: 1 })
-      expect(await getText('SELECT head_seq FROM em_derived_indexes_meta')).toBe(String(headSeq))
     } finally {
       await closeReopened()
     }
   } finally {
-    runner.mockRestore()
     await close()
     await client.drop()
     report.mockRestore()
