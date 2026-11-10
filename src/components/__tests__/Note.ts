@@ -55,7 +55,7 @@ describe('=note', () => {
     expect(noteEditor.innerHTML).toBe('<b>one&nbsp; two</b><br>three')
   })
 
-  test('undoes and redoes trimming without losing the note edit', async () => {
+  test('undoes and redoes a note edit without its boundary whitespace', async () => {
     await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
     await act(vi.runOnlyPendingTimersAsync)
     const noteEditor = screen.getByLabelText('note-editable')
@@ -69,7 +69,7 @@ describe('=note', () => {
       fireEvent.keyDown(document, { key: 'z', metaKey: true })
       await vi.runOnlyPendingTimersAsync()
     })
-    expect(screen.getByLabelText('note-editable').innerHTML).toBe('  hello  ')
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('seed')
     await act(async () => {
       fireEvent.keyDown(document, { key: 'z', metaKey: true, shiftKey: true })
       await vi.runOnlyPendingTimersAsync()
@@ -95,12 +95,12 @@ describe('=note', () => {
   })
 
   // https://github.com/cybersemics/em/issues/6275
-  test.skip('undo after leaving a note with Cursor Down returns the caret to the note', async () => {
+  test('undo after leaving a note with Cursor Down returns the caret to the note', async () => {
     await dispatch([importText({ text: '- a\n  - =note\n    - x\n- b' }), setCursor(['a']), toggleNote()])
     await act(vi.runOnlyPendingTimersAsync)
     const noteEditor = screen.getByLabelText('note-editable')
     await act(async () => {
-      fireEvent.input(noteEditor, { target: { innerHTML: 'x ' } })
+      fireEvent.input(noteEditor, { target: { innerHTML: 'xy ' } })
       await vi.runOnlyPendingTimersAsync()
     })
 
@@ -119,11 +119,11 @@ describe('=note', () => {
 
     expectPathToEqual(store.getState(), store.getState().cursor, ['a'])
     expect(store.getState().noteFocus).toBe(true)
-    expect(screen.getByLabelText('note-editable').innerHTML).toBe('x ')
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('x')
   })
 
   test.each(['suppressBlurSync', 'suppressChange'] as const)(
-    'leaves temporary blur untouched while %s is active',
+    'keeps the typed spaces on screen through a temporary blur while %s is active',
     async flag => {
       await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
       await act(vi.runOnlyPendingTimersAsync)
@@ -135,7 +135,7 @@ describe('=note', () => {
         await vi.runOnlyPendingTimersAsync()
       })
       expect(noteEditor.innerHTML).toBe('  hello  ')
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>  hello  </li>')
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>hello</li>')
 
       await act(async () => {
         editableSyncStore.update({ [flag]: false })
