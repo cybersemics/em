@@ -12,13 +12,10 @@ import multitouchStore from '../../stores/multitouchStore'
 const useRevertCorrection = ({
   editableRef,
   enabled,
-  setCaretOffset,
 }: {
   editableRef: React.RefObject<HTMLElement | null>
   /** Correct only while this editable is the one being edited, i.e. the cursor thought with the keyboard open. */
   enabled: boolean
-  /** Places the caret for a tap and records it in Redux, as for a tap with mouse events. */
-  setCaretOffset: (offset: number) => void
 }) => {
   useEffect(() => {
     const editable = editableRef.current
@@ -60,8 +57,10 @@ const useRevertCorrection = ({
       // a tap on the caret
       if (tapped === null || tapped === before) return
 
-      // iOS does not move the caret again after the revert, so a placement made now stays.
-      setCaretOffset(tapped)
+      // iOS does not move the caret again after the revert, so a placement made now stays. Only the selection is set, as
+      // iOS would have left it: a tap that gets no mouse events does not write cursorOffset, whether or not iOS reverts
+      // it.
+      selection.set(editable, { offset: tapped })
     }
 
     editable.addEventListener('touchend', onTouchEnd)
@@ -80,7 +79,7 @@ const useRevertCorrection = ({
       document.removeEventListener('beforeinput', endWatch, { capture: true })
       document.removeEventListener('selectionchange', onSelectionChange)
     }
-  }, [editableRef, enabled, setCaretOffset])
+  }, [editableRef, enabled])
 }
 
 export default useRevertCorrection
