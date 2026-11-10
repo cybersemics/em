@@ -330,10 +330,6 @@ const Editable = ({
     setContentInvalidState(isInvalid)
   }
 
-  // Set while setCursorOnThought focuses this editable, whose onFocus then calls setCursorOnThought again before the
-  // first call has set the cursor.
-  const focusingRef = useRef(false)
-
   /**
    * Sets the cursor on the thought, or places the caret within it when the cursor is already on it. This is the only
    * place an Editable sets the cursor or the cursor offset: focus, a tap, and the iOS tap workarounds in useEditMode all
@@ -341,37 +337,15 @@ const Editable = ({
    */
   const setCursorOnThought = useCallback(
     ({
-      focus,
       isKeyboardOpen,
       offset,
       preserveMulticursor = true,
     }: {
-      /** Moves the focus here from another editable or a note first, so that their blur handlers, such as a note's whitespace trim and setNoteFocus, dispatch before the cursor moves, and an Undo restores the note. Focusing rather than blurring gives the blur a relatedTarget, so that onBlur does not end edit mode. */
-      focus?: boolean
       isKeyboardOpen?: boolean
       /** The plain-text offset to place the caret at, such as where a tap landed. */
       offset?: number
       preserveMulticursor?: boolean
     } = {}) => {
-      // This is onFocus running for the focus below. The call that made it sets the cursor once the focus is done.
-      if (focusingRef.current) return
-
-      const focused = document.activeElement
-      if (
-        focus &&
-        contentRef.current &&
-        focused instanceof HTMLElement &&
-        focused !== document.body &&
-        focused !== contentRef.current
-      ) {
-        focusingRef.current = true
-        try {
-          contentRef.current.focus({ preventScroll: true })
-        } finally {
-          focusingRef.current = false
-        }
-      }
-
       dispatch((dispatch, getState) => {
         const state = getState()
 
@@ -422,7 +396,7 @@ const Editable = ({
     },
     // When isEditing changes, we need to reset the cursor on the thought.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [contentRef, dispatch, isEditing, path, simplePath, transient],
+    [dispatch, isEditing, path, simplePath, transient],
   )
 
   /**
@@ -431,18 +405,14 @@ const Editable = ({
    * when the tapped thought belongs to it, so that edits keep mirroring to the other selected thoughts.
    */
   const setCursorForTap = useCallback(
-    ({
-      focus,
-      offset,
-    }: {
-      /** See setCursorOnThought. The iOS tap workarounds in useEditMode leave the focus where iOS put it. */
-      focus?: boolean
-      offset?: number
-    }) => {
+    ({ offset }: { offset?: number }) => {
+      // An edit still in the throttle of the thought being left would otherwise be saved by its blur, which follows the
+      // cursor move, and an Undo would revert the edit without returning the caret to it. Commands flush the same way
+      // before they run (see executeCommand).
+      commandEmitter.trigger('command')
       dispatch((dispatch, getState) => {
         const state = getState()
         setCursorOnThought({
-          focus,
           isKeyboardOpen: true,
           offset,
           preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path),

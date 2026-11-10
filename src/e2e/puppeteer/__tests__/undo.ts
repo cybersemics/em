@@ -1,6 +1,7 @@
 import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
 import click from '../helpers/click'
+import clickNote from '../helpers/clickNote'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
@@ -261,6 +262,61 @@ it('redo of a click into another thought should place the caret where the click 
   } catch {
     throw new Error(`Expected the caret after "wonderf" (7), but it is at ${await getCaretOffset()}.`)
   }
+})
+
+it('undo of an edit followed at once by a click into another thought should return the caret to the edited thought', async () => {
+  await paste(`
+    - hello
+    - wonderful
+  `)
+
+  await clickThought('hello')
+  await press('End')
+  // The click comes within the edit throttle, before the edit has been saved.
+  await keyboard.type('x')
+  await click(await waitForEditable('wonderful'), { offset: 3 })
+  await waitForCursor('wonderful')
+
+  await press('z', { meta: true })
+  await waitForEditable('hello')
+  try {
+    await page.waitForFunction(
+      () => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === 'hello',
+      { timeout: 5000 },
+    )
+  } catch {
+    throw new Error(`Expected the cursor back on "hello", but it is on "${await getEditingText()}".`)
+  }
+  expect(await exportThoughts()).toBe(`
+- hello
+- wonderful
+`)
+})
+
+it('undo of a note edit followed by a click into another thought should return the caret to the note', async () => {
+  await paste(`
+    - a
+      - =note
+        - x
+    - b
+  `)
+
+  await clickThought('a')
+  await clickNote('x')
+  await press('End')
+  await keyboard.type('y')
+  await clickThought('b')
+  await waitForCursor('b')
+
+  await press('z', { meta: true })
+  await waitForNoteFocus()
+  await waitForCursor('a')
+  expect(await exportThoughts()).toBe(`
+- a
+  - =note
+    - x
+- b
+`)
 })
 
 /** Dispatches a native undo/redo beforeinput event on the thought currently being edited, as iOS does for a three-finger swipe or shake-to-undo. */

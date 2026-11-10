@@ -41,7 +41,7 @@ const useEditMode = ({
   isEditing: boolean
   path: Path
   /** Editable's setter for the cursor of a tap on this thought. The hook decides where the tap places the caret and whether to move the focus here first, Editable decides what the tap does to the cursor, and the selection effect places the caret from the result. */
-  setCursorForTap: (options: { focus?: boolean; offset?: number }) => void
+  setCursorForTap: (options: { offset?: number }) => void
   style: React.CSSProperties | undefined
   transient: boolean | undefined
 }) => {
@@ -76,9 +76,7 @@ const useEditMode = ({
   /** Updates the Redux cursor state for a tap and has the selection effect place the caret there. */
   const setCaretOffset = useFreshCallback(
     (offset: number) => {
-      // Move the focus here from another editable or a note before the cursor, as placing the caret synchronously used
-      // to. See setCursorOnThought in Editable.
-      setCursorForTap({ focus: true, offset })
+      setCursorForTap({ offset })
       bumpCaretNonce()
     },
     [setCursorForTap],
