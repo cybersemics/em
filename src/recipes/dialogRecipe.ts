@@ -247,7 +247,6 @@ const dialogRecipe = defineSlotRecipe({
         animationRange: '0 4rem, calc(100% - 1rem) 100%',
       },
     },
-    /** Custom scrollbar thumb overlaying the right edge of `content`. Its height, vertical position, and visibility are driven by JS in DialogContent (the native scrollbar is hidden on `content`). Uses the same translucent grey (`fgOverlay20`) as the app's default scrollbars (e.g. Sidebar), and is consistent on every platform, unlike iOS's uncontrollable native overlay scrollbar. */
     /** Inner wrapper inside `content` that carries the horizontal text inset. Kept separate from `content` so the scrollbar gutter doesn't push text in further. */
     contentInner: {
       // 1rem matches the rest of the dialog inset (the header row in DialogHeader and the search row in MobileCommandUniverse).
