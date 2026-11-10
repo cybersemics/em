@@ -39,7 +39,7 @@ it('record the touchend of a tap on a thought', () => {
         isEditing: true,
         path: store.getState().cursor!,
         // The hook is rendered on the cursor thought, where Editable's setter only places the caret.
-        setCursorOnThought: ({ offset }) => {
+        setCursorForTap: ({ offset }) => {
           if (offset !== undefined) store.dispatch(setCursorOffset({ offset }))
         },
         style: undefined,
@@ -69,7 +69,7 @@ it('suppress the synthesized mousedown of a tap that already moved the cursor wi
         isEditing: true,
         path: store.getState().cursor!,
         // The hook is rendered on the cursor thought, where Editable's setter only places the caret.
-        setCursorOnThought: ({ offset }) => {
+        setCursorForTap: ({ offset }) => {
           if (offset !== undefined) store.dispatch(setCursorOffset({ offset }))
         },
         style: undefined,
@@ -107,7 +107,7 @@ it('allow mousedown on the cursor thought when no cursor-moving tap preceded it'
         isEditing: true,
         path: store.getState().cursor!,
         // The hook is rendered on the cursor thought, where Editable's setter only places the caret.
-        setCursorOnThought: ({ offset }) => {
+        setCursorForTap: ({ offset }) => {
           if (offset !== undefined) store.dispatch(setCursorOffset({ offset }))
         },
         style: undefined,

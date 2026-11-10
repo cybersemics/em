@@ -426,6 +426,33 @@ const Editable = ({
   )
 
   /**
+   * Sets the cursor for a tap on the thought, at the offset useEditMode found under it. A tap enters edit mode. While a
+   * multiselection is being edited (Clear Thought), a tap moves the caret as usual, and the multiselection is preserved
+   * when the tapped thought belongs to it, so that edits keep mirroring to the other selected thoughts.
+   */
+  const setCursorForTap = useCallback(
+    ({
+      focus,
+      offset,
+    }: {
+      /** See setCursorOnThought. The iOS tap workarounds in useEditMode leave the focus where iOS put it. */
+      focus?: boolean
+      offset?: number
+    }) => {
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        setCursorOnThought({
+          focus,
+          isKeyboardOpen: true,
+          offset,
+          preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path),
+        })
+      })
+    },
+    [dispatch, path, setCursorOnThought],
+  )
+
+  /**
    * Dispatches editThought and has tutorial logic.
    * Debounced from onChangeHandler.
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
@@ -504,7 +531,7 @@ const Editable = ({
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(_.throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
-  useEditMode({ contentRef, isEditing, path, setCursorOnThought, style, transient })
+  useEditMode({ contentRef, isEditing, path, setCursorForTap, style, transient })
 
   useEffect(() => {
     /** Flushes pending edits. */
