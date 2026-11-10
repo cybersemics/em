@@ -57,8 +57,8 @@ const SNAP_STANDARD = 1
 /** Snap index of the expanded stage. */
 const SNAP_EXPANDED = 2
 
-/** The height offset between the standard and expanded stages, as a share of the viewport height. */
-const STAGE_OFFSET_FRACTION = 0.275
+/** How far the expanded stage sits above the standard stage. The sheet's maximum height can shrink this to fit. */
+const STAGE_OFFSET_PX = 200
 
 /** The gap that react-modal-sheet keeps above the sheet, below the top safe area. This gap limits how tall the sheet can get. */
 const SHEET_TOP_GAP_PX = 34
@@ -525,9 +525,7 @@ const CommandCenter = () => {
   // would push the bottom of the standard stage, including the chevron, off the screen.
   // This happens in landscape and with large fonts on small phones.
   const stageOffsetLimit = innerHeight - safeAreaTop - SHEET_TOP_GAP_PX - standardStageHeight
-  const stageOffset = Math.round(
-    Math.max(Math.min(innerHeight * STAGE_OFFSET_FRACTION, stageOffsetLimit), fontSize * MIN_STAGE_OFFSET_REM),
-  )
+  const stageOffset = Math.round(Math.max(Math.min(STAGE_OFFSET_PX, stageOffsetLimit), fontSize * MIN_STAGE_OFFSET_REM))
 
   /* Negative snap points are measured from the top of the sheet, so this resolves to
    * [closed, sheetHeight - stageOffset, sheetHeight]. At the standard stage, the bottom stageOffset
@@ -683,7 +681,7 @@ const CommandCenter = () => {
 
   const previousStageOffsetRef = useRef(stageOffset)
 
-  // stageOffset will change when the viewport size changes (e.g., due to a device rotation).
+  // stageOffset can change when the viewport shrinks below the room it needs (e.g., due to a rotation to landscape).
   // When the stageOffset changes, we need to re-snap the drawer so it shows the correct position.
   useEffect(() => {
     if (previousStageOffsetRef.current === stageOffset) return
