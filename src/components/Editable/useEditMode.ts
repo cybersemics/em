@@ -56,8 +56,8 @@ const useEditMode = ({
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
   // Bumped to place the caret for a tap, since the selection effect does not subscribe to cursorOffset.
   const [caretNonce, bumpCaretNonce] = useReducer((nonce: number) => nonce + 1, 0)
-  // Whether the next run of the selection effect is placing the caret for a tap.
-  const tapPlacementRef = useRef(false)
+  // A run of the selection effect is placing the caret for a tap when the tap's bump of caretNonce is what it follows.
+  const prevCaretNonce = usePrevious(caretNonce)
   const editableNonce = useSelector(state => state.editableNonce)
   const showSidebar = useSelector(state => state.showSidebar)
   const fontSize = useSelector(state => state.fontSize)
@@ -76,7 +76,6 @@ const useEditMode = ({
   /** Updates the Redux cursor state for a tap and has the selection effect place the caret there. */
   const setCaretOffset = useFreshCallback(
     (offset: number) => {
-      tapPlacementRef.current = true
       // Move the focus here from another editable or a note before the cursor, as placing the caret synchronously used
       // to. See setCursorOnThought in Editable.
       setCursorForTap({ focus: true, offset })
@@ -95,8 +94,7 @@ const useEditMode = ({
       const { cursorOffset, lastUndoableActionType } = store.getState()
       // onMouseDown has already decided that this tap places the caret, so the conditions below for a placement made
       // by side effect do not apply to it.
-      const isTapPlacement = tapPlacementRef.current
-      tapPlacementRef.current = false
+      const isTapPlacement = prevCaretNonce !== undefined && caretNonce !== prevCaretNonce
 
       /** Set the selection to the current Editable at the cursor offset. */
       const setSelectionToCursorOffset = () => {
@@ -197,7 +195,10 @@ const useEditMode = ({
         setSelectionToCursorOffset()
       }
     },
-    // React Hook useEffect has missing dependencies: 'contentRef', 'editMode', and 'style?.visibility'.
+    // React Hook useEffect has missing dependencies: 'contentRef', 'editMode', 'prevCaretNonce', and 'style?.visibility'.
+    // prevCaretNonce is read only to tell whether this run follows a tap's bump of caretNonce. As a dependency it would
+    // run the effect again on the render after a tap, as a placement made by side effect, which puts the caret back at
+    // cursorOffset after a move that did not write it, such as the End key.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       dragHold,
