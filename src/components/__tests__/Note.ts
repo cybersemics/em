@@ -94,6 +94,34 @@ describe('=note', () => {
     expect(screen.getByLabelText('note-editable').innerHTML).toBe('seed')
   })
 
+  // https://github.com/cybersemics/em/issues/6275
+  test.skip('undo after leaving a note with Cursor Down returns the caret to the note', async () => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - x\n- b' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.input(noteEditor, { target: { innerHTML: 'x ' } })
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    // Cursor Down moves the cursor first, and the note blurs after it, as in the browser.
+    await act(async () => {
+      fireEvent.keyDown(noteEditor, { key: 'ArrowDown' })
+      fireEvent.focusOut(noteEditor)
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expectPathToEqual(store.getState(), store.getState().cursor, ['b'])
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true })
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    expectPathToEqual(store.getState(), store.getState().cursor, ['a'])
+    expect(store.getState().noteFocus).toBe(true)
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('x ')
+  })
+
   test.each(['suppressBlurSync', 'suppressChange'] as const)(
     'leaves temporary blur untouched while %s is active',
     async flag => {
