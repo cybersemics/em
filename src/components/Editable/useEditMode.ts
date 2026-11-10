@@ -141,7 +141,6 @@ const useEditMode = ({
 
       if (shouldSetSelection) {
         const shouldAsyncFocus =
-          !isTapPlacement &&
           isTouch &&
           isSafari() &&
           lastUndoableActionType !== 'swapParent' &&
@@ -158,8 +157,8 @@ const useEditMode = ({
           hidden: style?.visibility === 'hidden',
         }))
 
-        // onMouseDown has already prevented autoscroll for a tap, with a margin that this would replace.
-        if (!isTapPlacement) preventAutoscroll(contentRef.current)
+        // A tap's onMouseDown has already prevented autoscroll with a margin, which preventAutoscroll keeps.
+        preventAutoscroll(contentRef.current)
 
         /*
         When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.

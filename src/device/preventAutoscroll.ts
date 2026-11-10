@@ -51,6 +51,10 @@ const preventAutoscroll = (
 ) => {
   if (!isTouch || el === document.activeElement || !el) return
 
+  // Keep a window that is still open on this element, such as the one a tap's onMouseDown opens with a margin before the
+  // selection effect places the caret.
+  if (timeoutId && activeEl === el) return
+
   // If preventAutoscroll was already called without preventAutoscrollEnd being called, clean up the previous element first. Otherwise its styles would be stuck forever, since the module-level saved styles and timeoutId are about to be overwritten.
   if (timeoutId) {
     preventAutoscrollEnd(activeEl)
