@@ -46,6 +46,8 @@ import PanelCommandGroup from './PanelCommandGroup'
 const easeOpen = [0.1, 0.2, 0.2, 1] as const
 /** MUI sharp — matches the close curve used by SwipeableDrawer. Slow first frame avoids a large initial gap. */
 const easeClose = [0.4, 0, 0.6, 1] as const
+/** MUI standard. A chevron tap moves the drawer between stages from rest, where easeOpen's head start would jump on the first frame. */
+const easeTap = [0.4, 0, 0.2, 1] as const
 
 /**************************************************************
  * Sheet stage constants
@@ -616,6 +618,31 @@ const CommandCenter = () => {
     [onBounceSnap],
   )
 
+  const prefersReducedMotion = useReducedMotion()
+
+  /**
+   * Moves the drawer to a stage on a chevron tap, with easeTap instead of the Sheet's tweenConfig.
+   *
+   * The Sheet's `snapTo` would use easeOpen, which is shaped to finish a swipe and jumps when started from rest.
+   * This bypasses `snapTo`, so the Sheet's `currentSnap` is not updated. `onSnap` is called directly instead.
+   */
+  const snapToByTap = useCallback(
+    (snapIndex: number) => {
+      const sheet = sheetRef.current
+      const target = sheet?.snapPoints[snapIndex]?.snapValueY
+      if (!sheet || target === undefined) return
+      animate(sheet.y, target, {
+        type: 'tween',
+        // Matches the Sheet's own reduced motion config.
+        ...(prefersReducedMotion
+          ? { duration: 0.01, ease: 'linear' }
+          : { duration: durations.get('commandCenter') / 1000, ease: easeTap }),
+        onComplete: () => onSnap(snapIndex),
+      })
+    },
+    [onSnap, prefersReducedMotion],
+  )
+
   /** The overlay hold and the bounce's gesture classifier both key off where the drag began. */
   const onSheetDragStart = useCallback(
     (e: MouseEvent | TouchEvent | PointerEvent) => {
@@ -869,7 +896,7 @@ const CommandCenter = () => {
                   style={{ opacity: expandedViewOpacity, pointerEvents: expandedPointerEvents }}
                 >
                   <button
-                    {...fastClick(() => sheetRef.current?.snapTo(SNAP_STANDARD))}
+                    {...fastClick(() => snapToByTap(SNAP_STANDARD))}
                     data-testid='command-center-collapse'
                     aria-label='Collapse Command Center'
                     className={css({
@@ -1032,7 +1059,7 @@ const CommandCenter = () => {
                     <button
                       {...fastClick(() => {
                         skipNextExpandedBounce()
-                        sheetRef.current?.snapTo(SNAP_EXPANDED)
+                        snapToByTap(SNAP_EXPANDED)
                       })}
                       data-testid='command-center-expand'
                       aria-label='Expand Command Center'
