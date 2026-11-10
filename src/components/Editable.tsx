@@ -17,7 +17,6 @@ import { setInvalidStateActionCreator as setInvalidState } from '../actions/inva
 import { keyboardOpenActionCreator } from '../actions/keyboardOpen'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { setCursorOffsetActionCreator as setCursorOffset } from '../actions/setCursorOffset'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isSafari, isTouch } from '../browser'
@@ -331,9 +330,9 @@ const Editable = ({
   }
 
   /**
-   * Sets the cursor on the thought, or places the caret within it when the cursor is already on it. This is the only
-   * place an Editable sets the cursor or the cursor offset: focus, a tap, and the iOS tap workarounds in useEditMode all
-   * come through it, and useEditMode places the caret from the result.
+   * Sets the cursor on the thought, at a given offset such as where a tap landed. This is the only place an Editable sets
+   * the cursor: focus, a tap, and the iOS tap workarounds in useEditMode all come through it, and useEditMode places the
+   * caret from the result. A cursor set on the thought it is already on keeps Clear Thought (see setCursor).
    */
   const setCursorOnThought = useCallback(
     ({
@@ -353,21 +352,8 @@ const Editable = ({
         // event if this component's path no longer points to the thought's current location. (#4680)
         if (!transient && !equalPath(thoughtToPath(state, head(simplePath)), simplePath)) return
 
-        if (equalPath(state.cursor, path)) {
-          // The cursor is already here, so this only places the caret within the thought, and enters edit mode if asked
-          // to. The multiselection needs nothing: a tap places the caret within the cursor thought only when there is no
-          // multiselection or it is being edited, which the cursor thought always belongs to (see isMultiEditing). A
-          // note that held the focus has already cleared noteFocus in its blur handler.
-          if (offset != null) {
-            dispatch([
-              isKeyboardOpen && !state.isKeyboardOpen ? keyboardOpenActionCreator({ value: true }) : null,
-              setCursorOffset({ offset }),
-            ])
-            return
-          }
-          // do not set cursor if it is unchanged and we are not entering when keyboard is open
-          if (!isKeyboardOpen || state.isKeyboardOpen) return
-        }
+        // Do not set the cursor if it is unchanged, there is no offset to place, and edit mode is not being entered.
+        if (equalPath(state.cursor, path) && offset == null && (!isKeyboardOpen || state.isKeyboardOpen)) return
 
         // Without a given offset, set offset to null to allow the browser to set the position of the selection.
         let restoredOffset: number | null = null
