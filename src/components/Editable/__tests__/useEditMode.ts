@@ -54,8 +54,8 @@ it('opens the virtual keyboard when Clear Thought activates edit mode', async ()
         isEditing: true,
         path: store.getState().cursor!,
         // The hook is rendered on the cursor thought, where Editable's setter only places the caret.
-        setCursorOnThought: ({ isKeyboardOpen, offset, preserveMulticursor }) => {
-          if (offset !== undefined) store.dispatch(setCursorOffset({ offset, isKeyboardOpen, preserveMulticursor }))
+        setCursorOnThought: ({ offset }) => {
+          if (offset !== undefined) store.dispatch(setCursorOffset({ offset }))
         },
         style: undefined,
         transient: undefined,

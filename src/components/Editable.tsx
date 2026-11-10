@@ -380,9 +380,15 @@ const Editable = ({
         if (!transient && !equalPath(thoughtToPath(state, head(simplePath)), simplePath)) return
 
         if (equalPath(state.cursor, path)) {
-          // The cursor is already here, so this only places the caret within the thought.
+          // The cursor is already here, so this only places the caret within the thought, and enters edit mode if asked
+          // to. The multiselection needs nothing: a tap places the caret within the cursor thought only when there is no
+          // multiselection or it is being edited, which the cursor thought always belongs to (see isMultiEditing). A
+          // note that held the focus has already cleared noteFocus in its blur handler.
           if (offset != null) {
-            dispatch(setCursorOffset({ offset, isKeyboardOpen, preserveMulticursor }))
+            dispatch([
+              isKeyboardOpen && !state.isKeyboardOpen ? keyboardOpenActionCreator({ value: true }) : null,
+              setCursorOffset({ offset }),
+            ])
             return
           }
           // do not set cursor if it is unchanged and we are not entering when keyboard is open

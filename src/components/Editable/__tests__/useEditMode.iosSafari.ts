@@ -39,8 +39,8 @@ it('record the touchend of a tap on a thought', () => {
         isEditing: true,
         path: store.getState().cursor!,
         // The hook is rendered on the cursor thought, where Editable's setter only places the caret.
-        setCursorOnThought: ({ isKeyboardOpen, offset, preserveMulticursor }) => {
-          if (offset !== undefined) store.dispatch(setCursorOffset({ offset, isKeyboardOpen, preserveMulticursor }))
+        setCursorOnThought: ({ offset }) => {
+          if (offset !== undefined) store.dispatch(setCursorOffset({ offset }))
         },
         style: undefined,
         transient: undefined,
@@ -69,8 +69,8 @@ it('suppress the synthesized mousedown of a tap that already moved the cursor wi
         isEditing: true,
         path: store.getState().cursor!,
         // The hook is rendered on the cursor thought, where Editable's setter only places the caret.
-        setCursorOnThought: ({ isKeyboardOpen, offset, preserveMulticursor }) => {
-          if (offset !== undefined) store.dispatch(setCursorOffset({ offset, isKeyboardOpen, preserveMulticursor }))
+        setCursorOnThought: ({ offset }) => {
+          if (offset !== undefined) store.dispatch(setCursorOffset({ offset }))
         },
         style: undefined,
         transient: undefined,
@@ -107,8 +107,8 @@ it('allow mousedown on the cursor thought when no cursor-moving tap preceded it'
         isEditing: true,
         path: store.getState().cursor!,
         // The hook is rendered on the cursor thought, where Editable's setter only places the caret.
-        setCursorOnThought: ({ isKeyboardOpen, offset, preserveMulticursor }) => {
-          if (offset !== undefined) store.dispatch(setCursorOffset({ offset, isKeyboardOpen, preserveMulticursor }))
+        setCursorOnThought: ({ offset }) => {
+          if (offset !== undefined) store.dispatch(setCursorOffset({ offset }))
         },
         style: undefined,
         transient: undefined,
