@@ -392,9 +392,11 @@ const Editable = ({
    */
   const setCursorForTap = useCallback(
     ({ offset }: { offset?: number }) => {
-      // An edit still in the throttle of the thought being left would otherwise be saved by its blur, which follows the
-      // cursor move, and an Undo would revert the edit without returning the caret to it. Commands flush the same way
-      // before they run (see executeCommand).
+      // Save the edit still waiting in the throttle before the tap moves the cursor or the caret, as commands do before
+      // they run (see executeCommand). On a tap into another thought, the thought being left would otherwise save it on
+      // blur, after the move, and an Undo would revert the edit without returning the caret to it. On a tap within the
+      // same thought, the edit would otherwise be saved after cursorOffset had already moved to the tap, so the undo
+      // history would record the tapped position as where the edit left the caret.
       commandEmitter.trigger('command')
       dispatch((dispatch, getState) => {
         const state = getState()
