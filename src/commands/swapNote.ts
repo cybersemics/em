@@ -7,6 +7,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const swapNote = {
   id: 'swapNote',
   label: 'Swap Note' as const,
+  systemMenu: 'Edit',
   description: 'Convert a thought to a note.',
   keyboard: { key: 'n', alt: true, shift: true },
   gesture: 'ulr',

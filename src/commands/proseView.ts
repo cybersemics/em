@@ -11,6 +11,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const proseViewCommand = {
   id: 'proseView',
   label: 'Prose View' as const,
+  systemMenu: 'View',
   description: 'Display subthoughts of the current thought as indented paragraphs.',
   gesture: 'rudr',
   keyboard: { key: 'p', shift: true, alt: true },

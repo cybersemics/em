@@ -68,6 +68,7 @@ const multicursor: Command['multicursor'] = {
 const newThoughtCommand = {
   id: 'newThought',
   label: 'New Thought' as const,
+  systemMenu: 'Edit',
   description: 'Create a shiny new thought.',
   longDescription: (
     <>

@@ -10,8 +10,7 @@ Test:
 */
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
-import { css, cva, cx } from '../../styled-system/css'
-import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
+import { css, cva } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import CommandType from '../@types/Command'
 import CommandId from '../@types/CommandId'
@@ -51,6 +50,7 @@ const arrow = cva({
     display: 'inline-block',
     lineHeight: '20px',
     zIndex: 'toolbarArrow',
+    pointerEvents: 'auto',
   },
   variants: {
     isHidden: {
@@ -157,6 +157,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       }
 
       updateArrows()
+      if (el.style.clipPath) el.style.setProperty('--toolbar-scroll-left', `${el.scrollLeft}px`)
     },
     [fontSize, updateArrows, deselectPressingToolbarId],
   )
@@ -235,26 +236,23 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     <FadeTransition in={!distractionFreeTyping || showDropdown} type='distractionFreeTyping' unmountOnExit>
       <div
         aria-label='toolbar'
-        className={cx(
-          // When a dropdown like ColorPicker or LetterCase is open, set pointer-events: none, otherwise the toolbar will block the editor. This will be overridden by the toolbar buttons to allow interaction.
-          showDropdown && toolbarPointerEventsRecipe(),
-          css({
-            right: 0,
-            textAlign: 'right',
-            // Prevent horizontal scroll bar when keyboard is up.
-            // overFlowX: 'hidden' does not work, as it breaks box-shadow on the child when the keyboard is up.
-            // https://github.com/cybersemics/em/pull/2760#issuecomment-2701329862
-            maxWidth: '100%',
-            userSelect: 'none',
-            WebkitTapHighlightColor: 'bgTransparent',
-            whiteSpace: 'nowrap',
-            ...(!customize && {
-              zIndex: 'toolbarContainer',
-              marginTop: '-500px',
-              paddingTop: '500px',
-            }),
+        className={css({
+          pointerEvents: 'none',
+          right: 0,
+          textAlign: 'right',
+          // Prevent horizontal scroll bar when keyboard is up.
+          // overFlowX: 'hidden' does not work, as it breaks box-shadow on the child when the keyboard is up.
+          // https://github.com/cybersemics/em/pull/2760#issuecomment-2701329862
+          maxWidth: '100%',
+          userSelect: 'none',
+          WebkitTapHighlightColor: 'bgTransparent',
+          whiteSpace: 'nowrap',
+          ...(!customize && {
+            zIndex: 'toolbarContainer',
+            marginTop: '-500px',
+            paddingTop: '500px',
           }),
-        )}
+        })}
         style={{
           ...(!customize ? positionFixedStyles : null),
           // make toolbar flush with left padding
@@ -295,11 +293,13 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           </span>
           <div
             id='toolbar'
+            data-toolbar-dropdowns
             data-testid='toolbar'
             ref={toolbarRef}
             className={css({
               maxWidth: '100%',
               position: 'relative',
+              pointerEvents: 'auto',
               // Constrain the horizontally-scrolling toolbar to horizontal panning only. Without this, a diagonal
               // (~45°) or vertical drag beginning on the toolbar is treated as a vertical pan and scrolls/overscrolls
               // the page; because the toolbar is position: fixed (usePositionFixed), that overscroll visually drags

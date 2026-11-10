@@ -51,6 +51,7 @@ const exec: Command['exec'] = (dispatch, getState) => {
 const archiveCommand = {
   id: 'archive',
   label: 'Archive' as const,
+  systemMenu: 'Edit',
   description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
   // Main gesture and alternate patterns to help with mis-swipes
   gesture: [

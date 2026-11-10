@@ -6,11 +6,13 @@ import hideVisibility from '../helpers/hideVisibility'
 import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
 import openSidebar from '../helpers/openSidebar'
+import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 expect.extend({
@@ -91,5 +93,40 @@ describe('sidebar', () => {
       links => links.map(link => link.textContent),
     )
     expect(breadcrumbs).toEqual(['This is an empty thought'])
+  })
+
+  // https://github.com/cybersemics/em/issues/6232
+  it('shows no scrollbar when the favorites fit', async () => {
+    await newThought('classroom')
+    await clickToolbar('Add to Favorites')
+    await openSidebar()
+
+    // Headless Chrome hides native scrollbars, so the native one is checked by whether it is turned off. WebKit draws it
+    // whenever it is on, even with nothing to scroll.
+    const scrollbar = await page.$eval('[data-scroll-at-edge]', el => {
+      const thumb = document.querySelector('[data-testid="scrollbar-thumb"]')
+      return { native: getComputedStyle(el).scrollbarWidth, thumbOpacity: thumb && getComputedStyle(thumb).opacity }
+    })
+    expect(scrollbar).toEqual({ native: 'none', thumbOpacity: '0' })
+  })
+
+  // https://github.com/cybersemics/em/issues/6232
+  it('shows a thumb shorter than the list while scrolling favorites that overflow', async () => {
+    await paste(Array.from({ length: 30 }, (_, i) => `- favorite ${i + 1}\n  - =favorite`).join('\n'))
+    await openSidebar()
+
+    await page.$eval('[data-scroll-at-edge]', el => el.scrollBy(0, 100))
+    // the thumb updates on the scroll event
+    await waitUntil(() => document.querySelector('[data-scroll-at-edge]')!.scrollTop > 0)
+    await page.evaluate(() => new Promise(requestAnimationFrame))
+
+    const scrollbar = await page.$eval('[data-scroll-at-edge]', el => {
+      const thumb = document.querySelector<HTMLElement>('[data-testid="scrollbar-thumb"]')
+      return {
+        thumbOpacity: thumb?.style.opacity ?? null,
+        shorterThanList: !!thumb && thumb.getBoundingClientRect().height < el.clientHeight,
+      }
+    })
+    expect(scrollbar).toEqual({ thumbOpacity: '1', shorterThanList: true })
   })
 })

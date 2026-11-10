@@ -8,6 +8,7 @@ import hasMulticursor from '../selectors/hasMulticursor'
 const command = {
   id: 'exportContext',
   label: 'Export' as const,
+  systemMenu: 'File',
   description: 'Download or copy the current context as plain text or html.',
   svg: ShareIcon,
   multicursor: false,

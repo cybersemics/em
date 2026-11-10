@@ -9,6 +9,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const italic = {
   id: 'italic',
   label: 'Italic' as const,
+  systemMenu: 'Edit',
   description: 'Italicizes the current thought or selected text.',
   descriptionInverse: 'Removes italics from the current thought or selected text. So much for being special.',
   svg: Icon,
