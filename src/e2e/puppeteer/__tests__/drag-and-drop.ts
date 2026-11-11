@@ -825,7 +825,7 @@ describe('scroll at edge', () => {
   deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   // https://github.com/cybersemics/em/issues/6281
-  it.skip('keeps dragging while the page scrolls at the bottom edge, and stops scrolling when the finger leaves the edge', async () => {
+  it('keeps dragging while the page scrolls at the bottom edge, and stops scrolling when the finger leaves the edge', async () => {
     await paste(Array.from({ length: 40 }, (_, i) => `- ${i + 1}`).join('\n'))
     await waitForEditable('40')
     await page.evaluate(() => window.scrollTo(0, 0))

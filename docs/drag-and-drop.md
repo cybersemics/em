@@ -240,7 +240,7 @@ Drag-and-drop runs hot — `canDrop` and `hover` fire many times per second duri
 
 ## react-dnd patches
 
-Six patches live under [`.yarn/patches/`](../.yarn/patches), five for the touch backend and one for the HTML5 backend. Patches stack: each patch is applied on top of the previous one's output. To create a new touch-backend patch, you must specify the correct candidate package (because there are already several layered patches):
+Eight patches live under [`.yarn/patches/`](../.yarn/patches), seven for the touch backend and one for the HTML5 backend. Patches stack: each patch is applied on top of the previous one's output. To create a new touch-backend patch, you must specify the correct candidate package (because there are already several layered patches):
 
 ```
 $ yarn patch -u react-dnd-touch-backend
@@ -279,7 +279,7 @@ The third layered touch-backend patch. It adds **scroll-to-cancel**: if a `scrol
 - Sets a `scrollHasBegun` flag on touchmove if the timer is still pending.
 - Cleans up `this.timeout = 0` after the timer fires and at touchSlop, so the scroll handler can distinguish "drag pending" from "drag started".
 
-This addresses the iOS Safari edge case where a vertical scroll begins before `touchSlop` is exceeded — once Safari starts scrolling, it can't be cancelled programmatically, so the drag has to bow out.
+This addresses the iOS Safari edge case where a vertical scroll begins before `touchSlop` is exceeded — once Safari starts scrolling, it can't be cancelled programmatically, so the drag has to bow out. The seventh patch unbinds the listener once the drag has shown that no native scroll is under way, so the app's own scroll-at-edge does not end the drag.
 
 ### `react-dnd-touch-backend-patch-03e51a5757.patch`
 
@@ -297,6 +297,10 @@ The sixth layered touch-backend patch makes the long-press delay honour the `Dra
 
 1. **Slop is measured from where the press began.** `handleTopMoveStartDelay` sets `_mouseClientOffset` from the `touchstart`. Otherwise the first delivered `touchmove` became the origin. The browser suppresses moves within its own slop, so that first move is already well away from the press point.
 2. **The long press commits on the next animation frame.** When the delay expires, the timer schedules `handleTopMoveStart` with `requestAnimationFrame`, and it bails if `this.timeout` no longer holds its id. Touch moves are dispatched at the start of a frame, so a move the browser received before the deadline is handled before the commit and can still cancel it, as can a scroll or a `touchend`. A long press therefore starts up to one frame after `delayTouchStart`.
+
+### `react-dnd-touch-backend-patch-21865b140f.patch`
+
+The seventh layered touch-backend patch keeps scroll-at-edge from ending the drag it is scrolling for ([#6281](https://github.com/cybersemics/em/issues/6281)). When `handleTopMove` handles a cancelable `touchmove` during a drag, it prevents its default and unbinds `handleScroll`. A cancelable move means the browser has not started a native scroll, and preventing it keeps one from starting, so every later `scroll` event is the app's own. Without this, a press with any movement during the long-press delay (which iOS Safari delivers on nearly every press) set `scrollHasBegun`, and the first scroll from scroll-at-edge ended the drag.
 
 ### `react-dnd-html5-backend-npm-16.0.1-754940d855.patch`
 
