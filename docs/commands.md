@@ -926,4 +926,4 @@ Add or remove devices that can access and edit this thoughtspace.
 
 Cancel the current gesture.
 
-Search and sort order live in `commandUniverseNavigation` beside the page history, and every navigation reducer carries them over. Opening a fresh session resets both controls; visiting details and returning retains them. Browsing changes are transient and not undoable.
+Search and sort order live in [`commandUniverseSearchSortStore`](../src/stores/commandUniverseSearchSortStore.ts), a ministore separate from Redux-owned navigation. The search input and sort button are controlled by that store, so typing updates only its subscribers without dispatching Redux actions. Opening a fresh session resets both controls; visiting details and returning retains them. Browsing changes are transient and not undoable.

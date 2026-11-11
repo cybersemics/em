@@ -12,7 +12,7 @@ import CommandsSearchIcon from './icons/CommandsSearchIcon'
  * Distinct from SearchCommands (used by Help / CustomizeToolbar via CommandTable),
  * which keeps the legacy bordered look.
  */
-const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onInput }) => {
+const CommandUniverseSearch: FC<{ value: string; onInput: (value: string) => void }> = ({ value, onInput }) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
   useDismissKeyboardOnScroll(inputRef)
@@ -67,10 +67,11 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
       <input
         ref={inputRef}
         type='text'
+        value={value}
         placeholder='Search for a command'
         onMouseDown={handleMouseDown}
         onInput={(e: React.FormEvent<HTMLInputElement>) => {
-          onInput?.(e.currentTarget.value)
+          onInput(e.currentTarget.value)
         }}
         className={css({
           marginLeft: 0,

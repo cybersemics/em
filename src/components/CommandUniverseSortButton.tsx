@@ -9,7 +9,7 @@ import ClockIcon from './icons/ClockIcon'
 import CommandsListIcon from './icons/CommandsListIcon'
 
 interface CommandUniverseSortButtonProps {
-  /** The order the commands page is showing, read by the parent from `commandUniverseNavigation` in Redux. */
+  /** The order the commands page is showing, owned by the parent. */
   sortOrder: CommandSortType
   onSortChange: (sortOrder: CommandSortType) => void
 }
@@ -18,8 +18,7 @@ interface CommandUniverseSortButtonProps {
  * Group/sort button used by the Mobile Command Universe dialog. Flush styling (no
  * border or background) with the new 24×24 list glyph.
  *
- * Controlled, so the sort order has a single owner. It lives in Redux, and a copy kept here
- * would have to be kept in step with it by hand.
+ * Controlled, so the sort order has a single owner in the session ministore.
  *
  * Distinct from SortButton (used by Help / CustomizeToolbar via CommandTable),
  * which keeps the legacy bordered look.

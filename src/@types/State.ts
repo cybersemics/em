@@ -29,7 +29,7 @@ interface State {
   archived?: boolean
   authenticated: boolean
   autologin: boolean
-  /** Page history and browsing controls for the current Command Universe session. */
+  /** Page history for the current Command Universe session. */
   commandUniverseNavigation: CommandUniverseNavigation
   /** Key: hashPath(path). */
   contextViews: Index<boolean>

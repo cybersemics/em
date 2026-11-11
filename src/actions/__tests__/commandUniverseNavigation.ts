@@ -7,8 +7,6 @@ import initialState from '../../util/initialState'
 import commandUniverseBack from '../commandUniverseBack'
 import commandUniverseForward from '../commandUniverseForward'
 import commandUniverseNavigate, { commandUniverseNavigateActionCreator } from '../commandUniverseNavigate'
-import commandUniverseSearch from '../commandUniverseSearch'
-import commandUniverseSort from '../commandUniverseSort'
 import toggleMobileCommandUniverse, { toggleMobileCommandUniverseActionCreator } from '../toggleMobileCommandUniverse'
 
 const command: Command = { id: 'newThought', label: 'New Thought', exec: () => {}, multicursor: false }
@@ -33,8 +31,6 @@ it('starts at the grid root with no history', () => {
   expect(state.commandUniverseNavigation).toEqual({
     entries: [{ entryId: 'root', page: { pageId: 'grid', props: {} }, arrival: null }],
     index: 0,
-    search: '',
-    sortOrder: 'type',
   })
 })
 
@@ -150,25 +146,5 @@ it('ignores navigation while closed and resets history when reopened', () => {
   expect(reopened.commandUniverseNavigation).toEqual({
     entries: [{ entryId: 'second-root', page: { pageId: 'grid', props: {} }, arrival: null }],
     index: 0,
-    search: '',
-    sortOrder: 'type',
   })
-})
-
-it('retains search and sorting through Navigate, Back, and Forward and resets them on a fresh open', () => {
-  const open = toggleMobileCommandUniverse(initialState(), { value: true })
-  const searched = commandUniverseSearch(commandUniverseSort(open, { value: 'alphabetical' }), { value: 'indent' })
-  const detail = commandUniverseNavigate(searched, {
-    entryId: 'search-detail',
-    page: { pageId: 'detail', props: { command } },
-    arrival: { zoom: 'in', origin: null },
-  })
-  const back = commandUniverseBack(detail)
-  const forward = commandUniverseForward(back)
-  expect(detail.commandUniverseNavigation).toMatchObject({ search: 'indent', sortOrder: 'alphabetical' })
-  expect(back.commandUniverseNavigation).toMatchObject({ search: 'indent', sortOrder: 'alphabetical' })
-  expect(forward.commandUniverseNavigation).toMatchObject({ search: 'indent', sortOrder: 'alphabetical' })
-  const closed = toggleMobileCommandUniverse(forward, { value: false })
-  const reopened = toggleMobileCommandUniverse(closed, { value: true })
-  expect(reopened.commandUniverseNavigation).toMatchObject({ search: '', sortOrder: 'type' })
 })

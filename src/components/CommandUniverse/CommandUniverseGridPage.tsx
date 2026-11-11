@@ -1,10 +1,8 @@
 import React from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import { SwitchTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
-import { commandUniverseSearchActionCreator } from '../../actions/commandUniverseSearch'
-import { commandUniverseSortActionCreator } from '../../actions/commandUniverseSort'
 import useCommandList from '../../hooks/useCommandList'
+import commandUniverseSearchSortStore from '../../stores/commandUniverseSearchSortStore'
 import CommandUniverseGrid from '../CommandUniverseGrid'
 import CommandUniverseSearch from '../CommandUniverseSearch'
 import CommandUniverseSortButton from '../CommandUniverseSortButton'
@@ -18,9 +16,7 @@ import DialogContent from '../dialog/DialogContent'
  * gestures are inputted.
  */
 const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
-  const dispatch = useDispatch()
-  const search = useSelector(state => state.commandUniverseNavigation.search)
-  const sortOrder = useSelector(state => state.commandUniverseNavigation.sortOrder)
+  const { search, sortOrder } = commandUniverseSearchSortStore.useState()
   const { sections } = useCommandList({ search, sortOrder })
 
   // Pass this ref to `DialogContent`, which owns the scrollable element, so that we can reset
@@ -50,10 +46,10 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
           paddingBlock: '0.5rem',
         })}
       >
-        <CommandUniverseSearch onInput={value => dispatch(commandUniverseSearchActionCreator(value))} />
+        <CommandUniverseSearch value={search} onInput={search => commandUniverseSearchSortStore.update({ search })} />
         <CommandUniverseSortButton
           sortOrder={sortOrder}
-          onSortChange={value => dispatch(commandUniverseSortActionCreator(value))}
+          onSortChange={sortOrder => commandUniverseSearchSortStore.update({ sortOrder })}
         />
       </div>
 

@@ -44,7 +44,6 @@ const commandUniverseNavigate = (
   return {
     ...state,
     commandUniverseNavigation: {
-      ...state.commandUniverseNavigation,
       entries,
       index: entries.length - 1,
     },
