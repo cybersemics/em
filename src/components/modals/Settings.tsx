@@ -61,7 +61,9 @@ const Setting: FC<
 const FontSize = () => {
   const dispatch = useDispatch()
   const fontSizeSelector = useSelector(state => state.fontSize)
-  const [fontSize, setFontSize] = useState<number>(fontSizeSelector)
+  // A value typed outside the allowed range, which is shown until it is corrected or the input is left. Otherwise the input shows the font size in the state, which a command can change while Settings is open, e.g. Command + = in the desktop app (#6198).
+  const [outOfRange, setOutOfRange] = useState<number | null>(null)
+  const fontSize = outOfRange ?? fontSizeSelector
   const label =
     fontSize <= MIN_FONT_SIZE
       ? 'minimum reached'
@@ -88,17 +90,16 @@ const FontSize = () => {
         max={MAX_FONT_SIZE}
         value={fontSize}
         // reset on blur if font size is out of bounds
-        onBlur={() => {
-          if (fontSize < MIN_FONT_SIZE || fontSize > MAX_FONT_SIZE) {
-            setFontSize(fontSizeSelector)
-          }
-        }}
+        onBlur={() => setOutOfRange(null)}
         onKeyDown={onKeyDown}
         onChange={e => {
           const inputValue = +e.target.value
 
-          setFontSize(inputValue)
-          if (inputValue < MIN_FONT_SIZE || inputValue > MAX_FONT_SIZE) return
+          if (inputValue < MIN_FONT_SIZE || inputValue > MAX_FONT_SIZE) {
+            setOutOfRange(inputValue)
+            return
+          }
+          setOutOfRange(null)
           dispatch(fontSizeActionCreator(inputValue))
         }}
         className={css({ padding: '0.5em' })}
@@ -108,7 +109,7 @@ const FontSize = () => {
         <a
           onClick={() => {
             dispatch(fontSizeActionCreator(DEFAULT_FONT_SIZE))
-            setFontSize(DEFAULT_FONT_SIZE)
+            setOutOfRange(null)
           }}
           className={css({ marginLeft: '0.5em' })}
         >

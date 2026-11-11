@@ -223,6 +223,10 @@ Choosing an item emits a `system-menu` event with the command id, and [`device/s
 
 A shortcut does not run its command twice. On macOS the page sees a key before the menu does ([wry](https://github.com/tauri-apps/wry) passes the menu only the keys the page left unhandled), and `keyDown` prevents the default of every shortcut it executes, unless the command has `permitDefault`, as only `indent`, `newThought`, and `copyCursor` do, none of which has an accelerator. A shortcut that `keyDown` declines reaches its menu item, which checks the same conditions as `keyDown` before it executes.
 
+A key reaches the menu without the page seeing it at all while the window, rather than the webview, is the first responder. The menu then runs a command from its accelerator alone, which is why every item checks the conditions itself.
+
+AppKit matches an accelerator loosely: it also chooses the item of Command + - for Command + Shift + -, and on some versions of macOS the item of Command + = for Command + Shift + =. `on_event` in `menu.rs` ignores an item that a key chose with Shift held when its accelerator has no Shift, unless Shift is what typed the accelerator's key, as on a layout where = needs Shift (`is_loose_key_match`). Tauri reports the chosen item from its event loop, after AppKit has dispatched the key, and by then the app may already have taken the key's release or a modifier's release off its queue, so `NSApp.currentEvent` is not reliably the key press. A local event monitor (`record_key_presses`) records each key press as the app dispatches it instead, and `on_event` takes the last one, if it is less than a second old. A mouse button press clears it, so an item chosen with the pointer runs as usual.
+
 ### Flushing pending edits
 
 Typing into a thought does not reach Redux on the keystroke. [`Editable`](../src/components/Editable.tsx) dispatches `editThought` through a lodash throttle of `EDIT_THROTTLE` (500 ms) with `leading: false`, so the value the user just typed sits on the trailing edge until the window closes. A command that mutates thought text and runs inside that window would read the pre-edit value, and the trailing edit would then commit over the command's own result — the typed character wins and the formatting is lost ([issue #4774](https://github.com/cybersemics/em/issues/4774)).
@@ -882,7 +886,7 @@ Decrease the font size. Get your reading glasses.
 
 <kbd>Command + -</kbd> (desktop app only)
 
-In a browser tab, Command/Ctrl + = and Command/Ctrl + - are left to the browser's zoom, so the two shortcuts are bound only when `isTauri()` is true. Like browser zoom, both commands also run while a modal is open (`allowExecuteFromModal`), so a size can be tried from Settings.
+In a browser tab, Command/Ctrl + = and Command/Ctrl + - are left to the browser's zoom, so the two shortcuts are bound only when `isTauri()` is true. Like browser zoom, both commands also run while a modal is open (`allowExecuteFromModal`), so a size can be tried from Settings, whose Font Size input shows the size from the state as it changes.
 
 ### Undo
 
