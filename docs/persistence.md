@@ -65,7 +65,7 @@ Two app-owned derived indexes live alongside the CRDT tables in the same SQLite 
 - **`em_lexeme_memberships`** ([`lexemes.ts`](../src/data-providers/treecrdt/lexemes.ts)) — one row per live thought, indexed by `hashThought(value)`. The provider assembles complete Lexemes from these rows, including contexts not loaded in Redux.
 - **`em_attribute_children`** ([`attributeChildren.ts`](../src/data-providers/treecrdt/attributeChildren.ts)) — `child_id` → (`parent_id`, `value`) for `=attribute` children only, indexed by `parent_id`. This restores em's `childrenMap` contract, where meta-attributes are keyed by value rather than by id.
 
-Both indexes follow local and incoming materialization events and share one index cursor in `em_derived_indexes_meta`, the `headSeq` they have reached. It advances only after both updates succeed and is saved once updates pause, after a catch-up, and on close, so it may lag behind the indexes. On opening, and on the next event after a failed update, both catch up from the index cursor with TreeCRDT's `changedSince`. A database whose index cursor is missing or from an older index version is rebuilt from every node.
+Both indexes follow TreeCRDT's change events through one durable subscription, `em-derived-indexes`. TreeCRDT keeps its position, catches both indexes up after a gap such as startup or a failed update, and, when `INDEX_VERSION` changes, clears them and delivers every node again.
 
 Favorites' manual order is a separate local preference in `em_favorite_order`. It orders only live `=favorite` memberships; missing IDs cannot add members, and newly added favorites follow the saved list. Rebuilding derived indexes does not discard this preference.
 
@@ -125,7 +125,7 @@ It also stamps every local write with a `writeId` of the form `em-local:${source
 
 The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.
 
-A failed readback retains the pending events; the next materialization event retries publication. This is separate from an indexing failure, which the next event repairs by catching up from the index cursor.
+A failed readback retains the pending events; the next materialization event retries publication. This is separate from an indexing failure, after which TreeCRDT delivers the same changes again.
 
 ### Memory management
 

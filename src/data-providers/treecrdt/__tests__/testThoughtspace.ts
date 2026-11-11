@@ -81,8 +81,9 @@ it('does not write seed operations again when binding a seeded client', async ()
   const client = await createTreecrdtClient({ docId: 'seeded-client' })
   const replicaId = new Uint8Array(32).fill(1)
   try {
-    await createTreecrdtDataProvider().bindClient(client, replicaId)
+    const close = await createTreecrdtDataProvider().bindClient(client, replicaId)
     const operations = await client.ops.all()
+    await close()
     await createTreecrdtDataProvider().bindClient(client, replicaId)
     await expect(client.ops.all()).resolves.toEqual(operations)
   } finally {
@@ -255,15 +256,15 @@ it('rebuilds memberships and keeps favorite order when opening a database indexe
     // Differs from the default order (created, then id), so losing the saved order would show.
     await provider.db.updateThoughts({ thoughtIndexUpdates: {}, favoriteOrder: [THOUGHT_B_ID, THOUGHT_Y_ID] })
     await close()
-    // Model a database indexed by an older version: a version-1 cursor and no memberships table.
-    await client.runner.exec(`
-      DROP TABLE em_lexeme_memberships;
-      UPDATE em_derived_indexes_meta SET version = 1;
-    `)
+    // Model a database indexed by an older version, which then skipped a write the new version must index.
+    const older = await client.onMaterializedDurable('em-derived-indexes', () => undefined, { version: 1 })
+    const payload = encodeThoughtPayload({ value: 'c', created: 1, lastUpdated: 1, updatedBy: 'test' })
+    await client.local.insert(replicaId, EM_TOKEN, THOUGHT_X_ID, { type: 'last' }, payload)
+    await older.close()
     const reopened = createTreecrdtDataProvider()
     const closeReopened = await reopened.bindClient(client, replicaId)
     try {
-      await expect(reopened.db.getLexemeById(hashThought('a'))).resolves.toMatchObject({ contexts: [THOUGHT_A_ID] })
+      await expect(reopened.db.getLexemeById(hashThought('c'))).resolves.toMatchObject({ contexts: [THOUGHT_X_ID] })
       await expect(reopened.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
         contexts: [THOUGHT_B_ID, THOUGHT_Y_ID],
       })

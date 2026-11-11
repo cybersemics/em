@@ -1,4 +1,5 @@
 import type { Operation } from '@treecrdt/interface'
+import type { MaterializationEvent } from '@treecrdt/interface/engine'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Index from '../../@types/IndexType'
 import type Thought from '../../@types/Thought'
@@ -15,6 +16,7 @@ import createDerivedIndexes from './derivedIndexes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
 import { enqueueMaterializedThoughtsToStore } from './sync'
 import type { MaterializationContext } from './sync/applyMaterializedThoughtsToStore'
+import { enqueueMaterializedThoughtsToStoreWork } from './sync/materializationQueue'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 import { createTreecrdtLocalWriteOptions } from './writeBarrier'
 
@@ -337,7 +339,12 @@ const createTreecrdtDataProvider = () => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
-    const { lexemes, updateIndexes, indexed, close: closeIndexes } = await createDerivedIndexes(client)
+    let publish: ((event: MaterializationEvent, keys: string[]) => void) | undefined
+    const {
+      lexemes,
+      indexed,
+      close: closeIndexes,
+    } = await createDerivedIndexes(client, (event, keys) => publish?.(event, keys))
 
     let subscribed = true
     const clientDb: TreecrdtClientDataProvider = {
@@ -365,15 +372,17 @@ const createTreecrdtDataProvider = () => {
       isActive: () => subscribed && activeDb === clientDb,
     }
 
-    const unsubscribeMaterialized = client.onMaterialized(event => {
-      const keys = updateIndexes(event)
-      if (!materializationContext) return
-      materializationContext.pending.push({ event, keys })
-      // Each event queues a publication; one that finds the buffer already drained returns at once.
-      void enqueueMaterializedThoughtsToStore(materializationContext).catch(err =>
-        console.error('TreeCRDT materialized UI sync failed', err),
-      )
-    })
+    // A publication is queued only once its event is indexed, so the idle barrier waits for the indexes too.
+    const unsubscribeMaterialized = client.onMaterialized(() => void enqueueMaterializedThoughtsToStoreWork(indexed))
+    if (materializationContext) {
+      publish = (event, keys) => {
+        materializationContext.pending.push({ event, keys })
+        // Each event queues a publication; one that finds the buffer already drained returns at once.
+        void enqueueMaterializedThoughtsToStore(materializationContext).catch(err =>
+          console.error('TreeCRDT materialized UI sync failed', err),
+        )
+      }
+    }
 
     activeDb = clientDb
     providerReadiness.resolve(clientDb)

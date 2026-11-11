@@ -15,7 +15,7 @@ import refreshThoughtsFromMaterializationChanges from './materializationThoughtU
 export type MaterializationContext = {
   bridge: ThoughtspaceMaterializationBridge
   db: Pick<DataProvider, 'getThoughtById' | 'getLexemesByIds'>
-  pending: { event: MaterializationEvent; keys: Promise<string[]> }[]
+  pending: { event: MaterializationEvent; keys: string[] }[]
   isActive: () => boolean
 }
 
@@ -28,7 +28,7 @@ export const applyMaterializedThoughtsToStore = async (context: MaterializationC
     const entries = pending.slice()
     const snapshot = bridge.getSnapshot()
     const writeVersion = getTreecrdtWriteBarrierVersion()
-    const keys = [...new Set((await Promise.all(entries.map(entry => entry.keys))).flat())]
+    const keys = [...new Set(entries.flatMap(entry => entry.keys))]
     const remoteChanges = entries.flatMap(({ event }) => (isTreecrdtLocalMaterialization(event) ? [] : event.changes))
     const thoughtIndexUpdates: Index<Thought | null> = {}
     if (remoteChanges.length) {
