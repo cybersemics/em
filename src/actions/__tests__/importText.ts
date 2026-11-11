@@ -1114,4 +1114,19 @@ describe('single-line paste into a thought', () => {
 
     expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['fresh'])!)!.value).toBe('fresh')
   })
+
+  // https://github.com/cybersemics/em/issues/6055
+  it.skip('does not apply the background color at the caret to pasted text that has its own color', () => {
+    const value = '<font color="#000000" style="background-color: rgb(255, 208, 20);">aaaa bbbb cccc</font>'
+    const stateNew = reducerFlow([
+      newThought({ value }),
+      // between "bbbb " and "cccc"
+      importTextAtFirstMatch({ at: [value], text: '<font color="#ff573d">eee</font>', caretPosition: 10 }),
+    ])(initialState())
+
+    const [child] = getAllChildren(stateNew, HOME_TOKEN)
+    expect(getThoughtById(stateNew, child)!.value).toBe(
+      '<font color="#000000" style="background-color: rgb(255, 208, 20);">aaaa bbbb </font><font color="#ff573d">eee</font><font color="#000000" style="background-color: rgb(255, 208, 20);">cccc</font>',
+    )
+  })
 })
