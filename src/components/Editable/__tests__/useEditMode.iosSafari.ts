@@ -2,7 +2,6 @@ import { renderHook } from '@testing-library/react'
 import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import { importTextActionCreator as importText } from '../../../actions/importText'
-import { setCursorActionCreator } from '../../../actions/setCursor'
 import store from '../../../stores/app'
 import touchStore from '../../../stores/touchStore'
 import initStore from '../../../test-helpers/initStore'
@@ -38,11 +37,8 @@ it('record the touchend of a tap on a thought', () => {
         contentRef: { current: editable as unknown as HTMLInputElement },
         isEditing: true,
         path: store.getState().cursor!,
-        // The hook is rendered on the cursor thought, where Editable's setter only places the caret.
-        setCursorForTap: ({ offset }) => {
-          if (offset !== undefined)
-            store.dispatch(setCursorActionCreator({ path: store.getState().cursor, offset, preserveMulticursor: true }))
-        },
+        // No tap places a caret in this test.
+        setCursorForTap: () => {},
         style: undefined,
         transient: undefined,
       }),
@@ -69,11 +65,8 @@ it('suppress the synthesized mousedown of a tap that already moved the cursor wi
         contentRef: { current: editable as unknown as HTMLInputElement },
         isEditing: true,
         path: store.getState().cursor!,
-        // The hook is rendered on the cursor thought, where Editable's setter only places the caret.
-        setCursorForTap: ({ offset }) => {
-          if (offset !== undefined)
-            store.dispatch(setCursorActionCreator({ path: store.getState().cursor, offset, preserveMulticursor: true }))
-        },
+        // No tap places a caret in this test.
+        setCursorForTap: () => {},
         style: undefined,
         transient: undefined,
       }),
@@ -108,11 +101,8 @@ it('allow mousedown on the cursor thought when no cursor-moving tap preceded it'
         contentRef: { current: editable as unknown as HTMLInputElement },
         isEditing: true,
         path: store.getState().cursor!,
-        // The hook is rendered on the cursor thought, where Editable's setter only places the caret.
-        setCursorForTap: ({ offset }) => {
-          if (offset !== undefined)
-            store.dispatch(setCursorActionCreator({ path: store.getState().cursor, offset, preserveMulticursor: true }))
-        },
+        // No tap places a caret in this test.
+        setCursorForTap: () => {},
         style: undefined,
         transient: undefined,
       }),
