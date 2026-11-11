@@ -101,7 +101,7 @@ const useEditMode = ({
       const setSelectionToCursorOffset = () => {
         // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
         // https://github.com/cybersemics/em/issues/1596
-        if (style?.visibility === 'hidden' && !isTapPlacement) {
+        if (style?.visibility === 'hidden') {
           selection.clear()
         } else {
           // Neither the Android WebView nor Chromium raises the virtual keyboard when a thought enters edit
