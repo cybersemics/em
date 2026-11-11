@@ -1116,7 +1116,7 @@ describe('single-line paste into a thought', () => {
   })
 
   // https://github.com/cybersemics/em/issues/6055
-  it.skip('does not apply the background color at the caret to pasted text that has its own color', () => {
+  it('does not apply the background color at the caret to pasted text that has its own color', () => {
     const value = '<font color="#000000" style="background-color: rgb(255, 208, 20);">aaaa bbbb cccc</font>'
     const stateNew = reducerFlow([
       newThought({ value }),
