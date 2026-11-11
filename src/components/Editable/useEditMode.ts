@@ -57,7 +57,9 @@ const useEditMode = ({
   // Bumped to place the caret for a tap, since the selection effect does not subscribe to cursorOffset. Subscribing
   // would move the caret on every saved edit, whose cursorOffset lags the live caret through the edit throttle, and
   // would not fire for a tap at the offset Redux already holds, such as one after the End key moved the caret without
-  // writing it. A nonce changes on every tap and on nothing else.
+  // writing it. A nonce changes on every tap that places the caret and on nothing else, which also lets a tap record its
+  // offset without placing it: recordCaretOffset records a slow tap at its touchend without a bump, since iOS has yet to
+  // move the caret, and useRevertCorrection puts back only the moves it has to.
   const [caretNonce, bumpCaretNonce] = useReducer((nonce: number) => nonce + 1, 0)
   // A run of the selection effect is placing the caret for a tap when the tap's bump of caretNonce is what it follows.
   const prevCaretNonce = usePrevious(caretNonce)
