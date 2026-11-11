@@ -39,13 +39,16 @@ const edgeOf = (editable: HTMLElement, clientY: number): 'start' | 'end' | null 
  * below the last first moves it to the start or end of the thought, as #6178 describes, and iOS 27 can extend the
  * selection from the caret back to where it was.
  *
- * The offset is recorded at the touchend, and the watch follows iOS's moves until the next input, with no timer. The
- * first move is either the jump to the start or end, which is put back only if the tap was at that edge, or the
- * placement at the tapped word. That can be the other end of the word from getCaretOffset's choice, so it is recorded
- * instead. The move back to where the caret was before the tap is put back, as is a range back to there, and moves in
- * between are left alone, since iOS can pass through another offset on its way back. After the move back, iOS does not
- * move the caret again, so any other move ends the watch. It can come from elsewhere, such as the space bar scrub, which
- * delivers no event to the page.
+ * The offset is recorded at the touchend, and only for a tap. The touchend gives only where the finger lifted, so the
+ * touchstart is noted too, and its distance and time from the touchend rule out a drag, a long press and a touchend
+ * iOS 27 withheld until the next touch, each of which would otherwise record an offset that was never tapped.
+ *
+ * The watch follows iOS's moves until the next input, with no timer. The first move is either the jump to the start or
+ * end, which is put back only if the tap was at that edge, or the placement at the tapped word. That can be the other
+ * end of the word from getCaretOffset's choice, so it is recorded instead. The move back to where the caret was before
+ * the tap is put back, as is a range back to there, and moves in between are left alone, since iOS can pass through
+ * another offset on its way back. After the move back, iOS does not move the caret again, so any other move ends the
+ * watch. It can come from elsewhere, such as the space bar scrub, which delivers no event to the page.
  */
 const useRevertCorrection = ({
   editableRef,
