@@ -63,6 +63,12 @@ const STAGE_OFFSET_PX = 200
 /** The gap that react-modal-sheet keeps above the sheet, below the top safe area. This gap limits how tall the sheet can get. */
 const SHEET_TOP_GAP_PX = 34
 
+/** The stage progress at which the standard stage's command grid has fully faded out. */
+const STANDARD_VIEW_EXIT_END = 0.3
+
+/** The stage progress at which the expanded stage's command list starts to fade in. */
+const EXPANDED_VIEW_ENTER_START = 0.25
+
 /**************************************************************
  * Expand bounce constants
  **************************************************************/
@@ -692,20 +698,22 @@ const CommandCenter = () => {
   // The Standard and Expanded stage animations are controlled independently by
   // `standardViewOpacity` and `expandedViewOpacity`, but both are derived from
   // the same `stageProgress` value to ensure smooth transitions between stages.
-  const standardViewOpacity = useTransform(stageProgress, [0, 0.5], [1, 0])
-  const expandedViewOpacity = useTransform(stageProgress, [0.4, 1], [0, 1])
-  // The command grid moves up and shrinks as it fades out, while the command list rises into its place as it fades in.
-  const standardViewYRem = useTransform(stageProgress, [0, 0.5], [0, -2.5], { ease: easeIn })
-  const standardViewY = useMotionTemplate`${standardViewYRem}rem`
-  const standardViewScale = useTransform(stageProgress, [0, 0.5], [1, 0.94])
-  const expandedViewYRem = useTransform(stageProgress, [0.4, 1], [1.5, 0], { ease: easeOut })
-  const expandedViewY = useMotionTemplate`${expandedViewYRem}rem`
-  const standardPointerEvents = useTransform(stageProgress, p => (p > 0.5 ? 'none' : 'auto')) as MotionValue<
-    'none' | 'auto'
-  >
-  const expandedPointerEvents = useTransform(stageProgress, p => (p > 0.5 ? 'auto' : 'none')) as MotionValue<
-    'none' | 'auto'
-  >
+  // The command grid nudges up as it fades out, while the command list rises into its place as it fades in.
+  // The two ranges overlap for only 5% of the transition, so the layouts are rarely visible together.
+  // The grid's short rise keeps it clear of "1 thought selected" above it.
+  const standardViewOpacity = useTransform(stageProgress, [0, STANDARD_VIEW_EXIT_END], [1, 0])
+  const standardViewY = useTransform(stageProgress, [0, STANDARD_VIEW_EXIT_END], [0, -14], { ease: easeIn })
+  const standardViewScale = useTransform(stageProgress, [0, STANDARD_VIEW_EXIT_END], [1, 0.94], { ease: easeIn })
+  const expandedViewOpacity = useTransform(stageProgress, [EXPANDED_VIEW_ENTER_START, 1], [0, 1])
+  const expandedViewY = useTransform(stageProgress, [EXPANDED_VIEW_ENTER_START, 1], [96, 0], { ease: easeOut })
+  // Grows the command list slightly as it rises, so it reads as coming forward rather than sliding flat.
+  const expandedViewScale = useTransform(stageProgress, [EXPANDED_VIEW_ENTER_START, 1], [0.94, 1], { ease: easeOut })
+  const standardPointerEvents = useTransform(stageProgress, p =>
+    p > STANDARD_VIEW_EXIT_END ? 'none' : 'auto',
+  ) as MotionValue<'none' | 'auto'>
+  const expandedPointerEvents = useTransform(stageProgress, p =>
+    p > STANDARD_VIEW_EXIT_END ? 'auto' : 'none',
+  ) as MotionValue<'none' | 'auto'>
 
   if (isTouch && !isTutorialOn) {
     return (
@@ -1015,10 +1023,13 @@ const CommandCenter = () => {
                         right: 0,
                         display: 'flex',
                         // minHeight: 0,
+                        // Anchors the scale to the top edge, so the list grows downward and its top stays put.
+                        transformOrigin: 'top center',
                       })}
                       style={{
                         opacity: expandedViewOpacity,
                         y: expandedViewY,
+                        scale: expandedViewScale,
                         pointerEvents: expandedPointerEvents,
                         // Set a negative bottom value to allow content to extend into the hidden chevron
                         // area instead of stopping at the visible edge.
