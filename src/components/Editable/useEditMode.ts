@@ -160,8 +160,10 @@ const useEditMode = ({
           hidden: style?.visibility === 'hidden',
         }))
 
-        // A tap's onMouseDown has already prevented autoscroll with a margin, which preventAutoscroll keeps.
-        preventAutoscroll(contentRef.current)
+        // The one call per placement, a tap's included: it runs in the same task as the tap's mousedown, before the
+        // browser moves the focus. A tap leaves about a line, the height of a single-line thought, between the tapped
+        // thought and the keyboard.
+        preventAutoscroll(contentRef.current, isTapPlacement ? { bottomMargin: fontSize * 2 } : undefined)
 
         /*
         When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
@@ -326,13 +328,7 @@ const useEditMode = ({
         })
 
         if (offset !== null) {
-          // Prevent the browser from autoscrolling to this editable element.
-          // For some reason doesn't work on touchend.
-          preventAutoscroll(editable, {
-            // about the height of a single-line thought
-            bottomMargin: fontSize * 2,
-          })
-
+          // The selection effect that places the caret also prevents the autoscroll.
           setCaretOffset(offset)
 
           // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
@@ -400,7 +396,6 @@ const useEditMode = ({
     setCursorForTap,
     isCursor,
     isMulticursor,
-    fontSize,
     path,
     dispatch,
     store,
