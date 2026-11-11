@@ -6841,17 +6841,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@treecrdt/auth@npm:0.2.1":
-  version: 0.2.1
-  resolution: "@treecrdt/auth@npm:0.2.1"
+"@treecrdt/auth@npm:0.2.2":
+  version: 0.2.2
+  resolution: "@treecrdt/auth@npm:0.2.2"
   dependencies:
     "@noble/ed25519": "npm:^3.0.0"
     "@noble/hashes": "npm:^1.8.0"
-    "@treecrdt/interface": "npm:0.4.0"
-    "@treecrdt/sync-protocol": "npm:0.2.1"
-    "@treecrdt/wasm": "npm:0.1.1"
+    "@treecrdt/interface": "npm:0.5.0"
+    "@treecrdt/sync-protocol": "npm:0.2.2"
+    "@treecrdt/wasm": "npm:0.1.2"
     cborg: "npm:^4.3.2"
-  checksum: 10c0/15b84838b0d7ac0d7961b0597c750367235602f4a50d9e1e9b2cc4d524b36256c9e1c1cdc793f34671028472156cb808581e392dfaa6ccfd5a924d770865a2d3
+  checksum: 10c0/8e3acc38d2cd6b2fb32493e2afaeb41d20ce123546bdb2c61effc03f9ac1b212b345b7a39575dcfcdd147d14d4b81b801c2506c79635a5a19cc25933edc88a60
   languageName: node
   linkType: hard
 
@@ -6862,12 +6862,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@treecrdt/interface@npm:0.4.0":
-  version: 0.4.0
-  resolution: "@treecrdt/interface@npm:0.4.0"
+"@treecrdt/interface@npm:0.5.0":
+  version: 0.5.0
+  resolution: "@treecrdt/interface@npm:0.5.0"
   dependencies:
     cborg: "npm:^4.3.2"
-  checksum: 10c0/af13159382895bdb40f6eedb98978dca5b8c43b8c9ac0b3afead7f8bafc8d2f2fc2e466d1f8400b4965ea1640329eb974c5e6851a91161d1338e2a85a344a045
+  checksum: 10c0/95aca3ac8d439412cab0b696bd327287fe96725e07b0972b4e75bbc3b114c26e513a9981f47721dc796c85570ac1ef68eaf37dc8ae0b3e752cfedc2a5edc6d87
   languageName: node
   linkType: hard
 
@@ -6878,58 +6878,58 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@treecrdt/sync-protocol@npm:0.2.1":
-  version: 0.2.1
-  resolution: "@treecrdt/sync-protocol@npm:0.2.1"
+"@treecrdt/sync-protocol@npm:0.2.2":
+  version: 0.2.2
+  resolution: "@treecrdt/sync-protocol@npm:0.2.2"
   dependencies:
     "@bufbuild/protobuf": "npm:^2.10.2"
     "@noble/hashes": "npm:^1.8.0"
-    "@treecrdt/interface": "npm:0.4.0"
+    "@treecrdt/interface": "npm:0.5.0"
     "@treecrdt/riblt-wasm": "npm:0.1.0"
-  checksum: 10c0/e3d11966fc6c097cfec1268c6edbcb85565228540931e721d5d9c27de7be74df97ae8e32de5fd5eed600927b2503e5874971dd7c67f0114a235895690126ab98
+  checksum: 10c0/259d34f632404b29543b93e72747745b39f0ea774e6f52af8df42bc1ce797d5db20906f196e6b74223841dc30bbd66c29d2a03292114163d526727b8c5b7f24b
   languageName: node
   linkType: hard
 
-"@treecrdt/sync-sqlite@npm:0.1.4":
-  version: 0.1.4
-  resolution: "@treecrdt/sync-sqlite@npm:0.1.4"
+"@treecrdt/sync-sqlite@npm:0.1.5":
+  version: 0.1.5
+  resolution: "@treecrdt/sync-sqlite@npm:0.1.5"
   dependencies:
-    "@treecrdt/auth": "npm:0.2.1"
-    "@treecrdt/interface": "npm:0.4.0"
-    "@treecrdt/sync-protocol": "npm:0.2.1"
-  checksum: 10c0/4ca0ea897b3119398bf8e2b9a26ef8d2b30923bd0e1e565e640f02821bfb20ae054511d0b9f1eea96aac3b090b5f7a8c6685369b72286e9f475a313e3dd10700
+    "@treecrdt/auth": "npm:0.2.2"
+    "@treecrdt/interface": "npm:0.5.0"
+    "@treecrdt/sync-protocol": "npm:0.2.2"
+  checksum: 10c0/84e7797a8594cbe163e3a32bf0a79066fb00f124d4f7d0bbc3da1d1add55fdde69b9e73d09d8a7cad3e763573d37c07d8c4bfffc2dbf972ef6129e279e201025
   languageName: node
   linkType: hard
 
-"@treecrdt/sync@npm:0.2.1":
-  version: 0.2.1
-  resolution: "@treecrdt/sync@npm:0.2.1"
+"@treecrdt/sync@npm:0.2.2":
+  version: 0.2.2
+  resolution: "@treecrdt/sync@npm:0.2.2"
   dependencies:
     "@treecrdt/discovery": "npm:0.1.0"
-    "@treecrdt/interface": "npm:0.4.0"
-    "@treecrdt/sync-protocol": "npm:0.2.1"
-    "@treecrdt/sync-sqlite": "npm:0.1.4"
-  checksum: 10c0/6ec7b537f78b95512eb20f86b5904558dd5088053405163ff9b2ac8a77d3cbd9d5b8fe2b52be897c16d776f8f366622ed23b054666f66b2b09c4c9fcf970779d
+    "@treecrdt/interface": "npm:0.5.0"
+    "@treecrdt/sync-protocol": "npm:0.2.2"
+    "@treecrdt/sync-sqlite": "npm:0.1.5"
+  checksum: 10c0/86e331902d075120b7746fc66daa5dd3e84457d6a28da5865c8e024dcd3bf4bd69f83e024e94480932ff06db8ab2d464e2bb80aa84707dccff4f00f1003dc5bb
   languageName: node
   linkType: hard
 
-"@treecrdt/wa-sqlite@npm:1.1.0":
-  version: 1.1.0
-  resolution: "@treecrdt/wa-sqlite@npm:1.1.0"
+"@treecrdt/wa-sqlite@npm:1.2.0":
+  version: 1.2.0
+  resolution: "@treecrdt/wa-sqlite@npm:1.2.0"
   dependencies:
     "@noble/hashes": "npm:^1.8.0"
-    "@treecrdt/interface": "npm:0.4.0"
+    "@treecrdt/interface": "npm:0.5.0"
     comlink: "npm:^4.4.2"
-  checksum: 10c0/a0bc39d0dd93883f2fc55c4684dc891b79a8554609de9d644ad95011bd80ce47cd53c8ced38c67c72bef7995745e78c0f0172e636d7f0f0231c58cae5602660c
+  checksum: 10c0/18114e67ece452356827231cf57fda5421504908cfc4fb17fd900be11cd5d5361e8ab63b6cc00e15ca28313c9ef774d641f1ce59d1773d7e79bf8b14674126b2
   languageName: node
   linkType: hard
 
-"@treecrdt/wasm@npm:0.1.1":
-  version: 0.1.1
-  resolution: "@treecrdt/wasm@npm:0.1.1"
+"@treecrdt/wasm@npm:0.1.2":
+  version: 0.1.2
+  resolution: "@treecrdt/wasm@npm:0.1.2"
   dependencies:
-    "@treecrdt/interface": "npm:0.4.0"
-  checksum: 10c0/0609b3d521f8376bb86f43c4f2c5b68dd996b339328212472b2e408ed8308493014149c516cd562a9b8c0fb5d1d0f6b753f008dfa531396e08c7e6fdbf3bc69f
+    "@treecrdt/interface": "npm:0.5.0"
+  checksum: 10c0/331b22c4fb809266601920fa9e605bd4201670781566fad72162669d9603c7ff50f024e6718ea03bb5f6f9f23419c34a7fdae396fddacabfbe4864b4d1a1937b
   languageName: node
   linkType: hard
 
@@ -11951,9 +11951,9 @@ __metadata:
     "@testing-library/react": "npm:^16.3.3"
     "@testing-library/user-event": "npm:^14.6.8"
     "@total-typescript/ts-reset": "npm:^0.6.1"
-    "@treecrdt/interface": "npm:0.4.0"
-    "@treecrdt/sync": "npm:0.2.1"
-    "@treecrdt/wa-sqlite": "npm:1.1.0"
+    "@treecrdt/interface": "npm:0.5.0"
+    "@treecrdt/sync": "npm:0.2.2"
+    "@treecrdt/wa-sqlite": "npm:1.2.0"
     "@trivago/prettier-plugin-sort-imports": "npm:^6.0.2"
     "@types/clipboard": "npm:^2.0.10"
     "@types/dompurify": "npm:^3.2.0"

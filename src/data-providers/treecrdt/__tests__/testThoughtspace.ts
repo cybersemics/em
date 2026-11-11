@@ -82,8 +82,9 @@ it('does not write seed operations again when binding a seeded client', async ()
   const client = await createTreecrdtClient({ docId: 'seeded-client' })
   const replicaId = new Uint8Array(32).fill(1)
   try {
-    await createTreecrdtDataProvider().bindClient(client, replicaId)
+    const close = await createTreecrdtDataProvider().bindClient(client, replicaId)
     const operations = await client.ops.all()
+    await close()
     await createTreecrdtDataProvider().bindClient(client, replicaId)
     await expect(client.ops.all()).resolves.toEqual(operations)
   } finally {

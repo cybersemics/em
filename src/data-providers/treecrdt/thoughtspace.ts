@@ -384,12 +384,13 @@ const createTreecrdtDataProvider = () => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
-    const { updateIndexes, indexed, close: closeIndexes } = await createDerivedIndexes(client)
+    const { indexed, close: closeIndexes } = await createDerivedIndexes(client)
     const clientDb = createClientDataProvider({ client, replicaId }, indexed)
     const materializationContext = materialization ? { bridge: materialization, db: clientDb } : null
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
-      const indexedEvent = updateIndexes(event)
+      // The index subscription listens first, so this resolves once this event is indexed.
+      const indexedEvent = indexed()
       // Local writes are already reflected optimistically. Other materialization uses the exact provider and client
       // that created this subscription, even if the app later binds a new client.
       if (isTreecrdtLocalMaterialization(event) || !materializationContext) return
