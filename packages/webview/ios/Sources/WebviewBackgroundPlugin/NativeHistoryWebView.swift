@@ -81,19 +81,26 @@ public final class NativeHistoryWebView: WKWebView {
 
     private var keyboardWillHideObserver: NSObjectProtocol?
 
-    override public init(frame: CGRect, configuration: WKWebViewConfiguration) {
-        super.init(frame: frame, configuration: configuration)
-        observeKeyboardWillHide()
-    }
-
-    public required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        observeKeyboardWillHide()
+    // The observer is registered when the view enters a window rather than in an initializer: declaring
+    // designated initializers on this subclass would stop it inheriting WKWebView's others, and any of those
+    // called by the framework would then trap at launch.
+    override public func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window == nil {
+            stopObservingKeyboardWillHide()
+        } else if keyboardWillHideObserver == nil {
+            observeKeyboardWillHide()
+        }
     }
 
     deinit {
+        stopObservingKeyboardWillHide()
+    }
+
+    private func stopObservingKeyboardWillHide() {
         if let observer = keyboardWillHideObserver {
             NotificationCenter.default.removeObserver(observer)
+            keyboardWillHideObserver = nil
         }
     }
 
