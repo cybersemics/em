@@ -1,10 +1,11 @@
 import React, { FC, PropsWithChildren, useEffect, useId, useRef, useState } from 'react'
-import { shallowEqual, useDispatch, useSelector } from 'react-redux'
+import { shallowEqual, useDispatch, useSelector, useStore } from 'react-redux'
 import pkg from '../../package.json'
 import { css, cx } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import Modal from '../@types/Modal'
+import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import fontSizeDown from '../actions/fontSizeDown'
 import fontSizeUp from '../actions/fontSizeUp'
@@ -245,17 +246,36 @@ const Footer = () => {
   //   fontSize,
   // })
 
+  const store = useStore()
   const _fontSize = useRef(fontSize)
+  /** Set when a font size button changes the font size, so that the change scrolls to the bottom. */
+  const scrollToBottomOnFontSize = useRef(false)
 
   // alert when font size changes
   useEffect(() => {
     // prevent alert dispatch when rendered for first time
     if (_fontSize.current !== fontSize) {
       dispatch(alert(`Font size: ${fontSize}`))
-      scrollTo('bottom')
+      // Keep the buttons under the pointer as the thoughts above them grow or shrink (#1152). A change from anywhere
+      // else, such as a command or Settings, leaves the scroll position alone and the cursor in view (#6273).
+      if (scrollToBottomOnFontSize.current) {
+        scrollTo('bottom')
+        scrollToBottomOnFontSize.current = false
+      }
       _fontSize.current = fontSize
     }
   }, [dispatch, fontSize])
+
+  /** Changes the font size from a footer button, and scrolls to the bottom once the thoughts have been laid out at it. */
+  const changeFontSize = (action: Thunk) => {
+    const fontSizeBefore = store.getState().fontSize
+    scrollToBottomOnFontSize.current = true
+    dispatch(action)
+    // At the minimum or maximum font size the button changes nothing, so a later change from elsewhere must not scroll.
+    if (store.getState().fontSize === fontSizeBefore) {
+      scrollToBottomOnFontSize.current = false
+    }
+  }
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
@@ -292,7 +312,7 @@ const Footer = () => {
               paddingRight: '12px',
               userSelect: 'none',
             })}
-            {...fastClick(() => dispatch(fontSizeUp()))}
+            {...fastClick(() => changeFontSize(fontSizeUp()))}
           >
             A
           </a>
@@ -305,7 +325,7 @@ const Footer = () => {
               paddingRight: '12px',
               userSelect: 'none',
             })}
-            {...fastClick(() => dispatch(fontSizeDown()))}
+            {...fastClick(() => changeFontSize(fontSizeDown()))}
           >
             A
           </a>

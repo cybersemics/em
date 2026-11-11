@@ -880,6 +880,8 @@ Increase the font size. Bigger is better!
 
 Decrease the font size. Get your reading glasses.
 
+Every change of the font size shows a "Font size" alert ([`Footer`](../src/components/Footer.tsx)). Only the footer's own font size buttons also scroll to the bottom, which keeps them under the pointer as the thoughts above them grow or shrink ([#1152](https://github.com/cybersemics/em/issues/1152)). A change from a command or Settings leaves the scroll position to the cursor ([#6273](https://github.com/cybersemics/em/issues/6273)).
+
 ### Undo
 
 Undo the last action.
