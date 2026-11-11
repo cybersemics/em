@@ -54,7 +54,10 @@ const useEditMode = ({
   const noteFocus = useSelector(state => state.noteFocus)
   const dragHold = useSelector(state => state.longPress === LongPressState.DragHold)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
-  // Bumped to place the caret for a tap, since the selection effect does not subscribe to cursorOffset.
+  // Bumped to place the caret for a tap, since the selection effect does not subscribe to cursorOffset. Subscribing
+  // would move the caret on every saved edit, whose cursorOffset lags the live caret through the edit throttle, and
+  // would not fire for a tap at the offset Redux already holds, such as one after the End key moved the caret without
+  // writing it. A nonce changes on every tap and on nothing else.
   const [caretNonce, bumpCaretNonce] = useReducer((nonce: number) => nonce + 1, 0)
   // A run of the selection effect is placing the caret for a tap when the tap's bump of caretNonce is what it follows.
   const prevCaretNonce = usePrevious(caretNonce)
