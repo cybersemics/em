@@ -40,7 +40,7 @@ const useEditMode = ({
   contentRef: React.RefObject<HTMLInputElement | null>
   isEditing: boolean
   path: Path
-  /** Editable's setter for the cursor of a tap on this thought. The hook decides where the tap places the caret and whether to move the focus here first, Editable decides what the tap does to the cursor, and the selection effect places the caret from the result. */
+  /** Editable's setter for the cursor of a tap on this thought. The hook decides where the tap places the caret, Editable decides what the tap does to the cursor, and the selection effect places the caret from the result. */
   setCursorForTap: (options: { offset?: number }) => void
   style: React.CSSProperties | undefined
   transient: boolean | undefined
