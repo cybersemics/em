@@ -1,5 +1,5 @@
 import React, { FC, PropsWithChildren, useEffect, useId, useRef, useState } from 'react'
-import { shallowEqual, useDispatch, useSelector, useStore } from 'react-redux'
+import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import pkg from '../../package.json'
 import { css, cx } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
@@ -246,10 +246,9 @@ const Footer = () => {
   //   fontSize,
   // })
 
-  const store = useStore()
   const _fontSize = useRef(fontSize)
-  /** Set when a font size button changes the font size, so that the change scrolls to the bottom. */
-  const scrollToBottomOnFontSize = useRef(false)
+  /** The font size that a font size button changed to, so that the change scrolls to the bottom once it is laid out. */
+  const fontSizeFromButton = useRef<number | null>(null)
 
   // alert when font size changes
   useEffect(() => {
@@ -258,24 +257,22 @@ const Footer = () => {
       dispatch(alert(`Font size: ${fontSize}`))
       // Keep the buttons under the pointer as the thoughts above them grow or shrink (#1152). A change from anywhere
       // else, such as a command or Settings, leaves the scroll position alone and the cursor in view (#6273).
-      if (scrollToBottomOnFontSize.current) {
+      if (fontSizeFromButton.current === fontSize) {
         scrollTo('bottom')
-        scrollToBottomOnFontSize.current = false
       }
+      fontSizeFromButton.current = null
       _fontSize.current = fontSize
     }
   }, [dispatch, fontSize])
 
-  /** Changes the font size from a footer button, and scrolls to the bottom once the thoughts have been laid out at it. */
-  const changeFontSize = (action: Thunk) => {
-    const fontSizeBefore = store.getState().fontSize
-    scrollToBottomOnFontSize.current = true
-    dispatch(action)
-    // At the minimum or maximum font size the button changes nothing, so a later change from elsewhere must not scroll.
-    if (store.getState().fontSize === fontSizeBefore) {
-      scrollToBottomOnFontSize.current = false
-    }
-  }
+  /** Changes the font size from a font size button, and records the font size it changed to, so that the change scrolls to the bottom once the thoughts have been laid out at it. At the minimum or maximum font size the button changes nothing, and nothing is recorded. */
+  const changeFontSize = (action: Thunk) =>
+    dispatch((dispatch, getState) => {
+      const fontSizeBefore = getState().fontSize
+      dispatch(action)
+      const fontSizeAfter = getState().fontSize
+      fontSizeFromButton.current = fontSizeAfter !== fontSizeBefore ? fontSizeAfter : null
+    })
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
