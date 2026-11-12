@@ -83,7 +83,6 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
       keys.add(row[1])
       live.push(row)
     }
-    // getText also executes parameterized writes (returning null); exec does not accept bind parameters.
     if (gone.length > 0) {
       await client.runner.getText(`DELETE FROM ${TABLE} WHERE thought_id IN (SELECT value FROM json_each(?1))`, [
         JSON.stringify(gone),
