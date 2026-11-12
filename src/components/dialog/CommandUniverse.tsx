@@ -85,7 +85,9 @@ const CommandUniverseFooter = ({ canGoBack, canGoDeeper }: { canGoBack: boolean;
 /** The light for one focused row. Each focused row gets its own, so two exist while the light crossfades from one row to the next. */
 const RowGlow = ({ row, isActive }: { row: HTMLLIElement; isActive: boolean }) => {
   const commandId = row.getAttribute('data-cu-command-id') as CommandId | null
-  const disabled = useSelector(state => (commandId ? !isExecutable(state, commandById(commandId)) : false))
+  // commandById finds only registered commands, so a row for a command stubbed by testFlags.stubCommands resolves to nothing. A stub has no canExecute, so it is never disabled.
+  const command = commandId ? commandById(commandId) : undefined
+  const disabled = useSelector(state => (command ? !isExecutable(state, command) : false))
 
   return (
     <motion.div
