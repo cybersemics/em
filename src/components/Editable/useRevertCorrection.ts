@@ -16,6 +16,12 @@ const EDGE_MARGIN = 4
 type Phase =
   /** Waiting for iOS's first move after the touchend. */
   | 'awaiting'
+  /**
+   * The jump of a tap at the edge has been put back, and iOS's placement or move back is still to come. Unlike
+   * awaiting, a move to the tapped offset does not count as the placement, since it may be the put-back's own
+   * selectionchange, which arrives as a separate event on some devices and not on others.
+   */
+  | 'jumped'
   /** The caret has been placed at the tapped word, and iOS may yet move it back. */
   | 'placed'
   /** The move back has been put right, and iOS does not move the caret again. */
@@ -136,19 +142,22 @@ const useRevertCorrection = ({
       if (current === offset) {
         // The corrections' own selectionchange, or iOS placing the caret where getCaretOffset did. While awaiting, this
         // is iOS's placement, and the move back is what comes next, except after a tap on the caret, which has no move
-        // back to come and ends the watch here. Once placed or reverted, it is putBack's own selectionchange.
+        // back to come and ends the watch here. In any other phase, it changes nothing.
         if (phase === 'awaiting') watch = canRevert ? { ...watch, phase: 'placed' } : null
         return
       }
 
-      if (phase === 'awaiting' && ((edge === 'start' && current === 0) || (edge === 'end' && current === length))) {
+      // Neither the placement nor the move back has come yet.
+      const unplaced = phase === 'awaiting' || phase === 'jumped'
+
+      if (unplaced && ((edge === 'start' && current === 0) || (edge === 'end' && current === length))) {
         // the jump of a tap at the edge, after which iOS still places the caret or moves it back
-        putBack('awaiting')
+        putBack('jumped')
       } else if (canRevert && phase !== 'reverted' && current === before) {
         // iOS moving the caret back to where it was before the tap (#4220), after the placement or, for a tap at the
         // edge, straight after the jump. It comes only once, so the watch then only waits for a move that ends it.
         putBack('reverted')
-      } else if (phase === 'awaiting' && canRevert) {
+      } else if (unplaced && canRevert) {
         // iOS placing the caret at the other end of the tapped word from getCaretOffset's choice. iOS's placement is
         // where the tap lands, so it replaces getCaretOffset's offset, both as the offset putBack restores and in Redux.
         watch = { ...watch, offset: current, phase: 'placed' }

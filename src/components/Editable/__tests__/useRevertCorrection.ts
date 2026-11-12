@@ -86,6 +86,22 @@ it('keeps the caret where a tap landed while iOS moves the caret', async () => {
   moveCaretTo(offsetAfterHello)
   expect(selection.offsetFromNode(editable)).toBe(offsetAfterThe)
 
+  // a tap below the line first jumps to the end of the thought, and the put-back's own selectionchange, which a device
+  // may or may not deliver, is not taken for iOS's placement, so the placement at the other end of the word is still
+  // recorded and kept
+  moveCaretTo(offsetBeforeIn)
+  tapAt(offsetBeforeThe, 19)
+  expect(recordCaretOffset).toHaveBeenLastCalledWith(offsetBeforeThe)
+  moveCaretTo(value.length)
+  expect(selection.offsetFromNode(editable)).toBe(offsetBeforeThe)
+  act(() => {
+    document.dispatchEvent(new Event('selectionchange'))
+  })
+  moveCaretTo(offsetAfterThe)
+  expect(recordCaretOffset).toHaveBeenLastCalledWith(offsetAfterThe)
+  moveCaretTo(offsetBeforeIn)
+  expect(selection.offsetFromNode(editable)).toBe(offsetAfterThe)
+
   // iOS can pass through another offset on its way back
   tapAt(offsetBeforeIn)
   moveCaretTo(offsetBeforeIn)
