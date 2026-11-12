@@ -1,4 +1,4 @@
 /** How the command was activated. */
-type CommandType = 'gesture' | 'keyboard' | 'toolbar' | 'desktopCommandUniverse' | 'commandCenter' | 'systemMenu'
+type CommandType = 'gesture' | 'keyboard' | 'toolbar' | 'commandUniverse' | 'commandCenter' | 'systemMenu'
 
 export default CommandType
