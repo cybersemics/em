@@ -79,7 +79,7 @@ it('opens the virtual keyboard when Clear Thought activates edit mode', async ()
 })
 
 // https://github.com/cybersemics/em/issues/6258
-it.skip('places the caret when the cursor returns to a clicked thought before the next timer fires', async () => {
+it('places the caret when the cursor returns to a clicked thought before the next timer fires', async () => {
   store.dispatch([importText({ text: '- first\n- last' }), setCursor(['last']), keyboardOpen({ value: true })])
 
   const editable = document.createElement('div')
