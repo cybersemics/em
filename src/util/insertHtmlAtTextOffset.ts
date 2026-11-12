@@ -1,5 +1,6 @@
 import * as selection from '../device/selection'
 import enclosingColorElement from './enclosingColorElement'
+import removeEmptyFormatting from './removeEmptyFormatting'
 import splitAtRange from './splitAtRange'
 
 /**
@@ -34,14 +35,15 @@ const insertHtmlAtTextOffset = (
   if (colorElement) {
     splitAtRange(colorElement, range!)
     colorElement.after(template.content)
-    // inserting at the start of the color element leaves nothing before the insertion point
-    if ((colorElement.textContent ?? '') === '') colorElement.remove()
   } else if (range) {
     range.insertNode(template.content)
   } else {
     // a value with no text, e.g. a cleared thought, has nothing to resolve the offset against
     div.appendChild(template.content)
   }
+
+  // inserting at the start of a color element that is split leaves it empty
+  removeEmptyFormatting(div)
 
   return div.innerHTML
 }
