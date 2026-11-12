@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../../actions/toggleMobileCommandUniverse'
 import store from '../../../stores/app'
+import viewportStore from '../../../stores/viewportStore'
 import createTestApp, { cleanupTestApp } from '../../../test-helpers/createTestApp'
-import useViewportForSuite from '../../../test-helpers/useViewportForSuite'
 
 vi.mock('../commandUniverseMotion', () => ({ default: { duration: 0, ease: 'linear' } }))
 beforeEach(createTestApp)
-useViewportForSuite({ width: 320 })
+beforeEach(() => act(() => viewportStore.update({ innerWidth: 320 })))
 afterEach(async () => {
   cleanup()
   await cleanupTestApp()
