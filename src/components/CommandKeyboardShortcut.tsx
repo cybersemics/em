@@ -1,23 +1,20 @@
 import { useSelector } from 'react-redux'
-import { css } from '../../styled-system/css'
+import { css, cx } from '../../styled-system/css'
 import Key from '../@types/Key'
 import { isMac } from '../browser'
-import { ColorToken } from '../colors.config'
 import { arrowTextToArrowCharacter, isArrowKey } from '../commands'
-import themeColors from '../selectors/themeColors'
 import Kbd from './Kbd'
 
 /** Displays keyboard shortcuts. Replaces formatKeyboardShortcut in commands.ts. */
 const CommandKeyboardShortcut = ({
   keyboardOrString,
-  color,
+  color = 'fgOverlay50',
 }: {
   keyboardOrString: Key | Key[] | string
-  /** Optional theme color for the shortcut. */
-  color?: ColorToken
+  /** The shortcut's text color. Given as a prop rather than through className because the component sets color itself, and cx does not resolve a conflict between two classes that set the same property. */
+  color?: 'fgOverlay50' | 'white'
 }): React.JSX.Element => {
   const fontSize = useSelector(state => state.fontSize)
-  const colors = useSelector(themeColors)
 
   if (Array.isArray(keyboardOrString)) {
     return <CommandKeyboardShortcut keyboardOrString={keyboardOrString[0]} color={color} />
@@ -27,15 +24,17 @@ const CommandKeyboardShortcut = ({
   const regularKey = keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key
   return (
     <div
-      className={css({
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 7,
-        color: 'fgOverlay50',
-        fontWeight: 400,
-      })}
-      style={{ fontSize, color: color ? colors[color] : undefined }}
+      className={cx(
+        css({
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 7,
+          fontWeight: 400,
+        }),
+        color === 'white' ? css({ color: 'white' }) : css({ color: 'fgOverlay50' }),
+      )}
+      style={{ fontSize }}
     >
       {keyboard.meta && (isMac ? <Kbd>⌘</Kbd> : <Kbd isText>ctrl</Kbd>)}
       {keyboard.alt && (isMac ? <Kbd>⌥</Kbd> : <Kbd isText>alt</Kbd>)}
