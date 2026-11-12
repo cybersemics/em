@@ -11,8 +11,12 @@ import { childrenMapKey } from '../../util/createChildrenMap'
 import sleep from '../../util/sleep'
 import type { DataProvider } from '../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../thoughtspace'
-import { getAttributeChildrenByParent } from './attributeChildren'
-import createDerivedIndexes from './derivedIndexes'
+import {
+  clearAttributeChildren,
+  getAttributeChildrenByParent,
+  refreshAttributeChildrenFromChanges,
+} from './attributeChildren'
+import createLexemeIndex, { payloadKeys } from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
 import { enqueueMaterializedThoughtsToStore } from './sync'
 import type { MaterializationContext } from './sync/applyMaterializedThoughtsToStore'
@@ -291,6 +295,9 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
   }
 }
 
+/** Bump when an index is added or changes, so databases indexed by an older version are rebuilt once. */
+const INDEX_VERSION = 2
+
 /**
  * Creates the stable app-facing TreeCRDT data provider.
  *
@@ -339,12 +346,34 @@ const createTreecrdtDataProvider = () => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
+    // The derived indexes (attribute children and lexeme memberships) follow TreeCRDT's change events. TreeCRDT
+    // remembers how far they got, so a gap such as startup or a failed update is caught up without rebuilding.
     let publish: ((event: MaterializationEvent, keys: string[]) => void) | undefined
-    const {
-      lexemes,
-      indexed,
-      close: closeIndexes,
-    } = await createDerivedIndexes(client, (event, keys) => publish?.(event, keys))
+    const lexemes = await createLexemeIndex(client)
+    const indexes = await client.onMaterializedDurable(
+      'em-derived-indexes',
+      async event => {
+        try {
+          await refreshAttributeChildrenFromChanges(client, event.changes)
+          const keys = await lexemes.applyChanges(event.changes)
+          publish?.(event, keys)
+        } catch (err) {
+          // Publication still needs this event's thoughts; the redelivery reports the memberships it missed.
+          publish?.(event, payloadKeys(event.changes))
+          throw err
+        }
+      },
+      {
+        version: INDEX_VERSION,
+        reset: async () => {
+          await lexemes.clear()
+          await clearAttributeChildren(client)
+        },
+        onError: err => console.error('TreeCRDT derived indexing failed', err),
+      },
+    )
+    /** Resolves once every change materialized so far is indexed. A failed update is logged and retried, not thrown. */
+    const indexed = () => indexes.settled().catch(err => console.error('TreeCRDT derived indexing failed', err))
 
     let subscribed = true
     const clientDb: TreecrdtClientDataProvider = {
@@ -390,7 +419,7 @@ const createTreecrdtDataProvider = () => {
       if (!subscribed) return
       subscribed = false
       unsubscribeMaterialized()
-      await closeIndexes()
+      await indexes.close()
     }
   }
 
