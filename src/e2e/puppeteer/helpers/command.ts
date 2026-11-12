@@ -23,7 +23,7 @@ async function command(label: CommandLabel, options: { inputType: 'commandPalett
 async function command(idOrLabel: CommandId | CommandLabel, options?: { inputType: 'commandPalette' }): Promise<void> {
   if (options?.inputType === 'commandPalette') {
     await press('P', { meta: true })
-    await waitForSelector('[data-testid=desktop-command-universe]')
+    await waitForSelector('input[aria-label="Search for a command"]')
     await page.keyboard.type(idOrLabel)
     await press('Enter')
     return

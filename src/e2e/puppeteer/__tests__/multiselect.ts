@@ -447,7 +447,7 @@ describe('multiselect', () => {
 
     // the Command Universe restores the browser selection it saved when it opened, so the faux carets would be
     // rendered on the frame after it unmounts
-    await page.waitForSelector('[data-testid=desktop-command-universe]', { hidden: true })
+    await page.waitForSelector('input[aria-label="Search for a command"]', { hidden: true })
     await nextFrame()
     await nextFrame()
 

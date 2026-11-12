@@ -94,7 +94,7 @@ The key itself is resolved from `e.keyCode` first, falling back to `e.code` and 
 
 The handler also:
 
-- Skips entirely if `state.showDesktopCommandUniverse` is open.
+- Skips while the Command Universe is open (`state.showCommandUniverse`).
 - Skips when a modal is showing, *unless* the command has `allowExecuteFromModal: true` (e.g. navigation commands that should still work).
 - Calls `e.preventDefault()` before dispatching, *unless* `command.permitDefault` is set. (`command.preventDefault` forces a preventDefault even when `canExecute` returns false.)
 - Routes through `executeCommandWithMulticursor`, which short-circuits to `executeCommand` if no multicursor is active.
@@ -131,7 +131,7 @@ A gesture is also always a **single finger**. `MultiGesture` follows only the fi
 
 - **Download Debug Log.** While Debug Logging is on, the secret gesture →↓←↓↑ saves the [debug log](debug-log.md) instead of running a command. It is not a command, so it appears nowhere a command does — Command Universe, gesture menu, help, or tutorial.
 
-- **Mobile Command Universe.** If the sequence ends with the `openMobileCommandUniverse` gesture, that command runs.
+- **Command Universe.** If the sequence ends with the `openMobileCommandUniverse` gesture, that command runs.
 - **Chained commands.** If the sequence *starts* with a gesture for a command that has `isChainable` and continues with another command's gesture, and that command's `isChainable` accepts the second command, the two are chained and executed together. The canonical example: `selectAll` chains into any multicursor command, so `<selectAll-gesture><archive-gesture>` archives all selected thoughts in one motion. `newThought` chains only into `outdent`, so New Thought followed by any other command's gesture runs nothing. The gesture menu applies the same check, so it offers exactly the chains that run on release. `chainCommand(c1, c2)` synthesizes a `Command` whose gesture and label combine both. Both commands execute inside one command transaction whose metadata identifies the combined command, so they produce one undo patch.
 
 In training mode, an alert briefly confirms the command's `label`, unless the command has `hideAlert: true`. The label is shown just before the command executes, so an alert the command raises itself — such as an error explaining why it cannot be executed — replaces the label rather than being hidden by it.
@@ -160,10 +160,7 @@ The Toolbar renders a configurable subset of commands as buttons. The user's cus
 - **`overlay.gesture` / `overlay.keyboard`** — alternative shortcuts shown in the toolbar long-press overlay.
 - **`longPress(dispatch)`** — runs when a toolbar button is long-pressed.
 
-The **Command Universe** is the searchable command palette. Two flavors:
-
-- **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.
-- **`MobileCommandUniverse`** is the responsive dialog opened by the Open Command Universe gesture. Below `lg`, it presents the mobile command grid. At `lg` and above, it presents a keyboard-driven list with search and sorting in the header and navigation hints in its footer. Enter or a row click executes a command; Tab opens its details, and Shift+Tab navigates back. Unavailable commands remain inspectable.
+The **Command Universe** is the searchable command palette: [`CommandUniverse`](../src/components/dialog/CommandUniverse.tsx), a responsive dialog opened by Cmd/Ctrl+P or the Open Command Universe gesture, both bound to the `openMobileCommandUniverse` command. Cmd/Ctrl+P or Escape closes it. Below `lg`, it presents the mobile command grid. At `lg` and above, it presents a keyboard-driven list with search and sorting in the header and navigation hints in its footer. Enter or a row click executes a command; Tab opens its details, and Shift+Tab navigates back. Unavailable commands remain inspectable.
 
 In the grid, cells are native buttons, so Enter and Space open details. Every detail page has a Pin Command row that pins the command to the corner widget without executing it; see [learning.md](learning.md).
 
@@ -175,7 +172,7 @@ The pinned-command gesture tooltip opens the pinned command's detail page direct
 
 The Command Universe has Redux-owned session navigation with separate routing and presentation layers:
 
-- `state.commandUniverseNavigation` owns the history entries, each recording how it was arrived at, and the active index. [`commandUniverseNavigate`](../src/actions/commandUniverseNavigate.ts), [`commandUniverseBack`](../src/actions/commandUniverseBack.ts), and [`commandUniverseForward`](../src/actions/commandUniverseForward.ts) mutate it through the app's filename-routed Redux reducer. Opening the mobile Command Universe starts a fresh session: [`toggleMobileCommandUniverse`](../src/actions/toggleMobileCommandUniverse.ts) replaces the history with the root page as it opens. These actions are non-undoable and can be dispatched by the Command system.
+- `state.commandUniverseNavigation` owns the history entries, each recording how it was arrived at, and the active index. [`commandUniverseNavigate`](../src/actions/commandUniverseNavigate.ts), [`commandUniverseBack`](../src/actions/commandUniverseBack.ts), and [`commandUniverseForward`](../src/actions/commandUniverseForward.ts) mutate it through the app's filename-routed Redux reducer. Opening the Command Universe starts a fresh session: [`toggleCommandUniverse`](../src/actions/toggleCommandUniverse.ts) replaces the history with the root page as it opens. These actions are non-undoable and can be dispatched by the Command system.
 - [`commandUniversePages`](../src/components/CommandUniverse/commandUniversePages.ts) maps page ids to components. [`CommandUniversePage`](../src/@types/CommandUniversePage.ts) derives both the ids and the corresponding props from that registry. A history entry wraps a page with its own `entryId`, so two visits to the same page remain distinct. The navigation state stores opaque page props and has no command-specific fields.
 - [`CommandUniversePageRouter`](../src/components/CommandUniverse/CommandUniversePageRouter.tsx) selects the active entry from Redux, resolves its registered component, and forwards its props. It does not own history, read command data, or size the dialog. The modal composition sizes the outer non-scrolling viewport. Each page uses [`DialogContent`](../src/components/dialog/DialogContent.tsx) for its independent scroller, padding, and custom scrollbar.
 - [`CommandUniversePageTransitions`](../src/components/CommandUniverse/CommandUniversePageTransitions.tsx) gives each retained surface a declarative target and lets Motion move it there, with `useReducedMotion` skipping the zoom when requested. Because the target is declarative, navigating while a zoom is running simply re-targets: Motion continues from wherever the surface got to rather than restarting. The running transition is local presentation state, derived from the change of active entry: Back reverses the arrival of the entry being left, and Forward and new visits replay the destination's own arrival. A visit requesting `transition: 'none'`, or using zero-duration motion, settles before paint. Completion otherwise comes from Motion rather than a parallel timer, and clears the transition only if it is still the one that animation started, so a late completion from an abandoned animation is ignored. Inactive pages are inert, while the active destination and the header remain usable throughout a zoom. At zoom start, the view restores the destination's last focused element or focuses its designated heading without changing scroll position. Animation completion does not move focus.
@@ -199,7 +196,7 @@ Description components can dispatch the Command Universe navigation actions when
 
 The router and route types update from the registry. No separate id union, props union, or routing switch needs editing. `commandUniverseNavigateActionCreator` calls are checked against the registered component's props. Add tests for the new page's behavior.
 
-Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`.
+The gesture menu and the Command Universe's search and Recently used results filter `globalCommands` through [`useFilteredCommands`](../src/hooks/useFilteredCommands.ts), which respects `hideFromGestureMenu` on touch devices and `hideFromHelp` / `hideFromDesktopCommandUniverse` on desktop.
 
 The desktop Command Universe includes commands without keyboard shortcuts in search and every sort order. Its Type and Alphabetical views retain the same device-specific visibility flags as search and Recently used. `useCommandList` defaults to `platformCommandsOnly: true`, preserving the mobile grid and CommandTable's restriction to commands with a current-platform shortcut; the desktop presentation opts out of that restriction.
 
@@ -209,7 +206,7 @@ Help and Customize Toolbar present commands grouped by `COMMAND_DIFFICULTIES` (i
 
 `useCommandList` resolves command IDs into `Command[]` and returns `sections`: display-only `CommandSection` objects with `{ id, title, difficulty?, commands }`. Search results and the alphabetical list have their own IDs and no difficulty. `CommandTable` and the Command Universe's mobile grid render those sections using their stable IDs as React keys. `CommandTable` detects difficulty boundaries by ID and renders each difficulty title above its first visible section; `CommandTableSection` renders the titled command table within each section. Configuration groups remain categories, while display sections can also represent search results or the alphabetical list.
 
-Both take the browser selection away from the thought as they open — the desktop palette by focusing its search input, the mobile drawer by clearing the selection outright — so both snapshot it into `state.selectionOffsets` on the way in, for the commands whose input is the selected text. See [Caret / Browser Selection](cursor-and-caret.md#caret--browser-selection).
+Opening the Command Universe takes the browser selection away from the thought — at `lg` and above its search input takes the focus, and below `lg` the selection is cleared outright — so it snapshots the selection into `state.selectionOffsets` on the way in, for the commands whose input is the selected text. At `lg` and above it also saves the DOM selection with [`useCommandUniverseSelection`](../src/hooks/useCommandUniverseSelection.ts) and restores it before the chosen command runs. That handoff is consumed, so closing the dialog cannot restore an old caret after a command changes the focus or clears the selection. See [Caret / Browser Selection](cursor-and-caret.md#caret--browser-selection).
 
 ### System menu
 

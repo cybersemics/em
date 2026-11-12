@@ -98,13 +98,13 @@ interface Command {
   /** Do not show the alert after the command is executed in training mode. */
   hideAlert?: boolean
 
-  /** Hide the command in the DesktopCommandUniverse. */
+  /** Hide the command from the Command Universe's search and Recently used results on desktop. */
   hideFromDesktopCommandUniverse?: boolean
 
   /** Hide the command in the mobile GestureMenu. */
   hideFromGestureMenu?: boolean
 
-  /** Hide the command in the Help modal and DesktopCommandUniverse. */
+  /** Hide the command in the Help modal and the Command Universe on desktop. */
   hideFromHelp?: boolean
 
   /** A function that returns true if the command should be highlighted in the Toolbar. */

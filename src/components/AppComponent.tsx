@@ -23,7 +23,6 @@ import Alert from './Alert'
 import BackgroundGlow from './BackgroundGlow'
 import CommandCenter from './CommandCenter/CommandCenter'
 import Content from './Content'
-import DesktopCommandUniverse from './DesktopCommandUniverse'
 import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
@@ -41,7 +40,7 @@ import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 import UndoSlider from './UndoSlider'
-import MobileCommandUniverse from './dialog/MobileCommandUniverse'
+import CommandUniverse from './dialog/CommandUniverse'
 import * as modals from './modals'
 
 /** A hook that sets an attribute on the document.body element. */
@@ -97,10 +96,10 @@ const shouldCancelGesture = (
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
-    // Over the Mobile Command Universe, only a trace over the open pinned command tooltip is a gesture: a dry run of
+    // Over the Command Universe, only a trace over the open pinned command tooltip is a gesture: a dry run of
     // the pinned command. A touch anywhere else there belongs to the Command Universe. Calls without coordinates come
     // from the responder, which only sees touches on the pinned command while the Command Universe covers the rest.
-    (!!state.showMobileCommandUniverse &&
+    (!!state.showCommandUniverse &&
       !(
         state.showPinnedCommandTooltip &&
         (x === undefined || y === undefined || !!document.elementFromPoint(x, y)?.closest('[data-above-dialog]'))
@@ -211,10 +210,9 @@ const AppComponent: FC = () => {
       <BackgroundGlow />
       <Alert />
       <Tips />
-      {!isTouch && <DesktopCommandUniverse />}
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
-      <MobileCommandUniverse />
+      <CommandUniverse />
 
       {isDocumentEditable() && !tutorial && !showModal && (
         <>

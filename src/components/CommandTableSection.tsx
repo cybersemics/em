@@ -11,7 +11,7 @@ interface CommandTableSectionProps {
   title: string
   search?: string
   commands: Command[]
-  /** See: CommandItem['isMobileGestures']. */
+  /** If true, renders each command's gesture diagram instead of its keyboard shortcut. */
   isMobileGestures: boolean
 }
 /**

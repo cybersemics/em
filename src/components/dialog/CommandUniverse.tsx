@@ -16,8 +16,10 @@ import CommandId from '../../@types/CommandId'
 import State from '../../@types/State'
 import { commandUniverseBackActionCreator as commandUniverseBack } from '../../actions/commandUniverseBack'
 import { commandUniverseForwardActionCreator as commandUniverseForward } from '../../actions/commandUniverseForward'
-import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
+import { toggleCommandUniverseActionCreator } from '../../actions/toggleCommandUniverse'
+import { hashCommand, hashKeyDown } from '../../commands'
 import { commandById } from '../../commands'
+import openMobileCommandUniverse from '../../commands/openMobileCommandUniverse'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import useCommandUniverseSelection from '../../hooks/useCommandUniverseSelection'
 import commandUniverseSearchSortStore from '../../stores/commandUniverseSearchSortStore'
@@ -37,7 +39,7 @@ import DialogGlass from './DialogGlass'
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
-  (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
+  (command.allowExecuteFromModal || !state.showModal || !state.showCommandUniverse)
 
 /** Displays the keyboard controls for moving through the list and between pages. Back and Details only appear when there is a page in that direction to go to. */
 const CommandUniverseFooter = ({ canGoBack, canGoDeeper }: { canGoBack: boolean; canGoDeeper: boolean }) => (
@@ -194,7 +196,7 @@ const CommandUniverseSession = ({
   const { search, sortOrder } = commandUniverseSearchSortStore.useState()
   const isCommandsPage = nav.entries[nav.index].page.pageId === 'commands'
   const onClose = useCallback(() => {
-    dispatch(toggleMobileCommandUniverseActionCreator({ value: false }))
+    dispatch(toggleCommandUniverseActionCreator({ value: false }))
   }, [dispatch])
   const onBack = useCallback(() => dispatch(commandUniverseBack()), [dispatch])
   const onForward = useCallback(() => dispatch(commandUniverseForward()), [dispatch])
@@ -204,7 +206,7 @@ const CommandUniverseSession = ({
     /** Routes dialog keys without changing ordinary search text editing. */
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.isComposing) return
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' || hashKeyDown(event) === hashCommand(openMobileCommandUniverse.keyboard)) {
         event.preventDefault()
         event.stopImmediatePropagation()
         onClose()
@@ -319,8 +321,8 @@ const CommandUniverseSession = ({
 }
 
 /** Mounts one browsing session for each opening and owns its shared fade/scale lifecycle. */
-const MobileCommandUniverse = () => {
-  const isOpen = useSelector(state => !!state.showMobileCommandUniverse)
+const CommandUniverse = () => {
+  const isOpen = useSelector(state => !!state.showCommandUniverse)
   const rootEntryId = useSelector(state => state.commandUniverseNavigation.entries[0].entryId)
   const isDesktop = useBreakpoint('lg')
   return (
@@ -332,4 +334,4 @@ const MobileCommandUniverse = () => {
   )
 }
 
-export default MobileCommandUniverse
+export default CommandUniverse

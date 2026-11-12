@@ -4,7 +4,7 @@ import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import Command from '../../../@types/Command'
 import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from '../../../actions/commandUniverseNavigate'
-import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../../actions/toggleMobileCommandUniverse'
+import { toggleCommandUniverseActionCreator as toggleCommandUniverse } from '../../../actions/toggleCommandUniverse'
 import store from '../../../stores/app'
 import initStore from '../../../test-helpers/initStore'
 import CommandUniversePageTransitions from '../CommandUniversePageTransitions'
@@ -19,7 +19,7 @@ it.each(['none', 'zoom'] as const)(
   async transition => {
     await initStore()
     const command: Command = { id: 'newThought', label: 'New Thought', exec: () => {}, multicursor: false }
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
 
     /** Renders the history surfaces supplied by the router. */
     const pages = () =>

@@ -174,9 +174,69 @@
       "checkable": true
     }
   ],
+  "Cursor": [
+    {
+      "id": "cursorBack",
+      "label": "Back",
+      "checkable": false
+    },
+    {
+      "id": "cursorForward",
+      "label": "Forward",
+      "checkable": false
+    },
+    {
+      "id": "home",
+      "label": "Home",
+      "checkable": false
+    },
+    {
+      "id": "jumpBack",
+      "label": "Jump Back",
+      "accelerator": "Cmd+J",
+      "checkable": false
+    },
+    {
+      "id": "jumpForward",
+      "label": "Jump Forward",
+      "accelerator": "Cmd+Shift+J",
+      "checkable": false
+    },
+    {
+      "id": "navigateBack",
+      "label": "Navigate Back",
+      "accelerator": "Cmd+[",
+      "checkable": false
+    },
+    {
+      "id": "navigateForward",
+      "label": "Navigate Forward",
+      "accelerator": "Cmd+]",
+      "checkable": false
+    },
+    {
+      "id": "cursorNext",
+      "label": "Next Thought",
+      "accelerator": "Cmd+ArrowDown",
+      "checkable": false
+    },
+    {
+      "id": "cursorPrev",
+      "label": "Previous Thought",
+      "accelerator": "Cmd+ArrowUp",
+      "checkable": false
+    }
+  ],
+  "File": [
+    {
+      "id": "exportContext",
+      "label": "Export",
+      "checkable": false
+    }
+  ],
   "View": [
     {
-      "id": "openDesktopCommandUniverse",
+      "id": "openMobileCommandUniverse",
       "label": "Command Universe",
       "accelerator": "Cmd+P",
       "checkable": false
@@ -249,66 +309,6 @@
       "id": "toggleSidebar",
       "label": "Toggle Recently Edited",
       "accelerator": "Alt+R",
-      "checkable": false
-    }
-  ],
-  "Cursor": [
-    {
-      "id": "cursorBack",
-      "label": "Back",
-      "checkable": false
-    },
-    {
-      "id": "cursorForward",
-      "label": "Forward",
-      "checkable": false
-    },
-    {
-      "id": "home",
-      "label": "Home",
-      "checkable": false
-    },
-    {
-      "id": "jumpBack",
-      "label": "Jump Back",
-      "accelerator": "Cmd+J",
-      "checkable": false
-    },
-    {
-      "id": "jumpForward",
-      "label": "Jump Forward",
-      "accelerator": "Cmd+Shift+J",
-      "checkable": false
-    },
-    {
-      "id": "navigateBack",
-      "label": "Navigate Back",
-      "accelerator": "Cmd+[",
-      "checkable": false
-    },
-    {
-      "id": "navigateForward",
-      "label": "Navigate Forward",
-      "accelerator": "Cmd+]",
-      "checkable": false
-    },
-    {
-      "id": "cursorNext",
-      "label": "Next Thought",
-      "accelerator": "Cmd+ArrowDown",
-      "checkable": false
-    },
-    {
-      "id": "cursorPrev",
-      "label": "Previous Thought",
-      "accelerator": "Cmd+ArrowUp",
-      "checkable": false
-    }
-  ],
-  "File": [
-    {
-      "id": "exportContext",
-      "label": "Export",
       "checkable": false
     }
   ],

@@ -18,7 +18,7 @@ import GestureDiagram from '../GestureDiagram'
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
-  (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
+  (command.allowExecuteFromModal || !state.showModal || !state.showCommandUniverse)
 
 /** Renders a single command row inside the Gesture Menu. */
 const GestureMenuItem: FC<{

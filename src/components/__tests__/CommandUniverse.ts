@@ -1,7 +1,7 @@
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
-import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
+import { toggleCommandUniverseActionCreator as toggleCommandUniverse } from '../../actions/toggleCommandUniverse'
 import indentCommand from '../../commands/indent'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -33,7 +33,7 @@ afterEach(async () => {
 
 it('opens command details even when the command cannot execute in the current context', async () => {
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   expect(indentCommand.canExecute(store.getState())).toBe(false)
@@ -46,7 +46,7 @@ it('opens command details even when the command cannot execute in the current co
 
 it.each(['{Enter}', ' '])('opens a detail page with %s and restores focus after Back', async key => {
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -63,7 +63,7 @@ it.each(['{Enter}', ' '])('opens a detail page with %s and restores focus after 
 
 it('updates search and sorting without notifying Redux subscribers', async () => {
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -89,7 +89,7 @@ it('updates search and sorting without notifying Redux subscribers', async () =>
 
 it('retains browsing controls through Back and Forward and clears search on a fresh opening', async () => {
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -113,7 +113,7 @@ it('retains browsing controls through Back and Forward and clears search on a fr
   await user.click(screen.getByRole('button', { name: 'Close' }))
   await act(vi.runAllTimersAsync)
   await act(async () => {
-    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    store.dispatch(toggleCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
   })
   expect(screen.getByPlaceholderText('Search for a command')).toHaveValue('')

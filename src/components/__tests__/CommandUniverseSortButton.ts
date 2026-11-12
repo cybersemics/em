@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react'
 import { act } from 'react'
-import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
+import { toggleCommandUniverseActionCreator as toggleCommandUniverse } from '../../actions/toggleCommandUniverse'
 import click from '../../test-helpers/click'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
@@ -10,7 +10,7 @@ afterEach(cleanupTestApp)
 
 // https://github.com/cybersemics/em/issues/4332
 it('closes the Command Universe sort dropdown when the user taps the search field', async () => {
-  await dispatch(toggleMobileCommandUniverse({ value: true }))
+  await dispatch(toggleCommandUniverse({ value: true }))
   await act(vi.runOnlyPendingTimersAsync)
 
   await click('[aria-label="Group commands"]')

@@ -15,7 +15,7 @@ import SettingsIcon from './icons/SettingsIcon'
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
-  (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
+  (command.allowExecuteFromModal || !state.showModal || !state.showCommandUniverse)
 
 type OriginRect = Pick<DOMRectReadOnly, 'x' | 'y' | 'width' | 'height'>
 /**
@@ -212,8 +212,8 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
     ref,
   )
   const isFocused = state.selectionManager.focusedKey === item.key
-  // Hover updates the listbox's focused key — matches the legacy DesktopCommandUniverse
-  // behavior where mousing over a row also moves the keyboard-selected highlight.
+  // Hover updates the listbox's focused key, so mousing over a row also moves the
+  // keyboard-selected highlight.
   // Disabled rows are still focusable on hover; action suppression happens at the parent.
   //
   // Bound to `mousemove` rather than `mouseenter` so the focus only follows *real* cursor

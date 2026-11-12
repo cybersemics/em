@@ -48,7 +48,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **command** — A user-triggered operation (keyboard shortcut, gesture, toolbar button, Command Universe entry, or system menu item). Single-file definition under [`/src/commands`](../src/commands) implementing the [`Command`](../src/@types/Command.ts) interface; auto-registered via the barrel import in [`commands.ts`](../src/commands.ts). The legacy name *shortcut* still appears in some places. See [commands.md](commands.md).
 
-**Command Universe** — Searchable list of all commands, opened with `Command/Ctrl + P` on desktop.
+**Command Universe** — Searchable dialog of all commands, opened with `Command/Ctrl + P` on desktop or the Open Command Universe gesture. Implemented by [`CommandUniverse`](../src/components/dialog/CommandUniverse.tsx); see [commands.md](commands.md).
 
 **Context** — `string[]` — a sequence of thought *values* from root to leaf, e.g. `['Animals', 'Cats']`. Ambiguous when duplicate values exist at the same level. Prefer `ThoughtId`/`Path` when an id is in scope. See [data-model.md → Context](data-model.md#context).
 

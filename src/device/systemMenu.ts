@@ -38,8 +38,7 @@ const reported = new Map<CommandId, ItemState>()
  * declined it, and the menu item must not then run what the shortcut would not.
  */
 const canExecuteFromMenu = (state: State, command: Command): boolean =>
-  !state.showDesktopCommandUniverse &&
-  !state.showMobileCommandUniverse &&
+  !state.showCommandUniverse &&
   (!state.showModal || !!command.allowExecuteFromModal) &&
   (!command.canExecute || command.canExecute(state))
 
