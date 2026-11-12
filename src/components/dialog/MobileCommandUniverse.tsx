@@ -23,7 +23,6 @@ import CommandUniverseSortButton from '../CommandUniverseSortButton'
 import Kbd from '../Kbd'
 import ScaleFadeTransition from '../ScaleFadeTransition'
 import Dialog from './Dialog'
-import DialogFooter from './DialogFooter'
 import DialogGlass from './DialogGlass'
 
 /** Displays the keyboard controls for moving through the list and between pages. */
@@ -153,11 +152,7 @@ const CommandUniverseSession = ({
           <CommandUniversePageRouter listRef={listRef} onBeforeExecute={restoreSelection} />
         </div>
       </DialogGlass>
-      {isDesktop && (
-        <DialogFooter>
-          <CommandUniverseFooter />
-        </DialogFooter>
-      )}
+      {isDesktop && <CommandUniverseFooter />}
     </Dialog>
   )
 }
