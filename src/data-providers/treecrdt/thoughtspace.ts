@@ -11,8 +11,11 @@ import hashThought from '../../util/hashThought'
 import sleep from '../../util/sleep'
 import type { DataProvider } from '../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../thoughtspace'
-import { getAttributeChildrenByParent } from './attributeChildren'
-import createDerivedIndexes from './derivedIndexes'
+import {
+  clearAttributeChildren,
+  getAttributeChildrenByParent,
+  refreshAttributeChildrenFromChanges,
+} from './attributeChildren'
 import {
   deleteLexeme as deleteLexemeRow,
   ensureLexemesSchema,
@@ -336,6 +339,9 @@ const createClientDataProvider = (
   },
 })
 
+/** Bump when an index is added or changes, so databases indexed by an older version are rebuilt once. */
+const INDEX_VERSION = 1
+
 /**
  * Creates the stable app-facing TreeCRDT data provider.
  *
@@ -384,7 +390,19 @@ const createTreecrdtDataProvider = () => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
-    const { indexed, close: closeIndexes } = await createDerivedIndexes(client)
+    // The derived indexes (attribute children) follow TreeCRDT's change events. TreeCRDT remembers how far they
+    // got, so a gap such as startup or a failed update is caught up without rebuilding.
+    const indexes = await client.onMaterializedDurable(
+      'em-derived-indexes',
+      event => refreshAttributeChildrenFromChanges(client, event.changes),
+      {
+        version: INDEX_VERSION,
+        reset: () => clearAttributeChildren(client),
+        onError: err => console.error('TreeCRDT derived indexing failed', err),
+      },
+    )
+    /** Resolves once every change materialized so far is indexed. A failed update is logged and retried, not thrown. */
+    const indexed = () => indexes.settled().catch(err => console.error('TreeCRDT derived indexing failed', err))
     const clientDb = createClientDataProvider({ client, replicaId }, indexed)
     const materializationContext = materialization ? { bridge: materialization, db: clientDb } : null
 
@@ -407,7 +425,7 @@ const createTreecrdtDataProvider = () => {
       if (!subscribed) return
       subscribed = false
       unsubscribeMaterialized()
-      await closeIndexes()
+      await indexes.close()
     }
   }
 
