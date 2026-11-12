@@ -88,19 +88,19 @@ export async function refreshAttributeChildrenFromChanges(
   }
 
   if (gone.length > 0) {
-    await client.runner.getText(`DELETE FROM ${TABLE} WHERE child_id IN (SELECT value FROM json_each(?1))`, [
+    await client.runner.run(`DELETE FROM ${TABLE} WHERE child_id IN (SELECT value FROM json_each(?1))`, [
       JSON.stringify(gone),
     ])
   }
   if (rows.length > 0) {
-    await client.runner.getText(
+    await client.runner.run(
       `INSERT INTO ${TABLE} (child_id, parent_id, value) SELECT value->>0, value->>1, value->>2 FROM json_each(?1)
        WHERE true ON CONFLICT(child_id) DO UPDATE SET parent_id = excluded.parent_id, value = excluded.value`,
       [JSON.stringify(rows)],
     )
   }
   if (moved.length > 0) {
-    await client.runner.getText(
+    await client.runner.run(
       `UPDATE ${TABLE} SET parent_id = moved.value->>1 FROM json_each(?1) AS moved WHERE child_id = moved.value->>0`,
       [JSON.stringify(moved)],
     )
