@@ -288,11 +288,17 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            // Crossfade title color on focus changes — same 200ms feel as the rest of the
-            // focused-row chrome (action pills, glow), so everything moves together. The weight
-            // changes instantly: animating font-weight reflows and re-rasterises the text on
-            // every frame.
-            transition: 'color {durations.fast} ease-out',
+            // Crossfade title color and weight on focus changes — same 200ms feel as the rest of
+            // the focused-row chrome (action pills, glow), so everything moves together. Radio
+            // Canada Big is loaded as a variable font, so font-weight interpolates through the
+            // wght axis instead of snapping between static faces. Each frame re-lays out and
+            // repaints the two labels whose weight is changing. The label grows by about 2% at
+            // 600, but the span is a fixed-width flex column, so nothing beside it moves.
+            // Under reduced motion the weight snaps and only the color fades.
+            transition: 'color {durations.fast} ease-out, font-weight {durations.fast} ease-out',
+            _motionReduce: {
+              transition: 'color {durations.fast} ease-out',
+            },
             color: isFocused ? 'white' : 'commandUniverseTitleMuted',
             fontSize: '0.85rem',
             fontWeight: isFocused ? 600 : 400,
