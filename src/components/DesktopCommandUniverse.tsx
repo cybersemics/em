@@ -1,19 +1,18 @@
-import React, { FC, ReactElement, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { FC, ReactElement, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
-import CommandId from '../@types/CommandId'
 import Key from '../@types/Key'
 import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../actions/desktopCommandUniverse'
 import { hashCommand, hashKeyDown } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
 import openDesktopCommandUniverseCommand from '../commands/openDesktopCommandUniverse'
-import { MAX_RECENT_COMMANDS } from '../constants'
 import useCommandUniverseSelection from '../hooks/useCommandUniverseSelection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import storageModel from '../stores/storageModel'
+import addRecentCommand from '../util/addRecentCommand'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 import CommandItem from './CommandItem'
 import FadeTransition from './FadeTransition'
@@ -103,11 +102,9 @@ const DesktopCommandUniverseSearch: FC<{
 /** Render a desktop command universe with keyboard. */
 const DesktopCommandUniverse: FC<{
   commands: Command[]
-  recentCommands: CommandId[]
-  setRecentCommands: (commandIds: CommandId[]) => void
   search: string
   setSearch: (search: string) => void
-}> = ({ commands, recentCommands, setRecentCommands, search, setSearch }) => {
+}> = ({ commands, search, setSearch }) => {
   const store = useStore()
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
@@ -130,14 +127,12 @@ const DesktopCommandUniverse: FC<{
         (store.getState().showModal && !command.allowExecuteFromModal)
       )
         return
-      const commandsNew = [command.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
       restoreSelection()
       dispatch(desktopCommandUniverse())
       executeCommandWithMulticursor(command, { event: e, type: 'commandUniverse', store })
-      storageModel.set('recentCommands', commandsNew)
-      setRecentCommands(commandsNew)
+      addRecentCommand(command.id)
     },
-    [dispatch, recentCommands, restoreSelection, setRecentCommands, store],
+    [dispatch, restoreSelection, store],
   )
 
   /** Execute the selected command. */
@@ -298,7 +293,12 @@ const DesktopCommandUniverseWithTransition: FC = () => {
   const showDesktopCommandUniverse = useSelector(state => state.showDesktopCommandUniverse)
 
   // Commands need to be calculated even if the desktop command universe is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
-  const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
+  // Re-read on every open and close, since the command page also writes recent commands while this component stays mounted.
+  const recentCommands = useMemo(
+    () => storageModel.get('recentCommands'),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showDesktopCommandUniverse],
+  )
   const [search, setSearch] = useState('')
   const commands = useFilteredCommands(search, {
     recentCommands,
@@ -340,13 +340,7 @@ const DesktopCommandUniverseWithTransition: FC = () => {
               })}
               onClick={onClose}
             >
-              <DesktopCommandUniverse
-                search={search}
-                setSearch={setSearch}
-                commands={commands}
-                recentCommands={recentCommands}
-                setRecentCommands={setRecentCommands}
-              />
+              <DesktopCommandUniverse search={search} setSearch={setSearch} commands={commands} />
             </div>
           </PopupBase>
         </FadeTransition>
