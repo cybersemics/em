@@ -79,6 +79,29 @@ describe('swapNote', () => {
     - bbb`)
   })
 
+  it('does nothing on the child of =note', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - aaa
+            - =note
+              - bbb
+        `,
+      }),
+      toggleHiddenThoughts(),
+      setCursor(['aaa', '=note', 'bbb']),
+    ])
+
+    expect(swapNoteCommand.canExecute(store.getState())).toBe(false)
+    executeCommand(swapNoteCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - aaa
+    - =note
+      - bbb`)
+  })
+
   describe('multicursor', () => {
     it('converts multiple thoughts to notes', async () => {
       store.dispatch([
