@@ -63,14 +63,6 @@ it('keeps the caret where a tap landed while iOS moves the caret', async () => {
   moveCaretTo(offsetBeforeThe)
   expect(selection.offsetFromNode(editable)).toBe(offsetBeforeIn)
 
-  // iOS 27 can also extend the selection from the caret back to where it was
-  act(() => {
-    selection.setRange(editable, { start: offsetBeforeIn, end: offsetBeforeThe })
-    document.dispatchEvent(new Event('selectionchange'))
-  })
-  expect(selection.isCollapsed()).toBe(true)
-  expect(selection.offsetFromNode(editable)).toBe(offsetBeforeIn)
-
   // after the move back, a move that iOS does not make, such as the space bar scrub, ends the watch
   moveCaretTo(offsetBeforeIn - 1)
   moveCaretTo(0)
@@ -109,15 +101,15 @@ it('keeps the caret where a tap landed while iOS moves the caret', async () => {
   moveCaretTo(0)
   expect(selection.offsetFromNode(editable)).toBe(0)
 
-  // the second touch of a double tap ends the watch, so that its word selection stays
+  // the next touch, such as the second of a double tap, ends the watch, so a move back to the old offset after it is
+  // left alone
   moveCaretTo(offsetBeforeThe)
   tapAt(offsetBeforeIn)
   act(() => {
     dispatchTouchEvent('touchstart', [{ identifier: 0, clientX: offsetBeforeIn * 10 + 2, clientY: 10 }], {
       target: editable,
     })
-    selection.setRange(editable, { start: offsetBeforeIn, end: offsetBeforeThe })
-    document.dispatchEvent(new Event('selectionchange'))
   })
-  expect(selection.isCollapsed()).toBe(false)
+  moveCaretTo(offsetBeforeThe)
+  expect(selection.offsetFromNode(editable)).toBe(offsetBeforeThe)
 })

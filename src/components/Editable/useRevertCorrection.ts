@@ -36,8 +36,7 @@ const edgeOf = (editable: HTMLElement, clientY: number): 'start' | 'end' | null 
  * Keeps the caret where a tap landed while iOS finishes handling the tap. A slow tap a few characters from the caret,
  * held about 80ms or longer, gets no mouse events, so onMouseDown never places the caret, and within about 150ms of the
  * touchend iOS moves it back to where it was before the tap, as #4220 describes. A tap above the first line of text or
- * below the last first moves it to the start or end of the thought, as #6178 describes, and iOS 27 can extend the
- * selection from the caret back to where it was.
+ * below the last first moves it to the start or end of the thought, as #6178 describes.
  *
  * The offset is recorded at the touchend, and only for a tap. The touchend gives only where the finger lifted, so the
  * touchstart is noted too, and its distance and time from the touchend rule out a drag, a long press and a touchend
@@ -46,7 +45,7 @@ const edgeOf = (editable: HTMLElement, clientY: number): 'start' | 'end' | null 
  * The watch follows iOS's moves until the next input, with no timer. The first move is either the jump to the start or
  * end, which is put back only if the tap was at that edge, or the placement at the tapped word. That can be the other
  * end of the word from getCaretOffset's choice, so it is recorded instead. The move back to where the caret was before
- * the tap is put back, as is a range back to there, and moves in between are left alone, since iOS can pass through
+ * the tap is put back, and moves in between are left alone, since iOS can pass through
  * another offset on its way back. After the move back, iOS does not move the caret again, so any other move ends the
  * watch. It can come from elsewhere, such as the space bar scrub, which delivers no event to the page.
  */
@@ -115,10 +114,14 @@ const useRevertCorrection = ({
 
     /** Puts the caret back after the moves iOS makes for a tap, and leaves any other move alone. */
     const onSelectionChange = () => {
+      // Only a tap on this editable is watched, and only while it keeps the focus. A selection that has left the
+      // editable is not one this watch can put back.
       if (!watch || document.activeElement !== editable) return
       const range = selection.offsetRange(editable)
-      if (!range) return
+      // iOS's moves after a tap are all moves of a collapsed caret, so a range is left to the browser.
+      if (!range || range.start !== range.end) return
       const { offset, before, edge, phase } = watch
+      // The offset of the end of the thought, which is where the jump of a tap below the last line lands.
       const length = editable.textContent?.length ?? 0
       // A tap on the caret leaves nothing for iOS to move back.
       const canRevert = offset !== before
@@ -129,15 +132,11 @@ const useRevertCorrection = ({
         selection.set(editable, { offset })
       }
 
-      if (range.start !== range.end) {
-        // iOS 27 can extend the selection from the caret back to where it was
-        if (canRevert && (range.start === before || range.end === before)) putBack(phase)
-        return
-      }
-
       const current = range.start
       if (current === offset) {
-        // the corrections' own selectionchange, or iOS placing the caret where getCaretOffset did
+        // The corrections' own selectionchange, or iOS placing the caret where getCaretOffset did. While awaiting, this
+        // is iOS's placement, and the move back is what comes next, except after a tap on the caret, which has no move
+        // back to come and ends the watch here. Once placed or reverted, it is putBack's own selectionchange.
         if (phase === 'awaiting') watch = canRevert ? { ...watch, phase: 'placed' } : null
         return
       }
@@ -146,9 +145,12 @@ const useRevertCorrection = ({
         // the jump of a tap at the edge, after which iOS still places the caret or moves it back
         putBack('awaiting')
       } else if (canRevert && phase !== 'reverted' && current === before) {
+        // iOS moving the caret back to where it was before the tap (#4220), after the placement or, for a tap at the
+        // edge, straight after the jump. It comes only once, so the watch then only waits for a move that ends it.
         putBack('reverted')
       } else if (phase === 'awaiting' && canRevert) {
-        // iOS placing the caret at the other end of the tapped word
+        // iOS placing the caret at the other end of the tapped word from getCaretOffset's choice. iOS's placement is
+        // where the tap lands, so it replaces getCaretOffset's offset, both as the offset putBack restores and in Redux.
         watch = { ...watch, offset: current, phase: 'placed' }
         recordCaretOffset(current)
       } else if (phase !== 'placed') {
@@ -156,6 +158,7 @@ const useRevertCorrection = ({
         // otherwise put back. A tap on the caret ends here on its first move, since there is no move back to wait for.
         watch = null
       }
+      // Otherwise the tap is placed and iOS is on its way back, passing through other offsets that are left alone.
     }
 
     editable.addEventListener('touchstart', onTouchStart, { passive: true })
