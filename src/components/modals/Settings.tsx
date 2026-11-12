@@ -101,7 +101,13 @@ const FontSize = () => {
           if (inputValue < MIN_FONT_SIZE || inputValue > MAX_FONT_SIZE) return
           dispatch(fontSizeActionCreator(inputValue))
         }}
-        className={css({ padding: '0.5em' })}
+        className={css({
+          padding: '0.5em',
+          // Keep the step arrows visible without hovering (#6260). WebKit draws them for the page's color scheme, which
+          // is light unless declared, so on the dark theme they were dark on dark. Chrome draws them only on hover.
+          _dark: { colorScheme: 'dark' },
+          '&::-webkit-inner-spin-button': { opacity: 1 },
+        })}
         style={{ fontSize: fontSizeSelector }}
       />
       {fontSizeSelector !== DEFAULT_FONT_SIZE && (
