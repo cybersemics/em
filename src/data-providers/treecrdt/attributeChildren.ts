@@ -46,29 +46,6 @@ export async function getAttributeChildrenByParent(
   return valueByChildId
 }
 
-/** Deletes one child from the attribute-child index. */
-async function deleteAttributeChild(client: TreecrdtClient, childId: ThoughtId): Promise<void> {
-  await ensureAttributeChildrenSchema(client)
-  // getText also executes parameterized writes (returning null); exec does not accept bind parameters.
-  await client.runner.getText(`DELETE FROM ${TABLE} WHERE child_id = ?1`, [childId])
-}
-
-/** Upserts an attribute child into the derived index. */
-async function upsertAttributeChild(
-  client: TreecrdtClient,
-  parentId: ThoughtId,
-  childId: ThoughtId,
-  value: string,
-): Promise<void> {
-  await ensureAttributeChildrenSchema(client)
-
-  await client.runner.getText(
-    `INSERT INTO ${TABLE} (child_id, parent_id, value) VALUES (?1, ?2, ?3)
-     ON CONFLICT(child_id) DO UPDATE SET parent_id = excluded.parent_id, value = excluded.value`,
-    [childId, parentId, value],
-  )
-}
-
 /** Removes every row before a full read rebuilds the index. */
 export async function clearAttributeChildren(client: TreecrdtClient): Promise<void> {
   await ensureAttributeChildrenSchema(client)
@@ -82,59 +59,51 @@ export async function refreshAttributeChildrenFromChanges(
 ): Promise<void> {
   await ensureAttributeChildrenSchema(client)
 
-  // An insert, restore or delete says everything about a node's row, so those are written together: a catch-up
-  // reports every node as one of them, hundreds per event.
-  const replaced: string[] = []
-  const rows = new Map<string, [string, string]>()
+  // Keep each node's last reported parent and value: one event can carry hundreds of nodes (a catch-up) and several
+  // changes for one node. Undefined was not reported; null is a deleted node or a missing value.
+  const nodes = new Map<string, { parent?: string | null; value?: string | null }>()
   for (const ch of changes) {
-    if (ch.kind === 'move' || ch.kind === 'payload') continue
-    replaced.push(ch.node)
-    const value = ch.kind !== 'delete' && ch.payload ? decodeThoughtPayload(ch.payload).value : undefined
-    if (ch.kind !== 'delete' && ch.parentAfter && value && isAttribute(value))
-      rows.set(ch.node, [ch.parentAfter, value])
-    else rows.delete(ch.node)
-  }
-  if (replaced.length > 0) {
-    await client.runner.getText(`DELETE FROM ${TABLE} WHERE child_id IN (SELECT value FROM json_each(?1))`, [
-      JSON.stringify(replaced),
-    ])
-  }
-  if (rows.size > 0) {
-    await client.runner.getText(
-      `INSERT INTO ${TABLE} (child_id, parent_id, value) SELECT value->>0, value->>1, value->>2 FROM json_each(?1)`,
-      [JSON.stringify([...rows].map(([child, [parent, value]]) => [child, parent, value]))],
-    )
+    if (ch.kind === 'move' && ch.parentBefore === ch.parentAfter) continue
+    const node = nodes.get(ch.node) ?? {}
+    nodes.set(ch.node, node)
+    if (ch.kind !== 'payload') node.parent = ch.kind === 'delete' ? null : ch.parentAfter
+    if (ch.kind !== 'move') {
+      node.value = ch.kind !== 'delete' && ch.payload ? decodeThoughtPayload(ch.payload).value : null
+    }
   }
 
-  for (const ch of changes) {
-    const childId = ch.node as ThoughtId
-    switch (ch.kind) {
-      case 'move':
-        if (ch.parentBefore !== ch.parentAfter) {
-          await client.runner.getText(`UPDATE ${TABLE} SET parent_id = ?1 WHERE child_id = ?2`, [
-            ch.parentAfter,
-            childId,
-          ])
-        }
-        break
-      case 'payload': {
-        if (!ch.payload) {
-          await deleteAttributeChild(client, childId)
-          break
-        }
-        const payload = decodeThoughtPayload(ch.payload)
-        if (!isAttribute(payload.value)) {
-          await deleteAttributeChild(client, childId)
-          break
-        }
-        const parent = await client.tree.node(childId).parent()
-        if (!parent) {
-          await deleteAttributeChild(client, childId)
-        } else {
-          await upsertAttributeChild(client, parent.id as ThoughtId, childId, payload.value)
-        }
-        break
-      }
+  const gone: string[] = []
+  const rows: [string, string, string][] = []
+  const moved: [string, string][] = []
+  for (const [id, { parent, value }] of nodes) {
+    // Only moves were reported, so an existing row just takes the new parent.
+    if (value === undefined) moved.push([id, parent!])
+    else if (parent === null || !value || !isAttribute(value)) gone.push(id)
+    else {
+      // A payload change does not say where the node is.
+      const parentId = parent ?? (await client.tree.node(id).parent())?.id
+      if (parentId) rows.push([id, parentId, value])
+      else gone.push(id)
     }
+  }
+
+  // getText also executes parameterized writes (returning null); exec does not accept bind parameters.
+  if (gone.length > 0) {
+    await client.runner.getText(`DELETE FROM ${TABLE} WHERE child_id IN (SELECT value FROM json_each(?1))`, [
+      JSON.stringify(gone),
+    ])
+  }
+  if (rows.length > 0) {
+    await client.runner.getText(
+      `INSERT INTO ${TABLE} (child_id, parent_id, value) SELECT value->>0, value->>1, value->>2 FROM json_each(?1)
+       WHERE true ON CONFLICT(child_id) DO UPDATE SET parent_id = excluded.parent_id, value = excluded.value`,
+      [JSON.stringify(rows)],
+    )
+  }
+  if (moved.length > 0) {
+    await client.runner.getText(
+      `UPDATE ${TABLE} SET parent_id = moved.value->>1 FROM json_each(?1) AS moved WHERE child_id = moved.value->>0`,
+      [JSON.stringify(moved)],
+    )
   }
 }
