@@ -1,7 +1,9 @@
 import Command from '../@types/Command'
 import { swapNoteActionCreator } from '../actions/swapNote'
 import SwapNoteIcon from '../components/icons/SwapNoteIcon'
-import hasMulticursor from '../selectors/hasMulticursor'
+import selectedPaths from '../selectors/selectedPaths'
+import headValue from '../util/headValue'
+import isAttribute from '../util/isAttribute'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const swapNote = {
@@ -13,7 +15,9 @@ const swapNote = {
   gesture: 'ulr',
   multicursor: true,
   canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+    // A metaprogramming attribute such as =favorite or =pin configures its parent; turning it into a note would silently strip that configuration, so the command is disabled when any selected thought is an attribute.
+    const paths = selectedPaths(state)
+    return isDocumentEditable() && paths.length > 0 && paths.every(path => !isAttribute(headValue(state, path) ?? ''))
   },
   svg: SwapNoteIcon,
   exec: dispatch => {
