@@ -4,6 +4,7 @@ import { TIMEOUT_LONG_PRESS_THOUGHT, TOUCH_SLOP } from '../../constants'
 import getCaretOffset from '../../device/getCaretOffset'
 import * as selection from '../../device/selection'
 import multitouchStore from '../../stores/multitouchStore'
+import stepRevertWatch, { RevertWatch } from './stepRevertWatch'
 
 /**
  * How far inside the first or last line of text, in pixels, a tap can land and still count as a tap at the edge of
@@ -11,21 +12,6 @@ import multitouchStore from '../../stores/multitouchStore'
  * tap that does not jump costs nothing, since iOS's own first move then ends the edge check.
  */
 const EDGE_MARGIN = 4
-
-/** The phase of a watched tap. */
-type Phase =
-  /** Waiting for iOS's first move after the touchend. */
-  | 'awaiting'
-  /**
-   * The jump of a tap at the edge has been put back, and iOS's placement or move back is still to come. Unlike
-   * awaiting, a move to the tapped offset does not count as the placement, since it may be the put-back's own
-   * selectionchange, which arrives as a separate event on some devices and not on others.
-   */
-  | 'jumped'
-  /** The caret has been placed at the tapped word, and iOS may yet move it back. */
-  | 'placed'
-  /** The move back has been put right, and iOS does not move the caret again. */
-  | 'reverted'
 
 /** Returns which edge of the thought's text the point is at, if any. */
 const edgeOf = (editable: HTMLElement, clientY: number): 'start' | 'end' | null => {
@@ -51,9 +37,10 @@ const edgeOf = (editable: HTMLElement, clientY: number): 'start' | 'end' | null 
  * The watch follows iOS's moves until the next input, with no timer. The first move is either the jump to the start or
  * end, which is put back only if the tap was at that edge, or the placement at the tapped word. That can be the other
  * end of the word from getCaretOffset's choice, so it is recorded instead. The move back to where the caret was before
- * the tap is put back, and moves in between are left alone, since iOS can pass through
- * another offset on its way back. After the move back, iOS does not move the caret again, so any other move ends the
- * watch. It can come from elsewhere, such as the space bar scrub, which delivers no event to the page.
+ * the tap is put back, and moves in between are left alone, since iOS can pass through another offset on its way back.
+ * After the move back, iOS does not move the caret again, so any other move ends the watch. It can come from
+ * elsewhere, such as the space bar scrub, which delivers no event to the page. Which move is which is decided by
+ * stepRevertWatch, and the hook carries out its decision.
  */
 const useRevertCorrection = ({
   editableRef,
@@ -72,9 +59,8 @@ const useRevertCorrection = ({
 
     // Where the touch in progress began, and when.
     let touchStart: { clientX: number; clientY: number; time: number } | null = null
-    // The tap being watched: the offset to keep, where the caret was before the tap, the edge of the thought the tap
-    // was at, if any, and how far iOS has got with the tap.
-    let watch: { offset: number; before: number; edge: 'start' | 'end' | null; phase: Phase } | null = null
+    // The tap being watched, if any.
+    let watch: RevertWatch | null = null
 
     /** Ends the watch on any other input. */
     const endWatch = () => {
@@ -126,48 +112,12 @@ const useRevertCorrection = ({
       const range = selection.offsetRange(editable)
       // iOS's moves after a tap are all moves of a collapsed caret, so a range is left to the browser.
       if (!range || range.start !== range.end) return
-      const { offset, before, edge, phase } = watch
-      // The offset of the end of the thought, which is where the jump of a tap below the last line lands.
-      const length = editable.textContent?.length ?? 0
-      // A tap on the caret leaves nothing for iOS to move back.
-      const canRevert = offset !== before
 
-      /** Puts the caret back where the tap landed. */
-      const putBack = (next: Phase) => {
-        watch = { offset, before, edge, phase: next }
-        selection.set(editable, { offset })
-      }
-
-      const current = range.start
-      if (current === offset) {
-        // The corrections' own selectionchange, or iOS placing the caret where getCaretOffset did. While awaiting, this
-        // is iOS's placement, and the move back is what comes next, except after a tap on the caret, which has no move
-        // back to come and ends the watch here. In any other phase, it changes nothing.
-        if (phase === 'awaiting') watch = canRevert ? { ...watch, phase: 'placed' } : null
-        return
-      }
-
-      // Neither the placement nor the move back has come yet.
-      const unplaced = phase === 'awaiting' || phase === 'jumped'
-
-      if (unplaced && ((edge === 'start' && current === 0) || (edge === 'end' && current === length))) {
-        // the jump of a tap at the edge, after which iOS still places the caret or moves it back
-        putBack('jumped')
-      } else if (canRevert && phase !== 'reverted' && current === before) {
-        // iOS moving the caret back to where it was before the tap (#4220), after the placement or, for a tap at the
-        // edge, straight after the jump. It comes only once, so the watch then only waits for a move that ends it.
-        putBack('reverted')
-      } else if (unplaced && canRevert) {
-        // iOS placing the caret at the other end of the tapped word from getCaretOffset's choice. iOS's placement is
-        // where the tap lands, so it replaces getCaretOffset's offset, both as the offset putBack restores and in Redux.
-        watch = { ...watch, offset: current, phase: 'placed' }
-        recordCaretOffset(current)
-      } else if (phase !== 'placed') {
-        // Something else is moving the caret, such as the space bar scrub, which may yet reach a place the watch would
-        // otherwise put back. A tap on the caret ends here on its first move, since there is no move back to wait for.
-        watch = null
-      }
-      // Otherwise the tap is placed and iOS is on its way back, passing through other offsets that are left alone.
+      const step = stepRevertWatch(watch, { current: range.start, length: editable.textContent?.length ?? 0 })
+      watch = step.watch
+      if (!step.watch) return
+      if (step.effect === 'putBack') selection.set(editable, { offset: step.watch.offset })
+      else if (step.effect === 'record') recordCaretOffset(step.watch.offset)
     }
 
     editable.addEventListener('touchstart', onTouchStart, { passive: true })
