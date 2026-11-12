@@ -41,7 +41,7 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
 
   /** Saves explicit ordering intent separately from membership updates, which must not prune it. */
   const setFavoriteOrder = (contexts: ThoughtId[]) =>
-    client.runner.getText('INSERT OR REPLACE INTO em_favorite_order (id, contexts_json) VALUES (1, ?1)', [
+    client.runner.run('INSERT OR REPLACE INTO em_favorite_order (id, contexts_json) VALUES (1, ?1)', [
       JSON.stringify(contexts),
     ])
 
@@ -84,12 +84,12 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
       live.push(row)
     }
     if (gone.length > 0) {
-      await client.runner.getText(`DELETE FROM ${TABLE} WHERE thought_id IN (SELECT value FROM json_each(?1))`, [
+      await client.runner.run(`DELETE FROM ${TABLE} WHERE thought_id IN (SELECT value FROM json_each(?1))`, [
         JSON.stringify(gone),
       ])
     }
     if (live.length > 0) {
-      await client.runner.getText(
+      await client.runner.run(
         `INSERT INTO ${TABLE} (thought_id, lexeme_hash, created, last_updated, updated_by)
          SELECT value->>0, value->>1, value->>2, value->>3, value->>4 FROM json_each(?1) WHERE true
          ON CONFLICT(thought_id) DO UPDATE SET lexeme_hash = excluded.lexeme_hash, created = excluded.created,
