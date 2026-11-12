@@ -138,6 +138,18 @@ it('uses indexed attribute values as childrenMap keys without changing TreeCRDT 
   expect(Object.values(childrenMap)).toEqual([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID])
 })
 
+it('keys an attribute under its new parent and drops the key once it is renamed', async () => {
+  await initTestThoughtspace()
+  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0), thought(OTHER_PARENT_ID, EM_TOKEN, 'other', 1)])
+  await persistThoughts([thought(PIN_ID, PARENT_ID, '=pin', 0)])
+
+  await persistThoughts([thought(PIN_ID, OTHER_PARENT_ID, '=pin', 0)], { [PIN_ID]: null })
+  expect((await treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID))?.childrenMap['=pin']).toBe(PIN_ID)
+
+  await persistThoughts([thought(PIN_ID, OTHER_PARENT_ID, 'pin', 0)])
+  expect((await treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID))?.childrenMap['=pin']).toBeUndefined()
+})
+
 it('falls back to rank placement when explicit afterId is stale', async () => {
   await initTestThoughtspace()
 
