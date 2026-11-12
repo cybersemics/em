@@ -24,4 +24,5 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 
 - [Glossary](glossary.md) — Project-specific terms (cliff, autofocus, lexeme, tangential context, tsid, …) with cross-links to the deeper docs. Start here if you encounter unfamiliar vocabulary.
 - [Commands](commands.md) — All user-facing commands and keyboard shortcuts, plus the architecture of the command system.
+- [Converting Figma lighting to CSS](liminal-ui/figma-to-css.md) — How the Command Universe's desktop lighting gradients and masks were derived from Figma, and how to check a conversion.
 - [Testing](testing.md) — Testing approach, platforms, and frameworks.
