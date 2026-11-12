@@ -9,6 +9,7 @@ import { commandUniverseBackActionCreator as commandUniverseBack } from '../../a
 import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from '../../actions/commandUniverseNavigate'
 import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
 import { executeCommandWithMulticursor } from '../../commands'
+import { MAX_RECENT_COMMANDS } from '../../constants'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import useCommandList from '../../hooks/useCommandList'
 import commandUniverseSearchSortStore from '../../stores/commandUniverseSearchSortStore'
@@ -60,7 +61,10 @@ const CommandUniverseCommandPage = ({
       dispatch(toggleMobileCommandUniverseActionCreator({ value: false }))
       executeCommandWithMulticursor(command, { store: commandStore, type: 'commandUniverse' })
       const recent = storageModel.get('recentCommands')
-      storageModel.set('recentCommands', [command.id, ...recent.filter(id => id !== command.id)].slice(0, 5))
+      storageModel.set(
+        'recentCommands',
+        [command.id, ...recent.filter(id => id !== command.id)].slice(0, MAX_RECENT_COMMANDS),
+      )
     })
   }
 

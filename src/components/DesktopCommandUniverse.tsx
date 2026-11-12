@@ -10,6 +10,7 @@ import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '.
 import { hashCommand, hashKeyDown } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
 import openDesktopCommandUniverseCommand from '../commands/openDesktopCommandUniverse'
+import { MAX_RECENT_COMMANDS } from '../constants'
 import useCommandUniverseSelection from '../hooks/useCommandUniverseSelection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import storageModel from '../stores/storageModel'
@@ -17,13 +18,6 @@ import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 import CommandItem from './CommandItem'
 import FadeTransition from './FadeTransition'
 import PopupBase from './PopupBase'
-
-/**********************************************************************
- * Constants
- **********************************************************************/
-
-/** The maximum number of recent commands to store for the desktop command universe. */
-const MAX_RECENT_COMMANDS = 5
 
 /**********************************************************************
  * Components
