@@ -416,7 +416,6 @@ const createTreecrdtDataProvider = () => {
     activeDb = clientDb
     providerReadiness.resolve(clientDb)
     return async () => {
-      if (!subscribed) return
       subscribed = false
       unsubscribeMaterialized()
       await indexes.close()
