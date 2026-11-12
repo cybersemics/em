@@ -32,6 +32,7 @@ import equalPathHead from '../util/equalPathHead'
 import getCommandState from '../util/getCommandState'
 import head from '../util/head'
 import strip from '../util/strip'
+import stripTags from '../util/stripTags'
 import trimHtml from '../util/trimHtml'
 import useCaretRestore from './Editable/useCaretRestore'
 import useOnCut from './Editable/useOnCut'
@@ -233,12 +234,16 @@ const Note = React.memo(
               noteThoughtValue.pendingFormat && noteThoughtValue.value.length === 0 && value.length > 0
                 ? applyOuterTags(value, noteThoughtValue.pendingFormat)
                 : value
+            const trimmedValue = trimHtml(wrappedValue)
 
             dispatch(
               editThought({
                 path: appendToPath(targetPath, noteThoughtValue.id) as SimplePath,
                 oldValue: noteThoughtValue.value,
-                newValue: trimHtml(wrappedValue),
+                // A value that is only tags once trimmed, such as a space typed into a note held in bold, is saved as
+                // empty, as in a thought. An empty note is then left as it was, still holding its formatting for the
+                // first text typed, rather than saved as an empty <b></b> that the caret cannot be placed inside.
+                newValue: stripTags(trimmedValue) ? trimmedValue : '',
                 noteOffset: noteOffset ?? undefined,
                 force: wrappedValue !== value,
                 undoLabel: 'Edit Note',
