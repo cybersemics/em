@@ -1,10 +1,12 @@
 import { fireEvent, screen } from '@testing-library/dom'
+import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { redoActionCreator as redo } from '../../actions/redo'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { HOME_TOKEN } from '../../constants'
+import * as selection from '../../device/selection'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getChildrenSorted } from '../../selectors/getChildren'
@@ -77,6 +79,35 @@ describe('=note', () => {
       await vi.runOnlyPendingTimersAsync()
     })
     expect(screen.getByLabelText('note-editable').innerHTML).toBe('hello')
+  })
+
+  // https://github.com/cybersemics/em/pull/6277#discussion_r4545966728
+  test('undoes and redoes typing after a leading space with the caret where it was', async () => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - x' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      noteEditor.focus()
+      selection.set(noteEditor, { offset: 0 })
+    })
+
+    const user = userEvent.setup({ delay: null })
+    await user.keyboard(' y')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      store.dispatch(undo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('x')
+    expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe(0)
+
+    await act(async () => {
+      store.dispatch(redo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('yx')
+    expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe('y'.length)
   })
 
   test('adds no undo step when the note blurs', async () => {
