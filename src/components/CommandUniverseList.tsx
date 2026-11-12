@@ -37,6 +37,8 @@ interface CommandUniverseListProps {
    * across sections — the parent only owns search/sort state, not the row chrome.
    */
   groups: CommandGroup[]
+  /** Reports the focused DOM row to the sibling glow without storing it in Redux. */
+  onFocusedRowChange?: (row: HTMLLIElement | null) => void
   /** Search text that will be highlighted within each matched command title. */
   search?: string
   /** Fired when a row is activated by click or keyboard Enter; receives the row's bounding rect in dialog-content coordinates. */
@@ -61,7 +63,7 @@ interface CommandUniverseListProps {
  * their grid counterparts and the input-driven keyboard wiring carries over unchanged.
  */
 const CommandUniverseList = forwardRef<CommandUniverseListHandle, CommandUniverseListProps>(
-  ({ groups, search = '', onItemTap, onItemActivate, onNavigateBack }, forwardedRef) => {
+  ({ groups, search = '', onItemTap, onItemActivate, onNavigateBack, onFocusedRowChange }, forwardedRef) => {
     const fontSize = useSelector(state => state.fontSize)
 
     // command.id → Command. Item keys in the collection are command.ids, and onAction
@@ -192,6 +194,13 @@ const CommandUniverseList = forwardRef<CommandUniverseListHandle, CommandUnivers
       // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-seed on filter changes
     }, [groups, search])
 
+    // A layout effect, so the glow starts to move in the same frame as the row's highlight.
+    useLayoutEffect(() => {
+      const key = state.selectionManager.focusedKey
+      onFocusedRowChange?.(key == null ? null : (rowRefs.current.get(String(key)) ?? null))
+      return () => onFocusedRowChange?.(null)
+    }, [onFocusedRowChange, state.selectionManager.focusedKey])
+
     // Neutralize react-aria's secondary "center the whole listbox" scroll. After the row's
     // own scroll-into-view, if the row moved at all, react-aria additionally calls
     // `containingElement.scrollIntoView({ block: 'center', inline: 'center' })` on the
@@ -249,7 +258,8 @@ const CommandUniverseList = forwardRef<CommandUniverseListHandle, CommandUnivers
         // Ignore points outside this list (cursor over the footer, another navstack page, etc.).
         if (!el || !listRef.current?.contains(el)) return
         const id = el.closest('[data-cu-command-id]')?.getAttribute('data-cu-command-id')
-        if (id && commandsByKey.has(id)) fm.setFocusedKey(id)
+        if (!id || !commandsByKey.has(id) || id === fm.focusedKey) return
+        fm.setFocusedKey(id)
       }
       /** Restarts the settle timer on each user scroll event, without reading layout. */
       const onScroll = () => {
