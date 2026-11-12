@@ -14,6 +14,8 @@ const swapNote = {
   keyboard: { key: 'n', alt: true, shift: true },
   gesture: 'ulr',
   multicursor: true,
+  // Option + Shift + N types ˜ on macOS, so swallow the keypress even when the command is disabled, e.g. on a metaprogramming attribute.
+  preventDefault: true,
   canExecute: state => {
     // A metaprogramming attribute such as =favorite or =pin configures its parent; turning it into a note would silently strip that configuration, so the command is disabled when any selected thought is an attribute.
     const paths = selectedPaths(state)
