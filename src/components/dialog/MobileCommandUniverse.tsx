@@ -1,16 +1,18 @@
-import { useCallback, useRef } from 'react'
+import { ComponentProps, useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { commandUniverseBackActionCreator as commandUniverseBack } from '../../actions/commandUniverseBack'
 import { commandUniverseForwardActionCreator as commandUniverseForward } from '../../actions/commandUniverseForward'
 import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
+import useBreakpoint from '../../hooks/useBreakpoint'
+import durations from '../../util/durations'
 import CommandUniverseHeader from '../CommandUniverse/CommandUniverseHeader'
 import CommandUniversePageRouter from '../CommandUniverse/CommandUniversePageRouter'
-import FadeTransition from '../FadeTransition'
+import ScaleFadeTransition from '../ScaleFadeTransition'
 import Dialog from './Dialog'
 
 /** Composes the Commands dialog without owning history or animation mechanics. */
-const CommandUniverseDialog = ({ isOpen }: { isOpen: boolean }) => {
+const CommandUniverseDialog = ({ animation }: { animation: ComponentProps<typeof Dialog>['animation'] }) => {
   const dispatch = useDispatch()
   const nodeRef = useRef<HTMLDivElement>(null)
   const { entries, index } = useSelector(state => state.commandUniverseNavigation)
@@ -21,29 +23,32 @@ const CommandUniverseDialog = ({ isOpen }: { isOpen: boolean }) => {
   const onForward = useCallback(() => dispatch(commandUniverseForward()), [dispatch])
 
   return (
-    <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
-      <Dialog onClose={onClose} nodeRef={nodeRef}>
-        <CommandUniverseHeader
-          onClose={onClose}
-          onBack={onBack}
-          onForward={onForward}
-          canGoBack={index > 0}
-          canGoForward={index < entries.length - 1}
-        >
-          Commands
-        </CommandUniverseHeader>
-        <div className={css({ height: 'min(70vh, 70dvh)', minHeight: 0 })}>
-          <CommandUniversePageRouter />
-        </div>
-      </Dialog>
-    </FadeTransition>
+    <Dialog animation={animation} onClose={onClose} nodeRef={nodeRef}>
+      <CommandUniverseHeader
+        onClose={onClose}
+        onBack={onBack}
+        onForward={onForward}
+        canGoBack={index > 0}
+        canGoForward={index < entries.length - 1}
+      >
+        Commands
+      </CommandUniverseHeader>
+      <div className={css({ height: 'min(70vh, 70dvh)', minHeight: 0 })}>
+        <CommandUniversePageRouter />
+      </div>
+    </Dialog>
   )
 }
 
 /** Renders the mobile Command Universe from its Redux-owned navigation session. */
 const MobileCommandUniverse = () => {
   const isOpen = useSelector(state => !!state.showMobileCommandUniverse)
-  return <CommandUniverseDialog isOpen={isOpen} />
+  const isDesktop = useBreakpoint('lg')
+  return (
+    <ScaleFadeTransition in={isOpen} duration={durations.get(isDesktop ? 'fast' : 'medium') / 1000}>
+      {({ opacity, scale }) => <CommandUniverseDialog animation={{ opacity, scale }} />}
+    </ScaleFadeTransition>
+  )
 }
 
 export default MobileCommandUniverse
