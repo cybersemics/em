@@ -1125,7 +1125,8 @@ describe('single-line paste into a thought', () => {
         at: [value],
         text: '<font color="#ff573d">eee</font>',
         caretPosition: 10,
-        isEmHtml: true,
+        isEmText: true,
+        isHtml: true,
       }),
     ])(initialState())
 
@@ -1141,7 +1142,7 @@ describe('single-line paste into a thought', () => {
     const stateNew = reducerFlow([
       newThought({ value }),
       // between "bbb " and "ccc"
-      importTextAtFirstMatch({ at: [value], text: 'eee', caretPosition: 8, isEmHtml: true }),
+      importTextAtFirstMatch({ at: [value], text: 'eee', caretPosition: 8, isEmText: true, isHtml: true }),
     ])(initialState())
 
     const [child] = getAllChildren(stateNew, HOME_TOKEN)
@@ -1154,7 +1155,7 @@ describe('single-line paste into a thought', () => {
     const value = '<span style="background-color: rgb(255, 208, 20);">aaa bbb ccc</span>'
     const stateNew = reducerFlow([
       newThought({ value }),
-      importTextAtFirstMatch({ at: [value], text: 'eee', caretPosition: 8, isEmHtml: true }),
+      importTextAtFirstMatch({ at: [value], text: 'eee', caretPosition: 8, isEmText: true, isHtml: true }),
     ])(initialState())
 
     const [child] = getAllChildren(stateNew, HOME_TOKEN)
