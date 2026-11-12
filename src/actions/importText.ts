@@ -129,6 +129,9 @@ export interface ImportTextPayload {
   /** The text is HTML copied from outside em, such as from a web page. Its formatting is sanitized with sanitizeExternalHtml when it is inserted inside the thought (single line only). Multiline imports are unaffected. */
   isExternalHtml?: boolean
 
+  /** The text is HTML copied from em. Its colors are its own, so it is not inserted inside the text or background color at the caret, even when it has no color of its own (#6055). Single line only. */
+  isEmHtml?: boolean
+
   /** Text or HTML that will be inserted below the thought (if multiline) or inside the thought (singl line only). */
   text: string
 
@@ -149,6 +152,7 @@ const importText = (
     replaceEnd,
     replaceStart,
     isExternalHtml,
+    isEmHtml,
     skipRoot,
     updatedBy = clientId,
     caretPosition = 0,
@@ -187,7 +191,7 @@ const importText = (
 
     const insertedText = isExternalHtml ? sanitizeExternalHtml(text) : text
     const insertOffset = replaceStart ?? caretPosition
-    const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, insertedText)
+    const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, insertedText, { ownColor: isEmHtml })
     // A thought's value never holds leading or trailing whitespace, which a paste can carry in (#5232). Trim before
     // adding the emoji space, as the change handler does, since the space is only added to a value starting with an emoji.
     const trimmedValue = trimHtml(combinedValue)

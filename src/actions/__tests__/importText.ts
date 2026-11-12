@@ -1121,12 +1121,56 @@ describe('single-line paste into a thought', () => {
     const stateNew = reducerFlow([
       newThought({ value }),
       // between "bbbb " and "cccc"
-      importTextAtFirstMatch({ at: [value], text: '<font color="#ff573d">eee</font>', caretPosition: 10 }),
+      importTextAtFirstMatch({
+        at: [value],
+        text: '<font color="#ff573d">eee</font>',
+        caretPosition: 10,
+        isEmHtml: true,
+      }),
     ])(initialState())
 
     const [child] = getAllChildren(stateNew, HOME_TOKEN)
     expect(getThoughtById(stateNew, child)!.value).toBe(
       '<font color="#000000" style="background-color: rgb(255, 208, 20);">aaaa bbbb </font><font color="#ff573d">eee</font><font color="#000000" style="background-color: rgb(255, 208, 20);">cccc</font>',
     )
+  })
+
+  // https://github.com/cybersemics/em/pull/6283#pullrequestreview-5868347122
+  it('does not apply the color at the caret to uncolored text copied from em', () => {
+    const value = '<font color="#00d26a">aaa bbb ccc</font>'
+    const stateNew = reducerFlow([
+      newThought({ value }),
+      // between "bbb " and "ccc"
+      importTextAtFirstMatch({ at: [value], text: 'eee', caretPosition: 8, isEmHtml: true }),
+    ])(initialState())
+
+    const [child] = getAllChildren(stateNew, HOME_TOKEN)
+    expect(getThoughtById(stateNew, child)!.value).toBe(
+      '<font color="#00d26a">aaa bbb </font>eee<font color="#00d26a">ccc</font>',
+    )
+  })
+
+  it('does not apply the background color at the caret to uncolored text copied from em', () => {
+    const value = '<span style="background-color: rgb(255, 208, 20);">aaa bbb ccc</span>'
+    const stateNew = reducerFlow([
+      newThought({ value }),
+      importTextAtFirstMatch({ at: [value], text: 'eee', caretPosition: 8, isEmHtml: true }),
+    ])(initialState())
+
+    const [child] = getAllChildren(stateNew, HOME_TOKEN)
+    expect(getThoughtById(stateNew, child)!.value).toBe(
+      '<span style="background-color: rgb(255, 208, 20);">aaa bbb </span>eee<span style="background-color: rgb(255, 208, 20);">ccc</span>',
+    )
+  })
+
+  it('applies the color at the caret to text pasted from outside em', () => {
+    const value = '<font color="#00d26a">aaa bbb ccc</font>'
+    const stateNew = reducerFlow([
+      newThought({ value }),
+      importTextAtFirstMatch({ at: [value], text: 'eee', caretPosition: 8 }),
+    ])(initialState())
+
+    const [child] = getAllChildren(stateNew, HOME_TOKEN)
+    expect(getThoughtById(stateNew, child)!.value).toBe('<font color="#00d26a">aaa bbb eeeccc</font>')
   })
 })

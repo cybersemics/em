@@ -109,6 +109,8 @@ export const importDataActionCreator = ({
           text: processedText,
           // Formatting is only preserved as is when the HTML was copied from em (#4161).
           isExternalHtml: !!cleanedHtml && !isEmText,
+          // HTML copied from em keeps its own colors, so it is not inserted inside the color at the caret (#6055).
+          isEmHtml: !!cleanedHtml && isEmText,
           // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
           // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
           rawDestValue,
