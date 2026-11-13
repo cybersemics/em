@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { useStore } from 'react-redux'
 import { useDispatch } from 'react-redux'
@@ -52,7 +52,9 @@ const useEditMode = ({
   const noteFocus = useSelector(state => state.noteFocus)
   const dragHold = useSelector(state => state.longPress === LongPressState.DragHold)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
-  const disabledRef = useRef(false)
+  // The state produced by the cursor change that onMouseDown placed the caret for itself. The effect run that renders
+  // exactly this state does not set the selection again.
+  const skipSelectionStateRef = useRef<State | null>(null)
   const editableNonce = useSelector(state => state.editableNonce)
   const showSidebar = useSelector(state => state.showSidebar)
   const fontSize = useSelector(state => state.fontSize)
@@ -75,7 +77,11 @@ const useEditMode = ({
     () => {
       // Get the cursorOffset directly from the store rather than subscribing to it reactively with useSelector.
       // Otherwise, it will try to set the selection while typing.
-      const { cursorOffset, lastUndoableActionType } = store.getState()
+      const state = store.getState()
+      const { cursorOffset, lastUndoableActionType } = state
+      // onMouseDown already placed the caret for this state. Only skip the one run that renders it.
+      const skipSelection = skipSelectionStateRef.current === state
+      skipSelectionStateRef.current = null
 
       /** Set the selection to the current Editable at the cursor offset. */
       const setSelectionToCursorOffset = () => {
@@ -120,7 +126,7 @@ const useEditMode = ({
           (!isMulticursor || isCursorCleared) &&
           !dragHold &&
           !dragInProgress &&
-          !disabledRef.current)
+          !skipSelection)
 
       if (shouldSetSelection) {
         const shouldAsyncFocus =
@@ -194,17 +200,6 @@ const useEditMode = ({
       transient,
     ],
   )
-
-  // Provide an escape hatch to allow the next default selection rather than setting it.
-  // This allows the user to set the selection in the middle of a non-cursor thought when keyboard is open.
-  // Otherwise the caret is moved to the beginning of the thought.
-  const allowDefaultSelection = useCallback(() => {
-    disabledRef.current = true
-    // enable on next tick, which is long enough to skip the next setSelectionToCursorOffset
-    setTimeout(() => {
-      disabledRef.current = false
-    })
-  }, [])
 
   // Handles the caret positioning logic for the editable element.
   useEffect(() => {
@@ -342,8 +337,12 @@ const useEditMode = ({
 
           // Setting the caret offset will activate the declarative shouldSetSelection effect, which will call preventAutoscroll and selection.set
           // all over again. Since the selection is managed imperatively in this handler, this duplicate behavior is undesirable.
-          allowDefaultSelection()
+          // Skip the effect run that renders this cursor change, and only that one, by recording the state it produced.
+          // A time window instead (e.g. until the next tick) would also swallow the run of a later action, such as a
+          // Backspace that returns the cursor to this thought, when the browser runs input tasks ahead of timers, leaving
+          // the thought with no caret (#6258).
           setCaretOffset(offset, { preserveMulticursor })
+          skipSelectionStateRef.current = store.getState()
 
           // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
           // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
@@ -417,7 +416,6 @@ const useEditMode = ({
     isCursor,
     isMulticursor,
     fontSize,
-    allowDefaultSelection,
     path,
     dispatch,
     store,
