@@ -36,7 +36,8 @@ interface Transition {
  * got to rather than restarting, which is what keeps Back usable before the motion finishes.
  */
 const CommandUniversePageTransitions = ({ children }: { children: ReactElement[] }) => {
-  const { entries, index } = useSelector(state => state.commandUniverseNavigation)
+  const entries = useSelector(state => state.commandUniverseNavigation.entries)
+  const index = useSelector(state => state.commandUniverseNavigation.index)
   const isOpen = useSelector(state => !!state.showMobileCommandUniverse)
   const activeEntryId = entries[index].entryId
   const [shownEntryId, setShownEntryId] = useState(activeEntryId)
