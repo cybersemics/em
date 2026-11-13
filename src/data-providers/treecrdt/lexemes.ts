@@ -34,6 +34,8 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
     CREATE TABLE IF NOT EXISTS em_favorite_order (
       id INTEGER PRIMARY KEY CHECK (id = 1), contexts_json TEXT NOT NULL
     );
+    -- Held whole lexemes before memberships; older databases may still have it.
+    DROP TABLE IF EXISTS em_lexemes;
   `)
 
   /** Saves explicit ordering intent separately from membership updates, which must not prune it. */
