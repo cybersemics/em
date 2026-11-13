@@ -35,8 +35,8 @@ export const applyMaterializedThoughtsToStore = async (context: MaterializationC
       const { deletedIds, thoughts } = await refreshThoughtsFromMaterializationChanges(remoteChanges, db)
       for (const id of deletedIds) thoughtIndexUpdates[id] = null
       for (const latest of thoughts) {
-        const pending = snapshot.thoughtIndex[latest.id]?.pending || snapshot.thoughtIndex[latest.parentId]?.pending
-        thoughtIndexUpdates[latest.id] = { ...latest, ...(pending ? { pending } : null) }
+        const loading = snapshot.thoughtIndex[latest.id]?.pending || snapshot.thoughtIndex[latest.parentId]?.pending
+        thoughtIndexUpdates[latest.id] = { ...latest, ...(loading ? { pending: loading } : null) }
       }
     }
     const values = await db.getLexemesByIds(keys)
