@@ -329,9 +329,22 @@ const Editable = ({
     setContentInvalidState(isInvalid)
   }
 
-  /** Set the cursor on the thought. */
+  /**
+   * Sets the cursor on the thought, at a given offset such as where a tap landed. This is the only place an Editable sets
+   * the cursor: focus, a tap, and the iOS tap workarounds in useEditMode all come through it, and useEditMode places the
+   * caret from the result. A cursor set on the thought it is already on keeps Clear Thought (see setCursor).
+   */
   const setCursorOnThought = useCallback(
-    ({ isKeyboardOpen }: { isKeyboardOpen?: boolean } = {}) => {
+    ({
+      isKeyboardOpen,
+      offset,
+      preserveMulticursor = true,
+    }: {
+      isKeyboardOpen?: boolean
+      /** The plain-text offset to place the caret at, such as where a tap landed. */
+      offset?: number
+      preserveMulticursor?: boolean
+    } = {}) => {
       dispatch((dispatch, getState) => {
         const state = getState()
 
@@ -339,17 +352,17 @@ const Editable = ({
         // event if this component's path no longer points to the thought's current location. (#4680)
         if (!transient && !equalPath(thoughtToPath(state, head(simplePath)), simplePath)) return
 
-        // do not set cursor if it is unchanged and we are not entering when keyboard is open
-        if ((!isKeyboardOpen || state.isKeyboardOpen) && equalPath(state.cursor, path)) return
+        // Do not set the cursor if it is unchanged, there is no offset to place, and edit mode is not being entered.
+        if (equalPath(state.cursor, path) && offset == null && (!isKeyboardOpen || state.isKeyboardOpen)) return
 
-        // set offset to null to allow the browser to set the position of the selection
-        let offset = null
+        // Without a given offset, set offset to null to allow the browser to set the position of the selection.
+        let restoredOffset: number | null = null
 
         // if running for the first time, restore the offset if the path matches the restored cursor
-        if (!cursorOffsetInitializedStore.getState()) {
+        if (offset == null && !cursorOffsetInitializedStore.getState()) {
           const restored: { path: Path | null; offset: number | null } = storageModel.get('cursor')
           if (path && restored.offset && equalPath(restored.path, path)) {
-            offset = restored.offset || null
+            restoredOffset = restored.offset || null
           }
         }
 
@@ -359,9 +372,9 @@ const Editable = ({
         dispatch(
           setCursor({
             cursorHistoryClear: true,
-            preserveMulticursor: true,
+            preserveMulticursor,
             isKeyboardOpen,
-            offset,
+            offset: offset ?? restoredOffset,
             path,
           }),
         )
@@ -370,6 +383,31 @@ const Editable = ({
     // When isEditing changes, we need to reset the cursor on the thought.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [dispatch, isEditing, path, simplePath, transient],
+  )
+
+  /**
+   * Sets the cursor for a tap on the thought, at the offset useEditMode found under it. A tap enters edit mode. While a
+   * multiselection is being edited (Clear Thought), a tap moves the caret as usual, and the multiselection is preserved
+   * when the tapped thought belongs to it, so that edits keep mirroring to the other selected thoughts.
+   */
+  const setCursorForTap = useCallback(
+    ({ offset }: { offset?: number }) => {
+      // Save the edit still waiting in the throttle before the tap moves the cursor or the caret, as commands do before
+      // they run (see executeCommand). On a tap into another thought, the thought being left would otherwise save it on
+      // blur, after the move, and an Undo would revert the edit without returning the caret to it. On a tap within the
+      // same thought, the edit would otherwise be saved after cursorOffset had already moved to the tap, so the undo
+      // history would record the tapped position as where the edit left the caret.
+      commandEmitter.trigger('command')
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        setCursorOnThought({
+          isKeyboardOpen: true,
+          offset,
+          preserveMulticursor: isMultiEditing(state) && isMulticursorPath(state, path),
+        })
+      })
+    },
+    [dispatch, path, setCursorOnThought],
   )
 
   /**
@@ -451,7 +489,7 @@ const Editable = ({
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(_.throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
-  useEditMode({ contentRef, isEditing, path, style, transient })
+  useEditMode({ contentRef, isEditing, path, setCursorForTap, style, transient })
 
   useEffect(() => {
     /** Flushes pending edits. */

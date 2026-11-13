@@ -33,6 +33,8 @@ it('focuses the editable when the caret is placed with no prior selection on a t
         contentRef: { current: editable as unknown as HTMLInputElement },
         isEditing: true,
         path: store.getState().cursor!,
+        // No tap happens in this test.
+        setCursorForTap: () => {},
         style: undefined,
         transient: undefined,
       }),

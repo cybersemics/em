@@ -144,11 +144,14 @@ const setCursor = (
       : null),
     // this is needed in particular for creating a new note, otherwise the cursor will disappear
     isKeyboardOpen: isKeyboardOpen != null ? isKeyboardOpen : state.isKeyboardOpen,
-    // Reset cursorCleared on navigate, except while a multicursor command is executing, which sets the cursor to each
-    // selected thought in turn rather than navigating. The cleared state applies to the whole multiselection, so it
-    // must survive the traversal, e.g. so that Backspace deletes every cleared thought rather than merging the ones it
-    // no longer sees as cleared. It is reset when the command completes (see executeCommandWithMulticursor).
-    cursorCleared: state.isMulticursorExecuting ? state.cursorCleared : false,
+    // Reset cursorCleared on navigate, i.e. when the cursor moves to another thought. A cursor set on the thought it is
+    // already on, such as a tap that places the caret within the cleared thought, is not navigation and keeps it.
+    // It is also kept while a multicursor command is executing, which sets the cursor to each selected thought in turn
+    // rather than navigating. The cleared state applies to the whole multiselection, so it must survive the traversal,
+    // e.g. so that Backspace deletes every cleared thought rather than merging the ones it no longer sees as cleared. It
+    // is reset when the command completes (see executeCommandWithMulticursor).
+    cursorCleared:
+      state.isMulticursorExecuting || equalPath(thoughtsResolved, state.cursor) ? state.cursorCleared : false,
     cursorOffset: updatedOffset,
     expanded,
     noteFocus,

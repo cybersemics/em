@@ -3,6 +3,7 @@ import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { HOME_TOKEN } from '../../constants'
+import * as selection from '../../device/selection'
 import exportContext from '../../selectors/exportContext'
 import { getChildrenRanked } from '../../selectors/getChildren'
 import store from '../../stores/app'
@@ -241,6 +242,8 @@ it('moves dragged text to a single drop caret above the finger', async () => {
   expect(drop.defaultPrevented).toBe(true)
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - Sed et fringillalacus`)
+  // the caret lands after the dropped text
+  expect(selection.offsetFromNode(editable)).toBe('Sed et fringilla'.length)
   expect(getDropCaret()).toBeNull()
   expect(document.body.dataset.nativeTextDrag).toBeUndefined()
 

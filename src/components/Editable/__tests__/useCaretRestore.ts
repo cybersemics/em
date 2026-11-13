@@ -57,6 +57,8 @@ const mountEditMode = (editable: HTMLElement) =>
         contentRef: { current: editable as unknown as HTMLInputElement },
         isEditing: true,
         path: store.getState().cursor!,
+        // No tap places a caret in this test.
+        setCursorForTap: () => {},
         style: undefined,
         transient: undefined,
       }),
