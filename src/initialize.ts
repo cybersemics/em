@@ -37,6 +37,7 @@ import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
 import owner from './util/owner'
+import resumeImports from './util/resumeImports'
 import taskQueue from './util/taskQueue'
 
 /**
@@ -121,7 +122,8 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
   thoughtsLocalPromise.then(() => {
     // extra delay for good measure to not block rendering
     setTimeout(() => {
-      store.dispatch(importFiles({ resume: true }))
+      // resume imports that were interrupted by a refresh or crash
+      resumeImports.getAll().then(files => store.dispatch(importFiles({ resume: files })))
     }, 500)
   })
 
