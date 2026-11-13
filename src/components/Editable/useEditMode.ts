@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useRef } from 'react'
+import React, { useCallback, useEffect, useReducer, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { useStore } from 'react-redux'
 import { useDispatch } from 'react-redux'
@@ -11,7 +11,6 @@ import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import virtualKeyboard from '../../device/virtual-keyboard'
-import useFreshCallback from '../../hooks/useFreshCallback'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
@@ -77,7 +76,7 @@ const useEditMode = ({
   const editingOrOnCursor = isCursor || editing
 
   /** Updates the Redux cursor state for a tap and has the selection effect place the caret there. */
-  const setCaretOffset = useFreshCallback(
+  const setCaretOffset = useCallback(
     (offset: number) => {
       setCursorForTap({ offset })
       bumpCaretNonce()
