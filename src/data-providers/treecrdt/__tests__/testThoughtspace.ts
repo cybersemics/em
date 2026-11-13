@@ -4,6 +4,7 @@ import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import hashThought from '../../../util/hashThought'
 import type { DataProvider } from '../../DataProvider'
+import { encodeThoughtPayload } from '../payload'
 import createTreecrdtThoughtspace from '../runtime'
 import createTreecrdtDataProvider, { createIndexedChildrenMap } from '../thoughtspace'
 
@@ -81,8 +82,9 @@ it('does not write seed operations again when binding a seeded client', async ()
   const client = await createTreecrdtClient({ docId: 'seeded-client' })
   const replicaId = new Uint8Array(32).fill(1)
   try {
-    await createTreecrdtDataProvider().bindClient(client, replicaId)
+    const close = await createTreecrdtDataProvider().bindClient(client, replicaId)
     const operations = await client.ops.all()
+    await close()
     await createTreecrdtDataProvider().bindClient(client, replicaId)
     await expect(client.ops.all()).resolves.toEqual(operations)
   } finally {
@@ -143,6 +145,18 @@ it('uses indexed attribute values as childrenMap keys without changing TreeCRDT 
   expect(childrenMap[FALSE_ID]).toBe(FALSE_ID)
   expect(childrenMap.false).toBeUndefined()
   expect(Object.values(childrenMap)).toEqual([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID])
+})
+
+it('keys an attribute under its new parent and drops the key once it is renamed', async () => {
+  await initTestThoughtspace()
+  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0), thought(OTHER_PARENT_ID, EM_TOKEN, 'other', 1)])
+  await persistThoughts([thought(PIN_ID, PARENT_ID, '=pin', 0)])
+
+  await persistThoughts([thought(PIN_ID, OTHER_PARENT_ID, '=pin', 0)], { [PIN_ID]: null })
+  expect((await treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID))?.childrenMap['=pin']).toBe(PIN_ID)
+
+  await persistThoughts([thought(PIN_ID, OTHER_PARENT_ID, 'pin', 0)])
+  expect((await treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID))?.childrenMap['=pin']).toBeUndefined()
 })
 
 it('falls back to rank placement when explicit afterId is stale', async () => {
@@ -246,5 +260,24 @@ it('keeps separately created thoughtspace instances isolated', async () => {
   } finally {
     await first.drop()
     await second.drop()
+  }
+})
+
+it('resumes from its cursor after an interrupted index update', async () => {
+  const client = await createTreecrdtClient({ docId: 'partial-index-update' })
+  const replicaId = new Uint8Array(32).fill(1)
+  try {
+    const close = await createTreecrdtDataProvider().bindClient(client, replicaId)
+    await close()
+    // A commit that no provider indexed: the state the app leaves when it stops before the index update.
+    const payload = encodeThoughtPayload({ value: '=pin', created: 1, lastUpdated: 1, updatedBy: 'test' })
+    await client.local.insert(replicaId, EM_TOKEN, PIN_ID, { type: 'last' }, payload)
+
+    const reopened = createTreecrdtDataProvider()
+    const closeReopened = await reopened.bindClient(client, replicaId)
+    expect((await reopened.db.getThoughtById(EM_TOKEN))?.childrenMap['=pin']).toBe(PIN_ID)
+    await closeReopened()
+  } finally {
+    await client.drop()
   }
 })
