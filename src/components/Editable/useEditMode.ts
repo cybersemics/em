@@ -78,10 +78,13 @@ const useEditMode = ({
   const editMode = !isTouch || editing
   const editingOrOnCursor = isCursor || editing
 
-  /** Records the offset of a tap in the Redux cursor state, through Editable's setCursorForTap, which flushes the edit throttle first and applies what a tap does to the cursor. */
-  // A fresh callback rather than useCallback, because useRevertCorrection keeps the tap it is watching inside an effect
-  // that depends on it. setCursorForTap changes identity whenever the thought's edit state or path does, and a new
-  // identity here would tear that effect down and lose the watch in the middle of a tap.
+  /**
+   * Records the offset of a tap in the Redux cursor state, through Editable's setCursorForTap, which flushes the edit
+   * throttle first and applies what a tap does to the cursor. It is a fresh callback rather than a useCallback, because
+   * the effect in which useRevertCorrection keeps the tap it is watching depends on it. Editable's setCursorForTap
+   * changes identity whenever the thought's edit state or path does, and a new identity here would tear that effect
+   * down and lose the watch in the middle of a tap.
+   */
   const recordCaretOffset = useFreshCallback(
     (offset: number) => {
       setCursorForTap({ offset })
