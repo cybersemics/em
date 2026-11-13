@@ -482,6 +482,27 @@ describe('useFilteredCommands', () => {
       })
     })
 
+    describe('Search', () => {
+      it('should filter commands by search when no gesture is in progress', () => {
+        const { result } = renderHook(() => useFilteredCommands('net', { platformCommandsOnly: true }), { wrapper })
+
+        const labels = result.current.map(cmd => cmd.label)
+        expect(labels).toContain('New Thought')
+        // These have gestures, so the gesture filter alone keeps them. Only the search can remove them.
+        expect(labels).not.toContain('Back')
+        expect(labels).not.toContain('Categorize')
+        // n, e, and t all appear in this label, but the t falls in the middle of a word
+        expect(labels).not.toContain('New Subthought')
+      })
+
+      it('should not include the help command when it does not match the search', () => {
+        const { result } = renderHook(() => useFilteredCommands('net', { platformCommandsOnly: true }), { wrapper })
+
+        const commandIds = result.current.map(cmd => cmd.id)
+        expect(commandIds).not.toContain('openMobileCommandUniverse')
+      })
+    })
+
     describe('Gesture sorting', () => {
       it('should sort commands by gesture length first, then by label', () => {
         act(() => {

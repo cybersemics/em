@@ -55,8 +55,8 @@ const useFilteredCommands = (
     ]
 
     const possibleCommands = visibleCommandsChained.filter(command => {
-      // Always include help command in gesture mode
-      if (isTouch && command.id === 'openMobileCommandUniverse') return true
+      // Always include help command in gesture mode, unless the user is searching for something else
+      if (isTouch && !search && command.id === 'openMobileCommandUniverse') return true
       // Show cancel command on touch devices when a gesture is in progress
       if (isTouch && command.id === 'cancel' && gestureInProgress) return true
 
@@ -65,7 +65,16 @@ const useFilteredCommands = (
         if (command.hideFromGestureMenu) return false
 
         const commandGesture = gestureString(command)
-        return (!platformCommandsOnly || command.gesture) && commandGesture.startsWith(gestureInProgress)
+        return (
+          (!platformCommandsOnly || command.gesture) &&
+          commandGesture.startsWith(gestureInProgress) &&
+          // match the label that the Command Universe grid displays, which is the inverse label while the command is active
+          (!search ||
+            !!fuzzyWordMatch(
+              command.labelInverse && command.isActive?.(store.getState()) ? command.labelInverse : command.label,
+              search,
+            ))
+        )
       }
       // keyboard
       else {
