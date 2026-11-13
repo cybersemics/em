@@ -339,6 +339,9 @@ export const gestureString = (command: Command): Gesture =>
 /** Get a command by its id. Only use this for dynamic ids that are only known at runtime. If you know the id of the command at compile time, use a static import. */
 export const commandById = (id: CommandId): Command => commandIdIndex[id]
 
+/** Gets the command that a keydown activates, if any. */
+export const commandByKeyDown = (e: KeyboardEvent): Command | undefined => commandKeyIndex[hashKeyDown(e)]
+
 /** Generates a synthetic Command object that is the result of chaining two commands together. Prefixes gesture and label. */
 export const chainCommand = (command1: Command, command2: Command): Command => {
   const command1GestureString = gestureString(command1)
@@ -1049,7 +1052,7 @@ export const keyDown = (e: KeyboardEvent) => {
   // disable if desktop command universe is displayed
   if (state.showDesktopCommandUniverse) return
 
-  const command = commandKeyIndex[hashKeyDown(e)]
+  const command = commandByKeyDown(e)
   keyCommandIdStore.update({ id: command?.id ?? null })
 
   // disable if modal is shown, except for navigation commands
