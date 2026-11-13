@@ -57,30 +57,33 @@ const manager = (file: ResumeImport) => {
   return { del: () => deleteResumeImport(file.id), init, update }
 }
 
-/** Reconstructs every unfinished import from its manifest and its raw text in IDB, so that it can be handed to the import to resume from its checkpoint. A missing raw text is reconstructed as empty, which imports nothing and deletes the manifest. */
-const getAll = async (): Promise<(ResumeImport & { text: string })[]> => {
+/** Lists the unfinished imports recorded in the manifest. Synchronous, since the manifest is in localStorage, so that their names are known before their raw text has been read. */
+const list = (): ResumeImport[] => {
   const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
-  return Promise.all(
-    Object.values(resumeImports).map(async resumeImport => {
+  return Object.values(resumeImports).map(resumeImport => ({
+    id: resumeImport.id,
+    insertBefore: resumeImport.insertBefore,
+    lastModified: resumeImport.lastModified,
+    thoughtsImported: resumeImport.thoughtsImported,
+    name: resumeImport.name,
+    path: resumeImport.path,
+    size: resumeImport.size,
+  }))
+}
+
+/** Reads the raw text of each of the given unfinished imports from IDB, so that it can be handed to the import to resume from its checkpoint. A missing raw text is read as empty, which imports nothing and deletes the manifest. */
+const withText = (resumeImports: ResumeImport[]): Promise<(ResumeImport & { text: string })[]> =>
+  Promise.all(
+    resumeImports.map(async resumeImport => {
       const text = await idb.get<string>(resumeImportKey(resumeImport.id))
       if (text == null) {
         console.warn(`Resume file missing from IDB: ${resumeImport.id}`, resumeImport)
       }
-      return {
-        id: resumeImport.id,
-        insertBefore: resumeImport.insertBefore,
-        lastModified: resumeImport.lastModified,
-        thoughtsImported: resumeImport.thoughtsImported,
-        name: resumeImport.name,
-        path: resumeImport.path,
-        size: resumeImport.size,
-        text: text ?? '',
-      }
+      return { ...resumeImport, text: text ?? '' }
     }),
   )
-}
 
 /** Persistence of unfinished file imports, so that an import interrupted by a refresh or crash is resumed on the next initialize. The localStorage manifest records each import's destination and the number of thoughts imported so far, and the raw text is stored in IDB. */
-const resumeImports = { delete: deleteResumeImport, getAll, manager }
+const resumeImports = { delete: deleteResumeImport, list, manager, withText }
 
 export default resumeImports

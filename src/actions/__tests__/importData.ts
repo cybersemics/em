@@ -749,8 +749,7 @@ it('resumes an interrupted import from its checkpoint when the app initializes',
   await stored
 
   const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
-  const remaining = resumeImports.getAll()
-  await vi.runAllTimersAsync()
+  const remaining = resumeImports.list()
 
   cleanup()
 
@@ -761,7 +760,7 @@ it('resumes an interrupted import from its checkpoint when the app initializes',
     - d
 `)
   // the manifest is deleted once the import is complete, so it is not resumed again
-  expect(await remaining).toEqual([])
+  expect(remaining).toEqual([])
 })
 
 // https://github.com/cybersemics/em/issues/2712
