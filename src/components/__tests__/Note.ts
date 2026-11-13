@@ -1,10 +1,12 @@
 import { fireEvent, screen } from '@testing-library/dom'
+import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { redoActionCreator as redo } from '../../actions/redo'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { HOME_TOKEN } from '../../constants'
+import * as selection from '../../device/selection'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getChildrenSorted } from '../../selectors/getChildren'
@@ -564,6 +566,41 @@ describe('=note/=path', () => {
     expect(getChildrenSorted(state, targetId).map(child => child.value)).toEqual(['c', 'de'])
 
     await act(vi.runAllTimersAsync)
+  })
+
+  // https://github.com/cybersemics/em/issues/6290
+  test.skip('undoes contiguous typing in a path note as one edit', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - =path
+              - b
+          - b
+            - x`,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      noteEditor.focus()
+      selection.set(noteEditor, { offset: 'x'.length })
+    })
+
+    const user = userEvent.setup({ delay: null })
+    await user.keyboard('yz')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      store.dispatch(undo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    const targetId = contextToThoughtId(store.getState(), ['a', 'b'])!
+    expect(getChildrenSorted(store.getState(), targetId).map(child => child.value)).toEqual(['x'])
   })
 
   test('undoes and redoes a multi-child path note edit atomically', async () => {
