@@ -58,12 +58,9 @@ it('records the other end of the tapped word when iOS places the caret there, an
 })
 
 // https://github.com/cybersemics/em/issues/6178
-it('puts back the jump of a tap above the line, and the move back after it', () => {
+it('puts back the jump of a tap above the line without changing the phase, and the move back after it', () => {
   const jumped = stepRevertWatch(tap(offsetAfterHello, offsetBeforeThe, 'start'), { current: 0, length })
-  expect(jumped).toEqual({
-    watch: { ...tap(offsetAfterHello, offsetBeforeThe, 'start'), phase: 'jumped' },
-    effect: 'putBack',
-  })
+  expect(jumped).toEqual({ watch: tap(offsetAfterHello, offsetBeforeThe, 'start'), effect: 'putBack' })
 
   expect(stepRevertWatch(jumped.watch!, { current: offsetBeforeThe, length })).toEqual({
     watch: { ...jumped.watch!, phase: 'reverted' },
@@ -71,19 +68,24 @@ it('puts back the jump of a tap above the line, and the move back after it', () 
   })
 })
 
-it('does not take the put-back of a jump for the placement, so iOS placing the caret after it is still recorded', () => {
+it("returns the caret to getCaretOffset's choice when iOS places it at the other end of the word after a jump", () => {
   const jumped = stepRevertWatch(tap(offsetBeforeThe, offsetBeforeIn, 'end'), { current: length, length })
   expect(jumped.effect).toBe('putBack')
 
-  // the put-back's own selectionchange, which a device may or may not deliver
-  expect(stepRevertWatch(jumped.watch!, { current: offsetBeforeThe, length })).toEqual({
-    watch: jumped.watch,
+  // the put-back's own selectionchange, on a device that delivers it, is taken for the placement
+  const placed = stepRevertWatch(jumped.watch!, { current: offsetBeforeThe, length })
+  expect(placed).toEqual({ watch: { ...jumped.watch!, phase: 'placed' }, effect: null })
+
+  // so iOS placing the caret at the other end of the word is left alone
+  expect(stepRevertWatch(placed.watch!, { current: offsetAfterThe, length })).toEqual({
+    watch: placed.watch,
     effect: null,
   })
 
-  expect(stepRevertWatch(jumped.watch!, { current: offsetAfterThe, length })).toEqual({
-    watch: { ...jumped.watch!, offset: offsetAfterThe, phase: 'placed' },
-    effect: 'record',
+  // and its move back is put back to getCaretOffset's choice
+  expect(stepRevertWatch(placed.watch!, { current: offsetBeforeIn, length })).toEqual({
+    watch: { ...placed.watch!, phase: 'reverted' },
+    effect: 'putBack',
   })
 })
 

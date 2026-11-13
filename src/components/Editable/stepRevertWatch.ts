@@ -2,12 +2,6 @@
 type Phase =
   /** Waiting for iOS's first move after the touchend. */
   | 'awaiting'
-  /**
-   * The jump of a tap at the edge has been put back, and iOS's placement or move back is still to come. Unlike
-   * awaiting, a move to the tapped offset does not count as the placement, since it may be the put-back's own
-   * selectionchange, which arrives as a separate event on some devices and not on others.
-   */
-  | 'jumped'
   /** The caret has been placed at the tapped word, and iOS may yet move it back. */
   | 'placed'
   /** The move back has been put right, and iOS does not move the caret again. */
@@ -51,19 +45,20 @@ const stepRevertWatch = (
   if (current === offset) {
     // The put-back's own selectionchange, or iOS placing the caret where getCaretOffset did. While awaiting, this is
     // iOS's placement, and the move back is what comes next, except after a tap on the caret, which has no move back
-    // to come and ends the watch here. In any other phase, it changes nothing.
+    // to come and ends the watch here. Once placed or reverted, it changes nothing.
     return {
       watch: phase !== 'awaiting' ? watch : canRevert ? { ...watch, phase: 'placed' } : null,
       effect: null,
     }
   }
 
-  // Neither the placement nor the move back has come yet.
-  const unplaced = phase === 'awaiting' || phase === 'jumped'
-
-  if (unplaced && ((edge === 'start' && current === 0) || (edge === 'end' && current === length))) {
-    // the jump of a tap at the edge, after which iOS still places the caret or moves it back
-    return { watch: { ...watch, phase: 'jumped' }, effect: 'putBack' }
+  if (phase === 'awaiting' && ((edge === 'start' && current === 0) || (edge === 'end' && current === length))) {
+    // The jump of a tap at the edge (#6178) is put back without changing the phase, since iOS's placement or move back
+    // is still to come. On the devices that deliver the put-back's own selectionchange, that is then taken for the
+    // placement. It makes no difference to what iOS does after a jump, which is to move the caret back, sometimes after
+    // a move to the tapped offset. If iOS ever placed the caret at the other end of the word after a jump, the watch
+    // would leave that move alone, and its move back would return the caret to getCaretOffset's choice.
+    return { watch, effect: 'putBack' }
   }
 
   if (canRevert && phase !== 'reverted' && current === before) {
@@ -72,7 +67,7 @@ const stepRevertWatch = (
     return { watch: { ...watch, phase: 'reverted' }, effect: 'putBack' }
   }
 
-  if (unplaced && canRevert) {
+  if (phase === 'awaiting' && canRevert) {
     // iOS placing the caret at the other end of the tapped word from getCaretOffset's choice. iOS's placement is where
     // the tap lands, so it replaces getCaretOffset's offset, both as the offset a put-back restores and in Redux.
     return { watch: { ...watch, offset: current, phase: 'placed' }, effect: 'record' }
