@@ -5,6 +5,7 @@ import { css, cx } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import Modal from '../@types/Modal'
+import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import fontSizeDown from '../actions/fontSizeDown'
 import fontSizeUp from '../actions/fontSizeUp'
@@ -246,16 +247,32 @@ const Footer = () => {
   // })
 
   const _fontSize = useRef(fontSize)
+  /** The font size that a font size button changed to, so that the change scrolls to the bottom once it is laid out. */
+  const fontSizeFromButton = useRef<number | null>(null)
 
   // alert when font size changes
   useEffect(() => {
     // prevent alert dispatch when rendered for first time
     if (_fontSize.current !== fontSize) {
       dispatch(alert(`Font size: ${fontSize}`))
-      scrollTo('bottom')
+      // Keep the buttons under the pointer as the thoughts above them grow or shrink (#1152). A change from anywhere
+      // else, such as a command or Settings, leaves the scroll position alone and the cursor in view (#6273).
+      if (fontSizeFromButton.current === fontSize) {
+        scrollTo('bottom')
+      }
+      fontSizeFromButton.current = null
       _fontSize.current = fontSize
     }
   }, [dispatch, fontSize])
+
+  /** Changes the font size from a font size button, and records the font size it changed to, so that the change scrolls to the bottom once the thoughts have been laid out at it. At the minimum or maximum font size the button changes nothing, and nothing is recorded. */
+  const changeFontSize = (action: Thunk) =>
+    dispatch((dispatch, getState) => {
+      const fontSizeBefore = getState().fontSize
+      dispatch(action)
+      const fontSizeAfter = getState().fontSize
+      fontSizeFromButton.current = fontSizeAfter !== fontSizeBefore ? fontSizeAfter : null
+    })
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
@@ -292,7 +309,7 @@ const Footer = () => {
               paddingRight: '12px',
               userSelect: 'none',
             })}
-            {...fastClick(() => dispatch(fontSizeUp()))}
+            {...fastClick(() => changeFontSize(fontSizeUp()))}
           >
             A
           </a>
@@ -305,7 +322,7 @@ const Footer = () => {
               paddingRight: '12px',
               userSelect: 'none',
             })}
-            {...fastClick(() => dispatch(fontSizeDown()))}
+            {...fastClick(() => changeFontSize(fontSizeDown()))}
           >
             A
           </a>
