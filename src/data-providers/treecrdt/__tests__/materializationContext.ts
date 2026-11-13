@@ -1,24 +1,17 @@
-import type { MaterializationListener } from '@treecrdt/interface/engine'
 import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
-import { EM_TOKEN } from '../../../constants'
-import type { DataProvider } from '../../DataProvider'
-import type { enqueueMaterializedThoughtsToStore as EnqueueMaterializedThoughtsToStore } from '../sync/applyMaterializedThoughtsToStore'
+import { EM_TOKEN, SETTINGS_TOKEN } from '../../../constants'
+import hashThought from '../../../util/hashThought'
+import type { ThoughtspaceMaterializationSnapshot } from '../../thoughtspace'
+import { waitForMaterializedThoughtsToStore } from '../sync/materializationQueue'
 import createTreecrdtDataProvider from '../thoughtspace'
-
-const { enqueueMaterializedThoughtsToStore } = vi.hoisted(() => ({
-  enqueueMaterializedThoughtsToStore: vi.fn().mockResolvedValue(undefined),
-}))
-
-vi.mock('../sync', async importOriginal => {
-  const actual = await importOriginal<typeof import('../sync')>()
-  return { ...actual, enqueueMaterializedThoughtsToStore }
-})
+import { withTreecrdtWriteBarrier } from '../writeBarrier'
 
 const THOUGHT_ID = '00000000000000000000000000000201' as ThoughtId
+const REPLICA_ID = new Uint8Array(32).fill(1)
 
-/** Creates a minimal thought fixture for the materialization context regression. */
+/** Creates a minimal thought fixture. */
 const thought = (value: string) => ({
   id: THOUGHT_ID,
   parentId: EM_TOKEN,
@@ -30,56 +23,120 @@ const thought = (value: string) => ({
   updatedBy: 'test',
 })
 
-/** Persists one thought through the public provider. */
-const persistThought = (db: Pick<DataProvider, 'updateThoughts'>, value: string) =>
-  db.updateThoughts({
-    thoughtIndexUpdates: { [THOUGHT_ID]: thought(value) },
-    lexemeIndexUpdates: {},
+let client: Awaited<ReturnType<typeof createTreecrdtClient>>
+let provider: ReturnType<typeof createTreecrdtDataProvider>
+let close: () => Promise<void>
+let snapshot: ThoughtspaceMaterializationSnapshot
+const getSnapshot = vi.fn()
+const apply = vi.fn()
+
+beforeEach(async () => {
+  client = await createTreecrdtClient({ docId: 'materialization-context' })
+  provider = createTreecrdtDataProvider()
+  snapshot = { thoughtIndex: {}, lexemeIndex: {} }
+  getSnapshot.mockReset().mockImplementation(() => snapshot)
+  apply.mockReset().mockImplementation(updates => {
+    snapshot = {
+      thoughtIndex: { ...snapshot.thoughtIndex, ...updates.thoughtIndex },
+      lexemeIndex: { ...snapshot.lexemeIndex, ...updates.lexemeIndex },
+    }
   })
+  close = await provider.bindClient(client, REPLICA_ID, { getSnapshot, apply })
+})
 
-it('retains the originating materialization context after rebinding the provider', async () => {
-  const clientOne = await createTreecrdtClient({ docId: 'materialization-context-one' })
-  const clientTwo = await createTreecrdtClient({ docId: 'materialization-context-two' })
-  const provider = createTreecrdtDataProvider()
-  const bridgeOne = {
-    getSnapshot: () => ({ thoughtIndex: {}, lexemeIndex: {} }),
-    apply: vi.fn(),
-  }
-  const bridgeTwo = {
-    getSnapshot: () => ({ thoughtIndex: {}, lexemeIndex: {} }),
-    apply: vi.fn(),
-  }
+afterEach(async () => {
+  await close()
+  await waitForMaterializedThoughtsToStore()
+  await client.drop()
+})
 
-  let onMaterializedOne: MaterializationListener | undefined
-  vi.spyOn(clientOne, 'onMaterialized').mockImplementation(listener => {
-    onMaterializedOne = listener
-    return () => undefined
+it('publishes coalesced local events once without republishing local thoughts', async () => {
+  await withTreecrdtWriteBarrier(async () => {
+    await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } })
+    await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('b') } })
   })
+  await waitForMaterializedThoughtsToStore()
 
-  try {
-    await provider.bindClient(clientOne, new Uint8Array(32).fill(1), bridgeOne)
-    await persistThought(provider.db, 'client one')
+  expect(apply).toHaveBeenCalledTimes(1)
+  expect(apply.mock.calls[0][0].thoughtIndex).toEqual({})
+  expect(snapshot.lexemeIndex[hashThought('b')].contexts).toEqual([THOUGHT_ID])
 
-    provider.resetBinding(new Error('switch client binding'))
-    await provider.bindClient(clientTwo, new Uint8Array(32).fill(2), bridgeTwo)
-    await persistThought(provider.db, 'client two')
+  apply.mockClear()
+  // An order-only write produces an event, but must not republish unchanged memberships.
+  await withTreecrdtWriteBarrier(() =>
+    provider.db.updateThoughts({
+      thoughtIndexUpdates: { [THOUGHT_ID]: thought('b') },
+      movePlacements: { [THOUGHT_ID]: SETTINGS_TOKEN },
+    }),
+  )
+  await waitForMaterializedThoughtsToStore()
+  expect(apply).not.toHaveBeenCalled()
+})
 
-    onMaterializedOne?.({
-      headSeq: 1,
-      changes: [{ kind: 'payload', node: THOUGHT_ID, payload: null }],
-    })
+it('retries stale membership readback after a newer optimistic rename and persistence', async () => {
+  // A round reads the store again after readback. A rename that lands there makes that readback stale.
+  getSnapshot.mockImplementationOnce(() => snapshot)
+  getSnapshot.mockImplementationOnce(() => {
+    snapshot = { ...snapshot, thoughtIndex: { [THOUGHT_ID]: thought('b') } }
+    void withTreecrdtWriteBarrier(() =>
+      provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('b') } }),
+    )
+    return snapshot
+  })
+  await withTreecrdtWriteBarrier(() =>
+    provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
+  )
+  await waitForMaterializedThoughtsToStore()
 
-    expect(enqueueMaterializedThoughtsToStore).toHaveBeenCalledTimes(1)
-    const [, context] = enqueueMaterializedThoughtsToStore.mock.calls[0] as unknown as Parameters<
-      typeof EnqueueMaterializedThoughtsToStore
-    >
+  expect(apply).toHaveBeenCalledTimes(1)
+  expect(snapshot.lexemeIndex[hashThought('a')]).toBeUndefined()
+  expect(snapshot.lexemeIndex[hashThought('b')].contexts).toEqual([THOUGHT_ID])
+})
 
-    expect(context.bridge).toBe(bridgeOne)
-    expect(context.db).not.toBe(provider.db)
-    await expect(context.db.getThoughtById(THOUGHT_ID)).resolves.toMatchObject({ value: 'client one' })
-    await expect(provider.db.getThoughtById(THOUGHT_ID)).resolves.toMatchObject({ value: 'client two' })
-  } finally {
-    await clientOne.drop()
-    await clientTwo.drop()
-  }
+it('publishes pending memberships on the next edit after a failed publication', async () => {
+  const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  getSnapshot.mockImplementationOnce(() => {
+    throw new Error('transient store read')
+  })
+  await withTreecrdtWriteBarrier(() =>
+    provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
+  )
+  await expect(waitForMaterializedThoughtsToStore()).rejects.toThrow('transient store read')
+
+  const laterThought = { ...thought('b'), id: '00000000000000000000000000000202' as ThoughtId }
+  await withTreecrdtWriteBarrier(() =>
+    provider.db.updateThoughts({ thoughtIndexUpdates: { [laterThought.id]: laterThought } }),
+  )
+  await waitForMaterializedThoughtsToStore()
+
+  expect(snapshot.lexemeIndex[hashThought('a')]?.contexts).toEqual([THOUGHT_ID])
+  expect(snapshot.lexemeIndex[hashThought('b')]?.contexts).toEqual([laterThought.id])
+  report.mockRestore()
+})
+
+it('does not publish an old binding after the provider is reset during readback', async () => {
+  getSnapshot.mockImplementationOnce(() => snapshot)
+  getSnapshot.mockImplementationOnce(() => {
+    provider.resetBinding(new Error('switch thoughtspace'))
+    return snapshot
+  })
+  await withTreecrdtWriteBarrier(() =>
+    provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
+  )
+  await waitForMaterializedThoughtsToStore()
+  expect(apply).not.toHaveBeenCalled()
+})
+
+it('updates stored memberships on incoming deletion even when its thought was not loaded', async () => {
+  await withTreecrdtWriteBarrier(() =>
+    provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
+  )
+  await waitForMaterializedThoughtsToStore()
+  snapshot = { thoughtIndex: {}, lexemeIndex: {} }
+  await client.local.delete(new Uint8Array(32).fill(2), THOUGHT_ID)
+  await waitForMaterializedThoughtsToStore()
+
+  await expect(provider.db.getLexemeById(hashThought('a'))).resolves.toBeUndefined()
+  // No deleted thought is loaded back into the view.
+  expect(snapshot.thoughtIndex[THOUGHT_ID]).toBeNull()
 })

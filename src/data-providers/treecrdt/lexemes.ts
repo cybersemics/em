@@ -1,83 +1,134 @@
-/* eslint-disable import/prefer-default-export */
+import type { Change } from '@treecrdt/interface/engine'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Lexeme from '../../@types/Lexeme'
+import type ThoughtId from '../../@types/ThoughtId'
+import type Timestamp from '../../@types/Timestamp'
+import { GLOBAL_ROOT_TOKEN } from '../../constants'
+import hashThought from '../../util/hashThought'
+import { decodeThoughtPayload } from './payload'
+import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 
-/** Application-owned lexeme rows in the same SQLite DB as TreeCRDT (not part of the CRDT tree). */
-const TABLE = 'em_lexemes'
-const schemaReady = new WeakSet<TreecrdtClient>()
+const TABLE = 'em_lexeme_memberships'
+const FAVORITE_KEY = hashThought('=favorite')
+const ROOT_IDS = new Set<string>([GLOBAL_ROOT_TOKEN, ...SYSTEM_ROOT_THOUGHT_IDS])
 
-const DDL = `
-CREATE TABLE IF NOT EXISTS ${TABLE} (
-  id TEXT PRIMARY KEY NOT NULL,
-  payload_json TEXT NOT NULL
-);
-`
+/** Hashes of the values a change batch carried. A later write may have replaced one in storage while Redux still shows it. */
+export const payloadKeys = (changes: readonly Change[]): string[] =>
+  changes.flatMap(change =>
+    !ROOT_IDS.has(change.node) && 'payload' in change && change.payload
+      ? [hashThought(decodeThoughtPayload(change.payload).value)]
+      : [],
+  )
 
-/**
- * Injects bound parameters into SQL for `runner.exec`, which does not accept bind args.
- * Only `?1` … `?n` placeholders are supported, in order.
- */
-function bindParams(sql: string, params: (string | number | null)[]): string {
-  let out = sql
-  for (let i = params.length - 1; i >= 0; i--) {
-    const p = params[i]
-    const lit = p === null ? 'NULL' : typeof p === 'number' ? String(p) : `'${String(p).replace(/'/g, "''")}'`
-    out = out.replace(new RegExp(`\\?${i + 1}\\b`, 'g'), lit)
+/** Maintains one membership per live thought, independent of which contexts Redux has loaded. */
+const createLexemeIndex = async (client: TreecrdtClient) => {
+  await client.runner.exec(`
+    CREATE TABLE IF NOT EXISTS ${TABLE} (
+      thought_id TEXT PRIMARY KEY NOT NULL,
+      lexeme_hash TEXT NOT NULL,
+      created INTEGER NOT NULL,
+      last_updated INTEGER NOT NULL,
+      updated_by TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_${TABLE}_hash ON ${TABLE} (lexeme_hash);
+    CREATE TABLE IF NOT EXISTS em_favorite_order (
+      id INTEGER PRIMARY KEY CHECK (id = 1), contexts_json TEXT NOT NULL
+    );
+    -- Held whole lexemes before memberships; older databases may still have it.
+    DROP TABLE IF EXISTS em_lexemes;
+  `)
+
+  /** Saves explicit ordering intent separately from membership updates, which must not prune it. */
+  const setFavoriteOrder = (contexts: ThoughtId[]) =>
+    client.runner.run('INSERT OR REPLACE INTO em_favorite_order (id, contexts_json) VALUES (1, ?1)', [
+      JSON.stringify(contexts),
+    ])
+
+  /** Updates memberships from one event's changes and returns the affected hashes. Moves change no membership. */
+  const applyChanges = async (changes: readonly Change[]): Promise<string[]> => {
+    // Keep each thought's last value, or null once it is gone: one event can carry several changes for one thought.
+    const latest = new Map<string, Uint8Array | null>()
+    for (const change of changes) {
+      if (change.kind !== 'move' && !ROOT_IDS.has(change.node)) {
+        latest.set(change.node, change.kind === 'delete' ? null : change.payload)
+      }
+    }
+    if (latest.size === 0) return []
+    // The hashes these thoughts are listed under now, which lose them if the value changed or the thought is gone.
+    const before = JSON.parse(
+      (await client.runner.getText(
+        `SELECT json_group_array(lexeme_hash) FROM ${TABLE} WHERE thought_id IN (SELECT value FROM json_each(?1))`,
+        [JSON.stringify([...latest.keys()])],
+      ))!,
+    ) as string[]
+    const gone = [...latest.keys()].filter(id => !latest.get(id))
+    const rows = [...latest].flatMap(([id, payload]) => {
+      if (!payload) return []
+      const { value, created, lastUpdated, updatedBy } = decodeThoughtPayload(payload)
+      return [[id, hashThought(value), created, lastUpdated, updatedBy]]
+    })
+    if (gone.length > 0) {
+      await client.runner.run(`DELETE FROM ${TABLE} WHERE thought_id IN (SELECT value FROM json_each(?1))`, [
+        JSON.stringify(gone),
+      ])
+    }
+    if (rows.length > 0) {
+      await client.runner.run(
+        `INSERT OR REPLACE INTO ${TABLE} (thought_id, lexeme_hash, created, last_updated, updated_by)
+         SELECT value->>0, value->>1, value->>2, value->>3, value->>4 FROM json_each(?1)`,
+        [JSON.stringify(rows)],
+      )
+    }
+    // payloadKeys adds the new hashes, and any value in between that Redux may still show.
+    return [...new Set([...before, ...payloadKeys(changes)])]
   }
-  return out
-}
 
-/** Serializes a Lexeme to JSON for storage in `payload_json`. */
-function serializeLexeme(lexeme: Lexeme): string {
-  return JSON.stringify(lexeme)
-}
+  /** Removes every membership before a full read rebuilds them. */
+  const clear = () => client.runner.exec(`DELETE FROM ${TABLE}`)
 
-/** Parses a stored `payload_json` string into a Lexeme. */
-function parseLexemeJson(text: string): Lexeme {
-  return JSON.parse(text) as Lexeme
-}
-
-/** Ensures the lexeme table exists. Safe to call on every init. */
-export async function ensureLexemesSchema(client: TreecrdtClient): Promise<void> {
-  if (schemaReady.has(client)) return
-  await client.runner.exec(DDL)
-  schemaReady.add(client)
-}
-
-/** Loads one lexeme by id (lexeme key / hash). */
-export async function getLexemeById(client: TreecrdtClient, id: string): Promise<Lexeme | undefined> {
-  await ensureLexemesSchema(client)
-  const text = await client.runner.getText(`SELECT payload_json FROM ${TABLE} WHERE id = ?1`, [id])
-  if (!text) return undefined
-  return parseLexemeJson(text)
-}
-
-/** Loads lexemes for the given ids; order matches `ids`. */
-export async function getLexemesByIds(client: TreecrdtClient, ids: string[]): Promise<(Lexeme | undefined)[]> {
-  if (ids.length === 0) return []
-  await ensureLexemesSchema(client)
-  const placeholders = ids.map(() => '?').join(',')
-  const sql = `SELECT json_group_array(json_object('id', id, 'lexeme', json(payload_json))) FROM ${TABLE} WHERE id IN (${placeholders})`
-  const text = await client.runner.getText(sql, ids)
-  if (!text) return ids.map(() => undefined)
-  const rows = JSON.parse(text) as ({ id: string; lexeme: Lexeme } | null)[]
-  const map = new Map<string, Lexeme>()
-  for (const row of rows) {
-    if (row && row.id) map.set(row.id, row.lexeme)
+  /** Assembles Lexemes from memberships, preserving requested key order. */
+  const getLexemesByIds = async (keys: string[]): Promise<(Lexeme | undefined)[]> => {
+    if (keys.length === 0) return []
+    const text = await client.runner.getText(
+      `SELECT json_group_array(json_object('id', thought_id, 'key', lexeme_hash,
+        'created', created, 'lastUpdated', last_updated, 'updatedBy', updated_by) ORDER BY created, thought_id)
+       FROM ${TABLE} WHERE lexeme_hash IN (SELECT value FROM json_each(?1))`,
+      [JSON.stringify(keys)],
+    )
+    const rows = JSON.parse(text!) as {
+      id: ThoughtId
+      key: string
+      created: Timestamp
+      lastUpdated: Timestamp
+      updatedBy: string
+    }[]
+    const lexemes = new Map<string, Lexeme>()
+    for (const { id, key, created, lastUpdated, updatedBy } of rows) {
+      const lexeme = lexemes.get(key)
+      if (!lexeme) {
+        lexemes.set(key, { contexts: [id], created, lastUpdated, updatedBy })
+      } else {
+        lexeme.contexts.push(id)
+        if (lastUpdated >= lexeme.lastUpdated) {
+          lexeme.lastUpdated = lastUpdated
+          lexeme.updatedBy = updatedBy
+        }
+      }
+    }
+    const favorites = lexemes.get(FAVORITE_KEY)
+    if (favorites) {
+      const text = await client.runner.getText('SELECT contexts_json FROM em_favorite_order WHERE id = 1')
+      const order = new Set(JSON.parse(text ?? '[]') as ThoughtId[])
+      const members = new Set(favorites.contexts)
+      favorites.contexts = [
+        ...[...order].filter(id => members.has(id)),
+        ...favorites.contexts.filter(id => !order.has(id)),
+      ]
+    }
+    return keys.map(key => lexemes.get(key))
   }
-  return ids.map(id => map.get(id))
+
+  return { applyChanges, clear, setFavoriteOrder, getLexemesByIds }
 }
 
-/** Inserts or replaces a lexeme row. */
-export async function upsertLexeme(client: TreecrdtClient, id: string, lexeme: Lexeme): Promise<void> {
-  await ensureLexemesSchema(client)
-  const sql = `INSERT INTO ${TABLE} (id, payload_json) VALUES (?1, ?2)
-    ON CONFLICT(id) DO UPDATE SET payload_json = excluded.payload_json`
-  await client.runner.exec(bindParams(sql, [id, serializeLexeme(lexeme)]))
-}
-
-/** Deletes a lexeme row by id. */
-export async function deleteLexeme(client: TreecrdtClient, id: string): Promise<void> {
-  await ensureLexemesSchema(client)
-  await client.runner.exec(bindParams(`DELETE FROM ${TABLE} WHERE id = ?1`, [id]))
-}
+export default createLexemeIndex

@@ -19,7 +19,6 @@ let createRealTreecrdtClient!: TreecrdtModule['createTreecrdtClient']
 
 const emptyUpdates = {
   thoughtIndexUpdates: {},
-  lexemeIndexUpdates: {},
 }
 
 beforeAll(async () => {

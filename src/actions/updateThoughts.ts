@@ -81,6 +81,7 @@ const updateThoughts = (
   state: State,
   {
     cursorOffset,
+    favoriteOrder,
     lexemeIndexUpdates,
     thoughtIndexUpdates,
     recentlyEdited,
@@ -140,6 +141,7 @@ const updateThoughts = (
 
   // updates are queued, detected by the pushQueue middleware, and sync'd with the local and remote stores
   const batch: PushBatch = {
+    favoriteOrder,
     idbSynced,
     lexemeIndexUpdates,
     local,

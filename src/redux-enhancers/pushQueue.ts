@@ -115,8 +115,8 @@ const pushQueue: StoreEnhancer<any> =
         const applyDbQueue = async () => {
           await thoughtspaceRuntime.persistPushQueueBatches(
             (dbQueue ?? []).map(batch => ({
+              favoriteOrder: batch.favoriteOrder,
               thoughtIndexUpdates: batch.thoughtIndexUpdates,
-              lexemeIndexUpdates: batch.lexemeIndexUpdates,
               movePlacements: batch.movePlacements,
               local: batch.local,
             })),
