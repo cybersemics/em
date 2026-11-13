@@ -1,4 +1,4 @@
-import type { Change, TreecrdtChangedNode } from '@treecrdt/interface/engine'
+import type { Change } from '@treecrdt/interface/engine'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Lexeme from '../../@types/Lexeme'
 import type ThoughtId from '../../@types/ThoughtId'
@@ -11,9 +11,6 @@ import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 const TABLE = 'em_lexeme_memberships'
 const FAVORITE_KEY = hashThought('=favorite')
 const ROOT_IDS = new Set<string>([GLOBAL_ROOT_TOKEN, ...SYSTEM_ROOT_THOUGHT_IDS])
-
-/** The node state a membership depends on, from a changedSince page or a materialization change. */
-type MembershipNode = Pick<TreecrdtChangedNode, 'node' | 'tombstone' | 'payload'>
 
 /** Hashes of the values a change batch carried. A later write may have replaced one in storage while Redux still shows it. */
 export const payloadKeys = (changes: readonly Change[]): string[] =>
@@ -45,75 +42,43 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
       JSON.stringify(contexts),
     ])
 
-  /** Replaces the memberships of changed nodes from their current state, returning every affected hash. */
-  const applyNodes = async (nodes: readonly MembershipNode[]): Promise<string[]> => {
-    // Keep each node's last state: one event can carry several changes for the same node.
-    const latest = new Map<string, MembershipNode>()
-    for (const node of nodes) if (!ROOT_IDS.has(node.node)) latest.set(node.node, node)
-    if (latest.size === 0) return []
-    const previous = JSON.parse(
-      (await client.runner.getText(
-        `SELECT json_group_object(thought_id, json_array(lexeme_hash, created, last_updated, updated_by)) FROM ${TABLE}
-         WHERE thought_id IN (SELECT value FROM json_each(?1))`,
-        [JSON.stringify([...latest.keys()])],
-      )) ?? '{}',
-    ) as Record<string, [string, number, number, string]>
-    const keys = new Set<string>()
-    const gone: string[] = []
-    const live: [string, string, number, number, string][] = []
-    for (const node of latest.values()) {
-      const before = previous[node.node]
-      if (node.tombstone || !node.payload) {
-        if (!before) continue
-        keys.add(before[0])
-        gone.push(node.node)
-        continue
+  /** Updates memberships from one event's changes and returns the affected hashes. Moves change no membership. */
+  const applyChanges = async (changes: readonly Change[]): Promise<string[]> => {
+    // Keep each thought's last value, or null once it is gone: one event can carry several changes for one thought.
+    const latest = new Map<string, Uint8Array | null>()
+    for (const change of changes) {
+      if (change.kind !== 'move' && !ROOT_IDS.has(change.node)) {
+        latest.set(change.node, change.kind === 'delete' ? null : change.payload)
       }
-      const payload = decodeThoughtPayload(node.payload)
-      const row: [string, string, number, number, string] = [
-        node.node,
-        hashThought(payload.value),
-        payload.created,
-        payload.lastUpdated,
-        payload.updatedBy,
-      ]
-      // Skip rows that already match, such as a node whose payload did not change.
-      if (before && before.every((value, i) => value === row[i + 1])) continue
-      if (before) keys.add(before[0])
-      keys.add(row[1])
-      live.push(row)
     }
+    if (latest.size === 0) return []
+    // The hashes these thoughts are listed under now, which lose them if the value changed or the thought is gone.
+    const before = JSON.parse(
+      (await client.runner.getText(
+        `SELECT json_group_array(lexeme_hash) FROM ${TABLE} WHERE thought_id IN (SELECT value FROM json_each(?1))`,
+        [JSON.stringify([...latest.keys()])],
+      ))!,
+    ) as string[]
+    const gone = [...latest.keys()].filter(id => !latest.get(id))
+    const rows = [...latest].flatMap(([id, payload]) => {
+      if (!payload) return []
+      const { value, created, lastUpdated, updatedBy } = decodeThoughtPayload(payload)
+      return [[id, hashThought(value), created, lastUpdated, updatedBy]]
+    })
     if (gone.length > 0) {
       await client.runner.run(`DELETE FROM ${TABLE} WHERE thought_id IN (SELECT value FROM json_each(?1))`, [
         JSON.stringify(gone),
       ])
     }
-    if (live.length > 0) {
+    if (rows.length > 0) {
       await client.runner.run(
-        `INSERT INTO ${TABLE} (thought_id, lexeme_hash, created, last_updated, updated_by)
-         SELECT value->>0, value->>1, value->>2, value->>3, value->>4 FROM json_each(?1) WHERE true
-         ON CONFLICT(thought_id) DO UPDATE SET lexeme_hash = excluded.lexeme_hash, created = excluded.created,
-           last_updated = excluded.last_updated, updated_by = excluded.updated_by`,
-        [JSON.stringify(live)],
+        `INSERT OR REPLACE INTO ${TABLE} (thought_id, lexeme_hash, created, last_updated, updated_by)
+         SELECT value->>0, value->>1, value->>2, value->>3, value->>4 FROM json_each(?1)`,
+        [JSON.stringify(rows)],
       )
     }
-    return [...keys]
-  }
-
-  /** Updates memberships from one event's changes and returns the affected hashes. Moves change no membership. */
-  const applyChanges = async (changes: readonly Change[]): Promise<string[]> => {
-    const nodes = changes.flatMap(change =>
-      change.kind === 'move'
-        ? []
-        : [
-            {
-              node: change.node,
-              tombstone: change.kind === 'delete',
-              payload: 'payload' in change ? change.payload : null,
-            },
-          ],
-    )
-    return [...new Set([...payloadKeys(changes), ...(await applyNodes(nodes))])]
+    // payloadKeys adds the new hashes, and any value in between that Redux may still show.
+    return [...new Set([...before, ...payloadKeys(changes)])]
   }
 
   /** Removes every membership before a full read rebuilds them. */
@@ -124,9 +89,8 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
     if (keys.length === 0) return []
     const text = await client.runner.getText(
       `SELECT json_group_array(json_object('id', thought_id, 'key', lexeme_hash,
-        'created', created, 'lastUpdated', last_updated, 'updatedBy', updated_by))
-       FROM (SELECT * FROM ${TABLE} WHERE lexeme_hash IN (SELECT value FROM json_each(?1))
-         ORDER BY created, thought_id)`,
+        'created', created, 'lastUpdated', last_updated, 'updatedBy', updated_by) ORDER BY created, thought_id)
+       FROM ${TABLE} WHERE lexeme_hash IN (SELECT value FROM json_each(?1))`,
       [JSON.stringify(keys)],
     )
     const rows = JSON.parse(text!) as {
@@ -137,20 +101,15 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
       updatedBy: string
     }[]
     const lexemes = new Map<string, Lexeme>()
-    for (const row of rows) {
-      const lexeme = lexemes.get(row.key)
+    for (const { id, key, created, lastUpdated, updatedBy } of rows) {
+      const lexeme = lexemes.get(key)
       if (!lexeme) {
-        lexemes.set(row.key, {
-          contexts: [row.id],
-          created: row.created,
-          lastUpdated: row.lastUpdated,
-          updatedBy: row.updatedBy,
-        })
+        lexemes.set(key, { contexts: [id], created, lastUpdated, updatedBy })
       } else {
-        lexeme.contexts.push(row.id)
-        if (row.lastUpdated >= lexeme.lastUpdated) {
-          lexeme.lastUpdated = row.lastUpdated
-          lexeme.updatedBy = row.updatedBy
+        lexeme.contexts.push(id)
+        if (lastUpdated >= lexeme.lastUpdated) {
+          lexeme.lastUpdated = lastUpdated
+          lexeme.updatedBy = updatedBy
         }
       }
     }
