@@ -6,9 +6,14 @@ import Command from '../../@types/Command'
 import Icon from '../../@types/IconType'
 import { isTouch } from '../../browser'
 import { executeCommandWithMulticursor } from '../../commands'
+import useFitText from '../../hooks/useFitText'
+import useRemAsPx from '../../hooks/useRemAsPx'
 import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
 import FadeTransition from '../FadeTransition'
+
+/** The largest a small button's icon grows to as the font size increases, which is as large as it can be and still clear the button's padding on a narrow phone. */
+const MAX_SMALL_ICON_SIZE = 44
 
 interface PanelCommandProps {
   /** The command to execute when the button is tapped. */
@@ -52,6 +57,29 @@ const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive }) => 
   )
 }
 
+/** The label of a medium button. It follows the user's font size, and shrinks to fit the button once it no longer fits at that size. */
+const PanelCommandLabel: FC<{ label: string }> = ({ label }) => {
+  const ref = useRef<HTMLDivElement>(null)
+  // 14px at the default font size.
+  useFitText(ref, { text: label, maxFontSize: useRemAsPx(0.875) })
+  return (
+    <div
+      ref={ref}
+      className={css({
+        minWidth: 0,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        color: 'fg',
+        textAlign: 'left',
+        letterSpacing: '-2%',
+      })}
+    >
+      {label}
+    </div>
+  )
+}
+
 /** A single button in the Panel Command Grid. */
 const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   const [isAnimated, setIsAnimated] = useState(false)
@@ -59,6 +87,7 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   const { svg, isActive, canExecute } = command
   const isButtonExecutable = useSelector(state => !canExecute || canExecute(state))
   const isButtonActive = useSelector(state => isActive?.(state))
+  const smallIconSize = Math.min(useRemAsPx(1.5), MAX_SMALL_ICON_SIZE)
 
   /** Handles the onClick event. Executes the command when tapped. */
   const handleTap = useCallback(
@@ -79,6 +108,10 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
   if (svg) {
     SVG = svg as React.FC<Icon>
   }
+
+  const hasLabel = !command.hideTitleInPanels && size === 'medium'
+  // Icons are read like text, so a small button's icon grows with the user's font size, as far as the fixed-width button has room for. A medium button's icon stays at its default size instead, leaving the room beside it to the label, which has more to say.
+  const iconSize = size === 'medium' ? 22 : smallIconSize
 
   return (
     <div
@@ -103,23 +136,12 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
         {SVG && (
           <SVG
             style={{ justifySelf: 'center' }}
-            size={size === 'small' ? 24 : size === 'medium' ? 22 : 24}
+            size={iconSize}
             animated={isAnimated}
             animationComplete={() => setIsAnimated(false)}
           />
         )}
-        {!command.hideTitleInPanels && size === 'medium' && (
-          <div
-            className={css({
-              fontSize: '14px',
-              color: 'fg',
-              textAlign: 'left',
-              letterSpacing: '-2%',
-            })}
-          >
-            {command.label}
-          </div>
-        )}
+        {hasLabel && <PanelCommandLabel label={command.label} />}
       </div>
     </div>
   )
