@@ -745,7 +745,7 @@ it('resumes a paste into an empty thought before its next sibling', async () => 
   await stored
 
   // resume the import, as initialize does
-  resumeImports.getAll().then(files => store.dispatch(importFiles({ resume: files })))
+  resumeImports.withText(resumeImports.list()).then(files => store.dispatch(importFiles({ resume: files })))
   await vi.runAllTimersAsync()
 
   const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
@@ -790,7 +790,7 @@ it('resumes an import interrupted after its first thought into the import destin
   await stored
 
   // resume the import, as initialize does
-  resumeImports.getAll().then(files => store.dispatch(importFiles({ resume: files })))
+  resumeImports.withText(resumeImports.list()).then(files => store.dispatch(importFiles({ resume: files })))
   await vi.runAllTimersAsync()
 
   const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
