@@ -4,6 +4,7 @@ import { AlertType } from '../constants'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import { getChildren } from '../selectors/getChildren'
+import getContextViewExpansion from '../selectors/getContextViewExpansion'
 import getRankBefore from '../selectors/getRankBefore'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
@@ -41,8 +42,13 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
   if (!cursor) return state
 
   const multicursorPaths = documentSort(state, Object.values(state.multicursors))
-  const cursorParent = parentOf(multicursorPaths.length > 0 ? multicursorPaths[0] : cursor)
-  const simplePath = simplifyPath(state, multicursorPaths.length > 0 ? multicursorPaths[0] : cursor)
+  const selectedPath = multicursorPaths.length > 0 ? multicursorPaths[0] : cursor
+  const simplePath = simplifyPath(state, selectedPath)
+  const expansion = getContextViewExpansion(state, selectedPath)
+  // Wrapping the first unfolded ancestor creates a category outside the aperture, so continue at its actual location.
+  const cursorParent = parentOf(
+    expansion && selectedPath.length === expansion.contextViewPath.length + 2 ? simplePath : selectedPath,
+  )
   // Protection belongs to the actual tree parent, which may differ from the displayed Context View parent.
   const simpleParent = rootedParentOf(state, simplePath)
 

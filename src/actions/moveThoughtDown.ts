@@ -5,6 +5,7 @@ import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
+import getContextViewExpansion from '../selectors/getContextViewExpansion'
 import getPrevRank from '../selectors/getPrevRank'
 import getRankAfter from '../selectors/getRankAfter'
 import nextSibling from '../selectors/nextSibling'
@@ -26,6 +27,13 @@ const moveThoughtDown = (state: State, { offset }: moveThoughtDownPayload = {}):
   const { cursor } = state
 
   if (!cursor) return state
+
+  const expansion = getContextViewExpansion(state, cursor)
+  if (expansion && cursor.length === expansion.contextViewPath.length + 2) {
+    // A frontier row's visible parent is the portal entrance; reordering still belongs to its actual siblings.
+    const result = moveThoughtDown({ ...state, cursor: simplifyPath(state, cursor) }, { offset })
+    return result.thoughts === state.thoughts ? { ...result, cursor } : result
+  }
 
   const thoughtId = head(cursor)
   const pathParent = parentOf(cursor)

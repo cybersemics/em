@@ -18,8 +18,10 @@ import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -32,6 +34,7 @@ import reducerFlow from '../util/reducerFlow'
 import timestamp from '../util/timestamp'
 import alert from './alert'
 import deleteAttribute from './deleteAttribute'
+import reconcileContextViewExpansions from './reconcileContextViewExpansions'
 
 export interface MoveThoughtPayload {
   oldPath: Path
@@ -80,9 +83,34 @@ const rerankUpdated = (state: State, id: ThoughtId): State => {
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
+/** Resolves a prospective placement beside the first unfolded ancestor into its physical parent. */
+const boundaryDestination = (state: State, path: Path): Path | undefined => {
+  const expansion = Object.values(state.contextViewExpansions)
+    .filter(expansion => {
+      const index = expansion.contextViewPath.length
+      return (
+        path.length > index + 1 &&
+        equalPath(path.slice(0, index) as Path, expansion.contextViewPath) &&
+        path[index] === expansion.contextId &&
+        path[index + 1] !== expansion.ancestorId
+      )
+    })
+    .sort((a, b) => b.contextViewPath.length - a.contextViewPath.length)[0]
+  return expansion
+    ? appendToPath(
+        rootedParentOf(state, thoughtToPath(state, expansion.ancestorId)),
+        ...path.slice(expansion.contextViewPath.length + 1),
+      )
+    : undefined
+}
+
 /** Moves a thought from one context to another, or within the same context. */
 const moveThought = (state: State, payload: MoveThoughtPayload) => {
-  const { oldPath, newPath, offset, skipRerank, skipMerge, newRank, afterId } = payload
+  const { oldPath, newPath: requestedNewPath, offset, skipRerank, skipMerge, newRank, afterId } = payload
+  // A placement outside an unfolded entry continues in its ordinary hierarchy.
+  // The hidden occurrence anchor is never treated as a stored parent.
+  const newPath = boundaryDestination(state, requestedNewPath) || requestedNewPath
+  const stateBeforeMove = state
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   const recentlyEdited = state.recentlyEdited
   // try {
@@ -315,14 +343,18 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
             })
           : paths
 
-      return {
-        ...state,
-        cursor: state.cursor && rebase(state.cursor),
-        multicursors: rebaseIndex(state.multicursors),
-        multicursorRange: rebaseIndex(state.multicursorRange),
-        multicursorAnchor: state.multicursorAnchor && rebase(state.multicursorAnchor),
-        ...(state.cursor && offset != null ? { cursorOffset: offset } : null),
-      }
+      return reconcileContextViewExpansions(
+        {
+          ...state,
+          cursor: state.cursor && rebase(state.cursor),
+          multicursors: rebaseIndex(state.multicursors),
+          multicursorRange: rebaseIndex(state.multicursorRange),
+          multicursorAnchor: state.multicursorAnchor && rebase(state.multicursorAnchor),
+          ...(state.cursor && offset != null ? { cursorOffset: offset } : null),
+        },
+        stateBeforeMove,
+        rebase,
+      )
     },
     // expand thoughts after cursor has been updated
     state => ({

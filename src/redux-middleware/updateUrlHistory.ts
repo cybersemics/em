@@ -7,6 +7,7 @@ import { isTouch } from '../browser'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
+import dehydrateContextPath from '../selectors/dehydrateContextPath'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -49,14 +50,17 @@ const cursorPrevStore = ministore<{ cursor: Path | null; value: string | null; m
 })
 
 /** Encodes context array into a URL. */
-const pathToUrl = (state: State, path: Path) => {
+const pathToUrl = (state: State, path: Path, includeContextViews = true) => {
   if (!path || isRoot(path)) return '/'
 
   const userId = window.location.pathname.split('/')[1] || '~'
   const queryString = window.location.search
   const thoughtsEncoded = path
     // Note: Since thouhtId is a uuid, so they are url safe
-    .map((thoughtId, i) => thoughtId + (isContextViewActive(state, path.slice(0, i + 1) as Path) ? '~' : ''))
+    .map(
+      (thoughtId, i) =>
+        thoughtId + (includeContextViews && isContextViewActive(state, path.slice(0, i + 1) as Path) ? '~' : ''),
+    )
     .join('/')
 
   return `/${userId}/${thoughtsEncoded}${queryString}`
@@ -65,7 +69,7 @@ const pathToUrl = (state: State, path: Path) => {
 /** Persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState). Ensure the location does not change through refreshes in standalone PWA mode. */
 // TODO: Restore cursor after thoughts replicate
 const saveCursor = _.throttle(
-  (state: State, path: Path) => {
+  (state: State, path: Path | null) => {
     if (state.cursor) {
       storageModel.set('cursor', { path, offset: selection.offsetThought() })
     } else {
@@ -82,9 +86,13 @@ const saveCursor = _.throttle(
  * Sets the url to the given Path. Encodes and persists the cursor to local storage.
  * SIDE EFFECTS: window.history.
  */
-const updateUrlHistory = (state: State, path: Path) => {
+const updateUrlHistory = (state: State, path: Path | null) => {
   // wait until local state has loaded before updating the url
   if (state.isLoading) return
+
+  const serialized = dehydrateContextPath(state, path)
+  const url = pathToUrl(state, serialized.path || HOME_PATH, !serialized.unfolded)
+  const currentUrl = window.location.pathname + window.location.search
 
   // If running as a PWA, do not update the browser URL.
   // On iOS, it causes a special browser navigation bar to appear.
@@ -110,7 +118,12 @@ const updateUrlHistory = (state: State, path: Path) => {
 
   // nothing to update if the cursor has not changed
   const pathPrev = pathPrevStore.getState()
-  if (state.isLoading || (equalPath(pathPrev.path, path) && pathPrev.url === window.location.href)) return
+  if (
+    equalPath(pathPrev.path, path) &&
+    pathPrev.url === window.location.href &&
+    (!serialized.unfolded || url === currentUrl)
+  )
+    return
   pathPrevStore.update({ path, url: window.location.href })
 
   const decoded = decodeThoughtsUrl(state)
@@ -121,15 +134,22 @@ const updateUrlHistory = (state: State, path: Path) => {
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
   // a null cursor is compared as the home path, otherwise navigating back to the home page would push a duplicate entry and discard the forward history (#5747)
-  if (equalArrays(path || HOME_PATH, decodedPath) && decoded.contextViews[encoded] === state.contextViews[encoded])
+  if (
+    serialized.unfolded
+      ? url === currentUrl
+      : equalArrays(path || HOME_PATH, decodedPath) && decoded.contextViews[encoded] === state.contextViews[encoded]
+  ) {
+    // The physical location may already be in the address bar, but the saved cursor must still shed its anchor.
+    if (serialized.unfolded) saveCursor(state, serialized.path)
     return
+  }
 
   const stateWithNewContextViews = {
     ...state,
     contextViews: state.contextViews || decoded.contextViews,
   }
 
-  saveCursor(stateWithNewContextViews, path)
+  saveCursor(stateWithNewContextViews, serialized.path)
 
   if (!isPWA) {
     try {
@@ -138,7 +158,7 @@ const updateUrlHistory = (state: State, path: Path) => {
         // an incrementing ID to track back or forward browser actions
         (window.history.state || 0) + 1,
         '',
-        pathToUrl(stateWithNewContextViews, path || [HOME_TOKEN]),
+        pathToUrl(stateWithNewContextViews, serialized.path || HOME_PATH, !serialized.unfolded),
       )
       pathPrevStore.update({ url: window.location.href })
     } catch (e) {

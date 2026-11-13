@@ -4,6 +4,8 @@ import State from '../@types/State'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import appendToPath from '../util/appendToPath'
+import hashPath from '../util/hashPath'
 import headValue from '../util/headValue'
 
 /**
@@ -18,12 +20,15 @@ const splitChain = (state: State, path: Path): SimplePath[] => {
     const ancestor = path.slice(0, i + 1) as Path
     const contextId = path[i + 1]
     const value = headValue(state, ancestor)
+    const expansion = contextId && state.contextViewExpansions[hashPath(appendToPath(ancestor, contextId))]
+    const crossesUnfoldedContext = !!expansion && path[i + 2] === expansion.ancestorId
     // An active context view is only crossed if the next id is one of the contexts, i.e. the parent of another instance of the thought. Otherwise the next id is an ordinary child and the path is simple, as with the SimplePath a/m/x of a thought rendered at a/m~/a/x.
     const crossesContextView =
       contextId !== undefined &&
       value !== undefined &&
       isContextViewActive(state, ancestor) &&
-      getContexts(state, value).some(cxid => getThoughtById(state, cxid)?.parentId === contextId)
+      (crossesUnfoldedContext ||
+        getContexts(state, value).some(cxid => getThoughtById(state, cxid)?.parentId === contextId))
     if (crossesContextView) {
       contextChain.push(path.slice(indexSimplePathStart, i + 1) as SimplePath)
       indexSimplePathStart = i + 1
