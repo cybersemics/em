@@ -54,6 +54,12 @@
       "checkable": false
     },
     {
+      "id": "find",
+      "label": "Find",
+      "accelerator": "Cmd+F",
+      "checkable": false
+    },
+    {
       "id": "indent",
       "label": "Indent",
       "checkable": false

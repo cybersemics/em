@@ -26,6 +26,7 @@ import Content from './Content'
 import DesktopCommandUniverse from './DesktopCommandUniverse'
 import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
+import FindBar from './FindBar'
 import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
 import HelpGenie from './HelpGenie/HelpGenie'
@@ -212,6 +213,7 @@ const AppComponent: FC = () => {
       <Alert />
       <Tips />
       {!isTouch && <DesktopCommandUniverse />}
+      {!isTouch && <FindBar />}
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
       <MobileCommandUniverse />
