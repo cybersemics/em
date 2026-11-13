@@ -280,6 +280,23 @@ export const offsetRange = (editable: HTMLElement): { start: number; end: number
   return { start, end: start + range.toString().length }
 }
 
+/** The start and end of a range, as a node and offset each. */
+export interface RangeBoundaries {
+  startContainer: Node
+  startOffset: number
+  endContainer: Node
+  endOffset: number
+}
+
+/** Returns the start and end of the browser selection's range, or null if there is none. A copy rather than the live
+ * Range, since changing the live Range is a change of selection, which hides Android's native selection menu (#5641). */
+export const boundaries = (): RangeBoundaries | null => {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return null
+  const { startContainer, startOffset, endContainer, endOffset } = selection.getRangeAt(0)
+  return { startContainer, startOffset, endContainer, endOffset }
+}
+
 /** Returns the plain-text character offsets [start, end) of the current selection relative to the given thought's
  * editable, or null if the thought is not rendered or the selection is not within it. */
 export const offsetRangeThought = (thoughtId: string): { start: number; end: number } | null => {

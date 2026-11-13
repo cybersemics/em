@@ -2,6 +2,8 @@
 import LetterCaseType from '../@types/LetterCaseType'
 import Thunk from '../@types/Thunk'
 import { commandEmitter } from '../commands'
+import { replaceTextInPlace } from '../device/editInPlace'
+import restoreEditMenu from '../device/restoreEditMenu'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -104,6 +106,9 @@ export const formatLetterCaseActionCreator =
       restoreRange.end > restoreRange.start
     )
     const cursorThoughtId = cursor && !state.noteFocus ? head(cursor) : null
+    // The selection's rects before the edit, so that restoreEditMenu can tell whether the edit moved the selected text
+    // and so dismissed the edit menu on iOS (#5641).
+    const rectsBefore = restoreSynchronously ? selection.editableClientRects() : []
 
     const editActions = paths.flatMap(path => {
       const value = state.noteFocus && cursor ? noteValue(state, cursor) : getThoughtById(state, head(path))?.value
@@ -113,7 +118,7 @@ export const formatLetterCaseActionCreator =
       const newValue = applyLetterCase(command, value, selectedTextRange ?? undefined)
       const isCursorThought = head(path) === cursorThoughtId
 
-      if (restoreSynchronously && isCursorThought) {
+      if (restoreSynchronously && isCursorThought && !replaceTextInPlace(cursorEditable!, newValue)) {
         cursorEditable!.innerHTML = newValue
         selection.setRange(cursorEditable!, restoreRange!)
       }
@@ -157,6 +162,8 @@ export const formatLetterCaseActionCreator =
 
       isMulticursor ? setIsMulticursorExecuting({ value: false }) : null,
     ])
+
+    if (restoreSynchronously) restoreEditMenu(rectsBefore)
 
     // Re-select the text that was selected before the edit (#4840). editThought re-renders the ContentEditable from
     // the new value, which destroys the browser selection, and useEditMode then collapses the caret to cursorOffset.

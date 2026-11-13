@@ -113,6 +113,25 @@ it('applies letter case to the selected text only', async () => {
   expect(await getEditingText()).toBe('Welcome to the world of BEAUTIFUL people')
 })
 
+// https://github.com/cybersemics/em/issues/5641
+it('letter-cases the selected text in place without replacing it', async () => {
+  await paste('Welcome to the world of beautiful people')
+
+  await clickThought('Welcome to the world of beautiful people')
+  await setSelection(24, 33)
+
+  // Android dismisses its native selection menu (Cut, Copy, Paste) as soon as the text under the selection is replaced,
+  // and re-selecting it does not bring the menu back. A range taken from the selection before the edit is live, so it
+  // still spans the cased word only if the edit changed the selected text in place.
+  const selectedRange = await page.evaluateHandle(() => window.getSelection()!.getRangeAt(0).cloneRange())
+
+  await clickToolbar('Letter Case', 'UpperCase')
+
+  await waitForEditable('Welcome to the world of BEAUTIFUL people')
+
+  expect(await selectedRange.evaluate(range => range.toString())).toBe('BEAUTIFUL')
+})
+
 it('the selected text remains selected when the thought has trailing whitespace', async () => {
   // Typed rather than pasted: Editable trims the value on its way into Redux while the live editable keeps the
   // trailing space, so the text the editable re-renders to is not the text the DOM had before the edit.
