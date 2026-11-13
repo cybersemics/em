@@ -22,6 +22,38 @@ it('includes the actual stroke radius when no arrowhead is requested', () => {
   )
 })
 
+it('frames every filled chevron and shaft end without clipping', () => {
+  const strokeWidth = 3
+  const strokeRadius = (strokeWidth * 1.5) / 2
+  const paths = ['r', 'l', 'u', 'd', 'rd', 'dr', 'lu', 'ud', 'rlr', 'rdl', 'rdlu', 'drul'] as const
+
+  ;[1.3, 2.4, 5].forEach(chevronSize => {
+    const chevron = { apexAngle: 61, halfSpan: strokeWidth * 1.5 * chevronSize, filled: true }
+    paths.forEach(path => {
+      const geometry = getGestureGeometry(path, { size: 50, reversalOffset: 15, chevron })
+      const [x, y, width, height] = getGestureViewBox(geometry, {
+        arrowSize: 1,
+        arrowhead: 'filled',
+        strokeWidth,
+        size: 50,
+        chevronSize,
+        chevronApexAngle: 61,
+      })
+        .split(' ')
+        .map(Number)
+      const shaftEnds = geometry.segments.flatMap(segment => [segment.from, segment.to])
+
+      ;[...geometry.chevron!, ...shaftEnds].forEach(point => {
+        const margin = geometry.chevron!.includes(point) ? 0 : strokeRadius
+        expect(point.x - margin).toBeGreaterThanOrEqual(x - 1e-9)
+        expect(point.x + margin).toBeLessThanOrEqual(x + width + 1e-9)
+        expect(point.y - margin).toBeGreaterThanOrEqual(y - 1e-9)
+        expect(point.y + margin).toBeLessThanOrEqual(y + height + 1e-9)
+      })
+    })
+  })
+})
+
 it('uses bounds to center each shape without changing its scale', () => {
   const options = { size: 150, arrowSize: 1, arrowhead: 'outlined-wide' as const, strokeWidth: 12 }
   const geometries = [

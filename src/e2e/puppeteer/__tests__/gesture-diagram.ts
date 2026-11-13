@@ -45,8 +45,10 @@ it('keeps the filled arrowhead visible while preserving gradient transparency', 
   const shaftClip = { x: 60, y: 19, width: 2, height: 2 }
   const translucent = 'rgba(0, 0, 0, 0.45)'
 
-  await renderGestureDiagram({ ...props, useGradient: false, color: '#000' })
-  const solidArrow = await screenshot({ clip: arrowClip })
+  // The reference arrow comes from the segmented gradient, which draws the same marker without an alpha mask.
+  // The solid renderer cannot be the reference, because it draws a chevron instead of the marker.
+  await renderGestureDiagram({ ...props, useGradient: true, color: '#000' })
+  const markerArrow = await screenshot({ clip: arrowClip })
 
   await renderGestureDiagram({ ...props, useGradient: false, color: translucent })
   const translucentShaft = await screenshot({ clip: shaftClip })
@@ -57,7 +59,7 @@ it('keeps the filled arrowhead visible while preserving gradient transparency', 
   const gradientArrow = await screenshot({ clip: arrowClip })
   const gradientShaft = await screenshot({ clip: shaftClip })
 
-  expect(gradientArrow).toEqual(solidArrow)
+  expect(gradientArrow).toEqual(markerArrow)
   expect(gradientShaft).toEqual(translucentShaft)
 })
 

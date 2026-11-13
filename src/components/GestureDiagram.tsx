@@ -54,9 +54,9 @@ interface GestureDiagramBaseProps {
   glow?: boolean
   /** Radius used to soften corners in line-based gradient gestures. */
   cornerRadius?: number
-  /** Interior angle of the geometry-based wide chevron. Default 80. */
+  /** Interior angle of the 'outlined-wide' chevron and the solid 'filled' chevron. Default 80. */
   chevronApexAngle?: number
-  /** Chevron half-span as a multiple of the rendered stroke width. Default 2.2. */
+  /** Half-span of the 'outlined-wide' chevron and the solid 'filled' chevron as a multiple of the rendered stroke width. Default 2.2. */
   chevronSize?: number
   /** Stroke color for highlighted directions. Default: token('colors.vividHighlight'). */
   highlightColor?: string
@@ -124,14 +124,18 @@ const GestureDiagram = ({
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
 
+  // Only the solid renderer paints 'filled' as a chevron. The gradient renderers draw the filled marker.
+  // Rounded gestures end in an arc, so getGestureGeometry returns no chevron and the marker comes back.
+  const filledChevron = arrowhead === 'filled' && !gradient && !useGradient
+
   const geometry = useMemo(
     () =>
       path === null
         ? null
         : getGestureGeometry(path, {
             chevron:
-              gradient && arrowhead === 'outlined-wide'
-                ? { apexAngle: chevronApexAngle, halfSpan: strokeWidth * 1.5 * chevronSize }
+              (gradient && arrowhead === 'outlined-wide') || filledChevron
+                ? { apexAngle: chevronApexAngle, halfSpan: strokeWidth * 1.5 * chevronSize, filled: filledChevron }
                 : undefined,
             cornerRadius: gradient ? cornerRadius : 0,
             reversalOffset: reversalOffset!,
@@ -149,6 +153,7 @@ const GestureDiagram = ({
       rounded,
       gradient,
       strokeWidth,
+      filledChevron,
     ],
   )
 
@@ -161,7 +166,7 @@ const GestureDiagram = ({
         className={cx(css(inGestureContainer && { position: 'relative', top: '10px' }), className)}
         style={{
           ...style,
-          ...(arrowhead === 'none'
+          ...(arrowhead === 'none' || filledChevron
             ? {}
             : styleCancelAsRegularGesture
               ? { paddingLeft: size / 10, paddingRight: size / 3 }
@@ -207,6 +212,7 @@ const GestureDiagram = ({
           size,
           chevronSize,
           chevronApexAngle,
+          filledChevron,
         })
       }
     >
