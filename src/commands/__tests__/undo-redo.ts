@@ -1276,6 +1276,7 @@ describe('grouping', () => {
         oldValue: original,
         newValue: updated,
         noteOffset: updated.length,
+        noteOffsetBefore: original.length,
       }),
     )
 

@@ -44,6 +44,13 @@ import FauxCaret from './FauxCaret'
 const ContentEditable =
   (ContentEditableModule as unknown as { default?: typeof ContentEditableModule }).default ?? ContentEditableModule
 
+/**
+ * Converts a caret offset in the note's text as the browser holds it into one in the text as it is saved: less the
+ * leading whitespace that the trim removes, and no further than the end of the trimmed text.
+ */
+const savedOffset = (offset: number, text: string): number =>
+  Math.min(Math.max(0, offset - (text.length - text.trimStart().length)), text.trim().length)
+
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = React.memo(
   ({
@@ -68,6 +75,14 @@ const Note = React.memo(
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
     const editableNonce = useSelector(state => state.editableNonce)
+    const html = (noteDraft?.editableNonce === editableNonce ? noteDraft.value : note) ?? ''
+
+    // What the note held before the input in progress: the html last rendered, or last typed when typing outpaces the
+    // render. onChange compares it with the html after the input to find where the caret was before the input.
+    const htmlBeforeInputRef = useRef(html)
+    useEffect(() => {
+      htmlBeforeInputRef.current = html
+    }, [html])
 
     // Formatting applied to the note while it was empty is held on the note's thought until the user types (#3910).
     // Style the placeholder with it so that the empty note previews the formatting its text will take.
@@ -188,15 +203,19 @@ const Note = React.memo(
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
 
-        // The caret in the text as it is saved: the offset in the note less the leading whitespace that the trim removes,
-        // and no further than the end of the trimmed text. Undo infers where the caret was before an edit from this
-        // offset and the lengths of the saved values, so it has to count the same text they do.
+        // The caret after the input and before it, counted in the text as it is saved, which is what undo and redo
+        // restore them into. The text the input added or removed is taken to be before the caret, as it is when typing
+        // or deleting, so the caret before the input is the caret after it plus the change in length, counted in the
+        // text the browser held then.
         const domOffset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
-        const text = noteRef.current?.textContent ?? ''
-        const noteOffset =
-          domOffset === null
-            ? null
-            : Math.min(Math.max(0, domOffset - (text.length - text.trimStart().length)), text.trim().length)
+        const textAfter = noteRef.current?.textContent ?? ''
+        const elementBefore = document.createElement('div')
+        elementBefore.innerHTML = htmlBeforeInputRef.current
+        const textBefore = elementBefore.textContent ?? ''
+        const noteOffset = domOffset === null ? null : savedOffset(domOffset, textAfter)
+        const noteOffsetBefore =
+          domOffset === null ? null : savedOffset(domOffset + textBefore.length - textAfter.length, textBefore)
+        htmlBeforeInputRef.current = e.target.value
 
         // update the referenced thought directly if it exists
         dispatch((dispatch, getState) => {
@@ -245,6 +264,7 @@ const Note = React.memo(
                 // first text typed, rather than saved as an empty <b></b> that the caret cannot be placed inside.
                 newValue: stripTags(trimmedValue) ? trimmedValue : '',
                 noteOffset: noteOffset ?? undefined,
+                noteOffsetBefore: noteOffsetBefore ?? undefined,
                 force: wrappedValue !== value,
                 undoLabel: 'Edit Note',
               }),
@@ -322,7 +342,7 @@ const Note = React.memo(
           <FauxCaret caretType='noteStart' />
         </span>
         <ContentEditable
-          html={(noteDraft?.editableNonce === editableNonce ? noteDraft.value : note) ?? ''}
+          html={html}
           innerRef={noteRef as React.RefObject<HTMLElement>}
           aria-label='note-editable'
           data-thought-id={head(path)}
