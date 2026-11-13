@@ -1,8 +1,9 @@
 import { fireEvent, screen } from '@testing-library/dom'
 import { act } from 'react'
+import fontSizeUp from '../../actions/fontSizeUp'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actions/toggleUserSetting'
-import { Settings } from '../../constants'
+import { DEFAULT_FONT_SIZE, Settings } from '../../constants'
 import download from '../../device/download'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
@@ -25,4 +26,29 @@ it('download the debug log as a text file', async () => {
     expect.stringContaining('--- state.thoughts:'),
     expect.stringMatching(/^em-debug-log-\d+\.txt$/),
   )
+})
+
+it('shows a font size changed while Settings is open, e.g. from Command + = (#6198)', async () => {
+  await dispatch(showModal({ id: 'settings' }))
+  await act(vi.runOnlyPendingTimersAsync)
+
+  await dispatch(fontSizeUp())
+
+  expect(screen.getByRole('spinbutton')).toHaveValue(DEFAULT_FONT_SIZE + 1)
+})
+
+it('keeps a font size typed out of range until the input is left, without applying it', async () => {
+  await dispatch(showModal({ id: 'settings' }))
+  await act(vi.runOnlyPendingTimersAsync)
+  const input = screen.getByRole('spinbutton')
+
+  await act(async () => {
+    fireEvent.change(input, { target: { value: '99' } })
+  })
+  expect(input).toHaveValue(99)
+
+  await act(async () => {
+    fireEvent.focusOut(input)
+  })
+  expect(input).toHaveValue(DEFAULT_FONT_SIZE)
 })

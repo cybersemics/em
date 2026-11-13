@@ -190,11 +190,13 @@
     {
       "id": "fontSizeDown",
       "label": "Decrease Font Size",
+      "accelerator": "Cmd+-",
       "checkable": false
     },
     {
       "id": "fontSizeUp",
       "label": "Increase Font Size",
+      "accelerator": "Cmd+=",
       "checkable": false
     },
     {
