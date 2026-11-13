@@ -96,12 +96,7 @@ const updateThoughts = (
     repairCursor,
   }: UpdateThoughtsOptions,
 ) => {
-  if (
-    favoriteOrder === undefined &&
-    Object.keys(thoughtIndexUpdates).length === 0 &&
-    Object.keys(lexemeIndexUpdates).length === 0
-  )
-    return state
+  if (Object.keys(thoughtIndexUpdates).length === 0 && Object.keys(lexemeIndexUpdates).length === 0) return state
 
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }

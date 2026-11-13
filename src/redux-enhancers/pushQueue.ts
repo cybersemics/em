@@ -72,9 +72,7 @@ const pushQueue: StoreEnhancer<any> =
       if (
         dbQueue?.some(
           batch =>
-            batch.favoriteOrder !== undefined ||
-            Object.keys(batch.thoughtIndexUpdates).length > 0 ||
-            Object.keys(batch.lexemeIndexUpdates).length > 0,
+            Object.keys(batch.thoughtIndexUpdates).length > 0 || Object.keys(batch.lexemeIndexUpdates).length > 0,
         )
       ) {
         // cache updated settings

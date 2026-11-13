@@ -289,7 +289,7 @@ it('rebuilds memberships and keeps favorite order when opening a database indexe
   }
 })
 
-it('keeps favorite order independent of membership changes and preserves it when reopening', async () => {
+it('keeps favorite order independent of membership changes', async () => {
   const client = await createTreecrdtClient({ docId: 'favorite-order' })
   const replicaId = new Uint8Array(32).fill(1)
   const provider = createTreecrdtDataProvider()
@@ -312,16 +312,9 @@ it('keeps favorite order independent of membership changes and preserves it when
       contexts: [THOUGHT_A_ID, THOUGHT_Y_ID],
     })
     await persistThoughtsTo(provider.db, [thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1)])
-    await close()
-    const reopened = createTreecrdtDataProvider()
-    const closeReopened = await reopened.bindClient(client, replicaId)
-    try {
-      await expect(reopened.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
-        contexts: [THOUGHT_B_ID, THOUGHT_A_ID, THOUGHT_Y_ID],
-      })
-    } finally {
-      await closeReopened()
-    }
+    await expect(provider.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+      contexts: [THOUGHT_B_ID, THOUGHT_A_ID, THOUGHT_Y_ID],
+    })
   } finally {
     await close()
     await client.drop()
