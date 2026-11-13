@@ -8,6 +8,7 @@ import RGBA from '../../@types/lottie/RGBA'
 import ShapeItem from '../../@types/lottie/ShapeItem'
 import ShapeLayer from '../../@types/lottie/ShapeLayer'
 import StaticColor from '../../@types/lottie/StaticColor'
+import testFlags from '../../e2e/testFlags'
 import hexToRgb from '../../util/hexToRgb'
 
 /** The props for the LottieAnimation component. */
@@ -138,6 +139,7 @@ const changeLineColor = (data: LottieData, newColor: string): LottieData => {
  */
 const LottieAnimation: React.FC<LottieAnimationProps> = ({ animationData, speed = 1, color, onComplete }) => {
   const lottieRef = useRef<LottieHandle>(null)
+  const { animationEnabled } = testFlags
 
   const animationDataWithColor = useMemo(() => {
     return animationData ? changeLineColor(animationData, color) : null
@@ -146,15 +148,15 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({ animationData, speed 
   const subscriptions = useMemo(
     () => ({
       complete: onComplete,
-      // skip the animation in Puppeteer tests to avoid inconsistent snapshots
-      ...(navigator.webdriver && {
+      // Complete immediately when animation playback is disabled.
+      ...(!animationEnabled && {
         ready: () => {
           lottieRef.current?.seek({ percent: 100 })
           onComplete?.()
         },
       }),
     }),
-    [onComplete],
+    [onComplete, animationEnabled],
   )
 
   if (!animationDataWithColor) {
@@ -170,8 +172,8 @@ const LottieAnimation: React.FC<LottieAnimationProps> = ({ animationData, speed 
       src={animationDataWithColor}
       lottieRef={lottieRef}
       speed={speed}
-      // turn off autoplay in puppeteer tests
-      autoplay={!navigator.webdriver}
+      // Ordinary automated tests skip playback; animation tests opt in explicitly.
+      autoplay={animationEnabled}
       loop={false}
       subscriptions={subscriptions}
     />
