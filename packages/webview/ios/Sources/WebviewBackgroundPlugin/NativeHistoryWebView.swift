@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import WebKit
 
 /// A native undo or redo gesture.
@@ -65,12 +66,68 @@ public final class NativeHistoryUndoManager: UndoManager {
 /// Only the responder chain is redirected. WebKit registers its edit commands directly on its own undo
 /// manager (`-[WKContentView undoManagerForWebView]`) rather than through the responder chain, so its
 /// internal bookkeeping is unaffected.
+///
+/// It also dismisses the native edit menu when the keyboard hides. On iOS 27 the menu WebKit presents for a
+/// caret (Paste | Select | Select All) survives the editable losing focus, so a tap outside the thought
+/// closes the keyboard and removes the caret but leaves the menu on screen (cybersemics/em#6180). The menu is
+/// native UI outside the DOM, so the web layer cannot reach it.
 public final class NativeHistoryWebView: WKWebView {
     /// Called when the user performs a native undo or redo gesture.
     public var onNativeHistory: ((NativeHistoryType) -> Void)?
 
     private lazy var nativeHistoryUndoManager = NativeHistoryUndoManager { [weak self] type in
         self?.onNativeHistory?(type)
+    }
+
+    private var keyboardWillHideObserver: NSObjectProtocol?
+
+    // The observer is registered when the view enters a window rather than in an initializer: declaring
+    // designated initializers on this subclass would stop it inheriting WKWebView's others, and any of those
+    // called by the framework would then trap at launch.
+    override public func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window == nil {
+            stopObservingKeyboardWillHide()
+        } else if keyboardWillHideObserver == nil {
+            observeKeyboardWillHide()
+        }
+    }
+
+    deinit {
+        stopObservingKeyboardWillHide()
+    }
+
+    private func stopObservingKeyboardWillHide() {
+        if let observer = keyboardWillHideObserver {
+            NotificationCenter.default.removeObserver(observer)
+            keyboardWillHideObserver = nil
+        }
+    }
+
+    private func observeKeyboardWillHide() {
+        keyboardWillHideObserver = NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillHideNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.dismissEditMenu()
+        }
+    }
+
+    /// Dismisses any edit menu presented by the web view's content. iOS 16+ presents it through a
+    /// `UIEditMenuInteraction` on WebKit's content view, which is private, so search the view tree for it.
+    private func dismissEditMenu() {
+        if #available(iOS 16.0, *) {
+            var views: [UIView] = [self]
+            while let view = views.popLast() {
+                for case let interaction as UIEditMenuInteraction in view.interactions {
+                    interaction.dismissMenu()
+                }
+                views.append(contentsOf: view.subviews)
+            }
+        } else {
+            UIMenuController.shared.hideMenu()
+        }
     }
 
     override public var undoManager: UndoManager? {
