@@ -23,6 +23,8 @@ async function ensureAttributeChildrenSchema(client: TreecrdtClient): Promise<vo
   if (schemaReady.has(client)) return
   await client.runner.exec(CREATE_TABLE_SQL)
   await client.runner.exec(CREATE_PARENT_INDEX_SQL)
+  // Held the index version before onMaterializedDurable; older databases may still have it.
+  await client.runner.exec('DROP TABLE IF EXISTS em_attribute_children_meta')
   schemaReady.add(client)
 }
 
