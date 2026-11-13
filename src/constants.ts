@@ -566,6 +566,7 @@ export const COMMAND_DIFFICULTIES = [
           'closeCommandCenter',
           'openCommandCenter',
           'help',
+          'sendFeedback',
           'openMobileCommandUniverse',
           'cancel',
         ],

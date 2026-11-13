@@ -4,7 +4,7 @@ description: >
   invoke a plain `vercel`.
 
   This replaces a `yarn dlx vercel` at every call site, which reinstalls the CLI each time it is
-  used — six times in Vercel Preview, three in Vercel Production. Yarn caches the download but
+  used — nine times in Vercel Preview, three per project in Vercel Production. Yarn caches the download but
   relinks and rebuilds (esbuild) on every invocation, so each repeat costs roughly 17 seconds for a
   binary the run already has. Installing once is around a minute and a half faster per preview run.
 

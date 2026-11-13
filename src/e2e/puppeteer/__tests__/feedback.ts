@@ -1,0 +1,121 @@
+import { KnownDevices } from 'puppeteer'
+import click from '../helpers/click'
+import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
+import deviceEmulation from '../helpers/deviceEmulation'
+import exportThoughts from '../helpers/exportThoughts'
+import gesture from '../helpers/gesture'
+import keyboard from '../helpers/keyboard'
+import paste from '../helpers/paste'
+import press from '../helpers/press'
+import setVirtualKeyboardHeight from '../helpers/setVirtualKeyboardHeight'
+import waitForEditable from '../helpers/waitForEditable'
+import waitForSelector from '../helpers/waitForSelector'
+import { page } from '../session'
+
+deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+// https://github.com/cybersemics/em/pull/6073#issuecomment-6594233627
+it('opens feedback with the focused message above an overlay keyboard', async () => {
+  await setVirtualKeyboardHeight(400)
+  await gesture('rdldr')
+  await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
+  const bounds = await page.$eval('textarea', element => ({
+    focused: element === document.activeElement,
+    top: element.getBoundingClientRect().top,
+    bottom: element.getBoundingClientRect().bottom,
+    visibleHeight: window.innerHeight - navigator.virtualKeyboard.boundingRect.height,
+  }))
+  expect(bounds.focused).toBe(true)
+  expect(bounds.top).toBeGreaterThanOrEqual(0)
+  expect(bounds.bottom).toBeLessThanOrEqual(bounds.visibleHeight)
+})
+
+// https://github.com/cybersemics/em/pull/6073#issuecomment-6593428901
+it('keeps the message field non-resizable across platforms', async () => {
+  await gesture('rdldr')
+  await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
+  expect(await page.$eval('textarea', element => getComputedStyle(element).resize)).toBe('none')
+})
+
+// https://github.com/cybersemics/em/pull/6073#issuecomment-6593989895
+it('dims unavailable thought attachment controls', async () => {
+  await gesture('rdldr')
+  await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
+  await waitForSelector('input[type="checkbox"]:disabled')
+  expect(
+    await page.$eval(
+      '::-p-text(Include my current selected thought context)',
+      element => getComputedStyle(element).opacity,
+    ),
+  ).toBe('0.5')
+})
+
+// https://github.com/cybersemics/em/pull/6073#issuecomment-6603321800
+it('matches feedback action and attachment button text sizes on wide screens', async () => {
+  await page.setViewport({ ...page.viewport()!, width: 1280, height: 900 })
+  await gesture('rdldr')
+  await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
+  const attachmentSize = await page.$eval(
+    'button::-p-text(Add attachment)',
+    element => getComputedStyle(element).fontSize,
+  )
+  const cancelSize = await page.$eval('button::-p-text(Cancel)', element => getComputedStyle(element).fontSize)
+  const sendSize = await page.$eval('button::-p-text(Send)', element => getComputedStyle(element).fontSize)
+  expect(cancelSize).toBe(attachmentSize)
+  expect(sendSize).toBe(attachmentSize)
+})
+
+// https://github.com/cybersemics/em/pull/6073#issuecomment-6593671502
+it.each(['input[autocomplete="name"]', 'input[type="email"]', 'textarea'])(
+  'highlights the focused feedback field with its foreground border: %s',
+  async selector => {
+    await gesture('rdldr')
+    await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
+    await click(selector)
+    const style = await page.$eval(selector, element => {
+      const style = getComputedStyle(element)
+      return { border: style.borderColor, foreground: style.color, outline: style.outlineStyle }
+    })
+    expect(style.border).toBe(style.foreground)
+    expect(style.outline).toBe('none')
+  },
+)
+
+it('opens feedback with rdldr and returns to the unchanged thoughtspace on cancel', async () => {
+  await paste('- aaa\n  - bbb')
+  await clickThought('aaa')
+  await gesture('rdldr')
+  await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
+  expect(await page.$eval('#feedback-title', element => element.textContent)).toBe('Send Feedback')
+  await page.click('button[aria-label="Close feedback"]')
+  await waitForSelector('[role="dialog"]', { hidden: true })
+  expect(await exportThoughts()).toBe('\n- aaa\n  - bbb\n')
+})
+
+// https://github.com/cybersemics/em/issues/5687
+it('keeps feedback typing and native undo out of the thoughtspace', async () => {
+  await paste('- Keep this thought')
+  await clickThought('Keep this thought')
+  await command('newThought')
+  await waitForEditable('')
+  await gesture('rdldr')
+  await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
+  await click('textarea')
+  await keyboard.type('First line')
+  await press('Enter')
+  await keyboard.type('Second line')
+  expect(await page.$eval('textarea', element => element.value)).toBe('First line\nSecond line')
+
+  await press('a', { ctrl: true })
+  await press('Backspace')
+  expect(await page.$eval('textarea', element => element.value)).toBe('')
+  await press('z', { ctrl: true })
+  expect(await page.$eval('textarea', element => element.value)).toBe('First line\nSecond line')
+  await press('z', { ctrl: true, shift: true })
+  expect(await page.$eval('textarea', element => element.value)).toBe('')
+
+  await click('button[aria-label="Close feedback"]')
+  await waitForSelector('[role="dialog"]', { hidden: true })
+  expect(await exportThoughts()).toBe('\n- Keep this thought\n- \n')
+})

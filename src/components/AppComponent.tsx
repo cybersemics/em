@@ -233,7 +233,7 @@ const AppComponent: FC = () => {
       <NativeTextDragCaret />
 
       <MultiGestureIfTouch>
-        {showModal ? (
+        {showModal && showModal !== 'feedback' ? (
           <div style={{ fontSize }}>{Modal && <Modal />}</div>
         ) : (
           <>
@@ -249,6 +249,7 @@ const AppComponent: FC = () => {
           </>
         )}
       </MultiGestureIfTouch>
+      {showModal === 'feedback' && Modal && <Modal />}
 
       {!showModal && isDocumentEditable() && (
         <>
