@@ -1,12 +1,16 @@
 import _ from 'lodash'
-// Explicitly import test function from vitest to access retry option.
-// Otherwise global jest types override vitest/globals.
-import { describe } from 'vitest'
-import sleep from '../sleep'
 import throttleConcat from '../throttleConcat'
 
-// See throttleReduce comment for why tests are skipped.
-describe.skip('throttleConcat', { retry: 10 }, () => {
+// See the throttleReduce comment for why these tests drive a fake clock.
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+describe('throttleConcat', () => {
   it('synchronous: once on the leading edge and once on the trailing edge', async () => {
     let calls = 0
     let output: number[] = []
@@ -21,7 +25,7 @@ describe.skip('throttleConcat', { retry: 10 }, () => {
       g(i)
     }
 
-    await sleep(20)
+    await vi.advanceTimersByTimeAsync(10)
 
     expect(calls).toBe(2)
     expect(output).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -41,7 +45,7 @@ describe.skip('throttleConcat', { retry: 10 }, () => {
       g(i)
     }
 
-    await sleep(20)
+    await vi.advanceTimersByTimeAsync(10)
 
     expect(calls).toBe(2)
     expect(output).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
