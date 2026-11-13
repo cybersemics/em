@@ -696,6 +696,8 @@ The helpers in [`../src/test-helpers/`](../src/test-helpers) cover store setup a
 - [`multicursorValues`](../src/test-helpers/multicursorValues.ts) — the sorted thought values of the current multicursor set, so multiselect assertions read as values rather than ids.
 - [`expectPathToEqual`](../src/test-helpers/expectPathToEqual.ts) — Jest matcher that compares paths by their thought *values* rather than ids, so test failures are readable.
 
+Rendered responsive component suites set the viewport by updating [`viewportStore`](../src/stores/viewportStore.ts) inside `act` after `beforeEach(createTestApp)`, for example `beforeEach(() => act(() => viewportStore.update({ innerWidth: 320 })))`. Breakpoint-dependent components read the store through `useBreakpoint`, and jsdom does no layout, so do not redefine `window.innerWidth` or `window.innerHeight` with `Object.defineProperty`: it changes nothing the code under test reads, and a replaced global breaks assumptions far from the test that replaced it.
+
 ### `src/e2e/puppeteer/helpers/` — for Puppeteer tests
 
 Puppeteer input is coordinated through the helpers in [`../src/e2e/puppeteer/helpers/`](../src/e2e/puppeteer/helpers):

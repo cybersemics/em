@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import * as selection from '../device/selection'
 
 /** Preserves the editor selection while palette search owns focus, handing it back before a command runs. */
-const useCommandUniverseSelection = () => {
+const useCommandUniverseSelection = ({ enabled = true }: { enabled?: boolean } = {}) => {
   // Capture before inserting the palette DOM or focusing search. DOM nodes remain presentation state, outside Redux.
-  const [savedSelection] = useState(() => selection.save())
+  const [savedSelection] = useState(() => (enabled ? selection.save() : null))
   const handedBack = useRef(false)
   const restoreSelection = useCallback(() => {
     // Once a command takes the selection, its focus changes must survive the palette closing, including Select All.

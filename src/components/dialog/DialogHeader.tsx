@@ -5,6 +5,7 @@ import { css } from '../../../styled-system/css'
 const DialogHeader = ({ children }: PropsWithChildren) => (
   <div
     className={css({
+      position: 'relative',
       display: 'flex',
       alignItems: 'center',
       paddingInline: '1rem',
