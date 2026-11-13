@@ -8,12 +8,14 @@ import MimeType from './@types/MimeType'
 import State from './@types/State'
 import ThoughtId from './@types/ThoughtId'
 import Thunk from './@types/Thunk'
+import { alertWithMinistore } from './actions/alert'
 import { importFilesActionCreator as importFiles } from './actions/importFiles'
 import { initThoughtsActionCreator as initThoughts } from './actions/initThoughts'
 import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
+import { AlertType } from './constants'
 import { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
 import scrollTo from './device/scrollTo'
 import testFlags from './e2e/testFlags'
@@ -37,6 +39,7 @@ import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
 import owner from './util/owner'
+import resumeImports from './util/resumeImports'
 import taskQueue from './util/taskQueue'
 
 /**
@@ -121,7 +124,18 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
   thoughtsLocalPromise.then(() => {
     // extra delay for good measure to not block rendering
     setTimeout(() => {
-      store.dispatch(importFiles({ resume: true }))
+      // Resume imports that were interrupted by a refresh or crash. The import is dispatched only once their raw text has
+      // been read from IDB, so show the alert it starts with, for the first import, while the text is read.
+      const unfinished = resumeImports.list()
+      if (unfinished.length > 0) {
+        store.dispatch(
+          alertWithMinistore(
+            `Resume import of ${unfinished[0].name}${unfinished.length > 1 ? ` (1/${unfinished.length})` : ''}`,
+            { alertType: AlertType.ImportFile, importFileId: unfinished[0].id },
+          ),
+        )
+      }
+      resumeImports.withText(unfinished).then(files => store.dispatch(importFiles({ resume: files })))
     }, 500)
   })
 
