@@ -159,7 +159,7 @@ export const importFilesActionCreator =
         (dispatch: Dispatch, getState: () => State) =>
         async (): Promise<Path | null> => {
           /** Updates importProgress alert and resumeImports. */
-          const updateImportProgress = async (importedPath: Path | null) => {
+          const updateImportProgress = async () => {
             // update resumeImports with thoughtsImported
             const importProgress = (i + 1) / numThoughts
             const importProgressString = (Math.floor(importProgress * 1000) / 10).toFixed(1)
@@ -173,8 +173,7 @@ export const importFilesActionCreator =
               }),
             )
 
-            const resumePath = i === 0 && importedPath ? importedPath : file.path
-            await manager.update(resumePath, i + 1)
+            await manager.update(i + 1)
           }
 
           const path = resume ? file.path : ancestors.length === 0 ? importPath : pathNew
@@ -195,7 +194,7 @@ export const importFilesActionCreator =
 
           // if inserting into an empty destination with a sibling afterwards, import into the parent
           const basePath =
-            insertBeforeNew || (destEmpty && ancestors.length === 0) ? rootedParentOf(stateAfterPull, path) : path
+            file.insertBefore || (destEmpty && ancestors.length === 0) ? rootedParentOf(stateAfterPull, path) : path
           const baseContext = pathToContext(stateAfterPull, basePath)
           const parentContext =
             ancestors.length === 0 ? baseContext : [...unroot(baseContext), ...relativeAncestorContext]
@@ -228,7 +227,8 @@ export const importFilesActionCreator =
           }
 
           // import into parent path after empty destination thought is destroyed
-          const importThoughtPath = ancestors.length === 0 && insertBeforeNew ? pathNew : parentPath
+          // read from the file rather than the payload, since a resumed import has no payload path to derive them from
+          const importThoughtPath = ancestors.length === 0 && file.insertBefore ? file.path : parentPath
 
           const id = head(parentPath)
           // Do not treat empty thoughts as duplicates: an empty thought is a placeholder with no identity, so merging
@@ -258,7 +258,7 @@ export const importFilesActionCreator =
             /** Updates the progress and resolves the task with the Path of the imported thought. */
             const updateAndResolve = () => {
               const pathImported = importedPath(getState())
-              return updateImportProgress(pathImported).then(() => resolve(pathImported))
+              return updateImportProgress().then(() => resolve(pathImported))
             }
 
             dispatch([
@@ -296,8 +296,8 @@ export const importFilesActionCreator =
                   // Any missing children from previously interrupted imports are cleaned up in createThought.
                   newThought({
                     at: importThoughtPath,
-                    insertNewSubthought: ancestors.length > 0 || !insertBeforeNew,
-                    insertBefore: ancestors.length === 0 && insertBeforeNew,
+                    insertNewSubthought: ancestors.length > 0 || !file.insertBefore,
+                    insertBefore: ancestors.length === 0 && file.insertBefore,
                     preventSetCursor: true,
                     value: block.scope,
                     idbSynced: updateAndResolve,

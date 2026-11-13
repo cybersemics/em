@@ -717,7 +717,7 @@ it('records the progress of an import after every imported thought', async () =>
 })
 
 // https://github.com/cybersemics/em/issues/6297
-it.skip('resumes a paste into an empty thought before its next sibling', async () => {
+it('resumes a paste into an empty thought before its next sibling', async () => {
   vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
@@ -737,7 +737,9 @@ it.skip('resumes a paste into an empty thought before its next sibling', async (
   // recorded after it. The checkpoints are the ones the import recorded, from the initial one at 0 thoughts.
   const checkpoint = setItem.mock.calls.filter(([key]) => key === 'resume-imports')[2][1]
   store.dispatch(deleteThought(['c']))
-  const stored = resumeImports.manager(Object.values(JSON.parse(checkpoint))[0] as ResumeImport).init(text)
+  const stored = resumeImports
+    .manager(Object.values(JSON.parse(checkpoint) as Record<string, ResumeImport>)[0])
+    .init(text)
   localStorage.setItem('resume-imports', checkpoint)
   await vi.runAllTimersAsync()
   await stored
@@ -760,7 +762,7 @@ it.skip('resumes a paste into an empty thought before its next sibling', async (
 })
 
 // https://github.com/cybersemics/em/issues/6298
-it.skip('resumes an import interrupted after its first thought into the import destination', async () => {
+it('resumes an import interrupted after its first thought into the import destination', async () => {
   vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
@@ -780,7 +782,9 @@ it.skip('resumes an import interrupted after its first thought into the import d
   // recorded after it. The checkpoints are the ones the import recorded, from the initial one at 0 thoughts.
   const checkpoint = setItem.mock.calls.filter(([key]) => key === 'resume-imports')[1][1]
   store.dispatch([deleteThought(['p', 'b']), deleteThought(['p', 'c'])])
-  const stored = resumeImports.manager(Object.values(JSON.parse(checkpoint))[0] as ResumeImport).init(text)
+  const stored = resumeImports
+    .manager(Object.values(JSON.parse(checkpoint) as Record<string, ResumeImport>)[0])
+    .init(text)
   localStorage.setItem('resume-imports', checkpoint)
   await vi.runAllTimersAsync()
   await stored
