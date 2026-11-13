@@ -724,16 +724,17 @@ it('resumes an interrupted import from its checkpoint when the app initializes',
 
   const text = `
 - b
-  - c
-- d`
+- c
+  - d`
 
-  // the thought imported before the interruption
-  store.dispatch(importText({ text: '- a\n  - b' }))
+  // the thoughts imported before the interruption
+  store.dispatch(importText({ text: '- a\n  - b\n  - c' }))
 
-  // record the import as interrupted after its first thought, as importFiles does after each thought
+  // record the import as interrupted after its second thought, as importFiles does after each thought
   const path = contextToPath(store.getState(), ['a'])!
   const resumeImport = resumeImports.manager({
     id: 'test',
+    insertBefore: false,
     lastModified: 0,
     thoughtsImported: 0,
     name: 'test',
@@ -741,7 +742,7 @@ it('resumes an interrupted import from its checkpoint when the app initializes',
     size: text.length,
   })
   const stored = resumeImport.init(text)
-  resumeImport.update(path, 1)
+  resumeImport.update(path, 2)
 
   // initialize resumes unfinished imports after a delay
   await vi.runAllTimersAsync()
@@ -756,8 +757,8 @@ it('resumes an interrupted import from its checkpoint when the app initializes',
   expect(removeHome(exported)).toBe(`
 - a
   - b
-    - c
-  - d
+  - c
+    - d
 `)
   // the manifest is deleted once the import is complete, so it is not resumed again
   expect(await remaining).toEqual([])
