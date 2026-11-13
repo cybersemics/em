@@ -262,37 +262,27 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
     }
   }
 
-  let settingsId: ThoughtId | null = null
+  // em/Settings may already exist, possibly under another id.
   for (const child of await client.tree.node(EM_TOKEN).children()) {
     const payloadBytes = await child.payload()
-    if (!payloadBytes) continue
-    const payload = decodeThoughtPayload(payloadBytes)
-    if (payload.value === SETTINGS_VALUE) {
-      settingsId = child.id as ThoughtId
-      break
-    }
+    if (payloadBytes && decodeThoughtPayload(payloadBytes).value === SETTINGS_VALUE) return
   }
+  if ((await client.tree.node(SETTINGS_TOKEN).parent())?.id === EM_TOKEN) return
 
-  if (!settingsId && (await client.tree.node(SETTINGS_TOKEN).parent())?.id === EM_TOKEN) {
-    settingsId = SETTINGS_TOKEN
-  }
-
-  if (!settingsId) {
-    const now = Date.now()
-    await client.local.insert(
-      replicaId,
-      EM_TOKEN,
-      SETTINGS_TOKEN,
-      { type: 'last' },
-      encodeThoughtPayload({
-        value: SETTINGS_VALUE,
-        created: now,
-        lastUpdated: now,
-        updatedBy: '',
-      }),
-      createTreecrdtLocalWriteOptions(),
-    )
-  }
+  const now = Date.now()
+  await client.local.insert(
+    replicaId,
+    EM_TOKEN,
+    SETTINGS_TOKEN,
+    { type: 'last' },
+    encodeThoughtPayload({
+      value: SETTINGS_VALUE,
+      created: now,
+      lastUpdated: now,
+      updatedBy: '',
+    }),
+    createTreecrdtLocalWriteOptions(),
+  )
 }
 
 /** Bump when an index is added or changes, so databases indexed by an older version are rebuilt once. */
@@ -348,6 +338,8 @@ const createTreecrdtDataProvider = () => {
 
     // The derived indexes (attribute children and lexeme memberships) follow TreeCRDT's change events. TreeCRDT
     // remembers how far they got, so a gap such as startup or a failed update is caught up without rebuilding.
+    // `publish` is set near the end of binding. The startup catch-up runs inside onMaterializedDurable before that, so
+    // it publishes nothing; Redux loads lexemes on demand.
     let publish: ((event: MaterializationEvent, keys: string[]) => void) | undefined
     const lexemes = await createLexemeIndex(client)
     const indexes = await client.onMaterializedDurable(
