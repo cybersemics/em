@@ -7,6 +7,7 @@ import State from '../@types/State'
 import { isTouch } from '../browser'
 import { chainCommand, gestureString, globalCommands, hashCommand, parseCommandShortcut } from '../commands'
 import gestureStore from '../stores/gestureStore'
+import fuzzyWordMatch from '../util/fuzzyWordMatch'
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
@@ -83,19 +84,12 @@ const useFilteredCommands = (
         // if no query is entered, all commands with keyboard shortcuts are visible
         if (!search) return true
 
-        const label = (
+        const label =
           sortActiveCommandsFirst && command.labelInverse && command.isActive?.(store.getState())
             ? command.labelInverse
             : command.label
-        ).toLowerCase()
-        const chars = search.toLowerCase().split('')
 
-        return (
-          // include commands with at least one included char and no more than three chars non-matching chars
-          // fuzzy matching will prioritize the best commands
-          chars.some(char => char !== ' ' && label.includes(char)) &&
-          search.split('').filter(char => char !== ' ' && !label.includes(char)).length <= 3
-        )
+        return !!fuzzyWordMatch(label, search)
       }
     })
 
@@ -135,18 +129,8 @@ const useFilteredCommands = (
             })(),
           // startsWith
           search && label.startsWith(search.trim().toLowerCase()) ? 0 : 1,
-          // contains (n chars)
-          // subtract from a large value to reverse order, otherwise commands with fewer matches will be sorted to the top
-          search &&
-            (
-              9999 -
-              search
-                .toLowerCase()
-                .split('')
-                .filter(char => char !== ' ' && label.includes(char)).length
-            )
-              .toString()
-              .padStart(5, '0'),
+          // contiguous matches above those that only match at word starts
+          search && label.includes(search.trim().toLowerCase()) ? 0 : 1,
           // all else equal, sort by label
           label,
         ].join('\x00')
