@@ -1,4 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -53,6 +54,52 @@ describe('swapNote', () => {
   - a
     - b
   - c`)
+  })
+
+  it('does nothing on a metaprogramming attribute', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - aaa
+            - =favorite
+            - bbb
+        `,
+      }),
+      toggleHiddenThoughts(),
+      setCursor(['aaa', '=favorite']),
+    ])
+
+    expect(swapNoteCommand.canExecute(store.getState())).toBe(false)
+    executeCommand(swapNoteCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - aaa
+    - =favorite
+    - bbb`)
+  })
+
+  it('does nothing on the child of =note', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - aaa
+            - =note
+              - bbb
+        `,
+      }),
+      toggleHiddenThoughts(),
+      setCursor(['aaa', '=note', 'bbb']),
+    ])
+
+    expect(swapNoteCommand.canExecute(store.getState())).toBe(false)
+    executeCommand(swapNoteCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - aaa
+    - =note
+      - bbb`)
   })
 
   describe('multicursor', () => {
