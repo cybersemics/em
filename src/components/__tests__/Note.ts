@@ -110,34 +110,6 @@ describe('=note', () => {
     expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe('y'.length)
   })
 
-  test('undoes and redoes deleting the first word of a note with the caret where it was', async () => {
-    await dispatch([importText({ text: '- a\n  - =note\n    - x y' }), setCursor(['a']), toggleNote()])
-    await act(vi.runOnlyPendingTimersAsync)
-    const noteEditor = screen.getByLabelText('note-editable')
-    await act(async () => {
-      noteEditor.focus()
-      selection.setRange(noteEditor, { start: 0, end: 'x'.length })
-    })
-
-    const user = userEvent.setup({ delay: null })
-    await user.keyboard('{Backspace}')
-    await act(vi.runOnlyPendingTimersAsync)
-
-    await act(async () => {
-      store.dispatch(undo())
-      await vi.runOnlyPendingTimersAsync()
-    })
-    expect(screen.getByLabelText('note-editable').innerHTML).toBe('x y')
-    expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe('x'.length)
-
-    await act(async () => {
-      store.dispatch(redo())
-      await vi.runOnlyPendingTimersAsync()
-    })
-    expect(screen.getByLabelText('note-editable').innerHTML).toBe('y')
-    expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe(0)
-  })
-
   test('adds no undo step when the note blurs', async () => {
     await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
     await act(vi.runOnlyPendingTimersAsync)

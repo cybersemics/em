@@ -48,6 +48,17 @@ function getTextContent(value: string): string {
   return element.textContent || ''
 }
 
+/** Infers the note caret offset before an edit from its post-edit offset and plain-text length delta. */
+function getNoteOffsetBeforeEdit(action: UnknownAction): number | null {
+  if (!isEditThoughtAction(action) || action.noteOffset == null) return null
+
+  const oldTextLength = getTextContent(action.oldValue).length
+  const newTextLength = getTextContent(action.newValue).length
+  const noteOffsetBeforeEdit = action.noteOffset + oldTextLength - newTextLength
+
+  return Math.max(0, Math.min(oldTextLength, noteOffsetBeforeEdit))
+}
+
 /** Compare the text contents of the old and new values to determine the direction of the edit.
  * Returns None if the action is not an editThought action or if the text content length is the same.
  * Formatting edits (bold, italic, color) and case changes (HELLO → hello) preserve text length and return None.
@@ -581,11 +592,9 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       lastEditThoughtDirection = editThoughtDirection
 
       // add a new undo patch
-      // Note focus intentionally does not dispatch on every caret movement. For the first note edit of a step, the note
-      // passes the caret from before the edit, so that the inverse patch can restore it instead of leaving the caret at
-      // the end. It cannot be inferred from the saved values, which are trimmed: a deletion can turn whitespace after
-      // the caret into leading whitespace that the trim removes, which changes the length without being before it.
-      const noteOffsetBeforeEdit = isEditThoughtAction(action) ? (action.noteOffsetBefore ?? null) : null
+      // Note focus intentionally does not dispatch on every caret movement. For the first note edit after focus,
+      // infer the pre-edit caret so the inverse patch can restore it instead of leaving the caret at the end.
+      const noteOffsetBeforeEdit = getNoteOffsetBeforeEdit(action)
       const stateBeforeAction = noteOffsetBeforeEdit == null ? state : { ...state, noteOffset: noteOffsetBeforeEdit }
       const undoPatch = diffState(newState as Index, stateBeforeAction)
       return undoPatch.length

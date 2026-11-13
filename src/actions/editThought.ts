@@ -39,8 +39,6 @@ export interface editThoughtPayload {
   force?: boolean
   /** Persist the note caret with the edit so undo and redo can restore it. */
   noteOffset?: number
-  /** Where the note caret was before the edit, in the old value, for undo to restore when the edit starts an undo step. The note does not record its caret as it moves, so only the editor can say where it was. */
-  noteOffsetBefore?: number
   oldValue: string
   newValue: string
   path: SimplePath
