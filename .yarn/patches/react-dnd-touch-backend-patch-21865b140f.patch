@@ -1,0 +1,19 @@
+diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
+index cf9c2e128dc8243afc1ae91b860ccbf28588ce14..93aa62fc0b5ac7f6f38791bc1d0ac5457260d58c 100644
+--- a/dist/TouchBackendImpl.js
++++ b/dist/TouchBackendImpl.js
+@@ -355,7 +355,13 @@ export class TouchBackendImpl {
+             const sourceNode = this.sourceNodes.get(this.monitor.getSourceId());
+             this.installSourceNodeRemovalObserver(sourceNode);
+             this.actions.publishDragSource();
+-            if (e1.cancelable) e1.preventDefault();
++            if (e1.cancelable) {
++                e1.preventDefault();
++                // A cancelable move during the drag means the browser has not started a native scroll, and preventing
++                // it keeps one from starting. Any scroll from here on is the app's own, such as scroll-at-edge, so stop
++                // listening for the native scroll that would end the drag. See em issue #6281.
++                window.removeEventListener('scroll', this.handleScroll);
++            }
+             // Get the node elements of the hovered DropTargets
+             const dragOverTargetNodes = (dragOverTargetIds || []).map((key)=>this.targetNodes.get(key)
+             ).filter((e)=>!!e

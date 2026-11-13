@@ -820,3 +820,76 @@ describe('mobile only', () => {
     await page.touchscreen.touchEnd()
   })
 })
+
+describe('scroll at edge', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+  // https://github.com/cybersemics/em/issues/6281
+  it('keeps dragging while the page scrolls at the bottom edge, and stops scrolling when the finger leaves the edge', async () => {
+    await paste(Array.from({ length: 40 }, (_, i) => `- ${i + 1}`).join('\n'))
+    await waitForEditable('40')
+    await page.evaluate(() => window.scrollTo(0, 0))
+
+    const source = await waitForEditable('3')
+    const box = await source.asElement()?.boundingBox()
+    if (!box) throw new Error('Thought 3 has no bounding box.')
+    const x = box.x + 1
+    const y = box.y + box.height / 2
+
+    await page.touchscreen.touchStart(x, y)
+
+    // A finger on iOS Safari drifts a pixel or two while it is held, and Safari delivers each of those moves. Chromium
+    // suppresses every move within its own touch slop, so Puppeteer cannot send one. Dispatch it on the page instead.
+    await page.evaluate(
+      ({ x, y }) => {
+        const target = document.elementFromPoint(x, y)!
+        const touch = new Touch({ identifier: 0, target, clientX: x, clientY: y + 2 })
+        target.dispatchEvent(
+          new TouchEvent('touchmove', {
+            touches: [touch],
+            targetTouches: [touch],
+            changedTouches: [touch],
+            bubbles: true,
+            cancelable: true,
+          }),
+        )
+      },
+      { x, y },
+    )
+
+    await page.waitForSelector('body[data-drag-hold="true"]', { timeout: 5000 })
+
+    const { innerHeight, scrollYStart } = await page.evaluate(() => ({
+      innerHeight: window.innerHeight,
+      scrollYStart: window.scrollY,
+    }))
+
+    // drag to the bottom edge until the page scrolls
+    const steps = 10
+    const edgeY = innerHeight - 20
+    for (let i = 1; i <= steps; i++) {
+      await page.touchscreen.touchMove(x, y + ((edgeY - y) * i) / steps)
+    }
+    await page.waitForFunction(scrollYStart => window.scrollY > scrollYStart + 50, { timeout: 5000 }, scrollYStart)
+
+    // drag back to the middle of the screen
+    const middleY = innerHeight / 2
+    for (let i = 1; i <= steps; i++) {
+      await page.touchscreen.touchMove(x, edgeY + ((middleY - edgeY) * i) / steps)
+    }
+
+    const dragInProgress = await page.evaluate(() => document.body.dataset.dragInProgress)
+
+    // Measure the scroll over a few frames with the finger held still away from the edge.
+    const scrolled = await page.evaluate(async () => {
+      const before = window.scrollY
+      for (let i = 0; i < 10; i++) await new Promise(requestAnimationFrame)
+      return window.scrollY - before
+    })
+
+    await page.touchscreen.touchEnd()
+
+    expect(dragInProgress).toBe('true')
+    expect(scrolled).toBe(0)
+  })
+})

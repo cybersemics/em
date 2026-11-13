@@ -98,6 +98,14 @@ const scrollAtEdge = (() => {
 
   /** Scroll vertically in the direction given by rate until stop is called. Defaults to scrolling the window, or you can pass an element to scroll. */
   const scroll = () => {
+    // Stop as soon as the drag ends, even while the finger is held still at the edge. Otherwise only the next touchmove
+    // or touchend would stop it, and a drag that ends while the finger is still down would scroll until release (#6281).
+    const state = store.getState()
+    if (!state.dragCommand && state.longPress !== LongPressState.DragInProgress) {
+      autoscrolling = false
+      return
+    }
+
     const scrollContainer = scrollContainerStore.getState().element
     const el = scrollContainer || window
 
