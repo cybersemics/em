@@ -17,6 +17,7 @@ export interface ViewportState {
   innerWidth: number
   innerHeight: number
   layoutTreeTop: number
+  colorPickerHeight: number
   scrollZoneWidth: number
   virtualKeyboardHeight: number
 }
@@ -34,6 +35,8 @@ const viewportStore = reactMinistore<ViewportState>({
       : keyboardHeightCacheStore.getState().landscape,
   /** The y position of the layout tree element relative to the document. Includes autocrop, i.e. this value changes when space above is cropped away as you navigate deeper. This ensures that scrollCursorIntoView can properly calculate the position of the cursor relative to the viewport. */
   layoutTreeTop: 0,
+  /** The height of the open Color Picker, or 0 when it is closed. The open Color Picker extends the toolbar down over the thoughts, so LayoutTree shifts the thoughts down by this much to make room to scroll the first thought out from under it. */
+  colorPickerHeight: 0,
 })
 
 /** Throttled update of viewport height. Invoked on window resize. */
