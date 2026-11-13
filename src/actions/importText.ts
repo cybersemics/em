@@ -126,8 +126,11 @@ export interface ImportTextPayload {
 
   skipRoot?: boolean
 
-  /** The text is HTML copied from outside em, such as from a web page. Its formatting is sanitized with sanitizeExternalHtml when it is inserted inside the thought (single line only). Multiline imports are unaffected. */
-  isExternalHtml?: boolean
+  /** The text was copied from em, as identified by the text/em clipboard marker. Together with isHtml, it decides how HTML is inserted inside the thought (single line only). Multiline imports are unaffected. HTML copied from em keeps its own colors, so it is not inserted inside the text or background color at the caret, even when it has no color of its own (#6055). HTML copied from anywhere else, such as a web page, is sanitized with sanitizeExternalHtml (#4161). */
+  isEmText?: boolean
+
+  /** The text is the clipboard's HTML flavor rather than its plain text. */
+  isHtml?: boolean
 
   /** Text or HTML that will be inserted below the thought (if multiline) or inside the thought (singl line only). */
   text: string
@@ -148,7 +151,8 @@ const importText = (
     rawDestValue,
     replaceEnd,
     replaceStart,
-    isExternalHtml,
+    isEmText,
+    isHtml,
     skipRoot,
     updatedBy = clientId,
     caretPosition = 0,
@@ -185,9 +189,12 @@ const importText = (
           )
         : destValue
 
-    const insertedText = isExternalHtml ? sanitizeExternalHtml(text) : text
+    // Formatting is only preserved as is when the HTML was copied from em (#4161), whose colors are its own (#6055).
+    const insertedText = isHtml && !isEmText ? sanitizeExternalHtml(text) : text
     const insertOffset = replaceStart ?? caretPosition
-    const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, insertedText)
+    const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, insertedText, {
+      ownColor: isHtml && isEmText,
+    })
     // A thought's value never holds leading or trailing whitespace, which a paste can carry in (#5232). Trim before
     // adding the emoji space, as the change handler does, since the space is only added to a value starting with an emoji.
     const trimmedValue = trimHtml(combinedValue)

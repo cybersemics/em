@@ -22,6 +22,7 @@ import { importFilesActionCreator as importFiles } from '../importFiles'
 import { importTextActionCreator as importText } from '../importText'
 import { newThoughtActionCreator as newThought } from '../newThought'
 import { pullActionCreator as pull } from '../pull'
+import { setCursorActionCreator } from '../setCursor'
 
 /** Helper function that initializes the store, imports html into the root, and exports it as plaintext to make easily readable assertions. This is async because importFiles is async. */
 const importExport = async (html: string, outputFormat: MimeType = 'text/plain') => {
@@ -1920,6 +1921,36 @@ it('paste em text with formatted html and meta charset as inline', async () => {
 
   expect(exported).toContain('<b>Hello</b>')
   expect(exported).not.toContain('<meta')
+})
+
+// https://github.com/cybersemics/em/pull/6283#pullrequestreview-5868347122
+it('paste uncolored em text into colored text without taking on its color', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  const value = '<font color="#00d26a">aaa ccc</font>'
+  store.dispatch([
+    newThought({ value }),
+    // the caret between "aaa " and "ccc"
+    (dispatch, getState) => dispatch(setCursorActionCreator({ path: contextToPath(getState(), [value])!, offset: 4 })),
+    (dispatch, getState) =>
+      dispatch(
+        importDataActionCreator({
+          path: contextToPath(getState(), [value])!,
+          html: 'eee',
+          text: 'eee',
+          isEmText: true,
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/html')
+
+  cleanup()
+
+  expect(exported).toContain('<font color="#00d26a">aaa </font>eee<font color="#00d26a">ccc</font>')
 })
 
 // https://github.com/cybersemics/em/issues/3960
