@@ -47,6 +47,7 @@ beforeEach(initStore)
  * from previous tests.
  */
 describe('undo persistence', () => {
+  // increase timeout to give time for two calls to initialize()
   it('persists undo thought change', async () => {
     await initialize({ storage: 'memory' })
 
@@ -77,8 +78,9 @@ describe('undo persistence', () => {
 
     await vi.runAllTimersAsync()
     vi.useRealTimers()
-  }, 10000 /* increase timeout to give time for two calls to initialize() */)
+  }, 10000)
 
+  // increase timeout to give time for two calls to initialize()
   it('persists undo move placement after reload', async () => {
     await initialize({ storage: 'memory' })
 
@@ -121,8 +123,9 @@ describe('undo persistence', () => {
   - c
   - d
   - e`)
-  }, 10000 /* increase timeout to give time for two calls to initialize() */)
+  }, 10000)
 
+  // increase timeout to give time for two calls to initialize()
   it('persists redo move placement after reload', async () => {
     await initialize({ storage: 'memory' })
 
@@ -174,7 +177,7 @@ describe('undo persistence', () => {
   - b
   - c
   - e`)
-  }, 10000 /* increase timeout to give time for two calls to initialize() */)
+  }, 10000)
 })
 
 describe('undo', () => {
