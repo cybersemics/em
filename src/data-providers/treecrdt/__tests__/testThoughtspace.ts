@@ -153,9 +153,12 @@ it('keys an attribute under its new parent and drops the key once it is renamed'
   await persistThoughts([thought(PIN_ID, PARENT_ID, '=pin', 0)])
 
   await persistThoughts([thought(PIN_ID, OTHER_PARENT_ID, '=pin', 0)], { [PIN_ID]: null })
+  // The attribute index catches up after the write; waiting for idle includes it.
+  await treecrdt.waitForIdle()
   expect((await treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID))?.childrenMap['=pin']).toBe(PIN_ID)
 
   await persistThoughts([thought(PIN_ID, OTHER_PARENT_ID, 'pin', 0)])
+  await treecrdt.waitForIdle()
   expect((await treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID))?.childrenMap['=pin']).toBeUndefined()
 })
 
