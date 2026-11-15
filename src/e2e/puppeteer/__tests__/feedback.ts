@@ -119,3 +119,23 @@ it('keeps feedback typing and native undo out of the thoughtspace', async () => 
   await waitForSelector('[role="dialog"]', { hidden: true })
   expect(await exportThoughts()).toBe('\n- Keep this thought\n- \n')
 })
+
+// https://github.com/cybersemics/em/pull/6073#issuecomment-6772976270
+it.skip('prevents selecting feedback instructions while preserving field and preview selection', async () => {
+  await gesture('rdldr')
+  await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
+  await page.click('::-p-text(Name and email are remembered on this device.)', { count: 2 })
+  expect(await page.evaluate(() => window.getSelection()?.toString())).toBe('')
+
+  await click('textarea')
+  await keyboard.type('Feedback message')
+  await press('a', { ctrl: true })
+  expect(
+    await page.$eval('textarea', element => element.value.slice(element.selectionStart, element.selectionEnd)),
+  ).toBe('Feedback message')
+
+  await click('label::-p-text(Include my display resolution)')
+  await waitForSelector('pre[aria-label="Display resolution preview"]')
+  await page.click('pre[aria-label="Display resolution preview"]', { count: 3 })
+  expect(await page.evaluate(() => window.getSelection()?.toString())).toBe('Device pixel ratio: 3')
+})
