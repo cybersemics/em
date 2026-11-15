@@ -377,9 +377,13 @@ const Feedback = () => {
     fontFamily: 'inherit',
     fontSize: '1rem',
     resize: 'none',
+    userSelect: 'text',
+    WebkitUserSelect: 'text',
     _focus: { borderColor: 'fg', outline: '0 none' },
   })
   const previewClass = css({
+    userSelect: 'text',
+    WebkitUserSelect: 'text',
     whiteSpace: 'pre-wrap',
     overflowWrap: 'anywhere',
     maxHeight: '12em',
@@ -406,6 +410,8 @@ const Feedback = () => {
           flexDirection: 'column',
           minHeight: 0,
           maxHeight: 'var(--dialog-max-height, 80dvh)',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
         })}
       >
         <div

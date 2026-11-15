@@ -911,8 +911,9 @@ Cancel the current gesture.
 opens the same form. The command preserves the cursor and multiselection. Name and email are optional and remembered
 only on the current device; clearing a field removes its saved value. Cancel, outside click, or Escape discards the
 unsent draft. While the software keyboard is visible, the dialog fits above it and reveals focused fields by scrolling
-inside the form. Native text selection and editing remain independent of the thought editor. While sending, dismissal
-and repeated submissions are disabled; a failed send preserves the draft for retry.
+inside the form. Labels and instructions cannot be selected. Text in native fields and attachment previews remains
+selectable, and native editing remains independent of the thought editor. While sending, dismissal and repeated
+submissions are disabled; a failed send preserves the draft for retry.
 
 Thoughts, display resolution, and debug logs each require an unchecked-by-default opt-in. The thought attachment is
 an indented plain-text export of the selected subtrees in document order, including notes, attributes, and archived

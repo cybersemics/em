@@ -121,7 +121,7 @@ it('keeps feedback typing and native undo out of the thoughtspace', async () => 
 })
 
 // https://github.com/cybersemics/em/pull/6073#issuecomment-6772976270
-it.skip('prevents selecting feedback instructions while preserving field and preview selection', async () => {
+it('prevents selecting feedback instructions while preserving field and preview selection', async () => {
   await gesture('rdldr')
   await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
   await page.click('::-p-text(Name and email are remembered on this device.)', { count: 2 })
