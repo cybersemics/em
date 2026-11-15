@@ -78,7 +78,7 @@ export async function refreshAttributeChildrenFromChanges(
   for (const [id, { parent, value }] of nodes) {
     // Only moves were reported, so an existing row just takes the new parent.
     if (value === undefined) moved.push([id, parent!])
-    else if (parent === null || !value || !isAttribute(value)) gone.push(id)
+    else if (parent === null || typeof value !== 'string' || !isAttribute(value)) gone.push(id)
     else {
       // A payload change does not say where the node is.
       const parentId = parent ?? (await client.tree.node(id).parent())?.id
