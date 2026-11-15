@@ -26,7 +26,6 @@ const dialogRecipe = defineSlotRecipe({
     'contentWrapper',
     'content',
     'contentInner',
-    'scrollbarThumb',
   ],
   base: {
     /** Full-viewport backdrop — transparent fill plus the backdrop blur that softens whatever's behind the dialog. */
@@ -207,7 +206,7 @@ const dialogRecipe = defineSlotRecipe({
       // Horizontal text padding lives on contentInner; this paddingRight gives the scrollbar breathing room from the modal edge.
       paddingTop: '0.5rem',
       paddingRight: '0.5rem',
-      // The native scrollbar is hidden and replaced by the custom `scrollbarThumb` overlay (rendered in
+      // The native scrollbar is hidden and replaced by the custom ScrollbarThumb overlay (rendered in
       // DialogContent). iOS WebKit cannot recolor its native overflow scrollbar via CSS — `scrollbarColor`,
       // the `::-webkit-scrollbar-*` pseudo-elements, and `color-scheme` are all ignored for the inner
       // overlay scrollbar — so on iOS < 26 it always painted dark. A JS-driven thumb is the only way to get
@@ -247,20 +246,6 @@ const dialogRecipe = defineSlotRecipe({
         // Top fade ramps over the first 4rem of scroll; bottom fade collapses over the last 1rem.
         animationRange: '0 4rem, calc(100% - 1rem) 100%',
       },
-    },
-    /** Custom scrollbar thumb overlaying the right edge of `content`. Its height, vertical position, and visibility are driven by JS in DialogContent (the native scrollbar is hidden on `content`). Uses the same translucent grey (`fgOverlay20`) as the app's default scrollbars (e.g. Sidebar), and is consistent on every platform, unlike iOS's uncontrollable native overlay scrollbar. */
-    scrollbarThumb: {
-      position: 'absolute',
-      top: 0,
-      right: '2px',
-      width: '4px',
-      borderRadius: '2px',
-      background: 'fgOverlay20',
-      opacity: 0,
-      transition: 'opacity 0.3s ease',
-      pointerEvents: 'none',
-      // Sits above the content and its decorative mask.
-      zIndex: 1,
     },
     /** Inner wrapper inside `content` that carries the horizontal text inset. Kept separate from `content` so the scrollbar gutter doesn't push text in further. */
     contentInner: {

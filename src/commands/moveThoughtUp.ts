@@ -11,6 +11,7 @@ import parentOf from '../util/parentOf'
 const moveThoughtUpCommand = {
   id: 'moveThoughtUp',
   label: 'Move Thought Up' as const,
+  systemMenu: 'Edit',
   description: 'Move the current thought up.',
   gesture: 'udu',
   keyboard: { key: 'ArrowUp', meta: true, shift: true },

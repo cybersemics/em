@@ -9,6 +9,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const removeFormat = {
   id: 'removeFormat',
   label: 'Clear Formatting' as const,
+  systemMenu: 'Edit',
   description: 'Clears all formatting from the current thought or selected text.',
   multicursor: true,
   svg: Icon,

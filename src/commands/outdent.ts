@@ -8,6 +8,7 @@ import moveCursorBackward from './moveCursorBackward'
 const outdentCommand = {
   id: 'outdent',
   label: 'Outdent' as const,
+  systemMenu: 'Edit',
   description: 'Outdent? De-indent? Whatever the opposite of indent is. Move the current thought up a level.',
   overlay: {
     keyboard: moveCursorBackward.keyboard,

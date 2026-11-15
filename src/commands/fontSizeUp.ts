@@ -5,6 +5,7 @@ import SettingsIcon from '../components/icons/SettingsIcon'
 const fontSizeUpCommand = {
   id: 'fontSizeUp',
   label: 'Increase Font Size' as const,
+  systemMenu: 'View',
   description: 'Increase the font size. Bigger is better!',
   multicursor: false,
   // TODO: Create unique icon

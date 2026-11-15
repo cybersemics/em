@@ -13,6 +13,7 @@ import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 const cursorBackCommand = {
   id: 'cursorBack',
   label: 'Back' as const,
+  systemMenu: 'Cursor',
   description: 'Move the cursor up a level.',
   longDescription: (
     <>

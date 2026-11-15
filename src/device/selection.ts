@@ -5,7 +5,7 @@ import { Keyboard } from '@capacitor/keyboard'
 import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
 import { ALLOWED_FORMATTING_TAGS, DEFAULT_FONT_SIZE } from '../constants'
-import isFormattingElement from '../util/isFormattingElement'
+import wrapInFormattingAncestors from '../util/wrapInFormattingAncestors'
 
 export type SelectionOptionsType = {
   offset?: number
@@ -654,16 +654,6 @@ export const removeCurrentSelection = () => {
   if (selection && selection.rangeCount > 0) document.execCommand('delete')
 }
 
-/** Wraps a container's contents in shallow clones of the formatting elements the given node sits inside. Cloning a range's contents returns bare text, dropping the tags that wholly contain it (#4229). */
-const wrapInFormattingAncestors = (container: HTMLElement, node: Node) => {
-  // wrap outward from the innermost ancestor; the editable itself is not a formatting element, so the walk stops there
-  for (let ancestor = node.parentElement; isFormattingElement(ancestor); ancestor = ancestor.parentElement) {
-    const wrapper = ancestor.cloneNode(false) as HTMLElement
-    while (container.firstChild) wrapper.appendChild(container.firstChild)
-    container.appendChild(wrapper)
-  }
-}
-
 /** Removes all text from an element, leaving its formatting elements behind as empty shells. */
 const stripText = (element: Element) => {
   for (const node of Array.from(element.childNodes)) {
@@ -693,7 +683,7 @@ export const html = () => {
     div.appendChild(range.cloneContents())
     // Identity, not isEqualNode: two distinct nodes that happen to hold the same content span a multi-node range, whose
     // clone already carries its own formatting, so re-applying the start node's ancestors would wrap it twice.
-    if (node === range.endContainer && node instanceof CharacterData) wrapInFormattingAncestors(div, node)
+    if (node === range.endContainer && node instanceof CharacterData) wrapInFormattingAncestors(div, node.parentElement)
   }
 
   return div.innerHTML

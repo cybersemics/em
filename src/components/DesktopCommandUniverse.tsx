@@ -31,13 +31,15 @@ const MAX_RECENT_COMMANDS = 5
 
 /** Search input for the Desktop Command Universe. */
 const DesktopCommandUniverseSearch: FC<{
+  /** The selection that the search input takes focus from. It is restored when the Command Universe unmounts, unless an executed command has already taken it. */
+  savedSelection: React.RefObject<selection.SavedSelection | null>
   onExecute?: (e: KeyboardEvent, value: string) => void
   onInput?: (value: string) => void
   onSelectDown?: (e: KeyboardEvent) => void
   onSelectUp?: (e: KeyboardEvent) => void
   onSelectTop?: (e: KeyboardEvent) => void
   onSelectBottom?: (e: KeyboardEvent) => void
-}> = ({ onExecute, onInput, onSelectDown, onSelectUp, onSelectTop, onSelectBottom }) => {
+}> = ({ savedSelection, onExecute, onInput, onSelectDown, onSelectUp, onSelectTop, onSelectBottom }) => {
   const dispatch = useDispatch()
   const inputRef = useRef<HTMLInputElement | null>(null)
   /** Handle desktop command universe commands. */
@@ -71,15 +73,12 @@ const DesktopCommandUniverseSearch: FC<{
   )
 
   useEffect(() => {
-    const sel = selection.save()
+    savedSelection.current = selection.save()
     inputRef.current?.focus()
     return () => {
-      // Do not overwrite a caret that the executed command placed in a thought or note, e.g. Note focuses the new note. The Command Universe unmounts after its fade-out, well after the command has run.
-      if (!selection.isThought()) {
-        selection.restore(sel)
-      }
+      selection.restore(savedSelection.current)
     }
-  }, [])
+  }, [savedSelection])
 
   // save selection and add event listeners on desktop
   // cleanup when desktop command universe is hidden
@@ -125,6 +124,7 @@ const DesktopCommandUniverse: FC<{
   const dispatch = useDispatch()
   const fontSize = useSelector(state => state.fontSize)
   const unmounted = useRef(false)
+  const savedSelection = useRef<selection.SavedSelection | null>(null)
 
   const [selectedCommand, setSelectedCommand] = useState<{
     command: Command
@@ -144,6 +144,11 @@ const DesktopCommandUniverse: FC<{
         return
       const commandsNew = [command.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
       dispatch(desktopCommandUniverse())
+      // Hand the selection back before the command runs rather than when the Command Universe unmounts after its
+      // fade-out. The command then sees the selection its keyboard shortcut would, and whatever it does to the selection
+      // stands: Note focuses the new note, and Select All clears the caret so that the selection is not edited (#6228).
+      selection.restore(savedSelection.current)
+      savedSelection.current = null
       executeCommandWithMulticursor(command, { event: e, type: 'desktopCommandUniverse', store })
       storageModel.set('recentCommands', commandsNew)
       setRecentCommands(commandsNew)
@@ -256,6 +261,7 @@ const DesktopCommandUniverse: FC<{
           })}
         >
           <DesktopCommandUniverseSearch
+            savedSelection={savedSelection}
             onExecute={onExecuteSelected}
             onInput={setSearch}
             onSelectUp={onSelectUp}

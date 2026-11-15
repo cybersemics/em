@@ -18,6 +18,7 @@ import backgroundGlowStore from '../stores/backgroundGlowStore'
 import offlineStatusStore from '../stores/offlineStatusStore'
 import syncStatusStore from '../stores/syncStatusStore'
 import fastClick from '../util/fastClick'
+import backgroundGlowImageClassName from './backgroundGlowImageClassName'
 
 /** Helper hook that allows web and native to share selectors for the footer component. */
 const useFooterUseSelectors = () => {
@@ -118,9 +119,6 @@ const liClass = css({
   },
 })
 
-/** Background glow images available in the debug picker, served from public/img/glow as glow-<name>.avif. */
-const glowImages = ['3a', '3b', '3c', '11']
-
 const glowSwatchClass = css({
   display: 'inline-block',
   textDecoration: 'none',
@@ -192,18 +190,15 @@ const BackgroundGlowPicker = () => {
             >
               ✕
             </a>
-            {glowImages.map(name => {
-              const glowImage = `glow-${name}.avif`
+            {Object.keys(backgroundGlowImageClassName).map(glowImage => {
+              const name = glowImage.replace(/^glow-|\.avif$/g, '')
               return (
                 <a
                   key={name}
                   title={glowImage}
                   {...fastClick(() => backgroundGlowStore.update({ image: glowImage }))}
-                  className={glowSwatchClass}
-                  style={{
-                    backgroundImage: `url(/img/glow/${glowImage})`,
-                    borderColor: image === glowImage ? token('colors.fg') : undefined,
-                  }}
+                  className={cx(glowSwatchClass, backgroundGlowImageClassName[glowImage])}
+                  style={{ borderColor: image === glowImage ? token('colors.fg') : undefined }}
                 >
                   {/* The images are dark in both themes, so the watermark uses a theme-invariant light color, further dimmed by opacity. */}
                   <span className={css({ color: 'gestureMenuLabel', opacity: 0.6, fontSize: '0.85em' })}>{name}</span>

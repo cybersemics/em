@@ -10,7 +10,9 @@ const {
   DELAYS_HOURS,
   MARKER,
   MAX_TASKS,
+  QUIET_HOURS,
   SKIP_LABELS,
+  TASK_WINDOW_HOURS,
   commentBody,
   parseState,
 } = require('./copilot-conflicts-comment.cjs')
@@ -19,7 +21,31 @@ const REPORT_DIR = 'copilot-conflicts'
 const REPORT_FILE = `${REPORT_DIR}/report.json`
 const COPILOT = 'Copilot'
 const BASE_BRANCH = 'main'
-const MAX_DISPATCHES = 5
+/**
+ * Tasks started per scan. One, because each task's push runs the full CI suite, BrowserStack
+ * included: several at once would fill the account's device sessions together, ahead of anybody's
+ * work. Scans are frequent — every push to main, every pull request event, and every BrowserStack
+ * run that finishes — so the next due task waits only for the next one.
+ */
+const MAX_DISPATCHES = 1
+
+/** The BrowserStack workflows, whose runs share the account's device sessions with a task's CI. */
+const BROWSERSTACK_WORKFLOWS = ['ios.yml', 'android.yml']
+
+/**
+ * Returns whether any BrowserStack run is queued or in progress. A task's CI would then compete with
+ * somebody's work for the account's device sessions, so the scan starts nothing and leaves the task
+ * to a later scan; the BrowserStack workflows finishing is itself what triggers one.
+ */
+const isBrowserStackBusy = async ({ github, owner, repo }) => {
+  for (const workflow_id of BROWSERSTACK_WORKFLOWS) {
+    for (const status of ['queued', 'in_progress']) {
+      const { data } = await github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id, status, per_page: 1 })
+      if (data.total_count || data.workflow_runs.length) return true
+    }
+  }
+  return false
+}
 
 /**
  * Creates or updates the state comment, unless the scan is read-only. A pull request that has never
@@ -67,11 +93,40 @@ const isEligible = ({ pr, repository, requested }) =>
   pr.head.repo &&
   pr.head.repo.full_name === repository
 
-/** Returns when the next resolution task becomes eligible, or null once the cap is reached. */
+const HOUR = 60 * 60 * 1000
+
+/**
+ * Returns when the next resolution task becomes eligible, or null once the cap is reached: once the
+ * branch has been quiet for QUIET_HOURS, and, after the first task, once the backoff since the
+ * previous task has passed.
+ */
 const getDueAt = state => {
   if (!state.firstConflictAt || state.tasks >= MAX_TASKS) return null
-  const previousTask = state.lastDispatchedAt || state.firstConflictAt
-  return new Date(new Date(previousTask).getTime() + DELAYS_HOURS[state.tasks] * 60 * 60 * 1000)
+  const quietAt = new Date(state.lastHeadChangeAt || state.firstConflictAt).getTime() + QUIET_HOURS * HOUR
+  const backoffAt = state.lastDispatchedAt
+    ? new Date(state.lastDispatchedAt).getTime() + DELAYS_HOURS[state.tasks] * HOUR
+    : 0
+  return new Date(Math.max(quietAt, backoffAt))
+}
+
+/**
+ * Tracks commits on the branch. A head the scan has not seen before starts the quiet period over,
+ * timed from this scan: a push to a Copilot pull request triggers a scan of its own, so the scan
+ * that sees a new head runs moments after it was pushed. A new head is somebody's work unless it
+ * arrives within TASK_WINDOW_HOURS of a task starting, when it is taken to be that task's; work
+ * restarts the count of tasks, so that the backoff only slows pull requests nobody is working on.
+ */
+const trackHead = ({ state, headSha, now }) => {
+  if (state.observedHeadSha === headSha && state.lastHeadChangeAt) return state
+  const isWork =
+    state.observedHeadSha &&
+    state.observedHeadSha !== headSha &&
+    !(state.lastDispatchedAt && now - new Date(state.lastDispatchedAt) < TASK_WINDOW_HOURS * HOUR)
+  return {
+    ...state,
+    lastHeadChangeAt: now.toISOString(),
+    ...(isWork && state.tasks ? { tasks: 0, lastDispatchedAt: null, lastTaskUrl: null, lastRunUrl: null } : null),
+  }
 }
 
 /** Produces the dispatcher report while keeping conflict state synchronized with GitHub. */
@@ -110,7 +165,7 @@ const collectCopilotConflicts = async ({ github, context, core }) => {
     const oldState = parseState(comment && comment.body)
     const conflicting = pr.mergeable === false
     const state = {
-      ...oldState,
+      ...trackHead({ state: oldState, headSha: pr.head.sha, now }),
       firstConflictAt: conflicting ? oldState.firstConflictAt || now.toISOString() : null,
       observedHeadSha: pr.head.sha,
       observedBaseSha: pr.base.sha,
@@ -125,7 +180,7 @@ const collectCopilotConflicts = async ({ github, context, core }) => {
       due.push({
         number: pr.number,
         url: pr.html_url,
-        updatedAt: pr.updated_at,
+        createdAt: pr.created_at,
         headRef: pr.head.ref,
         baseRef: pr.base.ref,
         headSha: pr.head.sha,
@@ -136,7 +191,12 @@ const collectCopilotConflicts = async ({ github, context, core }) => {
     }
   }
 
-  const tasks = due.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, MAX_DISPATCHES)
+  // Oldest first, the order pull requests are reviewed in, so the next one up is never left waiting
+  // for a later scan behind newer ones. Nothing starts while BrowserStack is busy, unless a human
+  // named the pull request.
+  const busy = !requestedPr && due.length > 0 && (await isBrowserStackBusy({ github, owner, repo }))
+  if (busy) core.info('BrowserStack is busy; leaving due tasks to a later scan.')
+  const tasks = busy ? [] : due.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).slice(0, MAX_DISPATCHES)
   fs.mkdirSync(REPORT_DIR, { recursive: true })
   // `requested` travels with the report so the dispatch step, which re-checks the opt-outs against
   // a pull request that may have changed since the scan, honors the same override the scan did.
@@ -146,7 +206,7 @@ const collectCopilotConflicts = async ({ github, context, core }) => {
   )
   await core.summary
     .addHeading('Copilot conflict resolution')
-    .addRaw(`Due: ${due.length}; selected: ${tasks.length}.`)
+    .addRaw(`Due: ${due.length}; selected: ${tasks.length}${busy ? ' (BrowserStack busy)' : ''}.`)
     .write()
   core.info(`Selected ${tasks.length} due Copilot conflict-resolution task(s).`)
 }

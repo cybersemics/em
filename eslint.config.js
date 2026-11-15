@@ -58,6 +58,41 @@ const rules = {
       message:
         'PandaCSS v2 does not generate CSS for a variable spread into a style object when the variable holds a conditional (e.g. `const styles = flag ? { ... } : {}`), and it fails silently: the class name is applied but no rule exists. Give each property its own ternary (`border: flag ? "1px solid" : undefined`) or spread the object literal inline (`...(flag ? { ... } : {})`). See .github/instructions/code-standards.instructions.md § CSS.',
     },
+    {
+      // The background image list comes from the app's CSS, so it cannot see an image in a style attribute. Any
+      // backgroundImage is rejected, whatever its value, because a variable could hold a url().
+      selector: [
+        'JSXAttribute[name.name="style"] Property[key.name="backgroundImage"]',
+        'JSXAttribute[name.name="style"] Property[key.name="background"] > Literal[value=/url\\(/]',
+        'JSXAttribute[name.name="style"] Property[key.name="background"] > TemplateLiteral > TemplateElement[value.raw=/url\\(/]',
+      ].join(', '),
+      message:
+        "Please set a background image using PandaCSS' `css()` helper, rather than an inline `style`. Background images in the CSS are pre-loaded by `initialize.ts`, but images in `style` attributes can't be pre-loaded. If you need to choose which image to load at runtime, prepare an object of `css()` classes and use a key at runtime to select the appropriate class.",
+    },
+    {
+      // initialize preloads each url() with new Image(), which resolves a relative path against the page's
+      // URL rather than the stylesheet's, so a relative path would preload the wrong file. The rule below makes sure
+      // every url() is written out where this rule can see it.
+      selector: [
+        'Property[key.name=/^background(Image)?$/] Literal[value=/url\\(\\s*[\'"]?(?!\\/|https?:\\/\\/)[^\\s\'")]/]',
+        'Property[key.name=/^background(Image)?$/] TemplateElement[value.raw=/url\\(\\s*[\'"]?(?!\\/|https?:\\/\\/)[^\\s\'")]/]',
+      ].join(', '),
+      message:
+        'A background image url() must start with `/` (a path from the root of the site, e.g. `url(/img/glow.avif)`) or `http://` / `https://`. `initialize.ts` preloads every background image, and it needs an absolute path in order to resolve images consistently.',
+    },
+    {
+      // Lint cannot see what a variable holds, so the rule above could not check a url() built from one. The
+      // background key is not checked for a variable, since a background color is often one.
+      selector: [
+        'Property[key.name=/^background(Image)?$/] TemplateElement[tail=false][value.raw=/url\\([^)]*$/]',
+        'Property[key.name="backgroundImage"][value.type=/^(Identifier|MemberExpression|CallExpression)$/]:not([value.type="Identifier"][value.name="undefined"])',
+        'Property[key.name="backgroundImage"] > ConditionalExpression[consequent.type=/^(Identifier|MemberExpression|CallExpression)$/]:not([consequent.type="Identifier"][consequent.name="undefined"])',
+        'Property[key.name="backgroundImage"] > ConditionalExpression[alternate.type=/^(Identifier|MemberExpression|CallExpression)$/]:not([alternate.type="Identifier"][alternate.name="undefined"])',
+        'Property[key.name="backgroundImage"] > LogicalExpression[right.type=/^(Identifier|MemberExpression|CallExpression)$/]',
+      ].join(', '),
+      message:
+        "Write a background image url() out in full, e.g. `backgroundImage: 'url(/img/glow.avif)'`, rather than building it from a variable. `initialize.ts` preloads every background image, and it needs an absolute path in order to resolve images consistently. If you need to choose which image to load at runtime, prepare an object of `css()` classes and use a key at runtime to select the appropriate class.",
+    },
   ],
   'no-restricted-properties': [
     2,

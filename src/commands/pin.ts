@@ -12,6 +12,7 @@ import head from '../util/head'
 const pinCommand = {
   id: 'pin',
   label: 'Pin' as const,
+  systemMenu: 'View',
   labelInverse: 'Unpin',
   description: 'Pins open a thought so its subthoughts are always visible.',
   descriptionInverse: 'Unpins a thought so its subthoughts are automatically hidden.',

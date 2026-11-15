@@ -33,8 +33,29 @@ const STATE_PATTERN = /<!-- copilot-conflicts-state: ([A-Za-z0-9_-]+) -->/
 /** Tasks started on one pull request before the automation gives up on it. */
 const MAX_TASKS = 6
 
-/** Hours waited before each task, indexed by the number of tasks already started. */
-const DELAYS_HOURS = [3, 6, 12, 24, 48, 96]
+/**
+ * Hours waited after the previous task before each task, indexed by the number of tasks already
+ * started. The first task waits only for the branch to go quiet (QUIET_HOURS). The later waits
+ * double to limit churn: every task pushes a commit that runs the full CI suite, BrowserStack
+ * included, and a pull request that keeps conflicting while nobody is about to review or merge it —
+ * over a weekend, or while it is stalled — would otherwise get a fresh resolution after every change
+ * to main. Doubling keeps the tasks a pull request can spend while nobody works on it to six over
+ * about eight days. Work on the pull request restarts the count, since a pull request somebody is
+ * working on is one that is about to be reviewed.
+ */
+const DELAYS_HOURS = [0, 6, 12, 24, 48, 96]
+
+/**
+ * Hours a pull request's branch must go without a new commit before a task starts, so that a task
+ * never lands in the middle of somebody's work on it. This is a debounce: each commit restarts it.
+ */
+const QUIET_HOURS = 1
+
+/**
+ * Hours after a task starts during which new commits on the branch are taken to be the task's own
+ * rather than somebody's work, so that they do not restart the count of tasks.
+ */
+const TASK_WINDOW_HOURS = 2
 
 /** The workflow as the comment names it, and as `gh workflow run` takes it. */
 const WORKFLOW = 'Copilot Conflict Resolution'
@@ -46,6 +67,7 @@ const initialState = () => ({
   firstConflictAt: null,
   tasks: 0,
   lastDispatchedAt: null,
+  lastHeadChangeAt: null,
   lastTaskUrl: null,
   lastRunUrl: null,
   history: [],
@@ -96,14 +118,15 @@ const commentBody = ({ state, number }) => {
   ]
     .filter(Boolean)
     .join(' ')
-  // Measured from the same instant getDueAt measures from, so it stays true however long the
+  // Measured from the same instants getDueAt measures from, so it stays true however long the
   // comment sits there. Nothing is scheduled while the pull request merges cleanly, and nothing is
   // scheduled past the cap — where the footer prints the cap notice in place of this.
+  const quiet = `the branch has had no new commits for ${QUIET_HOURS === 1 ? 'an hour' : `${QUIET_HOURS} hours`}`
   const next =
     state.firstConflictAt && state.tasks < MAX_TASKS
-      ? `The next task is eligible ${DELAYS_HOURS[state.tasks]} hours after ${
-          state.tasks ? 'this one' : 'the conflict was first seen'
-        }, if the pull request still conflicts.`
+      ? state.tasks
+        ? `The next task is eligible ${DELAYS_HOURS[state.tasks]} hours after this one, once ${quiet}, if the pull request still conflicts.`
+        : `The first task is eligible once ${quiet}, if the pull request still conflicts.`
       : null
   return taskComment({
     markers: [MARKER, `<!-- copilot-conflicts-state: ${encoded} -->`],
@@ -122,4 +145,13 @@ const commentBody = ({ state, number }) => {
   })
 }
 
-module.exports = { DELAYS_HOURS, MARKER, MAX_TASKS, SKIP_LABELS, commentBody, parseState }
+module.exports = {
+  DELAYS_HOURS,
+  MARKER,
+  MAX_TASKS,
+  QUIET_HOURS,
+  SKIP_LABELS,
+  TASK_WINDOW_HOURS,
+  commentBody,
+  parseState,
+}
