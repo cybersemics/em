@@ -381,9 +381,7 @@ const createTreecrdtDataProvider = () => {
       },
       updateThoughts: async updates => {
         if (updates.favoriteOrder) await lexemes.setFavoriteOrder(updates.favoriteOrder)
-        const operations = await updateThoughtsForClient({ client, replicaId }, updates)
-        await indexed()
-        return operations
+        return updateThoughtsForClient({ client, replicaId }, updates)
       },
     }
     const materializationContext: MaterializationContext | undefined = materialization && {

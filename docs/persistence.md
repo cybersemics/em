@@ -89,7 +89,7 @@ Favorites' manual order is a separate local preference in `em_favorite_order`. I
 
 The function returns the `readonly Operation[]` it minted. That array is what the runtime forwards to remote sync.
 
-`DataProvider.updateThoughts` accepts whole thought records, optional move placements, and an optional `favoriteOrder` preference—not derived lexeme updates. It waits for the resulting index updates before resolving. Writes that arrive before the client is bound wait on a readiness promise; a failed initialization or a `drop` rejects those waiters so the next initialization starts clean.
+`DataProvider.updateThoughts` accepts whole thought records, optional move placements, and an optional `favoriteOrder` preference—not derived lexeme updates. It resolves once the batch is committed, without waiting for the derived indexes, which catch up from the batch's change events. Writes that arrive before the client is bound wait on a readiness promise; a failed initialization or a `drop` rejects those waiters so the next initialization starts clean.
 
 #### Order and placement
 
@@ -118,9 +118,9 @@ It also stamps every local write with a `writeId` of the form `em-local:${source
 
 [`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) then:
 
-1. Waits for local writes and indexing.
+1. Waits for local writes.
 2. For incoming changes only, refreshes affected thoughts and projects sibling order onto numeric ranks.
-3. Reads complete memberships for affected old and new values.
+3. Waits for indexing, then reads complete memberships for affected old and new values. A round starts over when Redux changes, a local write is queued or another event is indexed while it reads.
 4. Applies changed memberships and incoming thoughts through the *materialization bridge*.
 
 The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.
@@ -168,7 +168,7 @@ Once Redux dispatches a thought update, the data flow is therefore:
 reducer → state.pushQueue → pushQueue enhancer
       → thoughtspaceRuntime.persistPushQueueBatches   (write barrier)
       → DataProvider.updateThoughts
-      → TreeCRDT local ops + derived table writes
+      → TreeCRDT local ops
       → Operation[] forwarded to WebSocket sync (if connected)
       → idbSynced callback is invoked
 ```
