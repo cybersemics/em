@@ -4,7 +4,6 @@ import { HOME_PATH, REGEX_NONFORMATTING_HTML } from '../constants'
 import * as selection from '../device/selection'
 import rootedParentOf from '../selectors/rootedParentOf'
 import head from '../util/head'
-import isMarkdown from '../util/isMarkdown'
 import timestamp from '../util/timestamp'
 import { importFilesActionCreator as importFiles } from './importFiles'
 import { importTextActionCreator as importText } from './importText'
@@ -33,12 +32,12 @@ const REGEX_HTML_SINGLE_LINE =
  *
  * Key features:
  * - Handles both single-line and multi-line content.
- * - Supports markdown content.
+ * - Supports markdown content, which is converted to thoughts by the shared parse funnel (textToHtml).
  * - Can preserve or strip text formatting based on configuration.
  *
  * Differences from other import actions:
- * - importText: Used for single-line content or markdown. Handles inline text insertion and replacement.
- * - importFiles: Used for multi-line, non-markdown content. Creates new thought structures for each line.
+ * - importText: Used for single-line content. Handles inline text insertion and replacement.
+ * - importFiles: Used for multi-line content, including markdown. Creates new thought structures for each line.
  *
  * @param payload - Configuration object for importing data.
  * @param payload.path - The path where the data should be imported. Defaults to HOME_PATH.
@@ -48,7 +47,7 @@ const REGEX_HTML_SINGLE_LINE =
  * @param payload.transient - If true, creates a new empty thought before importing the text.
  * @param payload.isEmText - If true, the HTML was copied from em and its formatting is preserved. Otherwise, HTML that is inserted inside a thought is sanitized to basic formatting within the text. Default: false.
  *
- * @returns A Thunk that handles importing the data based on whether it is multiline or markdown.
+ * @returns A Thunk that handles importing the data based on whether it is multiline.
  */
 export const importDataActionCreator = ({
   path,
@@ -90,12 +89,9 @@ export const importDataActionCreator = ({
       !singleLineHtml &&
       (cleanedHtml ? REGEX_NONFORMATTING_HTML.test(cleanedHtml) : !!processedText?.trim().includes('\n'))
 
-    // Check if the text is markdown, if so, prefer importText over importFiles
-    const markdown = isMarkdown(processedText)
-
     // Resumable imports (via importFiles) import thoughts one at a time and can be resumed if the page is refreshed or there is another interruption. They have a progress bar and they allow duplicates pending descendants to be loaded and merged.
     // Non-resumable imports (via importText), in contrast, are atomic, fast, and preserve the browser selection. Due to the lack of support for duplicates pending descendants, they are only used for single line imports.
-    if (!multiline || markdown) {
+    if (!multiline) {
       // Measured against the destination editable so that the offsets index into its whole value rather than into the text node the selection starts in (#5154).
       const replaceRange = path ? selection.offsetRangeThought(head(path)) : null
 
