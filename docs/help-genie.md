@@ -46,6 +46,7 @@ flowchart TB
   genieMotion["genieMotion.ts<br/>spring and remembered positions"]
   GenieFrame["GenieFrame.ts<br/>everything that changes per frame"]
   constants["constants.ts<br/>every tuned value"]
+  seededRandom["seededRandom.ts<br/>repeatable random numbers"]
 
   subgraph halo["halo/"]
     GenieHalo["GenieHalo.tsx"]
@@ -66,6 +67,7 @@ flowchart TB
 
   HelpGenie -- "lazy" --> GenieCanvas
   GenieCanvas --> stepGenie
+  GenieCanvas -- "scripted flight" --> seededRandom
   GenieCanvas --> GenieHalo
   GenieCanvas --> GenieTrail
   GenieCanvas --> GenieSparkles
@@ -79,7 +81,7 @@ flowchart TB
 
   classDef pure fill:#e8f1e8,stroke:#5a8a5a,color:#1a2e1a
   classDef pixi fill:#ece8f4,stroke:#7a6a9a,color:#241c33
-  class stepGenie,genieMotion,haloShape,flightPath,trailWidth,sparklesTs,GenieFrame,constants pure
+  class stepGenie,genieMotion,haloShape,flightPath,trailWidth,sparklesTs,GenieFrame,constants,seededRandom pure
   class GenieCanvas,GenieHalo,GenieTrail,GenieSparkles,shaders pixi
 ```
 
@@ -87,7 +89,7 @@ Green modules are pure TypeScript; purple ones draw with Pixi. `GenieFrame` and 
 
 em's standards allow one default export per file, and a component file may export only components, so a helper shared between two files needs a file of its own. Helpers used by one component stay inside it, like `trailColor` and `ribbonQuad` in `GenieTrail`. The separate files are there for one of two reasons:
 
-- **Shared:** `trailWidth` is used by the trail and the sparkles; `sparkles.ts` by `stepGenie` and, through the frame, `GenieSparkles`.
+- **Shared:** `trailWidth` is used by the trail and the sparkles; `sparkles.ts` by `stepGenie` and, through the frame, `GenieSparkles`; `seededRandom` by `GenieCanvas`, for a scripted flight, and by the `stepGenie` tests, which would otherwise count a different number of sparkles on each run.
 - **Tested:** `flightPath`, `haloShape`, `genieMotion`, and `stepGenie` hold the least obvious maths, and a function must be exported to be unit-tested.
 
 ## One frame
