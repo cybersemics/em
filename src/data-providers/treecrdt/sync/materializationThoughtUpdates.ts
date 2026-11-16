@@ -6,7 +6,7 @@ import type { DataProvider } from '../../DataProvider'
 
 /** Applies TreeCRDT sibling order to em's temporary rank projection for one parent. */
 const addTreeOrderRankProjection = async (
-  updates: Index<Thought>,
+  updates: Index<Thought | null>,
   db: Pick<DataProvider, 'getThoughtById'>,
   parentId: ThoughtId,
 ): Promise<void> => {
@@ -30,7 +30,7 @@ const addTreeOrderRankProjection = async (
 export default async function refreshThoughtsFromMaterializationChanges(
   changes: Change[],
   db: Pick<DataProvider, 'getThoughtById'>,
-): Promise<{ deletedIds: ThoughtId[]; thoughts: Thought[] }> {
+): Promise<Index<Thought | null>> {
   const deleted = new Set<ThoughtId>()
   const touched = new Set<ThoughtId>()
   const orderParents = new Set<ThoughtId>()
@@ -76,8 +76,7 @@ export default async function refreshThoughtsFromMaterializationChanges(
     touched.delete(id)
   }
 
-  const thoughts: Thought[] = []
-  const thoughtIndexUpdates: Index<Thought> = {}
+  const thoughtIndexUpdates: Index<Thought | null> = {}
 
   for (const id of touched) {
     const thought = await db.getThoughtById(id)
@@ -94,13 +93,8 @@ export default async function refreshThoughtsFromMaterializationChanges(
   }
 
   for (const id of deleted) {
-    delete thoughtIndexUpdates[id]
+    thoughtIndexUpdates[id] = null
   }
 
-  thoughts.push(...Object.values(thoughtIndexUpdates))
-
-  return {
-    deletedIds: [...deleted],
-    thoughts,
-  }
+  return thoughtIndexUpdates
 }

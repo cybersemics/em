@@ -18,18 +18,12 @@ import {
 } from './attributeChildren'
 import createLexemeIndex from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
-import { enqueueMaterializedThoughtsToStore } from './sync'
-import type { MaterializationContext } from './sync/applyMaterializedThoughtsToStore'
+import { type MaterializationContext, applyMaterializedThoughtsToStore } from './sync/applyMaterializedThoughtsToStore'
 import { enqueueMaterializedThoughtsToStoreWork } from './sync/materializationQueue'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 import { createTreecrdtLocalWriteOptions } from './writeBarrier'
 
 type TreecrdtPlacement = { type: 'first' } | { type: 'last' } | { type: 'after'; after: ThoughtId }
-
-type TreecrdtClientIdentity = Readonly<{
-  client: TreecrdtClient
-  replicaId: Uint8Array
-}>
 
 type TreecrdtClientDataProvider = Pick<
   DataProvider,
@@ -155,7 +149,8 @@ const getTreecrdtPlacement = async (
 
 /** Applies thought index updates and move placements to one exact TreeCRDT client. */
 const updateThoughtsForClient = async (
-  { client, replicaId }: TreecrdtClientIdentity,
+  client: TreecrdtClient,
+  replicaId: Uint8Array,
   { thoughtIndexUpdates, movePlacements }: Parameters<DataProvider['updateThoughts']>[0],
 ): Promise<readonly Operation[]> => {
   const ops: Operation[] = []
@@ -375,7 +370,6 @@ const createTreecrdtDataProvider = () => {
         ? Promise.resolve()
         : indexes.settled().catch(err => console.error('TreeCRDT derived indexing failed', err))
 
-    let subscribed = true
     const clientDb: TreecrdtClientDataProvider = {
       getLexemeById: async key => (await clientDb.getLexemesByIds([key]))[0],
       getLexemesByIds: async keys => {
@@ -389,14 +383,14 @@ const createTreecrdtDataProvider = () => {
       },
       updateThoughts: async updates => {
         if (updates.favoriteOrder) await lexemes.setFavoriteOrder(updates.favoriteOrder)
-        return updateThoughtsForClient({ client, replicaId }, updates)
+        return updateThoughtsForClient(client, replicaId, updates)
       },
     }
     const materializationContext: MaterializationContext | undefined = materialization && {
       bridge: materialization,
       db: clientDb,
       pending: [],
-      isActive: () => subscribed && activeDb === clientDb,
+      isActive: () => activeDb === clientDb,
     }
 
     // A publication is queued only once its event is indexed or has failed to index, so the idle barrier waits for the
@@ -406,16 +400,15 @@ const createTreecrdtDataProvider = () => {
       publish = (event, keys) => {
         materializationContext.pending.push({ event, keys })
         // Each event queues a publication; one that finds the buffer already drained returns at once.
-        void enqueueMaterializedThoughtsToStore(materializationContext).catch(err =>
-          console.error('TreeCRDT materialized UI sync failed', err),
-        )
+        void enqueueMaterializedThoughtsToStoreWork(() =>
+          applyMaterializedThoughtsToStore(materializationContext),
+        ).catch(err => console.error('TreeCRDT materialized UI sync failed', err))
       }
     }
 
     activeDb = clientDb
     providerReadiness.resolve(clientDb)
     return async () => {
-      subscribed = false
       unsubscribeMaterialized()
       await indexes.close()
     }

@@ -2,7 +2,6 @@ import type { Change } from '@treecrdt/interface/engine'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Lexeme from '../../@types/Lexeme'
 import type ThoughtId from '../../@types/ThoughtId'
-import type Timestamp from '../../@types/Timestamp'
 import { GLOBAL_ROOT_TOKEN } from '../../constants'
 import hashThought from '../../util/hashThought'
 import { decodeThoughtPayload } from './payload'
@@ -11,14 +10,6 @@ import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 const TABLE = 'em_lexeme_memberships'
 const FAVORITE_KEY = hashThought('=favorite')
 const ROOT_IDS = new Set<string>([GLOBAL_ROOT_TOKEN, ...SYSTEM_ROOT_THOUGHT_IDS])
-
-/** Hashes of the values a change batch carried. A later write may have replaced one in storage while Redux still shows it. */
-const payloadKeys = (changes: readonly Change[]): string[] =>
-  changes.flatMap(change =>
-    !ROOT_IDS.has(change.node) && 'payload' in change && change.payload
-      ? [hashThought(decodeThoughtPayload(change.payload).value)]
-      : [],
-  )
 
 /** Maintains one membership per live thought, independent of which contexts Redux has loaded. */
 const createLexemeIndex = async (client: TreecrdtClient) => {
@@ -46,9 +37,13 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
   const applyChanges = async (changes: readonly Change[]): Promise<string[]> => {
     // Keep each thought's last value, or null once it is gone: one event can carry several changes for one thought.
     const latest = new Map<string, Uint8Array | null>()
+    // Hashes of the event's values. A later write may have replaced one in storage while Redux still shows it.
+    const carried: string[] = []
     for (const change of changes) {
       if (change.kind !== 'move' && !ROOT_IDS.has(change.node)) {
-        latest.set(change.node, change.kind === 'delete' ? null : change.payload)
+        const payload = change.kind === 'delete' ? null : change.payload
+        latest.set(change.node, payload)
+        if (payload) carried.push(hashThought(decodeThoughtPayload(payload).value))
       }
     }
     if (latest.size === 0) return []
@@ -77,8 +72,7 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
         [JSON.stringify(rows)],
       )
     }
-    // payloadKeys adds the new hashes, and any value in between that Redux may still show.
-    return [...new Set([...before, ...payloadKeys(changes)])]
+    return [...new Set([...before, ...carried])]
   }
 
   /** Removes every membership before a full read rebuilds them. */
@@ -93,13 +87,7 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
        FROM ${TABLE} WHERE lexeme_hash IN (SELECT value FROM json_each(?1))`,
       [JSON.stringify(keys)],
     )
-    const rows = JSON.parse(text!) as {
-      id: ThoughtId
-      key: string
-      created: Timestamp
-      lastUpdated: Timestamp
-      updatedBy: string
-    }[]
+    const rows = JSON.parse(text!) as (Omit<Lexeme, 'contexts'> & { id: ThoughtId; key: string })[]
     const lexemes = new Map<string, Lexeme>()
     for (const { id, key, created, lastUpdated, updatedBy } of rows) {
       const lexeme = lexemes.get(key)

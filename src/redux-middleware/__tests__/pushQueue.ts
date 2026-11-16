@@ -51,11 +51,9 @@ it('editing a thought should load the lexeme and merge contexts', async () => {
   const thoughtContextsState = getLexemeFromState(store.getState(), 'f')?.contexts
 
   // Note: Thought h has been changed to f but the id remains the same
-  // check that state has the correct contexts, ignoring order
   expect(thoughtContextsState).toEqual(expect.arrayContaining([thoughtH?.id, thoughtF?.id]))
   expect(thoughtContextsState).toHaveLength(2)
 
-  // check that db has the correct contexts, ignoring order
   const thoughtContextsDb = (await getLexemeFromProvider(db, 'f'))?.contexts
   expect(thoughtContextsDb).toEqual(expect.arrayContaining([thoughtH?.id, thoughtF?.id]))
 
@@ -96,12 +94,10 @@ it('a new thought should merge into an unloaded lexeme and persist both contexts
 
   // the merged Lexeme should have been persisted, so both contexts are still there after the refresh
 
-  // check that db has the correct contexts, ignoring order
   const thoughtContextsDb = (await getLexemeFromProvider(db, 'f'))?.contexts
   expect(thoughtContextsDb).toEqual(expect.arrayContaining([thoughtF?.id, thoughtFRoot?.id]))
   expect(thoughtContextsDb).toHaveLength(2)
 
-  // check that state has the correct contexts, ignoring order
   const thoughtContextsState = getLexemeFromState(store.getState(), 'f')?.contexts
   expect(thoughtContextsState).toEqual(expect.arrayContaining([thoughtF?.id, thoughtFRoot?.id]))
   expect(thoughtContextsState).toHaveLength(2)

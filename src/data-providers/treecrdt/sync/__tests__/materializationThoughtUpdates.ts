@@ -3,7 +3,6 @@ import type Thought from '../../../../@types/Thought'
 import type ThoughtId from '../../../../@types/ThoughtId'
 import type Timestamp from '../../../../@types/Timestamp'
 import { HOME_TOKEN, ROOT_PARENT_ID } from '../../../../constants'
-import type { DataProvider } from '../../../DataProvider'
 import refreshThoughtsFromMaterializationChanges from '../materializationThoughtUpdates'
 
 const A_ID = 'a-id' as ThoughtId
@@ -35,16 +34,7 @@ const thought = (
 })
 
 /** Creates the minimal thoughtspace provider surface needed by refreshThoughtsFromMaterializationChanges. */
-const fakeProvider = (thoughts: Index<Thought>): DataProvider => ({
-  clear: async () => undefined,
-  getLexemeById: async () => undefined,
-  getLexemesByIds: async keys => keys.map(() => undefined),
-  getThoughtById: async (id: ThoughtId) => thoughts[id],
-  getThoughtsByIds: async ids => ids.map(id => thoughts[id]),
-  updateThoughts: async () => undefined,
-  freeThought: async () => undefined,
-  freeLexeme: async () => undefined,
-})
+const fakeProvider = (thoughts: Index<Thought>) => ({ getThoughtById: async (id: ThoughtId) => thoughts[id] })
 
 it('projects TreeCRDT sibling order into compatibility ranks', async () => {
   const newParent = thought(HOME_TOKEN, HOME_TOKEN, 0, ROOT_PARENT_ID, [C_ID, A_ID, B_ID])
@@ -52,7 +42,7 @@ it('projects TreeCRDT sibling order into compatibility ranks', async () => {
   const thoughtB = thought(B_ID, 'b', 1, HOME_TOKEN)
   const thoughtC = thought(C_ID, 'c', 2, HOME_TOKEN)
 
-  const result = await refreshThoughtsFromMaterializationChanges(
+  const updates = await refreshThoughtsFromMaterializationChanges(
     [{ kind: 'move', node: C_ID, parentBefore: HOME_TOKEN, parentAfter: HOME_TOKEN }],
     fakeProvider({
       [HOME_TOKEN]: newParent,
@@ -62,12 +52,10 @@ it('projects TreeCRDT sibling order into compatibility ranks', async () => {
     }),
   )
 
-  const updates = Object.fromEntries(result.thoughts.map(nextThought => [nextThought.id, nextThought]))
-
-  expect(Object.values(updates[HOME_TOKEN].childrenMap)).toEqual([C_ID, A_ID, B_ID])
-  expect(updates[C_ID].rank).toBe(0)
-  expect(updates[A_ID].rank).toBe(1)
-  expect(updates[B_ID].rank).toBe(2)
+  expect(Object.values(updates[HOME_TOKEN]!.childrenMap)).toEqual([C_ID, A_ID, B_ID])
+  expect(updates[C_ID]?.rank).toBe(0)
+  expect(updates[A_ID]?.rank).toBe(1)
+  expect(updates[B_ID]?.rank).toBe(2)
 })
 
 it('projects TreeCRDT sibling order for both parents after a cross-parent move', async () => {
@@ -77,7 +65,7 @@ it('projects TreeCRDT sibling order for both parents after a cross-parent move',
   const thoughtB = thought(B_ID, 'b', 1, LEFT_ID)
   const thoughtC = thought(C_ID, 'c', 0, RIGHT_ID)
 
-  const result = await refreshThoughtsFromMaterializationChanges(
+  const updates = await refreshThoughtsFromMaterializationChanges(
     [{ kind: 'move', node: A_ID, parentBefore: LEFT_ID, parentAfter: RIGHT_ID }],
     fakeProvider({
       [LEFT_ID]: newLeft,
@@ -88,12 +76,10 @@ it('projects TreeCRDT sibling order for both parents after a cross-parent move',
     }),
   )
 
-  const updates = Object.fromEntries(result.thoughts.map(nextThought => [nextThought.id, nextThought]))
-
-  expect(Object.values(updates[LEFT_ID].childrenMap)).toEqual([B_ID])
-  expect(Object.values(updates[RIGHT_ID].childrenMap)).toEqual([C_ID, A_ID])
-  expect(updates[B_ID].rank).toBe(0)
-  expect(updates[C_ID].rank).toBe(0)
+  expect(Object.values(updates[LEFT_ID]!.childrenMap)).toEqual([B_ID])
+  expect(Object.values(updates[RIGHT_ID]!.childrenMap)).toEqual([C_ID, A_ID])
+  expect(updates[B_ID]?.rank).toBe(0)
+  expect(updates[C_ID]?.rank).toBe(0)
   expect(updates[A_ID]).toMatchObject({
     parentId: RIGHT_ID,
     rank: 1,
@@ -107,8 +93,7 @@ it('keeps a thought restored after deletion in the same buffered refresh', async
       { kind: 'delete', node: A_ID, parentBefore: HOME_TOKEN },
       { kind: 'restore', node: A_ID, parentAfter: HOME_TOKEN, payload: null },
     ],
-    fakeProvider({ [A_ID]: restored, [HOME_TOKEN]: thought(HOME_TOKEN, HOME_TOKEN, 0, ROOT_PARENT_ID, [A_ID]) }),
+    fakeProvider({ [A_ID]: restored }),
   )
-  expect(result.deletedIds).toEqual([])
-  expect(result.thoughts).toContainEqual(restored)
+  expect(result).toEqual({ [A_ID]: restored })
 })

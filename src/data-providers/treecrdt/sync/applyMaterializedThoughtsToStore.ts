@@ -1,7 +1,5 @@
 import type { MaterializationEvent } from '@treecrdt/interface/engine'
 import _ from 'lodash'
-import type Index from '../../../@types/IndexType'
-import type Thought from '../../../@types/Thought'
 import type { DataProvider } from '../../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../../thoughtspace'
 import {
@@ -9,7 +7,6 @@ import {
   isTreecrdtLocalMaterialization,
   waitForTreecrdtWriteBarrier,
 } from '../writeBarrier'
-import { enqueueMaterializedThoughtsToStoreWork } from './materializationQueue'
 import refreshThoughtsFromMaterializationChanges from './materializationThoughtUpdates'
 
 export type MaterializationContext = {
@@ -30,14 +27,10 @@ export const applyMaterializedThoughtsToStore = async (context: MaterializationC
     const writeVersion = getTreecrdtWriteBarrierVersion()
     const keys = [...new Set(entries.flatMap(entry => entry.keys))]
     const remoteChanges = entries.flatMap(({ event }) => (isTreecrdtLocalMaterialization(event) ? [] : event.changes))
-    const thoughtIndexUpdates: Index<Thought | null> = {}
-    if (remoteChanges.length) {
-      const { deletedIds, thoughts } = await refreshThoughtsFromMaterializationChanges(remoteChanges, db)
-      for (const id of deletedIds) thoughtIndexUpdates[id] = null
-      for (const latest of thoughts) {
-        const loading = snapshot.thoughtIndex[latest.id]?.pending || snapshot.thoughtIndex[latest.parentId]?.pending
-        thoughtIndexUpdates[latest.id] = { ...latest, ...(loading ? { pending: loading } : null) }
-      }
+    const thoughtIndexUpdates = await refreshThoughtsFromMaterializationChanges(remoteChanges, db)
+    for (const latest of _.compact(Object.values(thoughtIndexUpdates))) {
+      const loading = snapshot.thoughtIndex[latest.id]?.pending || snapshot.thoughtIndex[latest.parentId]?.pending
+      if (loading) thoughtIndexUpdates[latest.id] = { ...latest, pending: loading }
     }
     const values = await db.getLexemesByIds(keys)
     const current = bridge.getSnapshot()
@@ -59,7 +52,3 @@ export const applyMaterializedThoughtsToStore = async (context: MaterializationC
     }
   }
 }
-
-/** Coalesces materialization events behind the existing local-write barrier. */
-export const enqueueMaterializedThoughtsToStore = (context: MaterializationContext): Promise<void> =>
-  enqueueMaterializedThoughtsToStoreWork(() => applyMaterializedThoughtsToStore(context))

@@ -93,9 +93,7 @@ it('does not write seed operations again when binding a seeded client', async ()
 
 it('preserves requested order, duplicates, and missing entries when reading persisted thoughts and lexemes', async () => {
   await initTestThoughtspace()
-  await treecrdtThoughtspace.updateThoughts({
-    thoughtIndexUpdates: { [PARENT_ID]: thought(PARENT_ID, EM_TOKEN, 'parent', 0) },
-  })
+  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
 
   await expect(treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID)).resolves.toBeUndefined()
   await expect(treecrdtThoughtspace.getLexemeById(hashThought('missing'))).resolves.toBeUndefined()
@@ -261,10 +259,9 @@ it('rebuilds memberships and keeps favorite order when opening a database indexe
   const client = await createTreecrdtClient({ docId: 'older-index-version' })
   const replicaId = new Uint8Array(32).fill(1)
   const provider = createTreecrdtDataProvider()
-  const close = await provider.bindClient(client, replicaId)
   try {
+    const close = await provider.bindClient(client, replicaId)
     await persistThoughtsTo(provider.db, [
-      thought(THOUGHT_A_ID, EM_TOKEN, 'a', 0),
       thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1),
       thought(THOUGHT_Y_ID, EM_TOKEN, '=favorite', 2),
     ])
@@ -278,50 +275,38 @@ it('rebuilds memberships and keeps favorite order when opening a database indexe
     await older.close()
     const reopened = createTreecrdtDataProvider()
     const closeReopened = await reopened.bindClient(client, replicaId)
-    try {
-      await expect(reopened.db.getLexemeById(hashThought('c'))).resolves.toMatchObject({ contexts: [THOUGHT_X_ID] })
-      await expect(reopened.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
-        contexts: [THOUGHT_B_ID, THOUGHT_Y_ID],
-      })
-    } finally {
-      await closeReopened()
-    }
+    await expect(reopened.db.getLexemeById(hashThought('c'))).resolves.toMatchObject({ contexts: [THOUGHT_X_ID] })
+    await expect(reopened.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+      contexts: [THOUGHT_B_ID, THOUGHT_Y_ID],
+    })
+    await closeReopened()
   } finally {
-    await close()
     await client.drop()
   }
 })
 
 it('keeps favorite order independent of membership changes', async () => {
-  const client = await createTreecrdtClient({ docId: 'favorite-order' })
-  const replicaId = new Uint8Array(32).fill(1)
-  const provider = createTreecrdtDataProvider()
-  const close = await provider.bindClient(client, replicaId)
-  try {
-    await persistThoughtsTo(provider.db, [
-      thought(THOUGHT_A_ID, EM_TOKEN, '=favorite', 0),
-      thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1),
-    ])
-    await provider.db.updateThoughts({
-      thoughtIndexUpdates: {},
-      favoriteOrder: [THOUGHT_B_ID, THOUGHT_A_ID, PARENT_ID],
-    })
-    await persistThoughtsTo(provider.db, [thought(THOUGHT_Y_ID, EM_TOKEN, '=favorite', 2)])
-    await expect(provider.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
-      contexts: [THOUGHT_B_ID, THOUGHT_A_ID, THOUGHT_Y_ID],
-    })
-    await persistThoughtsTo(provider.db, [thought(THOUGHT_B_ID, EM_TOKEN, 'not a favorite', 1)])
-    await expect(provider.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
-      contexts: [THOUGHT_A_ID, THOUGHT_Y_ID],
-    })
-    await persistThoughtsTo(provider.db, [thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1)])
-    await expect(provider.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
-      contexts: [THOUGHT_B_ID, THOUGHT_A_ID, THOUGHT_Y_ID],
-    })
-  } finally {
-    await close()
-    await client.drop()
-  }
+  await initTestThoughtspace()
+  await persistThoughts([
+    thought(THOUGHT_A_ID, EM_TOKEN, '=favorite', 0),
+    thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1),
+  ])
+  await treecrdtThoughtspace.updateThoughts({
+    thoughtIndexUpdates: {},
+    favoriteOrder: [THOUGHT_B_ID, THOUGHT_A_ID, PARENT_ID],
+  })
+  await persistThoughts([thought(THOUGHT_Y_ID, EM_TOKEN, '=favorite', 2)])
+  await expect(treecrdtThoughtspace.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+    contexts: [THOUGHT_B_ID, THOUGHT_A_ID, THOUGHT_Y_ID],
+  })
+  await persistThoughts([thought(THOUGHT_B_ID, EM_TOKEN, 'not a favorite', 1)])
+  await expect(treecrdtThoughtspace.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+    contexts: [THOUGHT_A_ID, THOUGHT_Y_ID],
+  })
+  await persistThoughts([thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1)])
+  await expect(treecrdtThoughtspace.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+    contexts: [THOUGHT_B_ID, THOUGHT_A_ID, THOUGHT_Y_ID],
+  })
 })
 
 it('resumes from its cursor after an interrupted index update', async () => {

@@ -132,7 +132,6 @@ it('updates stored memberships on incoming deletion even when its thought was no
     provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
   )
   await waitForMaterializedThoughtsToStore()
-  snapshot = { thoughtIndex: {}, lexemeIndex: {} }
   await client.local.delete(new Uint8Array(32).fill(2), THOUGHT_ID)
   await waitForMaterializedThoughtsToStore()
 
