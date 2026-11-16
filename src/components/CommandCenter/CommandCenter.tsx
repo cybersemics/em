@@ -33,10 +33,12 @@ import uncategorize from '../../commands/uncategorize'
 import useSafeArea from '../../hooks/useSafeArea'
 import isTutorial from '../../selectors/isTutorial'
 import backgroundGlowStore from '../../stores/backgroundGlowStore'
+import reactMinistore from '../../stores/react-ministore'
 import viewportStore from '../../stores/viewportStore'
 import virtualKeyboardStore from '../../stores/virtualKeyboardStore'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
+import storage from '../../util/storage'
 import CommandTable from '../CommandTable'
 import ChevronIcon from '../icons/ChevronIcon'
 import PanelCommand from './PanelCommand'
@@ -68,6 +70,106 @@ const STANDARD_VIEW_EXIT_END = 0.3
 
 /** The stage progress at which the expanded stage's command list starts to fade in. */
 const EXPANDED_VIEW_ENTER_START = 0.25
+
+/** The stage progress at which the fold-in variant has folded every row of the command grid away. The rows need longer than the push-up fade to read as folding. */
+const FOLD_EXIT_END = 0.5
+
+/** The stage progress at which the command list starts to fade in under the fold-in variant. Row 3 starts to fade out at the same progress. */
+const FOLD_ENTER_START = 0
+
+/** The gap between the bottom of the chevron band and the top of the command list while the fold-in variant's list slides in. */
+const ROW_TRANSITION_LIST_GAP_PX = 30
+
+/**************************************************************
+ * Transition variants (demo only)
+ **************************************************************/
+
+/** The standard-to-expanded transitions that the `?transitions` switcher chooses between. */
+const TRANSITION_MODES = [
+  { mode: 'push', label: 'Push up' },
+  { mode: 'fold', label: 'Fold in' },
+] as const
+
+/** A standard-to-expanded transition variant. */
+type TransitionMode = (typeof TRANSITION_MODES)[number]['mode']
+
+/** The local storage key that remembers the chosen transition variant across reloads. */
+const TRANSITION_MODE_STORAGE_KEY = 'commandCenterTransitionMode'
+
+/** The switcher appears only when the URL carries `?transitions`, so the app keeps the push-up transition otherwise. */
+const isTransitionSwitchEnabled = new URLSearchParams(window.location.search).has('transitions')
+
+/** Holds the transition variant that the switcher selected. */
+const commandCenterTransitionStore = reactMinistore<{ mode: TransitionMode }>({
+  mode: (() => {
+    const stored = isTransitionSwitchEnabled ? storage.getItem(TRANSITION_MODE_STORAGE_KEY) : null
+    return TRANSITION_MODES.find(({ mode }) => mode === stored)?.mode ?? 'push'
+  })(),
+})
+
+/** A pill row pinned near the top of the screen that switches between the transition variants. Hidden from e2e runs so that snapshots never include it. */
+const TransitionSwitcher: FC = () => {
+  const mode = commandCenterTransitionStore.useSelector(state => state.mode)
+  const ref = useRef<HTMLDivElement>(null)
+
+  // The app listens for touchstart and mousedown natively to dismiss the Command Center, so a tap on the switcher must not reach it.
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    /** Stops the event from reaching the app's native listeners. */
+    const stop = (e: Event) => e.stopPropagation()
+    el.addEventListener('touchstart', stop)
+    el.addEventListener('mousedown', stop)
+    return () => {
+      el.removeEventListener('touchstart', stop)
+      el.removeEventListener('mousedown', stop)
+    }
+  }, [])
+
+  if (!isTransitionSwitchEnabled || navigator.webdriver) return null
+
+  return (
+    <div
+      ref={ref}
+      className={css({
+        position: 'fixed',
+        top: 'calc(env(safe-area-inset-top) + 3.5rem)',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        gap: '2px',
+        padding: '3px',
+        borderRadius: '999px',
+        background: 'bgOverlay80',
+        border: '1px solid',
+        borderColor: 'fgOverlay20',
+        fontSize: '12px',
+        whiteSpace: 'nowrap',
+      })}
+      style={{ zIndex: 100000 }}
+    >
+      {TRANSITION_MODES.map(({ mode: option, label }) => (
+        <button
+          key={option}
+          onClick={() => {
+            storage.setItem(TRANSITION_MODE_STORAGE_KEY, option)
+            commandCenterTransitionStore.update({ mode: option })
+          }}
+          className={css({
+            all: 'unset',
+            cursor: 'pointer',
+            padding: '4px 10px',
+            borderRadius: '999px',
+            color: 'fg',
+          })}
+          style={{ background: option === mode ? token('colors.fgOverlay20') : 'transparent' }}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 /**************************************************************
  * Expand bounce constants
@@ -129,6 +231,25 @@ const STANDARD_STAGE_REM = 4
 
 /** The smallest stage offset. It keeps the command list long enough to cover the gap that the expand bounce opens below the drawer. */
 const MIN_STAGE_OFFSET_REM = MAX_EXPAND_REM - CHEVRON_SECTION_HEIGHT_REM
+
+/** The scale of a command grid row at the given opacity. A fully faded row is at 94%, the size that the push-up variant shrinks the whole grid to. */
+const rowScale = (opacity: unknown) => 0.94 + 0.06 * (opacity as number)
+
+/** The height of every button in the command grid. It matches the height in panelCommandRecipe. */
+const PANEL_COMMAND_HEIGHT_PX = 60
+
+/** The gap between the rows of the command grid, and between the grid and the chevron band. It matches the gap in their css. */
+const COMMAND_GRID_GAP_REM = 0.889
+
+/** The vertical padding of the chevron button. It matches the padding in its css. */
+const CHEVRON_BUTTON_PADDING_REM = 0.222
+
+/**
+ * The height of the chevron button's content.
+ * The chevron svg is inline, so the button's line box sets this height, not the svg's 13px.
+ * The line box comes from the inherited line-height, which does not scale with the font size setting.
+ */
+const CHEVRON_BUTTON_LINE_HEIGHT_PX = 20
 
 /** Dimensions of the chevron svg in px. The rounded path is inset by half its stroke, so these are the bounds of the visible mark, not a box it is letterboxed inside. */
 const CHEVRON_WIDTH = 33
@@ -701,19 +822,75 @@ const CommandCenter = () => {
   // The command grid nudges up as it fades out, while the command list rises into its place as it fades in.
   // The two ranges overlap for only 5% of the transition, so the layouts are rarely visible together.
   // The grid's short rise keeps it clear of "1 thought selected" above it.
-  const standardViewOpacity = useTransform(stageProgress, [0, STANDARD_VIEW_EXIT_END], [1, 0])
-  const standardViewY = useTransform(stageProgress, [0, STANDARD_VIEW_EXIT_END], [0, -14], { ease: easeIn })
-  const standardViewScale = useTransform(stageProgress, [0, STANDARD_VIEW_EXIT_END], [1, 0.94], { ease: easeIn })
-  const expandedViewOpacity = useTransform(stageProgress, [EXPANDED_VIEW_ENTER_START, 1], [0, 1])
-  const expandedViewY = useTransform(stageProgress, [EXPANDED_VIEW_ENTER_START, 1], [96, 0], { ease: easeOut })
+  const transitionMode = commandCenterTransitionStore.useSelector(state => state.mode)
+  // Fold-in moves each row of the command grid on its own; push-up moves the grid as a whole.
+  const isRowTransition = transitionMode !== 'push'
+  const exitEnd = transitionMode === 'fold' ? FOLD_EXIT_END : STANDARD_VIEW_EXIT_END
+  const enterStart = transitionMode === 'fold' ? FOLD_ENTER_START : EXPANDED_VIEW_ENTER_START
+
+  const standardViewOpacity = useTransform(stageProgress, [0, exitEnd], [1, 0])
+  const standardViewY = useTransform(stageProgress, [0, exitEnd], [0, -14], { ease: easeIn })
+  const standardViewScale = useTransform(stageProgress, [0, exitEnd], [1, 0.94], { ease: easeIn })
+  const expandedViewOpacity = useTransform(stageProgress, [enterStart, 1], [0, 1])
+  // How far the bottom of the chevron band sits below the top of the command grid.
+  // The fold-in variant starts the command list's rise there, so the list comes in from below the chevron
+  // instead of over row 3.
+  // The sum is the three rows and their two gaps, the gap above the band, and the band itself.
+  const rowGap = fontSize * COMMAND_GRID_GAP_REM
+  const chevronBandBottom =
+    3 * PANEL_COMMAND_HEIGHT_PX + 3 * rowGap + 2 * fontSize * CHEVRON_BUTTON_PADDING_REM + CHEVRON_BUTTON_LINE_HEIGHT_PX
+  const expandedViewY = useTransform(stageProgress, [enterStart, 1], [96, 0], { ease: easeOut })
   // Grows the command list slightly as it rises, so it reads as coming forward rather than sliding flat.
-  const expandedViewScale = useTransform(stageProgress, [EXPANDED_VIEW_ENTER_START, 1], [0.94, 1], { ease: easeOut })
-  const standardPointerEvents = useTransform(stageProgress, p =>
-    p > STANDARD_VIEW_EXIT_END ? 'none' : 'auto',
-  ) as MotionValue<'none' | 'auto'>
-  const expandedPointerEvents = useTransform(stageProgress, p =>
-    p > STANDARD_VIEW_EXIT_END ? 'auto' : 'none',
-  ) as MotionValue<'none' | 'auto'>
+  const expandedViewScale = useTransform(stageProgress, [enterStart, 1], [0.94, 1], { ease: easeOut })
+  const standardPointerEvents = useTransform(stageProgress, p => (p > exitEnd ? 'none' : 'auto')) as MotionValue<
+    'none' | 'auto'
+  >
+  const expandedPointerEvents = useTransform(stageProgress, p => (p > exitEnd ? 'auto' : 'none')) as MotionValue<
+    'none' | 'auto'
+  >
+
+  // Fold-in variant: each lower row slides up behind the row above it, so the grid collapses into the first row's
+  // space and never rises toward "1 thought selected".
+  // - The second and third rows travel to the first row's top, so the third row moves twice as far.
+  // - The lowest row fades first, so two translucent rows never stack at full strength.
+  // - The first row stays put and fades last.
+  /** How far each row of the command grid sits below the first row. Every row is one button tall. */
+  const rowOffsets = [0, 1, 2].map(i => i * (PANEL_COMMAND_HEIGHT_PX + rowGap))
+  const foldRow1Opacity = useTransform(stageProgress, [exitEnd * 0.5, exitEnd], [1, 0])
+  const foldRow2Opacity = useTransform(stageProgress, [exitEnd * 0.2, exitEnd * 0.85], [1, 0])
+  const foldRow2Y = useTransform(stageProgress, [0, exitEnd], [0, -rowOffsets[1]], { ease: easeIn })
+  const foldRow3Opacity = useTransform(stageProgress, [0, exitEnd * 0.7], [1, 0])
+  const foldRow3Y = useTransform(stageProgress, [0, exitEnd], [0, -rowOffsets[2]], { ease: easeIn })
+  const foldRows = [
+    { opacity: foldRow1Opacity, y: 0 },
+    { opacity: foldRow2Opacity, y: foldRow2Y },
+    { opacity: foldRow3Opacity, y: foldRow3Y },
+  ]
+
+  const rowStyles = foldRows
+
+  // Each row shrinks as it fades, to the same 94% that the push-up variant shrinks the whole grid to.
+  // The scale follows the row's own opacity, so every row recedes on its own schedule.
+  const rowScales = [
+    useTransform(foldRow1Opacity, rowScale),
+    useTransform(foldRow2Opacity, rowScale),
+    useTransform(foldRow3Opacity, rowScale),
+  ]
+
+  // In the fold-in variant the command list starts a fixed gap below the chevron's standard-stage spot and slides up
+  // together with row 3. The chevron also rides with row 3, so the gap holds and the list never overlaps a row or the chevron.
+  // Once row 3 and the chevron have faded, the list rises the rest of the way to its expanded position.
+  const rowTransitionListRiseY = useTransform(
+    stageProgress,
+    [exitEnd, 1],
+    [chevronBandBottom + ROW_TRANSITION_LIST_GAP_PX - rowOffsets[2], 0],
+    {
+      ease: easeOut,
+    },
+  )
+  const rowTransitionListY = useTransform([stageProgress, foldRow3Y, rowTransitionListRiseY], ([p, foldY, riseY]) =>
+    (p as number) < exitEnd ? chevronBandBottom + ROW_TRANSITION_LIST_GAP_PX + (foldY as number) : (riseY as number),
+  )
 
   if (isTouch && !isTutorialOn) {
     return (
@@ -740,6 +917,7 @@ const CommandCenter = () => {
           />
         )}
         <HiddenOverlay />
+        <TransitionSwitcher />
         <Sheet
           data-testid='command-center-panel'
           ref={sheetRef}
@@ -984,35 +1162,69 @@ const CommandCenter = () => {
                 >
                   <div className={css({ position: 'relative' })}>
                     <motion.div
-                      /** The standard stage's command grid. Kept on its own compositor layer so the stage transition moves and fades it rather than repainting every tile each frame. */
+                      /**
+                       * The standard stage's command grid, one row per child so that the fold-in variant can move each row on its own.
+                       * Kept on its own compositor layer so the stage transition moves and fades it rather than repainting every tile each frame.
+                       * Keyed on the transition variant: switching variants remounts the grid, so no inline style from the other variant is left behind.
+                       */
+                      key={transitionMode}
                       className={css({
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(4, 1fr)',
-                        gridTemplateRows: 'auto',
-                        gridAutoFlow: 'row',
-                        gap: '0.622rem',
-                        gridRowGap: '0.889rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.889rem',
                         transformOrigin: 'top center',
                       })}
                       style={{
-                        opacity: standardViewOpacity,
-                        y: standardViewY,
-                        scale: standardViewScale,
+                        ...(isRowTransition
+                          ? {}
+                          : { opacity: standardViewOpacity, y: standardViewY, scale: standardViewScale }),
                         pointerEvents: standardPointerEvents,
-                        willChange: 'opacity, transform',
+                        willChange: isRowTransition ? undefined : 'opacity, transform',
                       }}
                     >
-                      <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
-                      <PanelCommand command={note} size='small' />
-                      <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
-                      <PanelCommand command={deleteCommand} size='small' />
-                      <PanelCommandGroup commandSize='small' commandCount={2}>
-                        <PanelCommand command={{ ...outdent, label: '' }} size='small' />
-                        <PanelCommand command={{ ...indent, label: '' }} size='small' />
-                      </PanelCommandGroup>
-                      <PanelCommand command={swapParent} size='medium' />
-                      <PanelCommand command={categorize} size='medium' />
-                      <PanelCommand command={uncategorize} size='medium' />
+                      {[
+                        <>
+                          <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
+                          <PanelCommand command={note} size='small' />
+                          <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
+                          <PanelCommand command={deleteCommand} size='small' />
+                        </>,
+                        <>
+                          <PanelCommandGroup commandSize='small' commandCount={2}>
+                            <PanelCommand command={{ ...outdent, label: '' }} size='small' />
+                            <PanelCommand command={{ ...indent, label: '' }} size='small' />
+                          </PanelCommandGroup>
+                          <PanelCommand command={swapParent} size='medium' />
+                        </>,
+                        <>
+                          <PanelCommand command={categorize} size='medium' />
+                          <PanelCommand command={uncategorize} size='medium' />
+                        </>,
+                      ].map((row, i) => (
+                        <motion.div
+                          key={i}
+                          className={css({
+                            position: 'relative',
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(4, 1fr)',
+                            gap: '0.622rem',
+                          })}
+                          style={{
+                            // Fold-in tucks each lower row behind the row above it.
+                            zIndex: 3 - i,
+                            ...(isRowTransition
+                              ? {
+                                  opacity: rowStyles[i].opacity,
+                                  y: rowStyles[i].y,
+                                  scale: rowScales[i],
+                                  willChange: 'opacity, transform',
+                                }
+                              : {}),
+                          }}
+                        >
+                          {row}
+                        </motion.div>
+                      ))}
                     </motion.div>
                     <motion.div
                       /** Overlays the command grid, extending down over the chevron band and into the region that the standard stage leaves below the screen. Absolutely positioned so that it cannot change the measured sheet height, which the snap points are computed from. */
@@ -1028,7 +1240,7 @@ const CommandCenter = () => {
                       })}
                       style={{
                         opacity: expandedViewOpacity,
-                        y: expandedViewY,
+                        y: isRowTransition ? rowTransitionListY : expandedViewY,
                         scale: expandedViewScale,
                         pointerEvents: expandedPointerEvents,
                         // Set a negative bottom value to allow content to extend into the hidden chevron
@@ -1063,7 +1275,12 @@ const CommandCenter = () => {
                       alignItems: 'center',
                       justifyContent: 'center',
                     })}
-                    style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
+                    style={{
+                      // The chevron rides up with row 3 in the fold-in variant.
+                      opacity: standardViewOpacity,
+                      y: transitionMode === 'fold' ? foldRow3Y : 0,
+                      pointerEvents: standardPointerEvents,
+                    }}
                   >
                     <button
                       {...fastClick(() => {
