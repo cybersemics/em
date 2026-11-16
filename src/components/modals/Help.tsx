@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { Tab } from '../../@types/Tab'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
+import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../../constants'
@@ -333,6 +334,7 @@ const About = () => {
 
 /** A modal that offers links to the tutorial, a list of commands, and other helpful things. */
 const ModalHelp = () => {
+  const dispatch = useDispatch()
   const [section, setSection] = useState(Section.CommandLibrary)
   const fontSize = useSelector(state => state.fontSize)
   const showDot = useSelector(state => !state.storageCache?.tutorialComplete)
@@ -367,7 +369,12 @@ const ModalHelp = () => {
     <ModalComponent
       id='help'
       title='Help'
-      actions={({ close }) => <ActionButton key='close' title='Close' {...fastClick(() => close())} />}
+      actions={({ close }) => (
+        <>
+          <ActionButton title='Send Feedback' {...fastClick(() => dispatch(showModal({ id: 'feedback' })))} />
+          <ActionButton key='close' title='Close' {...fastClick(() => close())} />
+        </>
+      )}
       style={{ fontSize, paddingInline: 0 }}
     >
       <Tabs currentTab={section} onTabChange={setSection} tabs={tabs} />

@@ -1,18 +1,27 @@
-import React, { PropsWithChildren, useCallback, useEffect, useRef } from 'react'
+import React, { CSSProperties, PropsWithChildren, useCallback, useEffect, useRef } from 'react'
+import { css, cx } from '../../../styled-system/css'
 import { dialogRecipe } from '../../../styled-system/recipes'
 import useOnClickOutside from '../../hooks/useOnClickOutside'
+import usePositionFixed from '../../hooks/usePositionFixed'
 
 interface DialogProps {
   onClose: () => void
   nodeRef: React.RefObject<HTMLDivElement | null>
+  /** The unobscured viewport height when an overlay keyboard is visible. */
+  availableHeight?: number
 }
 
 /**
- * Dialog component with liminal glass treatment. All styling lives in dialogRecipe.
+ * Dialog component with liminal glass treatment and an optional height budget above an overlay keyboard.
  */
-const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, nodeRef }) => {
+const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, nodeRef, availableHeight }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const dialog = dialogRecipe()
+  const positionFixed = usePositionFixed({
+    keyboardOpen: availableHeight !== undefined,
+    safeArea: false,
+    scrollThrottle: 100,
+  })
 
   // Close the dialog when the user clicks or taps outside of it. A press on a surface layered above the dialog, marked
   // data-above-dialog, is not outside it: the dialog is still what the user is working in.
@@ -53,7 +62,32 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
 
   return (
     // Full-viewport backdrop with blur.
-    <div ref={nodeRef} className={dialog.overlay}>
+    <div
+      ref={nodeRef}
+      data-testid='dialog-overlay'
+      className={cx(
+        dialog.overlay,
+        availableHeight !== undefined
+          ? css({
+              alignItems: 'flex-start',
+              paddingTop: 'calc(env(safe-area-inset-top) + 1rem)',
+              paddingBottom: '1rem',
+              boxSizing: 'border-box',
+              touchAction: 'pan-y',
+            })
+          : undefined,
+      )}
+      style={
+        availableHeight !== undefined
+          ? ({
+              ...positionFixed,
+              height: availableHeight,
+              bottom: 'auto',
+              '--dialog-max-height': `calc(${availableHeight}px - env(safe-area-inset-top) - 2rem)`,
+            } as CSSProperties)
+          : undefined
+      }
+    >
       {/* Soft full-screen color glow rendered behind the glass. */}
       <div className={dialog.backgroundGlow} />
 

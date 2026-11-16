@@ -5,10 +5,12 @@ const anchorButtonRecipe = defineRecipe({
   className: 'anchor-button',
   description: 'Styles for <a> buttons',
   base: {
+    appearance: 'none',
     padding: '0.5em 2em',
     minWidth: '6em',
     textDecoration: 'none',
     display: 'inline-block',
+    border: 'none',
     borderRadius: '99px',
     color: 'bg',
     backgroundColor: 'fg',

@@ -18,6 +18,15 @@ While the keyboard is up, iOS pans the visual viewport within the layout viewpor
 - **Panning the visual viewport fires `scroll` on `window.visualViewport`, not on `window`.** A listener that must see every scroll has to listen on both, as `initEvents` does.
 - **`visualViewport` fires `resize` repeatedly while the user scrolls with the keyboard up**, not only when the keyboard opens and closes. Anything hooked to that event runs mid-scroll. Work that should happen once per keyboard open or close belongs on the app's keyboard state (`state.isKeyboardOpen`) changing, after the keyboard animation has finished.
 
+## Dialogs with native form controls
+
+Native inputs and textareas open the keyboard independently of the thought editor's edit mode. The feedback dialog
+supplies its measured keyboard visibility to `usePositionFixed`, which places the overlay at the current document
+scroll position while the keyboard is visible. The dialog owns its safe-area padding. Its scroll-driven position
+updates are throttled to 100 ms and include visual-viewport scroll events. Body overflow locking does not prevent
+Safari from panning to a refocused field. The feedback form also updates its height on the leading viewport resize,
+with a 100 ms throttle, so closing the keyboard expands the form without a trailing debounce delay.
+
 ## Rubber-band overscroll uncovers what is below a fixed background
 
 When the user bounces past the end of the page, the visual viewport moves below the bottom of the layout viewport (`offsetTop` beyond `clientHeight - visualViewport.height`), with the keyboard open or closed. A full-screen fixed background ends at the layout viewport's bottom, so the bounce uncovers a band of plain page background beneath it. That band is a visible defect, not acceptable platform behaviour.

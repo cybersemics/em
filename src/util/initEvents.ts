@@ -281,6 +281,8 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Beforeinput event listener. Native undo/redo gestures, and the events nativeHistory dispatches to keep WebKit's history usable, are consumed by nativeHistory before em's own handling sees them. */
   const onBeforeInput = (e: InputEvent) => {
+    // Native form controls own their text editing and undo history, independently of the selected thought.
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
     if (nativeHistory.beforeInput(e)) return
     beforeInput(e)
   }
