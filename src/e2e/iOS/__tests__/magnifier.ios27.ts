@@ -15,7 +15,7 @@ import waitUntil from '../helpers/waitUntil'
 
 describe('Magnifier', () => {
   // https://github.com/cybersemics/em/issues/6314
-  it.skip('a quick flick with the magnifier leaves the caret in the thought', async () => {
+  it('a quick flick with the magnifier leaves the caret in the thought', async () => {
     await paste(`
       - A
       - B
