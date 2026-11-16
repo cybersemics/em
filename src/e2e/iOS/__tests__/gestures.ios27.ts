@@ -13,9 +13,9 @@ import waitUntil from '../helpers/waitUntil'
 
 describe('Gestures', () => {
   // https://github.com/cybersemics/em/issues/5844
-  // The latch this depends on is also covered by unit tests in src/util/__tests__/initEvents.lifecycle.ts. Ethan James
-  // authorized covering it at both levels: the unit tests are simple, and only a device shows the pan they prevent.
-  it.skip('does not move the page when a drag starts on the bullet beside the caret', async () => {
+  // The latch this depends on is also covered by unit tests in src/util/__tests__/initEvents.lifecycle.ts.
+  // The unit tests are simple and cheap, but only a device shows the pan they prevent.
+  it('does not move the page when a drag starts on the bullet beside the caret', async () => {
     await paste(`
       - A
       - B
