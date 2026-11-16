@@ -125,7 +125,7 @@ It also stamps every local write with a `writeId` of the form `em-local:${source
 
 The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.
 
-A failed readback retains the pending events; the next materialization event retries publication. This is separate from an indexing failure, after which TreeCRDT delivers the same changes again.
+A failed readback retains the pending events; the next materialization event retries publication. This is separate from an indexing failure, after which TreeCRDT delivers the same changes again with the next event. Until that succeeds, waiting for indexing (including `waitForIdle`) returns at once instead of retrying, and a failed event is published without memberships: its thoughts reach Redux, and no round reads memberships on its behalf.
 
 ### Memory management
 

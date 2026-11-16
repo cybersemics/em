@@ -140,3 +140,25 @@ it('updates stored memberships on incoming deletion even when its thought was no
   // No deleted thought is loaded back into the view.
   expect(snapshot.thoughtIndex[THOUGHT_ID]).toBeNull()
 })
+
+it('publishes thoughts and keeps optimistic memberships while indexing keeps failing', async () => {
+  const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  // A membership needs the payload's timestamps, so every delivery and retry from here on fails.
+  const brokenId = '00000000000000000000000000000203' as ThoughtId
+  const payload = new TextEncoder().encode(JSON.stringify({ value: 'x' }))
+  await client.local.insert(new Uint8Array(32).fill(2), EM_TOKEN, brokenId, { type: 'last' }, payload)
+  await waitForMaterializedThoughtsToStore()
+  expect(snapshot.thoughtIndex[brokenId]?.value).toBe('x')
+
+  // This write is indexed in the same failing batch, so its optimistic Lexeme must be left alone. Waiting for idle
+  // skips the index while it fails, so wait for the batch's publication instead.
+  const lexeme = { contexts: [THOUGHT_ID], created: 1 as Timestamp, lastUpdated: 1 as Timestamp, updatedBy: 'test' }
+  snapshot = { ...snapshot, lexemeIndex: { [hashThought('a')]: lexeme } }
+  const published = new Promise<{ lexemeIndex: object }>(resolve => apply.mockImplementationOnce(resolve))
+  await withTreecrdtWriteBarrier(() =>
+    provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
+  )
+
+  expect((await published).lexemeIndex).toEqual({})
+  report.mockRestore()
+})

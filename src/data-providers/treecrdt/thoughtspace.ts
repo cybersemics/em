@@ -16,7 +16,7 @@ import {
   getAttributeChildrenByParent,
   refreshAttributeChildrenFromChanges,
 } from './attributeChildren'
-import createLexemeIndex, { payloadKeys } from './lexemes'
+import createLexemeIndex from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
 import { enqueueMaterializedThoughtsToStore } from './sync'
 import type { MaterializationContext } from './sync/applyMaterializedThoughtsToStore'
@@ -341,6 +341,9 @@ const createTreecrdtDataProvider = () => {
     // `publish` is set near the end of binding. The startup catch-up runs inside onMaterializedDurable before that, so
     // it publishes nothing; Redux loads lexemes on demand.
     let publish: ((event: MaterializationEvent, keys: string[]) => void) | undefined
+    // Set while the last index update failed. TreeCRDT retries it with the next event. Waiting for the indexes would
+    // retry it too, and every failed retry publishes its event again, so the readback kept discarding its own rounds.
+    let failing = false
     const lexemes = await createLexemeIndex(client)
     const indexes = await client.onMaterializedDurable(
       'em-derived-indexes',
@@ -348,10 +351,12 @@ const createTreecrdtDataProvider = () => {
         try {
           await refreshAttributeChildrenFromChanges(client, event.changes)
           const keys = await lexemes.applyChanges(event.changes)
+          failing = false
           publish?.(event, keys)
         } catch (err) {
-          // Publication still needs this event's thoughts; the redelivery reports the memberships it missed.
-          publish?.(event, payloadKeys(event.changes))
+          failing = true
+          // Publication still needs this event's thoughts. Its memberships are not indexed, so it names none.
+          publish?.(event, [])
           throw err
         }
       },
@@ -364,8 +369,11 @@ const createTreecrdtDataProvider = () => {
         onError: err => console.error('TreeCRDT derived indexing failed', err),
       },
     )
-    /** Resolves once every change materialized so far is indexed. A failed update is logged and retried, not thrown. */
-    const indexed = () => indexes.settled().catch(err => console.error('TreeCRDT derived indexing failed', err))
+    /** Resolves once every change materialized so far is indexed, or at once from a failed update until one succeeds. */
+    const indexed = () =>
+      failing
+        ? Promise.resolve()
+        : indexes.settled().catch(err => console.error('TreeCRDT derived indexing failed', err))
 
     let subscribed = true
     const clientDb: TreecrdtClientDataProvider = {
@@ -391,7 +399,8 @@ const createTreecrdtDataProvider = () => {
       isActive: () => subscribed && activeDb === clientDb,
     }
 
-    // A publication is queued only once its event is indexed, so the idle barrier waits for the indexes too.
+    // A publication is queued only once its event is indexed or has failed to index, so the idle barrier waits for the
+    // indexes too, except while an update is failing.
     const unsubscribeMaterialized = client.onMaterialized(() => void enqueueMaterializedThoughtsToStoreWork(indexed))
     if (materializationContext) {
       publish = (event, keys) => {

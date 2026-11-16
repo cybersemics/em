@@ -13,7 +13,7 @@ const FAVORITE_KEY = hashThought('=favorite')
 const ROOT_IDS = new Set<string>([GLOBAL_ROOT_TOKEN, ...SYSTEM_ROOT_THOUGHT_IDS])
 
 /** Hashes of the values a change batch carried. A later write may have replaced one in storage while Redux still shows it. */
-export const payloadKeys = (changes: readonly Change[]): string[] =>
+const payloadKeys = (changes: readonly Change[]): string[] =>
   changes.flatMap(change =>
     !ROOT_IDS.has(change.node) && 'payload' in change && change.payload
       ? [hashThought(decodeThoughtPayload(change.payload).value)]
