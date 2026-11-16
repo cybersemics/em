@@ -140,6 +140,12 @@ const colors = {
     commandDiscoveryDoneEdgeFade: 'rgba(40, 47, 72, 0.004)',
     commandDiscoveryDoneEdgeDeep: 'rgba(26, 27, 30, 0.184)',
     commandDiscoveryDoneEdgeDeepFade: 'rgba(40, 41, 72, 0.004)',
+    // Dragging a command to pin or unpin it. See CommandDragLayer.
+    commandDragBackdrop: 'rgba(0, 0, 0, 0.66)',
+    commandDragGlow: 'rgba(196, 186, 255, 0.5)',
+    commandDragTitle: '#f0e0ff',
+    commandDragReplacedLabel: '#a7a7a7',
+    commandDragReplacedText: '#717171',
     gestureMenuLabel: 'rgba(255, 255, 255, 0.7)', // gesture menu – "Gestures" header label (always renders on the dark glow overlay, so it doesn't flip with theme)
     gestureMenuDivider: 'rgba(174, 168, 214, 0.59)', // gesture menu – gradient start stop of the divider under the "Gestures" header
   },
@@ -284,6 +290,12 @@ const colors = {
     commandDiscoveryDoneEdgeFade: 'rgba(40, 47, 72, 0.004)',
     commandDiscoveryDoneEdgeDeep: 'rgba(26, 27, 30, 0.184)',
     commandDiscoveryDoneEdgeDeepFade: 'rgba(40, 41, 72, 0.004)',
+    // Dragging a command to pin or unpin it. See CommandDragLayer.
+    commandDragBackdrop: 'rgba(0, 0, 0, 0.66)',
+    commandDragGlow: 'rgba(196, 186, 255, 0.5)',
+    commandDragTitle: '#f0e0ff',
+    commandDragReplacedLabel: '#a7a7a7',
+    commandDragReplacedText: '#717171',
     gestureMenuLabel: 'rgba(255, 255, 255, 0.7)',
     gestureMenuDivider: 'rgba(174, 168, 214, 0.59)',
   },

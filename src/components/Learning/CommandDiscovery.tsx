@@ -18,9 +18,12 @@ import { commandDiscoveryActionCreator as commandDiscovery } from '../../actions
 import { toggleHelpGenieActionCreator as toggleHelpGenie } from '../../actions/toggleHelpGenie'
 import { commandById, gestureString } from '../../commands'
 import { PINNED_COMMAND_RING_SIZE } from '../../constants'
+import useCommandDrag from '../../hooks/useCommandDrag'
 import { SELECTED_ITEM_DESCRIPTION_LINE_HEIGHT_REM, SELECTED_ITEM_GAP_REM } from '../../hooks/useGestureMenuLayout'
 import useLockBodyScroll from '../../hooks/useLockBodyScroll'
 import commandDiscoveryStore from '../../stores/commandDiscoveryStore'
+import commandDragStore from '../../stores/commandDragStore'
+import commandEmitter from '../../stores/commandEmitter'
 import haptics from '../../util/haptics'
 import sampleCurve from '../../util/sampleCurve'
 import GestureDiagram from '../GestureDiagram'
@@ -96,6 +99,9 @@ const CHEVRON_OPACITY = 0.47
 /** How blurred the description and note are before they develop, in px. */
 const UNDEVELOPED_BLUR = 6
 /** How far below its place Done starts, in px, and how small. */
+/** How far the screen dims while the discovered command is dragged to the ring. */
+const DRAGGING_OPACITY = 0.4
+
 /** Done's opacity once it is in, as the design's. */
 const DONE_OPACITY = 0.8
 const DONE_RISE = { y: 10, scale: 0.96 }
@@ -227,12 +233,15 @@ const Title = ({
   rowRef,
   nameRef,
   gestureRef,
+  drag,
 }: PartProps & {
   command: Command
   reveal: MotionValue<number>
   rowRef: RefObject<HTMLDivElement | null>
   nameRef: RefObject<HTMLDivElement | null>
   gestureRef: RefObject<HTMLDivElement | null>
+  /** The command's gesture and name are its handle, to drag it to the pinned command ring (useCommandDrag). */
+  drag: ReturnType<typeof useCommandDrag>
 }) => {
   const scale = useTransform(t, time => mix(TITLE_SETTLE_FROM, 1, through(time, T.titleSettles)))
   // The gesture comes down with the fog from where it was in the Gesture Menu, rather than appearing as the fog lands.
@@ -264,8 +273,10 @@ const Title = ({
   return (
     <motion.div
       ref={rowRef}
+      onPointerDown={drag.onPointerDown}
+      onContextMenu={drag.onContextMenu}
       style={{ scale, transformOrigin: `${TYPE.gesture.box / 2}rem 50%`, gap: `${TYPE.gesture.gap}rem` }}
-      className={css({ display: 'flex', alignItems: 'center' })}
+      className={css({ display: 'flex', alignItems: 'center', width: 'fit-content', cursor: 'grab' })}
     >
       <motion.div
         ref={gestureRef}
@@ -452,10 +463,13 @@ const Details = ({
 const Ring = ({
   t,
   pinned,
+  dragging,
   ringRef,
 }: {
   t: MotionValue<number>
   pinned: boolean
+  /** Whether the command is being dragged to the ring, which then shows its own ring and hint to drop it on. */
+  dragging: boolean
   ringRef: RefObject<HTMLDivElement | null>
 }) => {
   const appear = useTransform(t, time => through(time, T.ring))
@@ -474,27 +488,29 @@ const Ring = ({
         className={css({ position: 'relative' })}
         style={{ width: PINNED_COMMAND_RING_SIZE, height: PINNED_COMMAND_RING_SIZE }}
       >
-        <motion.p
-          style={{
-            opacity: appear,
-            right: PINNED_COMMAND_RING_SIZE - ringGeometry.centerX + LAYOUT.pinHint.right,
-            top: ringGeometry.centerY + LAYOUT.pinHint.top,
-          }}
-          className={css({
-            position: 'absolute',
-            width: '163px',
-            margin: 0,
-            fontFamily: 'radioCanada',
-            fontSize: '14px',
-            lineHeight: '18px',
-            letterSpacing: '-0.01em',
-            textAlign: 'right',
-            color: 'white/35',
-          })}
-        >
-          Drag the command here to pin it.
-        </motion.p>
-        {!pinned && (
+        {!dragging && (
+          <motion.p
+            style={{
+              opacity: appear,
+              right: PINNED_COMMAND_RING_SIZE - ringGeometry.centerX + LAYOUT.pinHint.right,
+              top: ringGeometry.centerY + LAYOUT.pinHint.top,
+            }}
+            className={css({
+              position: 'absolute',
+              width: '163px',
+              margin: 0,
+              fontFamily: 'radioCanada',
+              fontSize: '14px',
+              lineHeight: '18px',
+              letterSpacing: '-0.01em',
+              textAlign: 'right',
+              color: 'white/35',
+            })}
+          >
+            Drag the command here to pin it.
+          </motion.p>
+        )}
+        {!pinned && !dragging && (
           <motion.div
             style={{ opacity: appear, scale, transformOrigin: origin }}
             className={css({ position: 'absolute', inset: 0 })}
@@ -727,13 +743,21 @@ const Discovery = ({ command }: { command: Command }) => {
   }, [])
 
   usePerformance({ t, reveal, layout, dropped, measure })
+  // The discovered command can be dragged straight to the pinned command ring to pin it. While it is, the screen dims, so
+  // the command and the ring stand out, and pinning it closes the screen.
+  const drag = useCommandDrag({ commandId: command.id, source: 'universe' })
+  const dragging = commandDragStore.useSelector(state => !!state)
+  useEffect(() => {
+    commandEmitter.on('commandPinnedByDrag', close)
+    return () => commandEmitter.off('commandPinnedByDrag', close)
+  }, [close])
   // The app does not scroll behind the screen.
   useLockBodyScroll(true)
 
   // Done and Escape finish.
   useEffect(() => {
-    /** Closes on Escape. */
-    const onKeyDown = (e: KeyboardEvent) => e.key === 'Escape' && close()
+    /** Closes on Escape, unless the command is being dragged, when Escape cancels the drag instead. */
+    const onKeyDown = (e: KeyboardEvent) => e.key === 'Escape' && !commandDragStore.getState() && close()
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [close])
@@ -770,8 +794,10 @@ const Discovery = ({ command }: { command: Command }) => {
         })}
       >
         <Fog command={command} t={t} layout={layout} reveal={reveal} />
-        <div
+        <motion.div
           ref={contentRef}
+          animate={{ opacity: dragging ? DRAGGING_OPACITY : 1 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
           className={css({ position: 'absolute' })}
           style={{
             left: LAYOUT.rowLeft,
@@ -787,11 +813,12 @@ const Discovery = ({ command }: { command: Command }) => {
             rowRef={rowRef}
             nameRef={nameRef}
             gestureRef={gestureRef}
+            drag={drag}
           />
           <Details description={description} t={t} blockRef={blockRef} onDone={close} />
-        </div>
+        </motion.div>
         <Glitter dropped={dropped} />
-        <Ring t={t} pinned={pinned} ringRef={ringRef} />
+        <Ring t={t} pinned={pinned} dragging={dragging} ringRef={ringRef} />
       </motion.div>
     </>
   )

@@ -541,10 +541,14 @@ export default defineConfig({
             // The help genie flies over everything, including the Command Universe dialog it is let out from. Its
             // canvas ignores pointer events, so it never blocks what is beneath it.
             'helpGenie',
+            // A command being dragged to the pinned command ring, and the hint beside the ring. See docs/learning.md.
+            'commandDrag',
             // Above dialogs so the pinned command stays visible over the Mobile Command Universe. See docs/learning.md.
             'pinnedCommandExpanded',
             // Command Discovery's fog, name, genie route and ring, over the closing Gesture Menu. See docs/learning.md.
             'commandDiscovery',
+            // Dims everything but the ring and the dragged command while a command is dragged to pin or unpin it.
+            'commandDragBackdrop',
             // Keep the menu above the trace without raising generic popups above dialogs.
             'gestureMenu',
             // What Command Discovery plays over, beneath the Gesture Menu, whose rows fade over it as the menu closes.

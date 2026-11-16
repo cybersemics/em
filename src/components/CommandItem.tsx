@@ -13,9 +13,11 @@ import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
 import { noop } from '../constants'
+import useCommandDrag from '../hooks/useCommandDrag'
 import useGestureHighlight from '../hooks/useGestureHighlight'
 import useLottieIntervalAnimation from '../hooks/useLottieIntervalAnimation'
 import store from '../stores/app'
+import commandDragStore from '../stores/commandDragStore'
 import CommandKeyboardShortcut from './CommandKeyboardShortcut'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
@@ -56,6 +58,8 @@ const CommandItem: FC<{
   tableMode?: boolean
   /** If true, renders the gesture diagram instead of the keyboard shortcut. Defaults to isTouch. Ignored if viewType is 'grid'. */
   isMobileGestures?: boolean
+  /** If true, the command can be dragged to the pinned command ring to pin it. See useCommandDrag. */
+  pinnable?: boolean
 }> = ({
   viewType,
   search = '',
@@ -71,7 +75,9 @@ const CommandItem: FC<{
   isLastCommand,
   tableMode,
   isMobileGestures = isTouch,
+  pinnable,
 }) => {
+  const pinDrag = useCommandDrag({ commandId: pinnable ? command.id : undefined, source: 'universe' })
   const [{ isDragging }, dragSource] = useDrag({
     type: DragAndDropType.ToolbarButton,
     item: (): DragToolbarItem => {
@@ -136,7 +142,10 @@ const CommandItem: FC<{
         ref.current = current
         dragSource(current)
       }}
-      onMouseMove={onHover?.bind(null, command)}
+      // A command dragged to pin passes over other rows, which must not take the highlight from under the backdrop.
+      onMouseMove={() => !commandDragStore.getState() && onHover?.(command)}
+      onPointerDown={pinDrag.onPointerDown}
+      onContextMenu={pinDrag.onContextMenu}
       className={css({
         cursor: onClick && !disabled ? 'pointer' : undefined,
         position: 'relative',

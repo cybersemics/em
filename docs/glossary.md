@@ -48,7 +48,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **command** — A user-triggered operation (keyboard shortcut, gesture, toolbar button, Command Universe entry, or system menu item). Single-file definition under [`/src/commands`](../src/commands) implementing the [`Command`](../src/@types/Command.ts) interface; auto-registered via the barrel import in [`commands.ts`](../src/commands.ts). The legacy name *shortcut* still appears in some places. See [commands.md](commands.md).
 
-**Command Discovery** — The full-screen moment that introduces a command the user has just discovered by holding still on its *ghost* in the Gesture Menu: its fog falls to rest, and the help genie reveals its name and description. Open while `state.commandDiscovery` holds the command. See [learning.md → Command Discovery](learning.md#command-discovery).
+**Command Discovery** — The full-screen moment that introduces a command the user has just discovered by holding still on its *ghost* in the Gesture Menu: its fog falls to rest, the help genie reveals its name and description, and it can be dragged into the pinned command ring. Open while `state.commandDiscovery` holds the command. See [learning.md → Command Discovery](learning.md#command-discovery).
 
 **Command Universe** — Searchable list of all commands, opened with `Command/Ctrl + P` on desktop.
 

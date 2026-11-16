@@ -16,6 +16,7 @@ import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
+import commandDragStore from '../stores/commandDragStore'
 import touchStore from '../stores/touchStore'
 import debugLog from '../util/debugLog'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -32,6 +33,7 @@ import HamburgerMenu from './HamburgerMenu'
 import HelpGenie from './HelpGenie/HelpGenie'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import CommandDiscovery from './Learning/CommandDiscovery'
+import CommandDragLayer from './Learning/CommandDragLayer'
 import PinnedCommand from './Learning/PinnedCommand'
 import MultiGesture from './MultiGesture'
 import NativeTextDragCaret from './NativeTextDragCaret'
@@ -98,6 +100,8 @@ const shouldCancelGesture = (
     touchStore.getState().pressOnCaret ||
     // Command Discovery takes the whole screen; nothing traced over it is a gesture.
     !!state.commandDiscovery ||
+    // A command dragged to pin or unpin it is not a gesture.
+    !!commandDragStore.getState() ||
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
@@ -250,8 +254,9 @@ const AppComponent: FC = () => {
               </div>
             }
             {/* Inside MultiGesture so that a trace over the pinned command's tooltip is recognized and drawn even where the tooltip sits over the Mobile Command Universe, which is outside it. Its own fixed z-index orders it against the NavBar. */}
-            {/* Before the ring, which shares a layer with the hint's background and must paint over it. */}
             {isDocumentEditable() && <CommandDiscovery />}
+            {/* Before the ring, which shares a layer with the hint's background and must paint over it. */}
+            {isDocumentEditable() && <CommandDragLayer />}
             {isDocumentEditable() && <PinnedCommand />}
           </>
         )}

@@ -289,6 +289,7 @@ const DesktopCommandUniverse: FC<{
                 shouldScrollSelectedIntoView={selectedCommand.source === 'keyboard'}
                 isFirstCommand={index === 0}
                 isLastCommand={index === commands.length - 1}
+                pinnable
               />
             ))
           ) : (
