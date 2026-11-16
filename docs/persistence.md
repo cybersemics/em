@@ -120,7 +120,7 @@ It also stamps every local write with a `writeId` of the form `em-local:${source
 
 1. Waits for local writes.
 2. For incoming changes only, refreshes affected thoughts and projects sibling order onto numeric ranks.
-3. Waits for indexing, then reads complete memberships for affected old and new values. A round starts over when Redux changes, a local write is queued or another event is indexed while it reads.
+3. Waits for indexing, then reads complete memberships for affected old and new values. A round starts over when Redux changes or another event is indexed while it reads.
 4. Applies changed memberships and incoming thoughts through the *materialization bridge*.
 
 The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.

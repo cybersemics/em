@@ -2,11 +2,7 @@ import type { MaterializationEvent } from '@treecrdt/interface/engine'
 import _ from 'lodash'
 import type { DataProvider } from '../../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../../thoughtspace'
-import {
-  getTreecrdtWriteBarrierVersion,
-  isTreecrdtLocalMaterialization,
-  waitForTreecrdtWriteBarrier,
-} from '../writeBarrier'
+import { isTreecrdtLocalMaterialization, waitForTreecrdtWriteBarrier } from '../writeBarrier'
 import refreshThoughtsFromMaterializationChanges from './materializationThoughtUpdates'
 
 export type MaterializationContext = {
@@ -24,7 +20,6 @@ export const applyMaterializedThoughtsToStore = async (context: MaterializationC
     await waitForTreecrdtWriteBarrier()
     const entries = pending.slice()
     const snapshot = bridge.getSnapshot()
-    const writeVersion = getTreecrdtWriteBarrierVersion()
     const keys = [...new Set(entries.flatMap(entry => entry.keys))]
     const remoteChanges = entries.flatMap(({ event }) => (isTreecrdtLocalMaterialization(event) ? [] : event.changes))
     const thoughtIndexUpdates = await refreshThoughtsFromMaterializationChanges(remoteChanges, db)
@@ -37,7 +32,6 @@ export const applyMaterializedThoughtsToStore = async (context: MaterializationC
     if (
       snapshot.lexemeIndex !== current.lexemeIndex ||
       snapshot.thoughtIndex !== current.thoughtIndex ||
-      writeVersion !== getTreecrdtWriteBarrierVersion() ||
       entries.length !== pending.length
     )
       continue
