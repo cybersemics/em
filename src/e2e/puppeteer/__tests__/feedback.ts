@@ -142,7 +142,7 @@ it('prevents selecting feedback instructions while preserving field and preview 
 })
 
 // https://github.com/cybersemics/em/pull/6073#issuecomment-6773316738
-it.skip('expands feedback when the keyboard closes without waiting for a trailing resize', async () => {
+it('expands feedback when the keyboard closes without waiting for a trailing resize', async () => {
   const fullHeight = await page.evaluate(() => window.innerHeight)
   await setVisualViewportHeight(fullHeight - 300)
   await gesture('rdldr')

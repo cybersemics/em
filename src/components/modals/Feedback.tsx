@@ -102,8 +102,8 @@ const Feedback = () => {
       }
     }
 
-    // Safari emits resize while scrolling too. Wait for geometry to settle instead of measuring fields on every frame.
-    const onResize = _.debounce(updateAvailableHeight, 100)
+    // Respond to keyboard changes immediately while limiting layout work during Safari viewport scrolling.
+    const onResize = _.throttle(updateAvailableHeight, 100)
     const unsubscribeKeyboard = virtualKeyboardStore.subscribeSelector(state => state.open, updateAvailableHeight)
     const unsubscribeViewport = isCapacitor()
       ? viewportStore.subscribeSelector(
