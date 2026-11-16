@@ -198,7 +198,8 @@ jobs:
       BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
 
     # The cancel step below needs actions: write, and declaring any permission zeroes the rest, so
-    # everything the job uses is listed. contents: read is for checkout; nothing else uses the token.
+    # everything the job uses is listed. contents: read is for checkout; pull-requests: read is for the
+    # PR's state and its conflict-resolution comment.
     permissions:
       contents: read
       actions: write
@@ -234,6 +235,36 @@ jobs:
           sleep 60
           echo "Cancellation did not land within 60s."
           exit 1
+
+      # The CI of a merge-conflict resolution on a Copilot PR is lower priority than anybody's work:
+      # it leaves BROWSERSTACK_SESSIONS_RESERVED sessions free for other runs before it starts (see
+      # waitForBrowserStackSlots.ts), so that a developer who pushes meanwhile is not kept waiting
+      # behind it. A head pushed within two hours of Copilot Conflict Resolution starting a task is
+      # taken to be that task's — the same window, TASK_WINDOW_HOURS in
+      # scripts/ci/copilot-conflicts-comment.cjs, that keeps such a commit from counting as work.
+      # Runs before checkout, so that it is main's logic and not the pull request's that decides.
+      - name: Lower priority for a conflict resolution
+        if: github.event_name == 'pull_request_target' && github.event.pull_request.user.login == 'Copilot'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          retries: 3
+          script: |
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              ...context.repo,
+              issue_number: context.payload.pull_request.number,
+              per_page: 100,
+            })
+            const encoded = comments
+              .map(comment => /<!-- copilot-conflicts-state: ([A-Za-z0-9_-]+) -->/.exec(comment.body || ''))
+              .find(Boolean)?.[1]
+            let lastDispatchedAt = null
+            try {
+              lastDispatchedAt = encoded && JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8')).lastDispatchedAt
+            } catch {}
+            if (lastDispatchedAt && Date.now() - new Date(lastDispatchedAt) < 2 * 60 * 60 * 1000) {
+              core.info(`A conflict-resolution task started at ${lastDispatchedAt}; leaving 3 sessions free for other runs.`)
+              core.exportVariable('BROWSERSTACK_SESSIONS_RESERVED', '3')
+            }
 
       # Check out the PR by head SHA, not by branch name. A bare branch name makes actions/checkout
       # build a wildcard refspec (`+refs/heads/<name>*:refs/remotes/origin/<name>*`), and a wildcard

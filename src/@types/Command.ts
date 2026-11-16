@@ -9,6 +9,7 @@ import Key from './Key'
 import MulticursorFilter from './MulticursorFilter'
 import Path from './Path'
 import State from './State'
+import SystemMenu from './SystemMenu'
 
 /** A command that the user initiates via keyboard, gesture, toolbar, or Command Universe. When creating a new command, carefully think through all the properties that are appropriate. */
 interface Command {
@@ -144,6 +145,9 @@ interface Command {
 
   /** When true, renders the gesture with rounded corners in the GestureDiagram. */
   rounded?: boolean
+
+  /** The top level menu of the desktop app's system menu bar that lists the command, with its keyboard shortcut as the accelerator. A command without one is not in the system menu. See desktop/menu.json, which is generated from it with `yarn tauri:menu`. */
+  systemMenu?: SystemMenu
 
   /** When true, hides the title for this command when shown in panels. */
   hideTitleInPanels?: boolean

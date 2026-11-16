@@ -2,7 +2,8 @@
 /**
  * Collects the final reviewer's comments posted after the first reviewer's first review, on PRs by the given authors.
  *
- * Usage: collect.mjs --first trevinhofmann --authors BayuAri,ethan-james --since 2026-07-01 [--final <login>] > gaps.json
+ * Usage: collect.mjs --first trevinhofmann --authors BayuAri,ethan-james --since 2026-07-01 [--comments-since <date>] [--final <login>] > gaps.json
+ * --since filters PRs by creation date; --comments-since keeps only comments posted on or after that date.
  * --final defaults to the authenticated gh user.
  */
 import { execFile } from 'node:child_process'
@@ -47,11 +48,14 @@ const { values: args } = parseArgs({
     first: { type: 'string' },
     authors: { type: 'string' },
     since: { type: 'string' },
+    'comments-since': { type: 'string' },
     final: { type: 'string' },
   },
 })
 if (!args.first || !args.authors || !args.since) {
-  console.error('Usage: collect.mjs --first <login> --authors <a,b> --since <YYYY-MM-DD> [--final <login>]')
+  console.error(
+    'Usage: collect.mjs --first <login> --authors <a,b> --since <YYYY-MM-DD> [--comments-since <YYYY-MM-DD>] [--final <login>]',
+  )
   process.exit(1)
 }
 const final = args.final ?? (await gh('api', 'user', '-q', '.login')).trim()
@@ -72,7 +76,8 @@ for (const pr of prs) {
   const reviews = pr.reviews.nodes
   const firstReviews = reviews.filter(r => login(r) === args.first).map(r => r.submittedAt)
   if (firstReviews.length === 0) continue
-  const start = firstReviews.sort()[0]
+  // a comment counts only after the first review and, with --comments-since, on or after that date
+  const start = [firstReviews.sort()[0], args['comments-since']].filter(Boolean).sort().at(-1)
 
   const comments = []
   for (const r of reviews) {

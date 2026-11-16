@@ -11,6 +11,7 @@ const exec = newThought({ insertNewSubthought: true, insertBefore: true })
 const newSubthoughtTopCommand = {
   id: 'newSubthoughtTop',
   label: 'New Subthought (above)' as const,
+  systemMenu: 'Edit',
   description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
   gesture: 'rdu',
   keyboard: { key: 'Enter', shift: true, meta: true },

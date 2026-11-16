@@ -1,0 +1,33 @@
+diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
+index 6daf95a5d21ed871735788c9e31a0ee23107dc5f..cf9c2e128dc8243afc1ae91b860ccbf28588ce14 100644
+--- a/dist/TouchBackendImpl.js
++++ b/dist/TouchBackendImpl.js
+@@ -275,7 +275,27 @@ export class TouchBackendImpl {
+             }
+             window.addEventListener('scroll', this.handleScroll);
+             const delay = e.type === eventNames.touch.start ? this.options.delayTouchStart : this.options.delayMouseStart;
+-            this.timeout = setTimeout(this.handleTopMoveStart.bind(this, e), delay);
++            // Measure the touch slop that cancels the delay from where the press began. Otherwise handleTopMove
++            // takes the first delivered move as the origin, and since the browser suppresses moves within its
++            // own slop, that move is already well away from the press point, so a swipe could travel
++            // touchSlop px past it before cancelling the timer. See em issue #5973.
++            const startOffset = getEventClientOffset(e);
++            if (startOffset) {
++                this._mouseClientOffset = startOffset;
++            }
++            // Commit the long press on the next animation frame rather than as soon as the timer expires.
++            // Touch moves are dispatched at the start of a frame, so a move the browser received before the
++            // deadline can otherwise be handled after the expired timer and lose the race. Deferring to
++            // requestAnimationFrame lets those queued moves (and scroll or touchend) cancel the timer first,
++            // which they signal by resetting this.timeout. Capturing the id also drops a stale timer that
++            // a later press has replaced. See em issue #5973.
++            const timeout = setTimeout(()=>{
++                requestAnimationFrame(()=>{
++                    if (this.timeout !== timeout) return;
++                    this.handleTopMoveStart(e);
++                });
++            }, delay);
++            this.timeout = timeout;
+             this.waitingForDelay = true;
+         };
+         this.handleTopMoveCapture = ()=>{

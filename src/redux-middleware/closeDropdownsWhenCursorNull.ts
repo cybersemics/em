@@ -2,7 +2,7 @@ import { ThunkMiddleware } from 'redux-thunk'
 import State from '../@types/State'
 import { closeDropdownsActionCreator as closeDropdowns } from '../actions/closeDropdowns'
 
-/** A middleware that closes any open toolbar dropdowns (e.g. Text Color, Letter Case) when the cursor is set to null. This handles cases where cursor becomes null without going through setCursor, such as when the last thought is deleted. */
+/** A middleware that closes any open toolbar dropdowns (e.g. Text Color, Letter Case) when the cursor is set to null. This handles cases where cursor becomes null without going through setCursor, such as when the last thought is deleted. The Undo Slider is left open, since it is not bound to the cursor, and undoing the creation of the only thought is one of the ways the cursor becomes null. */
 const closeDropdownsWhenCursorNull: ThunkMiddleware<State> = ({ getState, dispatch }) => {
   return next => action => {
     const prevCursor = getState().cursor
@@ -11,10 +11,10 @@ const closeDropdownsWhenCursorNull: ThunkMiddleware<State> = ({ getState, dispat
 
     const state = getState()
 
-    // Close all open dropdowns when cursor transitions from non-null to null.
+    // Close the open dropdowns, except the Undo Slider, when cursor transitions from non-null to null.
     // setCursor already handles this for direct cursor navigation, but other reducers (e.g. deleteThought) may set cursor to null directly.
     if (prevCursor !== null && state.cursor === null) {
-      dispatch(closeDropdowns())
+      dispatch(closeDropdowns({ keepUndoSlider: true }))
     }
   }
 }

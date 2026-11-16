@@ -94,7 +94,6 @@ export const attachExistingSession = async (): Promise<WebdriverIO.Browser> => {
     // it would otherwise only add after detecting a mobile session at session-create time.
     isMobile: true,
     isIOS: true,
-    isW3C: true,
     capabilities: { platformName: 'iOS', 'appium:automationName': 'XCUITest' } as WebdriverIO.Capabilities,
   })
 

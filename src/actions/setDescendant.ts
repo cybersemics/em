@@ -16,6 +16,8 @@ interface setDescendantPayload {
   path: Path
   value?: string
   values?: string[]
+  /** Names the undo step. Read by undoRedoEnhancer rather than by the reducer. */
+  undoLabel?: string
 }
 
 /** Sets a sequence of values as descendants. Attribute keys (e.g. =pin) are found or created, preserving existing descendants and unrelated siblings. A non-attribute last value is the attribute's value slot, and replaces the existing first subthought. */

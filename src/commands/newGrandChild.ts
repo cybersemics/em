@@ -11,6 +11,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const newGrandChildCommand = {
   id: 'newGrandChild',
   label: 'New Grandchild' as const,
+  systemMenu: 'Edit',
   description:
     'Create a thought within the first subthought. With no cursor, creates a thought within the first thought in the root.',
   gesture: 'rdrd',

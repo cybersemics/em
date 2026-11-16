@@ -6,6 +6,7 @@ import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from 
 import { saveSelectionOffsetsActionCreator as saveSelectionOffsets } from '../../actions/saveSelectionOffsets'
 import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
 import { commandById } from '../../commands'
+import commandEmitter from '../../stores/commandEmitter'
 import PinnedCommandIcon from './PinnedCommandIcon'
 import PinnedCommandRing from './PinnedCommandRing'
 import PinnedCommandTooltip from './PinnedCommandTooltip'
@@ -55,6 +56,15 @@ const PinnedCommand = () => {
   // The pinned command stays visible over the Mobile Command Universe, the dialog the user pins from, by keeping the
   // ring on its raised layer there. Under every other overlay it stays docked beneath.
   const inCommandUniverse = useSelector(state => !!state.showMobileCommandUniverse)
+  // A dry run over the Command Universe earns no rep, so the ring bursts with color instead of filling. The gesture
+  // handler announces each one on commandEmitter; the count only exists to tell the ring to play again.
+  const [burst, setBurst] = useState(0)
+  useEffect(() => {
+    /** Plays the ring's burst for a successful dry run. */
+    const playBurst = () => setBurst(count => count + 1)
+    commandEmitter.on('pinnedGestureDryRun', playBurst)
+    return () => commandEmitter.off('pinnedGestureDryRun', playBurst)
+  }, [])
   // The ring's fixed dock in the corner, and the ring button inside it.
   const dockRef = useRef<HTMLDivElement>(null)
   const ringRef = useRef<HTMLButtonElement>(null)
@@ -165,6 +175,7 @@ const PinnedCommand = () => {
             key={pinnedCommandId}
             progress={progress}
             flourish={flourishes}
+            burst={burst}
             activeOpacity={tooltipOpacity}
           >
             <PinnedCommandIcon command={command} repCount={newReps} />

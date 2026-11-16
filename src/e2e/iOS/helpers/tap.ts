@@ -1,4 +1,3 @@
-import type { Element } from 'webdriverio'
 import getScreenOffsetY from './getScreenOffsetY.js'
 import getTextOffsetCoordinates from './getTextOffsetCoordinates.js'
 
@@ -28,7 +27,7 @@ interface Options {
  * Uses the global browser object from WDIO.
  */
 const tap = async (
-  nodeHandle: Element,
+  nodeHandle: WebdriverIO.Element,
   {
     horizontalTapLine = 'center',
     offset,

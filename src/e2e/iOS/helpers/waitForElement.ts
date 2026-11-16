@@ -1,5 +1,3 @@
-import type { Element } from 'webdriverio'
-
 interface WaitForElementOptions {
   timeout?: number
 }
@@ -8,7 +6,10 @@ interface WaitForElementOptions {
  * Wait for element to exist.
  * Uses the global browser object from WDIO.
  */
-const waitForElement = async (selector: string, { timeout = 5000 }: WaitForElementOptions = {}): Promise<Element> => {
+const waitForElement = async (
+  selector: string,
+  { timeout = 5000 }: WaitForElementOptions = {},
+): Promise<WebdriverIO.Element> => {
   await browser.waitUntil(async () => !!(await browser.$(selector)).elementId, { timeout })
   return browser.$(selector).getElement()
 }

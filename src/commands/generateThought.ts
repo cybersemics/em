@@ -288,7 +288,7 @@ const generateThought = {
         // generated thought would land outside it and cost the user another undo.
         await Promise.resolve()
 
-        dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'generateThought' }))
+        dispatch(setIsMulticursorExecuting({ value: true }))
 
         // finally rather than a bare await, so that a rejected request cannot skip the dispatch below and leave the
         // bracket open over subsequent edits.
