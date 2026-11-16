@@ -9,6 +9,7 @@ import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setVirtualKeyboardHeight from '../helpers/setVirtualKeyboardHeight'
+import setVisualViewportHeight from '../helpers/setVisualViewportHeight'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
@@ -138,4 +139,27 @@ it('prevents selecting feedback instructions while preserving field and preview 
   await waitForSelector('pre[aria-label="Display resolution preview"]')
   await page.click('pre[aria-label="Display resolution preview"]', { count: 3 })
   expect(await page.evaluate(() => window.getSelection()?.toString())).toBe('Device pixel ratio: 3')
+})
+
+// https://github.com/cybersemics/em/pull/6073#issuecomment-6773316738
+it.skip('expands feedback when the keyboard closes without waiting for a trailing resize', async () => {
+  const fullHeight = await page.evaluate(() => window.innerHeight)
+  await setVisualViewportHeight(fullHeight - 300)
+  await gesture('rdldr')
+  await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
+  const initialBottom = await page.$eval('[role="dialog"]', element => element.getBoundingClientRect().bottom)
+
+  await setVisualViewportHeight(fullHeight)
+  const expandedBottom = await page.$eval(
+    '[role="dialog"]',
+    element =>
+      new Promise<number>(resolve =>
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            resolve(element.getBoundingClientRect().bottom)
+          }),
+        ),
+      ),
+  )
+  expect(expandedBottom).toBeGreaterThan(initialBottom + 100)
 })
