@@ -64,6 +64,7 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
     // Full-viewport backdrop with blur.
     <div
       ref={nodeRef}
+      data-testid='dialog-overlay'
       className={cx(
         dialog.overlay,
         availableHeight !== undefined

@@ -2,6 +2,7 @@ import { fireEvent, screen } from '@testing-library/dom'
 import { act } from 'react'
 import FeedbackPayload from '../../../packages/feedback/shared/FeedbackPayload'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
+import storageModel from '../../stores/storageModel'
 import viewportStore from '../../stores/viewportStore'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -39,6 +40,17 @@ beforeEach(async () => {
 afterEach(async () => {
   await cleanupTestApp()
   vi.stubGlobal('fetch', originalFetch)
+})
+
+it.each([
+  { name: '', email: '', field: 'Name (optional)' },
+  { name: 'Test Name', email: '', field: 'Email (optional)' },
+  { name: 'Test Name', email: 'test@example.com', field: 'Message' },
+])('focuses $field when opening with the saved identity', async ({ name, email, field }) => {
+  storageModel.set('feedbackName', name)
+  storageModel.set('feedbackEmail', email)
+  await dispatch(showModal({ id: 'feedback' }))
+  expect(screen.getByRole('textbox', { name: field })).toHaveFocus()
 })
 
 it('sends a message without optional private data by default', async () => {

@@ -10,7 +10,7 @@ import { css } from '../../../styled-system/css'
 import { anchorButtonRecipe } from '../../../styled-system/recipes'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
-import { isCapacitor, isTouch } from '../../browser'
+import { isAndroid, isCapacitor, isTouch } from '../../browser'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
 import getSafeAreaBottom from '../../device/virtual-keyboard/getSafeAreaBottom'
@@ -35,6 +35,8 @@ const Feedback = () => {
   const scrollRef = useRef<HTMLDivElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const nameRef = useRef<HTMLInputElement>(null)
+  const emailRef = useRef<HTMLInputElement>(null)
   const messageRef = useRef<HTMLTextAreaElement>(null)
   const busyRef = useRef(false)
   const attemptRef = useRef<{ id: string; token: string; key: string } | null>(null)
@@ -83,8 +85,15 @@ const Feedback = () => {
     /** Reads keyboard geometry independently of the thought editor's edit mode. */
     const updateAvailableHeight = () => {
       if (isCapacitor()) {
+        const { open } = virtualKeyboardStore.getState()
+        // Capacitor's Android SystemBars already resizes the WebView above the software keyboard.
+        if (isAndroid) {
+          setAvailableHeight(open ? window.innerHeight : undefined)
+          return
+        }
+
         const viewport = viewportStore.getState()
-        const height = virtualKeyboardStore.getState().open ? viewport.virtualKeyboardHeight + getSafeAreaBottom() : 0
+        const height = open ? viewport.virtualKeyboardHeight + getSafeAreaBottom() : 0
         setAvailableHeight(height > 0 ? Math.max(0, viewport.innerHeight - height) : undefined)
       } else {
         const viewport = window.visualViewport
@@ -146,7 +155,10 @@ const Feedback = () => {
   }, [dispatch])
 
   useEffect(() => {
-    messageRef.current?.focus({ preventScroll: true })
+    const firstEmptyField = [nameRef.current, emailRef.current, messageRef.current].find(
+      field => field && !field.value.trim(),
+    )
+    firstEmptyField?.focus({ preventScroll: true })
     /** Keeps Escape and Tab within the dialog instead of triggering editor commands. */
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -447,6 +459,7 @@ const Feedback = () => {
             <label>
               Name (optional)
               <input
+                ref={nameRef}
                 className={inputClass}
                 autoComplete='name'
                 maxLength={200}
@@ -457,6 +470,7 @@ const Feedback = () => {
             <label>
               Email (optional)
               <input
+                ref={emailRef}
                 className={inputClass}
                 type='email'
                 autoComplete='email'

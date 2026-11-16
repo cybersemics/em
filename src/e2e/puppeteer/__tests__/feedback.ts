@@ -17,10 +17,12 @@ import { page } from '../session'
 deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
 // https://github.com/cybersemics/em/pull/6073#issuecomment-6594233627
-it('opens feedback with the focused message above an overlay keyboard', async () => {
+it('scrolls the focused message above an overlay keyboard', async () => {
   await setVirtualKeyboardHeight(400)
   await gesture('rdldr')
   await waitForSelector('[role="dialog"][aria-labelledby="feedback-title"]')
+  await press('Tab')
+  await press('Tab')
   const bounds = await page.$eval('textarea', element => ({
     focused: element === document.activeElement,
     top: element.getBoundingClientRect().top,
