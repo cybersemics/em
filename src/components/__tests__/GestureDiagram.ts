@@ -231,6 +231,8 @@ describe('solid filled arrowhead', () => {
     expect(markup).toContain('<polygon points="')
     expect(markup).toContain('fill="dim"')
     expect(markup).not.toContain('marker-end')
+    expect(markup).toContain('<clipPath')
+    expect(markup).not.toContain('<mask')
   })
 
   it('keeps the chevron dim until the whole gesture is traced', () => {

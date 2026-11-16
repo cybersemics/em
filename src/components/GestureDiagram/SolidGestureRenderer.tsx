@@ -1,4 +1,5 @@
 import { token } from '../../../styled-system/tokens'
+import getGestureBounds from './getGestureBounds'
 import serializeGesturePath from './serializeGesturePath'
 import GestureArrowhead from './types/GestureArrowhead'
 import GestureGeometry from './types/GestureGeometry'
@@ -58,16 +59,21 @@ const SolidGestureRenderer = ({
   const activeColor = highlightColor ?? token('colors.vividHighlight')
   const inactiveColor = color ?? token('colors.fg')
   const chevronPoints = chevron?.map(point => `${point.x},${point.y}`).join(' ')
+  const bounds = getGestureBounds(geometry)
+  const clipMargin = strokeWidth * 1.5
 
   // The chevron belongs to the final direction, so it lights up only once the whole gesture is traced.
-  // The mask removes the shaft's round cap under the chevron. Translucent colors would otherwise darken the overlap.
+  // The clip path cuts the shaft out under the chevron. Translucent colors would otherwise darken the overlap.
+  // The clip rect only has to cover the shaft. Sizing it to the gesture keeps WebKit fast.
   const chevronElement = chevron && (
     <>
       <defs>
-        <mask id={`${instanceId}-chevron`} maskUnits='userSpaceOnUse' x={-1e4} y={-1e4} width={2e4} height={2e4}>
-          <rect x={-1e4} y={-1e4} width={2e4} height={2e4} fill='white' />
-          <polygon points={chevronPoints} fill='black' />
-        </mask>
+        <clipPath id={`${instanceId}-chevron`}>
+          <path
+            clipRule='evenodd'
+            d={`M ${bounds.x - clipMargin} ${bounds.y - clipMargin} h ${bounds.width + 2 * clipMargin} v ${bounds.height + 2 * clipMargin} h ${-(bounds.width + 2 * clipMargin)} Z M ${chevronPoints} Z`}
+          />
+        </clipPath>
       </defs>
       <polygon
         points={chevronPoints}
@@ -76,7 +82,7 @@ const SolidGestureRenderer = ({
       />
     </>
   )
-  const shaftMask = chevron ? `url(#${instanceId}-chevron)` : undefined
+  const shaftClip = chevron ? `url(#${instanceId}-chevron)` : undefined
 
   // A single path prevents rounded caps from overlapping into visible beads at joins.
   if (segments[0]?.kind === 'line' && path !== 'rdld') {
@@ -87,7 +93,7 @@ const SolidGestureRenderer = ({
             d={serializeGesturePath(segments)}
             stroke={allHighlighted ? activeColor : inactiveColor}
             markerEnd={markerEnd}
-            mask={shaftMask}
+            clipPath={shaftClip}
             {...commonPathProps}
           />
           {chevronElement}
@@ -105,7 +111,7 @@ const SolidGestureRenderer = ({
           d={serializeGesturePath(remaining)}
           stroke={inactiveColor}
           markerEnd={markerEnd}
-          mask={shaftMask}
+          clipPath={shaftClip}
           {...commonPathProps}
         />
         {chevronElement}
