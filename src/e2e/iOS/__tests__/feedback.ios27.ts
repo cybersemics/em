@@ -7,7 +7,7 @@ import waitForElement from '../helpers/waitForElement'
 
 describe('Feedback', () => {
   // https://github.com/cybersemics/em/pull/6073#issuecomment-6772525952
-  it.skip('keeps feedback above the keyboard after reopening Message', async () => {
+  it('keeps feedback above the keyboard after reopening Message', async () => {
     await newThought('Test feedback')
     await gesture('rdldr')
     await waitForElement('[role="dialog"][aria-labelledby="feedback-title"]')

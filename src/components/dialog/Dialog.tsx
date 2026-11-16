@@ -2,6 +2,7 @@ import React, { CSSProperties, PropsWithChildren, useCallback, useEffect, useRef
 import { css, cx } from '../../../styled-system/css'
 import { dialogRecipe } from '../../../styled-system/recipes'
 import useOnClickOutside from '../../hooks/useOnClickOutside'
+import usePositionFixed from '../../hooks/usePositionFixed'
 
 interface DialogProps {
   onClose: () => void
@@ -16,6 +17,11 @@ interface DialogProps {
 const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, nodeRef, availableHeight }) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const dialog = dialogRecipe()
+  const positionFixed = usePositionFixed({
+    keyboardOpen: availableHeight !== undefined,
+    safeArea: false,
+    scrollThrottle: 100,
+  })
 
   // Close the dialog when the user clicks or taps outside of it. A press on a surface layered above the dialog, marked
   // data-above-dialog, is not outside it: the dialog is still what the user is working in.
@@ -73,6 +79,7 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
       style={
         availableHeight !== undefined
           ? ({
+              ...positionFixed,
               height: availableHeight,
               bottom: 'auto',
               '--dialog-max-height': `calc(${availableHeight}px - env(safe-area-inset-top) - 2rem)`,

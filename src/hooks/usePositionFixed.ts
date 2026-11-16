@@ -27,6 +27,9 @@ const usePositionFixed = ({
   fromBottom,
   offset = 0,
   height,
+  keyboardOpen,
+  safeArea = true,
+  scrollThrottle = 0,
 }: {
   /** Anchor position for the element. */
   fromBottom?: boolean
@@ -34,6 +37,12 @@ const usePositionFixed = ({
   offset?: number
   /** The height of the container, used to calculate the bottom offset on mobile safari. Only use with `fromBottom`. */
   height?: number
+  /** Overrides the thought editor keyboard state for native form controls. */
+  keyboardOpen?: boolean
+  /** Includes safe-area offsets unless the caller already supplies safe-area padding. */
+  safeArea?: boolean
+  /** Minimum interval between scroll-driven position updates, in milliseconds. */
+  scrollThrottle?: number
 } = {}): {
   position: 'fixed' | 'absolute'
   top?: string
@@ -42,11 +51,11 @@ const usePositionFixed = ({
   const virtualKeyboard = virtualKeyboardStore.useState()
 
   // On iOS Safari, emulate `position: fixed` using absolute positioning when the virtual keyboard is open.
-  const position = virtualKeyboard.open && isSafari() && !isCapacitor() ? 'absolute' : 'fixed'
+  const position = (keyboardOpen ?? virtualKeyboard.open) && isSafari() && !isCapacitor() ? 'absolute' : 'fixed'
 
   // Only subscribe to scroll events when emulating with position: fixed. mode — in fixed mode, scroll position
   // is irrelevant and listening would cause unnecessary re-renders.
-  const scrollTop = useScrollTop({ disabled: position === 'fixed' })
+  const scrollTop = useScrollTop({ disabled: position === 'fixed', throttle: scrollThrottle })
   const { innerHeight } = viewportStore.useState()
 
   let top, bottom
@@ -66,13 +75,13 @@ const usePositionFixed = ({
       // safe-area-bottom inset so the element doesn't overlap the rounded-screen home indicator.
       //
       const visibleBottom = Math.min(document.body.scrollHeight, scrollTop + innerHeight - virtualKeyboard.height)
-      top = `calc(${visibleBottom - (height ?? 0) - offset}px - env(safe-area-inset-bottom))`
+      top = `calc(${visibleBottom - (height ?? 0) - offset}px - ${safeArea ? 'env(safe-area-inset-bottom)' : '0px'})`
     } else {
       // fromTop
       // Position the element at the top of the visible area.
       // scrollTop gives the top of the visible viewport. Add safe-area-top for
       // rounded screens (e.g. iPhone notch) and any additional offset if provided.
-      top = `calc(${scrollTop}px + env(safe-area-inset-top) + ${offset}px)`
+      top = `calc(${scrollTop}px + ${safeArea ? 'env(safe-area-inset-top)' : '0px'} + ${offset}px)`
     }
   }
 
@@ -82,12 +91,12 @@ const usePositionFixed = ({
       // Normal fixed positioning anchored to the bottom — safe-area-bottom keeps the element
       // above the home indicator on rounded screens, and virtualKeyboard.height pushes it
       // above the keyboard when open.
-      bottom = `calc(env(safe-area-inset-bottom) + ${virtualKeyboard.height}px + ${offset}px)`
+      bottom = `calc(${safeArea ? 'env(safe-area-inset-bottom)' : '0px'} + ${virtualKeyboard.height}px + ${offset}px)`
     } else {
       // fromTop
       // Normal fixed positioning anchored to the top — safe-area-top keeps the element
       // below the notch/status bar on rounded screens.
-      top = `calc(env(safe-area-inset-top) + ${offset}px)`
+      top = `calc(${safeArea ? 'env(safe-area-inset-top)' : '0px'} + ${offset}px)`
     }
   }
 
