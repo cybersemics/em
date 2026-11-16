@@ -143,6 +143,12 @@ it('updates stored memberships on incoming deletion even when its thought was no
 
 it('publishes thoughts and keeps optimistic memberships while indexing keeps failing', async () => {
   const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  // A readback that keeps restarting would hang the run instead of failing it, so cap its rounds.
+  let reads = 0
+  getSnapshot.mockImplementation(() => {
+    if (++reads > 50) throw new Error('readback keeps restarting')
+    return snapshot
+  })
   // A membership needs the payload's timestamps, so every delivery and retry from here on fails.
   const brokenId = '00000000000000000000000000000203' as ThoughtId
   const payload = new TextEncoder().encode(JSON.stringify({ value: 'x' }))
