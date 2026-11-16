@@ -17,6 +17,7 @@ import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
 import mergeUpdates from '../util/mergeUpdates'
 import reducerFlow from '../util/reducerFlow'
+import reconcileContextViewExpansions from './reconcileContextViewExpansions'
 
 export type UpdateThoughtsOptions = PushBatch & {
   cursorOffset?: number
@@ -184,6 +185,8 @@ const updateThoughts = (
         lexemeIndex,
       },
     }),
+
+    !preventExpandThoughts ? stateNew => reconcileContextViewExpansions(stateNew, state) : null,
 
     // Repair cursor
     // When getting updates from another device, the cursor may have moved or no longer exist, and needs to be updated.

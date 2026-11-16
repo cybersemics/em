@@ -1,19 +1,90 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransitionProps } from 'react-transition-group/CSSTransition'
 import { css } from '../../styled-system/css'
 import ActionType from '../@types/ActionType'
+import ContextViewExpansion from '../@types/ContextViewExpansion'
+import ThoughtId from '../@types/ThoughtId'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
+import { unfoldContextActionCreator as unfoldContext } from '../actions/unfoldContext'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
+import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import scrollTopStore from '../stores/scrollTopStore'
+import ellipsize from '../util/ellipsize'
+import fastClick from '../util/fastClick'
 import isDescendantPath from '../util/isDescendantPath'
+import isRoot from '../util/isRoot'
+import toVisibleText from '../util/toVisibleText'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
 import FauxCaret from './FauxCaret'
 import TreeNodePositioner from './TreeNodePositioner'
 import VirtualThought, { OnResize, SetSize } from './VirtualThought'
+import HomeIcon from './icons/HomeIcon'
+
+/** Measures a real collapsed ancestor as an independent node in the layout tree. */
+const AncestorBreadcrumb = ({
+  thoughtId,
+  thoughtKey,
+  contextEntry,
+  onResize,
+  autofocus,
+}: {
+  thoughtId: ThoughtId
+  thoughtKey: string
+  contextEntry: ContextViewExpansion
+  onResize: OnResize
+  autofocus: TreeThoughtPositioned['autofocus']
+}) => {
+  const dispatch = useDispatch()
+  const ref = useRef<HTMLButtonElement>(null)
+  const value = useSelector(state => getThoughtById(state, thoughtId)?.value || '')
+  const fontSize = useSelector(state => state.fontSize)
+  const visible = autofocus === 'show' || autofocus === 'dim'
+  useLayoutEffect(() => {
+    if (!ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    onResize({ id: thoughtId, key: thoughtKey, width: rect.width, height: rect.height, isVisible: visible })
+    return () => onResize({ id: thoughtId, key: thoughtKey, width: null, height: null, isVisible: false })
+  }, [value, fontSize, visible, onResize, thoughtId, thoughtKey])
+  const label = isRoot([thoughtId]) ? 'Home' : toVisibleText(value)
+  return (
+    <span aria-label='context-breadcrumbs'>
+      <button
+        ref={ref}
+        type='button'
+        aria-label={`Uncollapse ${label}`}
+        title={label}
+        {...fastClick(() => dispatch(unfoldContext({ ...contextEntry, ancestorId: thoughtId })))}
+        className={css({
+          all: 'unset',
+          display: 'inline-flex',
+          alignItems: 'center',
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          fontSize: '0.867rem',
+          lineHeight: 1.25,
+          color: 'gray66',
+          whiteSpace: 'nowrap',
+          gap: '3px',
+          '&:hover': { color: 'fg' },
+        })}
+        style={{ opacity: autofocus === 'dim' ? 0.5 : 1, visibility: visible ? 'visible' : 'hidden' }}
+      >
+        {isRoot([thoughtId]) ? (
+          <HomeIcon size={fontSize * 0.85} fill='currentColor' />
+        ) : (
+          <>
+            <span aria-hidden='true'>•</span>
+            <span>{ellipsize(label)}</span>
+          </>
+        )}
+      </button>
+    </span>
+  )
+}
 
 /** Renders a thought component for mapped treeThoughtsPositioned. */
 const TreeNode = ({
@@ -33,6 +104,9 @@ const TreeNode = ({
   path,
   prevChild,
   showContexts,
+  contextEntry,
+  breadcrumb,
+  portalPath,
   isLastVisible,
   simplePath,
   singleLineHeightWithCliff,
@@ -185,6 +259,7 @@ const TreeNode = ({
       unmountOnExit
     >
       <TreeNodePositioner
+        breadcrumb={breadcrumb}
         x={x}
         y={y}
         path={path}
@@ -200,43 +275,56 @@ const TreeNode = ({
       >
         <div
           ref={fadeThoughtRef}
+          className={css({ boxShadow: portalPath && !breadcrumb ? '-1px 0 {colors.gray33}' : undefined })}
           // It's possible for both the positioned faux caret and the start/end faux caret to be active at once, so hide the start/end
           // caret after a tap activates the positioned faux caret. https://github.com/cybersemics/em/pull/3757
           onClick={hideFauxCaret}
         >
-          <VirtualThought
-            debugIndex={testFlags.simulateDrop ? indexChild : undefined}
-            depth={depth}
-            childIndexNonAttribute={childIndexNonAttribute}
-            dropUncle={thoughtId === cursorUncleId}
-            env={env}
-            indexDescendant={indexDescendant}
-            isMultiColumnTable={false}
-            leaf={leaf}
-            onResize={onResize}
-            path={path}
-            prevChildId={prevChild?.id}
-            showContexts={showContexts}
-            simplePath={simplePath}
-            singleLineHeight={singleLineHeightWithCliff}
-            // Add a bit of space after a cliff to give nested lists some breathing room.
-            // Do this as padding instead of y, otherwise there will be a gap between drop targets.
-            // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
-            style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
-            crossContextualKey={thoughtKey}
-            cliff={cliff}
-            prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
-            isLastVisible={isLastVisible}
-            autofocus={autofocus}
-            // The width available to the thought before it wraps: for a table col1 cell this is its fixed
-            // width; for every other thought (including table col2 cells) the container extends to the right
-            // edge, so the wrap boundary is governed by x. Passing this lets VirtualThought re-measure its
-            // height when a thought enters or leaves a table column (e.g. toggling Table View), otherwise a
-            // stale wrapped height leaves a blank gap below the thought.
-            wrappingWidth={isTableCol1 ? width : x}
-          />
+          {breadcrumb && contextEntry ? (
+            <AncestorBreadcrumb
+              thoughtId={thoughtId}
+              thoughtKey={thoughtKey}
+              contextEntry={contextEntry}
+              onResize={onResize}
+              autofocus={autofocus}
+            />
+          ) : (
+            <VirtualThought
+              debugIndex={testFlags.simulateDrop ? indexChild : undefined}
+              depth={depth}
+              childIndexNonAttribute={childIndexNonAttribute}
+              dropUncle={thoughtId === cursorUncleId}
+              env={env}
+              indexDescendant={indexDescendant}
+              isMultiColumnTable={false}
+              leaf={leaf}
+              onResize={onResize}
+              path={path}
+              prevChildId={prevChild?.id}
+              showContexts={showContexts}
+              contextEntry={contextEntry}
+              simplePath={simplePath}
+              singleLineHeight={singleLineHeightWithCliff}
+              // Add a bit of space after a cliff to give nested lists some breathing room.
+              // Do this as padding instead of y, otherwise there will be a gap between drop targets.
+              // In Table View, we need to set the cliff padding on col1 so it matches col2 padding, otherwise there will be a gap during drag-and-drop.
+              style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
+              crossContextualKey={thoughtKey}
+              cliff={cliff}
+              prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
+              isLastVisible={isLastVisible}
+              autofocus={autofocus}
+              // The width available to the thought before it wraps: for a table col1 cell this is its fixed
+              // width; for every other thought (including table col2 cells) the container extends to the right
+              // edge, so the wrap boundary is governed by x. Passing this lets VirtualThought re-measure its
+              // height when a thought enters or leaves a table column (e.g. toggling Table View), otherwise a
+              // stale wrapped height leaves a blank gap below the thought.
+              wrappingWidth={isTableCol1 ? width : x}
+            />
+          )}
         </div>
         {dragInProgress &&
+          !breadcrumb &&
           // do not render hidden cliffs
           // rough autofocus estimate
           autofocusDepth - depth < 2 && (

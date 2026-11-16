@@ -1,4 +1,4 @@
-import { findAllByLabelText, findByLabelText, queryByLabelText, queryByText, screen } from '@testing-library/dom'
+import { findAllByLabelText, findByLabelText, queryByLabelText, screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
@@ -8,8 +8,8 @@ import freeThoughtsThresholdStore from '../../stores/freeThoughtsThresholdStore'
 import click from '../../test-helpers/click'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
-import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import findAllThoughtsByText from '../../test-helpers/queries/findAllThoughtsByText'
+import findCursor from '../../test-helpers/queries/findCursor'
 import findSubthoughts from '../../test-helpers/queries/findSubthoughts'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getClosestByLabel from '../../test-helpers/queries/getClosestByLabel'
@@ -20,7 +20,7 @@ import series from '../../util/series'
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-it('Clicking a context moves the cursor to that context', async () => {
+it('uncollapses a context breadcrumb in place while retaining the source context view', async () => {
   await dispatch([
     importText({
       text: `
@@ -42,31 +42,14 @@ it('Clicking a context moves the cursor to that context', async () => {
 
   await act(vi.runOnlyPendingTimersAsync)
 
-  // select each context in the context view
-  const contextBreadcrumbs = document.querySelectorAll('[aria-label="context-breadcrumbs"]')
-
-  // find the context that contains b2 (ignoring context order)
-  const contextLink = (
-    await Promise.all(
-      Array.from(contextBreadcrumbs).map(async el => queryByText(el as HTMLElement, 'b2', { exact: true })),
-    )
-  ).find(Boolean)!
-
-  expect(contextLink).toBeTruthy()
-
-  // click the context link
   const user = userEvent.setup({ delay: null })
-  await user.click(contextLink)
+  await user.click(screen.getByRole('button', { name: 'Uncollapse b2' }))
 
   await act(vi.runOnlyPendingTimersAsync)
 
-  // cursor should exist
-  const cursor = store.getState().cursor!
-  expect(cursor).toBeTruthy()
-
-  // cursor should be on the context that was clicked
-  const state = store.getState()
-  expectPathToEqual(state, state.cursor, ['b1', 'b2'])
+  expect(await findCursor()).toHaveTextContent('b2')
+  expect(await findThoughtByText('b2')).toBeVisible()
+  expect(screen.getByRole('button', { name: 'Uncollapse a2' })).toBeVisible()
 })
 
 it('render home icon as breadcrumbs for each context whose parent is the home context', async () => {
@@ -85,22 +68,7 @@ it('render home icon as breadcrumbs for each context whose parent is the home co
 
   await act(vi.runOnlyPendingTimersAsync)
 
-  const tree = screen.getAllByLabelText('tree-node').map(node => {
-    const breadcrumbs = queryByLabelText(node, 'context-breadcrumbs')
-    return {
-      value: queryByLabelText(node, 'thought')?.textContent,
-      homeBreadcrumbs: !!breadcrumbs && !!queryByLabelText(breadcrumbs, 'home'),
-    }
-  })
-
-  // The contexts a and b are both direct children of the home context, so each renders the home icon as its breadcrumbs.
-  expect(tree).toEqual([
-    { value: 'a', homeBreadcrumbs: false },
-    { value: 'm', homeBreadcrumbs: false },
-    { value: 'a', homeBreadcrumbs: true },
-    { value: 'b', homeBreadcrumbs: true },
-    { value: 'b', homeBreadcrumbs: false },
-  ])
+  expect(screen.getAllByRole('button', { name: 'Uncollapse Home' })).toHaveLength(2)
 })
 
 // https://github.com/cybersemics/em/issues/5857

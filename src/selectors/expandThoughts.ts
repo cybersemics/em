@@ -18,6 +18,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendant from '../util/isDescendant'
+import isRoot from '../util/isRoot'
 import keyValueBy from '../util/keyValueBy'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
@@ -25,9 +26,11 @@ import stripTags from '../util/stripTags'
 import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
 import { anyChild, getAllChildrenAsThoughts } from './getChildren'
+import getContextViewEntries from './getContextViewEntries'
 import getContexts from './getContexts'
 import pinned from './isPinned'
 import rootedParentOf from './rootedParentOf'
+import thoughtToPath from './thoughtToPath'
 
 /** Returns true if a thought is marked as done. */
 const isDone = (state: State, id: ThoughtId | null): boolean => {
@@ -137,7 +140,11 @@ function expandThoughtsRecursive(
         visibleChildren
       : // some children expanded
         visibleChildren.filter(child => {
-          const childPath = path ? appendToPath(path, showContexts ? child.parentId : child.id) : ([child.id] as Path)
+          const entry = showContexts
+            ? getContextViewEntries(state, path).find(entry => entry.context.id === child.id)
+            : undefined
+          const childPath =
+            entry?.path || (path ? appendToPath(path, showContexts ? child.parentId : child.id) : ([child.id] as Path))
 
           /** Check if the path is equal to the expansion path. */
           const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
@@ -175,7 +182,10 @@ function expandThoughtsRecursive(
   return keyValueBy(
     childrenExpanded,
     childOrContext => {
-      const newPath = unroot([...path, showContexts ? childOrContext.parentId : childOrContext.id])
+      const entry = showContexts
+        ? getContextViewEntries(state, path).find(entry => entry.context.id === childOrContext.id)
+        : undefined
+      const newPath = entry?.path || unroot([...path, showContexts ? childOrContext.parentId : childOrContext.id])
       // do not propagate =descendants/=pin into the context view, since the contexts' subtrees are outside the pinned subtree
       return expandThoughtsRecursive(state, expansionBasePath, newPath, showContexts ? null : descendantsPinned)
     },
@@ -210,6 +220,16 @@ function expandThoughts(state: State, path: Path | null): Index<Path | Context> 
   return [
     cursorExpansionPath,
     ...Object.values(state.multicursors).map(multicursorPath => rootedParentOf(state, multicursorPath)),
+    ...Object.values(state.contextViewExpansions).flatMap(expansion => {
+      if (!isContextViewActive(state, expansion.contextViewPath)) return []
+      const destination = isRoot([expansion.ancestorId])
+        ? [expansion.ancestorId, ...thoughtToPath(state, expansion.contextId)]
+        : thoughtToPath(state, expansion.contextId)
+      const start = destination.indexOf(expansion.ancestorId)
+      return start < 0
+        ? []
+        : [appendToPath(expansion.contextViewPath, expansion.contextId, ...destination.slice(start))]
+    }),
   ].reduce(
     (acc, expansionPath) => ({
       ...acc,

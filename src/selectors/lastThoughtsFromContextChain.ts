@@ -1,7 +1,9 @@
+import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import getLexeme from '../selectors/getLexeme'
 import appendToPath from '../util/appendToPath'
+import hashPath from '../util/hashPath'
 import headValue from '../util/headValue'
 import getThoughtById from './getThoughtById'
 import thoughtToPath from './thoughtToPath'
@@ -12,6 +14,11 @@ const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]):
 
   // the last path in the context chain is a context within a context view
   const simplePath = contextChain[contextChain.length - 1]
+  const ownerPath = contextChain.slice(0, -1).flat() as Path
+  const expansion = state.contextViewExpansions[hashPath(appendToPath(ownerPath, simplePath[0]))]
+  if (expansion && simplePath.length > 1 && simplePath[1] === expansion.ancestorId) {
+    return appendToPath(thoughtToPath(state, expansion.ancestorId), ...simplePath.slice(2))
+  }
 
   // the second-to-last path in the context chain is the closest context view
   const pathContextView = contextChain[contextChain.length - 2]

@@ -30,6 +30,7 @@ import {
 import asyncFocus from '../device/asyncFocus'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import { getChildrenSorted } from '../selectors/getChildren'
+import getContextViewExpansion from '../selectors/getContextViewExpansion'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
 import getRankAfter from '../selectors/getRankAfter'
@@ -187,7 +188,12 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
 
     // setCursor
     (newState: State) => {
-      const parentPath = !preventSetCursor ? unroot(insertNewSubthought ? path : parentOf(path)) : null
+      const expansion = getContextViewExpansion(state, path)
+      const crossesEntryBoundary =
+        expansion && !insertNewSubthought && path.length === expansion.contextViewPath.length + 2
+      const parentPath = !preventSetCursor
+        ? unroot(insertNewSubthought ? path : crossesEntryBoundary ? parentOf(simplePath) : parentOf(path))
+        : null
 
       return !preventSetCursor
         ? setCursor(newState, {

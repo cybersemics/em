@@ -154,7 +154,7 @@ A `SimplePath` is a `Path` that has not crossed any context views, and therefore
 In practice, you obtain a `SimplePath` either by:
 
 - Knowing structurally that a path doesn't cross a context view (e.g. it's just a sliced parent path), and casting via `as SimplePath`.
-- Calling [`simplifyPath`](../src/selectors/simplifyPath.ts), which uses [`splitChain`](../src/selectors/splitChain.ts) to find the trailing simple segment.
+- Calling [`simplifyPath`](../src/selectors/simplifyPath.ts), which splits the displayed route with [`splitChain`](../src/selectors/splitChain.ts) and resolves its final segment into a physical path.
 
 ### Lexeme
 
@@ -374,6 +374,63 @@ The context view is gated by `state.contextViews`, an object keyed by `hashPath(
 
 **Usage tip:** [`getContexts(state, value)`](../src/selectors/getContexts.ts) returns the live list. Internally that's just the `Lexeme.contexts` array.
 
+#### Unfolded context ancestry
+
+Selecting an ancestor breadcrumb unfolds that context entry in place. Ancestors
+before the selection remain breadcrumbs; the selected ancestor and its real
+descendants appear as ordinary thoughts, including siblings and the nominal
+thought that the collapsed entry elides. The stored tree is unchanged.
+
+`state.contextViewExpansions` records `{ contextViewPath, contextId, ancestorId }`
+for each unfolded entry, keyed by `hashPath([...contextViewPath, contextId])`.
+`contextId` is the existing destination occurrence's ID, not a value or parent
+label. Two entries may unfold the same stored ancestor while retaining different
+displayed routes and local context children.
+
+An unfolded route has the form:
+
+```ts
+[...contextViewPath, contextId, ancestorId, ...visibleDescendants]
+```
+
+The first `contextId` is a hidden occurrence anchor. It is never rendered as a
+thought. If the matching thought reappears farther down the hierarchy, its ID can
+occur again as an ordinary visible thought. Only the registry permits this anchor
+interpretation; equal text or a cyclic path alone is insufficient.
+
+`splitChain` retains the registered anchor in its raw route segment.
+`lastThoughtsFromContextChain` resolves an unfolded segment from the real path to
+`ancestorId` plus its visible suffix. This also preserves a prospective move's
+intended destination: looking up only the final ID would recover the moved
+thought's old location. Collapsed entries retain their existing nominal-elision
+resolution. The raw segments must therefore be resolved through `simplifyPath`
+before they are used as physical mutation paths.
+
+`displayedParentOf` skips the hidden anchor when navigating back from the first
+visible ancestor. It does not change the physical-parent semantics of
+`rootedParentOf`. Forward and sibling traversal use the projected entry paths.
+
+The retained ancestor-to-nominal spine is included in `expanded` independently of
+cursor depth. Autofocus and pinning still determine visibility; deeper navigation
+does not recollapse that ancestry. Zoom walks displayed ancestors and never
+applies the hidden occurrence anchor's attributes before that thought appears in
+the restored hierarchy. Departure cleanup remains a design question:
+an entry remains unfolded until its view is explicitly closed or its relationship
+is invalidated. Moves rebase owner routes at the move transaction, and deletion,
+rename or merge prunes invalid entries while retaining a surviving selection at
+its actual location. Undo restores the route together with the mutation.
+
+Explicit edits that cross the first unfolded ancestor's boundary continue in the
+ordinary hierarchy at the correct physical destination. This includes creating
+a sibling of that first ancestor, categorizing or reordering it, and
+indenting/outdenting across the frontier. If deleting an ancestor invalidates its
+frame, the next surviving sibling or parent is selected in the actual hierarchy.
+They do not automatically broaden the projected ancestry.
+
+The registry is in-memory view state. Cursor URLs, saved cursors and new unfolded
+jump-history entries use canonical real locations; reloading resumes at the real
+thought with the unfolded route closed. See [Cursor and Caret](cursor-and-caret.md).
+
 #### Context view recursion
 
 Contexts under a context view can themselves render their own children (defaulting back to normal view). The mechanics:
@@ -400,7 +457,7 @@ This is fine: the rendering is bounded by depth, and the underlying data structu
 
 #### contextChain
 
-When a `Path` crosses one or more context views, it is no longer a `SimplePath`. To get back to a `SimplePath` (which is required for any operation that needs a single contiguous context — e.g. converting to a `Context`), the path is split at every context-view boundary into a chain of `SimplePath` segments. [`splitChain`](../src/selectors/splitChain.ts) does this:
+When a `Path` crosses context views, it is a displayed route rather than a physical `SimplePath`. [`splitChain`](../src/selectors/splitChain.ts) splits it at each context-view boundary. [`lastThoughtsFromContextChain`](../src/selectors/lastThoughtsFromContextChain.ts) resolves the final segment into the physical path required for mutation; [`simplifyPath`](../src/selectors/simplifyPath.ts) combines those operations. The following example uses the legacy collapsed representation:
 
 Given:
 
@@ -422,7 +479,7 @@ When `cursor` is `a/m~/b/y`, then `contextChain` is (ranks omitted for readabili
 ]
 ```
 
-Each segment is a `SimplePath`. The transition from one segment to the next happens at each `m~` boundary.
+The transition from one raw segment to the next happens at each `m~` boundary. Collapsed segments elide the nominal occurrence; unfolded segments retain an explicit hidden occurrence anchor. Resolve them before treating them as physical `SimplePath` values.
 
 An active context view is not on its own enough to split: the id following the context-view thought must be one of that thought's contexts. The distinction matters in a cyclic context (see [Context view recursion](#context-view-recursion) above), where a `SimplePath` and a context-view `Path` can be the same array of ids. The thought rendered at `a/m~/a/x` has the `SimplePath` `a/m/x`, and a context view is active on `a/m` — but `x` is an ordinary child of `m` rather than a context of it, so `a/m/x` is left whole instead of being split into `[['a', 'm'], ['x']]`.
 
@@ -467,9 +524,9 @@ The cursor `Books/Read/C.S. Peirce/Philosophical Writings/Philosophy of Math~/Ph
 
 Related helpers:
 
-- [`splitChain`](../src/selectors/splitChain.ts) — `Path` → `SimplePath[]`.
-- [`lastThoughtsFromContextChain`](../src/selectors/lastThoughtsFromContextChain.ts) — picks the trailing simple segment.
+- [`splitChain`](../src/selectors/splitChain.ts) — splits a displayed `Path` into raw route segments.
+- [`lastThoughtsFromContextChain`](../src/selectors/lastThoughtsFromContextChain.ts) — resolves the final route segment into a physical `SimplePath`.
 - [`simplifyPath`](../src/selectors/simplifyPath.ts) — convenience: `splitChain` + `lastThoughtsFromContextChain`.
 - [`contextChainToPath`](../src/util/contextChainToPath.ts) — flattens a chain back into a single `Path`.
-- [`thoughtsEditingFromChain`](../src/selectors/thoughtsEditingFromChain.ts) — used by edit-mode logic to identify the actively-edited segment.
+- [`thoughtsEditingFromChain`](../src/selectors/thoughtsEditingFromChain.ts) — resolves an editing scope, including registered unfolded routes.
 - [`chain`](../src/selectors/chain.ts) — utility for working with chains.

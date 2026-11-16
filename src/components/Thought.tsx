@@ -4,6 +4,7 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { childRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
+import ContextViewExpansion from '../@types/ContextViewExpansion'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import LazyEnv from '../@types/LazyEnv'
@@ -94,6 +95,7 @@ export interface ThoughtContainerProps {
   publish?: boolean
   rank: number
   showContexts?: boolean
+  contextEntry?: ContextViewExpansion
   simplePath: SimplePath
   style?: React.CSSProperties
   styleContainer?: React.CSSProperties
@@ -262,6 +264,7 @@ const ThoughtContainer = ({
   prevChildId,
   rank,
   showContexts,
+  contextEntry,
   simplePath,
   style: styleProp,
   styleContainer: styleContainerProp,
@@ -598,7 +601,7 @@ const ThoughtContainer = ({
         }),
       )}
     >
-      {showContexts && !isRoot(simplePath) && (
+      {showContexts && !contextEntry && !isRoot(simplePath) && (
         <div
           className={css({
             /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */

@@ -14,7 +14,7 @@ const omitKey = <T>(record: Index<T>, key: string): Index<T> => {
 const useSizeTracking = () => {
   // Track dynamic thought heights from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
   const [heights, setHeights] = useState<Index<{ height: number; isVisible: boolean; cliff: number }>>({})
-  // Track thought widths separately from heights. Only table col1 widths are read, to size the column.
+  // Track thought widths separately from heights. Table col1 reads these widths to size the column; collapsed ancestor breadcrumbs also use them to arrange their labels.
   // A width outlives its height: removeSize drops the height when VirtualThought unmounts, including when list virtualization unmounts a thought that is still in the tree, while removeWidth drops the width only when the thought leaves the tree. Otherwise col1 would narrow whenever its widest thought is virtualized, which moves that thought back above the virtualization cutoff, and it would flicker indefinitely.
   const [widths, setWidths] = useState<Index<number>>({})
   const unmounted = useRef(false)

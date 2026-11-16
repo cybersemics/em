@@ -4,9 +4,12 @@ import { HOME_PATH } from '../constants'
 import splitChain from '../selectors/splitChain'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import getContextViewExpansion from './getContextViewExpansion'
+import simplifyPath from './simplifyPath'
 
 /** Gets the ranked thoughts that are being edited from a context chain. */
 const thoughtsEditingFromChain = (state: State, path: Path): Path => {
+  if (getContextViewExpansion(state, path)) return simplifyPath(state, path)
   const contextChain = splitChain(state, path)
 
   // the last context in the context chain, which is the context of the thought being edited

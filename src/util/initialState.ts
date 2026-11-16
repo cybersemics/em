@@ -111,6 +111,7 @@ const initialState = (created: Timestamp = timestamp()) => {
       index: 0,
     },
     contextViews: {},
+    contextViewExpansions: {},
     cursor: null,
     cursorBeforeSearch: null,
     cursorBeforeQuickAdd: null,

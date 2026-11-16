@@ -3,6 +3,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import cursorBack from '../actions/cursorBack'
 import setCursor from '../actions/setCursor'
+import getContextViewExpansion from '../selectors/getContextViewExpansion'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -29,6 +30,12 @@ import parentOf from '../util/parentOf'
 const updateCursorAfterDelete = (state: State, statePrev: State) => {
   const cursor = statePrev.cursor
   if (!cursor) return state
+
+  // Deleting an unfolded ancestor can remove the matching occurrence and its entire display frame. Choose the
+  // surviving sibling/parent in the actual hierarchy, since the previous hidden anchor is no longer a valid route.
+  if (getContextViewExpansion(statePrev, cursor) && !getContextViewExpansion(state, cursor)) {
+    return updateCursorAfterDelete(state, { ...statePrev, cursor: thoughtToPath(statePrev, head(cursor)) })
+  }
 
   const parentPath = rootedParentOf(statePrev, cursor)
   const showContexts = isContextViewActive(statePrev, parentPath)

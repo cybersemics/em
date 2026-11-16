@@ -2,6 +2,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
 import normalizeThought from '../util/normalizeThought'
 import splice from '../util/splice'
@@ -14,6 +15,14 @@ import parentOfThought from './parentOfThought'
 // if there is no/empty context chain, return thoughtsRanked as-is
 const chain = (state: State, contextChain: SimplePath[], simplePath: SimplePath): Path => {
   if (!contextChain || contextChain.length === 0) return simplePath
+
+  const segment = contextChain[contextChain.length - 1]
+  const owner = contextChain.slice(0, -1).flat() as Path
+  const expansion = segment && state.contextViewExpansions[hashPath([...owner, segment[0]] as Path)]
+  if (expansion) {
+    const start = simplePath.indexOf(expansion.ancestorId)
+    if (start >= 0) return [...expansion.contextViewPath, expansion.contextId, ...simplePath.slice(start)] as Path
+  }
 
   // get the head thought in the last segment of the contextChain
   const pivot = getThoughtById(state, head(contextChain[contextChain.length - 1]))

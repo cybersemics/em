@@ -10,6 +10,7 @@ import Thunk from '../@types/Thunk'
 import updateThoughts from '../actions/updateThoughts'
 import { HOME_PATH } from '../constants'
 import { clientId } from '../data-providers/thoughtspaceSession'
+import expandThoughts from '../selectors/expandThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
 import { getLexeme } from '../selectors/getLexeme'
 import getMovePlacement from '../selectors/getMovePlacement'
@@ -32,6 +33,7 @@ import keyValueBy from '../util/keyValueBy'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
 import timestamp from '../util/timestamp'
+import reconcileContextViewExpansions from './reconcileContextViewExpansions'
 
 interface Payload {
   pathParent: Path
@@ -273,7 +275,12 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
       local,
       remote,
       overwritePending: !persist,
+      preventExpandThoughts: true,
     }),
+    stateNew => {
+      const reconciled = reconcileContextViewExpansions(stateNew, state)
+      return { ...reconciled, expanded: expandThoughts(reconciled, reconciled.cursor) }
+    },
   ])(state)
 }
 

@@ -38,6 +38,18 @@ The touch case exists because a browser that has history to go back to offers an
 
 What this costs on touch is browser back/forward as cursor navigation — including [`navigateBack`](../src/commands/navigateBack.ts) and [`navigateForward`](../src/commands/navigateForward.ts), which are bound to `cmd+[` / `cmd+]` and have no gesture, so they are unreachable on a touch device regardless.
 
+### Unfolded context routes and restoration
+
+Unfolded context entries include a hidden destination-occurrence anchor in the
+live cursor route. The corresponding `contextViewExpansions` registry exists in
+memory, so the raw route cannot be restored as an ordinary stored hierarchy.
+`dehydrateContextPath` writes its selected visible thought's canonical location
+for cursor persistence and URLs, omitting context-view markers for that serialized
+route. Reload therefore resumes at the same actual thought with the unfolded
+route closed. Ordinary collapsed context routes retain their existing behavior.
+New jump-history entries created within an unfolded route likewise record actual
+edit locations. Live navigation and open-view state remain unchanged by saving.
+
 ## Caret / Browser Selection
 
 The caret is the native browser selection — `window.getSelection()`. We use the name "caret" because it's shorter and unambiguous. Unless otherwise noted, "caret" means a *collapsed* browser selection.

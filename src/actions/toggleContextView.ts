@@ -11,6 +11,7 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import hashPath from '../util/hashPath'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
+import reconcileContextViewExpansions from './reconcileContextViewExpansions'
 
 /** Toggles the context view on a given thought. */
 const toggleContextView = (state: State): State => {
@@ -30,6 +31,8 @@ const toggleContextView = (state: State): State => {
         return draft
       }),
     }),
+
+    stateNew => reconcileContextViewExpansions(stateNew, state),
 
     // update context views and expanded
     state => ({

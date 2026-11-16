@@ -12,6 +12,7 @@ type ContextAnimation = 'disappearingLowerLeft' | 'disappearingUpperRight' | nul
 
 interface TreeNodePositionerProps {
   children: ReactNode
+  breadcrumb?: boolean
   contextAnimation: ContextAnimation
   thoughtId: string
   isTableCol1: boolean
@@ -30,6 +31,7 @@ interface TreeNodePositionerProps {
  */
 const TreeNodePositioner = ({
   children,
+  breadcrumb,
   contextAnimation,
   thoughtId,
   isTableCol1,

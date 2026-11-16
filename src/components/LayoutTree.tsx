@@ -4,19 +4,22 @@ import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
 import Index from '../@types/IndexType'
-import ThoughtId from '../@types/ThoughtId'
+import Path from '../@types/Path'
+import State from '../@types/State'
 import { isTouch } from '../browser'
 import { CONTENT_BOX_PADDING_LEFT, LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
 import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
+import displayedParentOf from '../selectors/displayedParentOf'
 import { hasChildren } from '../selectors/getChildren'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
 import viewportStore from '../stores/viewportStore'
 import debugLog from '../util/debugLog'
 import head from '../util/head'
+import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import BulletCursorOverlay from './BulletCursorOverlay'
 import HoverArrow from './HoverArrow'
@@ -135,6 +138,10 @@ const useLayoutTreeTop = (
   return ref
 }
 
+/** Counts visible hierarchy levels without counting hidden context occurrence anchors. */
+const displayedDepth = (state: State, path: Path): number =>
+  isRoot(path) ? 0 : 1 + displayedDepth(state, displayedParentOf(state, path))
+
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const editing = useSelector(state => state.isKeyboardOpen)
@@ -144,9 +151,9 @@ const LayoutTree = () => {
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
   const ref = useRef<HTMLDivElement>(null)
   const indentDepth = useSelector(state =>
-    state.cursor && state.cursor.length > 2
+    state.cursor && displayedDepth(state, state.cursor) > 2
       ? // when the cursor is on a leaf, the indention level should not change
-        state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
+        displayedDepth(state, state.cursor) - (hasChildren(state, head(state.cursor)) ? 2 : 3)
       : 0,
   )
 
@@ -176,7 +183,7 @@ const LayoutTree = () => {
     )
       return 0
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
-    return state.cursor.length + (isCursorLeaf ? -1 : 0)
+    return displayedDepth(state, state.cursor) + (isCursorLeaf ? -1 : 0)
   })
 
   // first uncle of the cursor used for DropUncle
@@ -188,7 +195,8 @@ const LayoutTree = () => {
     )
       return null
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
-    const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)] as ThoughtId | null
+    const parent = displayedParentOf(state, state.cursor)
+    const cursorParentId = head(isCursorLeaf ? displayedParentOf(state, parent) : parent)
     return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
   })
 

@@ -6,6 +6,7 @@ import Command from './Command'
 import CommandId from './CommandId'
 import CommandUniverseNavigation from './CommandUniverseNavigation'
 import Context from './Context'
+import ContextViewExpansion from './ContextViewExpansion'
 import DragCommandZone from './DragCommandZone'
 import HelpGenieState from './HelpGenieState'
 import Index from './IndexType'
@@ -33,6 +34,8 @@ interface State {
   commandUniverseNavigation: CommandUniverseNavigation
   /** Key: hashPath(path). */
   contextViews: Index<boolean>
+  /** Unfolded context entries, keyed by their owner route and destination occurrence ID. */
+  contextViewExpansions: Index<ContextViewExpansion>
   cursor: Path | null
   /**
    * Set to true when clearThought is activated.
