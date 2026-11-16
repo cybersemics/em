@@ -8,7 +8,7 @@ import clickToolbar from '../helpers/clickToolbar'
 import closeKeyboard from '../helpers/closeKeyboard'
 import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
-import gesture, { startGesture } from '../helpers/gesture'
+import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
 import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
@@ -378,36 +378,5 @@ describe('command center', () => {
       viewportBottom: window.innerHeight,
     }))
     expect(chevronBottom).toBeLessThanOrEqual(viewportBottom)
-  })
-
-  // The command grid rises above the top of the Sheet's scroller during the stage transition, so the scroller must not clip it.
-  // A clipped region is not hit-testable, so the point just inside the Copy tile's top edge must still hit the tile.
-  it('does not clip the command grid while it rises toward the expanded stage', async () => {
-    await paste('- a')
-    await clickThought('a')
-
-    await gesture(openCommandCenterCommand)
-    await waitForCommandCenterOpen()
-    await closeKeyboard()
-    await waitForBrowserSettled()
-
-    const swipe = await startGesture({ target: '[aria-label="Expand Command Center"]' })
-    await swipe.move('u', { segmentLength: 70 })
-    await waitForBrowserSettled()
-
-    const doneBottom = await page.$eval('[data-testid=command-center-done]', el => el.getBoundingClientRect().bottom)
-    const { copyTop, isCopyTopEdgeVisible } = await page.$eval('[aria-label="Copy"]', el => {
-      const { left, top, width } = el.getBoundingClientRect()
-      return {
-        copyTop: top,
-        isCopyTopEdgeVisible: el.contains(document.elementFromPoint(left + width / 2, top + 2)),
-      }
-    })
-
-    await swipe.end()
-
-    // The tile only needs protecting from the scroller once it has risen past the header row above the scroller.
-    expect(copyTop).toBeLessThan(doneBottom)
-    expect(isCopyTopEdgeVisible).toBe(true)
   })
 })

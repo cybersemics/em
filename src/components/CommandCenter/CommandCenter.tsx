@@ -4,6 +4,7 @@ import {
   PanInfo,
   animate,
   easeIn,
+  easeInOut,
   easeOut,
   motion,
   useMotionTemplate,
@@ -77,7 +78,19 @@ const FOLD_EXIT_END = 0.5
 /** The stage progress at which the command list starts to fade in under the fold-in variant. Row 3 starts to fade out at the same progress. */
 const FOLD_ENTER_START = 0
 
-/** The gap between the bottom of the chevron band and the top of the command list while the fold-in variant's list slides in. */
+/** The stage progress at which the roll-up variant's last row has faded out. Three rows leaving one after another need more of the transition than fold-in. */
+const ROLL_UP_EXIT_END = 0.42
+
+/** The point in the roll-up exit at which row 1 has faded out, as a fraction of ROLL_UP_EXIT_END. It comes before row 2 lands, so row 1 is mostly gone by the time row 2 covers it. */
+const ROLL_UP_ROW1_FADE_END = 0.24
+
+/** The point in the roll-up exit at which row 2 has landed in row 1's spot, as a fraction of ROLL_UP_EXIT_END. */
+const ROLL_UP_ROW2_LAND = 1 / 3
+
+/** The stage progress at which the command list starts to fade in under the roll-up variant. It starts as row 2 lands in row 1's spot, so the list rises while the other rows are still leaving. */
+const ROLL_UP_ENTER_START = ROLL_UP_EXIT_END * ROLL_UP_ROW2_LAND
+
+/** The gap between the bottom of the chevron band and the top of the command list while the roll-up and fold-in variants' list slides in. */
 const ROW_TRANSITION_LIST_GAP_PX = 30
 
 /**************************************************************
@@ -88,6 +101,7 @@ const ROW_TRANSITION_LIST_GAP_PX = 30
 const TRANSITION_MODES = [
   { mode: 'push', label: 'Push up' },
   { mode: 'fold', label: 'Fold in' },
+  { mode: 'rollUp', label: 'Roll up' },
 ] as const
 
 /** A standard-to-expanded transition variant. */
@@ -823,17 +837,22 @@ const CommandCenter = () => {
   // The two ranges overlap for only 5% of the transition, so the layouts are rarely visible together.
   // The grid's short rise keeps it clear of "1 thought selected" above it.
   const transitionMode = commandCenterTransitionStore.useSelector(state => state.mode)
-  // Fold-in moves each row of the command grid on its own; push-up moves the grid as a whole.
+  const isRollUp = transitionMode === 'rollUp'
+  // Fold-in and roll-up move each row of the command grid on its own; push-up moves the grid as a whole.
   const isRowTransition = transitionMode !== 'push'
-  const exitEnd = transitionMode === 'fold' ? FOLD_EXIT_END : STANDARD_VIEW_EXIT_END
-  const enterStart = transitionMode === 'fold' ? FOLD_ENTER_START : EXPANDED_VIEW_ENTER_START
+  const exitEnd = isRollUp ? ROLL_UP_EXIT_END : transitionMode === 'fold' ? FOLD_EXIT_END : STANDARD_VIEW_EXIT_END
+  const enterStart = isRollUp
+    ? ROLL_UP_ENTER_START
+    : transitionMode === 'fold'
+      ? FOLD_ENTER_START
+      : EXPANDED_VIEW_ENTER_START
 
   const standardViewOpacity = useTransform(stageProgress, [0, exitEnd], [1, 0])
   const standardViewY = useTransform(stageProgress, [0, exitEnd], [0, -14], { ease: easeIn })
   const standardViewScale = useTransform(stageProgress, [0, exitEnd], [1, 0.94], { ease: easeIn })
   const expandedViewOpacity = useTransform(stageProgress, [enterStart, 1], [0, 1])
   // How far the bottom of the chevron band sits below the top of the command grid.
-  // The fold-in variant starts the command list's rise there, so the list comes in from below the chevron
+  // The roll-up variant starts the command list's rise there, so the list comes in from below the chevron
   // instead of over row 3.
   // The sum is the three rows and their two gaps, the gap above the band, and the band itself.
   const rowGap = fontSize * COMMAND_GRID_GAP_REM
@@ -867,19 +886,48 @@ const CommandCenter = () => {
     { opacity: foldRow3Opacity, y: foldRow3Y },
   ]
 
-  const rowStyles = foldRows
+  // Roll-up variant: the rows leave one at a time, top first, each through the first row's spot.
+  // - Row 1 fades where it is.
+  // - Row 2 moves up into row 1's spot, then fades.
+  // - Row 3 moves up into row 2's spot together with row 2, so no empty row opens above it.
+  // - Row 3 then moves up into row 1's spot while row 2 is still fading, and starts to fade as soon as it lands.
+  // Each row starts moving while the row above it is still fading, so it slides in over the previous row.
+  // Each fade is short, so little of a fading row shows through the translucent row sliding over it.
+  const rollUpRow1Opacity = useTransform(stageProgress, [0, exitEnd * ROLL_UP_ROW1_FADE_END], [1, 0])
+  // Row 2 eases out, so it covers most of the distance early, while row 1 is fading.
+  const rollUpRow2Y = useTransform(stageProgress, [exitEnd * 0.07, exitEnd * ROLL_UP_ROW2_LAND], [0, -rowOffsets[1]], {
+    ease: easeOut,
+  })
+  const rollUpRow2Opacity = useTransform(stageProgress, [exitEnd * ROLL_UP_ROW2_LAND, exitEnd * 0.6], [1, 0])
+  // Row 3 goes straight on into row 1's spot, with no hold at row 2's spot.
+  const rollUpRow3Y = useTransform(
+    stageProgress,
+    [exitEnd * 0.07, exitEnd * ROLL_UP_ROW2_LAND, exitEnd * (2 / 3)],
+    [0, rowOffsets[1] - rowOffsets[2], -rowOffsets[2]],
+    { ease: [easeOut, easeInOut] },
+  )
+  const rollUpRow3Opacity = useTransform(stageProgress, [exitEnd * (2 / 3), exitEnd], [1, 0])
+  const rowStyles = isRollUp
+    ? [
+        { opacity: rollUpRow1Opacity, y: 0 },
+        { opacity: rollUpRow2Opacity, y: rollUpRow2Y },
+        { opacity: rollUpRow3Opacity, y: rollUpRow3Y },
+      ]
+    : foldRows
 
   // Each row shrinks as it fades, to the same 94% that the push-up variant shrinks the whole grid to.
   // The scale follows the row's own opacity, so every row recedes on its own schedule.
+  // Both variants' opacities are inputs, and the transformer picks one, so the inputs stay the same when the variant changes.
   const rowScales = [
-    useTransform(foldRow1Opacity, rowScale),
-    useTransform(foldRow2Opacity, rowScale),
-    useTransform(foldRow3Opacity, rowScale),
+    useTransform([rollUpRow1Opacity, foldRow1Opacity], ([rollUp, fold]) => rowScale(isRollUp ? rollUp : fold)),
+    useTransform([rollUpRow2Opacity, foldRow2Opacity], ([rollUp, fold]) => rowScale(isRollUp ? rollUp : fold)),
+    useTransform([rollUpRow3Opacity, foldRow3Opacity], ([rollUp, fold]) => rowScale(isRollUp ? rollUp : fold)),
   ]
 
-  // In the fold-in variant the command list starts a fixed gap below the chevron's standard-stage spot and slides up
+  // In the roll-up and fold-in variants the command list starts a fixed gap below the chevron's standard-stage spot and slides up
   // together with row 3. The chevron also rides with row 3, so the gap holds and the list never overlaps a row or the chevron.
   // Once row 3 and the chevron have faded, the list rises the rest of the way to its expanded position.
+  // Both row 3 transforms are inputs, and the transformer picks one, so the inputs stay the same when the variant changes.
   const rowTransitionListRiseY = useTransform(
     stageProgress,
     [exitEnd, 1],
@@ -888,8 +936,12 @@ const CommandCenter = () => {
       ease: easeOut,
     },
   )
-  const rowTransitionListY = useTransform([stageProgress, foldRow3Y, rowTransitionListRiseY], ([p, foldY, riseY]) =>
-    (p as number) < exitEnd ? chevronBandBottom + ROW_TRANSITION_LIST_GAP_PX + (foldY as number) : (riseY as number),
+  const rowTransitionListY = useTransform(
+    [stageProgress, rollUpRow3Y, foldRow3Y, rowTransitionListRiseY],
+    ([p, rollUpY, foldY, riseY]) =>
+      (p as number) < exitEnd
+        ? chevronBandBottom + ROW_TRANSITION_LIST_GAP_PX + ((isRollUp ? rollUpY : foldY) as number)
+        : (riseY as number),
   )
 
   if (isTouch && !isTutorialOn) {
@@ -1211,7 +1263,8 @@ const CommandCenter = () => {
                           })}
                           style={{
                             // Fold-in tucks each lower row behind the row above it.
-                            zIndex: 3 - i,
+                            // Roll-up slides each lower row in front of the fading row it replaces.
+                            zIndex: isRollUp ? i + 1 : 3 - i,
                             ...(isRowTransition
                               ? {
                                   opacity: rowStyles[i].opacity,
@@ -1276,9 +1329,10 @@ const CommandCenter = () => {
                       justifyContent: 'center',
                     })}
                     style={{
-                      // The chevron rides up with row 3 in the fold-in variant.
-                      opacity: standardViewOpacity,
-                      y: transitionMode === 'fold' ? foldRow3Y : 0,
+                      // The chevron rides up with row 3 in the roll-up and fold-in variants.
+                      // Only the roll-up variant also fades the chevron with row 3.
+                      opacity: isRollUp ? rollUpRow3Opacity : standardViewOpacity,
+                      y: isRollUp ? rollUpRow3Y : transitionMode === 'fold' ? foldRow3Y : 0,
                       pointerEvents: standardPointerEvents,
                     }}
                   >
