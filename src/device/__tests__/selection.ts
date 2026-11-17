@@ -1,5 +1,5 @@
 import getTextContentFromHTML from '../../device/getTextContentFromHTML'
-import { html, offsetFromClosestParent } from '../selection'
+import { html, isCaretNear, offsetFromClosestParent } from '../selection'
 
 /** Create dummy div with given html value. */
 const createDummyDiv = (htmlValue: string) => {
@@ -195,5 +195,42 @@ describe('html', () => {
     expect(html()).toBe('<b></b>')
 
     document.body.removeChild(editable)
+  })
+})
+
+describe('isCaretNear', () => {
+  afterEach(() => {
+    document.body.replaceChildren()
+  })
+
+  // jsdom has no layout, so every rect is at the origin: the press there is beside the caret, and what differs between
+  // the tests is only where the selection is.
+  it('is true for a press beside a caret in the focused editable', () => {
+    const editable = document.createElement('div')
+    editable.setAttribute('data-editable', 'true')
+    editable.setAttribute('contenteditable', 'true')
+    editable.textContent = 'abc'
+    document.body.appendChild(editable)
+    editable.focus()
+    window.getSelection()!.collapse(editable.firstChild!, 1)
+
+    expect(isCaretNear(0, 0)).toBe(true)
+  })
+
+  // https://github.com/cybersemics/em/issues/5844
+  it.skip('is false when the selection has left the focused editable', () => {
+    const editable = document.createElement('div')
+    editable.setAttribute('data-editable', 'true')
+    editable.setAttribute('contenteditable', 'true')
+    editable.textContent = 'abc'
+    // the next thought's line start faux caret, where a quick magnifier flick moved the selection (#6314)
+    const fauxCaret = document.createElement('span')
+    fauxCaret.textContent = '|'
+    document.body.append(editable, fauxCaret)
+    editable.focus()
+    window.getSelection()!.collapse(fauxCaret.firstChild!, 0)
+
+    expect(document.activeElement).toBe(editable)
+    expect(isCaretNear(0, 0)).toBe(false)
   })
 })
