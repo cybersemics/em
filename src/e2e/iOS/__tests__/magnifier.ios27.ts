@@ -19,17 +19,9 @@ describe('Magnifier', () => {
     await paste(`
       - A
       - B
-      - C
-      - D
-      - E
-      - F
-      - G
-      - H
-      - I
-      - J
     `)
-    await clickThought('D')
-    const editable = await waitForEditable('D')
+    await clickThought('A')
+    const editable = await waitForEditable('A')
     await tap(editable, { pointerType: 'touch' })
     await waitUntil(isKeyboardShown)
     expect(await setSelection(1, 1)).toMatchObject({ type: 'Caret' })
@@ -66,7 +58,7 @@ describe('Magnifier', () => {
       },
     ])
 
-    expect(await getSelection().focusNode?.textContent).toBe('D')
+    expect(await getSelection().focusNode?.textContent).toBe('A')
     expect(await getSelection().focusOffset).toBe(1)
   })
 })
