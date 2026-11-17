@@ -66,6 +66,10 @@ const ThoughtAnnotationWrapper: FC<
               display: 'inline-block',
               maxWidth: '100%',
               boxSizing: 'border-box',
+              // editableRecipe makes the text selectable, which would undo the wrapper's userSelect. On iOS, a quick flick
+              // with the magnifier otherwise moved the selection into the next thought's line start faux caret, outside
+              // every editable, while the thought being edited kept focus (#6314).
+              userSelect: 'none',
               whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
               paddingRight: ellipsizedUrl || isTableCol1 ? '0.333em' : '1em',
               textAlign: isTableCol1 ? 'right' : 'left',
