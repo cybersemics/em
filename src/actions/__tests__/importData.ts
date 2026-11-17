@@ -1568,6 +1568,26 @@ it('splice pasted single-line markdown into the thought', async () => {
   expect(resumeManifestWritten).toBe(false)
 })
 
+// https://github.com/cybersemics/em/issues/6325
+it.skip('keep a link in pasted markdown as link formatting', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    newThought({ value: '' }),
+    (dispatch, getState) =>
+      dispatch(importDataActionCreator({ path: getState().cursor!, text: 'A [link](https://example.com)\nB' })),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const values = getChildrenRankedByContext(store.getState(), [HOME_TOKEN]).map(child => child.value)
+
+  cleanup()
+
+  expect(values).toEqual(['A <a href="https://example.com">link</a> B'])
+})
+
 // TODO: Indentation broke when switching from importText to importData
 it.skip(`import bold thoughts with bold descendants`, async () => {
   const text = `
