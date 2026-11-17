@@ -37,6 +37,8 @@ it('record the touchend of a tap on a thought', () => {
         contentRef: { current: editable as unknown as HTMLInputElement },
         isEditing: true,
         path: store.getState().cursor!,
+        // No tap places a caret in this test.
+        setCursorForTap: () => {},
         style: undefined,
         transient: undefined,
       }),
@@ -63,6 +65,8 @@ it('suppress the synthesized mousedown of a tap that already moved the cursor wi
         contentRef: { current: editable as unknown as HTMLInputElement },
         isEditing: true,
         path: store.getState().cursor!,
+        // No tap places a caret in this test.
+        setCursorForTap: () => {},
         style: undefined,
         transient: undefined,
       }),
@@ -97,6 +101,8 @@ it('allow mousedown on the cursor thought when no cursor-moving tap preceded it'
         contentRef: { current: editable as unknown as HTMLInputElement },
         isEditing: true,
         path: store.getState().cursor!,
+        // No tap places a caret in this test.
+        setCursorForTap: () => {},
         style: undefined,
         transient: undefined,
       }),

@@ -236,6 +236,7 @@ The exception is an edit typed while there is nothing to undo, such as the first
 - **Keyboard and gesture** — `keyDown` and `handleGestureEnd` trigger it before they dispatch.
 - **Toolbar, Command Center, Command Universe, system menu** — `executeCommandWithMulticursor` triggers it for every type other than keyboard and gesture, which have already flushed.
 - **Pickers** — a swatch dispatches its action creator directly rather than executing a command, so [`formatSelectionColor`](../src/actions/formatSelectionColor.ts) and [`formatLetterCase`](../src/actions/formatLetterCase.ts) trigger it themselves.
+- **Taps** — a tap into a thought runs no command, but `Editable`'s `setCursorForTap` triggers it before it moves the cursor. The thought being left then saves its last keystrokes before the move, rather than on blur after it, where Undo would revert the edit without returning the caret to it. On a tap within the same thought, the edit is saved before `cursorOffset` moves to the tap, so the undo history records where the edit left the caret rather than where the tap put it.
 
 Notes are not part of this. [`Note`](../src/components/Note.tsx) commits through a plain `react-contenteditable` `onChange` that dispatches `editThought` / `setDescendant` immediately, with no throttle and no `commandEmitter` subscription, so a note edit is already in Redux by the time any command runs and there is nothing to flush.
 

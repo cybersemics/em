@@ -1,3 +1,5 @@
+import State from '../../@types/State'
+import cursorCleared from '../../actions/cursorCleared'
 import importText from '../../actions/importText'
 import toggleContextView from '../../actions/toggleContextView'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -33,4 +35,39 @@ it('set the cursor to a Path across a context view', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b', 'y'])
+})
+
+it('keep Clear Thought when the cursor is set on the thought it is already on', () => {
+  const text = `
+    - a
+    - b`
+
+  const steps = [
+    importText({ text }),
+    setCursor(['a']),
+    // cursorCleared is not curried, so unlike its neighbors it cannot compose point-free
+    (state: State) => cursorCleared(state, { value: true }),
+    setCursor(['a']),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursorCleared).toBe(true)
+})
+
+it('end Clear Thought when the cursor moves to another thought', () => {
+  const text = `
+    - a
+    - b`
+
+  const steps = [
+    importText({ text }),
+    setCursor(['a']),
+    (state: State) => cursorCleared(state, { value: true }),
+    setCursor(['b']),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursorCleared).toBe(false)
 })
