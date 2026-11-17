@@ -17,7 +17,7 @@ const expectedMulticursors = (state: State, pathsUnranked: string[][]) =>
 
 describe('toggleMulticursor', () => {
   // https://github.com/cybersemics/em/issues/3561
-  it('deselects selected children when their parent is selected', () => {
+  it('deselects the selected children when their parent is selected', () => {
     const steps = [
       importText({
         text: `
@@ -54,5 +54,82 @@ describe('toggleMulticursor', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.multicursors).toEqual(expectedMulticursors(stateNew, [['a'], ['d']]))
+  })
+
+  it('deselects selected thoughts at a deeper depth under a different parent', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+          - x
+            - y
+        `,
+      }),
+      toggleMulticursor(['x', 'y']),
+      toggleMulticursor(['a']),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.multicursors).toEqual(expectedMulticursors(stateNew, [['a']]))
+  })
+
+  it('deselects selected thoughts at a shallower depth under a different parent', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+          - x
+            - y
+        `,
+      }),
+      toggleMulticursor(['a']),
+      toggleMulticursor(['x', 'y']),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.multicursors).toEqual(expectedMulticursors(stateNew, [['x', 'y']]))
+  })
+
+  it('deselects the selected parent when its child is selected', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - b
+        `,
+      }),
+      toggleMulticursor(['a']),
+      toggleMulticursor(['a', 'b']),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.multicursors).toEqual(expectedMulticursors(stateNew, [['a', 'b']]))
+  })
+
+  it('keeps selected thoughts at the same depth under a different parent', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - b
+          - x
+            - y
+        `,
+      }),
+      toggleMulticursor(['a', 'b']),
+      toggleMulticursor(['x', 'y']),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.multicursors).toEqual(
+      expectedMulticursors(stateNew, [
+        ['a', 'b'],
+        ['x', 'y'],
+      ]),
+    )
   })
 })

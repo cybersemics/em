@@ -4,11 +4,10 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import isDescendantPath from '../util/isDescendantPath'
 import addMulticursor from './addMulticursor'
 import removeMulticursor from './removeMulticursor'
 
-/** Toggles a cursor in the multicursor set. Selecting a thought deselects any of its selected descendants, since all selected thoughts must be at the same depth. */
+/** Toggles a cursor in the multicursor set. All selected thoughts must sit at the same depth, so selecting a thought deselects every selected thought at a different depth, whether it is a descendant, an ancestor, or under a different parent. */
 export const toggleMulticursor = (state: State, payload: { path: Path }): State => {
   const { path } = payload
   const removing = isMulticursorPath(state, path)
@@ -17,10 +16,7 @@ export const toggleMulticursor = (state: State, payload: { path: Path }): State 
     : addMulticursor(
         {
           ...state,
-          multicursors: _.pickBy(
-            state.multicursors,
-            multicursorPath => !isDescendantPath(multicursorPath, path, { exclusive: true }),
-          ),
+          multicursors: _.pickBy(state.multicursors, multicursorPath => multicursorPath.length === path.length),
         },
         { path },
       )
