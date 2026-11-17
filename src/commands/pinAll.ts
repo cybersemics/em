@@ -39,6 +39,7 @@ const getPinAllState = (state: State, thoughtId: ThoughtId) => {
 const pinAllCommand = {
   id: 'pinAll',
   label: 'Pin All' as const,
+  systemMenu: 'View',
   labelInverse: 'Unpin All',
   description: 'Pins open all thoughts at the current level.',
   descriptionInverse: 'Unpins all thoughts at the current level.',

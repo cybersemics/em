@@ -10,6 +10,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const clearThoughtCommand = {
   id: 'clearThought',
   label: 'Clear Thought' as const,
+  systemMenu: 'Edit',
   description: 'Clear the text of the current thought. A quick recovery after you have changed your mind.',
   gesture: 'rl',
   keyboard: { key: 'c', alt: true, shift: true, meta: true },

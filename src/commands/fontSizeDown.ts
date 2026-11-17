@@ -5,6 +5,7 @@ import SettingsIcon from '../components/icons/SettingsIcon'
 const fontSizeDownCommand = {
   id: 'fontSizeDown',
   label: 'Decrease Font Size' as const,
+  systemMenu: 'View',
   description: 'Decrease the font size. Get your reading glasses.',
   multicursor: false,
   // TODO: Create unique icon

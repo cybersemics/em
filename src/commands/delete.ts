@@ -54,6 +54,7 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }) => {
 const deleteCommand = {
   id: 'delete',
   label: 'Delete' as const,
+  systemMenu: 'Edit',
   description: 'Say goodbye to the current thought. Hit undo if you are not ready to part ways.',
   gesture: 'ldldl',
   multicursor: {

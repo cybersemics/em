@@ -5,7 +5,7 @@ import { Keyboard } from '@capacitor/keyboard'
 import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
 import { ALLOWED_FORMATTING_TAGS, DEFAULT_FONT_SIZE } from '../constants'
-import isFormattingElement from '../util/isFormattingElement'
+import wrapInFormattingAncestors from '../util/wrapInFormattingAncestors'
 
 export type SelectionOptionsType = {
   offset?: number
@@ -654,16 +654,6 @@ export const removeCurrentSelection = () => {
   if (selection && selection.rangeCount > 0) document.execCommand('delete')
 }
 
-/** Wraps a container's contents in shallow clones of the formatting elements the given node sits inside. Cloning a range's contents returns bare text, dropping the tags that wholly contain it (#4229). */
-const wrapInFormattingAncestors = (container: HTMLElement, node: Node) => {
-  // wrap outward from the innermost ancestor; the editable itself is not a formatting element, so the walk stops there
-  for (let ancestor = node.parentElement; isFormattingElement(ancestor); ancestor = ancestor.parentElement) {
-    const wrapper = ancestor.cloneNode(false) as HTMLElement
-    while (container.firstChild) wrapper.appendChild(container.firstChild)
-    container.appendChild(wrapper)
-  }
-}
-
 /** Removes all text from an element, leaving its formatting elements behind as empty shells. */
 const stripText = (element: Element) => {
   for (const node of Array.from(element.childNodes)) {
@@ -693,7 +683,7 @@ export const html = () => {
     div.appendChild(range.cloneContents())
     // Identity, not isEqualNode: two distinct nodes that happen to hold the same content span a multi-node range, whose
     // clone already carries its own formatting, so re-applying the start node's ancestors would wrap it twice.
-    if (node === range.endContainer && node instanceof CharacterData) wrapInFormattingAncestors(div, node)
+    if (node === range.endContainer && node instanceof CharacterData) wrapInFormattingAncestors(div, node.parentElement)
   }
 
   return div.innerHTML
@@ -776,5 +766,28 @@ export const isCaretNear = (x: number, y: number): boolean => {
     y,
     { left: caret.x, right: caret.x, top: caret.y, bottom: caret.y + caret.height },
     DEFAULT_FONT_SIZE,
+  )
+}
+
+/** WebKit's hit-test padding around the caret, in CSS px. */
+const WITHHELD_TOUCH_DISTANCE = 44
+
+/**
+ * Returns true if the point is within the padding around the collapsed caret in which WebKit 27, once the tab has
+ * shown a selection, withholds a touch's touchmove and touchend until the next touch begins (#5895). Unlike
+ * isCaretNear, the point need not be inside the editable, since WebKit withholds a touch on the bullet or a
+ * neighboring thought just the same.
+ */
+export const isInWithheldCaretZone = (x: number, y: number): boolean => {
+  if (!isActive() || !isCollapsed()) return false
+
+  const caret = caretRectViewport()
+  if (!caret) return false
+
+  return isNearBounds(
+    x,
+    y,
+    { left: caret.x, right: caret.x, top: caret.y, bottom: caret.y + caret.height },
+    WITHHELD_TOUCH_DISTANCE,
   )
 }

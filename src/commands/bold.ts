@@ -9,6 +9,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const bold = {
   id: 'bold',
   label: 'Bold' as const,
+  systemMenu: 'Edit',
   description: 'Bolds the current thought or selected text.',
   descriptionInverse: 'Removes bold from the current thought or selected text.',
   multicursor: { toggle: true },

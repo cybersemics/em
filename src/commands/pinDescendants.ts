@@ -40,6 +40,7 @@ const getPinDescendantsState = (state: State, thoughtId: ThoughtId) => {
 const pinDescendantsCommand = {
   id: 'pinDescendants',
   label: 'Pin Descendants' as const,
+  systemMenu: 'View',
   labelInverse: 'Unpin Descendants',
   description: 'Pins open all descendants of the current thought.',
   descriptionInverse: 'Unpins all descendants of the current thought.',
