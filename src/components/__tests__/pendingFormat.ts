@@ -247,6 +247,20 @@ describe('pending format', () => {
     expect(noteValue(state, state.cursor!)).toBe('<b>H</b>')
   })
 
+  // https://github.com/cybersemics/em/pull/6277#discussion_r4545986853
+  it('applies bold to the text typed after a space into an empty note (#3910)', async () => {
+    await dispatch([importText({ text: '- x' }), toggleNote()])
+    await dispatch(formatSelection('bold'))
+
+    const user = userEvent.setup({ delay: null })
+    await user.type(getNoteEditable(), ' H')
+    await act(vi.runAllTimersAsync)
+
+    const state = store.getState()
+
+    expect(noteValue(state, state.cursor!)).toBe('<b>H</b>')
+  })
+
   // #3910: a color applied to an empty thought must take part in undo like a color applied to text. Undoing the first
   // typed character restores the empty thought, so the color it was holding has to come back with it — otherwise undo
   // leaves an empty, uncolored thought that the user never created. Typing again is what proves the color survived,
