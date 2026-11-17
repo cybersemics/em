@@ -1,3 +1,4 @@
+import { isTauri } from '@tauri-apps/api/core'
 import _ from 'lodash'
 import lifecycle from 'page-lifecycle'
 import { Store } from 'redux'
@@ -10,12 +11,13 @@ import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isSafari, isTouch } from '../browser'
+import { isMac, isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, DEFAULT_FONT_SIZE, LongPressState } from '../constants'
 import initKeyboardSelection from '../device/initKeyboardSelection'
 import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
+import systemMenu from '../device/systemMenu'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import getThoughtById from '../selectors/getThoughtById'
@@ -52,6 +54,9 @@ const WINDOW_SCROLLATEDGE_SPEED = 2
 
 /** How often to save the selection offset to storage when it changes. */
 const SELECTION_CHANGE_THROTTLE = 200
+
+/** Set in sessionStorage once a selection has been shown in the tab on WebKit 27, after which WebKit withholds touches near the caret for the life of the tab, across reloads (#5895). */
+const WITHHOLDS_TOUCHES_KEY = 'em-withholds-touches'
 
 /** The pending selection.clear that fires if the device stays in the passive state (see onStateChange). A ministore whose dispose clears the timer, so that cleanup and a reset between tests cancel it rather than leaving it to fire later. */
 const passiveTimeoutStore = ministore<{ timer: Timer | null }>(
@@ -253,6 +258,9 @@ const initEvents = (store: Store<State, any>) => {
     () => {
       // editables are not long-pressable on desktop, so the range will only be a concern on mobile
       if (isTouch) selectionRangeStore.update(!selection.isCollapsed())
+      if (isTouch && !selection.isCollapsed() && (osVersionStore.getState() ?? 0) >= 27) {
+        sessionStorage.setItem(WITHHOLDS_TOUCHES_KEY, 'true')
+      }
       storageModel.set('cursor', value => ({
         path: value?.path || store.getState().cursor,
         offset: selection.offsetThought(),
@@ -369,7 +377,13 @@ const initEvents = (store: Store<State, any>) => {
     const isEmptyThought = !!state.cursor && getThoughtById(state, head(state.cursor))?.value === ''
     touchStore.update({
       pressOnCaret:
-        isTouch && (isSafari() || isEmptyThought) && !!touch && selection.isCaretNear(touch.clientX, touch.clientY),
+        isTouch &&
+        (isSafari() || isEmptyThought) &&
+        !!touch &&
+        (selection.isCaretNear(touch.clientX, touch.clientY) ||
+          // a long press here could start a drag whose touchend never arrives
+          (!!sessionStorage.getItem(WITHHOLDS_TOUCHES_KEY) &&
+            selection.isInWithheldCaretZone(touch.clientX, touch.clientY))),
       pressInEmptyThought:
         isTouch &&
         isEmptyThought &&
@@ -635,6 +649,11 @@ const initEvents = (store: Store<State, any>) => {
   // Route iOS native undo/redo gestures through em's undo/redo in the Capacitor app
   nativeHistory.init()
 
+  // Connect the commands to the system menu, which the desktop app only installs on macOS
+  if (isTauri() && isMac) {
+    systemMenu.init()
+  }
+
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
   lifecycle.addEventListener('statechange', onStateChange)
@@ -676,6 +695,7 @@ const initEvents = (store: Store<State, any>) => {
     unsubscribeKeyboardSelection()
     virtualKeyboardHandler.destroy()
     nativeHistory.destroy()
+    systemMenu.destroy()
     untrackHistoryState()
     eventHandlers = null
   }

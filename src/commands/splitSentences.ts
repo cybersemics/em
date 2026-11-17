@@ -11,6 +11,7 @@ import splitSentence from '../util/splitSentence'
 const splitSentencesCommand = {
   id: 'splitSentences',
   label: 'Split Sentences' as const,
+  systemMenu: 'Edit',
   description: 'Splits multiple sentences in a single thought into separate thoughts.',
   keyboard: { key: 's', meta: true, shift: true },
   gesture: 'dlr',

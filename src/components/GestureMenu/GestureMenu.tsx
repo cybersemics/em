@@ -313,46 +313,49 @@ const GestureMenuWithTransition: FC = () => {
 
   return (
     <>
-      <PopupBase background='transparent' ref={popupRef} fullScreen layer='gestureMenu'>
-        <div
-          data-testid='popup-value'
-          className={css({
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'start',
-            alignItems: 'center',
-            width: '100%',
-            position: 'absolute',
-            top: 0,
-          })}
-        >
-          {/* Apply the fade transition only to the glow, overlay, and gesture menu contents
+      {/* The gesture menu is a display, never a touch target. It closes once a gesture ends, so a new touch can begin over it just before or while it fades out, and the browser pins a touch to its touchstart target: when the menu unmounts, the touch's remaining touchmoves and touchend go to the detached tree and its swipe is never recognized. Touches pass through to the content beneath, which is inside MultiGesture, so a gesture traced over the menu is still recognized. */}
+      <div className={css({ pointerEvents: 'none' })}>
+        <PopupBase background='transparent' ref={popupRef} fullScreen layer='gestureMenu'>
+          <div
+            data-testid='popup-value'
+            className={css({
+              boxSizing: 'border-box',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'start',
+              alignItems: 'center',
+              width: '100%',
+              position: 'absolute',
+              top: 0,
+            })}
+          >
+            {/* Apply the fade transition only to the glow, overlay, and gesture menu contents
             to prevent them from appearing only after the animation ends. */}
-          <FadeTransition nodeRef={overlayRef} in={fadeIn} type='fast' unmountOnExit onExited={onGestureMenuExited}>
-            <div
-              ref={overlayRef}
-              className={css({
-                position: 'relative',
-                // prevent mix-blend-mode and backdrop-filter from affecting each other
-                isolation: 'isolate',
-                width: '100%',
-                maxHeight: '100dvh',
-                // Keeps the compositor layer alive so Android WebView doesn't drop the subtree for a
-                // frame at fade end, flashing the sibling GestureContentBlur blur through the menu.
-                willChange: 'opacity',
-                paddingBottom: '11.111rem',
-              })}
-            >
-              <Overlay />
-              <Glow />
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <GestureMenu commands={commands} />
+            <FadeTransition nodeRef={overlayRef} in={fadeIn} type='fast' unmountOnExit onExited={onGestureMenuExited}>
+              <div
+                ref={overlayRef}
+                className={css({
+                  position: 'relative',
+                  // prevent mix-blend-mode and backdrop-filter from affecting each other
+                  isolation: 'isolate',
+                  width: '100%',
+                  maxHeight: '100dvh',
+                  // Keeps the compositor layer alive so Android WebView doesn't drop the subtree for a
+                  // frame at fade end, flashing the sibling GestureContentBlur blur through the menu.
+                  willChange: 'opacity',
+                  paddingBottom: '11.111rem',
+                })}
+              >
+                <Overlay />
+                <Glow />
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <GestureMenu commands={commands} />
+                </div>
               </div>
-            </div>
-          </FadeTransition>
-        </div>
-      </PopupBase>
+            </FadeTransition>
+          </div>
+        </PopupBase>
+      </div>
       {/* Sibling of PopupBase (not a child) so its gestureContentBlur z-index is ordered in the shared
           <View> stacking context — below the trace, above the content — rather than being trapped inside
           PopupBase's higher 'gestureMenu' stacking context. */}

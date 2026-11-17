@@ -11,6 +11,7 @@ import isRoot from '../util/isRoot'
 const toggleSortCommand = {
   id: 'toggleSort',
   label: 'Sort' as const,
+  systemMenu: 'View',
   description:
     'Change the sorting option for the current context. Rotates through manual, alphabetical, and reverse alphabetical.',
   gesture: 'lurd',
