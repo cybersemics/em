@@ -216,6 +216,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'splitSentences',
   'toggleHiddenThoughts',
   'exportContext',
+  'importFile',
   'devices',
   'settings',
   // 'archive',
