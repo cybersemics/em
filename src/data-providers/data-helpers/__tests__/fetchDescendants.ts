@@ -31,6 +31,9 @@ it('buffers branches at the depth limit while still loading leaves and attribute
     ],
     [['content', false]],
   ])
+
+  const branch = Object.values(chunks[1].thoughtIndex).find(thought => thought.value === 'branch')!
+  expect(branch.lastUpdated).toBe((await db.getThoughtById(branch.id))?.lastUpdated)
 })
 
 it('loads EM descendants beyond the depth limit while buffering the other requested root', async () => {

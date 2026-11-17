@@ -116,8 +116,7 @@ describe('thought move logging', () => {
 
     debugLog.setEnabled(true)
     debugLog.clear()
-    // dispatched as a local update; a non-local (reconcile) update with an unchanged lastUpdated would be dropped by
-    // updateThoughts' last-write-wins guard and never reach the state
+    // dispatched as a local update, since updateThoughts discards a non-local update of a loaded thought
     store.dispatch(
       updateThoughts({
         thoughtIndexUpdates: Object.fromEntries(
@@ -153,8 +152,7 @@ describe('duplicate rank integrity warning', () => {
 
     debugLog.setEnabled(true)
     debugLog.clear()
-    // dispatched as a local update; a non-local (reconcile) update with an unchanged lastUpdated would be dropped by
-    // updateThoughts' last-write-wins guard and never reach the state
+    // dispatched as a local update, since updateThoughts discards a non-local update of a loaded thought
     store.dispatch(
       updateThoughts({
         thoughtIndexUpdates: { [b.id]: { ...b, rank: a.rank } },

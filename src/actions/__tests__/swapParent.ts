@@ -5,15 +5,20 @@ import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
+import store from '../../stores/app'
+import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
-import setCursor from '../../test-helpers/setCursorFirstMatch'
+import importToContext from '../../test-helpers/importToContext'
+import initStore from '../../test-helpers/initStore'
+import setCursor, { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newThought from '../newThought'
+import { pullAncestorsActionCreator as pullAncestors } from '../pullAncestors'
 import setSortPreference from '../setSortPreference'
-import swapParent from '../swapParent'
+import swapParent, { swapParentActionCreator as swapParentAction } from '../swapParent'
 import toggleContextView from '../toggleContextView'
 import updateThoughts from '../updateThoughts'
 
@@ -519,7 +524,7 @@ describe('reconcile', () => {
       updateThoughts({ thoughtIndexUpdates: stalePull, lexemeIndexUpdates: {}, local: false, remote: false }),
     ])(state1)
 
-    // Without the last-write-wins guard, exportContext would recurse infinitely on the cycle.
+    // If the stale BBB were applied, exportContext would recurse infinitely on the cycle.
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
   - AAA
@@ -533,9 +538,8 @@ describe('reconcile', () => {
   // lastUpdated millisecond, and each moveThought queues its own push batch, including the transient
   // intermediate state where the moved-in child (CCC) has been added under AAA but the moved-out child
   // (BBB) has not yet been removed from AAA's childrenMap. A forced pull that reads that intermediate
-  // snapshot re-delivers AAA with BBB still listed as a child, stamped with the swap's lastUpdated. If a
-  // strict `<` guard let it through it would clobber the correct result, leaving BBB in two contexts
-  // (AAA and CCC) → parent-chain cycle → hang.
+  // snapshot re-delivers AAA with BBB still listed as a child, stamped with the swap's lastUpdated. Applying it
+  // would clobber the correct result, leaving BBB in two contexts (AAA and CCC) → parent-chain cycle → hang.
   it('stale reconcile of the swap intermediate state (equal lastUpdated) must not create a cycle', () => {
     const text = `
     - AAA
@@ -556,20 +560,40 @@ describe('reconcile', () => {
       lastUpdated: aaa.lastUpdated,
     }
 
+    // Pulls never replace a loaded thought, so send it as materialization (repairCursor), which checks lastUpdated.
     const stateNew = reducerFlow([
       updateThoughts({
         thoughtIndexUpdates: { [idAAA]: staleIntermediateAAA },
         lexemeIndexUpdates: {},
         local: false,
         remote: false,
+        repairCursor: true,
       }),
     ])(stateSwapped)
 
-    // With a strict `<` guard the stale intermediate slips through and exportContext recurses infinitely.
+    // If the stale AAA were applied, BBB would be exported under both AAA and CCC.
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
   - AAA
     - CCC
       - BBB`)
+  })
+
+  // https://github.com/cybersemics/em/issues/3947
+  it('keeps the former parent visible after swapping during a forced pull', async () => {
+    await initStore()
+    store.dispatch([importToContext('- AAA\n  - BBB'), setCursorAction(['AAA', 'BBB'])])
+    await vi.runAllTimersAsync()
+
+    const path = contextToPathOrThrow(store.getState(), ['AAA', 'BBB'], 'swapParent')
+    // Recently Edited starts a forced ancestor pull that can still be running when the swap begins.
+    const pull = store.dispatch(pullAncestors(path, { force: true, maxDepth: 0 }))
+    store.dispatch(swapParentAction())
+    await pull
+    await vi.runAllTimersAsync()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - BBB
+    - AAA`)
   })
 })

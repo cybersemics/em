@@ -26,10 +26,11 @@ export type UpdateThoughtsOptions = PushBatch & {
   recentlyEdited?: RecentlyEditedTree
   /** By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought. */
   preventExpandThoughts?: boolean
-  /** Allow non-pending thoughts to become pending. This is mainly used by freeThoughts. */
+  /** Let a non-local update replace loaded thoughts, even with pending ones. */
   overwritePending?: boolean
   /**
    * If true, check if the cursor is valid, and if not, move it to the closest valid ancestor.
+   * Also lets a non-local update replace a loaded thought with a newer one (TreeCRDT materialization).
    * This should only be used when the updates are coming from another device. For local updates, updateThoughts is typically called within a higher level reducer (e.g. moveThought) which handles all cursor updates. There would be false positives during local updates since the cursor is updated after updateThoughts.
    */
   repairCursor?: boolean
@@ -100,25 +101,11 @@ const updateThoughts = (
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
 
-  // Last-write-wins guard for reconcile updates (local === false), e.g. a forced pull (RecentlyEdited's
-  // pullJumpHistory) or a cross-device onThoughtChange. The pulled snapshot is read asynchronously from
-  // the data provider and may predate a local edit that landed in the meantime; if it overwrote the newer
-  // in-memory thought it would corrupt parent/child links (e.g. after Swap Parent, producing a parent-chain
-  // cycle and hanging the app). Drop any incoming thought that is no newer than the existing non-pending
-  // thought.
-  //
-  // The comparison must be `<=`, not `<`: a single high-level action such as swapParent runs several
-  // moveThought reducers synchronously in one reducerFlow, so every thought it touches is stamped with the
-  // *same* lastUpdated millisecond, and each moveThought queues its own push batch — including the
-  // transient intermediate state (e.g. the old parent's childrenMap before the moved child is removed). A
-  // forced pull that reads that intermediate snapshot re-dispatches it with a lastUpdated equal to the
-  // final state's, so a strict `<` would let it through and clobber the correct result (planting a child in
-  // two contexts → cycle → hang, https://github.com/cybersemics/em/issues/3948). Because the final state is
-  // emitted last, its lastUpdated is always >= any intermediate, so `<=` reliably discards the stale echo
-  // while genuinely newer cross-device edits (strictly greater) still win.
-  //
-  // Skip when overwritePending is set (freeThoughts/deleteThought/generateThought intentionally overwrite)
-  // and keep deletions (null) and missing/pending thoughts so pulls still load them.
+  // A pull reads storage asynchronously, so its records can predate an edit or undo made in the meantime, and
+  // replacing a loaded thought with one can corrupt the tree (#3947, #3948, #5622). So a non-local update only adds
+  // missing thoughts, fills pending ones and deletes, unless it sets overwritePending to replace thoughts on purpose.
+  // TreeCRDT materialization (repairCursor) may also replace a loaded thought, but only with a newer one, since its
+  // readback can predate a local edit too.
   const thoughtIndexUpdatesFresh =
     local || overwritePending
       ? thoughtIndexUpdates
@@ -127,12 +114,11 @@ const updateThoughts = (
           return thoughtUpdate &&
             thoughtOld &&
             !thoughtOld.pending &&
-            thoughtUpdate.lastUpdated <= thoughtOld.lastUpdated
+            (!repairCursor || thoughtUpdate.lastUpdated <= thoughtOld.lastUpdated)
             ? null
             : { [id]: thoughtUpdate }
         })
 
-  // TODO: Can we use { overwritePending: !local } and get rid of the overwritePending option to updateThoughts? i.e. Are there any false positives when local is false?
   const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdatesFresh, { overwritePending })
   const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates, { overwritePending })
 

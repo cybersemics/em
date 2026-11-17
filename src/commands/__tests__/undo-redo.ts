@@ -9,6 +9,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { pullAncestorsActionCreator as pullAncestors } from '../../actions/pullAncestors'
 import { redoActionCreator as redo } from '../../actions/redo'
 import { setNoteFocusActionCreator as setNoteFocus } from '../../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
@@ -22,13 +23,16 @@ import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import isUndoEnabled from '../../selectors/isUndoEnabled'
+import thoughtToPath from '../../selectors/thoughtToPath'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initStore from '../../test-helpers/initStore'
+import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
+import head from '../../util/head'
 import archiveCommand from '../archive'
 import deleteCommand from '../delete'
 import indentCommand from '../indent'
@@ -654,6 +658,30 @@ describe('undo', () => {
   - f
   - g`
     expect(exported).toEqual(expectedOutput)
+  })
+
+  // https://github.com/cybersemics/em/issues/5622
+  it('keeps a move undone when a forced pull that read the move resolves after the undo', async () => {
+    store.dispatch(
+      importText({
+        text: `
+        - a
+          - x
+        - b`,
+      }),
+    )
+    await vi.runAllTimersAsync()
+    store.dispatch(moveThought({ from: ['a', 'x'], to: ['b', 'x'], newRank: 0 }))
+    await vi.runAllTimersAsync()
+
+    // Recently Edited starts a forced ancestor pull that can still be running when the move is undone.
+    const path = contextToPath(store.getState(), ['b', 'x'])!
+    const pull = store.dispatch(pullAncestors(path, { force: true, maxDepth: 0 }))
+    store.dispatch(undo())
+    await pull
+    await vi.runAllTimersAsync()
+
+    expect(thoughtToPath(store.getState(), head(path))).toEqual(contextToPath(store.getState(), ['a', 'x']))
   })
 })
 

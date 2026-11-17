@@ -13,10 +13,8 @@ import head from '../../util/head'
 import isAttribute from '../../util/isAttribute'
 import isRoot from '../../util/isRoot'
 import keyValueBy from '../../util/keyValueBy'
-import never from '../../util/never'
 import nonNull from '../../util/nonNull'
 import { DataProvider } from '../DataProvider'
-import { clientId } from '../thoughtspaceSession'
 
 // default maxDepth before thoughts become pending
 const MAX_DEPTH = 100
@@ -209,8 +207,6 @@ async function* fetchDescendants(
           }
           return {
             ...thought,
-            lastUpdated: never(),
-            updatedBy: clientId,
             pending: true,
           }
         } else {

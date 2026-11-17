@@ -49,7 +49,7 @@ const getPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId
   })
 
 /**
- * Fetch, reconciles, and updates descendants of any number of contexts up to a given depth.
+ * Loads missing and pending descendants of any number of contexts up to a given depth.
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
 export const pullActionCreator =
@@ -88,7 +88,7 @@ export const pullActionCreator =
     await itForEach(thoughtsIterable, (thoughtsChunk: ThoughtIndices) => {
       thoughtChunks.push(thoughtsChunk)
 
-      // mergeUpdates will prevent overwriting non-pending thoughtsChunk with pending thoughtsChunk
+      // updateThoughts only adds missing thoughts and fills pending ones
       // cannot set isLoading to false here because we do not know which chunk contains the root context
       dispatch(
         updateThoughts({
