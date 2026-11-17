@@ -77,6 +77,19 @@ it('seeds fixed system thoughts in the TreeCRDT provider', async () => {
   expect(settingsLexeme?.contexts).toEqual([SETTINGS_TOKEN])
 })
 
+it('does not write seed operations again when binding a seeded client', async () => {
+  const client = await createTreecrdtClient({ docId: 'seeded-client' })
+  const replicaId = new Uint8Array(32).fill(1)
+  try {
+    await createTreecrdtDataProvider().bindClient(client, replicaId)
+    const operations = await client.ops.all()
+    await createTreecrdtDataProvider().bindClient(client, replicaId)
+    await expect(client.ops.all()).resolves.toEqual(operations)
+  } finally {
+    await client.drop()
+  }
+})
+
 it('preserves requested order, duplicates, and missing entries when reading persisted thoughts and lexemes', async () => {
   await initTestThoughtspace()
   await treecrdtThoughtspace.updateThoughts({
