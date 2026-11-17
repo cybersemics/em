@@ -26,15 +26,6 @@ describe('Magnifier', () => {
     await waitUntil(isKeyboardShown)
     expect(await setSelection(1, 1)).toMatchObject({ type: 'Caret' })
 
-    // Safari may still be scrolling the focused thought into view after the keyboard appears
-    let lastScrollY: number | undefined
-    await waitUntil(async () => {
-      const scrollY = await browser.execute(() => window.scrollY)
-      const settled = scrollY === lastScrollY
-      lastScrollY = scrollY
-      return settled
-    })
-
     const caret = await getTextOffsetCoordinates(editable, 1)
     if (!caret) throw new Error('Caret coordinates not found.')
     const screenY = caret.y + (await getScreenOffsetY())
