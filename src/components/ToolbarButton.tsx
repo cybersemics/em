@@ -1,7 +1,6 @@
 import React, { FC, MutableRefObject, useCallback, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css, cx } from '../../styled-system/css'
-import { toolbarPointerEventsRecipe } from '../../styled-system/recipes'
+import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import CommandId from '../@types/CommandId'
 import DragCommandZone from '../@types/DragCommandZone'
@@ -252,33 +251,29 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       ref={dndRef(node => dragSource(dropTarget(node)))}
       key={commandId}
       title={`${command.label}${(command.overlay?.keyboard ?? command.keyboard) ? ` (${formatKeyboardShortcut((command.overlay?.keyboard ?? command.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
-      className={cx(
-        // Override the Toolbar's pointer-events: none to restore pointer behavior.
-        toolbarPointerEventsRecipe({ override: true }),
-        css({
-          display: 'inline-block',
-          borderRadius: '3px',
-          zIndex: 'stack',
-          // animate maxWidth to avoid having to know the exact width of the toolbar icon
-          // maxWidth just needs to exceed the width
-          maxWidth: fontSize * 2,
-          ...(dropToRemove
-            ? {
-                // offset toolbar-icon padding
-                marginLeft: -10,
-                maxWidth: 10,
-              }
-            : null),
-          // offset top to avoid changing container height
-          // marginBottom: isPressing ? -10 : 0,
-          // top: isButtonExecutable && isPressing ? 10 : 0,
-          transform: isButtonExecutable && isPressing && !isDragging ? `translateY(0.25em)` : `translateY(0em)`,
-          position: 'relative',
-          cursor: isButtonExecutable ? 'pointer' : 'default',
-          transition:
-            'transform {durations.veryFast} ease-out, max-width {durations.veryFast} ease-out, margin-left {durations.veryFast} ease-out',
-        }),
-      )}
+      className={css({
+        display: 'inline-block',
+        borderRadius: '3px',
+        zIndex: 'stack',
+        // animate maxWidth to avoid having to know the exact width of the toolbar icon
+        // maxWidth just needs to exceed the width
+        maxWidth: fontSize * 2,
+        ...(dropToRemove
+          ? {
+              // offset toolbar-icon padding
+              marginLeft: -10,
+              maxWidth: 10,
+            }
+          : null),
+        // offset top to avoid changing container height
+        // marginBottom: isPressing ? -10 : 0,
+        // top: isButtonExecutable && isPressing ? 10 : 0,
+        transform: isButtonExecutable && isPressing && !isDragging ? `translateY(0.25em)` : `translateY(0em)`,
+        position: 'relative',
+        cursor: isButtonExecutable ? 'pointer' : 'default',
+        transition:
+          'transform {durations.veryFast} ease-out, max-width {durations.veryFast} ease-out, margin-left {durations.veryFast} ease-out',
+      })}
       style={{
         // extend drop area down, otherwise the drop hover is blocked by the user's finger
         // must match toolbar marginBottom

@@ -1,5 +1,6 @@
 import GenieFrame from '../GenieFrame'
 import { MEMORY } from '../constants'
+import seededRandom from '../seededRandom'
 import stepGenie from '../stepGenie'
 
 /** A genie at rest at the origin. */
@@ -9,8 +10,8 @@ const START: GenieFrame = {
   sparkles: [],
 }
 
-/** Steps the genie towards a fixed target for a number of 60Hz frames, and returns every frame. */
-const fly = (frame: GenieFrame, target: { x: number; y: number }, frames: number, random = Math.random) =>
+/** Steps the genie towards a fixed target for a number of 60Hz frames, and returns every frame. The random numbers are seeded unless others are given, so that every run flies the same frames. */
+const fly = (frame: GenieFrame, target: { x: number; y: number }, frames: number, random = seededRandom(1)) =>
   Array.from({ length: frames }).reduce<GenieFrame[]>(
     (acc, _, i) => [...acc, stepGenie(i === 0 ? frame : acc[i - 1], { target, dt: 1000 / 60, bob: 0, random })],
     [],
@@ -19,7 +20,10 @@ const fly = (frame: GenieFrame, target: { x: number; y: number }, frames: number
 it('gives off sparkles in flight, and only a few at rest', () => {
   const frames = fly(START, { x: 600, y: 0 }, 300)
   const inFlight = Math.max(...frames.map(frame => frame.sparkles.length))
-  const atRest = frames[frames.length - 1].sparkles.length
+  // The last two seconds, by which the head has long settled and the sparkles from the flight have expired. The count
+  // is averaged over them because any one frame is a matter of chance: about 1 in 50 resting frames has 5 or more.
+  const resting = frames.slice(-120)
+  const atRest = resting.reduce((sum, frame) => sum + frame.sparkles.length, 0) / resting.length
 
   expect(inFlight).toBeGreaterThan(100)
   expect(atRest).toBeLessThan(5)

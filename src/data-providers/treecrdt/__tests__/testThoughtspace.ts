@@ -77,6 +77,19 @@ it('seeds fixed system thoughts in the TreeCRDT provider', async () => {
   expect(settingsLexeme?.contexts).toEqual([SETTINGS_TOKEN])
 })
 
+it('does not write seed operations again when binding a seeded client', async () => {
+  const client = await createTreecrdtClient({ docId: 'seeded-client' })
+  const replicaId = new Uint8Array(32).fill(1)
+  try {
+    await createTreecrdtDataProvider().bindClient(client, replicaId)
+    const operations = await client.ops.all()
+    await createTreecrdtDataProvider().bindClient(client, replicaId)
+    await expect(client.ops.all()).resolves.toEqual(operations)
+  } finally {
+    await client.drop()
+  }
+})
+
 it('preserves requested order, duplicates, and missing entries when reading persisted thoughts and lexemes', async () => {
   await initTestThoughtspace()
   await treecrdtThoughtspace.updateThoughts({
@@ -179,10 +192,7 @@ it('excludes the moving thought from stale rank placement', async () => {
 
 // https://github.com/cybersemics/em/pull/4325#issuecomment-5248342036
 it('reads sibling order once per thought when inserting a wide batch', async () => {
-  const client = await createTreecrdtClient({
-    storage: { type: 'memory' },
-    runtime: { type: 'direct' },
-  })
+  const client = await createTreecrdtClient({ docId: 'wide-batch' })
   const provider = createTreecrdtDataProvider()
 
   try {
@@ -190,15 +200,17 @@ it('reads sibling order once per thought when inserting a wide batch', async () 
     await persistThoughtsTo(provider.db, [thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
 
     const childIds = Array.from({ length: 40 }, (_, index) => (index + 512).toString(16).padStart(32, '0') as ThoughtId)
-    const childrenSpy = vi.spyOn(client.tree, 'children')
+    const nodeSpy = vi.spyOn(client.tree, 'node')
 
     await persistThoughtsTo(
       provider.db,
       childIds.map((id, index) => thought(id, PARENT_ID, `child-${index}`, index + 0.5)),
     )
 
-    expect(childrenSpy).toHaveBeenCalledTimes(childIds.length)
-    await expect(client.tree.children(PARENT_ID)).resolves.toEqual(childIds)
+    // Each sibling-order read goes through the parent's node.
+    expect(nodeSpy.mock.calls.filter(([id]) => id === PARENT_ID)).toHaveLength(childIds.length)
+    const children = await client.tree.node(PARENT_ID).children()
+    expect(children.map(child => child.id)).toEqual(childIds)
   } finally {
     await client.drop()
   }

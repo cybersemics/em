@@ -119,7 +119,7 @@ A gesture is a string of swipe directions, where each character is one of `'l'`,
 
 A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/util/isInGestureZone.ts), enforced by [`MultiGesture`](../src/components/MultiGesture.tsx)): the screen minus the scroll zone (a strip on the right, or on the left for left-handed users), the toolbar at the top, and — on devices with a home indicator (nonzero `safe-area-inset-bottom`) — a strip at the bottom where the OS recognizes system gestures. Without the bottom exclusion, the upward app switcher swipe is committed as the Open Command Center gesture right before the app suspends. Single-finger touches that start outside the zone scroll the page as usual; multi-finger touches are inert everywhere (see [Multi-touch rejection](#multi-touch-rejection)).
 
-`shouldCancelGesture` in [`AppComponent`](../src/components/AppComponent.tsx) abandons a gesture that starts on the toolbar, on a selected text range, on the caret (see [Cursor and Caret](cursor-and-caret.md#selectionrangestore)), or while a press, modal, sidebar, or the Mobile Command Universe is active. The one exception is a dry run: over the Mobile Command Universe, a gesture that starts on the open pinned command tooltip is allowed (see [learning.md](learning.md#dry-run-over-the-command-universe)). It is evaluated with the touch point at touchstart and again without one during the gesture, so only the point-dependent checks are limited to the first call. The abandoned state is per touch: `MultiGesture` clears it when the first finger of the next touch lands, rather than relying only on its window `touchend` listener, because a control that stops the propagation of its `touchend` — such as a toolbar dropdown option — keeps that listener from running, and the next gesture would otherwise be abandoned too ([issue #5850](https://github.com/cybersemics/em/issues/5850)).
+`shouldCancelGesture` in [`AppComponent`](../src/components/AppComponent.tsx) abandons a gesture that starts on the toolbar or one of its open dropdowns, on a selected text range, on the caret (see [Cursor and Caret](cursor-and-caret.md#selectionrangestore)), or while a press, modal, sidebar, or the Mobile Command Universe is active. The one exception is a dry run: over the Mobile Command Universe, a gesture that starts on the open pinned command tooltip is allowed (see [learning.md](learning.md#dry-run-over-the-command-universe)). It is evaluated with the touch point at touchstart and again without one during the gesture, so only the point-dependent checks are limited to the first call. The abandoned state is per touch: `MultiGesture` clears it when the first finger of the next touch lands, rather than relying only on its window `touchend` listener, because a control that stops the propagation of its `touchend` — such as a toolbar dropdown option — keeps that listener from running, and the next gesture would otherwise be abandoned too ([issue #5850](https://github.com/cybersemics/em/issues/5850)). Dropdowns remain inside `#toolbar` for native scrolling and scroll range. [`Popover`](../src/components/Popover.tsx) clips the empty area beside a dropdown, using bounds measured on open/resize and a CSS scroll variable. Gesture cancellation checks the hit element instead of the toolbar's full rectangle, so thoughts beside the dropdown receive taps and gestures ([issue #5977](https://github.com/cybersemics/em/issues/5977)).
 
 A gesture is also always a **single finger**. `MultiGesture` follows only the finger that began the gesture, by its touch identifier, and ends the gesture when that finger lifts, even if other fingers are still down. A finger that touches down before the gesture's first swipe is recognized latches multi-touch, and `MultiGesture` then ignores movement until every finger is up again, because iOS reports its own multi-finger system gestures to the page as ordinary touch events: tracking the first finger of a three-finger undo swipe would commit it as `cursorForward`, and the redo swipe as `cursorBack`. Both are undoable, so each would clear the redo stack and leave the redo half of the gesture with nothing to restore ([issue #5575](https://github.com/cybersemics/em/issues/5575)).
 
@@ -301,7 +301,7 @@ Only commands that make an *undoable, non-navigational* change are recorded, so 
 
 - Navigation commands (Cursor Down, Jump Back) are skipped — their actions are registered `isNavigation`.
 - Commands that dispatch no undoable action (Export, Settings, Command Universe) are skipped, since they add no patch.
-- Commands that set `repeatable: false` are never recorded. `undo` and `redo` move through the undo history rather than making a new undoable change, and recording `repeat` would recurse.
+- Commands that set `repeatable: false` are never recorded. `undo` and `redo` move through the undo history rather than making a new undoable change, recording `repeat` would recurse, and repeating [Import](#import) would only open the file picker again.
 - An asynchronous command is recorded after its Promise settles and its patch exists.
 
 ### Undo history and the undo slider
@@ -909,6 +909,18 @@ Drag the start handle back to rewind, then drag the end handle to a later point;
 ### Export
 
 Download or copy the current context as plain text or html.
+
+### Import
+
+Import plain text, markdown, html, or rtf files into the current thought.
+
+It opens the browser's file picker, which accepts several files at once and offers only the files that [`importFiles`](../src/actions/importFiles.ts) can read: any text, and rtf. The desktop app's picker offers every file, since wry builds the macOS file panel itself and does not pass on the input's list of accepted types, so the command checks each chosen file's type and extension as well, skips the ones it cannot read, and names them in an alert once the others are imported. It imports the files where dropping them on the thought with the cursor would: as subthoughts of that thought, in place of it if it is empty, or into Home if there is no cursor. Like a drop, it cannot import into a divider, into a thought whose context view is shown, or into a thought listed in a context view.
+
+Every action of the import is attributed to the command, so an import that nothing else interrupts is undone in one step, where a drop is undone thought by thought. Import is not repeatable: Repeat would only open the picker again.
+
+The picker is a hidden file input, and the browser only opens it while it is handling a user gesture, so the command chooses the files before it does anything asynchronous. Browsers before Safari 16.4 do not say when the picker is dismissed, so the input of a dismissed picker is removed when the next one opens.
+
+Import is on the default toolbar beside Export, since it has neither a keyboard shortcut nor a gesture, which a command needs to be listed in Customize Toolbar.
 
 ### Customize Toolbar
 

@@ -188,18 +188,47 @@ describe('all platforms', () => {
     // press backspace to delete the empty thought
     await press('Backspace')
 
-    // this is necessary because sometimes in CI, the caret is not immediately moved to the end of the previous thought
-    // without this, the test will intermittently fail in CI
-    await waitUntil(() => {
-      const selection = window.getSelection()
-      // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
-      const focusNodeType = selection?.focusNode?.nodeType
-      return (
-        selection &&
-        selection.focusNode?.textContent === 'first' &&
-        (Node.TEXT_NODE === focusNodeType ? selection.focusOffset === 'first'.length : selection.focusOffset === 1)
+    // The wait is the assertion. It times out well inside the 20s test timeout and reports what was rendered, so that
+    // the intermittent CI failure (#6258) shows whether Backspace left the empty thought in place or deleted it without
+    // placing the caret back in `first`.
+    try {
+      await waitUntil(
+        () => {
+          const selection = window.getSelection()
+          // offset at the end of the thought is value.length for TEXT_NODE and 1 for ELEMENT_NODE
+          const focusNodeType = selection?.focusNode?.nodeType
+          return (
+            selection &&
+            selection.focusNode?.textContent === 'first' &&
+            (Node.TEXT_NODE === focusNodeType ? selection.focusOffset === 'first'.length : selection.focusOffset === 1)
+          )
+        },
+        { timeout: 10000 },
       )
-    })
+    } catch {
+      const rendered = await page.evaluate(() => {
+        const selection = window.getSelection()
+        const active = document.activeElement
+        return {
+          thoughts: Array.from(document.querySelectorAll('[data-editable]')).map(editable => ({
+            value: editable.textContent,
+            editing: !!editable.closest('[data-editing=true]'),
+          })),
+          selection: {
+            focusNodeType: selection?.focusNode?.nodeType ?? null,
+            focusNodeText: selection?.focusNode?.textContent ?? null,
+            focusOffset: selection?.focusOffset ?? null,
+            rangeCount: selection?.rangeCount ?? null,
+          },
+          activeElement: active
+            ? { tagName: active.tagName, editable: active.hasAttribute('data-editable'), text: active.textContent }
+            : null,
+        }
+      })
+      throw new Error(
+        `Expected the caret at the end of "first" after Backspace, but rendered ${JSON.stringify(rendered, null, 2)}`,
+      )
+    }
   })
 
   it('caret should move to editable after closing the desktop command universe, then executing a cursor down command', async () => {

@@ -50,6 +50,7 @@ beforeEach(initStore)
  * from previous tests.
  */
 describe('undo persistence', () => {
+  // increase timeout to give time for two calls to initialize()
   it('persists undo thought change', async () => {
     await initialize({ storage: 'memory' })
 
@@ -80,7 +81,7 @@ describe('undo persistence', () => {
 
     await vi.runAllTimersAsync()
     vi.useRealTimers()
-  }, 10000 /* increase timeout to give time for two calls to initialize() */)
+  }, 10000)
 
   it('persists the removal of the empty category when undoing Categorize', async () => {
     store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
@@ -100,6 +101,7 @@ describe('undo persistence', () => {
     expect(Object.values(home!.childrenMap)).toEqual([thoughtId])
   })
 
+  // increase timeout to give time for two calls to initialize()
   it('persists undo move placement after reload', async () => {
     await initialize({ storage: 'memory' })
 
@@ -142,8 +144,9 @@ describe('undo persistence', () => {
   - c
   - d
   - e`)
-  }, 10000 /* increase timeout to give time for two calls to initialize() */)
+  }, 10000)
 
+  // increase timeout to give time for two calls to initialize()
   it('persists redo move placement after reload', async () => {
     await initialize({ storage: 'memory' })
 
@@ -195,7 +198,7 @@ describe('undo persistence', () => {
   - b
   - c
   - e`)
-  }, 10000 /* increase timeout to give time for two calls to initialize() */)
+  }, 10000)
 })
 
 describe('undo', () => {
