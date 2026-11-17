@@ -196,6 +196,8 @@ The `Thought` component itself is the primary `ThoughtDrop` zone. There's no ded
 
 [`Favorites`](../src/components/Favorites.tsx) — the favorites panel; uses `useDragDropFavorites` for drag and drop within the panel.
 
+Each favorite is long pressed through `useDragHold`, but its link opens the thought and closes the sidebar on any click, and Mobile Safari follows the `touchend` of a long press with one ([#3693](https://github.com/cybersemics/em/issues/3693)). That click can arrive after the 10 ms window in which `state.longPress` is still `DragHold`, so a favorite does not read it from state the way `BulletPositioner` does. It marks the press once it becomes a long press and swallows every click in the capture phase until the next press begins: the next `touchstart` on touch devices, since the browser sends a compatibility `mousedown` between the `touchend` and the click, and the next `mousedown` on desktop.
+
 ### Quick drops
 
 [`DropGutter`](../src/components/DropGutter.tsx) — an invisible 2em-wide panel pinned to the right edge of the screen, mounted only while a drag is in progress (the file's default export is `QuickDropController`, which subscribes to `state.longPress === DragInProgress` and conditionally mounts `DropGutter`).

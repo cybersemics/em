@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { dropHoverRecipe } from '../../styled-system/recipes'
@@ -7,6 +7,7 @@ import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../actions/toggleUserSetting'
+import { isTouch } from '../browser'
 import { Settings } from '../constants'
 import useDragAndDropFavorites from '../hooks/useDragDropFavorites'
 import useDragHold from '../hooks/useDragHold'
@@ -43,12 +44,32 @@ const DragAndDropFavorite = ({
   })
   const dragHoldResult = useDragHold({ simplePath, sourceZone: DragThoughtZone.Favorites })
 
+  // Mobile Safari follows the touchend of a long press with a click on the favorite, which would set the cursor and close the sidebar (#3693). Mark a press once it becomes a long press, and swallow every click until the next touch begins. The click can arrive after state.longPress has already returned to Inactive, so it cannot be read from state the way the Bullet's click handler reads dragHold.
+  const longPressedRef = useRef(false)
+  useEffect(() => {
+    if (dragHoldResult.isPressed) {
+      longPressedRef.current = true
+    }
+  }, [dragHoldResult.isPressed])
+
+  /** Clears the long press mark at the start of a new press. On touch devices this must wait for the next touchstart, since the browser follows the touchend of a long press with a compatibility mousedown before the click. */
+  const resetLongPressed = () => {
+    longPressedRef.current = false
+  }
+
   return (
     // Set display:flow-root to create a new block formatting context so the drop target fully wraps its contents.
     // Otherwise the context-breadcrumbs margin-top will leak out and create a dead zone where the favorite cannot be dropped.
     // Note: overflow:auto also creates a BFC but causes a scrollbar on empty thoughts (#3817). overflow:hidden clips content.
     <div
       {...dragHoldResult.props}
+      onTouchStartCapture={isTouch ? resetLongPressed : undefined}
+      onMouseDownCapture={isTouch ? undefined : resetLongPressed}
+      onClickCapture={e => {
+        if (!longPressedRef.current) return
+        e.preventDefault()
+        e.stopPropagation()
+      }}
       className={css({ display: 'flow-root' })}
       data-testid='drag-and-drop-favorite'
       ref={dndRef(node => dragSource(dropTarget(node)))}

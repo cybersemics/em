@@ -112,7 +112,7 @@ describe('favorites long press on mobile', () => {
   deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   // https://github.com/cybersemics/em/issues/3693
-  it.skip('lifting the finger after a long press on a favorite does not open it', async () => {
+  it('lifting the finger after a long press on a favorite does not open it', async () => {
     await paste(`
       - a
       - b

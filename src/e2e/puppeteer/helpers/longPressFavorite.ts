@@ -1,12 +1,12 @@
 import { AlertText } from '../../../constants'
 import { page } from '../session'
-import { findFavoriteItem } from './dragAndDropFavorite'
+import findFavoriteItem from './findFavoriteItem'
 import waitForAlert from './waitForAlert'
 
 /**
  * Tap and hold a favorite in the sidebar until the long press activates, then lift the finger without dragging and wait for the release to be processed.
  *
- * Mobile Safari follows the touchend of a press held for under about two seconds with a click on the pressed element. Chrome's touch emulation drops that click after a long press, so it is sent here explicitly, the way Mobile Safari delivers it (#3693).
+ * Mobile Safari follows the touchend of a press held for under about two seconds with a click on the pressed element. Chrome's touch emulation sends it only when the finger lifts before Chrome's own long press timeout, so it is sent here explicitly, the way Mobile Safari delivers it (#3693).
  */
 const longPressFavorite = async (value: string) => {
   const favorite = await findFavoriteItem(value)
