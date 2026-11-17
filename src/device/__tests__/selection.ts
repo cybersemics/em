@@ -218,7 +218,7 @@ describe('isCaretNear', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5844
-  it.skip('is false when the selection has left the focused editable', () => {
+  it('is false when the selection has left the focused editable', () => {
     const editable = document.createElement('div')
     editable.setAttribute('data-editable', 'true')
     editable.setAttribute('contenteditable', 'true')
