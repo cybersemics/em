@@ -25,7 +25,6 @@ import panelCommandRecipe from './src/recipes/panelCommandRecipe'
 import slideTransitionRecipe from './src/recipes/slideTransition'
 import textNoteRecipe from './src/recipes/textNote'
 import thoughtRecipe from './src/recipes/thought'
-import toolbarPointerEventsRecipe from './src/recipes/toolbarPointerEvents'
 import tutorialBulletRecipe from './src/recipes/tutorialBullet'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 import keyValueBy from './src/util/keyValueBy'
@@ -588,7 +587,6 @@ export default defineConfig({
         editableRecipe,
         textNoteRecipe,
         modalActionLinkRecipe,
-        toolbarPointerEventsRecipe,
         tutorialBulletRecipe,
         dropHoverRecipe,
         dropEndRecipe,

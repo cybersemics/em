@@ -309,6 +309,12 @@
       "checkable": true
     },
     {
+      "id": "reload",
+      "label": "Reload",
+      "accelerator": "Cmd+R",
+      "checkable": false
+    },
+    {
       "id": "toggleHiddenThoughts",
       "label": "Show Hidden Thoughts",
       "accelerator": {
@@ -423,6 +429,11 @@
     {
       "id": "exportContext",
       "label": "Export",
+      "checkable": false
+    },
+    {
+      "id": "importFile",
+      "label": "Import",
       "checkable": false
     }
   ],
