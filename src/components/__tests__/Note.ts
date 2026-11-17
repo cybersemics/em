@@ -111,6 +111,35 @@ describe('=note', () => {
     expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe('y'.length)
   })
 
+  // https://github.com/cybersemics/em/pull/6277#discussion_r4570542744
+  test('undoes and redoes deleting the first word of a note with the caret where it was', async () => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - x y' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      noteEditor.focus()
+      selection.setRange(noteEditor, { start: 0, end: 'x'.length })
+    })
+
+    const user = userEvent.setup({ delay: null })
+    await user.keyboard('{Backspace}')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      store.dispatch(undo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('x y')
+    expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe('x'.length)
+
+    await act(async () => {
+      store.dispatch(redo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('y')
+    expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe(0)
+  })
+
   // https://github.com/cybersemics/em/pull/6277#discussion_r4570526756
   test('bolds the selected word after a leading space', async () => {
     await dispatch([importText({ text: '- a\n  - =note\n    - one two' }), setCursor(['a']), toggleNote()])
