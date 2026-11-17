@@ -18,6 +18,7 @@ import editableSyncStore from '../stores/editableSyncStore'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
 import reducerFlow from '../util/reducerFlow'
+import trimmedTextOffset from '../util/trimmedTextOffset'
 import editThought from './editThought'
 import setDescendant from './setDescendant'
 import setNoteFocus from './setNoteFocus'
@@ -226,11 +227,13 @@ export const formatSelectionActionCreator =
       return
     }
 
-    // Compute the plain-text character offsets [start, end) of the selection relative to the editable.
-    const plainLength = contentEditable.textContent?.length ?? 0
+    // Compute the plain-text character offsets [start, end) of the selection relative to the editable. A note's are
+    // counted in its value as saved, since the note's draft can lead with whitespace that the trim has removed from it.
+    const text = contentEditable.textContent ?? ''
+    const plainLength = state.noteFocus ? text.trim().length : text.length
     const offsets = selection.offsetRange(contentEditable)
-    const start = offsets?.start ?? 0
-    const end = offsets?.end ?? plainLength
+    const start = offsets ? (state.noteFocus ? trimmedTextOffset(offsets.start, text) : offsets.start) : 0
+    const end = offsets ? (state.noteFocus ? trimmedTextOffset(offsets.end, text) : offsets.end) : plainLength
 
     // Treat a collapsed caret or a full selection as formatting the whole thought.
     const whole = start === end || end - start === plainLength
@@ -248,7 +251,8 @@ export const formatSelectionActionCreator =
     // re-renders the note's ContentEditable, which drops the caret; restoring the offset via setNoteFocus
     // places it back where the user left off instead of jumping to the start/end of the note (#4630).
     // noteFocus is only true when the caret is on a note, so it's not necessary to check whether the keyboard is open.
-    const noteOffset = state.noteFocus ? selection.offsetFromNode(contentEditable) : null
+    const domNoteOffset = state.noteFocus ? selection.offsetFromNode(contentEditable) : null
+    const noteOffset = domNoteOffset === null ? null : trimmedTextOffset(domNoteOffset, text)
 
     // Only call document.execCommand when the keyboard is open and the caret is on a thought.
     // This avoids messy and buggy focus-management logic.

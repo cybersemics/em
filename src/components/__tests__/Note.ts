@@ -1,6 +1,7 @@
 import { fireEvent, screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
+import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { redoActionCreator as redo } from '../../actions/redo'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
@@ -108,6 +109,30 @@ describe('=note', () => {
     })
     expect(screen.getByLabelText('note-editable').innerHTML).toBe('yx')
     expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe('y'.length)
+  })
+
+  // https://github.com/cybersemics/em/pull/6277#discussion_r4570526756
+  test('bolds the selected word after a leading space', async () => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - one two' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      noteEditor.focus()
+      selection.set(noteEditor, { offset: 0 })
+    })
+
+    const user = userEvent.setup({ delay: null })
+    await user.keyboard(' ')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      selection.setRange(noteEditor, { start: ' '.length, end: ' one'.length })
+      store.dispatch(formatSelection('bold'))
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    const noteId = contextToThoughtId(store.getState(), ['a', '=note'])!
+    expect(getChildrenSorted(store.getState(), noteId).map(child => child.value)).toEqual(['<b>one</b> two'])
   })
 
   test('adds no undo step when the note blurs', async () => {

@@ -34,6 +34,7 @@ import head from '../util/head'
 import strip from '../util/strip'
 import stripTags from '../util/stripTags'
 import trimHtml from '../util/trimHtml'
+import trimmedTextOffset from '../util/trimmedTextOffset'
 import useCaretRestore from './Editable/useCaretRestore'
 import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
@@ -188,15 +189,10 @@ const Note = React.memo(
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
 
-        // The caret in the text as it is saved: the offset in the note less the leading whitespace that the trim removes,
-        // and no further than the end of the trimmed text. Undo infers where the caret was before an edit from this
-        // offset and the lengths of the saved values, so it has to count the same text they do.
+        // The caret in the text as it is saved. Undo infers where the caret was before an edit from this offset and the
+        // lengths of the saved values, so it has to count the same text they do.
         const domOffset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
-        const text = noteRef.current?.textContent ?? ''
-        const noteOffset =
-          domOffset === null
-            ? null
-            : Math.min(Math.max(0, domOffset - (text.length - text.trimStart().length)), text.trim().length)
+        const noteOffset = domOffset === null ? null : trimmedTextOffset(domOffset, noteRef.current?.textContent ?? '')
 
         // update the referenced thought directly if it exists
         dispatch((dispatch, getState) => {
