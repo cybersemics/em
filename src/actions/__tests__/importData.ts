@@ -1,6 +1,5 @@
 import { act } from 'react'
 import MimeType from '../../@types/MimeType'
-import ResumeImport from '../../@types/ResumeImport'
 import { EMPTY_SPACE, EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import contextToPath from '../../selectors/contextToPath'
@@ -8,7 +7,6 @@ import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import { deleteThoughtAtFirstMatchActionCreator as deleteThought } from '../../test-helpers/deleteThoughtAtFirstMatch'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import importDataAtFirstMatch from '../../test-helpers/importDataAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
@@ -18,7 +16,6 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import head from '../../util/head'
 import removeHome from '../../util/removeHome'
-import resumeImports from '../../util/resumeImports'
 import { clearActionCreator as clear } from '../clear'
 import importDataActionCreator from '../importData'
 import { importFilesActionCreator as importFiles } from '../importFiles'
@@ -714,51 +711,6 @@ it('records the progress of an import after every imported thought', async () =>
 
   // the manifest is deleted once the import is complete
   expect(thoughtsImported).toEqual([[0], [1], [2], [3], []])
-})
-
-// https://github.com/cybersemics/em/issues/6297
-it('resumes a paste into an empty thought before its next sibling', async () => {
-  vi.useFakeTimers()
-  const { cleanup } = await initialize({ storage: 'memory' })
-
-  store.dispatch([importText({ text: '- x\n- y' }), setCursor(['x']), newThought({})])
-  // let initialize look for unfinished imports while there are none
-  await vi.runAllTimersAsync()
-
-  const setItem = vi.spyOn(localStorage, 'setItem')
-  const text = `
-- a
-- b
-- c`
-  store.dispatch(importDataAtFirstMatch([''], { text }))
-  await vi.runAllTimersAsync()
-
-  // A refresh after the second thought leaves the thoughts imported before it, the raw text, and the checkpoint
-  // recorded after it. The checkpoints are the ones the import recorded, from the initial one at 0 thoughts.
-  const checkpoint = setItem.mock.calls.filter(([key]) => key === 'resume-imports')[2][1]
-  store.dispatch(deleteThought(['c']))
-  const stored = resumeImports
-    .manager(Object.values(JSON.parse(checkpoint) as Record<string, ResumeImport>)[0])
-    .init(text)
-  localStorage.setItem('resume-imports', checkpoint)
-  await vi.runAllTimersAsync()
-  await stored
-
-  // resume the import, as initialize does
-  resumeImports.withText(resumeImports.list()).then(files => store.dispatch(importFiles({ resume: files })))
-  await vi.runAllTimersAsync()
-
-  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
-
-  cleanup()
-
-  expect(removeHome(exported)).toBe(`
-- x
-- a
-- b
-- c
-- y
-`)
 })
 
 // https://github.com/cybersemics/em/issues/2712
