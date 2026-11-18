@@ -78,11 +78,12 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
       : EditThoughtDirection.Shorter
 }
 
-/** Gets where the caret was before and after an action, for a new patch to store (see Patch.cursorOffset). A formatting edit or a letter case change leaves the plain text, and so the caret, where it was, so its before is its after. Its action-creator reads the live caret, while state.cursorOffset may predate a caret move that was not recorded, such as an arrow key, which would send the caret back there on Undo (#3908). */
+/** Gets where the caret was before and after an action, for a new patch to store (see Patch.cursorOffset). A formatting edit or a letter case change leaves the plain text, and so the caret, where it was, so its before is its after. Its action-creator reads the live caret, while state.cursorOffset may predate a caret move that was not recorded, such as an arrow key, which would send the caret back there on Undo (#3908). A formatSelection action is recognized by its type, since it is dispatched as itself rather than as the editThought its reducer calls. */
 function getCursorOffsets(action: UnknownAction, state: State, newState: State): Patch['cursorOffset'] {
   const isFormattingEdit =
-    isEditThoughtAction(action) &&
-    getTextContent(action.oldValue).toLowerCase() === getTextContent(action.newValue).toLowerCase()
+    action.type === 'formatSelection' ||
+    (isEditThoughtAction(action) &&
+      getTextContent(action.oldValue).toLowerCase() === getTextContent(action.newValue).toLowerCase())
   return { before: isFormattingEdit ? newState.cursorOffset : state.cursorOffset, after: newState.cursorOffset }
 }
 
