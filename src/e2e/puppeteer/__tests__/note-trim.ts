@@ -92,3 +92,25 @@ it('saves formatted references without the spaces typed around them', async () =
     - **de**
 `)
 })
+
+// https://github.com/cybersemics/em/pull/6277
+it('leaves a note unbolded when only a leading draft space is selected', async () => {
+  await paste(`
+    - a
+      - =note
+        - one two
+  `)
+  await clickNote('one two')
+  await press('Home')
+  await press('Space')
+  await press('ArrowLeft', { shift: true })
+  await waitUntil(() => window.getSelection()?.toString() === ' ')
+
+  await press('b', { ctrl: true })
+
+  expect(await exportThoughts()).toBe(`
+- a
+  - =note
+    - one two
+`)
+})

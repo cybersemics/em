@@ -235,6 +235,9 @@ export const formatSelectionActionCreator =
     const start = offsets ? (state.noteFocus ? trimmedTextOffset(offsets.start, text) : offsets.start) : 0
     const end = offsets ? (state.noteFocus ? trimmedTextOffset(offsets.end, text) : offsets.end) : plainLength
 
+    // A selection confined to draft whitespace has no saved text to format.
+    if (state.noteFocus && offsets && offsets.start !== offsets.end && start === end) return
+
     // Treat a collapsed caret or a full selection as formatting the whole thought.
     const whole = start === end || end - start === plainLength
     const range = whole ? undefined : { start, end }
