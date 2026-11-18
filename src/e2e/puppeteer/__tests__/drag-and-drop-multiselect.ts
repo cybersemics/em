@@ -1,4 +1,3 @@
-import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
@@ -110,17 +109,20 @@ describe('drag and drop multiple thoughts', () => {
 `)
   })
 
-  it('should drop a multiselected thought and subthought as the first children, preserving document order', async () => {
+  it('should drop multiselected thoughts from different parents as the first children, preserving document order', async () => {
+    // pin a and x so that b and c both stay visible while they are selected
     await paste(`
       - a
+        - =pin
+          - true
         - b
-      - c
+      - x
+        - =pin
+          - true
+        - c
       `)
 
-    // expand a so that its child b is visible
-    await clickThought('a')
-
-    // select the subthought b and the sibling c
+    // select b and c, which are at the same depth under different parents
     await multiselectThoughts(['b', 'c'])
 
     // drop c above b (the first child of a). b above itself is a no-op, but c should still move.
@@ -129,8 +131,13 @@ describe('drag and drop multiple thoughts', () => {
     const exported = await exportThoughts()
     expect(exported).toBe(`
 - a
+  - =pin
+    - true
   - b
   - c
+- x
+  - =pin
+    - true
 `)
   })
 
