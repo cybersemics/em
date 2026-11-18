@@ -25,8 +25,13 @@ const selectAllCommand = {
   isActive: isAllSelected,
   // Allow chaining Select All into multicursor commands without lifting the finger.
   // Unfortunately categorize is a special case since it has multicursor: false but can still handle multicursor in the action.
+  // Exclude commands that never make sense on every sibling at once (#5874):
+  // - indent: the first sibling has no previous sibling, and the previous sibling of every other one is itself selected, so there is never a thought to indent into.
   isChainable: command =>
-    !!command.gesture && command.id !== 'clearThought' && (!!command.multicursor || command.id === 'categorize'),
+    !!command.gesture &&
+    command.id !== 'clearThought' &&
+    command.id !== 'indent' &&
+    (!!command.multicursor || command.id === 'categorize'),
   canExecute: state => {
     if (!isDocumentEditable()) {
       return false
