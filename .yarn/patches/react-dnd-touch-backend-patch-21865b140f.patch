@@ -1,8 +1,81 @@
 diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
-index cf9c2e128dc8243afc1ae91b860ccbf28588ce14..93aa62fc0b5ac7f6f38791bc1d0ac5457260d58c 100644
 --- a/dist/TouchBackendImpl.js
 +++ b/dist/TouchBackendImpl.js
-@@ -355,7 +355,13 @@ export class TouchBackendImpl {
+@@ -42,6 +42,8 @@
+     // Cancel drag-and-drop if a scroll event is received so that scroll doesn't interfere with dragging.
+     // Use an arrow function to bind this event handler to the TouchBackendImpl object so that we can use `this`.
+     handleScroll = () => {
++        // Ignore a scroll that the app reports as its own, such as scroll-at-edge, and keep listening. See em issue #6281.
++        if (this.options.args?.ignoreScroll?.()) return;
+         if (this.timeout) {
+             clearTimeout(this.timeout);
+             this.timeout = 0;
+@@ -52,6 +54,28 @@
+         window.removeEventListener('scroll', this.handleScroll)
+     }
+ 
++    // Hover again at the finger's last position when the page scrolls during a drag. Otherwise, while the finger is held
++    // still at the edge and scroll-at-edge scrolls the page, the drop target stays on the thought the finger was over when
++    // it last moved, as thoughts scroll past under it. Replays the move handlers in the order the move itself reaches
++    // them: the capture on the root, each drop target's handler on the body, then the root. See em issue #6281.
++    handleDragScroll = () => {
++        const e = this.lastMoveEvent;
++        if (!e || !this.monitor.isDragging()) return;
++        const replay = {
++            type: e.type,
++            touches: e.touches,
++            targetTouches: e.targetTouches,
++            changedTouches: e.changedTouches,
++            clientX: e.clientX,
++            clientY: e.clientY,
++            cancelable: false,
++            preventDefault: ()=>{}
++        };
++        this.handleTopMoveCapture();
++        this.targetMoveHandlers.forEach((handleMove)=>handleMove(replay));
++        this.handleTopMove(replay);
++    }
++
+     setup() {
+         const root = this.options.rootElement;
+         if (!root) {
+@@ -64,6 +88,7 @@
+         this.addEventListener(root, 'move', this.handleTopMove);
+         this.addEventListener(root, 'move', this.handleTopMoveCapture, true);
+         this.addEventListener(root, 'end', this.handleTopMoveEndCapture, true);
++        window.addEventListener('scroll', this.handleDragScroll);
+         // iOS WKWebView intermittently drops the terminating `touchend` event, which leaves the drag
+         // stuck at DragInProgress (the dragged thought never drops/archives and "blinks"). The pointer
+         // events `pointerup`/`pointercancel` ARE reliably delivered on finger-lift, so register them as
+@@ -91,6 +116,8 @@
+         this.removeEventListener(root, 'move', this.handleTopMoveCapture, true);
+         this.removeEventListener(root, 'move', this.handleTopMove);
+         this.removeEventListener(root, 'end', this.handleTopMoveEndCapture, true);
++        window.removeEventListener('scroll', this.handleDragScroll);
++        this.lastMoveEvent = undefined;
+         if (this.pointerEndTimeout) {
+             clearTimeout(this.pointerEndTimeout);
+             this.pointerEndTimeout = undefined;
+@@ -189,7 +216,9 @@
+ 		 * Attaching the event listener to the body so that touchmove will work while dragging over multiple target elements.
+ 		 */ this.addEventListener(this.document.body, 'move', handleMove);
+         this.targetNodes.set(targetId, node);
++        this.targetMoveHandlers.set(targetId, handleMove);
+         return ()=>{
++            this.targetMoveHandlers.delete(targetId);
+             if (this.document) {
+                 this.targetNodes.delete(targetId);
+                 this.removeEventListener(this.document.body, 'move', handleMove);
+@@ -308,6 +337,8 @@
+         };
+         this.handleTopMove = (e1)=>{
+             if (this.timeout) this.scrollHasBegun = true
++            // Keep the last real move for handleDragScroll to replay.
++            if (e1 instanceof Event) this.lastMoveEvent = e1;
+ 
+             const clientOffset = getEventClientOffset(e1, this.lastTargetTouchFallback)
+ 
+@@ -355,7 +386,13 @@
              const sourceNode = this.sourceNodes.get(this.monitor.getSourceId());
              this.installSourceNodeRemovalObserver(sourceNode);
              this.actions.publishDragSource();
@@ -17,3 +90,19 @@ index cf9c2e128dc8243afc1ae91b860ccbf28588ce14..93aa62fc0b5ac7f6f38791bc1d0ac545
              // Get the node elements of the hovered DropTargets
              const dragOverTargetNodes = (dragOverTargetIds || []).map((key)=>this.targetNodes.get(key)
              ).filter((e)=>!!e
+@@ -440,6 +477,7 @@
+             this._isScrolling = false;
+             this.lastTargetTouchFallback = undefined;
+             this._mouseClientOffset = {};
++            this.lastMoveEvent = undefined;
+             if (!eventShouldEndDrag(e)) {
+                 return;
+             }
+@@ -470,6 +508,7 @@
+         this.sourcePreviewNodes = new Map();
+         this.sourcePreviewNodeOptions = new Map();
+         this.targetNodes = new Map();
++        this.targetMoveHandlers = new Map();
+         this.listenerTypes = [];
+         this._mouseClientOffset = {};
+         this._isScrolling = false;

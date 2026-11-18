@@ -122,6 +122,11 @@ const scrollAtEdge = (() => {
     }
 
     el.scrollTo(scrollLeftNew, scrollTopNew)
+    // Record where the window actually landed, which the browser clamps at the end of the page, so that the touch
+    // backend does not mistake the scroll event that follows for a native scroll and end the drag (#6281).
+    if (!scrollContainer || scrollContainer === window) {
+      scrollContainerStore.update({ windowScrollTop: document.documentElement.scrollTop })
+    }
     window.requestAnimationFrame(() => {
       if (autoscrolling) {
         scroll()
