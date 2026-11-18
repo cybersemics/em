@@ -33,6 +33,15 @@ describe('GestureDiagram rendering modes', () => {
     expect(renderedPathData(markup)).toEqual(['M 0 0 L 50 0', 'M 50 0 L 50 50 L 100 50'])
   })
 
+  // Separate arc paths would overlap their round caps at each join, which a translucent color shows as beads.
+  it('renders a solid rounded gesture as one combined path', () => {
+    const markup = render({ path: 'rul', size: 100, arrowhead: 'none', useGradient: false, rounded: true })
+    const pathData = renderedPathData(markup)
+
+    expect(pathData).toHaveLength(1)
+    expect(pathData[0].match(/A /g)).toHaveLength(3)
+  })
+
   it('keeps synthetic geometry with the semantic direction it extends', () => {
     const markup = render({ path: 'rdl', size: 100, arrowhead: 'none', useGradient: false, highlight: 2 })
 
