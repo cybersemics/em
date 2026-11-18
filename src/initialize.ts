@@ -76,6 +76,11 @@ type InitializeOptions = { storage: ThoughtspaceStorage }
 
 /** Initialize local db and window events. */
 const initializeInternal = async ({ storage }: InitializeOptions) => {
+  // Read the imports a previous session left unfinished before the app renders. They are resumed after a delay, and an
+  // import the user starts during that delay records itself in the same list, so a list read after the delay would
+  // import it a second time alongside itself.
+  const unfinished = resumeImports.list()
+
   initOfflineStatusStore(/* websocket */)
 
   // An app built before the Device plugin was added cannot tell, so the store stays null.
@@ -126,7 +131,6 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
     setTimeout(() => {
       // Resume imports that were interrupted by a refresh or crash. The import is dispatched only once their raw text has
       // been read from IDB, so show the alert it starts with, for the first import, while the text is read.
-      const unfinished = resumeImports.list()
       if (unfinished.length > 0) {
         store.dispatch(
           alertWithMinistore(
