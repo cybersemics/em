@@ -1569,14 +1569,13 @@ it('splice pasted single-line markdown into the thought', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/6325
-it.skip('keep a link in pasted markdown as link formatting', async () => {
+it('keep a link in pasted markdown as link formatting', async () => {
   vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
   store.dispatch([
     newThought({ value: '' }),
-    (dispatch, getState) =>
-      dispatch(importDataActionCreator({ path: getState().cursor!, text: 'A [link](https://example.com)\nB' })),
+    importDataAtFirstMatch([''], { text: 'A [link](https://example.com)\nB' }),
   ])
 
   await vi.runOnlyPendingTimersAsync()
@@ -1586,6 +1585,47 @@ it.skip('keep a link in pasted markdown as link formatting', async () => {
   cleanup()
 
   expect(values).toEqual(['A <a href="https://example.com">link</a> B'])
+})
+
+// https://github.com/cybersemics/em/issues/6325
+it('reduce a link in pasted HTML to its text', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    newThought({ value: '' }),
+    importDataAtFirstMatch([''], {
+      html: '<ul><li>A <a href="https://example.com">link</a></li><li>B</li></ul>',
+      text: 'A link\nB',
+    }),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const values = getChildrenRankedByContext(store.getState(), [HOME_TOKEN]).map(child => child.value)
+
+  cleanup()
+
+  expect(values).toEqual(['A link', 'B'])
+})
+
+// https://github.com/cybersemics/em/issues/6325
+it('reduce a link in pasted markdown with an unsafe URL to its text', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    newThought({ value: '' }),
+    importDataAtFirstMatch([''], { text: 'A [link](javascript:alert(1))\nB' }),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const values = getChildrenRankedByContext(store.getState(), [HOME_TOKEN]).map(child => child.value)
+
+  cleanup()
+
+  expect(values).toEqual(['A link B'])
 })
 
 // TODO: Indentation broke when switching from importText to importData

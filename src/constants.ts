@@ -267,6 +267,9 @@ export const REGEX_HTML = /<\/?[a-z][\s\S]*>/i
 // can be used to replace all HTML in a string
 export const REGEX_TAGS = /(<([^>]+)>)/gi
 
+// matches a link that has a URL, capturing the URL and the link text
+export const REGEX_LINK = /<a\s[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi
+
 /** Matches HTML tags that indicate the snippet is a block of proper HTML, not just text formatted with HTML tags. Includes <html>, <body>, <li>, <meta>, <ol>, <ul>. Does not match strings that just contain formattings tags like <b>, <i>, or <u>. */
 export const REGEX_NONFORMATTING_HTML = /<(html|\!doctype|li|meta|ol|ul)/i
 
@@ -312,12 +315,14 @@ export const REGEX_EMOJI_GROUP = new RegExp(`^(?:${EMOJI_REGEX.source})+\u200D?\
 /** Matches a group of one or more emoji at the start of a string, including the whitespace that separates it from the rest of the string. */
 export const REGEX_EMOJI_PREFIX = new RegExp(`${REGEX_EMOJI_GROUP.source}\\s*`)
 
-export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike', 'code', 'font']
+// A link is formatting, but only a markdown link can create one (#6325). The import funnel (textToHtml) strips the links from any other input, and a single-line HTML paste keeps only EXTERNAL_FORMATTING_TAGS.
+export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike', 'code', 'font', 'a']
 
 export const EXTERNAL_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'strike', 'code']
 export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
 
-export const ALLOWED_ATTR = ['class', 'style', 'color']
+// DOMPurify removes an href whose URL is unsafe, such as javascript:
+export const ALLOWED_ATTR = ['class', 'style', 'color', 'href']
 
 export const EMPTY_SPACE = '  '
 

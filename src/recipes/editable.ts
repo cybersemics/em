@@ -26,6 +26,12 @@ const editableRecipe = defineRecipe({
     // and stops the browser from generating that gesture. Gestures are unaffected, as they are driven by raw touch
     // events rather than browser-recognized pans.
     touchAction: 'pan-y',
+    // Link text is edited like any other text, so it can be selected and a click places the caret rather than opening
+    // the link (#6325). The global link style disables both. The thought's URL icon opens the link instead.
+    '& a': {
+      userSelect: 'text',
+      cursor: 'text',
+    },
   },
 })
 
