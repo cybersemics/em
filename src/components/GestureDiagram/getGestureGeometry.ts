@@ -335,7 +335,6 @@ const getGestureGeometry = (
       return { ...geometry, chevron: [legA, apex, legB] }
     }
 
-    if (finalSegment.kind !== 'line') return { ...geometry, chevron: null }
     const segmentLength = Math.hypot(finalSegment.to.x - finalSegment.from.x, finalSegment.to.y - finalSegment.from.y)
     const legsBehindEnd = Math.hypot(finalSegment.to.x - legs.x, finalSegment.to.y - legs.y)
     // The shaft stops between the legs so its round cap stays inside the filled chevron.
