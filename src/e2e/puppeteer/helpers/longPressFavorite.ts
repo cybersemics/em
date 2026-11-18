@@ -4,7 +4,7 @@ import findFavoriteItem from './findFavoriteItem'
 import waitForAlert from './waitForAlert'
 
 /**
- * Tap and hold a favorite in the sidebar until the long press activates, then lift the finger without dragging and wait for the release to be processed.
+ * Press and hold a favorite in the sidebar until the long press activates, then release without dragging and wait for the release to be processed. Holds with a finger when the page emulates a touch device, and with the mouse otherwise.
  *
  * Mobile Safari follows the touchend of a press held for under about two seconds with a click on the pressed element. Chrome's touch emulation sends it only when the finger lifts before Chrome's own long press timeout, so it is sent here explicitly, the way Mobile Safari delivers it (#3693).
  */
@@ -23,10 +23,18 @@ const longPressFavorite = async (value: string) => {
   const x = boundingBox.x + boundingBox.width / 2
   const y = boundingBox.y + boundingBox.height / 2
 
-  await page.touchscreen.touchStart(x, y)
-  await waitForAlert(AlertText.ReorderFavorites)
-  await page.touchscreen.touchEnd()
-  await page.mouse.click(x, y)
+  if (page.viewport()?.hasTouch) {
+    await page.touchscreen.touchStart(x, y)
+    await waitForAlert(AlertText.ReorderFavorites)
+    await page.touchscreen.touchEnd()
+    await page.mouse.click(x, y)
+  } else {
+    // Releasing the mouse button follows mouseup with a click, as on a real desktop.
+    await page.mouse.move(x, y)
+    await page.mouse.down()
+    await waitForAlert(AlertText.ReorderFavorites)
+    await page.mouse.up()
+  }
 
   // The app ends the long press on a timer after the release, so wait for the body's data-drag-hold attribute, which mirrors state.longPress, to return to 'false'.
   await page.waitForFunction(() => document.body.getAttribute('data-drag-hold') === 'false', { timeout: 5000 })

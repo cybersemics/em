@@ -131,3 +131,23 @@ describe('favorites long press on mobile', () => {
     expect(await getEditingText()).toBe('b')
   })
 })
+
+describe('favorites long press on desktop', () => {
+  // https://github.com/cybersemics/em/issues/3693
+  it.skip('releasing the mouse after a long press on a favorite does not open it', async () => {
+    await paste(`
+      - a
+      - b
+    `)
+    await clickThought('a')
+    await click('[aria-label="Add to Favorites"]')
+    await clickThought('b')
+    await openSidebar()
+
+    await longPressFavorite('a')
+
+    const openSidebars = await page.$$eval('[data-testid="sidebar"]:not([inert])', sidebars => sidebars.length)
+    expect(openSidebars).toBe(1)
+    expect(await getEditingText()).toBe('b')
+  })
+})
