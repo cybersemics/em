@@ -167,10 +167,6 @@ const updateThoughtsForClient = async (
     }
   }
 
-  for (const id of deletes) {
-    ops.push(await client.local.delete(replicaId, id, createTreecrdtLocalWriteOptions()))
-  }
-
   for (const [id, thought] of Object.entries(updates)) {
     const thoughtId = id as ThoughtId
     const payloadBytes = encodeThoughtPayload({
@@ -220,6 +216,11 @@ const updateThoughtsForClient = async (
         ops.push(await client.local.payload(replicaId, thoughtId, payloadBytes, createTreecrdtLocalWriteOptions()))
       }
     }
+  }
+
+  // Moves out of a deleted parent must precede its delete, so its knownState covers the move.
+  for (const id of deletes) {
+    ops.push(await client.local.delete(replicaId, id, createTreecrdtLocalWriteOptions()))
   }
 
   return ops

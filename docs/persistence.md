@@ -84,8 +84,8 @@ Favorites' manual order is a separate local preference in `em_favorite_order`. I
 
 `updateThoughtsForClient` applies one push-queue batch:
 
-1. **Deletions.** Each `null` entry in `thoughtIndexUpdates` becomes a `client.local.delete`.
-2. **Upserts.** For a thought that doesn't exist yet, a `client.local.insert` with a resolved placement (see below); for one that does, a `client.local.move` when the parent or the order changed, and a `client.local.payload` when any payload field actually changed. Redundant payload writes are skipped so no-op edits don't mint operations.
+1. **Upserts.** For a thought that doesn't exist yet, a `client.local.insert` with a resolved placement (see below); for one that does, a `client.local.move` when the parent or the order changed, and a `client.local.payload` when any payload field actually changed. Redundant payload writes are skipped so no-op edits don't mint operations.
+2. **Deletions.** Each `null` entry in `thoughtIndexUpdates` becomes a `client.local.delete`. Deletions run after upserts so that moves out of a deleted parent's subtree are included in its delete's `knownState`.
 
 The function returns the `readonly Operation[]` it minted. That array is what the runtime forwards to remote sync.
 
