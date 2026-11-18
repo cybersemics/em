@@ -1104,6 +1104,25 @@ describe('grouping', () => {
     expect(store.getState().cursorOffset).toBe(26)
   })
 
+  // https://github.com/cybersemics/em/pull/6257#pullrequestreview-5900676429
+  it('undo of Bold should return the caret to where it was moved with the arrow keys before Bold', () => {
+    store.dispatch([importText({ text: `- World` })])
+    const path = contextToPath(store.getState(), ['World'])!
+
+    // Tap at the end of the thought.
+    store.dispatch(setCursorRaw({ path, offset: 5 }))
+
+    // The arrow keys move the caret to after "Wor" without recording it, and Bold reads the live caret from the
+    // document and formats the whole thought, since the caret is collapsed.
+    store.dispatch({ type: 'formatSelection', command: 'bold', cursorOffset: 3 })
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - World`)
+    expect(store.getState().cursorOffset).toBe(3)
+  })
+
   // https://github.com/cybersemics/em/issues/6221
   it('undo and redo of a typed edit should place the caret where it was before and after the edit, not where it was moved since', () => {
     store.dispatch([importText({ text: `- Hello world` })])
