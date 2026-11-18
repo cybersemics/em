@@ -43,6 +43,8 @@ const DragAndDropFavorite = ({
     path: simplePath,
   })
   const dragHoldResult = useDragHold({ simplePath, sourceZone: DragThoughtZone.Favorites })
+  // Link stops mousedown from propagating, so a long press on desktop is started in the capture phase instead, before the event reaches the link. Otherwise holding the mouse button on a favorite never becomes a long press, and releasing it opens the favorite (#3693).
+  const { onMouseDown: startLongPress, ...dragHoldProps } = dragHoldResult.props
 
   // Mobile Safari follows the touchend of a long press with a click on the favorite, which would set the cursor and close the sidebar (#3693). Mark a press once it becomes a long press, and swallow every click until the next touch begins. The click can arrive after state.longPress has already returned to Inactive, so it cannot be read from state the way the Bullet's click handler reads dragHold.
   const longPressedRef = useRef(false)
@@ -62,9 +64,16 @@ const DragAndDropFavorite = ({
     // Otherwise the context-breadcrumbs margin-top will leak out and create a dead zone where the favorite cannot be dropped.
     // Note: overflow:auto also creates a BFC but causes a scrollbar on empty thoughts (#3817). overflow:hidden clips content.
     <div
-      {...dragHoldResult.props}
+      {...dragHoldProps}
       onTouchStartCapture={isTouch ? resetLongPressed : undefined}
-      onMouseDownCapture={isTouch ? undefined : resetLongPressed}
+      onMouseDownCapture={
+        isTouch
+          ? undefined
+          : e => {
+              resetLongPressed()
+              startLongPress?.(e)
+            }
+      }
       onClickCapture={e => {
         if (!longPressedRef.current) return
         e.preventDefault()

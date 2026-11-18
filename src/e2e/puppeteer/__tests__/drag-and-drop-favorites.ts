@@ -134,7 +134,7 @@ describe('favorites long press on mobile', () => {
 
 describe('favorites long press on desktop', () => {
   // https://github.com/cybersemics/em/issues/3693
-  it.skip('releasing the mouse after a long press on a favorite does not open it', async () => {
+  it('releasing the mouse after a long press on a favorite does not open it', async () => {
     await paste(`
       - a
       - b
