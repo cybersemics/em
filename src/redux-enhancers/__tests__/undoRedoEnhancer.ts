@@ -1,3 +1,4 @@
+import Timestamp from '../../@types/Timestamp'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { setCursorActionCreator as setCursorPath } from '../../actions/setCursor'
 import { undoActionCreator as undo } from '../../actions/undo'
@@ -6,6 +7,7 @@ import { initialize } from '../../initialize'
 import contextToPath from '../../selectors/contextToPath'
 import getLexeme from '../../selectors/getLexeme'
 import store from '../../stores/app'
+import contextToThought from '../../test-helpers/contextToThought'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
@@ -75,17 +77,18 @@ it('undo restores a Lexeme that the readback reordered during a typing run', () 
       lexemeIndexUpdates: { [hashThought('ab')]: { ...lexeme, contexts: [...lexeme.contexts].reverse() } },
       local: false,
       remote: false,
+      repairCursor: true,
     }),
   )
 
-  // merged into the previous edit's undo step, which replays that step's patch on the reordered Lexeme
+  // merged into the previous edit's undo step, which replays that step's patch after the readback reordered the Lexeme
   store.dispatch(editThought(['ab'], 'a'))
   store.dispatch(undo())
 
   expect(getLexeme(store.getState(), 'ab')?.contexts).toEqual([head(contextToPath(store.getState(), ['x', 'ab'])!)])
 })
 
-it('undo does not throw when the readback deleted a Lexeme that the undo restores', () => {
+it('undo recreates a Lexeme that the readback deleted instead of throwing', () => {
   store.dispatch([
     importText({
       text: `
@@ -96,15 +99,21 @@ it('undo does not throw when the readback deleted a Lexeme that the undo restore
     editThought(['a'], 'b'),
   ])
 
-  // Another device deletes x/a, so the readback deletes the Lexeme of a
+  // Another device deletes x/a and stamps x, so the readback removes x/a from x and deletes the Lexeme of a
+  const x = contextToThought(store.getState(), ['x'])!
   store.dispatch(
     updateThoughts({
-      thoughtIndexUpdates: { [head(contextToPath(store.getState(), ['x', 'a'])!)]: null },
+      thoughtIndexUpdates: {
+        [x.id]: { ...x, childrenMap: {}, lastUpdated: (x.lastUpdated + 1) as Timestamp },
+        [head(contextToPath(store.getState(), ['x', 'a'])!)]: null,
+      },
       lexemeIndexUpdates: { [hashThought('a')]: null },
       local: false,
       remote: false,
+      repairCursor: true,
     }),
   )
 
   expect(() => store.dispatch(undo())).not.toThrow()
+  expect(getLexeme(store.getState(), 'a')?.contexts).toEqual([head(contextToPath(store.getState(), ['a'])!)])
 })

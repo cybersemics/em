@@ -16,11 +16,17 @@ import updateThoughts from '../actions/updateThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
+import addContext from '../util/addContext'
 import debugLog from '../util/debugLog'
 import equalArrays from '../util/equalArrays'
 import getUndoStepCount from '../util/getUndoStepCount'
+import hashThought from '../util/hashThought'
 import headValue from '../util/headValue'
+import keyValueBy from '../util/keyValueBy'
+import mergeUpdates from '../util/mergeUpdates'
+import newLexeme from '../util/newLexeme'
 import reducerFlow from '../util/reducerFlow'
+import removeContext from '../util/removeContext'
 import stripTags from '../util/stripTags'
 
 /** Track a stream of editThought actions so that they can be merged,
@@ -167,17 +173,8 @@ const restoreMoveUpdatesFromThoughtUpdates = (
  * Manually recreate the pushQueue for thought and thought index updates from patches.
  */
 const restorePushQueueFromPatches = (state: State, oldState: State, ops: Operation[]) => {
-  const lexemeIndexChanges = ops.filter(p => p?.path.startsWith('/thoughts/lexemeIndex/'))
   const thoughtIndexChanges = ops.filter(p => p?.path.startsWith('/thoughts/thoughtIndex/'))
 
-  const lexemeIndexUpdates = lexemeIndexChanges.reduce<Index<Lexeme | null>>((acc, { path }) => {
-    const lexemeKey = path.slice('/thoughts/lexemeIndex/'.length).split('/')[0]
-    return {
-      ...acc,
-      // diffState replaces a Lexeme whole, so the path ends at its key. Persist the full lexeme.
-      [lexemeKey]: state.thoughts.lexemeIndex[lexemeKey] || null,
-    }
-  }, {})
   const thoughtIndexUpdates = thoughtIndexChanges.reduce<Index<Thought | null>>((acc, { path }) => {
     const id = path.slice('/thoughts/thoughtIndex/'.length).split('/')[0]
     return {
@@ -187,7 +184,7 @@ const restorePushQueueFromPatches = (state: State, oldState: State, ops: Operati
   }, {})
 
   /*
-    Note: Computed thoughtIndexUpdates and contextIndexUpdates will take store to the identical state
+    Note: Computed thoughtIndexUpdates will take the thoughtIndex to the identical state
     after patches are applied by undo or redo handler. This is done to create push batches using updateThoughts generates.
 
     However we also need to update the state like cursor that depends on the new thought indices changes. Else
@@ -203,7 +200,8 @@ const restorePushQueueFromPatches = (state: State, oldState: State, ops: Operati
   return {
     ...state,
     pushQueue: updateThoughts({
-      lexemeIndexUpdates,
+      // The provider derives Lexemes from the thoughts, and patches leave them out (see diffState).
+      lexemeIndexUpdates: {},
       thoughtIndexUpdates: moveUpdates.thoughtIndexUpdates,
       movePlacements: moveUpdates.movePlacements,
     })(oldStateWithUpdatedCursor).pushQueue,
@@ -234,29 +232,65 @@ const pathProperties: Record<PathProperty, true> = {
 /**
  * Returns the diff between two states as a fast-json-patch Patch that can be applied for undo/redo functionality. Ignores ephemeral state properties such as alert which should not be recreated (defined in statePropertiesToOmit).
  * A Path-valued property, such as the cursor or multicursorAnchor (see pathProperties), is replaced whole rather than element by element. A Path is a value, not a container: an element-wise op like replace /multicursorAnchor/2 is only valid against the exact array it was diffed from. When navigation patches are merged, the previous patch is replayed on top of whatever non-undoable actions have done since, so the array may have changed or become null in the meantime (e.g. toggleMulticursor clears the anchor when the anchored thought is deselected). Replaying an element-wise op then either splices the restored Path into an unrelated one or throws on null.
- * A Lexeme is replaced whole for the same reason. After each write, applyMaterializedThoughtsToStore replaces the Lexemes the write touched with the provider's copies, and that is not undoable. A copy can list contexts in another order or include thoughts that are not loaded, and a Lexeme with no thoughts left is deleted. So an op like remove /thoughts/lexemeIndex/<key>/contexts/1 can point at a different thought, or into a deleted Lexeme, by the time it is applied. The cost is a copy of each changed Lexeme in the patch.
+ * Lexemes are left out. After each write, applyMaterializedThoughtsToStore replaces the Lexemes the write touched with the provider's copies, and that is not undoable. A copy can list contexts in another order or include thoughts that are not loaded, and a Lexeme with no contexts left is deleted, so a recorded op like remove /thoughts/lexemeIndex/<key>/contexts/1 could point at a different thought, or into a deleted Lexeme, by the time it was applied. Recording each changed Lexeme whole would avoid that, but would copy all of its contexts into every patch. Instead, undo and redo update the Lexemes of the thoughts they change (see updateLexemeContexts).
  */
 const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] => {
-  const ops = compare(_.omit(newValue, statePropertiesToOmit), _.omit(value, statePropertiesToOmit))
+  const ops = compare(
+    { ..._.omit(newValue, statePropertiesToOmit), thoughts: _.omit(newValue.thoughts as object, 'lexemeIndex') },
+    { ..._.omit(value, statePropertiesToOmit), thoughts: _.omit(value.thoughts as object, 'lexemeIndex') },
+  )
 
-  // The Path property or Lexeme that each op is inside of, if any. These are replaced whole.
-  const wholePaths = ops.map(({ path }) => {
-    const segments = path.split('/')
-    return segments.length > 2 && segments[1] in pathProperties
-      ? `/${segments[1]}`
-      : segments.length > 4 && segments[1] === 'thoughts' && segments[2] === 'lexemeIndex'
-        ? segments.slice(0, 4).join('/')
-        : null
-  })
+  // Path properties with at least one element-wise op
+  const pathKeys = new Set(
+    ops
+      .map(op => op.path.split('/'))
+      .filter(segments => segments.length > 2 && segments[1] in pathProperties)
+      .map(segments => segments[1]),
+  )
 
   return [
-    ...ops.filter((op, i) => !wholePaths[i]),
-    ...[...new Set(_.compact(wholePaths))].map(path => ({
-      op: 'replace' as const,
-      path,
-      value: _.cloneDeep(_.get(value, path.split('/').slice(1))),
-    })),
+    ...ops.filter(op => !pathKeys.has(op.path.split('/')[1])),
+    ...[...pathKeys].map(key => ({ op: 'replace' as const, path: `/${key}`, value: _.cloneDeep(value[key]) })),
   ]
+}
+
+/**
+ * Moves each thought that an undo or redo patch changed from the Lexeme of its old value to the Lexeme of its new value, since patches leave Lexemes out (see diffState). A Lexeme left with no contexts is deleted. A context that is added goes at the end, so the order can differ from the provider's until the readback replaces the Lexeme.
+ */
+const updateLexemeContexts = (state: State, oldState: State, ops: Operation[]): State => {
+  const ids = _.uniq(ops.flatMap(op => op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)/)?.[1] ?? [])) as ThoughtId[]
+
+  const lexemeIndexUpdates = keyValueBy<ThoughtId, Lexeme | null>(ids, (id, i, updates) => {
+    const thoughtOld = getThoughtById(oldState, id)
+    const thoughtNew = getThoughtById(state, id)
+    const keyOld = thoughtOld && hashThought(thoughtOld.value)
+    const keyNew = thoughtNew && hashThought(thoughtNew.value)
+    if (keyOld === keyNew) return null
+
+    // An earlier thought in the same patch may already have changed one of these Lexemes.
+    const lexemeOld = keyOld && (keyOld in updates ? updates[keyOld] : state.thoughts.lexemeIndex[keyOld])
+    const lexemeNew = keyNew && (keyNew in updates ? updates[keyNew] : state.thoughts.lexemeIndex[keyNew])
+    const lexemeOldWithout = lexemeOld && removeContext(lexemeOld, id)
+
+    return {
+      ...(keyOld && lexemeOldWithout
+        ? { [keyOld]: lexemeOldWithout.contexts.length > 0 ? lexemeOldWithout : null }
+        : null),
+      ...(keyNew && thoughtNew
+        ? { [keyNew]: lexemeNew ? addContext(lexemeNew, { id }) : newLexeme({ id, value: thoughtNew.value }) }
+        : null),
+    }
+  })
+
+  return Object.keys(lexemeIndexUpdates).length > 0
+    ? {
+        ...state,
+        thoughts: {
+          ...state.thoughts,
+          lexemeIndex: mergeUpdates(state.thoughts.lexemeIndex, lexemeIndexUpdates),
+        },
+      }
+    : state
 }
 
 /**
@@ -286,7 +320,11 @@ const undoOneReducer = (state: State): State => {
   const { redoPatches, undoPatches } = state
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
-  const newState = produce(state, (state: State) => applyPatch(state, lastUndoPatch.ops).newDocument)
+  const newState = updateLexemeContexts(
+    produce(state, (state: State) => applyPatch(state, lastUndoPatch.ops).newDocument),
+    state,
+    lastUndoPatch.ops,
+  )
   const correspondingRedoPatch: Patch = {
     ops: diffState(newState as Index, state),
     metadata: lastUndoPatch.metadata,
@@ -309,7 +347,11 @@ const redoOneReducer = (state: State): State => {
   const { redoPatches, undoPatches } = state
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
-  const newState = produce(state, (state: State) => applyPatch(state, lastRedoPatch.ops).newDocument)
+  const newState = updateLexemeContexts(
+    produce(state, (state: State) => applyPatch(state, lastRedoPatch.ops).newDocument),
+    state,
+    lastRedoPatch.ops,
+  )
   const correspondingUndoPatch: Patch = {
     ops: diffState(newState as Index, state),
     metadata: lastRedoPatch.metadata,
@@ -495,7 +537,6 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         // Command Center opened by the multicursor alert middleware) is not restored by undo.
         (!isUndoable(actionType) && !(state.isMulticursorExecuting && multicursorActionTypes.has(actionType))) ||
         // ignore the first importText since it is part of app initialization and should not be undoable
-        // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
         // See: https://github.com/cybersemics/em/issues/1494
         (actionType === 'importText' && !newState.undoPatches.length)
       ) {
