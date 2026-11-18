@@ -15,6 +15,7 @@ import { setDescendantActionCreator as setDescendant } from '../actions/setDesce
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
@@ -197,18 +198,9 @@ const Note = React.memo(
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
 
-        // The caret after the input and before it, counted in the text as it is saved, which is what undo and redo
-        // restore them into. The text the input added or removed is taken to be before the caret, as it is when typing
-        // or deleting, so the caret before the input is the caret after it plus the change in length, counted in the
-        // text the browser held then.
         const domOffset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
         const textAfter = noteRef.current?.textContent ?? ''
-        const elementBefore = document.createElement('div')
-        elementBefore.innerHTML = htmlBeforeInputRef.current
-        const textBefore = elementBefore.textContent ?? ''
-        const noteOffset = domOffset === null ? null : trimmedTextOffset(domOffset, textAfter)
-        const noteOffsetBefore =
-          domOffset === null ? null : trimmedTextOffset(domOffset + textBefore.length - textAfter.length, textBefore)
+        const htmlBefore = htmlBeforeInputRef.current
         htmlBeforeInputRef.current = e.target.value
 
         // update the referenced thought directly if it exists
@@ -228,7 +220,7 @@ const Note = React.memo(
 
             dispatch(
               editNotePath({
-                noteOffset: noteOffset ?? undefined,
+                noteOffset: domOffset === null ? undefined : trimmedTextOffset(domOffset, textAfter, textAfter.trim()),
                 path: targetPath,
                 values,
                 undoLabel: 'Edit Note',
@@ -248,17 +240,27 @@ const Note = React.memo(
                 ? applyOuterTags(value, noteThoughtValue.pendingFormat)
                 : value
             const trimmedValue = trimHtml(wrappedValue)
+            // A value that is only tags once trimmed stays empty so it keeps its held formatting until text is typed.
+            const newValue = stripTags(trimmedValue) ? trimmedValue : ''
+            const textBefore = getTextContentFromHTML(htmlBefore)
+            const savedTextBefore =
+              htmlBefore === noteThoughtValue.value ? textBefore : getTextContentFromHTML(noteThoughtValue.value)
+            const savedTextAfter = e.target.value === newValue ? textAfter : getTextContentFromHTML(newValue)
+            const noteOffset = domOffset === null ? undefined : trimmedTextOffset(domOffset, textAfter, savedTextAfter)
+
+            // Infer the pre-edit caret from the change in draft length. Then map it into the old saved value for Undo.
+            const noteOffsetBefore =
+              domOffset === null
+                ? undefined
+                : trimmedTextOffset(domOffset + textBefore.length - textAfter.length, textBefore, savedTextBefore)
 
             dispatch(
               editThought({
                 path: appendToPath(targetPath, noteThoughtValue.id) as SimplePath,
                 oldValue: noteThoughtValue.value,
-                // A value that is only tags once trimmed, such as a space typed into a note held in bold, is saved as
-                // empty, as in a thought. An empty note is then left as it was, still holding its formatting for the
-                // first text typed, rather than saved as an empty <b></b> that the caret cannot be placed inside.
-                newValue: stripTags(trimmedValue) ? trimmedValue : '',
-                noteOffset: noteOffset ?? undefined,
-                noteOffsetBefore: noteOffsetBefore ?? undefined,
+                newValue,
+                noteOffset,
+                noteOffsetBefore,
                 force: wrappedValue !== value,
                 undoLabel: 'Edit Note',
               }),

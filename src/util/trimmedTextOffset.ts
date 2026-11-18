@@ -1,9 +1,9 @@
-/**
- * Converts an offset in text as the browser holds it into one in the same text trimmed, which is how a note's value is
- * saved while its draft keeps what was typed: less the leading whitespace that the trim removes, and no further than
- * the end of the trimmed text.
- */
-const trimmedTextOffset = (offset: number, text: string): number =>
-  Math.min(Math.max(0, offset - (text.length - text.trimStart().length)), text.trim().length)
+/** Maps a draft text offset to the saved text after trimming its boundaries. */
+const trimmedTextOffset = (offset: number, text: string, savedText: string): number => {
+  const savedStart = text.indexOf(savedText)
+  // The fallback paste path can normalize interior whitespace as well, so keep the plain-text adjustment in that case.
+  const removedLeadingLength = savedStart < 0 ? text.length - text.trimStart().length : savedStart
+  return Math.min(Math.max(0, offset - removedLeadingLength), savedText.length)
+}
 
 export default trimmedTextOffset

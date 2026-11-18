@@ -4,6 +4,7 @@ import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -218,7 +219,8 @@ export const formatSelectionActionCreator =
     ) as HTMLElement | null
     if (!contentEditable) return
 
-    const value = state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value
+    const literalNote = state.noteFocus ? noteThought(state, state.cursor) : null
+    const value = state.noteFocus ? (literalNote?.value ?? noteValue(state, state.cursor) ?? '') : thought.value
 
     // An empty thought has no selection to read, and the reducer holds the formatting rather than changing the value.
     if (value.length === 0) {
@@ -230,10 +232,15 @@ export const formatSelectionActionCreator =
     // Compute the plain-text character offsets [start, end) of the selection relative to the editable. A note's are
     // counted in its value as saved, since the note's draft can lead with whitespace that the trim has removed from it.
     const text = contentEditable.textContent ?? ''
-    const plainLength = state.noteFocus ? text.trim().length : text.length
+    const savedText = literalNote ? getTextContentFromHTML(value) : state.noteFocus ? text.trim() : text
+    const plainLength = savedText.length
     const offsets = selection.offsetRange(contentEditable)
-    const start = offsets ? (state.noteFocus ? trimmedTextOffset(offsets.start, text) : offsets.start) : 0
-    const end = offsets ? (state.noteFocus ? trimmedTextOffset(offsets.end, text) : offsets.end) : plainLength
+    const start = offsets ? (state.noteFocus ? trimmedTextOffset(offsets.start, text, savedText) : offsets.start) : 0
+    const end = offsets
+      ? state.noteFocus
+        ? trimmedTextOffset(offsets.end, text, savedText)
+        : offsets.end
+      : plainLength
 
     // A selection confined to draft whitespace has no saved text to format.
     if (state.noteFocus && offsets && offsets.start !== offsets.end && start === end) return
@@ -255,7 +262,7 @@ export const formatSelectionActionCreator =
     // places it back where the user left off instead of jumping to the start/end of the note (#4630).
     // noteFocus is only true when the caret is on a note, so it's not necessary to check whether the keyboard is open.
     const domNoteOffset = state.noteFocus ? selection.offsetFromNode(contentEditable) : null
-    const noteOffset = domNoteOffset === null ? null : trimmedTextOffset(domNoteOffset, text)
+    const noteOffset = domNoteOffset === null ? null : trimmedTextOffset(domNoteOffset, text, savedText)
 
     // Only call document.execCommand when the keyboard is open and the caret is on a thought.
     // This avoids messy and buggy focus-management logic.
