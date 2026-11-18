@@ -250,16 +250,16 @@ describe('solid filled arrowhead', () => {
     expect(markup).toContain('marker-end')
   })
 
-  // A rounded gesture ends in an arc, which has no filled chevron, so the marker and its viewBox padding return.
-  it('falls back to the filled marker for rounded gestures', () => {
+  // A rounded gesture must share the scale of the straight gestures listed beside it, so it takes the same chevron padding.
+  it('paints a filled chevron on rounded gestures', () => {
     const rounded = render({ ...props, path: 'rul', rounded: true })
     const straight = render({ ...props, path: 'rul' })
     /** Extracts the side length of the square viewBox from static markup. */
     const viewBoxSide = (markup: string) => +markup.match(/viewBox="[^"]+ ([^" ]+)"/)![1]
 
-    expect(rounded).not.toContain('<polygon')
-    expect(rounded).toContain('marker-end')
-    expect(viewBoxSide(rounded)).toBeGreaterThan(viewBoxSide(straight))
+    expect(rounded).toContain('<polygon')
+    expect(rounded).not.toContain('marker-end')
+    expect(viewBoxSide(rounded)).toBe(viewBoxSide(straight))
   })
 
   // The rdld glyph draws no arrowhead, but it must share the scale of the chevron gestures listed beside it.

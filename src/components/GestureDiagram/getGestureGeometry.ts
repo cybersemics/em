@@ -299,7 +299,7 @@ const getGestureGeometry = (
     rounded,
     size,
   }: {
-    /** Dimensions of a geometry-based chevron, or undefined for an SVG marker. A filled chevron applies only to a final line. */
+    /** Dimensions of a geometry-based chevron, or undefined for an SVG marker. A filled chevron applies to a final line or arc. */
     chevron?: { apexAngle: number; halfSpan: number; filled?: boolean }
     /** Radius used to soften vertices in line geometry. */
     cornerRadius?: number
@@ -319,11 +319,23 @@ const getGestureGeometry = (
   const chevronPoints = getChevron(finalSegment.to, getEndTangent(finalSegment), chevron)
 
   if (chevron.filled) {
-    if (finalSegment.kind !== 'line') return { ...geometry, chevron: null }
     const legs = {
       x: (chevronPoints[0].x + chevronPoints[2].x) / 2,
       y: (chevronPoints[0].y + chevronPoints[2].y) / 2,
     }
+
+    // An arc keeps its full length, so the chevron moves forward until its legs meet the arc's end.
+    // Only the arc's round cap then reaches under the chevron, as with a trimmed line.
+    // The tip lands half a chevron depth further out than on a line, which the viewBox padding must still fit.
+    if (finalSegment.kind === 'arc') {
+      const [legA, apex, legB] = chevronPoints.map(point => ({
+        x: point.x + finalSegment.to.x - legs.x,
+        y: point.y + finalSegment.to.y - legs.y,
+      }))
+      return { ...geometry, chevron: [legA, apex, legB] }
+    }
+
+    if (finalSegment.kind !== 'line') return { ...geometry, chevron: null }
     const segmentLength = Math.hypot(finalSegment.to.x - finalSegment.from.x, finalSegment.to.y - finalSegment.from.y)
     const legsBehindEnd = Math.hypot(finalSegment.to.x - legs.x, finalSegment.to.y - legs.y)
     // The shaft stops between the legs so its round cap stays inside the filled chevron.

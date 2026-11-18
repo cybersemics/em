@@ -151,8 +151,10 @@ const SolidGestureRenderer = ({
           stroke={highlight != null && segment.gestureIndex < highlight ? activeColor : inactiveColor}
           {...commonPathProps}
           markerEnd={index === segments.length - 1 ? markerEnd : undefined}
+          clipPath={shaftClip}
         />
       ))}
+      {chevronElement}
     </>
   )
 }
