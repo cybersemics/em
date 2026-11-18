@@ -311,6 +311,8 @@ The seventh layered touch-backend patch makes the drag work with scroll-at-edge 
 
 A popup, such as the drag-and-drop alert that sits at the bottom edge where scroll-at-edge scrolls, would also hide the thoughts beneath it from the drop target search, which uses `elementFromPoint`. [`PopupBase`](../src/components/PopupBase.tsx) sets `pointer-events: none` for both `DragHold` and `DragInProgress`, so a drag passes through a popup.
 
+The drop hover of a thought beneath such a popup would still be hidden behind it, though. So `PopupBase` marks a popup anchored to the bottom of the screen (and not full screen) with `data-drop-above`, and [`DragAndDropContext`](../src/components/DragAndDropContext.tsx) passes the backend a `dropPoint` option. While the finger is over a marked popup, the backend searches for the drop target `DROP_ABOVE_POPUP_MARGIN` px above the popup's top edge instead of under the finger. The drop hover is drawn across the top of the hovered thought, so it always lands above the popup. Everywhere else the drop target is the one under the finger.
+
 ### `react-dnd-html5-backend-npm-16.0.1-754940d855.patch`
 
 Single change to the HTML5 backend: removes a `e.preventDefault()` call inside the native-item drop handler. Removing it lets native drag sources (e.g. external file drops) proceed without their default behavior being suppressed at the wrong moment.

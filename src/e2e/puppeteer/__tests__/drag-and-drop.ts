@@ -1007,4 +1007,61 @@ describe('scroll at edge', () => {
     expect(dropTargetAfter).not.toBeNull()
     expect(dropTargetAfter).not.toBe(dropTargetBefore)
   })
+
+  it('shows the drop hover above the alert while the finger is held on the alert', async () => {
+    await paste(Array.from({ length: 40 }, (_, i) => `- ${i + 1}`).join('\n'))
+    await waitForEditable('40')
+    await page.evaluate(() => window.scrollTo(0, 0))
+
+    const source = await waitForEditable('1')
+    const box = await source.asElement()?.boundingBox()
+    if (!box) throw new Error('Thought 1 has no bounding box.')
+    const x = box.x + 1
+    const y = box.y + box.height / 2
+
+    await page.touchscreen.touchStart(x, y)
+
+    // A finger on iOS Safari drifts a pixel or two while it is held, and Safari delivers each of those moves. Chromium
+    // suppresses every move within its own touch slop, so Puppeteer cannot send one. Dispatch it on the page instead.
+    await page.evaluate(
+      ({ x, y }) => {
+        const target = document.elementFromPoint(x, y)!
+        const touch = new Touch({ identifier: 0, target, clientX: x, clientY: y + 2 })
+        target.dispatchEvent(
+          new TouchEvent('touchmove', {
+            touches: [touch],
+            targetTouches: [touch],
+            changedTouches: [touch],
+            bubbles: true,
+            cancelable: true,
+          }),
+        )
+      },
+      { x, y },
+    )
+
+    await waitForAlert(AlertText.DragAndDrop)
+
+    // drag quickly onto the alert at the bottom edge, and hold the finger still there
+    const innerHeight = await page.evaluate(() => window.innerHeight)
+    const edgeY = innerHeight - 40
+    await page.touchscreen.touchMove(x, (y + edgeY) / 2)
+    await page.touchscreen.touchMove(x, edgeY)
+
+    // Wait for the page to scroll, then measure the drop hover and the alert in the same frame.
+    const scrollYBefore = await page.evaluate(() => window.scrollY)
+    await page.waitForFunction(scrollYBefore => window.scrollY > scrollYBefore + 150, { timeout: 5000 }, scrollYBefore)
+    await page.waitForSelector('[data-testid="drop-hover"]', { timeout: 5000 })
+    const { dropHoverBottom, alertTop } = await page.evaluate(() => {
+      const alert = document.querySelector('[data-testid="alert-content"]')!.closest('[data-drop-above]')!
+      return {
+        dropHoverBottom: document.querySelector('[data-testid="drop-hover"]')!.getBoundingClientRect().bottom,
+        alertTop: alert.getBoundingClientRect().top,
+      }
+    })
+
+    await page.touchscreen.touchEnd()
+
+    expect(dropHoverBottom).toBeLessThanOrEqual(alertTop)
+  })
 })

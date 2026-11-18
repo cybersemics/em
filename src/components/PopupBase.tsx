@@ -128,6 +128,9 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           pointerEvents: { _dragHold: 'none', _dragInProgress: 'none' },
         })}
         {...swipeProps}
+        // A drag held over a popup at the bottom of the screen, such as the drag-and-drop alert, drops just above it
+        // (see dropPoint in DragAndDropContext).
+        data-drop-above={anchorFromBottom && !fullScreen ? true : undefined}
         // the hook measures the element whether or not swipe-to-dismiss is enabled, so its ref is always attached
         ref={useCombinedRefs([ref, innerRef, useSwipeToDismissProps.ref])}
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
