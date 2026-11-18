@@ -10,7 +10,7 @@ diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
          if (this.timeout) {
              clearTimeout(this.timeout);
              this.timeout = 0;
-@@ -52,6 +54,28 @@
+@@ -52,6 +54,18 @@
          window.removeEventListener('scroll', this.handleScroll)
      }
  
@@ -19,18 +19,8 @@ diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
 +    // it last moved, as thoughts scroll past under it. Replays the move handlers in the order the move itself reaches
 +    // them: the capture on the root, each drop target's handler on the body, then the root. See em issue #6281.
 +    handleDragScroll = () => {
-+        const e = this.lastMoveEvent;
-+        if (!e || !this.monitor.isDragging()) return;
-+        const replay = {
-+            type: e.type,
-+            touches: e.touches,
-+            targetTouches: e.targetTouches,
-+            changedTouches: e.changedTouches,
-+            clientX: e.clientX,
-+            clientY: e.clientY,
-+            cancelable: false,
-+            preventDefault: ()=>{}
-+        };
++        const replay = this.lastMoveEvent;
++        if (!replay || !this.monitor.isDragging()) return;
 +        this.handleTopMoveCapture();
 +        this.targetMoveHandlers.forEach((handleMove)=>handleMove(replay));
 +        this.handleTopMove(replay);
@@ -39,7 +29,7 @@ diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
      setup() {
          const root = this.options.rootElement;
          if (!root) {
-@@ -64,6 +88,7 @@
+@@ -64,6 +78,7 @@
          this.addEventListener(root, 'move', this.handleTopMove);
          this.addEventListener(root, 'move', this.handleTopMoveCapture, true);
          this.addEventListener(root, 'end', this.handleTopMoveEndCapture, true);
@@ -47,7 +37,7 @@ diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
          // iOS WKWebView intermittently drops the terminating `touchend` event, which leaves the drag
          // stuck at DragInProgress (the dragged thought never drops/archives and "blinks"). The pointer
          // events `pointerup`/`pointercancel` ARE reliably delivered on finger-lift, so register them as
-@@ -91,6 +116,8 @@
+@@ -91,6 +106,8 @@
          this.removeEventListener(root, 'move', this.handleTopMoveCapture, true);
          this.removeEventListener(root, 'move', this.handleTopMove);
          this.removeEventListener(root, 'end', this.handleTopMoveEndCapture, true);
@@ -56,7 +46,7 @@ diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
          if (this.pointerEndTimeout) {
              clearTimeout(this.pointerEndTimeout);
              this.pointerEndTimeout = undefined;
-@@ -189,7 +216,9 @@
+@@ -189,7 +206,9 @@
  		 * Attaching the event listener to the body so that touchmove will work while dragging over multiple target elements.
  		 */ this.addEventListener(this.document.body, 'move', handleMove);
          this.targetNodes.set(targetId, node);
@@ -66,16 +56,38 @@ diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
              if (this.document) {
                  this.targetNodes.delete(targetId);
                  this.removeEventListener(this.document.body, 'move', handleMove);
-@@ -308,6 +337,8 @@
+@@ -308,6 +327,30 @@
          };
          this.handleTopMove = (e1)=>{
              if (this.timeout) this.scrollHasBegun = true
-+            // Keep the last real move for handleDragScroll to replay.
-+            if (e1 instanceof Event) this.lastMoveEvent = e1;
++            // Keep a copy of the last real move for handleDragScroll to replay. Copy the coordinates rather than keep the
++            // event: the browser owns the event's touch lists, so they are not guaranteed to still describe the finger
++            // once the event has been handled.
++            if (e1 instanceof Event) {
++                const offset = getEventClientOffset(e1, this.lastTargetTouchFallback);
++                if (offset) {
++                    const touch = {
++                        clientX: offset.x,
++                        clientY: offset.y,
++                        target: e1.target
++                    };
++                    const touches = isTouchEvent(e1) ? [touch] : undefined;
++                    this.lastMoveEvent = {
++                        type: e1.type,
++                        touches,
++                        targetTouches: touches,
++                        changedTouches: touches,
++                        clientX: offset.x,
++                        clientY: offset.y,
++                        cancelable: false,
++                        preventDefault: ()=>{}
++                    };
++                }
++            }
  
              const clientOffset = getEventClientOffset(e1, this.lastTargetTouchFallback)
  
-@@ -355,7 +386,13 @@
+@@ -355,7 +398,13 @@
              const sourceNode = this.sourceNodes.get(this.monitor.getSourceId());
              this.installSourceNodeRemovalObserver(sourceNode);
              this.actions.publishDragSource();
@@ -90,7 +102,7 @@ diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
              // Get the node elements of the hovered DropTargets
              const dragOverTargetNodes = (dragOverTargetIds || []).map((key)=>this.targetNodes.get(key)
              ).filter((e)=>!!e
-@@ -440,6 +477,7 @@
+@@ -440,6 +489,7 @@
              this._isScrolling = false;
              this.lastTargetTouchFallback = undefined;
              this._mouseClientOffset = {};
@@ -98,7 +110,7 @@ diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
              if (!eventShouldEndDrag(e)) {
                  return;
              }
-@@ -470,6 +508,7 @@
+@@ -470,6 +520,7 @@
          this.sourcePreviewNodes = new Map();
          this.sourcePreviewNodeOptions = new Map();
          this.targetNodes = new Map();
