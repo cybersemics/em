@@ -761,50 +761,6 @@ it('resumes a paste into an empty thought before its next sibling', async () => 
 `)
 })
 
-// https://github.com/cybersemics/em/issues/6298
-it('resumes an import interrupted after its first thought into the import destination', async () => {
-  vi.useFakeTimers()
-  const { cleanup } = await initialize({ storage: 'memory' })
-
-  store.dispatch(importText({ text: '- p' }))
-  // let initialize look for unfinished imports while there are none
-  await vi.runAllTimersAsync()
-
-  const setItem = vi.spyOn(localStorage, 'setItem')
-  const text = `
-- a
-- b
-- c`
-  store.dispatch(importDataAtFirstMatch(['p'], { text }))
-  await vi.runAllTimersAsync()
-
-  // A refresh after the first thought leaves the thought imported before it, the raw text, and the checkpoint
-  // recorded after it. The checkpoints are the ones the import recorded, from the initial one at 0 thoughts.
-  const checkpoint = setItem.mock.calls.filter(([key]) => key === 'resume-imports')[1][1]
-  store.dispatch([deleteThought(['p', 'b']), deleteThought(['p', 'c'])])
-  const stored = resumeImports
-    .manager(Object.values(JSON.parse(checkpoint) as Record<string, ResumeImport>)[0])
-    .init(text)
-  localStorage.setItem('resume-imports', checkpoint)
-  await vi.runAllTimersAsync()
-  await stored
-
-  // resume the import, as initialize does
-  resumeImports.withText(resumeImports.list()).then(files => store.dispatch(importFiles({ resume: files })))
-  await vi.runAllTimersAsync()
-
-  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
-
-  cleanup()
-
-  expect(removeHome(exported)).toBe(`
-- p
-  - a
-  - b
-  - c
-`)
-})
-
 // https://github.com/cybersemics/em/issues/2712
 // The cursor is set on the first imported thought that is not a metaprogramming attribute. Duplicates are not merged,
 // so when it duplicates an existing sibling, the cursor belongs on the imported thought, not on the existing one.

@@ -65,3 +65,31 @@ it('imports a paste made as soon as the app loads only once', async () => {
 ${outline(values)}
 `)
 })
+
+// https://github.com/cybersemics/em/issues/6298
+it('resumes a paste interrupted after its first thought into the thought it was pasted into', async () => {
+  const values = Array.from({ length: 10 }, (_, i) => `t${i + 1}`)
+
+  await paste(`
+    - x
+  `)
+  await clickThought('x')
+  await press('Enter')
+  await waitForEditable('')
+
+  await setClipboard({ text: outline(values) })
+  await press('Insert', { shift: true })
+  // refresh as soon as the first thought is shown, while the rest are still being imported
+  await waitForEditable('t1', { timeout: 20000 })
+
+  await refresh()
+  await waitForAlert('Importing from clipboard', { timeout: 20000 })
+  // The few thoughts left import quickly enough that the final progress alert can be cleared before it is seen, so
+  // wait for the last thought instead.
+  await waitForEditable('t10', { timeout: 30000 })
+
+  expect(await exportThoughts()).toBe(`
+- x
+${outline(values)}
+`)
+})
