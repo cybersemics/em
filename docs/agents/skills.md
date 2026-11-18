@@ -76,6 +76,7 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`end-session`](#end-session) | Work through the exit checklist before stopping for any reason | [SKILL.md](../../.github/skills/end-session/SKILL.md) |
 | [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
 | [`bisect`](#bisect) | Find whether a bug is a recent regression, and the commit and pull request that introduced it | [SKILL.md](../../.github/skills/bisect/SKILL.md) |
+| [`address-pr-feedback`](#address-pr-feedback) | Work on feedback left as a comment on a pull request, and reply there with what was found and done | [SKILL.md](../../.github/skills/address-pr-feedback/SKILL.md) |
 | `create-issue` | Write a GitHub issue, or the reproduction sections of a pull request with no linked issue, in the format this repo uses | [SKILL.md](../../.github/skills/create-issue/SKILL.md) |
 | [`liminal`](#liminal) | Style a static artifact, such as a report page, like em's Liminal UI | [SKILL.md](../../.github/skills/liminal/SKILL.md) |
 | [`report-review-gaps`](#report-review-gaps) | Report the feedback a final reviewer gave after the first review, as review principles | [SKILL.md](../../.github/skills/report-review-gaps/SKILL.md) |
@@ -316,6 +317,14 @@ Three things go stale, and the skill checks for them in order of how often they 
 It reports one line back into the ending — the documents it updated, or `docs: unaffected — <reason>`. The second is a common and legitimate outcome, but it is a conclusion reached after checking the table, not a default.
 
 The escalation rule is the interesting one. If a change contradicts **design intent** recorded in a doc — not a detail, but the stated reason a subsystem is built the way it is — the agent stops and raises it instead of editing the intent to match the new code. Quietly rewriting the "why" erases the only record that a deliberate decision was ever made.
+
+## Working on pull request feedback
+
+### address-pr-feedback
+
+**Source: [`.github/skills/address-pr-feedback/SKILL.md`](../../.github/skills/address-pr-feedback/SKILL.md)**
+
+Runs when the agent is asked to work on feedback left as a comment on a pull request: a tester's regression report, new Steps to Reproduce, or a reviewer's request. It reads the whole thread and any video frame by frame, reproduces the report on the pull request's head and on its base, so that a bug the pull request did not introduce is not reported as a regression, and fixes it on top of the pull request. Then it replies on the pull request with what was found, what changed (with bare commit hashes), how it was verified, what was not verified, and what is still open. The tester sees none of the work until that reply appears, and uses it to decide what to retest.
 
 ## Presenting work
 
