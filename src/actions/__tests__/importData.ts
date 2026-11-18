@@ -720,7 +720,10 @@ it('records the progress of an import after every imported thought', async () =>
 // interrupted session into that thought.
 it('resumes an interrupted import from its checkpoint when the app initializes', async () => {
   vi.useFakeTimers()
-  const { cleanup } = await initialize({ storage: 'memory' })
+
+  // the session that is interrupted
+  const interrupted = await initialize({ storage: 'memory' })
+  await vi.runAllTimersAsync()
 
   const text = `
 - b
@@ -743,10 +746,13 @@ it('resumes an interrupted import from its checkpoint when the app initializes',
   })
   const stored = resumeImport.init(text)
   resumeImport.update(path, 2)
-
-  // initialize resumes unfinished imports after a delay
   await vi.runAllTimersAsync()
   await stored
+  interrupted.cleanup()
+
+  // the next session resumes unfinished imports after a delay
+  const { cleanup } = await initialize({ storage: 'memory' })
+  await vi.runAllTimersAsync()
 
   const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
   const remaining = resumeImports.list()
