@@ -74,6 +74,19 @@ it('collapses a final line shorter than half the filled chevron instead of rever
   expect(geometry.segments[0].to).toEqual({ x: 0, y: 0 })
 })
 
+// A final arc keeps its full length, so only its round cap reaches under the chevron.
+it('places the legs of a filled chevron on the end of a final arc and leaves the arc whole', () => {
+  const chevron = { apexAngle: 90, halfSpan: 5, filled: true }
+  const options = { size: 50, reversalOffset: 15, rounded: true }
+  const geometry = getGestureGeometry('rul', { ...options, chevron })
+  const [legA, , legB] = geometry.chevron!
+  const arcEnd = geometry.segments.at(-1)!.to
+
+  expect((legA.x + legB.x) / 2).toBeCloseTo(arcEnd.x, 6)
+  expect((legA.y + legB.y) / 2).toBeCloseTo(arcEnd.y, 6)
+  expect(geometry.segments).toEqual(getGestureGeometry('rul', options).segments)
+})
+
 it('omits the filled chevron from the question mark', () => {
   const chevron = { apexAngle: 90, halfSpan: 5, filled: true }
   const geometry = getGestureGeometry('rdld', { size: 50, reversalOffset: 15, chevron })
