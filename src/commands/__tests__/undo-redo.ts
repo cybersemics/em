@@ -6,6 +6,7 @@ import { cursorDownActionCreator as cursorDown } from '../../actions/cursorDown'
 import { editThoughtActionCreator as editThoughtRaw } from '../../actions/editThought'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../../actions/formatLetterCase'
 import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
+import { freeThoughtsActionCreator as freeThoughts } from '../../actions/freeThoughts'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
@@ -26,10 +27,14 @@ import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import isUndoEnabled from '../../selectors/isUndoEnabled'
 import store from '../../stores/app'
+import freeThoughtsThresholdStore from '../../stores/freeThoughtsThresholdStore'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
+import importToContext from '../../test-helpers/importToContext'
 import initStore from '../../test-helpers/initStore'
+import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import archiveCommand from '../archive'
@@ -1505,5 +1510,294 @@ describe('count', () => {
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
   - a`)
+  })
+})
+
+describe('freed thoughts', () => {
+  it('undo an edit after freeThoughts frees memory', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - x
+            - w
+              - a
+          - p
+            - p1
+          - q
+            - q1
+          - r
+            - r1
+          - z
+            - z1
+              - z2`,
+      }),
+      setCursor(['x', 'w', 'a']),
+      editThought(['x', 'w', 'a'], 'b'),
+      // edits in three other places, so that x/w/b is no longer one of the jump points that freeThoughts keeps
+      setCursor(['p', 'p1']),
+      editThought(['p', 'p1'], 'p2'),
+      setCursor(['q', 'q1']),
+      editThought(['q', 'q1'], 'q2'),
+      setCursor(['r', 'r1']),
+      editThought(['r', 'r1'], 'r2'),
+    ])
+
+    // freeThoughts frees every thought that it does not keep. initStore restores the threshold.
+    freeThoughtsThresholdStore.update(0)
+    store.dispatch(freeThoughts())
+    // z/z1/z2, which the history does not need, is still freed
+    expect(contextToThoughtId(store.getState(), ['z', 'z1', 'z2'])).toBeNull()
+
+    store.dispatch([undo(), undo(), undo()])
+    // undoing the edit of x/w/b threw when freeThoughts had freed x/w/b
+    expect(() => store.dispatch(undo())).not.toThrow()
+
+    expect(exportContext(store.getState(), ['x'], 'text/plain')).toEqual(`- x
+  - w
+    - a`)
+  })
+
+  it('undo an edit after freeThoughts frees memory, when another thought has the old value', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - x
+            - w
+              - a
+          - y
+            - u
+              - v
+                - a
+          - p
+            - p1
+          - q
+            - q1
+          - r
+            - r1`,
+      }),
+      setCursor(['x', 'w', 'a']),
+      editThought(['x', 'w', 'a'], 'b'),
+      // edits in three other places, so that x/w/b is no longer one of the jump points that freeThoughts keeps
+      setCursor(['p', 'p1']),
+      editThought(['p', 'p1'], 'p2'),
+      setCursor(['q', 'q1']),
+      editThought(['q', 'q1'], 'q2'),
+      setCursor(['r', 'r1']),
+      editThought(['r', 'r1'], 'r2'),
+    ])
+
+    // freeThoughts frees every thought that it does not keep. initStore restores the threshold.
+    freeThoughtsThresholdStore.update(0)
+    store.dispatch(freeThoughts())
+
+    store.dispatch([undo(), undo(), undo()])
+    // Undoing the edit adds x/w/a back to the contexts of a. That threw when freeThoughts had freed y/u/v/a, the last loaded context of a, since that freed the Lexeme too.
+    expect(() => store.dispatch(undo())).not.toThrow()
+
+    expect(exportContext(store.getState(), ['x'], 'text/plain')).toEqual(`- x
+  - w
+    - a`)
+  })
+
+  it('undo moving the only child out of a thought after freeThoughts frees memory', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - x
+            - w
+              - a
+                - c
+              - b
+          - y`,
+      }),
+      setCursor(['y']),
+      // drag x/w/a/c into x/w/b, which leaves x/w/a without children
+      moveThought({ from: ['x', 'w', 'a', 'c'], to: ['x', 'w', 'b', 'c'], newRank: 0 }),
+    ])
+
+    // freeThoughts frees every thought that it does not keep. initStore restores the threshold.
+    freeThoughtsThresholdStore.update(0)
+    store.dispatch(freeThoughts())
+
+    // undoing the move adds x/w/a/c back to x/w/a, which threw when freeThoughts had freed x/w/a
+    expect(() => store.dispatch(undo())).not.toThrow()
+
+    expect(exportContext(store.getState(), ['x'], 'text/plain')).toEqual(`- x
+  - w
+    - a
+      - c
+    - b`)
+  })
+
+  // increase timeout to give time for the call to initialize()
+  it('persist undoing an indent after freeThoughts frees memory', async () => {
+    store.dispatch([
+      importText({
+        text: `
+          - x
+            - w
+              - c1
+              - c2
+              - c3
+          - p
+            - p1
+          - q
+            - q1
+          - r
+            - r1`,
+      }),
+      setCursor(['x', 'w', 'c3']),
+      indent(),
+      // edits in three other places, so that x/w/c2/c3 is no longer one of the jump points that freeThoughts keeps
+      setCursor(['p', 'p1']),
+      editThought(['p', 'p1'], 'p2'),
+      setCursor(['q', 'q1']),
+      editThought(['q', 'q1'], 'q2'),
+      setCursor(['r', 'r1']),
+      editThought(['r', 'r1'], 'r2'),
+    ])
+
+    // freeThoughts frees every thought that it does not keep. Restore the threshold before the reload, so that the freeThoughts middleware does not free the thoughts that the reload loads.
+    freeThoughtsThresholdStore.update(0)
+    store.dispatch(freeThoughts())
+    freeThoughtsThresholdStore.reset()
+
+    store.dispatch([undo(), undo(), undo()])
+    // undoing the indent moves x/w/c2/c3 back into x/w, which threw when freeThoughts had freed it
+    expect(() => store.dispatch(undo())).not.toThrow()
+    await waitForThoughtspaceIdle()
+
+    // clear and call initialize again to reload from local db (simulating page refresh)
+    store.dispatch(clear())
+    await initialize({ storage: 'memory' })
+    await vi.runAllTimersAsync()
+    store.dispatch(setCursor(['x', 'w']))
+    await vi.runAllTimersAsync()
+    await waitForThoughtspaceIdle()
+
+    // When freeThoughts kept x/w/c2 and x/w/c3, which the undo needs, but freed x/w/c1, undoing the indent placed x/w/c2 first, since a replayed move is placed after the previous loaded sibling.
+    expect(exportContext(store.getState(), ['x'], 'text/plain')).toEqual(`- x
+  - w
+    - c1
+    - c2
+    - c3`)
+  }, 10000)
+
+  it('undo a new thought after freeThoughts frees memory', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - x
+            - w
+              - c
+          - p
+            - p1
+          - q
+            - q1
+          - r
+            - r1`,
+      }),
+      setCursor(['x', 'w', 'c']),
+      newThought({ value: 'd' }),
+      // edits in three other places, so that x/w/d is no longer one of the jump points that freeThoughts keeps
+      setCursor(['p', 'p1']),
+      editThought(['p', 'p1'], 'p2'),
+      setCursor(['q', 'q1']),
+      editThought(['q', 'q1'], 'q2'),
+      setCursor(['r', 'r1']),
+      editThought(['r', 'r1'], 'r2'),
+    ])
+
+    // freeThoughts frees every thought that it does not keep. initStore restores the threshold.
+    freeThoughtsThresholdStore.update(0)
+    store.dispatch(freeThoughts())
+
+    store.dispatch([undo(), undo(), undo()])
+    // undoing the new thought restores the cursor to x/w/c, which threw when freeThoughts had freed x/w/c
+    expect(() => store.dispatch(undo())).not.toThrow()
+
+    expect(exportContext(store.getState(), ['x'], 'text/plain')).toEqual(`- x
+  - w
+    - c`)
+    expectPathToEqual(store.getState(), store.getState().cursor, ['x', 'w', 'c'])
+  })
+
+  it('redo a new thought after freeThoughts frees memory', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - x
+            - w
+          - p
+            - p1
+          - q
+            - q1
+          - r
+            - r1`,
+      }),
+      setCursor(['x', 'w']),
+      newThought({ value: 'foo', insertNewSubthought: true }),
+      // edits in three other places, so that x/w/foo is no longer one of the jump points that freeThoughts keeps
+      setCursor(['p', 'p1']),
+      editThought(['p', 'p1'], 'p2'),
+      setCursor(['q', 'q1']),
+      editThought(['q', 'q1'], 'q2'),
+      setCursor(['r', 'r1']),
+      editThought(['r', 'r1'], 'r2'),
+    ])
+
+    // freeThoughts frees every thought that it does not keep. initStore restores the threshold.
+    freeThoughtsThresholdStore.update(0)
+    store.dispatch(freeThoughts())
+
+    // Undoing x/w/foo removed nothing when freeThoughts had freed it, which left Redo nothing to recreate.
+    store.dispatch([undo(), undo(), undo(), undo(), redo(), redo(), redo(), redo()])
+
+    expect(exportContext(store.getState(), ['x'], 'text/plain')).toEqual(`- x
+  - w
+    - foo`)
+  })
+
+  it('redo a paste after freeThoughts frees memory', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - x
+            - w
+          - p
+            - p1
+          - q
+            - q1
+          - r
+            - r1`,
+      }),
+      setCursor(['x', 'w']),
+      importToContext(
+        ['x', 'w'],
+        `
+        - m
+        - n`,
+      ),
+      // edits in three other places, so that x/w/n is no longer one of the jump points that freeThoughts keeps
+      setCursor(['p', 'p1']),
+      editThought(['p', 'p1'], 'p2'),
+      setCursor(['q', 'q1']),
+      editThought(['q', 'q1'], 'q2'),
+      setCursor(['r', 'r1']),
+      editThought(['r', 'r1'], 'r2'),
+    ])
+
+    // freeThoughts frees every thought that it does not keep. initStore restores the threshold.
+    freeThoughtsThresholdStore.update(0)
+    store.dispatch(freeThoughts())
+
+    store.dispatch([undo(), undo(), undo(), undo()])
+    // Undoing the paste removed nothing when freeThoughts had freed x/w/m and x/w/n, which left Redo nothing to recreate. Redo then threw on the cursor that it restores to x/w/n.
+    expect(() => store.dispatch(redo())).not.toThrow()
+
+    expect(exportContext(store.getState(), ['x'], 'text/plain')).toEqual(`- x
+  - w
+    - m
+    - n`)
   })
 })

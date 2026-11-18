@@ -2,7 +2,7 @@
 
 The persistence layer has three tiers:
 
-1. **In-memory state** — Redux store (`state.thoughts.thoughtIndex` and `state.thoughts.lexemeIndex`), holding only thoughts that are currently visible.
+1. **In-memory state** — Redux store (`state.thoughts.thoughtIndex` and `state.thoughts.lexemeIndex`), holding only thoughts that are currently visible, and the thoughts that the undo and redo history needs.
 2. **Local persistence** — a [TreeCRDT](https://github.com/cybersemics/treecrdt) operation log materialized into SQLite, running in the browser via [`@treecrdt/wa-sqlite`](https://www.npmjs.com/package/@treecrdt/wa-sqlite) and stored in OPFS.
 3. **Remote sync** — TreeCRDT WebSocket sync ([`@treecrdt/sync`](https://www.npmjs.com/package/@treecrdt/sync)). **Opt-in** — see [Remote sync](#remote-sync-opt-in) below.
 
@@ -17,7 +17,7 @@ Learning state uses the same [`storageModel`](../src/stores/storageModel.ts) as 
 
 ## In-memory state (Redux)
 
-Thoughts live in `state.thoughts.thoughtIndex` (keyed by `ThoughtId`) and `state.thoughts.lexemeIndex` (keyed by hashed value). Only thoughts that are *visible* — the cursor, its ancestors, `state.expanded` paths, and any context-view contexts and their ancestors — are held in memory. Everything else has either never been pulled or was freed after going off-screen.
+Thoughts live in `state.thoughts.thoughtIndex` (keyed by `ThoughtId`) and `state.thoughts.lexemeIndex` (keyed by hashed value). Only thoughts that are *visible* — the cursor, its ancestors, `state.expanded` paths, and any context-view contexts and their ancestors — are held in memory, along with the thoughts that the undo and redo history needs (see [Memory management](#memory-management)). Everything else has either never been pulled or was freed after going off-screen.
 
 Thoughts that are known to exist but haven't been loaded yet are flagged with `pending: true` so the UI can render placeholder rows while the pull queue fetches them.
 
@@ -124,6 +124,8 @@ The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot`
 ### Memory management
 
 `freeThought` / `freeLexeme` are **no-ops** in the TreeCRDT provider. The whole thoughtspace is a single SQLite database, so there is no per-document cache to release — freeing memory only means dropping entries from the Redux indexes, which the `freeQueue` half of the push queue already does. [`redux-middleware/freeThoughts.ts`](../src/redux-middleware/freeThoughts.ts) dispatches `freeThoughts` once `thoughtIndex` exceeds the [`freeThoughtsThresholdStore`](../src/stores/freeThoughtsThresholdStore.ts) store's value.
+
+[`freeThoughts`](../src/actions/freeThoughts.ts) never frees a thought that the undo or redo history needs, or an ancestor of one, since freeing a thought frees its descendants. Undo and Redo replay patches recorded against the Redux state, so a patch needs every thought and Lexeme that it changes or removes, and every thought in a Path that it restores, such as the cursor. An op nested in a freed thought throws, the remove of a freed thought removes nothing, which leaves the reverse patch unable to recreate it, and a restored Path through a freed thought is invalid. A Lexeme is freed along with the last of its loaded contexts, so one of those contexts is kept for each Lexeme that a patch changes or removes. A patch that moves a thought also needs every child of the parents that it moves the thought between, since the replayed move is persisted as a placement after the previous loaded sibling. The undo history is not capped, so a thought stays in memory for as long as a patch that needs it is in the history.
 
 Deleting a thought is not a separate provider call: it is a `null` entry in `thoughtIndexUpdates`, handled by the write path above.
 
