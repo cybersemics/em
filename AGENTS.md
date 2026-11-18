@@ -16,8 +16,6 @@ The repo's `commit-msg` hook adds this automatically for Claude Code, Codex, Ope
 
 **5. Leave commit hashes bare on GitHub.** In issues, comments, and pull request descriptions, write a commit hash as plain text — no backticks and no code block. GitHub autolinks a bare hash to the commit; wrapping it in code formatting suppresses the link.
 
-**6. Reply on the pull request when you work on feedback left there.** When you take up a comment on a pull request — a tester's report, new steps, a reviewer's request — use `address-pr-feedback`. The person who left it sees none of your work until you reply, so post a comment on the pull request saying what you found, what you changed, how it was verified, and what is still open.
-
 ## Accessing documentation
 
 - `docs/` contains comprehensive documentation on the codebase. Start from [`docs/readme.md`](docs/readme.md), which indexes every subsystem doc.
