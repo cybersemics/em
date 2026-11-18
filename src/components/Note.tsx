@@ -162,6 +162,9 @@ const Note = React.memo(
         // note may be '' or null if the attribute child was deleted
         else if (e.key === 'Backspace' && !note) {
           e.stopPropagation()
+          // The saved note can be empty while the editor still contains draft spaces.
+          if (e.currentTarget.textContent) return
+
           e.preventDefault()
 
           // delete target thought if it exists
