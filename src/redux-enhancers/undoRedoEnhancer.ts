@@ -174,7 +174,7 @@ const restorePushQueueFromPatches = (state: State, oldState: State, ops: Operati
     const lexemeKey = path.slice('/thoughts/lexemeIndex/'.length).split('/')[0]
     return {
       ...acc,
-      // Patch paths may target nested lexeme properties such as contexts. Persist the full lexeme.
+      // diffState replaces a Lexeme whole, so the path ends at its key. Persist the full lexeme.
       [lexemeKey]: state.thoughts.lexemeIndex[lexemeKey] || null,
     }
   }, {})
@@ -234,21 +234,28 @@ const pathProperties: Record<PathProperty, true> = {
 /**
  * Returns the diff between two states as a fast-json-patch Patch that can be applied for undo/redo functionality. Ignores ephemeral state properties such as alert which should not be recreated (defined in statePropertiesToOmit).
  * A Path-valued property, such as the cursor or multicursorAnchor (see pathProperties), is replaced whole rather than element by element. A Path is a value, not a container: an element-wise op like replace /multicursorAnchor/2 is only valid against the exact array it was diffed from. When navigation patches are merged, the previous patch is replayed on top of whatever non-undoable actions have done since, so the array may have changed or become null in the meantime (e.g. toggleMulticursor clears the anchor when the anchored thought is deselected). Replaying an element-wise op then either splices the restored Path into an unrelated one or throws on null.
+ * A Lexeme is replaced whole for the same reason. After each write, applyMaterializedThoughtsToStore replaces the Lexemes the write touched with the provider's copies, and that is not undoable. A copy can list contexts in another order or include thoughts that are not loaded, and a Lexeme with no thoughts left is deleted. So an op like remove /thoughts/lexemeIndex/<key>/contexts/1 can point at a different thought, or into a deleted Lexeme, by the time it is applied. The cost is a copy of each changed Lexeme in the patch.
  */
 const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] => {
   const ops = compare(_.omit(newValue, statePropertiesToOmit), _.omit(value, statePropertiesToOmit))
 
-  // Path properties with at least one element-wise op
-  const pathKeys = new Set(
-    ops
-      .map(op => op.path.split('/'))
-      .filter(segments => segments.length > 2 && segments[1] in pathProperties)
-      .map(segments => segments[1]),
-  )
+  // The Path property or Lexeme that each op is inside of, if any. These are replaced whole.
+  const wholePaths = ops.map(({ path }) => {
+    const segments = path.split('/')
+    return segments.length > 2 && segments[1] in pathProperties
+      ? `/${segments[1]}`
+      : segments.length > 4 && segments[1] === 'thoughts' && segments[2] === 'lexemeIndex'
+        ? segments.slice(0, 4).join('/')
+        : null
+  })
 
   return [
-    ...ops.filter(op => !pathKeys.has(op.path.split('/')[1])),
-    ...[...pathKeys].map(key => ({ op: 'replace' as const, path: `/${key}`, value: _.cloneDeep(value[key]) })),
+    ...ops.filter((op, i) => !wholePaths[i]),
+    ...[...new Set(_.compact(wholePaths))].map(path => ({
+      op: 'replace' as const,
+      path,
+      value: _.cloneDeep(_.get(value, path.split('/').slice(1))),
+    })),
   ]
 }
 
