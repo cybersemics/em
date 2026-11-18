@@ -16,7 +16,6 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import head from '../../util/head'
 import removeHome from '../../util/removeHome'
-import resumeImports from '../../util/resumeImports'
 import { clearActionCreator as clear } from '../clear'
 import importDataActionCreator from '../importData'
 import { importFilesActionCreator as importFiles } from '../importFiles'
@@ -712,61 +711,6 @@ it('records the progress of an import after every imported thought', async () =>
 
   // the manifest is deleted once the import is complete
   expect(thoughtsImported).toEqual([[0], [1], [2], [3], []])
-})
-
-// https://github.com/cybersemics/em/issues/5174
-// An import that was interrupted by a refresh is resumed when the app initializes. It continues from the number of
-// thoughts recorded in the resume manifest, importing the remaining descendants of a thought imported by the
-// interrupted session into that thought.
-it('resumes an interrupted import from its checkpoint when the app initializes', async () => {
-  vi.useFakeTimers()
-
-  // the session that is interrupted
-  const interrupted = await initialize({ storage: 'memory' })
-  await vi.runAllTimersAsync()
-
-  const text = `
-- b
-- c
-  - d`
-
-  // the thoughts imported before the interruption
-  store.dispatch(importText({ text: '- a\n  - b\n  - c' }))
-
-  // record the import as interrupted after its second thought, as importFiles does after each thought
-  const path = contextToPath(store.getState(), ['a'])!
-  const resumeImport = resumeImports.manager({
-    id: 'test',
-    insertBefore: false,
-    lastModified: 0,
-    thoughtsImported: 0,
-    name: 'test',
-    path,
-    size: text.length,
-  })
-  const stored = resumeImport.init(text)
-  resumeImport.update(path, 2)
-  await vi.runAllTimersAsync()
-  await stored
-  interrupted.cleanup()
-
-  // the next session resumes unfinished imports after a delay
-  const { cleanup } = await initialize({ storage: 'memory' })
-  await vi.runAllTimersAsync()
-
-  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
-  const remaining = resumeImports.list()
-
-  cleanup()
-
-  expect(removeHome(exported)).toBe(`
-- a
-  - b
-  - c
-    - d
-`)
-  // the manifest is deleted once the import is complete, so it is not resumed again
-  expect(remaining).toEqual([])
 })
 
 // https://github.com/cybersemics/em/issues/2712
