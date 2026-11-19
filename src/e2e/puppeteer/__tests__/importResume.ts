@@ -85,7 +85,8 @@ it('resumes a paste into an empty thought before its next sibling', async () => 
   // refresh as soon as the first child is shown, while the rest are still being imported
   await waitForEditable('t1', { timeout: 20000 })
 
-  await refresh()
+  // The thoughtspace is not idle until the import finishes, so a refresh that waits for idle would land after it.
+  await refresh({ immediate: true })
   await waitForAlert('Importing from clipboard', { timeout: 20000 })
   // The few thoughts left import quickly enough that the final progress alert can be cleared before it is seen, so
   // wait for the last thought instead.
@@ -112,10 +113,12 @@ it('resumes a paste interrupted after its first thought into the thought it was 
 
   await setClipboard({ text: outline(values) })
   await press('Insert', { shift: true })
-  // refresh as soon as the first thought is shown, while the rest are still being imported
-  await waitForEditable('t1', { timeout: 20000 })
+  // The second thought is imported only once the first is saved and its checkpoint recorded, so refreshing as soon as it
+  // is shown interrupts the import after its first thought.
+  await waitForEditable('t2', { timeout: 20000 })
 
-  await refresh()
+  // The thoughtspace is not idle until the import finishes, so a refresh that waits for idle would land after it.
+  await refresh({ immediate: true })
   await waitForAlert('Importing from clipboard', { timeout: 20000 })
   // The few thoughts left import quickly enough that the final progress alert can be cleared before it is seen, so
   // wait for the last thought instead.
