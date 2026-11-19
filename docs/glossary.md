@@ -188,7 +188,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **=style** — Meta-attribute carrying CSS styles. Variants: `=children/=style` (apply to direct children), `=grandchildren/=style` (one level deeper).
 
-**system menu** — The menu bar of the macOS desktop app. It lists every command with a `systemMenu`, under the top level menu that the property names, with the command's keyboard shortcut as the accelerator. Built natively from [`desktop/menu.json`](../desktop/menu.json), which is generated from the commands. See [commands.md](commands.md#system-menu).
+**system menu** — The menu bar of the desktop app, on macOS, Windows, and Linux. It lists every command with a `systemMenu`, under the top level menu that the property names, with the command's keyboard shortcut beside it. Built natively from [`desktop/menu.json`](../desktop/menu.json), which is generated from the commands. See [commands.md](commands.md#system-menu).
 
 ## T
 
