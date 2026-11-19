@@ -6,6 +6,7 @@ import store from '../../stores/app'
 import { resetStores } from '../../stores/ministore'
 import scrollContainerStore from '../../stores/scrollContainerStore'
 import touchStore from '../../stores/touchStore'
+import dispatchTouchEvent from '../../test-helpers/dispatchTouchEvent'
 import initStore from '../../test-helpers/initStore'
 import debugLog from '../debugLog'
 import initEvents from '../initEvents'
@@ -63,6 +64,46 @@ it('allows cursor events again when a new touch starts', () => {
   window.dispatchEvent(new TouchEvent('touchstart'))
 
   expect(touchStore.getState().suppressCursorAfterTouch).toBe(false)
+})
+
+// Also covered on a device by src/e2e/iOS/__tests__/gestures.ios27.ts, see the comment there
+describe('press on the caret', () => {
+  afterEach(() => {
+    document.body.replaceChildren()
+  })
+
+  it('is latched for a touch that lands on the editable holding the caret', () => {
+    initEvents(store)
+    const editable = document.createElement('div')
+    editable.setAttribute('data-editable', 'true')
+    editable.setAttribute('contenteditable', 'true')
+    editable.textContent = 'abc'
+    document.body.appendChild(editable)
+    editable.focus()
+    window.getSelection()!.collapse(editable.firstChild!, 0)
+
+    dispatchTouchEvent('touchstart', [{ identifier: 0, clientX: 0, clientY: 0 }], { target: editable })
+
+    expect(touchStore.getState().pressOnCaret).toBe(true)
+  })
+
+  // https://github.com/cybersemics/em/issues/5844
+  it('is not latched for a touch at the same point that lands on an element drawn over the editable', () => {
+    initEvents(store)
+    const editable = document.createElement('div')
+    editable.setAttribute('data-editable', 'true')
+    editable.setAttribute('contenteditable', 'true')
+    editable.textContent = 'abc'
+    const bullet = document.createElement('span')
+    bullet.setAttribute('aria-label', 'bullet')
+    document.body.append(bullet, editable)
+    editable.focus()
+    window.getSelection()!.collapse(editable.firstChild!, 0)
+
+    dispatchTouchEvent('touchstart', [{ identifier: 0, clientX: 0, clientY: 0 }], { target: bullet })
+
+    expect(touchStore.getState().pressOnCaret).toBe(false)
+  })
 })
 
 // https://github.com/cybersemics/em/issues/1596

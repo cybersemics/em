@@ -371,7 +371,15 @@ const initEvents = (store: Store<State, any>) => {
     const isEmptyThought = !!state.cursor && getThoughtById(state, head(state.cursor))?.value === ''
     touchStore.update({
       pressOnCaret:
-        isTouch && (isSafari() || isEmptyThought) && !!touch && selection.isCaretNear(touch.clientX, touch.clientY),
+        isTouch &&
+        (isSafari() || isEmptyThought) &&
+        !!touch &&
+        // isCaretNear compares the point with the editable's rect, but the bullet overlaps the editable's left edge and a
+        // url icon its right, and a touch on either goes to that element. iOS then pans rather than raising the
+        // magnifier, and the moves that MultiGesture lets through after MAGNIFIER_DELAY scroll the page (#5844).
+        e.target instanceof Node &&
+        !!document.activeElement?.contains(e.target) &&
+        selection.isCaretNear(touch.clientX, touch.clientY),
       pressInEmptyThought:
         isTouch &&
         isEmptyThought &&
