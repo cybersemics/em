@@ -354,13 +354,11 @@ const createTreecrdtDataProvider = () => {
         onError: err => console.error('TreeCRDT derived indexing failed', err),
       },
     )
-    /** Resolves once the index updates queued so far have finished, whether or not they succeeded. */
-    const indexed = () => indexes.idle()
 
     const clientDb: TreecrdtClientDataProvider = {
       getLexemeById: async key => (await clientDb.getLexemesByIds([key]))[0],
       getLexemesByIds: async keys => {
-        await indexed()
+        await indexes.idle()
         return lexemes.getLexemesByIds(keys)
       },
       getThoughtById: id => getThoughtByIdFromClient(client, id),
@@ -381,7 +379,9 @@ const createTreecrdtDataProvider = () => {
     }
 
     // A publication is queued only once its event is indexed, so the idle barrier waits for the indexes too.
-    const unsubscribeMaterialized = client.onMaterialized(() => void enqueueMaterializedThoughtsToStoreWork(indexed))
+    const unsubscribeMaterialized = client.onMaterialized(
+      () => void enqueueMaterializedThoughtsToStoreWork(() => indexes.idle()),
+    )
     if (materializationContext) {
       publish = (event, keys) => {
         materializationContext.pending.push({ event, keys })
