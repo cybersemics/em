@@ -9,7 +9,7 @@ import selectAllCommand from '../selectAll'
 beforeEach(initStore)
 
 // https://github.com/cybersemics/em/issues/5228
-it.skip('deselects all thoughts when Select All is executed while all thoughts are selected', () => {
+it('deselects all thoughts when Select All is executed while all thoughts are selected', () => {
   store.dispatch([
     importText({
       text: `
