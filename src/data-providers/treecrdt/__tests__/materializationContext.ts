@@ -93,6 +93,26 @@ it('retries stale membership readback after a newer optimistic rename and persis
   expect(snapshot.lexemeIndex[hashThought('b')].contexts).toEqual([THOUGHT_ID])
 })
 
+it('keeps a round when another thought is edited and its write is indexed while the round reads', async () => {
+  const other = { ...thought('x'), id: '00000000000000000000000000000204' as ThoughtId }
+  getSnapshot.mockImplementationOnce(() => {
+    // Right after the round first reads the store, an edit to another thought lands and queues its write.
+    const before = snapshot
+    snapshot = { ...snapshot, thoughtIndex: { ...snapshot.thoughtIndex, [other.id]: other } }
+    void withTreecrdtWriteBarrier(() => provider.db.updateThoughts({ thoughtIndexUpdates: { [other.id]: other } }))
+    return before
+  })
+  await withTreecrdtWriteBarrier(() =>
+    provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
+  )
+  await waitForMaterializedThoughtsToStore()
+
+  // The first round publishes: only its own two store reads come before the publication.
+  const [published] = apply.mock.invocationCallOrder
+  expect(getSnapshot.mock.invocationCallOrder.filter(order => order < published)).toHaveLength(2)
+  expect(snapshot.lexemeIndex[hashThought('a')].contexts).toEqual([THOUGHT_ID])
+})
+
 it('publishes pending memberships on the next edit after a failed publication', async () => {
   const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   getSnapshot.mockImplementationOnce(() => {
