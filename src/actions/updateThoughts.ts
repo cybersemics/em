@@ -104,8 +104,8 @@ const updateThoughts = (
   // A pull reads storage asynchronously, so its records can predate an edit or undo made in the meantime, and
   // replacing a loaded thought with one can corrupt the tree (#3947, #3948, #5622). So a non-local update only adds
   // missing thoughts, fills pending ones and deletes, unless it sets overwritePending to replace thoughts on purpose.
-  // TreeCRDT materialization (repairCursor) may also replace a loaded thought, but only with a newer one, since its
-  // readback can predate a local edit too.
+  // TreeCRDT materialization (repairCursor) may also replace a loaded thought, but only with a newer one. That drops a
+  // readback that predates a local edit, but not one that predates an undo, since undo restores the older lastUpdated.
   const thoughtIndexUpdatesFresh =
     local || overwritePending
       ? thoughtIndexUpdates
