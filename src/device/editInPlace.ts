@@ -2,10 +2,9 @@
 /**
  * Rewrites a thought's editable to new HTML through DOM mutations alone, so that the browser selection over it is never
  * torn down. Android's WebView dismisses its native selection menu (Cut, Copy, Paste) and the selection handles as
- * soon as the selection collapses or is set through the Selection API in the same frame as an edit, and setting it
- * again does not bring them back (#5641). Assigning innerHTML collapses the selection, so em's own edits of the
- * selected text go through here first, and fall back to innerHTML and selection.setRange only when the edit cannot be
- * made this way.
+ * soon as the selection collapses or is set through the Selection API, and setting it again does not bring them
+ * back (#5641). Assigning innerHTML collapses the selection, so em's own edits of the selected text go through here
+ * first, and fall back to innerHTML and selection.setRange only when the edit cannot be made this way.
  *
  * The DOM carries a selection through a mutation by moving its boundaries by rule: inserting or deleting characters
  * shifts the offsets after them, and splitting a text node moves the boundaries after the split into the new node.
@@ -13,7 +12,17 @@
  * Android's WebView does not shift a boundary between two children of an element when a node is inserted before it.
  * See docs/cursor-and-caret.md.
  */
+import editableSyncStore from '../stores/editableSyncStore'
+import { FormatCommand } from '../util/formatSelectionHtml'
 import * as selection from './selection'
+
+/** The document.execCommand names of the formatting commands that the browser can toggle itself. */
+const EXEC_COMMAND_NAMES: Partial<Record<FormatCommand, string>> = {
+  bold: 'bold',
+  italic: 'italic',
+  underline: 'underline',
+  strikethrough: 'strikeThrough',
+}
 
 /** Returns the text nodes under a node in document order. */
 const textNodes = (root: Node): Text[] => {
@@ -92,40 +101,67 @@ const hasBoundaryInChangedRun = (node: Text, newData: string): boolean => {
   ].some(({ container, offset }) => container === node && offset > prefix && offset < runEnd)
 }
 
+/** Groups the non-empty text nodes under a node into runs of adjacent siblings, with only empty text nodes between
+ * them. Parsing HTML merges each such run into a single text node. */
+const textRuns = (root: Node): Text[][] =>
+  textNodes(root)
+    .filter(node => node.length > 0)
+    .reduce<Text[][]>((runs, node) => {
+      const run = runs[runs.length - 1]
+      let sibling = node.previousSibling
+      while (sibling instanceof Text && sibling.length === 0) sibling = sibling.previousSibling
+      return run && sibling === run[run.length - 1] ? [...runs.slice(0, -1), [...run, node]] : [...runs, [node]]
+    }, [])
+
+/** Splits the new text of a run of adjacent text nodes into the new data of each node, or returns null if that cannot
+ * be done without moving text from one node to another. A run of one node takes all of it. A longer run can only be
+ * split when the length is unchanged, which a letter case change almost always leaves it, so that each node keeps its
+ * own characters. */
+const splitRun = (run: Text[], newText: string): string[] | null => {
+  if (run.length === 1) return [newText]
+  if (run.reduce((length, node) => length + node.length, 0) !== newText.length) return null
+  return run.reduce<{ data: string[]; offset: number }>(
+    ({ data, offset }, node) => ({
+      data: [...data, newText.slice(offset, offset + node.length)],
+      offset: offset + node.length,
+    }),
+    { data: [], offset: 0 },
+  ).data
+}
+
+/** Pairs each non-empty text node under a node with its new data from the text nodes of the new HTML, or returns null
+ * if they do not correspond (see splitRun). */
+const textNodeUpdates = (root: Node, newNodes: Text[]): { node: Text; data: string }[] | null => {
+  const runs = textRuns(root)
+  if (runs.length !== newNodes.length) return null
+  const split = runs.map((run, i) => splitRun(run, newNodes[i].data))
+  return split.every(data => data !== null)
+    ? runs.flatMap((run, i) => run.map((node, j) => ({ node, data: split[i]![j] })))
+    : null
+}
+
 /** Changes an editable to the given HTML by changing the characters of its existing text nodes, which keeps the
  * selection over the same text (see replaceData). Only possible when the new HTML differs from the editable's only in
  * characters, with the same markup, which is what a letter case change produces, and when no boundary of the
  * selection falls inside a run of characters whose length changes. Empty text nodes, such as the ones
  * replaceMarkupInPlace leaves holding the selection's boundaries around new formatting, add nothing to the HTML and
- * are left as they are. Returns false, without changing anything, otherwise. */
+ * are left as they are. So are the boundaries between adjacent text nodes, which a format toggled off by
+ * replaceMarkupInPlace leaves around the word, though the new HTML has one text node there. Returns false, without
+ * changing anything, otherwise. */
 export const replaceTextInPlace = (editable: HTMLElement, html: string): boolean => {
   const fragment = parse(html)
   if (!fragment) return false
   const newNodes = textNodes(fragment)
-  const liveNodes = textNodes(editable).filter(node => node.length > 0)
-  if (liveNodes.length !== newNodes.length) return false
+  const updates = textNodeUpdates(editable, newNodes)
+  if (!updates) return false
 
   const clone = editable.cloneNode(true) as HTMLElement
-  textNodes(clone)
-    .filter(node => node.length > 0)
-    .forEach((node, i) => (node.data = newNodes[i].data))
+  textNodeUpdates(clone, newNodes)?.forEach(({ node, data }) => (node.data = data))
   if (clone.innerHTML !== html) return false
 
-  if (liveNodes.some((node, i) => hasBoundaryInChangedRun(node, newNodes[i].data))) return false
+  if (updates.some(({ node, data }) => hasBoundaryInChangedRun(node, data))) return false
 
-  const changedNodes = liveNodes.filter((node, i) => node.data !== newNodes[i].data)
-  liveNodes.forEach((node, i) => replaceData(node, newNodes[i].data))
-
-  // After a Bold, the selection's boundaries sit in the empty text nodes on either side of the new <b>, which a letter
-  // case change never touches. Android's WebView then leaves the stem of the end handle where the word ended before it
-  // was letter-cased, though the highlight covers the whole word. Setting the selection again to the same boundaries
-  // makes the WebView place the handles anew, and it keeps the menu up, but only once the edit has been rendered: set
-  // within the same frame as the edit, it dismisses the menu and the handles.
-  // It waits two frames, which is what was verified on a Samsung A56; a single frame has not been tried.
-  const saved = selection.saveRange()
-  if (saved && !changedNodes.some(node => node === saved.anchorNode || node === saved.focusNode)) {
-    requestAnimationFrame(() => requestAnimationFrame(() => selection.reselectRange(saved)))
-  }
+  updates.forEach(({ node, data }) => replaceData(node, data))
 
   return true
 }
@@ -226,4 +262,24 @@ export const replaceMarkupInPlace = (
   endNode.deleteData(0, endNode.length)
 
   return true
+}
+
+/**
+ * Applies a formatting command to the selection with the browser's own editing command, document.execCommand, and
+ * returns true if that left the editable with exactly the given HTML. The command removes a tag that holds both of the
+ * selection's boundaries without tearing the selection down, which no DOM edit of em's own can do, so Android's WebView
+ * keeps its selection menu and handles, e.g. when a double-tapped word that is already bold has its Bold toggled off.
+ * Returns false, without changing anything, for a command the browser has no equivalent for, such as Code. Returns
+ * false after changing the editable if the browser's markup differs from the given HTML, in which case the caller has
+ * to write the HTML itself. The editable's change handler is suppressed, since the caller dispatches the edit.
+ */
+export const replaceMarkupWithCommand = (editable: HTMLElement, html: string, command: FormatCommand): boolean => {
+  const execCommandName = EXEC_COMMAND_NAMES[command]
+  if (!execCommandName) return false
+
+  editableSyncStore.update({ suppressChange: true })
+  document.execCommand(execCommandName)
+  editableSyncStore.update({ suppressChange: false })
+
+  return editable.innerHTML === html
 }

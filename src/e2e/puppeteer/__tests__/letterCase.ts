@@ -151,6 +151,26 @@ it('letter-cases text that was just formatted in place without replacing the sel
 })
 
 // https://github.com/cybersemics/em/issues/5641
+it('letter-cases text that was just formatted and unformatted in place without replacing the selection', async () => {
+  await paste('Welcome to the world of beautiful people')
+
+  await clickThought('Welcome to the world of beautiful people')
+  await setSelection(24, 33)
+  await clickToolbar('Strikethrough')
+  await clickToolbar('Strikethrough')
+
+  // Toggling the format off leaves the word in a text node of its own between the text nodes around it, while the
+  // value, parsed, has a single text node there.
+  const selectedRange = await page.evaluateHandle(() => window.getSelection()!.getRangeAt(0).cloneRange())
+
+  await clickToolbar('Letter Case', 'UpperCase')
+
+  await waitForEditable('Welcome to the world of BEAUTIFUL people')
+
+  expect(await selectedRange.evaluate(range => range.toString())).toBe('BEAUTIFUL')
+})
+
+// https://github.com/cybersemics/em/issues/5641
 it('letter-cases text whose length changes in place without replacing the selection', async () => {
   await paste('Take a walk down the straße today.')
 

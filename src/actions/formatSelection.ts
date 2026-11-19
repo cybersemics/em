@@ -2,9 +2,9 @@ import _ from 'lodash'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
-import { isSafari, isTouch } from '../browser'
+import { isAndroid, isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
-import { replaceMarkupInPlace } from '../device/editInPlace'
+import { replaceMarkupInPlace, replaceMarkupWithCommand } from '../device/editInPlace'
 import restoreEditMenu from '../device/restoreEditMenu'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
@@ -267,8 +267,14 @@ export const formatSelectionActionCreator =
     // that keep the selection over it where possible, since Android dismisses its selection menu and handles when the
     // selection is torn down and set again (#5641). Otherwise, restoring the range immediately after the write
     // preserves the logical selection. The native undo step has already replaced the editable's contents on iOS, so
-    // there is no selection left to keep then.
-    if (isPartial && (registeredUndoStep || !replaceMarkupInPlace(contentEditable, newValue, range))) {
+    // there is no selection left to keep then. When the selection is inside a tag the new markup removes, which no DOM
+    // edit can take it out of, Android's own editing command can, and keeps the menu.
+    const keptSelection =
+      isPartial &&
+      !registeredUndoStep &&
+      (replaceMarkupInPlace(contentEditable, newValue, range) ||
+        (isAndroid && replaceMarkupWithCommand(contentEditable, newValue, command)))
+    if (isPartial && !keptSelection) {
       contentEditable.innerHTML = newValue
       selection.setRange(contentEditable, range)
     }
