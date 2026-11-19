@@ -34,7 +34,8 @@ it('resumes an interrupted paste after a refresh', async () => {
   // refresh partway through the children of a, so that the import resumes them into the a it imported before the refresh
   await waitForEditable('t7', { timeout: 20000 })
 
-  await refresh()
+  // The thoughtspace is not idle until the import finishes, so a refresh that waits for idle would land after it.
+  await refresh({ immediate: true })
   await waitForAlert('Importing from clipboard', { timeout: 20000 })
   // The final progress alert is cleared as soon as the import finishes, so it can be cleared before it is seen. Wait for
   // the last thought instead.
