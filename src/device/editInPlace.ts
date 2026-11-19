@@ -2,9 +2,10 @@
 /**
  * Rewrites a thought's editable to new HTML through DOM mutations alone, so that the browser selection over it is never
  * torn down. Android's WebView dismisses its native selection menu (Cut, Copy, Paste) and the selection handles as
- * soon as the selection collapses or is set through the Selection API, and setting it again does not bring them
- * back (#5641). Assigning innerHTML collapses the selection, so em's own edits of the selected text go through here
- * first, and fall back to innerHTML and selection.setRange only when the edit cannot be made this way.
+ * soon as the selection collapses or is set through the Selection API in the same frame as an edit, and setting it
+ * again does not bring them back (#5641). Assigning innerHTML collapses the selection, so em's own edits of the
+ * selected text go through here first, and fall back to innerHTML and selection.setRange only when the edit cannot be
+ * made this way.
  *
  * The DOM carries a selection through a mutation by moving its boundaries by rule: inserting or deleting characters
  * shifts the offsets after them, and splitting a text node moves the boundaries after the split into the new node.
@@ -112,16 +113,19 @@ export const replaceTextInPlace = (editable: HTMLElement, html: string): boolean
 
   if (liveNodes.some((node, i) => hasBoundaryInChangedRun(node, newNodes[i].data))) return false
 
+  const changedNodes = liveNodes.filter((node, i) => node.data !== newNodes[i].data)
   liveNodes.forEach((node, i) => replaceData(node, newNodes[i].data))
 
-  // Blink caches the selection's bounds, which Android positions the selection handles from, and recomputes them after
-  // a change of text only if the change moved a boundary of the selection. A change of children always recomputes
-  // them. A boundary in one of the empty text nodes that a preceding Bold left around the word is never moved, so the
-  // end handle would be left where the end of the word was before it was letter-cased. Inserting and removing an empty
-  // text node, which holds no boundary, makes Blink recompute them without changing the selection or the HTML.
-  const marker = document.createTextNode('')
-  editable.append(marker)
-  marker.remove()
+  // After a Bold, the selection's boundaries sit in the empty text nodes on either side of the new <b>, which a letter
+  // case change never touches. Android's WebView then leaves the stem of the end handle where the word ended before it
+  // was letter-cased, though the highlight covers the whole word. Setting the selection again to the same boundaries
+  // makes the WebView place the handles anew, and it keeps the menu up, but only once the edit has been rendered: set
+  // within the same frame as the edit, it dismisses the menu and the handles.
+  // It waits two frames, which is what was verified on a Samsung A56; a single frame has not been tried.
+  const saved = selection.saveRange()
+  if (saved && !changedNodes.some(node => node === saved.anchorNode || node === saved.focusNode)) {
+    requestAnimationFrame(() => requestAnimationFrame(() => selection.reselectRange(saved)))
+  }
 
   return true
 }

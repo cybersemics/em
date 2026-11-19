@@ -391,6 +391,19 @@ export const restoreRange = (savedRange: SavedRange | null): void => {
   sel.setBaseAndExtent(anchorNode, anchorOffset, focusNode, focusOffset)
 }
 
+/** Sets the selection again to a range saved by selection.saveRange, but only if the selection is still exactly that range, so that a selection the user or another edit has changed in the meantime is left alone. Re-setting a selection to its own boundaries changes nothing in the DOM, but it makes Android's WebView place the selection handles anew (see editInPlace). */
+export const reselectRange = (savedRange: SavedRange): void => {
+  const sel = window.getSelection()
+  if (
+    sel?.anchorNode === savedRange.anchorNode &&
+    sel.anchorOffset === savedRange.anchorOffset &&
+    sel.focusNode === savedRange.focusNode &&
+    sel.focusOffset === savedRange.focusOffset
+  ) {
+    sel.setBaseAndExtent(savedRange.anchorNode, savedRange.anchorOffset, savedRange.focusNode, savedRange.focusOffset)
+  }
+}
+
 /**
  * Recursively iterates the nodes children and returns focusNode and offset where the relative offset ends.
  */
