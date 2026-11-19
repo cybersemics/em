@@ -54,14 +54,17 @@ const SidebarDrawer = ({
   onTouchEnd: () => void
   children: ReactNode
 }) => {
-  /** Tap-to-close zone on the right edge, for small screens where the drawer is full-width and
-   * there's no backdrop sliver to tap. Checks the click position after the fact rather than a
-   * dedicated overlay element, so scrolling inside the zone still works. Attached in the
-   * capture phase — rather than the usual bubble phase — so it reliably sees the tap before any
-   * nested descendant's own click handler (a Favorites row, a dropdown item) can act on it or
-   * stop it from propagating; `stopPropagation` below then suppresses that descendant's own
-   * reaction to the same tap. */
+  /** Consumes release clicks from a held favorite and closes the full-width drawer on a right-edge tap. */
   const handleClickCapture = (e: MouseEvent<HTMLDivElement>) => {
+    // Check the hold before either the edge-close action or a nested link can handle the click.
+    if (e.target instanceof Element && e.target.closest('[data-favorite-long-pressed]')) {
+      e.preventDefault()
+      e.stopPropagation()
+      return
+    }
+
+    // Check the click position in capture so the edge can close the drawer without activating a nested control.
+    // Checking coordinates keeps the edge scrollable.
     if (isLargeDevice) return
 
     const { right, width: elementWidth } = e.currentTarget.getBoundingClientRect()

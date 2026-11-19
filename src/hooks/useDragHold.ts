@@ -14,11 +14,14 @@ import useLongPress from './useLongPress'
 /** Adds event handlers to detect long press and set state.longPress while the user is long pressing a thought in preparation for a drag. */
 const useDragHold = ({
   disabled,
+  onDragHold,
   simplePath,
   sourceZone,
   toggleMulticursorOnLongPress,
 }: {
   disabled?: boolean
+  /** Called when the press first becomes a hold. */
+  onDragHold?: () => void
   toggleMulticursorOnLongPress?: boolean
   simplePath: SimplePath
   sourceZone: DragThoughtZone
@@ -32,8 +35,9 @@ const useDragHold = ({
   const onLongPressStart = useCallback(() => {
     if (disabled) return
     setIsPressed(true)
+    onDragHold?.()
     dispatch(longPress({ value: LongPressState.DragHold, simplePath, sourceZone }))
-  }, [disabled, dispatch, simplePath, sourceZone])
+  }, [disabled, dispatch, onDragHold, simplePath, sourceZone])
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
   const onLongPressEnd = useCallback(

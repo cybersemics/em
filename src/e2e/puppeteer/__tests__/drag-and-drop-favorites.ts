@@ -151,7 +151,7 @@ describe('favorites long press on desktop', () => {
     expect(await getEditingText()).toBe('b')
   })
   // https://github.com/cybersemics/em/issues/3693
-  it.skip('keeps the sidebar open when releasing a favorite long press at the right edge', async () => {
+  it('keeps the sidebar open when releasing a favorite long press at the right edge', async () => {
     await page.setViewport({ width: 500, height: 800 })
     await paste(`
       - Apple

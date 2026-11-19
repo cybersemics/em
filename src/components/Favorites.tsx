@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { dropHoverRecipe } from '../../styled-system/recipes'
@@ -42,22 +42,17 @@ const DragAndDropFavorite = ({
     simplePath,
     path: simplePath,
   })
-  const dragHoldResult = useDragHold({ simplePath, sourceZone: DragThoughtZone.Favorites })
-  // Link stops mousedown from propagating, so a long press on desktop is started in the capture phase instead, before the event reaches the link. Otherwise holding the mouse button on a favorite never becomes a long press, and releasing it opens the favorite (#3693).
+  const [longPressed, setLongPressed] = useState(false)
+
+  /** Marks the row so the drawer can consume the release click after the hold state has cleared. */
+  const markLongPressed = useCallback(() => setLongPressed(true), [])
+
+  const dragHoldResult = useDragHold({ simplePath, sourceZone: DragThoughtZone.Favorites, onDragHold: markLongPressed })
+  // Link stops mousedown from propagating, so the row starts a desktop hold in capture.
   const { onMouseDown: startLongPress, ...dragHoldProps } = dragHoldResult.props
 
-  // Mobile Safari follows the touchend of a long press with a click on the favorite, which would set the cursor and close the sidebar (#3693). Mark a press once it becomes a long press, and swallow every click until the next touch begins. The click can arrive after state.longPress has already returned to Inactive, so it cannot be read from state the way the Bullet's click handler reads dragHold.
-  const longPressedRef = useRef(false)
-  useEffect(() => {
-    if (dragHoldResult.isPressed) {
-      longPressedRef.current = true
-    }
-  }, [dragHoldResult.isPressed])
-
-  /** Clears the long press mark at the start of a new press. On touch devices this must wait for the next touchstart, since the browser follows the touchend of a long press with a compatibility mousedown before the click. */
-  const resetLongPressed = () => {
-    longPressedRef.current = false
-  }
+  /** Clears the mark on the next press. On touch, the release's compatibility mousedown still belongs to the hold. */
+  const resetLongPressed = () => setLongPressed(false)
 
   return (
     // Set display:flow-root to create a new block formatting context so the drop target fully wraps its contents.
@@ -74,11 +69,7 @@ const DragAndDropFavorite = ({
               startLongPress?.(e)
             }
       }
-      onClickCapture={e => {
-        if (!longPressedRef.current) return
-        e.preventDefault()
-        e.stopPropagation()
-      }}
+      data-favorite-long-pressed={longPressed ? '' : undefined}
       className={css({ display: 'flow-root' })}
       data-testid='drag-and-drop-favorite'
       ref={dndRef(node => dragSource(dropTarget(node)))}
