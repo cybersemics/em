@@ -230,3 +230,51 @@ it('a space in the query does not indent an empty thought that has the cursor', 
 - 
 `)
 })
+
+// https://github.com/cybersemics/em/pull/6293#issuecomment-6982575365
+it('Escape with thoughts selected moves the cursor to the current match without editing the selection', async () => {
+  await paste(`
+    - apple
+    - banana
+    - cherry
+  `)
+  await clickThought('apple')
+  await command('selectAll')
+
+  await press('f', { meta: true })
+  await keyboard.type('nan')
+  await waitForFindStatus('1 of 1')
+  await press('Escape')
+  await keyboard.type('X')
+  // commit the edit, which is throttled, by leaving the thought
+  await press('Escape')
+
+  expect(await exportThoughts()).toBe(`
+- apple
+- bananXa
+- cherry
+`)
+})
+
+// https://github.com/cybersemics/em/pull/6293#issuecomment-6982575365
+it('a command keystroke with thoughts selected executes the command on the current match', async () => {
+  await paste(`
+    - apple
+    - banana
+    - cherry
+  `)
+  await clickThought('apple')
+  await command('selectAll')
+
+  await press('f', { meta: true })
+  await keyboard.type('nan')
+  await waitForFindStatus('1 of 1')
+  // Indent
+  await press('Tab')
+
+  expect(await exportThoughts()).toBe(`
+- apple
+  - banana
+- cherry
+`)
+})

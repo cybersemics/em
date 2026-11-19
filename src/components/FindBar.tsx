@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
+import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isMac } from '../browser'
 import { commandByKeyDown, hashKeyDown, isArrowKey } from '../commands'
@@ -10,6 +11,7 @@ import findCommand from '../commands/find'
 import getVisibleBounds from '../device/getVisibleBounds'
 import scrollTo from '../device/scrollTo'
 import * as selection from '../device/selection'
+import hasMulticursor from '../selectors/hasMulticursor'
 import commandEmitter from '../stores/commandEmitter'
 import findBarStore from '../stores/findBarStore'
 import head from '../util/head'
@@ -215,7 +217,7 @@ const FindBarOpen = () => {
     update(matches, (currentRef.current + direction + matches.length) % matches.length, { scroll: true })
   }
 
-  /** Closes the find bar and moves the cursor to the current match, with the caret at the end of the match. Focusing the editable sets the cursor on its thought (see onFocus in Editable), which knows its Path. Without a current match, the selection that the find bar took the focus from is restored, and the cursor is left where it was. Synchronous, so that a command that commits the match executes on the new cursor. */
+  /** Closes the find bar and moves the cursor to the current match, with the caret at the end of the match. Focusing the editable sets the cursor on its thought (see onFocus in Editable), which knows its Path. A multiselection is dismissed first. Without a current match, the selection that the find bar took the focus from is restored, and the cursor and the multiselection are left as they were. Synchronous, so that a command that commits the match executes on the new cursor. */
   const commit = useCallback(() => {
     const match = matchesRef.current[currentRef.current]
     findBarStore.update({ open: false })
@@ -223,6 +225,13 @@ const FindBarOpen = () => {
       selection.restore(savedSelection.current)
       return
     }
+    // The match becomes the thought being edited, so a multiselection is dismissed first, as Escape and closing the
+    // sidebar do (see toggleSidebar). Focusing a selected thought would otherwise render the selection as being
+    // edited, with a faux caret in every selected thought and typing mirrored across them, and a command that commits
+    // the match would execute on the whole selection rather than on the match.
+    dispatch((dispatch, getState) => {
+      if (hasMulticursor(getState())) dispatch(clearMulticursors())
+    })
     match.editable.focus()
     selection.set(match.editable, { offset: match.end })
     // The focus set the cursor with the caret at the start of the thought, since the find bar took the focus from a
@@ -230,7 +239,7 @@ const FindBarOpen = () => {
     dispatch((dispatch, getState) => {
       const { cursor } = getState()
       if (cursor && match.editable.getAttribute('aria-label') === `editable-${head(cursor)}`) {
-        dispatch(setCursor({ path: cursor, offset: match.end, preserveMulticursor: true }))
+        dispatch(setCursor({ path: cursor, offset: match.end }))
       }
     })
   }, [dispatch])
