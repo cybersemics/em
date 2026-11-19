@@ -1,7 +1,6 @@
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
 import Index from '../@types/IndexType'
-import Path from '../@types/Path'
 import ResumeImport from '../@types/ResumeImport'
 import abandonImportStore from '../stores/abandonImportStore'
 import parseJsonSafe from './parseJsonSafe'
@@ -24,8 +23,9 @@ const deleteResumeImport = async (id: string) => {
 /** Creates a small object that can be used to manage the persistence of a ResumeImport while it is being imported. */
 const manager = (file: ResumeImport) => {
   /** Updates the persisted ResumeImport file to the latest number of imported thoughts. */
-  // TODO: throttling update breaks resume file.path for some reason
-  const update = async (path: Path | null, thoughtsImported: number, insertBefore?: boolean) => {
+  // Not throttled: a resumed import continues from thoughtsImported, and duplicates are not merged on import, so a count
+  // that falls behind the thoughts actually imported would import them a second time (#2712).
+  const update = async (thoughtsImported: number) => {
     if (abandonImportStore.getState()) return
 
     const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
@@ -35,13 +35,11 @@ const manager = (file: ResumeImport) => {
         ...(resumeImports || {}),
         [file.id]: {
           id: file.id,
-          // use the original insertBefore for the first import of the first thought
-          // See: insertBeforeNew
-          insertBefore: thoughtsImported === 1 ? insertBefore : file.insertBefore,
+          insertBefore: file.insertBefore,
           lastModified: file.lastModified,
           thoughtsImported,
           name: file.name,
-          path: path || file.path,
+          path: file.path,
           size: file.size,
         },
       }),
@@ -50,7 +48,7 @@ const manager = (file: ResumeImport) => {
 
   /** Initializes the ResumeImport file manifest and raw file in IDB. */
   const init = async (text: string) => {
-    await update(file.path, 0, file.insertBefore)
+    await update(0)
     await idb.set(resumeImportKey(file.id), text)
   }
 

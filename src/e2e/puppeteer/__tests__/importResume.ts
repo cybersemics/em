@@ -65,3 +65,67 @@ it('imports a paste made as soon as the app loads only once', async () => {
 ${outline(values)}
 `)
 })
+
+// https://github.com/cybersemics/em/issues/6297
+it('resumes a paste into an empty thought before its next sibling', async () => {
+  const children = Array.from({ length: 10 }, (_, i) => `t${i + 1}`)
+
+  await paste(`
+    - x
+    - y
+  `)
+  await clickThought('x')
+  await press('Enter')
+  await waitForEditable('')
+
+  // A single thought is pasted before y, with the rest nested under it. Pasting several thoughts before the same sibling
+  // would put them in reverse order after the refresh (#5471).
+  await setClipboard({ text: `- a\n${outline(children, 1)}` })
+  await press('Insert', { shift: true })
+  // refresh as soon as the first child is shown, while the rest are still being imported
+  await waitForEditable('t1', { timeout: 20000 })
+
+  // The thoughtspace is not idle until the import finishes, so a refresh that waits for idle would land after it.
+  await refresh({ immediate: true })
+  await waitForAlert('Importing from clipboard', { timeout: 20000 })
+  // The few thoughts left import quickly enough that the final progress alert can be cleared before it is seen, so
+  // wait for the last thought instead.
+  await waitForEditable('t10', { timeout: 30000 })
+
+  expect(await exportThoughts()).toBe(`
+- x
+- a
+${outline(children, 1)}
+- y
+`)
+})
+
+// https://github.com/cybersemics/em/issues/6298
+it('resumes a paste interrupted after its first thought into the thought it was pasted into', async () => {
+  const values = Array.from({ length: 10 }, (_, i) => `t${i + 1}`)
+
+  await paste(`
+    - x
+  `)
+  await clickThought('x')
+  await press('Enter')
+  await waitForEditable('')
+
+  await setClipboard({ text: outline(values) })
+  await press('Insert', { shift: true })
+  // The second thought is imported only once the first is saved and its checkpoint recorded, so refreshing as soon as it
+  // is shown interrupts the import after its first thought.
+  await waitForEditable('t2', { timeout: 20000 })
+
+  // The thoughtspace is not idle until the import finishes, so a refresh that waits for idle would land after it.
+  await refresh({ immediate: true })
+  await waitForAlert('Importing from clipboard', { timeout: 20000 })
+  // The few thoughts left import quickly enough that the final progress alert can be cleared before it is seen, so
+  // wait for the last thought instead.
+  await waitForEditable('t10', { timeout: 30000 })
+
+  expect(await exportThoughts()).toBe(`
+- x
+${outline(values)}
+`)
+})
