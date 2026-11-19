@@ -4,28 +4,6 @@ import type Thought from '../../../@types/Thought'
 import type ThoughtId from '../../../@types/ThoughtId'
 import type { DataProvider } from '../../DataProvider'
 
-/** Applies TreeCRDT sibling order to em's temporary rank projection for one parent. */
-const addTreeOrderRankProjection = async (
-  updates: Index<Thought | null>,
-  db: Pick<DataProvider, 'getThoughtById'>,
-  parentId: ThoughtId,
-): Promise<void> => {
-  const parent = await db.getThoughtById(parentId)
-  if (!parent) return
-
-  updates[parent.id] = parent
-
-  const orderedChildIds = Object.values(parent.childrenMap || {})
-  for (const [rank, childId] of orderedChildIds.entries()) {
-    const child = await db.getThoughtById(childId)
-    if (!child) continue
-    updates[child.id] = {
-      ...child,
-      rank,
-    }
-  }
-}
-
 /** Collects affected ids from materialization changes, loads fresh thoughts from the provider. */
 export default async function refreshThoughtsFromMaterializationChanges(
   changes: Change[],
@@ -89,7 +67,13 @@ export default async function refreshThoughtsFromMaterializationChanges(
   // projection from the authoritative TreeCRDT child order without exposing TreeCRDT's internal order keys.
   // TODO: Remove when read-side selectors consume provider-backed sibling order instead of rank projection.
   for (const parentId of orderParents) {
-    await addTreeOrderRankProjection(thoughtIndexUpdates, db, parentId)
+    const parent = await db.getThoughtById(parentId)
+    if (!parent) continue
+    thoughtIndexUpdates[parent.id] = parent
+    for (const [rank, childId] of Object.values(parent.childrenMap).entries()) {
+      const child = await db.getThoughtById(childId)
+      if (child) thoughtIndexUpdates[child.id] = { ...child, rank }
+    }
   }
 
   for (const id of deleted) {

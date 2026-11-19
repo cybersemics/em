@@ -8,7 +8,6 @@ import { decodeThoughtPayload } from './payload'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 
 const TABLE = 'em_lexeme_memberships'
-const FAVORITE_KEY = hashThought('=favorite')
 const ROOT_IDS = new Set<string>([GLOBAL_ROOT_TOKEN, ...SYSTEM_ROOT_THOUGHT_IDS])
 
 /** Maintains one membership per live thought, independent of which contexts Redux has loaded. */
@@ -101,7 +100,7 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
         }
       }
     }
-    const favorites = lexemes.get(FAVORITE_KEY)
+    const favorites = lexemes.get(hashThought('=favorite'))
     if (favorites) {
       const text = await client.runner.getText('SELECT contexts_json FROM em_favorite_order WHERE id = 1')
       const order = new Set(JSON.parse(text ?? '[]') as ThoughtId[])

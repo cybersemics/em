@@ -103,7 +103,6 @@ const pushQueue: StoreEnhancer<any> =
             batches: (dbQueue ?? []).length,
             thoughtCount: thoughtUpdates.length,
             deleteCount: thoughtUpdates.filter(([, thought]) => !thought).length,
-            lexemeCount: (dbQueue ?? []).reduce((n, batch) => n + Object.keys(batch.lexemeIndexUpdates).length, 0),
             moveCount: (dbQueue ?? []).reduce((n, batch) => n + Object.keys(batch.movePlacements ?? {}).length, 0),
             local: (dbQueue ?? []).some(batch => batch.local !== false),
             remote: (dbQueue ?? []).some(batch => batch.remote !== false),

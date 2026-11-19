@@ -17,10 +17,6 @@ type TreecrdtModule = typeof import('@treecrdt/wa-sqlite')
 
 let createRealTreecrdtClient!: TreecrdtModule['createTreecrdtClient']
 
-const emptyUpdates = {
-  thoughtIndexUpdates: {},
-}
-
 beforeAll(async () => {
   const actual = await vi.importActual<TreecrdtModule>('@treecrdt/wa-sqlite')
   createRealTreecrdtClient = actual.createTreecrdtClient
@@ -145,34 +141,34 @@ it('rejects queued startup writes when initialization fails and uses a fresh gat
   mockCreateTreecrdtClient.mockRejectedValueOnce(initError)
 
   const treecrdtThoughtspace = createTreecrdtThoughtspace()
-  const queuedWrite = treecrdtThoughtspace.db.updateThoughts(emptyUpdates)
+  const queuedWrite = treecrdtThoughtspace.db.updateThoughts({ thoughtIndexUpdates: {} })
   const queuedWriteExpectation = expect(queuedWrite).rejects.toBe(initError)
 
   await expect(treecrdtThoughtspace.init({ storage: 'memory' })).rejects.toBe(initError)
   await queuedWriteExpectation
 
   await treecrdtThoughtspace.init({ storage: 'memory' })
-  await expect(treecrdtThoughtspace.db.updateThoughts(emptyUpdates)).resolves.toEqual([])
+  await expect(treecrdtThoughtspace.db.updateThoughts({ thoughtIndexUpdates: {} })).resolves.toEqual([])
   await treecrdtThoughtspace.drop()
 })
 
 it('rejects writes queued before each settled drop and creates a fresh gate for init', async () => {
   const treecrdtThoughtspace = createTreecrdtThoughtspace()
 
-  const firstWrite = treecrdtThoughtspace.db.updateThoughts(emptyUpdates)
+  const firstWrite = treecrdtThoughtspace.db.updateThoughts({ thoughtIndexUpdates: {} })
   const firstWriteExpectation = expect(firstWrite).rejects.toThrow(
     'TreeCRDT client binding cleared before initialization.',
   )
   await Promise.all([treecrdtThoughtspace.drop(), firstWriteExpectation])
 
-  const secondWrite = treecrdtThoughtspace.db.updateThoughts(emptyUpdates)
+  const secondWrite = treecrdtThoughtspace.db.updateThoughts({ thoughtIndexUpdates: {} })
   const secondWriteExpectation = expect(secondWrite).rejects.toThrow(
     'TreeCRDT client binding cleared before initialization.',
   )
   await Promise.all([treecrdtThoughtspace.drop(), secondWriteExpectation])
 
   await treecrdtThoughtspace.init({ storage: 'memory' })
-  await expect(treecrdtThoughtspace.db.updateThoughts(emptyUpdates)).resolves.toEqual([])
+  await expect(treecrdtThoughtspace.db.updateThoughts({ thoughtIndexUpdates: {} })).resolves.toEqual([])
   await treecrdtThoughtspace.drop()
 })
 

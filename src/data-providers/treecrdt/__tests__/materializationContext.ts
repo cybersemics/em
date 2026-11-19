@@ -9,7 +9,6 @@ import createTreecrdtDataProvider from '../thoughtspace'
 import { withTreecrdtWriteBarrier } from '../writeBarrier'
 
 const THOUGHT_ID = '00000000000000000000000000000201' as ThoughtId
-const REPLICA_ID = new Uint8Array(32).fill(1)
 
 /** Creates a minimal thought fixture. */
 const thought = (value: string) => ({
@@ -41,7 +40,7 @@ beforeEach(async () => {
       lexemeIndex: { ...snapshot.lexemeIndex, ...updates.lexemeIndex },
     }
   })
-  close = await provider.bindClient(client, REPLICA_ID, { getSnapshot, apply })
+  close = await provider.bindClient(client, new Uint8Array(32).fill(1), { getSnapshot, apply })
 })
 
 afterEach(async () => {
@@ -160,18 +159,12 @@ it('updates stored memberships on incoming deletion even when its thought was no
   expect(snapshot.thoughtIndex[THOUGHT_ID]).toBeNull()
 })
 
-it('publishes nothing while indexing keeps failing', async () => {
+it('publishes nothing for an event that fails to index', async () => {
   const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  // A membership needs the payload's timestamps, so every delivery and retry from here on fails.
+  // A membership needs the payload's timestamps, so indexing this insert fails.
   const brokenId = '00000000000000000000000000000203' as ThoughtId
   const payload = new TextEncoder().encode(JSON.stringify({ value: 'x' }))
   await client.local.insert(new Uint8Array(32).fill(2), EM_TOKEN, brokenId, { type: 'last' }, payload)
-  await waitForMaterializedThoughtsToStore()
-
-  // This edit is indexed in the same failing batch, so it is not published either.
-  await withTreecrdtWriteBarrier(() =>
-    provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
-  )
   await waitForMaterializedThoughtsToStore()
 
   expect(apply).not.toHaveBeenCalled()

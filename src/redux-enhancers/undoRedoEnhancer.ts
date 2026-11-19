@@ -232,7 +232,7 @@ const pathProperties: Record<PathProperty, true> = {
 /**
  * Returns the diff between two states as a fast-json-patch Patch that can be applied for undo/redo functionality. Ignores ephemeral state properties such as alert which should not be recreated (defined in statePropertiesToOmit).
  * A Path-valued property, such as the cursor or multicursorAnchor (see pathProperties), is replaced whole rather than element by element. A Path is a value, not a container: an element-wise op like replace /multicursorAnchor/2 is only valid against the exact array it was diffed from. When navigation patches are merged, the previous patch is replayed on top of whatever non-undoable actions have done since, so the array may have changed or become null in the meantime (e.g. toggleMulticursor clears the anchor when the anchored thought is deselected). Replaying an element-wise op then either splices the restored Path into an unrelated one or throws on null.
- * Lexemes are left out. After each write, applyMaterializedThoughtsToStore replaces the Lexemes the write touched with the provider's copies, and that is not undoable. A copy can list contexts in another order or include thoughts that are not loaded, and a Lexeme with no contexts left is deleted, so a recorded op like remove /thoughts/lexemeIndex/<key>/contexts/1 could point at a different thought, or into a deleted Lexeme, by the time it was applied. Recording each changed Lexeme whole would avoid that, but would copy all of its contexts into every patch. Instead, undo and redo update the Lexemes of the thoughts they change (see updateLexemeContexts).
+ * Lexemes are left out: the readback (applyMaterializedThoughtsToStore) can reorder, extend or delete a Lexeme outside the undo history, which would leave a recorded op like remove /thoughts/lexemeIndex/<key>/contexts/1 pointing at another thought or into a deleted Lexeme. Undo and redo update the Lexemes of the thoughts they change instead (see updateLexemeContexts).
  */
 const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] => {
   const ops = compare(
@@ -255,12 +255,12 @@ const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] => {
 }
 
 /**
- * Moves each thought that an undo or redo patch changed from the Lexeme of its old value to the Lexeme of its new value, since patches leave Lexemes out (see diffState). A Lexeme left with no contexts is deleted. A context that is added goes at the end, so the order can differ from the provider's until the readback replaces the Lexeme.
+ * Moves each thought that an undo or redo changed from the Lexeme of its old value to the Lexeme of its new value, since patches leave Lexemes out (see diffState). A Lexeme left with no contexts is deleted. A context that is added goes at the end, so the order can differ from the provider's until the readback replaces the Lexeme.
  */
 const updateLexemeContexts = (state: State, oldState: State): State => {
   const thoughtsOld = oldState.thoughts.thoughtIndex
   const thoughtsNew = state.thoughts.thoughtIndex
-  // immer keeps every thought that the patch did not change as the same object.
+  // immer keeps every thought that the patches did not change as the same object.
   const ids = _.union(Object.keys(thoughtsOld), Object.keys(thoughtsNew)).filter(
     id => thoughtsOld[id] !== thoughtsNew[id],
   ) as ThoughtId[]
@@ -272,7 +272,7 @@ const updateLexemeContexts = (state: State, oldState: State): State => {
     const keyNew = thoughtNew && hashThought(thoughtNew.value)
     if (keyOld === keyNew) return null
 
-    // An earlier thought in the same patch may already have changed one of these Lexemes.
+    // An earlier thought in the same undo or redo may already have changed one of these Lexemes.
     const lexemeOld = keyOld && (keyOld in updates ? updates[keyOld] : state.thoughts.lexemeIndex[keyOld])
     const lexemeNew = keyNew && (keyNew in updates ? updates[keyNew] : state.thoughts.lexemeIndex[keyNew])
     const lexemeOldWithout = lexemeOld && removeContext(lexemeOld, id)
@@ -325,10 +325,7 @@ const undoOneReducer = (state: State): State => {
   const { redoPatches, undoPatches } = state
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
-  const newState = updateLexemeContexts(
-    produce(state, (state: State) => applyPatch(state, lastUndoPatch.ops).newDocument),
-    state,
-  )
+  const newState = produce(state, (state: State) => applyPatch(state, lastUndoPatch.ops).newDocument)
   const correspondingRedoPatch: Patch = {
     ops: diffState(newState as Index, state),
     metadata: lastUndoPatch.metadata,
@@ -351,10 +348,7 @@ const redoOneReducer = (state: State): State => {
   const { redoPatches, undoPatches } = state
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
-  const newState = updateLexemeContexts(
-    produce(state, (state: State) => applyPatch(state, lastRedoPatch.ops).newDocument),
-    state,
-  )
+  const newState = produce(state, (state: State) => applyPatch(state, lastRedoPatch.ops).newDocument)
   const correspondingUndoPatch: Patch = {
     ops: diffState(newState as Index, state),
     metadata: lastRedoPatch.metadata,
@@ -417,6 +411,7 @@ const undoReducer = (
 
   return reducerFlow([
     ...Array.from({ length: undoCount }, () => undoOneReducer),
+    newState => updateLexemeContexts(newState, state),
     newState =>
       restorePushQueueFromPatches(
         newState,
@@ -446,6 +441,7 @@ const redoReducer = (
 
   return reducerFlow([
     ...Array.from({ length: redoCount }, () => redoOneReducer),
+    newState => updateLexemeContexts(newState, state),
     newState =>
       restorePushQueueFromPatches(
         newState,

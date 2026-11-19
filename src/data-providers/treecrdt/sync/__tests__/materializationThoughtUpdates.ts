@@ -37,18 +37,13 @@ const thought = (
 const fakeProvider = (thoughts: Index<Thought>) => ({ getThoughtById: async (id: ThoughtId) => thoughts[id] })
 
 it('projects TreeCRDT sibling order into compatibility ranks', async () => {
-  const newParent = thought(HOME_TOKEN, HOME_TOKEN, 0, ROOT_PARENT_ID, [C_ID, A_ID, B_ID])
-  const thoughtA = thought(A_ID, 'a', 0, HOME_TOKEN)
-  const thoughtB = thought(B_ID, 'b', 1, HOME_TOKEN)
-  const thoughtC = thought(C_ID, 'c', 2, HOME_TOKEN)
-
   const updates = await refreshThoughtsFromMaterializationChanges(
     [{ kind: 'move', node: C_ID, parentBefore: HOME_TOKEN, parentAfter: HOME_TOKEN }],
     fakeProvider({
-      [HOME_TOKEN]: newParent,
-      [A_ID]: thoughtA,
-      [B_ID]: thoughtB,
-      [C_ID]: thoughtC,
+      [HOME_TOKEN]: thought(HOME_TOKEN, HOME_TOKEN, 0, ROOT_PARENT_ID, [C_ID, A_ID, B_ID]),
+      [A_ID]: thought(A_ID, 'a', 0, HOME_TOKEN),
+      [B_ID]: thought(B_ID, 'b', 1, HOME_TOKEN),
+      [C_ID]: thought(C_ID, 'c', 2, HOME_TOKEN),
     }),
   )
 
@@ -59,20 +54,14 @@ it('projects TreeCRDT sibling order into compatibility ranks', async () => {
 })
 
 it('projects TreeCRDT sibling order for both parents after a cross-parent move', async () => {
-  const newLeft = thought(LEFT_ID, 'left', 0, HOME_TOKEN, [B_ID])
-  const newRight = thought(RIGHT_ID, 'right', 1, HOME_TOKEN, [C_ID, A_ID])
-  const thoughtANew = thought(A_ID, 'a', 1, RIGHT_ID)
-  const thoughtB = thought(B_ID, 'b', 1, LEFT_ID)
-  const thoughtC = thought(C_ID, 'c', 0, RIGHT_ID)
-
   const updates = await refreshThoughtsFromMaterializationChanges(
     [{ kind: 'move', node: A_ID, parentBefore: LEFT_ID, parentAfter: RIGHT_ID }],
     fakeProvider({
-      [LEFT_ID]: newLeft,
-      [RIGHT_ID]: newRight,
-      [A_ID]: thoughtANew,
-      [B_ID]: thoughtB,
-      [C_ID]: thoughtC,
+      [LEFT_ID]: thought(LEFT_ID, 'left', 0, HOME_TOKEN, [B_ID]),
+      [RIGHT_ID]: thought(RIGHT_ID, 'right', 1, HOME_TOKEN, [C_ID, A_ID]),
+      [A_ID]: thought(A_ID, 'a', 1, RIGHT_ID),
+      [B_ID]: thought(B_ID, 'b', 1, LEFT_ID),
+      [C_ID]: thought(C_ID, 'c', 0, RIGHT_ID),
     }),
   )
 

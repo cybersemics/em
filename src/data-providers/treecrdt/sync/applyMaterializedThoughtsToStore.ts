@@ -14,9 +14,7 @@ export type MaterializationContext = {
 }
 
 /** Publishes complete memberships after persistence; local thoughts keep their optimistic view. */
-export const applyMaterializedThoughtsToStore = async (context: MaterializationContext): Promise<void> => {
-  const { bridge, db, pending, isActive } = context
-  // Without per-write confirmations, a newer edit invalidates readback. Retry after its persistence completes.
+export const applyMaterializedThoughtsToStore = async ({ bridge, db, pending, isActive }: MaterializationContext) => {
   while (pending.length && isActive()) {
     // pushQueue queues each edit's write in the reducer that makes it, so once the wait ends storage has every edit this
     // snapshot shows.

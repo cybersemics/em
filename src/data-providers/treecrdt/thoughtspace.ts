@@ -332,10 +332,8 @@ const createTreecrdtDataProvider = () => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
-    // The derived indexes (attribute children and lexeme memberships) follow TreeCRDT's change events. TreeCRDT
-    // remembers how far they got, so a gap such as startup or a failed update is caught up without rebuilding.
-    // `publish` is set near the end of binding. The startup catch-up runs inside onMaterializedDurable before that, so
-    // it publishes nothing; Redux loads lexemes on demand.
+    // TreeCRDT remembers how far the derived indexes got and catches them up after a gap such as startup or a failed
+    // update. The startup catch-up runs before `publish` is set and publishes nothing; Redux loads lexemes on demand.
     let publish: ((event: MaterializationEvent, keys: string[]) => void) | undefined
     const lexemes = await createLexemeIndex(client)
     const indexes = await client.onMaterializedDurable(
@@ -371,24 +369,24 @@ const createTreecrdtDataProvider = () => {
         return updateThoughtsForClient(client, replicaId, updates)
       },
     }
-    const materializationContext: MaterializationContext | undefined = materialization && {
-      bridge: materialization,
-      db: clientDb,
-      pending: [],
-      isActive: () => activeDb === clientDb,
-    }
 
     // A publication is queued only once its event is indexed, so the idle barrier waits for the indexes too.
     const unsubscribeMaterialized = client.onMaterialized(
       () => void enqueueMaterializedThoughtsToStoreWork(() => indexes.idle()),
     )
-    if (materializationContext) {
+    if (materialization) {
+      const context: MaterializationContext = {
+        bridge: materialization,
+        db: clientDb,
+        pending: [],
+        isActive: () => activeDb === clientDb,
+      }
       publish = (event, keys) => {
-        materializationContext.pending.push({ event, keys })
+        context.pending.push({ event, keys })
         // Each event queues a publication; one that finds the buffer already drained returns at once.
-        void enqueueMaterializedThoughtsToStoreWork(() =>
-          applyMaterializedThoughtsToStore(materializationContext),
-        ).catch(err => console.error('TreeCRDT materialized UI sync failed', err))
+        void enqueueMaterializedThoughtsToStoreWork(() => applyMaterializedThoughtsToStore(context)).catch(err =>
+          console.error('TreeCRDT materialized UI sync failed', err),
+        )
       }
     }
 

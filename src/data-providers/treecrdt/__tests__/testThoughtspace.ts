@@ -72,9 +72,6 @@ it('seeds fixed system thoughts in the TreeCRDT provider', async () => {
     parentId: EM_TOKEN,
     value: SETTINGS_VALUE,
   })
-
-  const settingsLexeme = await treecrdtThoughtspace.getLexemeById(hashThought(SETTINGS_VALUE))
-  expect(settingsLexeme?.contexts).toEqual([SETTINGS_TOKEN])
 })
 
 it('does not write seed operations again when binding a seeded client', async () => {

@@ -92,8 +92,6 @@ it('a new thought should merge into an unloaded lexeme and persist both contexts
 
   await refreshTestApp()
 
-  // the merged Lexeme should have been persisted, so both contexts are still there after the refresh
-
   const thoughtContextsDb = (await getLexemeFromProvider(db, 'f'))?.contexts
   expect(thoughtContextsDb).toEqual(expect.arrayContaining([thoughtF?.id, thoughtFRoot?.id]))
   expect(thoughtContextsDb).toHaveLength(2)
