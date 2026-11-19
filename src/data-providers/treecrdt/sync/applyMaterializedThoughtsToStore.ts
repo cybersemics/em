@@ -1,10 +1,8 @@
 /* eslint-disable import/prefer-default-export -- bridge module */
 import type { MaterializationEvent } from '@treecrdt/interface/engine'
-import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Index from '../../../@types/IndexType'
 import type Thought from '../../../@types/Thought'
 import type { ThoughtspaceMaterializationBridge } from '../../thoughtspace'
-import { refreshAttributeChildrenFromChanges } from '../attributeChildren'
 import { waitForTreecrdtWriteBarrier } from '../writeBarrier'
 import { enqueueMaterializedThoughtsToStoreWork } from './materializationQueue'
 import { type MaterializationStore, refreshThoughtsFromMaterializationChanges } from './materializationThoughtUpdates'
@@ -12,8 +10,9 @@ import { type MaterializationStore, refreshThoughtsFromMaterializationChanges } 
 /** Dependencies captured when a client registers its materialization listener. */
 type MaterializationContext = Readonly<{
   bridge: ThoughtspaceMaterializationBridge
-  client: TreecrdtClient
   db: MaterializationStore
+  /** Resolves once every change materialized so far is in the attribute index. */
+  indexed: () => Promise<void>
 }>
 
 /**
@@ -22,7 +21,7 @@ type MaterializationContext = Readonly<{
  */
 export async function applyMaterializedThoughtsToStore(
   event: MaterializationEvent,
-  { bridge, client, db }: MaterializationContext,
+  { bridge, db, indexed }: MaterializationContext,
 ): Promise<void> {
   if (event.changes.length === 0) return
 
@@ -30,7 +29,9 @@ export async function applyMaterializedThoughtsToStore(
   // SQLite back into app state, otherwise a remote refresh can reapply stale rows over newer optimistic state.
   await waitForTreecrdtWriteBarrier()
 
-  await refreshAttributeChildrenFromChanges(client, event.changes)
+  // Thought reads include attribute children, and writes don't wait for the index, so wait until it has applied this
+  // event and the local writes before it.
+  await indexed()
 
   const snapshot = bridge.getSnapshot()
   const { deletedIds, thoughts, lexemeIndexUpdates } = await refreshThoughtsFromMaterializationChanges(
