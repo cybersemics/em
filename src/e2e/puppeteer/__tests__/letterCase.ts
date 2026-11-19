@@ -132,6 +132,40 @@ it('letter-cases the selected text in place without replacing it', async () => {
   expect(await selectedRange.evaluate(range => range.toString())).toBe('BEAUTIFUL')
 })
 
+// https://github.com/cybersemics/em/issues/5641
+it('letter-cases text that was just formatted in place without replacing the selection', async () => {
+  await paste('Welcome to the world of beautiful people')
+
+  await clickThought('Welcome to the world of beautiful people')
+  await setSelection(24, 33)
+  await clickToolbar('Bold')
+
+  // Bold leaves the selection in the empty text nodes on either side of the new <b>, which add nothing to the value.
+  const selectedRange = await page.evaluateHandle(() => window.getSelection()!.getRangeAt(0).cloneRange())
+
+  await clickToolbar('Letter Case', 'UpperCase')
+
+  await waitForEditable('Welcome to the world of <b>BEAUTIFUL</b> people')
+
+  expect(await selectedRange.evaluate(range => range.toString())).toBe('BEAUTIFUL')
+})
+
+// https://github.com/cybersemics/em/issues/5641
+it('letter-cases text whose length changes in place without replacing the selection', async () => {
+  await paste('Take a walk down the straße today.')
+
+  await clickThought('Take a walk down the straße today.')
+  await setSelection(21, 27)
+
+  const selectedRange = await page.evaluateHandle(() => window.getSelection()!.getRangeAt(0).cloneRange())
+
+  await clickToolbar('Letter Case', 'UpperCase')
+
+  await waitForEditable('Take a walk down the STRASSE today.')
+
+  expect(await selectedRange.evaluate(range => range.toString())).toBe('STRASSE')
+})
+
 it('the selected text remains selected when the thought has trailing whitespace', async () => {
   // Typed rather than pasted: Editable trims the value on its way into Redux while the live editable keeps the
   // trailing space, so the text the editable re-renders to is not the text the DOM had before the edit.

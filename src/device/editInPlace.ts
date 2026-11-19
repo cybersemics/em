@@ -38,33 +38,81 @@ const parse = (html: string): DocumentFragment | null => {
   return template.innerHTML === html ? template.content : null
 }
 
-/** Changes an editable to the given HTML by changing its existing text nodes character by character. Replacing a
- * character with insertData followed by deleteData leaves every boundary of a live range where it was, whereas
- * assigning a text node's data collapses it. Only possible when the new HTML differs from the editable's only in
- * characters, with the same markup and the same length for each text node, which is what a letter case change usually
- * produces. Returns false, without changing anything, otherwise, e.g. when 'ß' becomes 'SS'. */
-export const replaceTextInPlace = (editable: HTMLElement, html: string): boolean => {
-  const fragment = parse(html)
-  if (!fragment) return false
-  const newNodes = textNodes(fragment)
-  const liveNodes = textNodes(editable)
-  if (liveNodes.length !== newNodes.length || liveNodes.some((node, i) => node.length !== newNodes[i].length)) {
-    return false
-  }
+/** Returns the length of the longest common prefix of two strings. */
+const commonPrefixLength = (a: string, b: string): number => {
+  let i = 0
+  while (i < a.length && i < b.length && a[i] === b[i]) i++
+  return i
+}
 
-  const clone = editable.cloneNode(true) as HTMLElement
-  textNodes(clone).forEach((node, i) => (node.data = newNodes[i].data))
-  if (clone.innerHTML !== html) return false
+/** Returns the length of the longest common suffix of two strings that does not overlap the given prefix length. */
+const commonSuffixLength = (a: string, b: string, prefix: number): number => {
+  let i = 0
+  while (i < a.length - prefix && i < b.length - prefix && a[a.length - 1 - i] === b[b.length - 1 - i]) i++
+  return i
+}
 
-  liveNodes.forEach((node, i) => {
-    const newData = newNodes[i].data
+/** Changes a text node to new data, keeping every boundary of the live selection where it belongs. Assigning a text
+ * node's data collapses the selection, whereas inserting and deleting characters moves its boundaries by rule. When
+ * the length is unchanged, each changed character is replaced with insertData followed by deleteData, which leaves
+ * every boundary where it was. Otherwise, the run of characters between the common prefix and suffix is replaced in one
+ * insertData and one deleteData, which keeps a boundary on either edge of that run on the same edge of the new run,
+ * e.g. around 'straße' when it becomes 'STRASSE'. */
+const replaceData = (node: Text, newData: string): void => {
+  if (node.length === newData.length) {
     Array.from({ length: newData.length }, (_, offset) => offset)
       .filter(offset => node.data[offset] !== newData[offset])
       .forEach(offset => {
         node.insertData(offset, newData[offset])
         node.deleteData(offset + 1, 1)
       })
-  })
+    return
+  }
+
+  const prefix = commonPrefixLength(node.data, newData)
+  const suffix = commonSuffixLength(node.data, newData, prefix)
+  const oldLength = node.length - prefix - suffix
+  const newRun = newData.slice(prefix, newData.length - suffix)
+  node.insertData(prefix, newRun)
+  node.deleteData(prefix + newRun.length, oldLength)
+}
+
+/** Returns true if a boundary of the selection falls strictly inside the run of characters of a text node that
+ * replaceData would replace as a whole, where it would be moved to the end of the new run. */
+const hasBoundaryInChangedRun = (node: Text, newData: string): boolean => {
+  if (node.length === newData.length) return false
+  const bounds = selection.boundaries()
+  if (!bounds) return false
+  const prefix = commonPrefixLength(node.data, newData)
+  const runEnd = node.length - commonSuffixLength(node.data, newData, prefix)
+  return [
+    { container: bounds.startContainer, offset: bounds.startOffset },
+    { container: bounds.endContainer, offset: bounds.endOffset },
+  ].some(({ container, offset }) => container === node && offset > prefix && offset < runEnd)
+}
+
+/** Changes an editable to the given HTML by changing the characters of its existing text nodes, which keeps the
+ * selection over the same text (see replaceData). Only possible when the new HTML differs from the editable's only in
+ * characters, with the same markup, which is what a letter case change produces, and when no boundary of the
+ * selection falls inside a run of characters whose length changes. Empty text nodes, such as the ones
+ * replaceMarkupInPlace leaves holding the selection's boundaries around new formatting, add nothing to the HTML and
+ * are left as they are. Returns false, without changing anything, otherwise. */
+export const replaceTextInPlace = (editable: HTMLElement, html: string): boolean => {
+  const fragment = parse(html)
+  if (!fragment) return false
+  const newNodes = textNodes(fragment)
+  const liveNodes = textNodes(editable).filter(node => node.length > 0)
+  if (liveNodes.length !== newNodes.length) return false
+
+  const clone = editable.cloneNode(true) as HTMLElement
+  textNodes(clone)
+    .filter(node => node.length > 0)
+    .forEach((node, i) => (node.data = newNodes[i].data))
+  if (clone.innerHTML !== html) return false
+
+  if (liveNodes.some((node, i) => hasBoundaryInChangedRun(node, newNodes[i].data))) return false
+
+  liveNodes.forEach((node, i) => replaceData(node, newNodes[i].data))
 
   return true
 }
