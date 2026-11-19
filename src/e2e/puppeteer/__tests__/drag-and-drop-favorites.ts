@@ -150,4 +150,22 @@ describe('favorites long press on desktop', () => {
     expect(openSidebars).toBe(1)
     expect(await getEditingText()).toBe('b')
   })
+  // https://github.com/cybersemics/em/issues/3693
+  it.skip('keeps the sidebar open when releasing a favorite long press at the right edge', async () => {
+    await page.setViewport({ width: 500, height: 800 })
+    await paste(`
+      - Apple
+      - Other thought
+    `)
+    await clickThought('Apple')
+    await click('[aria-label="Add to Favorites"]')
+    await clickThought('Other thought')
+    await openSidebar()
+
+    await longPressFavorite('Apple', { rightEdge: true })
+
+    const openSidebars = await page.$$eval('[data-testid="sidebar"]:not([inert])', sidebars => sidebars.length)
+    expect(openSidebars).toBe(1)
+    expect(await getEditingText()).toBe('Other thought')
+  })
 })

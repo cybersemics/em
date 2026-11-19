@@ -8,7 +8,7 @@ import waitForAlert from './waitForAlert'
  *
  * Mobile Safari follows the touchend of a press held for under about two seconds with a click on the pressed element. Chrome's touch emulation sends it only when the finger lifts before Chrome's own long press timeout, so it is sent here explicitly, the way Mobile Safari delivers it (#3693).
  */
-const longPressFavorite = async (value: string) => {
+const longPressFavorite = async (value: string, { rightEdge = false }: { rightEdge?: boolean } = {}) => {
   const favorite = await findFavoriteItem(value)
   // Press the link itself rather than the center of the favorite, which can fall between the context breadcrumbs and the link.
   const link = await favorite.evaluateHandle(
@@ -20,7 +20,10 @@ const longPressFavorite = async (value: string) => {
   const boundingBox = await link.asElement()?.boundingBox()
   if (!boundingBox) throw new Error(`Favorite "${value}" not found.`)
 
-  const x = boundingBox.x + boundingBox.width / 2
+  // On a narrow viewport, press the blank space in the row inside the drawer's edge-close zone.
+  const x = rightEdge
+    ? (await page.$eval('[aria-label="sidebar"]', sidebar => sidebar.getBoundingClientRect().right)) - 35
+    : boundingBox.x + boundingBox.width / 2
   const y = boundingBox.y + boundingBox.height / 2
 
   if (page.viewport()?.hasTouch) {
