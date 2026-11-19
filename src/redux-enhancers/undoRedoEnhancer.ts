@@ -257,8 +257,13 @@ const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] => {
 /**
  * Moves each thought that an undo or redo patch changed from the Lexeme of its old value to the Lexeme of its new value, since patches leave Lexemes out (see diffState). A Lexeme left with no contexts is deleted. A context that is added goes at the end, so the order can differ from the provider's until the readback replaces the Lexeme.
  */
-const updateLexemeContexts = (state: State, oldState: State, ops: Operation[]): State => {
-  const ids = _.uniq(ops.flatMap(op => op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)/)?.[1] ?? [])) as ThoughtId[]
+const updateLexemeContexts = (state: State, oldState: State): State => {
+  const thoughtsOld = oldState.thoughts.thoughtIndex
+  const thoughtsNew = state.thoughts.thoughtIndex
+  // immer keeps every thought that the patch did not change as the same object.
+  const ids = _.union(Object.keys(thoughtsOld), Object.keys(thoughtsNew)).filter(
+    id => thoughtsOld[id] !== thoughtsNew[id],
+  ) as ThoughtId[]
 
   const lexemeIndexUpdates = keyValueBy<ThoughtId, Lexeme | null>(ids, (id, i, updates) => {
     const thoughtOld = getThoughtById(oldState, id)
@@ -323,7 +328,6 @@ const undoOneReducer = (state: State): State => {
   const newState = updateLexemeContexts(
     produce(state, (state: State) => applyPatch(state, lastUndoPatch.ops).newDocument),
     state,
-    lastUndoPatch.ops,
   )
   const correspondingRedoPatch: Patch = {
     ops: diffState(newState as Index, state),
@@ -350,7 +354,6 @@ const redoOneReducer = (state: State): State => {
   const newState = updateLexemeContexts(
     produce(state, (state: State) => applyPatch(state, lastRedoPatch.ops).newDocument),
     state,
-    lastRedoPatch.ops,
   )
   const correspondingUndoPatch: Patch = {
     ops: diffState(newState as Index, state),
