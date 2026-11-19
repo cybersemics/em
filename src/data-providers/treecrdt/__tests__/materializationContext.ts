@@ -160,29 +160,20 @@ it('updates stored memberships on incoming deletion even when its thought was no
   expect(snapshot.thoughtIndex[THOUGHT_ID]).toBeNull()
 })
 
-it('publishes thoughts and keeps optimistic memberships while indexing keeps failing', async () => {
+it('publishes nothing while indexing keeps failing', async () => {
   const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  // A readback that keeps restarting would hang the run instead of failing it, so cap its rounds.
-  let reads = 0
-  getSnapshot.mockImplementation(() => {
-    if (++reads > 50) throw new Error('readback keeps restarting')
-    return snapshot
-  })
   // A membership needs the payload's timestamps, so every delivery and retry from here on fails.
   const brokenId = '00000000000000000000000000000203' as ThoughtId
   const payload = new TextEncoder().encode(JSON.stringify({ value: 'x' }))
   await client.local.insert(new Uint8Array(32).fill(2), EM_TOKEN, brokenId, { type: 'last' }, payload)
   await waitForMaterializedThoughtsToStore()
-  expect(snapshot.thoughtIndex[brokenId]?.value).toBe('x')
 
-  // This write is indexed in the same failing batch, so its optimistic Lexeme must be left alone.
-  const lexeme = { contexts: [THOUGHT_ID], created: 1 as Timestamp, lastUpdated: 1 as Timestamp, updatedBy: 'test' }
-  snapshot = { ...snapshot, lexemeIndex: { [hashThought('a')]: lexeme } }
+  // This edit is indexed in the same failing batch, so it is not published either.
   await withTreecrdtWriteBarrier(() =>
     provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
   )
   await waitForMaterializedThoughtsToStore()
 
-  expect(snapshot.lexemeIndex[hashThought('a')]).toBe(lexeme)
+  expect(apply).not.toHaveBeenCalled()
   report.mockRestore()
 })

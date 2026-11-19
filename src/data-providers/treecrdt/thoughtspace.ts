@@ -341,15 +341,9 @@ const createTreecrdtDataProvider = () => {
     const indexes = await client.onMaterializedDurable(
       'em-derived-indexes',
       async event => {
-        try {
-          await refreshAttributeChildrenFromChanges(client, event.changes)
-          const keys = await lexemes.applyChanges(event.changes)
-          publish?.(event, keys)
-        } catch (err) {
-          // Publication still needs this event's thoughts. Its memberships are not indexed, so it names none.
-          publish?.(event, [])
-          throw err
-        }
+        await refreshAttributeChildrenFromChanges(client, event.changes)
+        const keys = await lexemes.applyChanges(event.changes)
+        publish?.(event, keys)
       },
       {
         version: INDEX_VERSION,
@@ -386,8 +380,7 @@ const createTreecrdtDataProvider = () => {
       isActive: () => activeDb === clientDb,
     }
 
-    // A publication is queued only once its event is indexed or has failed to index, so the idle barrier waits for the
-    // indexes too.
+    // A publication is queued only once its event is indexed, so the idle barrier waits for the indexes too.
     const unsubscribeMaterialized = client.onMaterialized(() => void enqueueMaterializedThoughtsToStoreWork(indexed))
     if (materializationContext) {
       publish = (event, keys) => {
