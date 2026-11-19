@@ -95,7 +95,7 @@ it('pressing Enter mid-note with multiple thoughts multiselected creates an empt
 })
 
 // https://github.com/cybersemics/em/pull/6277
-it('keeps the note focused when Backspace erases its only draft space', async () => {
+it('deletes a new note on Backspace after a space, since the space does not appear, as in an empty thought', async () => {
   await paste('- a')
   await clickThought('a')
   await press('n', { meta: true, alt: true })
@@ -103,11 +103,8 @@ it('keeps the note focused when Backspace erases its only draft space', async ()
   await press('Space')
 
   await press('Backspace')
-  await keyboard.type('z')
 
   expect(await exportThoughts()).toBe(`
 - a
-  - =note
-    - z
 `)
 })

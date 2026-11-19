@@ -23,13 +23,19 @@ afterEach(cleanupTestApp)
 
 describe('=note', () => {
   // https://github.com/cybersemics/em/issues/5084
+  // A note left with only whitespace is emptied as it is typed, as a thought is, so nothing is shown while typing.
   test.each([
-    ['plain whitespace', '  hello  world  ', 'hello  world'],
-    ['formatted whitespace', '<b>  hello <i>world  </i></b>', '<b>hello <i>world</i></b>'],
-    ['only whitespace', '   ', ''],
+    ['plain whitespace', '  hello  world  ', '  hello  world  ', 'hello  world'],
+    [
+      'formatted whitespace',
+      '<b>  hello <i>world  </i></b>',
+      '<b>  hello <i>world  </i></b>',
+      '<b>hello <i>world</i></b>',
+    ],
+    ['only whitespace', '   ', '', ''],
   ])(
     'saves %s trimmed as it is typed, and shows it trimmed once the note blurs',
-    async (_description, input, expected) => {
+    async (_description, input, shown, expected) => {
       await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
       await act(vi.runOnlyPendingTimersAsync)
       const noteEditor = screen.getByLabelText('note-editable')
@@ -37,7 +43,7 @@ describe('=note', () => {
       await act(async () => {
         fireEvent.input(noteEditor, { target: { innerHTML: input } })
       })
-      expect(noteEditor.innerHTML).toBe(input)
+      expect(noteEditor.innerHTML).toBe(shown)
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain(`<li>${expected}</li>`)
 
       await act(async () => {
@@ -162,6 +168,27 @@ describe('=note', () => {
 
     const noteId = contextToThoughtId(store.getState(), ['a', '=note'])!
     expect(getChildrenSorted(store.getState(), noteId).map(child => child.value)).toEqual(['<b>one</b> two'])
+  })
+
+  // https://github.com/cybersemics/em/pull/6277
+  test('a space typed into an empty note does not appear, as in an empty thought', async () => {
+    await dispatch([importText({ text: '- a' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      noteEditor.focus()
+      selection.set(noteEditor, { offset: 0 })
+    })
+
+    const user = userEvent.setup({ delay: null })
+    await user.keyboard(' ')
+    await act(vi.runOnlyPendingTimersAsync)
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('')
+
+    // The caret stays in the note, so the next character starts the note's text.
+    await user.keyboard('y')
+    await act(vi.runOnlyPendingTimersAsync)
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('y')
   })
 
   test('adds no undo step when the note blurs', async () => {

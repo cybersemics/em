@@ -162,9 +162,6 @@ const Note = React.memo(
         // note may be '' or null if the attribute child was deleted
         else if (e.key === 'Backspace' && !note) {
           e.stopPropagation()
-          // The saved note can be empty while the editor still contains draft spaces.
-          if (e.currentTarget.textContent) return
-
           e.preventDefault()
 
           // delete target thought if it exists
@@ -194,7 +191,7 @@ const Note = React.memo(
         if (editableSyncStore.getState().suppressChange) return
 
         // calculate pathToContext onChange not in render for performance
-        const value = justPasted
+        const typedValue = justPasted
           ? // if just pasted, strip all HTML from value
             (setJustPasted(false), strip(e.target.value))
           : // Mobile Safari inserts <br> when all text is deleted
@@ -203,8 +200,15 @@ const Note = React.memo(
 
         const domOffset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
         const textAfter = noteRef.current?.textContent ?? ''
+
+        // As in a thought, a note left with only whitespace is emptied as it is typed, so a space typed into an empty
+        // note never appears and adds no undo step (see Editable's onChangeHandler).
+        const blank = !stripTags(trimHtml(typedValue))
+        if (blank && noteRef.current?.innerHTML) noteRef.current.innerHTML = ''
+        const value = blank ? '' : typedValue
+
         const htmlBefore = htmlBeforeInputRef.current
-        htmlBeforeInputRef.current = e.target.value
+        htmlBeforeInputRef.current = blank ? '' : e.target.value
 
         // update the referenced thought directly if it exists
         dispatch((dispatch, getState) => {
