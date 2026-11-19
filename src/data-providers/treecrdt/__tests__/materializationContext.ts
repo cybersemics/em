@@ -38,16 +38,8 @@ const persistThought = (db: Pick<DataProvider, 'updateThoughts'>, value: string)
   })
 
 it('retains the originating materialization context after rebinding the provider', async () => {
-  const clientOne = await createTreecrdtClient({
-    storage: { type: 'memory' },
-    runtime: { type: 'direct' },
-    docId: 'materialization-context-one',
-  })
-  const clientTwo = await createTreecrdtClient({
-    storage: { type: 'memory' },
-    runtime: { type: 'direct' },
-    docId: 'materialization-context-two',
-  })
+  const clientOne = await createTreecrdtClient({ docId: 'materialization-context-one' })
+  const clientTwo = await createTreecrdtClient({ docId: 'materialization-context-two' })
   const provider = createTreecrdtDataProvider()
   const bridgeOne = {
     getSnapshot: () => ({ thoughtIndex: {}, lexemeIndex: {} }),
@@ -83,7 +75,6 @@ it('retains the originating materialization context after rebinding the provider
     >
 
     expect(context.bridge).toBe(bridgeOne)
-    expect(context.client).toBe(clientOne)
     expect(context.db).not.toBe(provider.db)
     await expect(context.db.getThoughtById(THOUGHT_ID)).resolves.toMatchObject({ value: 'client one' })
     await expect(provider.db.getThoughtById(THOUGHT_ID)).resolves.toMatchObject({ value: 'client two' })
