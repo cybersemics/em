@@ -311,7 +311,10 @@
     {
       "id": "reload",
       "label": "Reload",
-      "accelerator": "Cmd+R",
+      "accelerator": {
+        "macos": "Cmd+R",
+        "windowsLinux": "Ctrl+R"
+      },
       "checkable": false
     },
     {
