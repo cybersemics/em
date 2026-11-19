@@ -1,6 +1,6 @@
 import Command from '../@types/Command'
+import { showFindBarActionCreator as showFindBar } from '../actions/showFindBar'
 import { isTouch } from '../browser'
-import findBarStore from '../stores/findBarStore'
 
 const findCommand = {
   id: 'find',
@@ -14,7 +14,7 @@ const findCommand = {
   // The find bar is desktop only (see AppComponent). On a touch device with a hardware keyboard, the shortcut is left to
   // the browser's own find, since keyDown prevents the default only of a command that can execute.
   canExecute: () => !isTouch,
-  exec: () => findBarStore.update({ open: true }),
+  exec: dispatch => dispatch(showFindBar({ value: true })),
 } satisfies Command
 
 export default findCommand

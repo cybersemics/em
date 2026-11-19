@@ -1,10 +1,11 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import { showFindBarActionCreator as showFindBar } from '../actions/showFindBar'
 import { isMac } from '../browser'
 import { commandByKeyDown, hashKeyDown, isArrowKey } from '../commands'
 import findCommand from '../commands/find'
@@ -13,7 +14,6 @@ import scrollTo from '../device/scrollTo'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import commandEmitter from '../stores/commandEmitter'
-import findBarStore from '../stores/findBarStore'
 import head from '../util/head'
 import ChevronRightIcon from './icons/ChevronRightIcon'
 import XIcon from './icons/XIcon'
@@ -220,7 +220,7 @@ const FindBarOpen = () => {
   /** Closes the find bar and moves the cursor to the current match, with the caret at the end of the match. Focusing the editable sets the cursor on its thought (see onFocus in Editable), which knows its Path. A multiselection is dismissed first. Without a current match, the selection that the find bar took the focus from is restored, and the cursor and the multiselection are left as they were. Synchronous, so that a command that commits the match executes on the new cursor. */
   const commit = useCallback(() => {
     const match = matchesRef.current[currentRef.current]
-    findBarStore.update({ open: false })
+    dispatch(showFindBar({ value: false }))
     if (!match?.editable.isConnected) {
       selection.restore(savedSelection.current)
       return
@@ -295,11 +295,14 @@ const FindBarOpen = () => {
   useEffect(() => {
     /** Commits the current match before a command executes. */
     const onCommand = (command?: Command) => {
-      if (command && command !== findCommand && findBarStore.getState().open) commit()
+      if (!command || command === findCommand) return
+      dispatch((dispatch, getState) => {
+        if (getState().showFindBar) commit()
+      })
     }
     commandEmitter.on('command', onCommand)
     return () => commandEmitter.off('command', onCommand)
-  }, [commit])
+  }, [commit, dispatch])
 
   // Find the matches when the query changes, starting from the first one at or below the top of the visible area.
   useEffect(() => {
@@ -380,7 +383,7 @@ const FindBarOpen = () => {
         // Close when the focus moves elsewhere in the page, e.g. to a thought that was clicked. A blur from switching
         // to another window leaves the find bar open, as a browser's does.
         onBlur={() => {
-          if (document.hasFocus()) findBarStore.update({ open: false })
+          if (document.hasFocus()) dispatch(showFindBar({ value: false }))
         }}
         className={css({ padding: '0.3em 0.5em', borderRadius: '4px', width: '12em', fontSize: 'inherit' })}
       />
@@ -412,7 +415,7 @@ const FindBarOpen = () => {
 
 /** An inline find bar for the rendered thoughts, opened with Find (Command/Ctrl + F). Enter and Shift + Enter, or the down and up buttons, step through the matches, Escape or the close button moves the cursor to the current match, and any other command moves the cursor to it and then executes. */
 const FindBar = () => {
-  const open = findBarStore.useSelector(state => state.open)
+  const open = useSelector(state => state.showFindBar)
   return open ? <FindBarOpen /> : null
 }
 
