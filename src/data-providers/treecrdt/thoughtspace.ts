@@ -337,9 +337,6 @@ const createTreecrdtDataProvider = () => {
     // `publish` is set near the end of binding. The startup catch-up runs inside onMaterializedDurable before that, so
     // it publishes nothing; Redux loads lexemes on demand.
     let publish: ((event: MaterializationEvent, keys: string[]) => void) | undefined
-    // Set while the last index update failed. TreeCRDT retries it with the next event. Waiting for the indexes would
-    // retry it too, and every failed retry publishes its event again, so the readback kept discarding its own rounds.
-    let failing = false
     const lexemes = await createLexemeIndex(client)
     const indexes = await client.onMaterializedDurable(
       'em-derived-indexes',
@@ -347,10 +344,8 @@ const createTreecrdtDataProvider = () => {
         try {
           await refreshAttributeChildrenFromChanges(client, event.changes)
           const keys = await lexemes.applyChanges(event.changes)
-          failing = false
           publish?.(event, keys)
         } catch (err) {
-          failing = true
           // Publication still needs this event's thoughts. Its memberships are not indexed, so it names none.
           publish?.(event, [])
           throw err
@@ -365,11 +360,8 @@ const createTreecrdtDataProvider = () => {
         onError: err => console.error('TreeCRDT derived indexing failed', err),
       },
     )
-    /** Resolves once every change materialized so far is indexed, or at once from a failed update until one succeeds. */
-    const indexed = () =>
-      failing
-        ? Promise.resolve()
-        : indexes.settled().catch(err => console.error('TreeCRDT derived indexing failed', err))
+    /** Resolves once the index updates queued so far have finished, whether or not they succeeded. */
+    const indexed = () => indexes.idle()
 
     const clientDb: TreecrdtClientDataProvider = {
       getLexemeById: async key => (await clientDb.getLexemesByIds([key]))[0],
@@ -395,7 +387,7 @@ const createTreecrdtDataProvider = () => {
     }
 
     // A publication is queued only once its event is indexed or has failed to index, so the idle barrier waits for the
-    // indexes too, except while an update is failing.
+    // indexes too.
     const unsubscribeMaterialized = client.onMaterialized(() => void enqueueMaterializedThoughtsToStoreWork(indexed))
     if (materializationContext) {
       publish = (event, keys) => {

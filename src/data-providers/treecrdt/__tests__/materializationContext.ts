@@ -155,15 +155,14 @@ it('publishes thoughts and keeps optimistic memberships while indexing keeps fai
   await waitForMaterializedThoughtsToStore()
   expect(snapshot.thoughtIndex[brokenId]?.value).toBe('x')
 
-  // This write is indexed in the same failing batch, so its optimistic Lexeme must be left alone. Waiting for idle
-  // skips the index while it fails, so wait for the batch's publication instead.
+  // This write is indexed in the same failing batch, so its optimistic Lexeme must be left alone.
   const lexeme = { contexts: [THOUGHT_ID], created: 1 as Timestamp, lastUpdated: 1 as Timestamp, updatedBy: 'test' }
   snapshot = { ...snapshot, lexemeIndex: { [hashThought('a')]: lexeme } }
-  const published = new Promise<{ lexemeIndex: object }>(resolve => apply.mockImplementationOnce(resolve))
   await withTreecrdtWriteBarrier(() =>
     provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
   )
+  await waitForMaterializedThoughtsToStore()
 
-  expect((await published).lexemeIndex).toEqual({})
+  expect(snapshot.lexemeIndex[hashThought('a')]).toBe(lexeme)
   report.mockRestore()
 })
