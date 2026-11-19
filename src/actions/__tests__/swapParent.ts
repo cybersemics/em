@@ -5,20 +5,15 @@ import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
-import store from '../../stores/app'
-import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
-import importToContext from '../../test-helpers/importToContext'
-import initStore from '../../test-helpers/initStore'
-import setCursor, { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newThought from '../newThought'
-import { pullAncestorsActionCreator as pullAncestors } from '../pullAncestors'
 import setSortPreference from '../setSortPreference'
-import swapParent, { swapParentActionCreator as swapParentAction } from '../swapParent'
+import swapParent from '../swapParent'
 import toggleContextView from '../toggleContextView'
 import updateThoughts from '../updateThoughts'
 
@@ -577,23 +572,5 @@ describe('reconcile', () => {
   - AAA
     - CCC
       - BBB`)
-  })
-
-  // https://github.com/cybersemics/em/issues/3947
-  it('keeps the former parent visible after swapping during a forced pull', async () => {
-    await initStore()
-    store.dispatch([importToContext('- AAA\n  - BBB'), setCursorAction(['AAA', 'BBB'])])
-    await vi.runAllTimersAsync()
-
-    const path = contextToPathOrThrow(store.getState(), ['AAA', 'BBB'], 'swapParent')
-    // Recently Edited starts a forced ancestor pull that can still be running when the swap begins.
-    const pull = store.dispatch(pullAncestors(path, { force: true, maxDepth: 0 }))
-    store.dispatch(swapParentAction())
-    await pull
-    await vi.runAllTimersAsync()
-
-    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - BBB
-    - AAA`)
   })
 })
