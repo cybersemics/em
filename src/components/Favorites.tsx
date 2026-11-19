@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { useCallback, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { dropHoverRecipe } from '../../styled-system/recipes'
@@ -43,11 +43,12 @@ const DragAndDropFavorite = ({
     path: simplePath,
   })
   const [longPressed, setLongPressed] = useState(false)
+  const dragHoldResult = useDragHold({ simplePath, sourceZone: DragThoughtZone.Favorites })
 
-  /** Marks the row so the drawer can consume the release click after the hold state has cleared. */
-  const markLongPressed = useCallback(() => setLongPressed(true), [])
-
-  const dragHoldResult = useDragHold({ simplePath, sourceZone: DragThoughtZone.Favorites, onDragHold: markLongPressed })
+  // Mark the row once the press becomes a hold, so the drawer can consume the release click after the hold state has cleared.
+  useEffect(() => {
+    if (dragHoldResult.isPressed) setLongPressed(true)
+  }, [dragHoldResult.isPressed])
   // Link stops mousedown from propagating, so the row starts a desktop hold in capture.
   const { onMouseDown: startLongPress, ...dragHoldProps } = dragHoldResult.props
 
