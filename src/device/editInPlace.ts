@@ -114,6 +114,15 @@ export const replaceTextInPlace = (editable: HTMLElement, html: string): boolean
 
   liveNodes.forEach((node, i) => replaceData(node, newNodes[i].data))
 
+  // Blink caches the selection's bounds, which Android positions the selection handles from, and recomputes them after
+  // a change of text only if the change moved a boundary of the selection. A change of children always recomputes
+  // them. A boundary in one of the empty text nodes that a preceding Bold left around the word is never moved, so the
+  // end handle would be left where the end of the word was before it was letter-cased. Inserting and removing an empty
+  // text node, which holds no boundary, makes Blink recompute them without changing the selection or the HTML.
+  const marker = document.createTextNode('')
+  editable.append(marker)
+  marker.remove()
+
   return true
 }
 
