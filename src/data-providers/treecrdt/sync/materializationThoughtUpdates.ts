@@ -11,17 +11,21 @@ export default async function refreshThoughtsFromMaterializationChanges(
 ): Promise<Index<Thought | null>> {
   const deleted = new Set<ThoughtId>()
   const touched = new Set<ThoughtId>()
+  /** Thoughts inserted, moved or restored, so their siblings' positions may have shifted. */
+  const placed = new Set<ThoughtId>()
   const orderParents = new Set<ThoughtId>()
   for (const ch of changes) {
     switch (ch.kind) {
       case 'insert':
         deleted.delete(ch.node as ThoughtId)
         touched.add(ch.node as ThoughtId)
+        placed.add(ch.node as ThoughtId)
         touched.add(ch.parentAfter as ThoughtId)
         orderParents.add(ch.parentAfter as ThoughtId)
         break
       case 'move':
         touched.add(ch.node as ThoughtId)
+        placed.add(ch.node as ThoughtId)
         if (ch.parentBefore) {
           touched.add(ch.parentBefore as ThoughtId)
           orderParents.add(ch.parentBefore as ThoughtId)
@@ -39,6 +43,7 @@ export default async function refreshThoughtsFromMaterializationChanges(
       case 'restore':
         deleted.delete(ch.node as ThoughtId)
         touched.add(ch.node as ThoughtId)
+        placed.add(ch.node as ThoughtId)
         if (ch.parentAfter) {
           touched.add(ch.parentAfter as ThoughtId)
           orderParents.add(ch.parentAfter as ThoughtId)
@@ -60,7 +65,8 @@ export default async function refreshThoughtsFromMaterializationChanges(
     const thought = await db.getThoughtById(id)
     if (!thought) continue
     thoughtIndexUpdates[thought.id] = thought
-    orderParents.add(thought.parentId)
+    // A rename moves no sibling, and a parent keeps its place when its children change.
+    if (placed.has(id)) orderParents.add(thought.parentId)
   }
 
   // Current em selectors still sort by numeric rank. For remote/order-only TreeCRDT changes, derive a local rank

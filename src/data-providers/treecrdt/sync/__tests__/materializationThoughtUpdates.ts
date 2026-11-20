@@ -75,6 +75,22 @@ it('projects TreeCRDT sibling order for both parents after a cross-parent move',
   })
 })
 
+it('reads only a renamed thought, since a rename moves no sibling', async () => {
+  const thoughts = {
+    [HOME_TOKEN]: thought(HOME_TOKEN, HOME_TOKEN, 0, ROOT_PARENT_ID, [A_ID, B_ID]),
+    [A_ID]: thought(A_ID, 'a', 0, HOME_TOKEN),
+    [B_ID]: thought(B_ID, 'b', 1, HOME_TOKEN),
+  }
+  const getThoughtById = vi.fn(async (id: ThoughtId) => thoughts[id])
+
+  const updates = await refreshThoughtsFromMaterializationChanges([{ kind: 'payload', node: A_ID, payload: null }], {
+    getThoughtById,
+  })
+
+  expect(updates).toEqual({ [A_ID]: thoughts[A_ID] })
+  expect(getThoughtById.mock.calls).toEqual([[A_ID]])
+})
+
 it('keeps a thought restored after deletion in the same buffered refresh', async () => {
   const restored = thought(A_ID, 'a', 0, HOME_TOKEN)
   const result = await refreshThoughtsFromMaterializationChanges(
