@@ -4,12 +4,15 @@ import userEvent from '@testing-library/user-event'
 import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
+import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { setCursorActionCreator as setCursorPath } from '../../actions/setCursor'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import defineTerm from '../../commands/defineTerm'
 import generateEmoji from '../../commands/generateEmoji'
 import generateThought from '../../commands/generateThought'
 import organizeThought from '../../commands/organizeThought'
+import undo from '../../commands/undo'
 import { HOME_TOKEN } from '../../constants'
 import * as selection from '../../device/selection'
 import contextToPath from '../../selectors/contextToPath'
@@ -210,6 +213,47 @@ it('toggles the multicursor on a click that follows a new touchstart', async () 
   // the first tap selected b, the second deselected it
   expect(Object.keys(store.getState().multicursors)).toHaveLength(1)
 })
+
+// https://github.com/cybersemics/em/issues/6347
+it.each([
+  { position: 'start', entered: 3, offset: 0, typed: ' bbb' },
+  { position: 'end', entered: 0, offset: 3, typed: 'bbb ' },
+])(
+  'undoes a space typed at the $position of a thought without undoing the step before it',
+  async ({ entered, offset, typed }) => {
+    await dispatch([importText({ text: '- aaa\n- bbb' }), setCursor(['aaa'])])
+    await act(async () => {
+      store.dispatch(formatSelection('foreColor', 'green'))
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    // Enter bbb at the other end from where the space is typed, so that the caret recorded on entry differs from
+    // where it is when the space is typed.
+    await dispatch(setCursorPath({ path: contextToPath(store.getState(), ['bbb'])!, offset: entered }))
+    const editable = (await findThoughtByText('bbb'))!
+    await act(async () => {
+      editable.focus()
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    // Move the caret with the arrow keys, which records nothing.
+    await act(async () => selection.set(editable, { offset }))
+    const user = userEvent.setup({ delay: null })
+    await user.keyboard(' ')
+    await act(vi.runAllTimersAsync)
+    expect(editable.textContent).toBe(typed)
+
+    await act(async () => {
+      executeCommand(undo)
+      await vi.runAllTimersAsync()
+    })
+
+    expect(editable.textContent).toBe('bbb')
+    // The caret stays where the space was typed, counted in the text without it.
+    expect(selection.offsetThought()).toBe(offset)
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<font color=')
+  },
+)
 
 describe('Generate Thought', () => {
   const mockFetch = vi.fn()
