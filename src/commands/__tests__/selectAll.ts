@@ -49,7 +49,7 @@ describe('chained commands', () => {
 
 describe('excluded commands', () => {
   // https://github.com/cybersemics/em/issues/5874
-  it.skip('does not chain Table View, which toggles the same parent as Table View alone', () => {
+  it('does not chain Table View, which toggles the same parent as Table View alone', () => {
     store.dispatch([
       importText({
         text: `
