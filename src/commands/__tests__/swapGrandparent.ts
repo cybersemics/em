@@ -45,7 +45,7 @@ describe('multicursor', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5874
-  it.skip('does not swap selected siblings with their grandparent', () => {
+  it('does not swap selected siblings with their grandparent', () => {
     store.dispatch([
       importText({
         text: `
