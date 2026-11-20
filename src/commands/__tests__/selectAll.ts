@@ -4,6 +4,7 @@ import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import indentCommand from '../indent'
+import mergeDuplicatesCommand from '../mergeDuplicates'
 import outdentCommand from '../outdent'
 import selectAllCommand from '../selectAll'
 
@@ -41,5 +42,12 @@ describe('chained commands', () => {
 
     const selectAllOutdent = chainCommand(selectAllCommand, outdentCommand)
     expect(selectAllOutdent.canExecute!(store.getState())).toBe(true)
+  })
+})
+
+describe('excluded commands', () => {
+  // https://github.com/cybersemics/em/issues/5874
+  it('does not chain Merge Duplicates, which merges the same level as Merge Duplicates alone', () => {
+    expect(selectAllCommand.isChainable(mergeDuplicatesCommand)).toBe(false)
   })
 })
