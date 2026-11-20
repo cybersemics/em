@@ -47,7 +47,7 @@ describe('chained commands', () => {
 
 describe('excluded commands', () => {
   // https://github.com/cybersemics/em/issues/5874
-  it.skip('does not chain Merge Duplicates, which merges the same level as Merge Duplicates alone', () => {
+  it('does not chain Merge Duplicates, which merges the same level as Merge Duplicates alone', () => {
     expect(selectAllCommand.isChainable(mergeDuplicatesCommand)).toBe(false)
   })
 })
