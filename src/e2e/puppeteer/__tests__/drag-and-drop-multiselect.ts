@@ -143,7 +143,7 @@ describe('drag and drop multiple thoughts', () => {
   })
 
   // https://github.com/cybersemics/em/issues/3561
-  it.skip('drags only the new thought when it is at a different depth from the selection', async () => {
+  it('drags only the new thought when it is at a different depth from the selection', async () => {
     await paste(`
       - a
         - b

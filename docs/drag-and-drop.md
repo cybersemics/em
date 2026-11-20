@@ -220,8 +220,8 @@ The previous `QuickDropIcon` / `DeleteDrop` / `CopyOneDrop` / `ExportDrop` icon 
 
 When a user has multiple thoughts selected via the multicursor (`state.multicursors`), dragging *any* selected thought drags the entire selection. `useDragAndDropThought.beginDrag` does the assembly:
 
-1. If a multicursor is active and the dragged thought is *not* part of it, add it via `addMulticursor`.
-2. Build the drag item array: every multicursor path plus the dragged thought.
+1. If a multicursor is active and the dragged thought is outside it, add it via `addMulticursor` and clear selected thoughts at other depths.
+2. Build the drag item array from the resulting selection, or from the dragged thought alone when there is no selection.
 3. Sort the array by document order with [`documentSort`](../src/selectors/documentSort.ts) so drops apply in the correct order.
 4. Set `state.draggingThoughts` to the simple paths and dispatch `longPress({ value: DragInProgress })`.
 
