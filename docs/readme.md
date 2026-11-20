@@ -2,6 +2,8 @@
 
 The in-repo documentation for **em**. The GitHub wiki is being deprecated in favour of these files; everything lives alongside the code now.
 
+Two directories here are not documentation and are not kept true as the code moves: `plans/` holds Compound Engineering plans, one per piece of work, and `solutions/` holds the learnings captured when work finishes. Both are point-in-time records for the session that acts on them, and `docs-sync` leaves them alone.
+
 ## Architecture
 
 - [Folder Structure](folder-structure.md) — Top-level layout of `src/`.
