@@ -29,7 +29,7 @@ describe('chained commands', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5874
-  it.skip('disables Swap Parent when there are several siblings', () => {
+  it('disables Swap Parent when there are several siblings', () => {
     store.dispatch([
       importText({
         text: `

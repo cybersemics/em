@@ -198,7 +198,7 @@ describe('multicursor', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5874
-  it.skip('does not swap selected siblings with their parent', () => {
+  it('does not swap selected siblings with their parent', () => {
     store.dispatch([
       importText({
         text: `

@@ -422,6 +422,8 @@ https://github.com/user-attachments/assets/39bf1ddd-d780-4a4c-8256-1ee7dbfb4311
 
 Swap the current thought with its parent. The children keep their position while the two thoughts trade places, so the parent's other children end up under the current thought and the current thought's children end up under the parent. The exceptions are `=done`, which marks a thought as completed, and `=favorite`, which lists the thought itself in Favorites. They describe the thought rather than its children, so each stays with the thought it belongs to.
 
+Swap Parent is disabled when two or more selected thoughts are siblings, since swapping each of them with the parent in turn would scramble the subtree. Selected thoughts with different parents are each swapped with their own parent.
+
 https://github.com/user-attachments/assets/0ca1a77b-e174-4884-9606-739a94cde039
 
 ### Swap Grandparent
