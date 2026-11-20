@@ -15,6 +15,7 @@ const SortOption = ({ sort, label, selectedSort, handleSortChange }: SortOptionP
       className={css({
         display: 'flex',
         flexDirection: 'row',
+        alignItems: 'center',
       })}
     >
       <input
