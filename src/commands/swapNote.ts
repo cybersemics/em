@@ -3,6 +3,8 @@ import { swapNoteActionCreator } from '../actions/swapNote'
 import SwapNoteIcon from '../components/icons/SwapNoteIcon'
 import getThoughtById from '../selectors/getThoughtById'
 import selectedPaths from '../selectors/selectedPaths'
+import thoughtToPath from '../selectors/thoughtToPath'
+import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -22,7 +24,11 @@ const swapNote = {
     return (
       isDocumentEditable() &&
       paths.length > 0 &&
-      paths.every(path => !path.some(id => isAttribute(getThoughtById(state, id)?.value ?? '')))
+      paths.every(path => {
+        // Context View can include attributes that are outside the selected thought's parent chain.
+        const thoughtPath = thoughtToPath(state, head(path))
+        return !path.some(id => isAttribute(getThoughtById(state, id)?.value ?? '') && thoughtPath.includes(id))
+      })
     )
   },
   svg: SwapNoteIcon,

@@ -104,7 +104,7 @@ describe('swapNote', () => {
   })
 
   // https://github.com/cybersemics/em/issues/6008
-  it.skip('converts an ordinary thought reached from a context view inside a note', () => {
+  it('converts an ordinary thought reached from a context view inside a note', () => {
     store.dispatch([
       importText({
         text: `
