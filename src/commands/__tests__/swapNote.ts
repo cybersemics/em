@@ -138,7 +138,7 @@ describe('swapNote', () => {
   })
 
   // https://github.com/cybersemics/em/issues/6008
-  it.skip('preserves a note descendant reached from a context view outside the note', () => {
+  it('preserves a note descendant reached from a context view outside the note', () => {
     store.dispatch([
       importText({
         text: `
