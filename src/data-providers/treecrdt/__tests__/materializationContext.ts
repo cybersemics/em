@@ -73,7 +73,8 @@ it('publishes coalesced local events once without republishing local thoughts', 
 })
 
 it('retries stale membership readback after a newer optimistic rename and persistence', async () => {
-  // A round reads the store again after readback. A rename that lands there makes that readback stale.
+  // A round reads the store again after readback. A rename that lands there makes that readback stale. Redux has no
+  // Lexeme for 'a' at both reads, as with a value typed and typed away while the round waits.
   getSnapshot.mockImplementationOnce(() => snapshot)
   getSnapshot.mockImplementationOnce(() => {
     snapshot = { ...snapshot, thoughtIndex: { [THOUGHT_ID]: thought('b') } }

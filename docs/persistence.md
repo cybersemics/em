@@ -78,6 +78,8 @@ Favorites' manual order is a separate local preference in `em_favorite_order`. I
 - `rank` is the node's **index among its siblings** (`0` when it has no parent). It is a projection of the tree's order, computed per read, not a persisted field.
 - `childrenMap` is built by `createIndexedChildrenMap`: attribute children are keyed by their value (via `childrenMapKey`, which disambiguates duplicates), all other children by their `ThoughtId`. Insertion order follows `client.tree.children`, so `Object.values(childrenMap)` is the authoritative sibling order.
 
+The attribute index catches up after each write, so `getThoughtsByIds`, which pulls read through, first waits for the index updates already queued. Otherwise a pull could key an attribute by its id. The readback reads through `getThoughtById` and starts over instead (see [Change observation](#change-observation-materialization)).
+
 `testFlags.replicationDelay` injects an artificial delay into `getThoughtsByIds`, used by e2e tests that need to observe slow local materialization after a refresh.
 
 ### Writes

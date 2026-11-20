@@ -3,10 +3,28 @@ import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import hashThought from '../../../util/hashThought'
+import sleep from '../../../util/sleep'
 import type { DataProvider } from '../../DataProvider'
 import { encodeThoughtPayload } from '../payload'
 import createTreecrdtThoughtspace from '../runtime'
 import createTreecrdtDataProvider, { createIndexedChildrenMap } from '../thoughtspace'
+
+/** While set, the attribute index waits for it before indexing a change, as behind a backlog of writes. */
+let attributeIndexHold: Promise<void> | undefined
+let releaseAttributeIndex: (() => void) | undefined
+
+vi.mock('../attributeChildren', async importOriginal => {
+  const actual = await importOriginal<typeof import('../attributeChildren')>()
+  return {
+    ...actual,
+    refreshAttributeChildrenFromChanges: async (
+      ...args: Parameters<typeof actual.refreshAttributeChildrenFromChanges>
+    ) => {
+      await attributeIndexHold
+      return actual.refreshAttributeChildrenFromChanges(...args)
+    },
+  }
+})
 
 /** Initializes an isolated in-memory TreeCRDT client and thoughtspace for unit tests. */
 const treecrdt = createTreecrdtThoughtspace()
@@ -57,6 +75,8 @@ const persistThoughts = (
 ) => persistThoughtsTo(treecrdtThoughtspace, thoughts, movePlacements)
 
 afterEach(async () => {
+  // A failed test can leave the attribute index held. Release it, or this drop and every later test wait forever.
+  releaseAttributeIndex?.()
   await treecrdt.drop()
 })
 
@@ -146,6 +166,19 @@ it('keys an attribute under its new parent and drops the key once it is renamed'
   await persistThoughts([thought(PIN_ID, OTHER_PARENT_ID, 'pin', 0)])
   await treecrdt.waitForIdle()
   expect((await treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID))?.childrenMap['=pin']).toBeUndefined()
+})
+
+it('keys an attribute by its value when a pull reads it before the attribute index catches up', async () => {
+  await initTestThoughtspace()
+  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
+  attributeIndexHold = new Promise(resolve => (releaseAttributeIndex = resolve))
+  await persistThoughts([thought(PIN_ID, PARENT_ID, '=pin', 0)])
+
+  // A read that does not wait for the index finishes while it is held, and keys the attribute by its id.
+  const reading = treecrdtThoughtspace.getThoughtsByIds([PARENT_ID])
+  await Promise.race([reading, sleep(50)])
+  releaseAttributeIndex?.()
+  expect((await reading)[0]?.childrenMap['=pin']).toBe(PIN_ID)
 })
 
 it('falls back to rank placement when explicit afterId is stale', async () => {

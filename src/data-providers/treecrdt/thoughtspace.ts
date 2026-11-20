@@ -362,6 +362,10 @@ const createTreecrdtDataProvider = () => {
       getThoughtById: id => getThoughtByIdFromClient(client, id),
       getThoughtsByIds: async ids => {
         await waitForTestReplicationDelay()
+        // Pulls read thoughts here. Their attribute keys come from an index that catches up after each write, so wait
+        // for the updates already queued, as getLexemesByIds does. The readback reads through getThoughtById and starts
+        // over when an event is indexed while it reads.
+        await indexes.idle()
         return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
       },
       updateThoughts: async updates => {

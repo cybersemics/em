@@ -30,8 +30,9 @@ export const applyMaterializedThoughtsToStore = async ({ bridge, db, pending, is
       // A newer edit to a Lexeme this round reads or a thought it writes.
       keys.some(key => lexemeIndex[key] !== snapshot.lexemeIndex[key]) ||
       Object.keys(thoughtIndexUpdates).some(id => thoughtIndex[id] !== snapshot.thoughtIndex[id]) ||
-      // A newer edit that renamed a listed thought into another Lexeme or deleted it. Only changed thoughts count, or a
-      // remote rename this round publishes would restart it forever.
+      // A newer edit that renamed a listed thought into another Lexeme or deleted it. The first check misses this if
+      // Redux has no Lexeme for the value at both reads, as with a value typed and typed away while the round waits.
+      // Only changed thoughts count, or a remote rename this round publishes would restart it forever.
       values.some((lexeme, i) =>
         lexeme?.contexts.some(id => {
           const thought = thoughtIndex[id]
