@@ -1,5 +1,5 @@
 /**
- * This hook supplies the command sections rendered by CommandTable and MobileCommandUniverse.
+ * This hook supplies the command sections rendered by CommandTable and CommandUniverse.
  * The caller owns the `search` string and `sortOrder` that its search input and sort button drive, and passes them in.
  * The hook centralizes two pieces of command-browsing logic:
  *
@@ -30,7 +30,7 @@ import keyValueBy from '../util/keyValueBy'
 import useFilteredCommands from './useFilteredCommands'
 
 /**
- * This build-time guard ensures every command that is *visible* on the current platform is reachable from at least one COMMAND_DIFFICULTIES entry.
+ * This build-time guard ensures every non-hidden command with a shortcut on the current platform is reachable from at least one COMMAND_DIFFICULTIES entry.
  * Without this, a newly added Command that someone forgot to slot into a group would be inaccessible.
  */
 const commandsGroupedMap = keyValueBy(
@@ -51,7 +51,7 @@ if (commandsUngrouped.length > 0) {
 /**
  * Display sections for command categories, tagged with their difficulty.
  * Sections are kept in difficulty order, so consumers can render a level heading whenever the difficulty ID changes.
- * Only commands executable on the current platform are included.
+ * Consumers choose whether to restrict these sections to commands with a shortcut on the current platform.
  */
 const commandSectionsByCategory: CommandSection[] = COMMAND_DIFFICULTIES.flatMap(level =>
   level.groups
@@ -59,21 +59,10 @@ const commandSectionsByCategory: CommandSection[] = COMMAND_DIFFICULTIES.flatMap
       id: group.id,
       title: group.title,
       difficulty: { id: level.id, title: level.title },
-      commands: group.commands.map(commandById).filter(command => (isTouch ? command.gesture : command.keyboard)),
+      commands: group.commands.map(commandById),
     }))
     .filter(section => section.commands.length > 0),
 )
-
-/**
- * Commands in a single flat array, sorted alphabetically by their label.
- * Only commands executable on the current platform are included.
- */
-const commandsSortedByLabel: Command[] = COMMAND_DIFFICULTIES.flatMap(level =>
-  level.groups.flatMap(group => group.commands),
-)
-  .map(commandById)
-  .filter(command => (isTouch ? command.gesture : command.keyboard))
-  .sort((a, b) => a.label.localeCompare(b.label))
 
 /** A titled display section containing a category, search results, or the alphabetical command list. */
 interface CommandSection {
@@ -88,22 +77,49 @@ interface CommandSection {
 const useCommandList = ({
   search,
   sortOrder,
+  platformCommandsOnly = true,
+  sortActiveCommandsFirst = false,
 }: {
   search: string
   sortOrder: CommandSortType
+  /** Only include commands with a keyboard shortcut on desktop or a gesture on touch devices. */
+  platformCommandsOnly?: boolean
+  sortActiveCommandsFirst?: boolean
 }): { sections: CommandSection[] } => {
   const [recentCommands] = useState(() => storageModel.get('recentCommands'))
   const filteredCommands = useFilteredCommands(search, {
-    platformCommandsOnly: true,
+    platformCommandsOnly,
     recentCommands,
+    sortActiveCommandsFirst,
   })
+
+  const { categories, alphabetical } = useMemo(() => {
+    const categories = commandSectionsByCategory
+      .map(section => ({
+        ...section,
+        // Default callers retain the platform shortcut restriction. The desktop palette keeps its visibility flags.
+        commands: section.commands.filter(command =>
+          platformCommandsOnly
+            ? Boolean(isTouch ? command.gesture : command.keyboard)
+            : isTouch
+              ? !command.hideFromGestureMenu
+              : !command.hideFromHelp && !command.hideFromDesktopCommandUniverse,
+        ),
+      }))
+      .filter(section => section.commands.length > 0)
+
+    return {
+      categories,
+      alphabetical: categories.flatMap(section => section.commands).sort((a, b) => a.label.localeCompare(b.label)),
+    }
+  }, [platformCommandsOnly])
 
   const sections = useMemo<CommandSection[]>(() => {
     if (search) return [{ id: 'results', title: 'Results', commands: filteredCommands }]
     if (sortOrder === 'recent') return [{ id: 'recent', title: 'Recently used', commands: filteredCommands }]
-    if (sortOrder === 'type') return commandSectionsByCategory
-    return [{ id: 'allCommands', title: 'All Commands', commands: commandsSortedByLabel }]
-  }, [search, sortOrder, filteredCommands])
+    if (sortOrder === 'type') return categories
+    return [{ id: 'allCommands', title: 'All Commands', commands: alphabetical }]
+  }, [search, sortOrder, filteredCommands, categories, alphabetical])
 
   return { sections }
 }

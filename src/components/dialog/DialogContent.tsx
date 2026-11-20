@@ -17,7 +17,7 @@ const DialogContent: React.FC<PropsWithChildren<{ scrollRef: RefObject<HTMLDivEl
 
   return (
     <div className={dialog.contentWrapper}>
-      <div ref={scrollRef} className={dialog.content}>
+      <div ref={scrollRef} data-dialog-scroll='true' className={dialog.content}>
         <div className={dialog.contentInner}>{children}</div>
       </div>
       <ScrollbarThumb scrollRef={scrollRef} />

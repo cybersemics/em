@@ -45,6 +45,9 @@ export const LATEST_COMMAND_DIAGRAM_DURATION = 800
 // number of latest commands to show at a time
 export const LATEST_COMMAND_LIMIT = 3
 
+/** The maximum number of recently executed commands to store, shown first in the command universe. */
+export const MAX_RECENT_COMMANDS = 5
+
 /** Practice repetitions needed to learn a command. Captured into a command's progress record when it is first pinned, so changing this does not change existing records. Provisional value pending a product decision (see #5485). */
 export const LEARNING_TARGET_REPS = 5
 

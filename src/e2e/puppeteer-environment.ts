@@ -49,6 +49,8 @@ const PuppeteerEnvironment: Environment = {
       // are not enumerable on the window. Pass them explicitly so that modules reading storage at import time work.
       localStorage: win.localStorage,
       sessionStorage: win.sessionStorage,
+      // matchMedia is non-enumerable too, so the spread drops it. Keep the real window as its receiver.
+      matchMedia: win.matchMedia.bind(win),
       browser,
     })
 

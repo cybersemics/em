@@ -4,6 +4,7 @@ import { act } from 'react'
 import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
 import indentCommand from '../../commands/indent'
 import store from '../../stores/app'
+import viewportStore from '../../stores/viewportStore'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
 // These tests cover navigation and focus, not elapsed motion time. Use real Motion with zero-duration settings.
@@ -19,6 +20,7 @@ afterAll(() => {
 })
 
 beforeEach(createTestApp)
+beforeEach(() => act(() => viewportStore.update({ innerWidth: 320 })))
 afterEach(async () => {
   // Motion schedules cleanup on its shared frame loop. Unmount before flushing/resetting the fake clock.
   cleanup()
@@ -81,7 +83,7 @@ it('updates search and sorting without notifying Redux subscribers', async () =>
   }
 })
 
-it('retains browsing controls through Back and Forward and resets them on a fresh opening', async () => {
+it('retains browsing controls through Back and Forward and clears search on a fresh opening', async () => {
   await act(async () => {
     store.dispatch(toggleMobileCommandUniverse({ value: true }))
     await vi.runAllTimersAsync()
@@ -113,5 +115,5 @@ it('retains browsing controls through Back and Forward and resets them on a fres
   expect(screen.getByPlaceholderText('Search for a command')).toHaveValue('')
   expect(screen.getByRole('button', { name: 'New Thought' })).toBeVisible()
   await user.click(screen.getByRole('button', { name: 'Group commands' }))
-  expect(screen.getByRole('radio', { name: 'Type' })).toBeChecked()
+  expect(screen.getByRole('radio', { name: 'Alphabetical' })).toBeChecked()
 })
