@@ -44,6 +44,13 @@ const ResizeObserverMock = vi.fn(
 
 vi.stubGlobal('ResizeObserver', ResizeObserverMock)
 
+// jsdom does not implement document.fonts. An event target that never fires stands in for a page whose web fonts have
+// all loaded, which is what jsdom amounts to, since it renders no text. useFitText listens on it for fonts that finish
+// loading after a fit.
+if (!('fonts' in document)) {
+  Object.defineProperty(document, 'fonts', { value: new EventTarget(), configurable: true })
+}
+
 HTMLImageElement.prototype.decode = vi.fn<() => Promise<void>>().mockResolvedValue(undefined)
 
 // jsdom does not implement Range.prototype.getClientRects, which getCaretOffset uses for glyph hit-testing.
