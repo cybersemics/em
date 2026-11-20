@@ -302,7 +302,7 @@ Only commands that make an *undoable, non-navigational* change are recorded, so 
 
 - Navigation commands (Cursor Down, Jump Back) are skipped — their actions are registered `isNavigation`.
 - Commands that dispatch no undoable action (Export, Settings, Command Universe) are skipped, since they add no patch.
-- Commands that set `repeatable: false` are never recorded. `undo` and `redo` move through the undo history rather than making a new undoable change, and recording `repeat` would recurse.
+- Commands that set `repeatable: false` are never recorded. `undo` and `redo` move through the undo history rather than making a new undoable change, recording `repeat` would recurse, and repeating [Import](#import) would only open the file picker again.
 - An asynchronous command is recorded after its Promise settles and its patch exists.
 
 ### Undo history and the undo slider
@@ -910,6 +910,18 @@ Drag the start handle back to rewind, then drag the end handle to a later point;
 ### Export
 
 Download or copy the current context as plain text or html.
+
+### Import
+
+Import plain text, markdown, html, or rtf files into the current thought.
+
+It opens the browser's file picker, which accepts several files at once and offers only the files that [`importFiles`](../src/actions/importFiles.ts) can read: any text, and rtf. The desktop app's picker offers every file, since wry builds the macOS file panel itself and does not pass on the input's list of accepted types, so the command checks each chosen file's type and extension as well, skips the ones it cannot read, and names them in an alert once the others are imported. It imports the files where dropping them on the thought with the cursor would: as subthoughts of that thought, in place of it if it is empty, or into Home if there is no cursor. Like a drop, it cannot import into a divider, into a thought whose context view is shown, or into a thought listed in a context view.
+
+Every action of the import is attributed to the command, so an import that nothing else interrupts is undone in one step, where a drop is undone thought by thought. Import is not repeatable: Repeat would only open the picker again.
+
+The picker is a hidden file input, and the browser only opens it while it is handling a user gesture, so the command chooses the files before it does anything asynchronous. Browsers before Safari 16.4 do not say when the picker is dismissed, so the input of a dismissed picker is removed when the next one opens.
+
+Import is on the default toolbar beside Export, since it has neither a keyboard shortcut nor a gesture, which a command needs to be listed in Customize Toolbar.
 
 ### Customize Toolbar
 
