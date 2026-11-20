@@ -32,27 +32,33 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
       JSON.stringify(contexts),
     ])
 
-  /** Updates memberships from one event's changes and returns the affected hashes. Moves change no membership. */
+  /** Updates memberships from one event's changes and returns the hashes of Lexemes a thought joined or left. */
   const applyChanges = async (changes: readonly Change[]): Promise<string[]> => {
     // Keep each thought's last value, or null once it is gone: one event can carry several changes for one thought.
     const latest = new Map<string, Uint8Array | null>()
-    // Hashes of the event's values. A later write may have replaced one in storage while Redux still shows it.
-    const carried: string[] = []
+    // Hashes of each thought's values in the event. A later write may have replaced one in storage while Redux still
+    // shows it.
+    const carried = new Map<string, Set<string>>()
     for (const change of changes) {
       if (change.kind !== 'move' && !ROOT_IDS.has(change.node)) {
         const payload = change.kind === 'delete' ? null : change.payload
         latest.set(change.node, payload)
-        if (payload) carried.push(hashThought(decodeThoughtPayload(payload).value))
+        const hashes = carried.get(change.node) ?? new Set<string>()
+        if (payload) hashes.add(hashThought(decodeThoughtPayload(payload).value))
+        carried.set(change.node, hashes)
       }
     }
     if (latest.size === 0) return []
-    // The hashes these thoughts are listed under now, which lose them if the value changed or the thought is gone.
-    const before = JSON.parse(
-      (await client.runner.getText(
-        `SELECT json_group_array(lexeme_hash) FROM ${TABLE} WHERE thought_id IN (SELECT value FROM json_each(?1))`,
-        [JSON.stringify([...latest.keys()])],
-      ))!,
-    ) as string[]
+    // The hash each thought is listed under now, which loses it if the value changed or the thought is gone.
+    const before = new Map(
+      JSON.parse(
+        (await client.runner.getText(
+          `SELECT json_group_array(json_array(thought_id, lexeme_hash)) FROM ${TABLE}
+           WHERE thought_id IN (SELECT value FROM json_each(?1))`,
+          [JSON.stringify([...latest.keys()])],
+        ))!,
+      ) as [string, string][],
+    )
     const gone = [...latest.keys()].filter(id => !latest.get(id))
     const rows = [...latest].flatMap(([id, payload]) => {
       if (!payload) return []
@@ -71,7 +77,16 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
         [JSON.stringify(rows)],
       )
     }
-    return [...new Set([...before, ...carried])]
+    const affected = new Set<string>()
+    for (const [id, payload] of latest) {
+      const hashes = carried.get(id)!
+      const old = before.get(id)
+      if (old) hashes.add(old)
+      // A thought that keeps its value, as a move's thought and both parents do when their lastUpdated is bumped, stays
+      // in its Lexeme. One listed under another hash, or listed only before or only now, joined or left one.
+      if (hashes.size > 1 || !old !== !payload) hashes.forEach(hash => affected.add(hash))
+    }
+    return [...affected]
   }
 
   /** Removes every membership before a full read rebuilds them. */
