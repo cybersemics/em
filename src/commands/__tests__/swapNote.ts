@@ -137,6 +137,41 @@ describe('swapNote', () => {
           - Draft`)
   })
 
+  // https://github.com/cybersemics/em/issues/6008
+  it.skip('preserves a note descendant reached from a context view outside the note', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - Inbox
+            - Shared
+          - Work
+            - =note
+              - Notes
+                - Shared
+                  - Project
+                    - Draft
+        `,
+      }),
+      toggleHiddenThoughts(),
+      setCursor(['Inbox', 'Shared']),
+      toggleContextView(),
+      setCursor(['Inbox', 'Shared', 'Notes', 'Project', 'Draft']),
+    ])
+
+    executeCommand(swapNoteCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Inbox
+    - Shared
+  - Work
+    - =note
+      - Notes
+        - Shared
+          - Project
+            - Draft`)
+  })
+
   describe('multicursor', () => {
     it('converts multiple thoughts to notes', async () => {
       store.dispatch([
