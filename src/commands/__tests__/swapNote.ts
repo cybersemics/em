@@ -1,4 +1,6 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
+import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -53,6 +55,121 @@ describe('swapNote', () => {
   - a
     - b
   - c`)
+  })
+
+  it('does nothing on a metaprogramming attribute', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - aaa
+            - =favorite
+            - bbb
+        `,
+      }),
+      toggleHiddenThoughts(),
+      setCursor(['aaa', '=favorite']),
+    ])
+
+    expect(swapNoteCommand.canExecute(store.getState())).toBe(false)
+    executeCommand(swapNoteCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - aaa
+    - =favorite
+    - bbb`)
+  })
+
+  it('does nothing on the child of =note', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - aaa
+            - =note
+              - bbb
+        `,
+      }),
+      toggleHiddenThoughts(),
+      setCursor(['aaa', '=note', 'bbb']),
+    ])
+
+    expect(swapNoteCommand.canExecute(store.getState())).toBe(false)
+    executeCommand(swapNoteCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - aaa
+    - =note
+      - bbb`)
+  })
+
+  // https://github.com/cybersemics/em/issues/6008
+  it('converts an ordinary thought reached from a context view inside a note', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - Inbox
+            - =note
+              - Shared
+          - Work
+            - Shared
+              - Project
+                - Draft
+        `,
+      }),
+      toggleHiddenThoughts(),
+      setCursor(['Inbox', '=note', 'Shared']),
+      toggleContextView(),
+      setCursor(['Inbox', '=note', 'Shared', 'Work', 'Project', 'Draft']),
+    ])
+
+    executeCommand(swapNoteCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Inbox
+    - =note
+      - Shared
+  - Work
+    - Shared
+      - Project
+        - =note
+          - Draft`)
+  })
+
+  // https://github.com/cybersemics/em/issues/6008
+  it('preserves a note descendant reached from a context view outside the note', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - Inbox
+            - Shared
+          - Work
+            - =note
+              - Notes
+                - Shared
+                  - Project
+                    - Draft
+        `,
+      }),
+      toggleHiddenThoughts(),
+      setCursor(['Inbox', 'Shared']),
+      toggleContextView(),
+      setCursor(['Inbox', 'Shared', 'Notes', 'Project', 'Draft']),
+    ])
+
+    executeCommand(swapNoteCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Inbox
+    - Shared
+  - Work
+    - =note
+      - Notes
+        - Shared
+          - Project
+            - Draft`)
   })
 
   describe('multicursor', () => {
