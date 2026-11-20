@@ -147,7 +147,7 @@ describe('cursorUp Shift+Up multiselect in table view second column', () => {
 })
 
 // https://github.com/cybersemics/em/issues/3561
-it.skip('selects only the parent when Shift+Up moves above the first child', () => {
+it('selects only the parent when Shift+Up moves above the first child', () => {
   store.dispatch([
     importText({
       text: `
