@@ -10,6 +10,7 @@ import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import applyLetterCase from '../util/applyLetterCase'
 import head from '../util/head'
+import trimmedTextOffset from '../util/trimmedTextOffset'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setCursorActionCreator as setCursor } from './setCursor'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
@@ -53,20 +54,45 @@ export const formatLetterCaseActionCreator =
     const cursorText = cursorEditable?.textContent ?? null
     const selectedRange = cursorEditable ? selection.offsetRange(cursorEditable) : null
 
+    // The cursor thought's value, which is what its editable re-renders from. Editable trims the value on its way into
+    // Redux, so it can differ from the editable's own text while the thought is being edited.
+    const cursorValue = cursor ? getThoughtById(state, head(cursor))?.value : undefined
+
+    // Whitespace typed at either end of the cursor thought is shown in its editable but is not in its saved value, so the
+    // selection is counted in the saved text, and the whitespace is kept around the new value (#6346).
+    const savedText = cursorText !== null && cursorValue !== undefined ? plainText(cursorValue) : null
+    const savedStart = cursorText !== null && savedText !== null ? cursorText.indexOf(savedText) : -1
+    const leadingWhitespace = savedStart > 0 ? cursorText!.slice(0, savedStart) : ''
+    const trailingWhitespace = savedStart >= 0 ? cursorText!.slice(savedStart + savedText!.length) : ''
+    const savedRange =
+      selectedRange && cursorText !== null && savedText !== null
+        ? {
+            start: trimmedTextOffset(selectedRange.start, cursorText, savedText),
+            end: trimmedTextOffset(selectedRange.end, cursorText, savedText),
+          }
+        : null
+
+    // A selection confined to that whitespace has no saved text to letter-case.
+    if (
+      !isMulticursor &&
+      selectedRange &&
+      savedRange &&
+      selectedRange.end > selectedRange.start &&
+      savedRange.end === savedRange.start
+    ) {
+      return
+    }
+
     // The range of the cursor thought to letter-case, or null to letter-case the whole thought (#4281). As in
     // formatSelection, a collapsed caret or a full selection letter-cases the whole thought. A multiselection has no
     // browser selection to letter-case a range of, and each of its thoughts is letter-cased in full.
     const selectedTextRange =
       !isMulticursor &&
-      selectedRange &&
-      selectedRange.end > selectedRange.start &&
-      selectedRange.end - selectedRange.start < (cursorText?.length ?? 0)
-        ? selectedRange
+      savedRange &&
+      savedRange.end > savedRange.start &&
+      savedRange.end - savedRange.start < (savedText?.length ?? 0)
+        ? savedRange
         : null
-
-    // The cursor thought's value, which is what its editable re-renders from. Editable trims the value on its way into
-    // Redux, so it can differ from the editable's own text while the thought is being edited.
-    const cursorValue = cursor ? getThoughtById(state, head(cursor))?.value : undefined
 
     /** Applies the letter case transform to plain text. */
     const transformedText = (text: string): string => {
@@ -82,15 +108,35 @@ export const formatLetterCaseActionCreator =
      * after the edit if the text that precedes it is transformed too. */
     const transformedOffset = (text: string, offset: number): number => transformedText(text.slice(0, offset)).length
 
+    /** Maps an offset in the cursor thought's editable to the same place in it after the edit. The whitespace kept
+     * around the new value does not change, so only the saved text between it is transformed. */
+    const editedOffset = (offset: number): number => {
+      if (savedText === null) return offset
+      const leading = leadingWhitespace.length
+      if (offset <= leading) return offset
+      const savedOffset = Math.min(offset - leading, savedText.length)
+      const trailing = offset - leading - savedOffset
+      return leading + transformedOffset(savedText, savedOffset) + trailing
+    }
+
+    // The caret is counted in the saved value, which is what the edit records.
     const cursorOffset =
-      isCursorEdited && cursorText !== null && offset !== null ? transformedOffset(cursorText, offset) : offset
+      isCursorEdited && cursorText !== null && savedText !== null && offset !== null
+        ? transformedOffset(savedText, trimmedTextOffset(offset, cursorText, savedText))
+        : offset
     const restoreRange =
-      isCursorEdited && cursorText !== null && selectedRange
-        ? {
-            start: transformedOffset(cursorText, selectedRange.start),
-            end: transformedOffset(cursorText, selectedRange.end),
-          }
+      isCursorEdited && selectedRange
+        ? { start: editedOffset(selectedRange.start), end: editedOffset(selectedRange.end) }
         : selectedRange
+    // A forced render replaces the editable with the saved value, without the whitespace, so a selection restored after
+    // one is counted in the saved text.
+    const savedRestoreRange =
+      isCursorEdited && savedText !== null && savedRange
+        ? {
+            start: transformedOffset(savedText, savedRange.start),
+            end: transformedOffset(savedText, savedRange.end),
+          }
+        : savedRange
 
     // Keep the cursor thought's edit synchronous with its live editable, as formatSelection does for partial thought
     // formatting. Writing the new value and restoring the range here means the edit does not need a forced render, and
@@ -114,7 +160,7 @@ export const formatLetterCaseActionCreator =
       const isCursorThought = head(path) === cursorThoughtId
 
       if (restoreSynchronously && isCursorThought) {
-        cursorEditable!.innerHTML = newValue
+        cursorEditable!.innerHTML = `${leadingWhitespace}${newValue}${trailingWhitespace}`
         selection.setRange(cursorEditable!, restoreRange!)
       }
 
@@ -183,7 +229,7 @@ export const formatLetterCaseActionCreator =
         // ignore any mutation that precedes the re-render, e.g. one dispatched in the same tick as the edit
         if (editable?.textContent !== newText) return
         observer.disconnect()
-        selection.setRange(editable, restoreRange)
+        selection.setRange(editable, savedRestoreRange ?? restoreRange)
       })
       observer.observe(cursorEditable, { characterData: true, childList: true, subtree: true })
     }

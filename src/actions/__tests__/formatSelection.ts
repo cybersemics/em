@@ -1,3 +1,4 @@
+import { fireEvent } from '@testing-library/dom'
 import { act } from 'react'
 import { UnknownAction } from 'redux'
 import Thunk from '../../@types/Thunk'
@@ -205,6 +206,57 @@ describe('formatSelection', () => {
     await dispatch(formatSelection('removeFormat'))
     expect(cursorValue()).toBe('goodbye')
   })
+})
+
+// https://github.com/cybersemics/em/issues/6346
+describe('formatting after a space typed at the start of a thought', () => {
+  beforeEach(createTestApp)
+  afterEach(cleanupTestApp)
+
+  /** Types a space at the start of the cursor thought: the editable shows it, while the saved value is trimmed. */
+  const typeLeadingSpace = async () => {
+    const editable = getEditable()
+    await act(async () => {
+      editable.innerHTML = ` ${editable.innerHTML}`
+      fireEvent.input(editable)
+      await vi.runAllTimersAsync()
+    })
+    expect(editable.textContent).toBe(' abc')
+    expect(cursorValue()).toBe('abc')
+  }
+
+  it.each([
+    ['Bold', () => formatSelection('bold')],
+    ['Upper Case', () => formatLetterCase('UpperCase')],
+  ])('%s with only the space selected changes nothing', async (_name, format) => {
+    await dispatch([newThought({ value: 'abc' })])
+    await typeLeadingSpace()
+
+    selectRange(0, ' '.length)
+    await dispatch(format())
+
+    expect(cursorValue()).toBe('abc')
+    expect(getEditable().textContent).toBe(' abc')
+    expect(window.getSelection()?.toString()).toBe(' ')
+  })
+
+  it.each([
+    ['Bold', () => formatSelection('bold'), '<b>a</b>bc', ' <b>a</b>bc', ' a'],
+    ['Upper Case', () => formatLetterCase('UpperCase'), 'Abc', ' Abc', ' A'],
+  ])(
+    '%s with the space and the first letter selected formats only the letter and keeps the space',
+    async (_name, format, saved, shown, selected) => {
+      await dispatch([newThought({ value: 'abc' })])
+      await typeLeadingSpace()
+
+      selectRange(0, ' a'.length)
+      await dispatch(format())
+
+      expect(cursorValue()).toBe(saved)
+      expect(getEditable().innerHTML).toBe(shown)
+      expect(window.getSelection()?.toString()).toBe(selected)
+    },
+  )
 })
 
 /**

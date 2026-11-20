@@ -229,21 +229,18 @@ export const formatSelectionActionCreator =
       return
     }
 
-    // Compute the plain-text character offsets [start, end) of the selection relative to the editable. A note's are
-    // counted in its value as saved, since the note's draft can lead with whitespace that the trim has removed from it.
+    // Compute the plain-text character offsets [start, end) of the selection relative to the editable, counted in the
+    // value as saved. A thought or note being edited can show whitespace typed at either end that the trim has kept out
+    // of its saved value, so the offsets in the editable can be ahead of the saved text (#6346).
     const text = contentEditable.textContent ?? ''
-    const savedText = literalNote ? getTextContentFromHTML(value) : state.noteFocus ? text.trim() : text
+    const savedText = state.noteFocus && !literalNote ? text.trim() : getTextContentFromHTML(value)
     const plainLength = savedText.length
     const offsets = selection.offsetRange(contentEditable)
-    const start = offsets ? (state.noteFocus ? trimmedTextOffset(offsets.start, text, savedText) : offsets.start) : 0
-    const end = offsets
-      ? state.noteFocus
-        ? trimmedTextOffset(offsets.end, text, savedText)
-        : offsets.end
-      : plainLength
+    const start = offsets ? trimmedTextOffset(offsets.start, text, savedText) : 0
+    const end = offsets ? trimmedTextOffset(offsets.end, text, savedText) : plainLength
 
-    // A selection confined to draft whitespace has no saved text to format.
-    if (state.noteFocus && offsets && offsets.start !== offsets.end && start === end) return
+    // A selection confined to that whitespace has no saved text to format.
+    if (offsets && offsets.start !== offsets.end && start === end) return
 
     // Treat a collapsed caret or a full selection as formatting the whole thought.
     const whole = start === end || end - start === plainLength
@@ -268,11 +265,15 @@ export const formatSelectionActionCreator =
     // This avoids messy and buggy focus-management logic.
     if (state.isKeyboardOpen) registerNativeUndoStep(newValue)
 
-    // Keep partial thought formatting synchronous with the live editable. Restoring the range immediately after the
-    // write preserves the logical selection.
-    if (range && !state.noteFocus) {
-      contentEditable.innerHTML = newValue
-      selection.setRange(contentEditable, range)
+    // Keep partial thought formatting synchronous with the live editable. Restoring the selection immediately after the
+    // write preserves it. Whitespace typed at either end of the thought is not in the saved value, so it is written back
+    // around the formatted value, which leaves the text the same and the selection where the user made it (#6346).
+    if (range && offsets && !state.noteFocus) {
+      const savedStart = text.indexOf(savedText)
+      const leadingWhitespace = savedStart > 0 ? text.slice(0, savedStart) : ''
+      const trailingWhitespace = savedStart >= 0 ? text.slice(savedStart + savedText.length) : ''
+      contentEditable.innerHTML = `${leadingWhitespace}${newValue}${trailingWhitespace}`
+      selection.setRange(contentEditable, offsets)
     }
 
     dispatch({
@@ -280,7 +281,7 @@ export const formatSelectionActionCreator =
       command,
       color,
       range,
-      cursorOffset: offsets?.end,
+      cursorOffset: offsets ? end : undefined,
       noteOffset,
     })
 
