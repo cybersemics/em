@@ -1,6 +1,7 @@
 import {
   createTreecrdtLocalWriteOptions,
   isTreecrdtLocalMaterialization,
+  waitForQueuedTreecrdtWrites,
   waitForTreecrdtWriteBarrier,
   withTreecrdtWriteBarrier,
 } from '../writeBarrier'
@@ -32,7 +33,10 @@ it('waits for TreeCRDT writes queued while waiting for idle', async () => {
   expect(order).toEqual(['first:start', 'first:end', 'second', 'idle'])
 })
 
-it('surfaces TreeCRDT write failures when waiting for idle', async () => {
+it.each([
+  ['idle', waitForTreecrdtWriteBarrier],
+  ['queued writes', waitForQueuedTreecrdtWrites],
+] as const)('surfaces a TreeCRDT write failure once when waiting for %s', async (_, wait) => {
   const err = new Error('write failed')
 
   await expect(
@@ -41,7 +45,8 @@ it('surfaces TreeCRDT write failures when waiting for idle', async () => {
     }),
   ).rejects.toThrow('write failed')
 
-  await expect(waitForTreecrdtWriteBarrier()).rejects.toThrow('write failed')
+  await expect(wait()).rejects.toThrow('write failed')
+  await expect(wait()).resolves.toBeUndefined()
 })
 
 it('identifies only this tab local TreeCRDT materialization events', () => {

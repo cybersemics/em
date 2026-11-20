@@ -3,10 +3,28 @@ import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import hashThought from '../../../util/hashThought'
+import sleep from '../../../util/sleep'
 import type { DataProvider } from '../../DataProvider'
 import { encodeThoughtPayload } from '../payload'
 import createTreecrdtThoughtspace from '../runtime'
 import createTreecrdtDataProvider, { createIndexedChildrenMap } from '../thoughtspace'
+
+/** While set, the attribute index waits for it before indexing a change, as behind a backlog of writes. */
+let attributeIndexHold: Promise<void> | undefined
+let releaseAttributeIndex: (() => void) | undefined
+
+vi.mock('../attributeChildren', async importOriginal => {
+  const actual = await importOriginal<typeof import('../attributeChildren')>()
+  return {
+    ...actual,
+    refreshAttributeChildrenFromChanges: async (
+      ...args: Parameters<typeof actual.refreshAttributeChildrenFromChanges>
+    ) => {
+      await attributeIndexHold
+      return actual.refreshAttributeChildrenFromChanges(...args)
+    },
+  }
+})
 
 /** Initializes an isolated in-memory TreeCRDT client and thoughtspace for unit tests. */
 const treecrdt = createTreecrdtThoughtspace()
@@ -47,7 +65,6 @@ const persistThoughtsTo = (
 ) =>
   db.updateThoughts({
     thoughtIndexUpdates: Object.fromEntries(thoughts.map(thought => [thought.id, thought])),
-    lexemeIndexUpdates: {},
     movePlacements,
   })
 
@@ -58,6 +75,8 @@ const persistThoughts = (
 ) => persistThoughtsTo(treecrdtThoughtspace, thoughts, movePlacements)
 
 afterEach(async () => {
+  // A failed test can leave the attribute index held. Release it, or this drop and every later test wait forever.
+  releaseAttributeIndex?.()
   await treecrdt.drop()
 })
 
@@ -73,9 +92,6 @@ it('seeds fixed system thoughts in the TreeCRDT provider', async () => {
     parentId: EM_TOKEN,
     value: SETTINGS_VALUE,
   })
-
-  const settingsLexeme = await treecrdtThoughtspace.getLexemeById(hashThought(SETTINGS_VALUE))
-  expect(settingsLexeme?.contexts).toEqual([SETTINGS_TOKEN])
 })
 
 it('does not write seed operations again when binding a seeded client', async () => {
@@ -94,17 +110,7 @@ it('does not write seed operations again when binding a seeded client', async ()
 
 it('preserves requested order, duplicates, and missing entries when reading persisted thoughts and lexemes', async () => {
   await initTestThoughtspace()
-  await treecrdtThoughtspace.updateThoughts({
-    thoughtIndexUpdates: { [PARENT_ID]: thought(PARENT_ID, EM_TOKEN, 'parent', 0) },
-    lexemeIndexUpdates: {
-      [hashThought('parent')]: {
-        contexts: [PARENT_ID],
-        created: 1 as Timestamp,
-        lastUpdated: 1 as Timestamp,
-        updatedBy: 'test',
-      },
-    },
-  })
+  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
 
   await expect(treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID)).resolves.toBeUndefined()
   await expect(treecrdtThoughtspace.getLexemeById(hashThought('missing'))).resolves.toBeUndefined()
@@ -160,6 +166,19 @@ it('keys an attribute under its new parent and drops the key once it is renamed'
   await persistThoughts([thought(PIN_ID, OTHER_PARENT_ID, 'pin', 0)])
   await treecrdt.waitForIdle()
   expect((await treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID))?.childrenMap['=pin']).toBeUndefined()
+})
+
+it('keys an attribute by its value when a pull reads it before the attribute index catches up', async () => {
+  await initTestThoughtspace()
+  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
+  attributeIndexHold = new Promise(resolve => (releaseAttributeIndex = resolve))
+  await persistThoughts([thought(PIN_ID, PARENT_ID, '=pin', 0)])
+
+  // A read that does not wait for the index finishes while it is held, and keys the attribute by its id.
+  const reading = treecrdtThoughtspace.getThoughtsByIds([PARENT_ID])
+  await Promise.race([reading, sleep(50)])
+  releaseAttributeIndex?.()
+  expect((await reading)[0]?.childrenMap['=pin']).toBe(PIN_ID)
 })
 
 it('falls back to rank placement when explicit afterId is stale', async () => {
@@ -266,6 +285,60 @@ it('keeps separately created thoughtspace instances isolated', async () => {
   }
 })
 
+it('rebuilds memberships and keeps favorite order when opening a database indexed by an older version', async () => {
+  const client = await createTreecrdtClient({ docId: 'older-index-version' })
+  const replicaId = new Uint8Array(32).fill(1)
+  const provider = createTreecrdtDataProvider()
+  try {
+    const close = await provider.bindClient(client, replicaId)
+    await persistThoughtsTo(provider.db, [
+      thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1),
+      thought(THOUGHT_Y_ID, EM_TOKEN, '=favorite', 2),
+    ])
+    // Differs from the default order (created, then id), so losing the saved order would show.
+    await provider.db.updateThoughts({ thoughtIndexUpdates: {}, favoriteOrder: [THOUGHT_B_ID, THOUGHT_Y_ID] })
+    await close()
+    // Model a database indexed by an older version, which then skipped a write the new version must index.
+    const older = await client.onMaterializedDurable('em-derived-indexes', () => undefined, { version: 1 })
+    const payload = encodeThoughtPayload({ value: 'c', created: 1, lastUpdated: 1, updatedBy: 'test' })
+    await client.local.insert(replicaId, EM_TOKEN, THOUGHT_X_ID, { type: 'last' }, payload)
+    await older.close()
+    const reopened = createTreecrdtDataProvider()
+    const closeReopened = await reopened.bindClient(client, replicaId)
+    await expect(reopened.db.getLexemeById(hashThought('c'))).resolves.toMatchObject({ contexts: [THOUGHT_X_ID] })
+    await expect(reopened.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+      contexts: [THOUGHT_B_ID, THOUGHT_Y_ID],
+    })
+    await closeReopened()
+  } finally {
+    await client.drop()
+  }
+})
+
+it('keeps favorite order independent of membership changes', async () => {
+  await initTestThoughtspace()
+  await persistThoughts([
+    thought(THOUGHT_A_ID, EM_TOKEN, '=favorite', 0),
+    thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1),
+  ])
+  await treecrdtThoughtspace.updateThoughts({
+    thoughtIndexUpdates: {},
+    favoriteOrder: [THOUGHT_B_ID, THOUGHT_A_ID, PARENT_ID],
+  })
+  await persistThoughts([thought(THOUGHT_Y_ID, EM_TOKEN, '=favorite', 2)])
+  await expect(treecrdtThoughtspace.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+    contexts: [THOUGHT_B_ID, THOUGHT_A_ID, THOUGHT_Y_ID],
+  })
+  await persistThoughts([thought(THOUGHT_B_ID, EM_TOKEN, 'not a favorite', 1)])
+  await expect(treecrdtThoughtspace.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+    contexts: [THOUGHT_A_ID, THOUGHT_Y_ID],
+  })
+  await persistThoughts([thought(THOUGHT_B_ID, EM_TOKEN, '=favorite', 1)])
+  await expect(treecrdtThoughtspace.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+    contexts: [THOUGHT_B_ID, THOUGHT_A_ID, THOUGHT_Y_ID],
+  })
+})
+
 it('resumes from its cursor after an interrupted index update', async () => {
   const client = await createTreecrdtClient({ docId: 'partial-index-update' })
   const replicaId = new Uint8Array(32).fill(1)
@@ -278,6 +351,7 @@ it('resumes from its cursor after an interrupted index update', async () => {
 
     const reopened = createTreecrdtDataProvider()
     const closeReopened = await reopened.bindClient(client, replicaId)
+    await expect(reopened.db.getLexemeById(hashThought('=pin'))).resolves.toMatchObject({ contexts: [PIN_ID] })
     expect((await reopened.db.getThoughtById(EM_TOKEN))?.childrenMap['=pin']).toBe(PIN_ID)
     await closeReopened()
   } finally {

@@ -26,7 +26,7 @@ const localWriteSourceId =
 const localWriteIdPrefix = `em-local:${localWriteSourceId}:`
 
 /**
- * Queues em -> TreeCRDT persistence work and exposes an idle barrier for materialization refreshes.
+ * Queues em -> TreeCRDT persistence work, which materialization refreshes and the idle barrier wait for.
  * This is a local ordering guard, not a CRDT requirement; it keeps app-state refreshes from racing local persistence.
  */
 export function withTreecrdtWriteBarrier<T>(work: () => Promise<T>): Promise<T> {
@@ -45,6 +45,13 @@ export function withTreecrdtWriteBarrier<T>(work: () => Promise<T>): Promise<T> 
 /** Monotonically increases whenever TreeCRDT persistence work is queued. */
 export const getTreecrdtWriteBarrierVersion = (): number => pendingTreecrdtWriteVersion
 
+/** Throws a recorded write failure once. */
+const throwPendingTreecrdtWriteError = () => {
+  const err = pendingTreecrdtWriteError
+  pendingTreecrdtWriteError = null
+  if (err) throw err
+}
+
 /** Waits until TreeCRDT persistence is idle, including work queued while waiting. */
 export async function waitForTreecrdtWriteBarrier(): Promise<void> {
   let pending: Promise<void>
@@ -52,12 +59,13 @@ export async function waitForTreecrdtWriteBarrier(): Promise<void> {
     pending = pendingTreecrdtWrite
     await pending
   } while (pending !== pendingTreecrdtWrite)
+  throwPendingTreecrdtWriteError()
+}
 
-  if (pendingTreecrdtWriteError) {
-    const err = pendingTreecrdtWriteError
-    pendingTreecrdtWriteError = null
-    throw err
-  }
+/** Waits for the TreeCRDT writes queued before the call, but not for work queued while waiting. */
+export async function waitForQueuedTreecrdtWrites(): Promise<void> {
+  await pendingTreecrdtWrite
+  throwPendingTreecrdtWriteError()
 }
 
 /** Creates local write metadata used to identify materialization events already applied optimistically by the app. */
@@ -81,6 +89,7 @@ export default {
   createTreecrdtLocalWriteOptions,
   getTreecrdtWriteBarrierVersion,
   isTreecrdtLocalMaterialization,
+  waitForQueuedTreecrdtWrites,
   waitForTreecrdtWriteBarrier,
   withTreecrdtWriteBarrier,
 }
