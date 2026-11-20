@@ -88,7 +88,7 @@ describe('swapNote', () => {
     })
 
     // https://github.com/cybersemics/em/issues/5874
-    it.skip('does not convert selected siblings to notes', () => {
+    it('does not convert selected siblings to notes', () => {
       store.dispatch([
         importText({
           text: `
