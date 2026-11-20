@@ -87,6 +87,30 @@ describe('swapNote', () => {
       - f`)
     })
 
+    // https://github.com/cybersemics/em/issues/5874
+    it.skip('does not convert selected siblings to notes', () => {
+      store.dispatch([
+        importText({
+          text: `
+            - p
+              - a
+              - b
+          `,
+        }),
+        setCursor(['p', 'a']),
+        addMulticursor(['p', 'a']),
+        addMulticursor(['p', 'b']),
+      ])
+
+      executeCommandWithMulticursor(swapNoteCommand, { store })
+
+      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+      expect(exported).toBe(`- ${HOME_TOKEN}
+  - p
+    - a
+    - b`)
+    })
+
     it('moves the multiselect and cursor to the non-attribute parents when thoughts are converted to notes', () => {
       store.dispatch([
         importText({

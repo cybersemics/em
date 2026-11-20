@@ -6,6 +6,7 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import indentCommand from '../indent'
 import outdentCommand from '../outdent'
 import selectAllCommand from '../selectAll'
+import swapNoteCommand from '../swapNote'
 
 beforeEach(initStore)
 
@@ -25,6 +26,23 @@ describe('chained commands', () => {
 
     const selectAllIndent = chainCommand(selectAllCommand, indentCommand)
     expect(selectAllIndent.canExecute!(store.getState())).toBe(false)
+  })
+
+  // https://github.com/cybersemics/em/issues/5874
+  it.skip('disables Swap Note when there are several siblings', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - p
+            - a
+            - b
+        `,
+      }),
+      setCursor(['p', 'b']),
+    ])
+
+    const selectAllSwapNote = chainCommand(selectAllCommand, swapNoteCommand)
+    expect(selectAllSwapNote.canExecute!(store.getState())).toBe(false)
   })
 
   it('enables Outdent on a nested level', () => {
