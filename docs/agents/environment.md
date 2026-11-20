@@ -143,7 +143,7 @@ Two ways this bites, both ending in a black screen and a timeout, and both needi
 - **The upload lapsed.** BrowserStack deletes apps 30 days after last use.
 - **The build is bad.** The app has its dev-server address baked in and needs the self-signed certificate handler compiled in, and a build made any other way than `yarn build:ios:browserstack` (which bakes the address and forces a Debug configuration) tends to get one of them wrong — the webview then loads nothing. The skill doc explains how to tell the two bad-build modes apart from inside a session.
 
-Either way it has to be rebuilt and re-uploaded with `yarn build:ios:browserstack` from a Mac with Xcode signing set up.
+Either way it has to be rebuilt and re-uploaded, with `yarn build:ios:browserstack` from a Mac with Xcode signing set up, or by dispatching the [`iOS app to BrowserStack`](../../.github/workflows/ios-app-browserstack.yml) workflow with `custom_id` set to `em-server-mode`. The workflow makes the same Debug server-mode build on a macOS runner, signed with the `IOS_DEVELOPMENT_*` repository secrets, and uploads it with the repository's BrowserStack account, so the upload belongs to that account.
 
 ### The iOS bridge
 
