@@ -1,5 +1,8 @@
+import { GestureResponderEvent } from 'react-native'
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { chainCommand } from '../../commands'
+import { chainCommand, handleGestureEnd } from '../../commands'
+import { HOME_TOKEN } from '../../constants'
+import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -41,5 +44,32 @@ describe('chained commands', () => {
 
     const selectAllOutdent = chainCommand(selectAllCommand, outdentCommand)
     expect(selectAllOutdent.canExecute!(store.getState())).toBe(true)
+  })
+})
+
+describe('excluded commands', () => {
+  // https://github.com/cybersemics/em/issues/5874
+  it.skip('does not chain Sort, which sorts the same parent as Sort alone', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - p
+            - c
+            - a
+            - b
+        `,
+      }),
+      setCursor(['p', 'b']),
+    ])
+
+    // Select All (ldr) + Sort (lurd)
+    handleGestureEnd({ sequence: 'ldr' + 'lurd', e: {} as GestureResponderEvent })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - p
+    - c
+    - a
+    - b`)
   })
 })
