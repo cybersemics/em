@@ -88,6 +88,62 @@ const RDLD_SEGMENTS: readonly GestureSegment[] = [
   { kind: 'line', from: { x: 45, y: 58.5 }, to: { x: 45, y: 72 }, gestureIndex: 3 },
 ]
 
+type Turn = 'cw' | 'ccw'
+
+/** Unit vector of each direction in SVG space, where y points down. */
+const directionVector = (dir: Direction): GesturePoint =>
+  ({
+    l: { x: -1, y: 0 },
+    r: { x: 1, y: 0 },
+    u: { x: 0, y: -1 },
+    d: { x: 0, y: 1 },
+  })[dir]
+
+/** Returns whether moving from one direction to the next is a clockwise or counterclockwise quarter turn, or null for a reversal or repeat. */
+const getTurn = (from: Direction, to: Direction): Turn | null =>
+  rotateClockwise(from) === to ? 'cw' : rotateClockwise(to) === from ? 'ccw' : null
+
+/**
+ * Builds a rounded gesture whose turns change direction, e.g. lul, as one quarter-circle per turn.
+ * Consecutive quarter-circles share their tangent at the join, so a flip in turn direction becomes a smooth inflection.
+ * Each quarter is split at its midpoint so that the direction entering and the direction leaving the turn each own half of it.
+ */
+const getInflectedArcSegments = (directions: Direction[], turns: Turn[]): ArcGestureSegment[] =>
+  turns
+    .reduce<{ point: GesturePoint; segments: ArcGestureSegment[] }>(
+      ({ point, segments }, turn, i) => {
+        const heading = directionVector(directions[i])
+        // The center lies on the side the gesture turns toward, one radius from the current point.
+        // Rotating (x, y) clockwise in y-down space gives (-y, x).
+        const toCenter = turn === 'cw' ? { x: -heading.y, y: heading.x } : { x: heading.y, y: -heading.x }
+        const center = { x: point.x + toCenter.x, y: point.y + toCenter.y }
+        const startAngle = (Math.atan2(point.y - center.y, point.x - center.x) * 180) / Math.PI
+        // Clockwise travel increases the angle in y-down space, matching sweepFlag 1.
+        const step = turn === 'cw' ? 45 : -45
+
+        /** Returns the point on this turn's circle at the given angle. */
+        const pointAt = (angle: number): GesturePoint => ({
+          x: center.x + Math.cos((angle * Math.PI) / 180),
+          y: center.y + Math.sin((angle * Math.PI) / 180),
+        })
+
+        const halves = [0, 1].map<ArcGestureSegment>(half => ({
+          kind: 'arc',
+          from: pointAt(startAngle + half * step),
+          to: pointAt(startAngle + (half + 1) * step),
+          center,
+          radius: 1,
+          startAngle: startAngle + half * step,
+          endAngle: startAngle + (half + 1) * step,
+          sweepFlag: turn === 'cw' ? 1 : 0,
+          gestureIndex: i + half,
+        }))
+        return { point: halves[1].to, segments: [...segments, ...halves] }
+      },
+      { point: { x: 0, y: 0 }, segments: [] },
+    )
+    .segments
+
 type BaseGestureGeometry = Omit<GestureGeometry, 'chevron'>
 
 /** Builds an unscaled line, circular-arc or question-mark template. */
@@ -106,6 +162,13 @@ const getBaseGestureGeometry = (
 
   if (rounded) {
     const directions = Array.from(path) as Direction[]
+    // A single circle only fits when every turn goes the same way, e.g. lurd or rul.
+    // When the turn direction flips, e.g. lul, the curve needs an inflection and is built turn by turn.
+    const turns = directions.slice(1).map((dir, i) => getTurn(directions[i], dir))
+    if (turns.length > 1 && turns.every(turn => turn !== null) && turns.some(turn => turn !== turns[0])) {
+      return { path, extendedPath: path, segments: getInflectedArcSegments(directions, turns as Turn[]) }
+    }
+
     const segments = directions.map<ArcGestureSegment>((_, gestureIndex) => {
       const { startX, startY, radius, sweepFlag, endX, endY, startAngle, endAngle, center } = generateArcCoordinates(
         gestureIndex,
