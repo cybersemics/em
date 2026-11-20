@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Dispatch from '../@types/Dispatch'
@@ -54,6 +54,11 @@ const Content: FC = () => {
   })
   const isAbsoluteContext = useSelector(state => isAbsolute(state.rootContext))
 
+  // Whether the current press began on a thought. Pressing a thought can move the content before the release, such as
+  // when the new cursor is scrolled out from under the Color Picker, and then the browser dispatches the click to the
+  // common ancestor of the press and release targets rather than to the thought (#6057).
+  const pressedThoughtRef = useRef(false)
+
   /** Closes modals and dropdowns if the click goes all the way through to the content. */
   const clickOnEmptySpace: Thunk = (dispatch: Dispatch, getState) => {
     const state = getState()
@@ -72,7 +77,8 @@ const Content: FC = () => {
         e => {
           // make sure the the actual Content element has been clicked
           // otherwise it will incorrectly be called on mobile due to touch vs click ordering (#1029)
-          if (!selection.isThought(e.target)) dispatch(clickOnEmptySpace)
+          // A press that began on a thought is not a click on empty space, even if it was released elsewhere.
+          if (!selection.isThought(e.target) && !pressedThoughtRef.current) dispatch(clickOnEmptySpace)
         },
         {
           enableHaptics: false,
@@ -82,7 +88,8 @@ const Content: FC = () => {
           // blur starts the keyboard animation, so the two teardowns do not overlap and the menu does not flash back.
           // Only a range is collapsed: a caret is dismissed by the blur anyway.
           tapDown: e => {
-            if (!selection.isThought(e.target)) selection.collapse()
+            pressedThoughtRef.current = selection.isThought(e.target)
+            if (!pressedThoughtRef.current) selection.collapse()
           },
         },
       )}

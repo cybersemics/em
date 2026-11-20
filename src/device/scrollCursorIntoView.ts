@@ -7,21 +7,27 @@ import getVisibleBounds from './getVisibleBounds'
 // A scroll that is waiting for preventAutoscroll to finish. Held so that it can be cancelled, since it is a scroll that has been decided on but not yet performed.
 let preventAutoscrollTimer: ReturnType<typeof setTimeout> | undefined
 
+/** Options for scrollCursorIntoView. */
+interface ScrollCursorIntoViewOptions {
+  /** Extra space to keep between the element and the bottom of the toolbar. Defaults to 0. */
+  marginAbove?: number
+}
+
 /** Scrolls the minimum amount necessary to move the viewport so that it includes the element. */
-const scrollIntoViewIfNeeded = (y: number, height: number) => {
+const scrollIntoViewIfNeeded = (y: number, height: number, { marginAbove = 0 }: ScrollCursorIntoViewOptions = {}) => {
   // preventAutoscroll works by briefly increasing the element's height, which breaks isElementInViewport.
   // Therefore, we need to wait until preventAutoscroll is done.
   // See: preventAutoscroll.ts
   if (isPreventAutoscrollInProgress()) {
     preventAutoscrollTimer = setTimeout(() => {
-      scrollIntoViewIfNeeded(y, height)
+      scrollIntoViewIfNeeded(y, height, { marginAbove })
     }, PREVENT_AUTOSCROLL_TIMEOUT)
     return
   }
 
   // determine if the elements is above or below the viewport
   const {
-    top: toolbarBottom,
+    top: visibleTop,
     bottom: bottomBoundary,
     toolbarHeight,
     keyboardOpen,
@@ -36,7 +42,15 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   /** The y position of the element relative to the viewport. */
   const yViewport = yDocument - window.scrollY
 
-  const isAboveViewport = yViewport < toolbarBottom
+  // In Mobile Safari with the keyboard open, usePositionFixed emulates the toolbar's fixed position and only moves it
+  // back to the top of the viewport on the scroll event after a scroll. A scroll just made, such as the autocrop
+  // counter-scroll when the Color Picker opens, leaves the toolbar's rect above the viewport, so a thought beneath the
+  // Color Picker would appear uncovered (#6057). Use the height of the toolbar instead, which is its bottom once it is
+  // pinned to the top, since Mobile Safari has no safe-area inset at the top.
+  const isPositionFixedEmulated = keyboardOpen && isSafari() && !isCapacitor()
+  const toolbarBottom = isPositionFixedEmulated ? toolbarHeight : visibleTop
+
+  const isAboveViewport = yViewport < toolbarBottom + marginAbove
   const isBelowViewport = yViewport + height > bottomBoundary
 
   if (!isAboveViewport && !isBelowViewport) return
@@ -51,7 +65,9 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // toolbarBottom (which includes the inset) rather than the toolbar height; otherwise the element is scrolled
   // behind the toolbar, which causes the cursor to be pinned near the top and the list to scroll up repeatedly. (#4326)
   const aboveOffset = isIOS && isCapacitor() ? toolbarBottom : toolbarHeight
-  const scrollYNew = isAboveViewport ? yDocument - aboveOffset - height / 2 : yDocument - bottomBoundary + height * 1.5
+  const scrollYNew = isAboveViewport
+    ? yDocument - aboveOffset - marginAbove - height / 2
+    : yDocument - bottomBoundary + height * 1.5
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
@@ -74,6 +90,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
     scrollY: Math.round(window.scrollY),
     yViewport: Math.round(yViewport),
     toolbarBottom: Math.round(toolbarBottom),
+    marginAbove,
     // which of the two viewport heights bounded the cursor: the iOS Capacitor keyboard branch or visualViewport
     keyboardOpen,
     visualViewportHeight: Math.round(visualViewportHeight),
@@ -92,7 +109,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
 }
 
 /** Scrolls the cursor into view if needed. */
-const scrollCursorIntoView = (y: number, height: number) => {
+const scrollCursorIntoView = (y: number, height: number, options?: ScrollCursorIntoViewOptions) => {
   // bump scroll on Mobile Safari
   // otherwise Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
@@ -100,7 +117,7 @@ const scrollCursorIntoView = (y: number, height: number) => {
     window.scrollBy(0, 1)
   }
 
-  scrollIntoViewIfNeeded(y, height)
+  scrollIntoViewIfNeeded(y, height, options)
 }
 
 /** Cancels a scroll that is waiting for preventAutoscroll to finish. Does not affect a scroll that has already been performed. */
