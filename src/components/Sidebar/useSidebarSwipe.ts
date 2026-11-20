@@ -1,10 +1,17 @@
 import { MotionValue } from 'framer-motion'
 import { RefObject, useEffect, useEffectEvent, useRef, useState } from 'react'
+import { isCapacitor, isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import store from '../../stores/app'
 
 /** MUI-style uncertainty threshold for direction detection (in pixels). */
 const UNCERTAINTY_THRESHOLD = 3
+
+/** Width of the strip along the left edge of the screen where a touch can start Mobile Safari's swipe-back gesture (in pixels). */
+const SWIPE_BACK_EDGE = 20
+
+/** Mobile Safari navigates back when a swipe starts at the left edge of the screen. The app's webview does not. */
+const hasSwipeBack = isTouch && isSafari() && !isCapacitor()
 
 interface UseSidebarSwipeOptions {
   /** The gesture only runs while the sidebar is open. */
@@ -68,6 +75,13 @@ const useSidebarSwipe = ({ enabled, drawerRef, width, x, onSwipeEnd }: UseSideba
       const touchX = e.touches[0].clientX
       const touchY = e.touches[0].clientY
       const startedOnBackdrop = !drawerRef.current?.contains(e.target as Node)
+
+      // Mobile Safari claims a swipe from the left edge for its swipe-back gesture before the touchmove handler below
+      // can cancel it, sliding the previous page in under the sidebar. Only cancelling the touch as it starts keeps the
+      // swipe on the page. See #3681.
+      if (hasSwipeBack && touchX < SWIPE_BACK_EDGE) {
+        e.preventDefault()
+      }
 
       // Reset swipe state
       swipeState.current = {
@@ -184,7 +198,7 @@ const useSidebarSwipe = ({ enabled, drawerRef, width, x, onSwipeEnd }: UseSideba
       setIsSwiping(false)
     }
 
-    document.addEventListener('touchstart', handleTouchStart)
+    document.addEventListener('touchstart', handleTouchStart, { passive: false })
     document.addEventListener('touchmove', handleTouchMove, { passive: false })
     document.addEventListener('touchend', handleTouchEnd)
 
