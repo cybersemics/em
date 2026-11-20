@@ -494,16 +494,9 @@ describe('Caret', () => {
     await waitForCaretOffset(offsetBeforeWorld)
 
     // Tap the "h" of "the", three characters to the left of the caret, 1px below its line box, where iOS first moves
-    // the caret to the end of the thought.
+    // the caret to the end of the thought. 'bottom' is 1px inside the line, so 2px more is 1px below it.
     const offsetInThe = 'Hello beautiful people in t'.length
-    const lineHeight = await browser.execute((offset: number) => {
-      const text = document.querySelector('[data-editing=true] [data-editable]')!.firstChild!
-      const range = document.createRange()
-      range.setStart(text, offset)
-      range.setEnd(text, offset + 1)
-      return range.getBoundingClientRect().height
-    }, offsetInThe)
-    await tap(editable, { offset: offsetInThe, y: lineHeight / 2 + 1, pointerType: 'touch' })
+    await tap(editable, { offset: offsetInThe, verticalTapLine: 'bottom', y: 2, pointerType: 'touch' })
 
     // the tap rounds to the nearer end of "the"
     await waitForCaretOffset('Hello beautiful people in '.length)
