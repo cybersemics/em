@@ -5,9 +5,9 @@ import * as selection from '../../device/selection'
 import multitouchStore from '../../stores/multitouchStore'
 
 /**
- * Puts the caret where a tap landed when iOS moves it back. A tap a few characters from the caret gets no mouse
- * events, so onMouseDown never places the caret, and after the touchend iOS moves the caret to the tapped word and
- * then, within about 70ms, back to where it was before the tap (#4220).
+ * Puts the caret where a tap landed when iOS moves it back. A slow tap a few characters from the caret, held about
+ * 80ms or longer, gets no mouse events, so onMouseDown never places the caret, and after the touchend iOS moves the
+ * caret to the tapped word and then, within about 150ms, back to where it was before the tap (#4220).
  */
 const useRevertCorrection = ({
   editableRef,
@@ -57,8 +57,9 @@ const useRevertCorrection = ({
       // a tap on the caret
       if (tapped === null || tapped === before) return
 
-      // iOS does not move the caret again after the revert, so it can be set synchronously. The cursor offset in Redux
-      // is left alone, as it is for a tap that iOS places itself: nothing writes it during a tap without mouse events.
+      // iOS does not move the caret again after the revert, so a placement made now stays. Only the selection is set, as
+      // iOS would have left it: a tap that gets no mouse events does not write cursorOffset, whether or not iOS reverts
+      // it.
       selection.set(editable, { offset: tapped })
     }
 

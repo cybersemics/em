@@ -128,6 +128,10 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let about = AboutMetadata {
         name: Some(package.name.clone()),
         version: Some(package.version.to_string()),
+        // The About box shows it in parentheses after the version, where macOS would otherwise repeat the version. A
+        // rolling release from main keeps the same version from build to build, so the commit is what tells them apart.
+        // desktop/build.rs sets EM_COMMIT_HASH.
+        short_version: Some(env!("EM_COMMIT_HASH").into()),
         copyright: app.config().bundle.copyright.clone(),
         ..Default::default()
     };

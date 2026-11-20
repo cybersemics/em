@@ -18,7 +18,7 @@ import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
-import { firstVisibleChild, getChildrenSorted } from '../selectors/getChildren'
+import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import noteThought from '../selectors/noteThought'
 import noteValue from '../selectors/noteValue'
@@ -59,8 +59,9 @@ const Note = React.memo(
     const generating = useSelector(state => !!getThoughtById(state, head(path))?.generating)
     const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
-    // A draft preserves the user's comma spacing while typing. A forced editor refresh (e.g. undo/redo)
-    // invalidates it in the same render, before the caret effect runs, so it cannot mask the restored value.
+    // A draft preserves what the user typed, including the boundary spaces and comma spacing that are trimmed from the
+    // saved values, until editing ends. A forced editor refresh (e.g. undo/redo) invalidates it in the same render,
+    // before the caret effect runs, so it cannot mask the restored value.
     const [noteDraft, setNoteDraft] = useState<{ value: string; editableNonce: number } | null>(null)
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
@@ -196,10 +197,13 @@ const Note = React.memo(
           const targetPath = resolvedTargetPath ?? path
           const { noteId } = resolveNoteKey(state, head(path))
 
-          if (!noteId && resolvedTargetPath) {
-            const values = value.split(',').map(value => value.trim())
+          // As with thoughts, the note's whitespace never goes into Redux: each value is trimmed as it is typed, while the
+          // draft keeps what the browser holds, boundary spaces and comma spacing included, until editing ends.
+          setNoteDraft({ value, editableNonce: state.editableNonce })
 
-            setNoteDraft({ value, editableNonce: state.editableNonce })
+          if (!noteId && resolvedTargetPath) {
+            const values = value.split(',').map(trimHtml)
+
             dispatch(
               editNotePath({
                 noteOffset: noteOffset ?? undefined,
@@ -226,7 +230,7 @@ const Note = React.memo(
               editThought({
                 path: appendToPath(targetPath, noteThoughtValue.id) as SimplePath,
                 oldValue: noteThoughtValue.value,
-                newValue: wrappedValue,
+                newValue: trimHtml(wrappedValue),
                 noteOffset: noteOffset ?? undefined,
                 force: wrappedValue !== value,
                 undoLabel: 'Edit Note',
@@ -236,7 +240,7 @@ const Note = React.memo(
             dispatch(
               setDescendant({
                 path: targetPath,
-                values: [value],
+                values: [trimHtml(value)],
                 undoLabel: 'Edit Note',
               }),
             )
@@ -246,41 +250,11 @@ const Note = React.memo(
       [dispatch, path, justPasted],
     )
 
-    /** Trims the saved note and updates focus and keyboard state when editing ends. */
+    /** Ends editing: drops the draft, so that the note shows its trimmed value, and updates focus and keyboard state. */
     const onBlur = useFreshCallback(
       (e: React.FocusEvent) => {
         if (editableSyncStore.getState().suppressBlurSync || editableSyncStore.getState().suppressChange) return
 
-        // Input saves synchronously. Trim fresh state rather than replaying the DOM, which may be stale after a
-        // command or undo. Only update an existing note so blur cannot recreate one that was just deleted.
-        dispatch((dispatch, getState) => {
-          const state = getState()
-          const targetPath = resolveNotePath(state, path)
-          if (!targetPath) return
-
-          const { noteId } = resolveNoteKey(state, head(path))
-          if (noteId) {
-            const thought = firstVisibleChild(state, head(targetPath))
-            if (!thought) return
-            const value = trimHtml(thought.value)
-            if (value !== thought.value) {
-              dispatch(
-                editThought({
-                  path: appendToPath(targetPath, thought.id) as SimplePath,
-                  oldValue: thought.value,
-                  newValue: value,
-                  undoLabel: 'Edit Note',
-                }),
-              )
-            }
-          } else {
-            const children = getChildrenSorted(state, head(targetPath))
-            const values = children.map(child => trimHtml(child.value))
-            if (values.some((value, index) => value !== children[index].value)) {
-              dispatch(editNotePath({ path: targetPath, values, undoLabel: 'Edit Note' }))
-            }
-          }
-        })
         setNoteDraft(null)
         if (!selection.isNote(e.relatedTarget)) {
           dispatch(setNoteFocus({ value: false }))

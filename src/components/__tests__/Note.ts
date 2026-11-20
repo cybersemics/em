@@ -24,24 +24,26 @@ describe('=note', () => {
     ['plain whitespace', '  hello  world  ', 'hello  world'],
     ['formatted whitespace', '<b>  hello <i>world  </i></b>', '<b>hello <i>world</i></b>'],
     ['only whitespace', '   ', ''],
-  ])('trims %s only after the note blurs', async (_description, input, expected) => {
-    await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
-    await act(vi.runOnlyPendingTimersAsync)
-    const noteEditor = screen.getByLabelText('note-editable')
+  ])(
+    'saves %s trimmed as it is typed, and shows it trimmed once the note blurs',
+    async (_description, input, expected) => {
+      await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
+      await act(vi.runOnlyPendingTimersAsync)
+      const noteEditor = screen.getByLabelText('note-editable')
 
-    await act(async () => {
-      fireEvent.input(noteEditor, { target: { innerHTML: input } })
-    })
-    expect(noteEditor.innerHTML).toBe(input)
+      await act(async () => {
+        fireEvent.input(noteEditor, { target: { innerHTML: input } })
+      })
+      expect(noteEditor.innerHTML).toBe(input)
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain(`<li>${expected}</li>`)
 
-    await act(async () => {
-      fireEvent.focusOut(noteEditor)
-      await vi.runOnlyPendingTimersAsync()
-    })
-    expect(noteEditor.innerHTML).toBe(expected)
-
-    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain(`<li>${expected}</li>`)
-  })
+      await act(async () => {
+        fireEvent.focusOut(noteEditor)
+        await vi.runOnlyPendingTimersAsync()
+      })
+      expect(noteEditor.innerHTML).toBe(expected)
+    },
+  )
 
   test('preserves internal whitespace and line breaks when a note blurs', async () => {
     await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
@@ -55,7 +57,7 @@ describe('=note', () => {
     expect(noteEditor.innerHTML).toBe('<b>one&nbsp; two</b><br>three')
   })
 
-  test('undoes and redoes trimming without losing the note edit', async () => {
+  test('undoes and redoes a note edit without its boundary whitespace', async () => {
     await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
     await act(vi.runOnlyPendingTimersAsync)
     const noteEditor = screen.getByLabelText('note-editable')
@@ -69,7 +71,7 @@ describe('=note', () => {
       fireEvent.keyDown(document, { key: 'z', metaKey: true })
       await vi.runOnlyPendingTimersAsync()
     })
-    expect(screen.getByLabelText('note-editable').innerHTML).toBe('  hello  ')
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('seed')
     await act(async () => {
       fireEvent.keyDown(document, { key: 'z', metaKey: true, shiftKey: true })
       await vi.runOnlyPendingTimersAsync()
@@ -77,7 +79,7 @@ describe('=note', () => {
     expect(screen.getByLabelText('note-editable').innerHTML).toBe('hello')
   })
 
-  test('does not add a content undo step when blur leaves the value unchanged', async () => {
+  test('adds no undo step when the note blurs', async () => {
     await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
     await act(vi.runOnlyPendingTimersAsync)
     const noteEditor = screen.getByLabelText('note-editable')
@@ -94,8 +96,36 @@ describe('=note', () => {
     expect(screen.getByLabelText('note-editable').innerHTML).toBe('seed')
   })
 
+  // https://github.com/cybersemics/em/issues/6275
+  test('undo after leaving a note with Cursor Down returns the caret to the note', async () => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - x\n- b' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.input(noteEditor, { target: { innerHTML: 'xy ' } })
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    // Cursor Down moves the cursor first, and the note blurs after it, as in the browser.
+    await act(async () => {
+      fireEvent.keyDown(noteEditor, { key: 'ArrowDown' })
+      fireEvent.focusOut(noteEditor)
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expectPathToEqual(store.getState(), store.getState().cursor, ['b'])
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true })
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    expectPathToEqual(store.getState(), store.getState().cursor, ['a'])
+    expect(store.getState().noteFocus).toBe(true)
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('x')
+  })
+
   test.each(['suppressBlurSync', 'suppressChange'] as const)(
-    'leaves temporary blur untouched while %s is active',
+    'keeps the typed spaces on screen through a temporary blur while %s is active',
     async flag => {
       await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
       await act(vi.runOnlyPendingTimersAsync)
@@ -107,7 +137,7 @@ describe('=note', () => {
         await vi.runOnlyPendingTimersAsync()
       })
       expect(noteEditor.innerHTML).toBe('  hello  ')
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>  hello  </li>')
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>hello</li>')
 
       await act(async () => {
         editableSyncStore.update({ [flag]: false })
@@ -353,7 +383,7 @@ describe('=note', () => {
 
 describe('=note/=path', () => {
   // https://github.com/cybersemics/em/issues/5084
-  test('trims each referenced value on blur without losing its descendants', async () => {
+  test('saves each referenced value trimmed as it is typed without losing its descendants', async () => {
     await dispatch([
       importText({
         text: '- a\n  - =note\n    - =path\n      - b\n  - b\n    - c\n      - child of c\n    - d\n      - child of d',
@@ -367,11 +397,6 @@ describe('=note/=path', () => {
       fireEvent.input(noteEditor, { target: { innerHTML: '<b> c </b>,  d  ' } })
     })
     expect(noteEditor.innerHTML).toBe('<b> c </b>,  d  ')
-    await act(async () => {
-      fireEvent.focusOut(noteEditor)
-      await vi.runOnlyPendingTimersAsync()
-    })
-    expect(noteEditor.innerHTML).toBe('<b>c</b>, d')
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a
     - =note
@@ -382,6 +407,11 @@ describe('=note/=path', () => {
         - child of c
       - d
         - child of d`)
+    await act(async () => {
+      fireEvent.focusOut(noteEditor)
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(noteEditor.innerHTML).toBe('<b>c</b>, d')
   })
 
   test('preserves both referenced subtrees when trimming creates duplicate values', async () => {

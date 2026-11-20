@@ -97,6 +97,29 @@ describe('all platforms', () => {
     expect(offset).toBe(nodeType === Node.TEXT_NODE ? 'Richard Feynman'.length : 1)
   })
 
+  // The right edge is past the last glyph, where onMouseDown prevents the browser's own placement, so only em can put
+  // the caret there.
+  it('clicking on the right edge of another thought while editing, the caret should move to the end of that thought.', async () => {
+    const importText = `
+    - Richard Feynman
+    - Marie Curie`
+
+    await paste(importText)
+
+    const feynman = await waitForEditable('Richard Feynman')
+    await click(feynman, { offset: 3 })
+    await waitUntil(() => window.getSelection()?.focusOffset === 3)
+
+    const curie = await waitForEditable('Marie Curie')
+    await click(curie, { edge: 'right' })
+    await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'Marie Curie')
+
+    // Manual caret placement may put the selection on the element (offset 1) or the text node (offset length)
+    const nodeType = await getSelection().focusNode?.nodeType
+    const offset = await getSelection().focusOffset
+    expect(offset).toBe(nodeType === Node.TEXT_NODE ? 'Marie Curie'.length : 1)
+  })
+
   it('clicking in the middle of a thought, the caret should be set to the point that is clicked.', async () => {
     const importText = `
     - Freddie Mercury`

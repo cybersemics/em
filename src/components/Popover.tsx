@@ -1,4 +1,4 @@
-import React, { FC, useRef } from 'react'
+import React, { FC, useLayoutEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -20,6 +20,35 @@ const Popover: FC<PopoverProps> = ({ ariaLabel, children, show, size = 18 }) => 
   const fontSize = useSelector(state => state.fontSize)
   const overflow = useWindowOverflow(ref)
 
+  // eyeballing it to get font sizes 14–24 to look right
+  const left = (size * (size + 90)) / 200 + 600 / (size * size)
+  const marginTop = size * 1.2 - 10
+
+  // Keep the picker in the native scroller, but clip the empty band beside it so thoughts remain interactive.
+  useLayoutEffect(() => {
+    const content = ref.current?.firstElementChild
+    const toolbar = ref.current?.closest<HTMLElement>('#toolbar')
+    if (!show || !content || !toolbar || toolbar.dataset.scrollAtEdge === 'true') return
+
+    /** Measures the clip once on open/resize; scrolling only updates its CSS variable. */
+    const measure = () => {
+      const rect = content.getBoundingClientRect()
+      const origin = toolbar.getBoundingClientRect()
+      const left = `calc(${rect.left - origin.left + toolbar.scrollLeft}px - var(--toolbar-scroll-left))`
+      const right = `calc(${rect.right - origin.left + toolbar.scrollLeft}px - var(--toolbar-scroll-left))`
+      const row = fontSize + 30
+      const bottom = rect.bottom - origin.top
+      toolbar.style.setProperty('--toolbar-scroll-left', `${toolbar.scrollLeft}px`)
+      toolbar.style.clipPath = `polygon(0 0, 100% 0, 100% ${row}px, ${right} ${row}px, ${right} ${bottom}px, ${left} ${bottom}px, ${left} ${row}px, 0 ${row}px)`
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => {
+      toolbar.style.clipPath = ''
+      window.removeEventListener('resize', measure)
+    }
+  }, [show, size, fontSize])
+
   /** Stops a tap that lands on the popover's padding rather than one of its options from reaching the toolbar button that renders the popover, which would otherwise close it (#4264). */
   const containTap = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
@@ -35,17 +64,10 @@ const Popover: FC<PopoverProps> = ({ ariaLabel, children, show, size = 18 }) => 
         className={css({
           position: 'relative',
           zIndex: 'stack',
-          // position fixed or absolute causes the Popover to get clipped by the toolbar's overflow-x: scroll
-          // ideally we want overflow-x:scroll and overflow-y:visible, but Safari does not differing allow overflow-x and overflow-y
-          // instead, keep position:static but set the width to 0
-          // this will increase the height of the toolbar so the Popover does not get clipped without taking up horizontal space
+          // the width is 0 so that the content can be centered under the anchor with translate(-50%)
           width: 0,
         })}
-        style={{
-          // eyeballing it to get font sizes 14–24 to look right
-          left: (size * (size + 90)) / 200 + 600 / (size * size),
-          marginTop: size * 1.2 - 10,
-        }}
+        style={{ left, marginTop }}
       >
         <div
           aria-label={ariaLabel}

@@ -52,6 +52,8 @@ it('opens the virtual keyboard when Clear Thought activates edit mode', async ()
         contentRef: { current: editable as unknown as HTMLInputElement },
         isEditing: true,
         path: store.getState().cursor!,
+        // No tap places a caret in this test.
+        setCursorForTap: () => {},
         style: undefined,
         transient: undefined,
       }),
