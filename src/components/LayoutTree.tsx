@@ -14,8 +14,10 @@ import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
 import { hasChildren } from '../selectors/getChildren'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
+import fontSizeAnchorStore from '../stores/fontSizeAnchorStore'
 import viewportStore from '../stores/viewportStore'
 import debugLog from '../util/debugLog'
+import durations from '../util/durations'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import BulletCursorOverlay from './BulletCursorOverlay'
@@ -80,7 +82,11 @@ const useNavAndFooterHeight = () => {
 }
 
 /** When navigating deep within the hierarchy, many ancestors and siblings of ancestors are hidden, resulting in a large blank space above the cursor. If the user scrolls up, the entire screen will be blank. To avoid this, crop the space above and simultaneously scroll up by the same amount so that the thoughts do not appear to move (relative to the viewport), but the empty space above is eliminated. Returns the number of pixels that all thoughts should be shifted off. */
-const useAutocrop = (spaceAbove: number): number => {
+const useAutocrop = (
+  spaceAbove: number,
+  /** The amount that useFontSizeAnchor scrolled in the current commit. */
+  anchorScroll: RefObject<number>,
+): number => {
   // get the scroll position before the render so it can be preserved
   const scrollY = window.scrollY
 
@@ -99,15 +105,18 @@ const useAutocrop = (spaceAbove: number): number => {
   useEffect(
     () => {
       // scrollY is the position read during render, before this effect, so a scroll that happens in between is
-      // overwritten. Logging it beside the target makes that visible.
+      // overwritten. Logging it beside the target makes that visible. The font size anchor scrolls in between, in the
+      // layout effects of the same commit, so its scroll is added back.
+      const top = scrollY + anchorScroll.current + autocrop - autocropLast.current
       debugLog.log('scroll', () => ({
         source: 'autocrop',
         scrollY: Math.round(scrollY),
+        anchorScroll: Math.round(anchorScroll.current),
         autocrop,
         autocropLast: autocropLast.current,
-        top: Math.round(scrollY + autocrop - autocropLast.current),
+        top: Math.round(top),
       }))
-      window.scrollTo({ top: scrollY + autocrop - autocropLast.current })
+      window.scrollTo({ top })
       autocropLast.current = autocrop
     },
     // do not trigger effect on scrollY change
@@ -116,6 +125,128 @@ const useAutocrop = (spaceAbove: number): number => {
   )
 
   return autocrop
+}
+
+/** The longest that a font size change is taken to still be laying out, in ms. The layout settles within a few frames. */
+const FONT_SIZE_LAYOUT_TIMEOUT = 500
+
+/** A font size change that is still being laid out. See: useFontSizeAnchor. */
+interface FontSizeHold {
+  /** What is held still in the viewport. */
+  anchor: 'cursor' | 'footer'
+  /** The time at which the hold ends, whether or not the layout has settled. */
+  until: number
+  /** The scroll position that the last commit left the page at. */
+  scrollY: number
+}
+
+/** Holds the viewport still while a font size change lays the thoughts out again. Every thought changes height, which moves the cursor and everything below it. Each time the layout moves the cursor, the page is scrolled by the same amount, so that the cursor stays where it is on the screen and nothing below it, such as the footer, drifts into view (#6273). When the footer's font size buttons made the change, the footer is held instead, so that the buttons stay under the pointer (#1152). Without a cursor the scroll position is left alone. */
+const useFontSizeAnchor = ({
+  tree,
+  cursorY,
+  footerY,
+  autocrop,
+  anchorScroll,
+  thoughtsRef,
+}: {
+  /** The thoughts that are laid out. A change to them ends the hold, since the layout then moves for another reason. Compared by reference. */
+  tree: unknown
+  /** The y position of the cursor thought within the layout, if there is a cursor. */
+  cursorY: number | undefined
+  /** The y position of the footer, measured from the top of the layout. */
+  footerY: number
+  /** The amount that the layout is shifted up. See: useAutocrop. */
+  autocrop: number
+  /** Set to the amount scrolled in the current commit, for useAutocrop to keep. */
+  anchorScroll: RefObject<number>
+  /** The element that contains the thoughts. */
+  thoughtsRef: RefObject<HTMLElement | null>
+}) => {
+  const fontSize = useSelector(state => state.fontSize)
+
+  // Get the scroll position before the render, as useAutocrop does. Once the render is committed, the browser has
+  // already moved a scroll position that a shorter document no longer reaches, e.g. at the bottom of the page when the
+  // font size is decreased, and scrolling from there would count that part of the change twice.
+  const scrollY = window.scrollY
+
+  const last = useRef<{
+    fontSize: number
+    tree: unknown
+    cursorY: number | undefined
+    footerY: number
+    autocrop: number
+    hold: FontSizeHold | null
+  }>({ fontSize, tree, cursorY, footerY, autocrop, hold: null })
+
+  // Runs on every commit, since a font size change is laid out over several: the thoughts are measured at the new size
+  // a frame after it is applied, and the footer after that.
+  // A layout effect, so that the scroll is painted together with the layout that it answers, and so that the cursor
+  // overlay's passive effect then finds the cursor where it was, rather than scrolling to it.
+  useLayoutEffect(() => {
+    const { current: prev } = last
+    const fontSizeChanged = fontSize !== prev.fontSize
+
+    // The footer's font size buttons name the footer as the anchor of the change they make. Take it, and leave the
+    // cursor as the anchor of the next change.
+    const started: FontSizeHold | null = fontSizeChanged
+      ? { anchor: fontSizeAnchorStore.getState(), until: performance.now() + FONT_SIZE_LAYOUT_TIMEOUT, scrollY }
+      : prev.hold
+    if (fontSizeChanged) {
+      fontSizeAnchorStore.update('cursor')
+    }
+
+    // Let go as soon as the layout can move for another reason, or something else moves the page: the thoughts or the
+    // cursor change, the user scrolls, or the cursor is scrolled into view.
+    const hold =
+      started && performance.now() < started.until && tree === prev.tree && Math.abs(scrollY - started.scrollY) < 1
+        ? started
+        : null
+
+    // The footer does not move with the autocrop, whose own scroll would otherwise carry it away.
+    const [y, yPrev] =
+      hold?.anchor === 'footer' ? [footerY - autocrop, prev.footerY - prev.autocrop] : [cursorY, prev.cursorY]
+    const delta = hold && y !== undefined && yPrev !== undefined ? y - yPrev : 0
+
+    if (delta !== 0) {
+      debugLog.log('scroll', () => ({
+        source: 'fontSize',
+        anchor: hold?.anchor,
+        scrollY: Math.round(scrollY),
+        top: Math.round(scrollY + delta),
+      }))
+      window.scrollTo({ top: scrollY + delta })
+
+      // The scroll is instant, while the thoughts take layoutNodeAnimation to move to their new positions, so they
+      // would jump by the amount scrolled and then slide back. Start them from where they were on the screen instead,
+      // so that the anchor stays put and the thoughts around it glide into place.
+      const duration = durations.get('layoutNodeAnimation')
+      const thoughts = thoughtsRef.current
+      if (duration > 0 && thoughts) {
+        const glide = thoughts.animate([{ translate: `0 ${delta}px` }, { translate: '0 0' }], {
+          duration,
+          easing: 'ease-out',
+        })
+        // An animation started from script takes the time of the last frame, while the thoughts' top transitions start
+        // in the next frame, when they are first rendered. The glide would run a frame ahead of them, and the anchor
+        // would dip by a few pixels and come back. Hold the glide at its first keyframe until that frame instead.
+        glide.pause()
+        requestAnimationFrame(() => {
+          glide.startTime = document.timeline.currentTime
+        })
+      }
+    }
+
+    anchorScroll.current = delta
+    last.current = {
+      fontSize,
+      tree,
+      cursorY,
+      footerY,
+      autocrop,
+      // useAutocrop scrolls by the change in autocrop after this effect
+      hold: hold && { ...hold, scrollY: scrollY + delta + autocrop - prev.autocrop },
+    }
+  })
 }
 
 /** A hook that returns a ref to the content div and updates the viewport store's layoutTreeTop property on mount. */
@@ -252,11 +383,22 @@ const LayoutTree = () => {
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
   const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
 
-  const autocrop = useAutocrop(spaceAbove)
+  const anchorScroll = useRef(0)
+  const thoughtsRef = useRef<HTMLDivElement>(null)
+  const autocrop = useAutocrop(spaceAbove, anchorScroll)
 
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
+
+  useFontSizeAnchor({
+    tree: treeThoughts,
+    cursorY: cursorThoughtPositioned?.y,
+    footerY: totalHeight + spaceBelow,
+    autocrop,
+    anchorScroll,
+    thoughtsRef,
+  })
 
   useLayoutTreeTop(ref, autocrop)
 
@@ -291,6 +433,7 @@ const LayoutTree = () => {
         hoverArrowVisibility={hoverArrowVisibility}
       />
       <div
+        ref={thoughtsRef}
         className={css({ transition: `transform {durations.layoutSlowShift} ease-out` })}
         style={{
           // Set a container height that fits all thoughts.

@@ -876,7 +876,7 @@ Open the recently edited sidebar.
 
 Increase the font size. Bigger is better!
 
-Every change of the font size, from either command, the footer's font size buttons, or Settings, shows a "Font size" alert ([`Footer`](../src/components/Footer.tsx)). Only the footer's own font size buttons also scroll to the bottom, which keeps them under the pointer as the thoughts above them grow or shrink ([#1152](https://github.com/cybersemics/em/issues/1152)). A change from a command or Settings leaves the scroll position to the cursor ([#6273](https://github.com/cybersemics/em/issues/6273)).
+Every change of the font size, from either command, the footer's font size buttons, or Settings, shows a "Font size" alert ([`Footer`](../src/components/Footer.tsx)). While the thoughts are laid out at the new size, the page scrolls with the cursor, so that the cursor stays where it is on the screen ([#6273](https://github.com/cybersemics/em/issues/6273)). A change from the footer's own font size buttons scrolls with the footer instead, which keeps the buttons under the pointer as the thoughts above them grow or shrink ([#1152](https://github.com/cybersemics/em/issues/1152)). See [layout-rendering.md → `useFontSizeAnchor`](layout-rendering.md#usefontsizeanchor-font-size-changes).
 
 ### Decrease Font Size
 

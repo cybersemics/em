@@ -12,10 +12,10 @@ import fontSizeUp from '../actions/fontSizeUp'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { tsid } from '../data-providers/thoughtspaceSession'
-import scrollTo from '../device/scrollTo'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
 import backgroundGlowStore from '../stores/backgroundGlowStore'
+import fontSizeAnchorStore from '../stores/fontSizeAnchorStore'
 import offlineStatusStore from '../stores/offlineStatusStore'
 import syncStatusStore from '../stores/syncStatusStore'
 import fastClick from '../util/fastClick'
@@ -247,31 +247,24 @@ const Footer = () => {
   // })
 
   const _fontSize = useRef(fontSize)
-  /** The font size that a font size button changed to, so that the change scrolls to the bottom once it is laid out. */
-  const fontSizeFromButton = useRef<number | null>(null)
 
   // alert when font size changes
   useEffect(() => {
     // prevent alert dispatch when rendered for first time
     if (_fontSize.current !== fontSize) {
       dispatch(alert(`Font size: ${fontSize}`))
-      // Keep the buttons under the pointer as the thoughts above them grow or shrink (#1152). A change from anywhere
-      // else, such as a command or Settings, leaves the scroll position alone and the cursor in view (#6273).
-      if (fontSizeFromButton.current === fontSize) {
-        scrollTo('bottom')
-      }
-      fontSizeFromButton.current = null
       _fontSize.current = fontSize
     }
   }, [dispatch, fontSize])
 
-  /** Changes the font size from a font size button, and records the font size it changed to, so that the change scrolls to the bottom once the thoughts have been laid out at it. At the minimum or maximum font size the button changes nothing, and nothing is recorded. */
+  /** Changes the font size from a font size button, and has the footer held still in the viewport while the thoughts above it are laid out at the new size, so that the buttons stay under the pointer (#1152). At the minimum or maximum font size the button changes nothing, so there is nothing to hold, and a later change from a command holds the cursor as usual. */
   const changeFontSize = (action: Thunk) =>
     dispatch((dispatch, getState) => {
       const fontSizeBefore = getState().fontSize
       dispatch(action)
-      const fontSizeAfter = getState().fontSize
-      fontSizeFromButton.current = fontSizeAfter !== fontSizeBefore ? fontSizeAfter : null
+      if (getState().fontSize !== fontSizeBefore) {
+        fontSizeAnchorStore.update('footer')
+      }
     })
 
   // hide footer during tutorial
