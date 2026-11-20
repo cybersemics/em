@@ -62,7 +62,7 @@ export default async function refreshThoughtsFromMaterializationChanges(
   // Read the touched thoughts and the parents whose order changed, then those parents' children. A placed thought whose
   // change named no parent, or another one, adds its current parent, which takes one more read.
   const thoughts: Index<Thought | undefined> = {}
-  for (;;) {
+  while (true) {
     for (const id of touched) {
       const thought = thoughts[id]
       // A rename moves no sibling, and a parent keeps its place when its children change.
