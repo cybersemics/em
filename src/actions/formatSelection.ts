@@ -2,8 +2,10 @@ import _ from 'lodash'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
-import { isSafari, isTouch } from '../browser'
+import { isAndroid, isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
+import { replaceMarkupInPlace, replaceMarkupWithCommand } from '../device/editInPlace'
+import restoreEditMenu from '../device/restoreEditMenu'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -161,6 +163,7 @@ const formatSelection = (
  * makes the native undo gesture fire.
  *
  * No-op on non-iOS platforms (isTouch && isSafari gates iOS WKWebView; desktop Safari has no shake/three-finger undo).
+ * Returns true if it changed the editable.
  *
  * Trade-offs:
  *
@@ -179,11 +182,12 @@ const formatSelection = (
  * thought is focused again. Redo is unaffected: `device/nativeHistory.ts` registers its redo step on a hidden editing host
  * that always exists.
  */
-const registerNativeUndoStep = (html: string): void => {
-  if (!isTouch || !isSafari()) return
+const registerNativeUndoStep = (html: string): boolean => {
+  if (!isTouch || !isSafari()) return false
   editableSyncStore.update({ suppressChange: true })
   document.execCommand('insertHTML', false, html)
   editableSyncStore.update({ suppressChange: false })
+  return true
 }
 
 /** Action-creator for formatSelection. Reads the browser selection, which the reducer cannot read, and keeps the live
@@ -250,13 +254,27 @@ export const formatSelectionActionCreator =
     // noteFocus is only true when the caret is on a note, so it's not necessary to check whether the keyboard is open.
     const noteOffset = state.noteFocus ? selection.offsetFromNode(contentEditable) : null
 
+    // The selection's rects before the edit, so that restoreEditMenu can tell whether the edit moved the selected text
+    // and so dismissed the edit menu on iOS (#5641).
+    const isPartial = !!range && !state.noteFocus
+    const rectsBefore = isPartial ? selection.editableClientRects() : []
+
     // Only call document.execCommand when the keyboard is open and the caret is on a thought.
     // This avoids messy and buggy focus-management logic.
-    if (state.isKeyboardOpen) registerNativeUndoStep(newValue)
+    const registeredUndoStep = state.isKeyboardOpen && registerNativeUndoStep(newValue)
 
-    // Keep partial thought formatting synchronous with the live editable. Restoring the range immediately after the
-    // write preserves the logical selection.
-    if (range && !state.noteFocus) {
+    // Keep partial thought formatting synchronous with the live editable. The new markup is applied with DOM mutations
+    // that keep the selection over it where possible, since Android dismisses its selection menu and handles when the
+    // selection is torn down and set again (#5641). Otherwise, restoring the range immediately after the write
+    // preserves the logical selection. The native undo step has already replaced the editable's contents on iOS, so
+    // there is no selection left to keep then. When the selection is inside a tag the new markup removes, which no DOM
+    // edit can take it out of, Android's own editing command can, and keeps the menu.
+    const keptSelection =
+      isPartial &&
+      !registeredUndoStep &&
+      (replaceMarkupInPlace(contentEditable, newValue, range) ||
+        (isAndroid && replaceMarkupWithCommand(contentEditable, newValue, command)))
+    if (isPartial && !keptSelection) {
       contentEditable.innerHTML = newValue
       selection.setRange(contentEditable, range)
     }
@@ -269,6 +287,8 @@ export const formatSelectionActionCreator =
       cursorOffset: offsets?.end,
       noteOffset,
     })
+
+    if (isPartial) restoreEditMenu(rectsBefore)
 
     // Update the toolbar command state when formatting a sub-range (the whole-thought state is derived from the caret).
     if (range || !state.isKeyboardOpen) updateCommandState(getState())

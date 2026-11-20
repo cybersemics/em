@@ -5,6 +5,7 @@ import getEditingText from '../helpers/getEditingText'
 import longPressBullet from '../helpers/longPressBullet'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import setSelection from '../helpers/setSelection'
 import waitForAlert from '../helpers/waitForAlert'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
@@ -38,6 +39,28 @@ it('Apply formatting to a selected portion of a thought', async () => {
   expect(output).toBe(`
 - **Golden** Retriever
 `)
+})
+
+// https://github.com/cybersemics/em/issues/5641
+it('formats the selected text without replacing the selection', async () => {
+  await paste('Welcome to the world of beautiful people')
+
+  await clickThought('Welcome to the world of beautiful people')
+  await setSelection(24, 33)
+
+  // Android dismisses its native selection menu (Cut, Copy, Paste) as soon as the selection is torn down, and setting
+  // it again does not bring the menu back. A range taken from the selection before the edit is live, so it still spans
+  // the formatted word only if the edit never collapsed the selection.
+  const selectedRange = await page.evaluateHandle(() => window.getSelection()!.getRangeAt(0).cloneRange())
+
+  await clickToolbar('Bold')
+
+  await page.waitForFunction(() =>
+    document.querySelector('[data-editing=true] [data-editable]')?.innerHTML.includes('<b>beautiful</b>'),
+  )
+
+  expect(await selectedRange.evaluate(range => range.toString())).toBe('beautiful')
+  expect(await page.evaluate(() => window.getSelection()?.toString())).toBe('beautiful')
 })
 
 it('Apply code formatting to a thought with the toolbar button', async () => {

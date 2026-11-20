@@ -15,6 +15,7 @@ npx cap sync
 
 * [`changeBackgroundColor(...)`](#changebackgroundcolor)
 * [`setHistoryAvailability(...)`](#sethistoryavailability)
+* [`presentEditMenu()`](#presenteditmenu)
 * [`addListener('nativeHistory', ...)`](#addlistenernativehistory-)
 * [`removeAllListeners()`](#removealllisteners)
 * [Interfaces](#interfaces)
@@ -50,6 +51,19 @@ report its availability has iOS confirming an undo or redo that does nothing.
 | Param         | Type                                                 |
 | ------------- | ---------------------------------------------------- |
 | **`options`** | <code>{ canUndo: boolean; canRedo: boolean; }</code> |
+
+--------------------
+
+
+### presentEditMenu()
+
+```typescript
+presentEditMenu() => Promise<void>
+```
+
+Presents WebKit's own edit menu (Cut, Copy, Paste, …) for the current text selection. WebKit dismisses the
+menu when the rendered rects of the selection change, and the web layer has no way to present it again, so
+the app calls this after an edit of its own moves the selected text. Does nothing before iOS 17.4.
 
 --------------------
 

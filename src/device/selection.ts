@@ -280,6 +280,23 @@ export const offsetRange = (editable: HTMLElement): { start: number; end: number
   return { start, end: start + range.toString().length }
 }
 
+/** The start and end of a range, as a node and offset each. */
+export interface RangeBoundaries {
+  startContainer: Node
+  startOffset: number
+  endContainer: Node
+  endOffset: number
+}
+
+/** Returns the start and end of the browser selection's range, or null if there is none. A copy rather than the live
+ * Range, since changing the live Range is a change of selection, which hides Android's native selection menu (#5641). */
+export const boundaries = (): RangeBoundaries | null => {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return null
+  const { startContainer, startOffset, endContainer, endOffset } = selection.getRangeAt(0)
+  return { startContainer, startOffset, endContainer, endOffset }
+}
+
 /** Returns the plain-text character offsets [start, end) of the current selection relative to the given thought's
  * editable, or null if the thought is not rendered or the selection is not within it. */
 export const offsetRangeThought = (thoughtId: string): { start: number; end: number } | null => {
@@ -698,15 +715,22 @@ export const getBoundingClientRect = () => {
   return null
 }
 
-/** Returns the client rects of a non-collapsed browser selection that lies within a single thought or note, with zero-width rects removed. Returns an empty array otherwise. */
-export const editableClientRects = (): DOMRect[] => {
+/** Returns the range of a non-collapsed browser selection that lies within a single thought or note, together with the thought's or note's editable, or null otherwise. */
+const editableRange = (): { range: Range; editable: Element } | null => {
   const selection = window.getSelection()
   const range = selection && selection.rangeCount > 0 && !selection.isCollapsed ? selection.getRangeAt(0) : null
   const ancestor = range?.commonAncestorContainer
   const ancestorElement = ancestor instanceof Element ? ancestor : ancestor?.parentElement
   const editable = ancestorElement?.closest('[data-editable], [aria-label=note-editable]')
-  return range && editable ? [...range.getClientRects()].filter(rect => rect.width > 0) : []
+  return range && editable ? { range, editable } : null
 }
+
+/** Returns the editable of the thought or note that holds a non-collapsed browser selection, or null if there is none. */
+export const selectedEditable = (): Element | null => editableRange()?.editable ?? null
+
+/** Returns the client rects of a non-collapsed browser selection that lies within a single thought or note, with zero-width rects removed. Returns an empty array otherwise. */
+export const editableClientRects = (): DOMRect[] =>
+  [...(editableRange()?.range.getClientRects() ?? [])].filter(rect => rect.width > 0)
 
 /** Returns true if the point is within the given number of pixels of the bounds, on every side. */
 const isNearBounds = (

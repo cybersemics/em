@@ -8,5 +8,7 @@ export default class WebviewBackgroundWeb extends WebPlugin implements WebviewBa
   async changeBackgroundColor(_options: { color: string }): Promise<void>{}
 
   async setHistoryAvailability(_options: { canUndo: boolean; canRedo: boolean }): Promise<void>{}
+
+  async presentEditMenu(): Promise<void>{}
   
 }
