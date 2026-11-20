@@ -40,6 +40,11 @@ export type PatchMetadata = PatchMetadataInput & {
 interface Patch {
   ops: Operation[]
   metadata: PatchMetadata
+  /** Where the caret was in the cursor thought immediately before and after the patch's actions ran. Undo restores before, and Redo restores after. It is stored rather than diffed, because a caret move that is not an undo step still writes state.cursorOffset, and a diff would hand that move to the next Undo or Redo (#6221). */
+  cursorOffset: {
+    before: number | null
+    after: number | null
+  }
 }
 
 export default Patch
