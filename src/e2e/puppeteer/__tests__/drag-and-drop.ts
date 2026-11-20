@@ -1066,7 +1066,7 @@ describe('scroll at edge', () => {
     expect(dropHoverBottom).toBeLessThanOrEqual(alertTop)
   })
   // https://github.com/cybersemics/em/issues/6281
-  it.skip('stops edge scrolling when the dragged thought enters the quick-delete gutter', async () => {
+  it('stops edge scrolling when the dragged thought enters the quick-delete gutter', async () => {
     await paste(Array.from({ length: 40 }, (_, i) => `- ${i + 1}`).join('\n'))
     await waitForEditable('40')
     await scrollTo(0)

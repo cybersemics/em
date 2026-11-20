@@ -85,7 +85,11 @@ const scrollEndTimeoutStore = ministore<{ timer: Timer | null }>(
   { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
 )
 
-/** An scroll-at-edge function that will continue scrolling smoothly in a given direction until scroll-at-edge.stop is called. Takes a number of pixels to scroll each iteration. */
+/** Whether a thought drag can scroll vertically at the edge of the screen. */
+const canScrollThoughtAtEdge = (state: State) =>
+  state.longPress === LongPressState.DragInProgress && state.alert?.alertType !== AlertType.DeleteDropHint
+
+/** A scroll-at-edge function that will continue scrolling smoothly in a given direction until scroll-at-edge.stop is called. Takes a number of pixels to scroll each iteration. */
 const scrollAtEdge = (() => {
   /** Cubic easing function. */
   const ease = (n: number) => Math.pow(n, 3)
@@ -98,10 +102,9 @@ const scrollAtEdge = (() => {
 
   /** Scroll vertically in the direction given by rate until stop is called. Defaults to scrolling the window, or you can pass an element to scroll. */
   const scroll = () => {
-    // Stop as soon as the drag ends, even while the finger is held still at the edge. Otherwise only the next touchmove
-    // or touchend would stop it, and a drag that ends while the finger is still down would scroll until release (#6281).
+    // Recheck eligibility even when the finger is still. The drag may have ended or entered the quick-delete gutter.
     const state = store.getState()
-    if (!state.dragCommand && state.longPress !== LongPressState.DragInProgress) {
+    if (!state.dragCommand && !canScrollThoughtAtEdge(state)) {
       autoscrolling = false
       return
     }
@@ -330,12 +333,7 @@ const initEvents = (store: Store<State, any>) => {
       else {
         scrollAtEdge.stop()
       }
-    }
-    // do not scroll-at-edge when hovering over DropGutter component
-    else if (
-      state.longPress === LongPressState.DragInProgress &&
-      !(state.alert?.alertType === AlertType.DeleteDropHint)
-    ) {
+    } else if (canScrollThoughtAtEdge(state)) {
       const y = e.touches[0].clientY
       scrollContainerStore.update({ element: (target.closest('[data-scroll-at-edge]') as HTMLElement) || window })
 

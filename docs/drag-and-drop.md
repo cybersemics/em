@@ -302,7 +302,7 @@ The sixth layered touch-backend patch makes the long-press delay honour the `Dra
 
 ### `react-dnd-touch-backend-patch-21865b140f.patch`
 
-The seventh layered touch-backend patch makes the drag work with scroll-at-edge ([#6281](https://github.com/cybersemics/em/issues/6281)). Scroll-at-edge, in [`initEvents`](../src/util/initEvents.ts), scrolls the page while the finger is held near the top or bottom edge of the screen during a drag.
+The seventh layered touch-backend patch makes the drag work with scroll-at-edge ([#6281](https://github.com/cybersemics/em/issues/6281)). Scroll-at-edge, in [`initEvents`](../src/util/initEvents.ts), scrolls the page while the finger is held near the top or bottom edge of the screen during a drag. It stops while the finger is over the quick-delete gutter, even if the finger stays still as the delete hint appears.
 
 1. **Scroll-at-edge does not end the drag.** A press with any movement during the long-press delay, which iOS Safari delivers on nearly every press, sets `scrollHasBegun`, so `handleScroll` would end the drag on the first scroll from scroll-at-edge. Two changes prevent this:
    - When `handleTopMove` handles a cancelable `touchmove` during a drag, it prevents its default and unbinds `handleScroll`. A cancelable move means the browser has not started a native scroll, and preventing it keeps one from starting, so every later `scroll` event is the app's own.
