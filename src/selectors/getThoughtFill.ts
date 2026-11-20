@@ -36,7 +36,7 @@ const getInheritedColors = (element: HTMLElement, inherited: InheritedColors): I
  */
 const getThoughtFill = (state: State, thoughtId: ThoughtId): string | undefined => {
   const thought = getThoughtById(state, thoughtId)
-  if (!thought) return undefined
+  if (!thought || !thought.value.includes('<')) return undefined
 
   if (typeof DOMParser === 'undefined') return undefined
 
