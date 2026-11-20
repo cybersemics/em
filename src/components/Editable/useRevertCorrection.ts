@@ -57,15 +57,11 @@ const useRevertCorrection = ({
     const editable = editableRef.current
     if (!editable || !enabled || !isTouch || !isSafari()) return
 
+    // The last tap on the editable: the offset recorded for it, the offset before it, which edge it was at, and how far
+    // iOS has got with it. It lasts until the next input of any kind, since the revert arrives after the touchend.
+    let watch: RevertWatch | null = null
     // Where the touch in progress began, and when.
     let touchStart: { clientX: number; clientY: number; time: number } | null = null
-    // The tap being watched, if any.
-    let watch: RevertWatch | null = null
-
-    /** Ends the watch on any other input. */
-    const endWatch = () => {
-      watch = null
-    }
 
     /** Notes where a touch on the editable began. */
     const onTouchStart = (e: TouchEvent) => {
@@ -103,6 +99,9 @@ const useRevertCorrection = ({
       watch = { offset, before, edge: edgeOf(editable, touch.clientY), phase: 'awaiting' }
       recordCaretOffset(offset)
     }
+
+    /** Ends the watch on any other input. A mousedown means the tap is one that onMouseDown places itself. */
+    const endWatch = () => (watch = null)
 
     /** Puts the caret back after the moves iOS makes for a tap, and leaves any other move alone. */
     const onSelectionChange = () => {
