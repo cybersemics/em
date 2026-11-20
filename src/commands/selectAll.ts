@@ -48,14 +48,15 @@ const selectAllCommand = {
   exec: (dispatch, getState) => {
     const state = getState()
 
-    // Toggle between Select All and Deselect All
-    // i.e. If all thoughts at the current level are selected, clear the multicursor instead.
-    // Only Deselect All on mobile, since desktop has Escape to easily deselect all.
-    const isDeselectAll = isTouch && isAllSelected(state)
-
     // A multiselection that is already being edited (Clear Thought) holds the caret on purpose. Clearing it would blur
     // the thought being edited, closing the keyboard and exiting the cleared state (see onBlur in Editable).
     const isEdited = isMultiEditing(state)
+
+    // Toggle between Select All and Deselect All
+    // i.e. If all thoughts at the current level are selected, clear the multicursor instead.
+    // On desktop, a multiselection that is being edited stays selected, so that Select All does not exit Clear Thought
+    // (#5108).
+    const isDeselectAll = isAllSelected(state) && (isTouch || !isEdited)
 
     dispatch(isDeselectAll ? clearMulticursors() : addAllMulticursor())
 
