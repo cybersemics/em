@@ -80,7 +80,10 @@
     {
       "id": "find",
       "label": "Find",
-      "accelerator": "Cmd+F",
+      "accelerator": {
+        "macos": "Cmd+F",
+        "windowsLinux": "Ctrl+F"
+      },
       "checkable": false
     },
     {
