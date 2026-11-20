@@ -226,6 +226,6 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## W
 
-**write barrier** — [`writeBarrier.ts`](../src/data-providers/treecrdt/writeBarrier.ts). Serializes em → TreeCRDT persistence and exposes an idle barrier, so a materialization refresh cannot reapply stale rows over newer optimistic state. Also mints each write's *writeId*.
+**write barrier** — [`writeBarrier.ts`](../src/data-providers/treecrdt/writeBarrier.ts). Serializes em → TreeCRDT persistence and exposes waits for it, so a materialization refresh cannot reapply stale rows over newer optimistic state. Also mints each write's *writeId*.
 
 **writeId** — `em-local:${sourceId}:${n}`, attached to every local TreeCRDT write and echoed on the materialization changes it produces. Lets this tab refresh memberships without reading back its already-optimistic local thoughts.

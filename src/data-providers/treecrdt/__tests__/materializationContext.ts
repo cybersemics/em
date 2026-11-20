@@ -28,6 +28,7 @@ let close: () => Promise<void>
 let snapshot: ThoughtspaceMaterializationSnapshot
 const getSnapshot = vi.fn()
 const apply = vi.fn()
+let releaseWrite: (() => void) | undefined
 
 beforeEach(async () => {
   client = await createTreecrdtClient({ docId: 'materialization-context' })
@@ -44,6 +45,8 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
+  // A held write blocks every round and write queued after it.
+  releaseWrite?.()
   await close()
   await waitForMaterializedThoughtsToStore()
   await client.drop()
@@ -74,7 +77,7 @@ it('publishes coalesced local events once without republishing local thoughts', 
 
 it('retries stale membership readback after a newer optimistic rename and persistence', async () => {
   // A round reads the store again after readback. A rename that lands there makes that readback stale. Redux has no
-  // Lexeme for 'a' at both reads, as with a value typed and typed away while the round waits.
+  // Lexeme for 'a' at both reads, as when it has not loaded that Lexeme.
   getSnapshot.mockImplementationOnce(() => snapshot)
   getSnapshot.mockImplementationOnce(() => {
     snapshot = { ...snapshot, thoughtIndex: { [THOUGHT_ID]: thought('b') } }
@@ -111,6 +114,24 @@ it('keeps a round when another thought is edited and its write is indexed while 
   const [published] = apply.mock.invocationCallOrder
   expect(getSnapshot.mock.invocationCallOrder.filter(order => order < published)).toHaveLength(2)
   expect(snapshot.lexemeIndex[hashThought('a')].contexts).toEqual([THOUGHT_ID])
+})
+
+it('publishes without waiting for a write queued after the round first reads the store', async () => {
+  const heldWrite = new Promise<void>(resolve => {
+    releaseWrite = resolve
+  })
+  getSnapshot.mockImplementationOnce(() => {
+    // An edit made after this read queues its write while the round is already waiting.
+    queueMicrotask(() => void withTreecrdtWriteBarrier(() => heldWrite))
+    return snapshot
+  })
+  const published = new Promise(resolve => apply.mockImplementationOnce(resolve))
+  await withTreecrdtWriteBarrier(() =>
+    provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
+  )
+
+  // The write is held until after the test.
+  expect(await published).toMatchObject({ lexemeIndex: { [hashThought('a')]: { contexts: [THOUGHT_ID] } } })
 })
 
 it('publishes pending memberships on the next edit after a failed publication', async () => {

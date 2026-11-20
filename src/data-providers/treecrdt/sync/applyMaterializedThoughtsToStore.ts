@@ -3,7 +3,7 @@ import _ from 'lodash'
 import hashThought from '../../../util/hashThought'
 import type { DataProvider } from '../../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../../thoughtspace'
-import { isTreecrdtLocalMaterialization, waitForTreecrdtWriteBarrier } from '../writeBarrier'
+import { isTreecrdtLocalMaterialization, waitForQueuedTreecrdtWrites } from '../writeBarrier'
 import refreshThoughtsFromMaterializationChanges from './materializationThoughtUpdates'
 
 export type MaterializationContext = {
@@ -16,10 +16,10 @@ export type MaterializationContext = {
 /** Publishes complete memberships after persistence; local thoughts keep their optimistic view. */
 export const applyMaterializedThoughtsToStore = async ({ bridge, db, pending, isActive }: MaterializationContext) => {
   while (pending.length && isActive()) {
-    // pushQueue queues each edit's write in the reducer that makes it, so once the wait ends storage has every edit this
-    // snapshot shows.
+    // pushQueue queues each edit's write in the reducer that makes it, so once the writes queued by now are done, storage
+    // has every edit this snapshot shows. Writes queued later are not waited for; the checks below catch any that matter.
     const snapshot = bridge.getSnapshot()
-    await waitForTreecrdtWriteBarrier()
+    await waitForQueuedTreecrdtWrites()
     const entries = pending.slice()
     const keys = [...new Set(entries.flatMap(entry => entry.keys))]
     const remoteChanges = entries.flatMap(({ event }) => (isTreecrdtLocalMaterialization(event) ? [] : event.changes))
@@ -31,7 +31,7 @@ export const applyMaterializedThoughtsToStore = async ({ bridge, db, pending, is
       keys.some(key => lexemeIndex[key] !== snapshot.lexemeIndex[key]) ||
       Object.keys(thoughtIndexUpdates).some(id => thoughtIndex[id] !== snapshot.thoughtIndex[id]) ||
       // A newer edit that renamed a listed thought into another Lexeme or deleted it. The first check misses this if
-      // Redux has no Lexeme for the value at both reads, as with a value typed and typed away while the round waits.
+      // Redux has no Lexeme for the value at both reads, as when it has not loaded that Lexeme.
       // Only changed thoughts count, or a remote rename this round publishes would restart it forever.
       values.some((lexeme, i) =>
         lexeme?.contexts.some(id => {

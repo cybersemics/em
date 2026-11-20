@@ -110,7 +110,7 @@ The rank fallback is a compatibility bridge while the app still treats `rank` as
 
 [`writeBarrier.ts`](../src/data-providers/treecrdt/writeBarrier.ts) serializes em → TreeCRDT persistence and exposes an idle barrier. It is a local ordering guard, not a CRDT requirement: it keeps app-state refreshes from racing local persistence, so a materialization refresh can't reapply stale rows over newer optimistic state.
 
-A failed write is recorded and thrown at the next wait for idle. Between tests, a failure that nothing waited for is discarded instead, along with any failure still to come from a write queued before the test boundary, so that it is not thrown at the next test. The materialization queue does the same for failed refreshes. See [testing.md → Isolation and cleanup](testing.md#isolation-and-cleanup).
+A failed write is recorded and thrown once, by the next wait that covers it: a wait for idle, or a readback round's wait for the writes queued so far. Between tests, a failure that nothing waited for is discarded instead, along with any failure still to come from a write queued before the test boundary, so that it is not thrown at the next test. The materialization queue does the same for failed refreshes. See [testing.md → Isolation and cleanup](testing.md#isolation-and-cleanup).
 
 It also stamps every local write with a `writeId` of the form `em-local:${sourceId}:${n}`, where `sourceId` is unique per page load. `isTreecrdtLocalMaterialization` recognizes this tab's own writes, so publication refreshes memberships without reading back already-optimistic local thoughts.
 
@@ -120,7 +120,7 @@ It also stamps every local write with a `writeId` of the form `em-local:${source
 
 [`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) then:
 
-1. Reads a Redux snapshot, then waits for local writes. Every edit the snapshot shows has queued its write by then, so storage has it once the wait ends.
+1. Reads a Redux snapshot, then waits for the local writes queued so far. Every edit the snapshot shows has queued its write by then, so storage has it once the wait ends. Writes queued later are not waited for; step 3 catches any that matter.
 2. For incoming changes only, refreshes affected thoughts and projects sibling order onto numeric ranks.
 3. Waits for indexing, then reads complete memberships for affected old and new values. A round starts over if Redux meanwhile changes a Lexeme it read or a thought it writes, or renames or deletes a thought its Lexemes list. It also starts over if an event is indexed while it reads, unless the event is local and the round read no thoughts.
 4. Applies changed memberships and incoming thoughts through the *materialization bridge*.
