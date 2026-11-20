@@ -64,10 +64,11 @@ it('publishes coalesced local events once without republishing local thoughts', 
   expect(snapshot.lexemeIndex[hashThought('b')].contexts).toEqual([THOUGHT_ID])
 
   apply.mockClear()
-  // An order-only write produces an event, but must not republish unchanged memberships.
+  // A move writes the thought again with a newer lastUpdated. That is a payload change, but no membership changes, so
+  // nothing is republished.
   await withTreecrdtWriteBarrier(() =>
     provider.db.updateThoughts({
-      thoughtIndexUpdates: { [THOUGHT_ID]: thought('b') },
+      thoughtIndexUpdates: { [THOUGHT_ID]: { ...thought('b'), lastUpdated: 2 as Timestamp } },
       movePlacements: { [THOUGHT_ID]: SETTINGS_TOKEN },
     }),
   )
