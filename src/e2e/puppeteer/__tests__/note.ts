@@ -93,3 +93,18 @@ it('pressing Enter mid-note with multiple thoughts multiselected creates an empt
 - 
 `)
 })
+
+// https://github.com/cybersemics/em/pull/6277
+it('deletes a new note on Backspace after a space, since the space does not appear, as in an empty thought', async () => {
+  await paste('- a')
+  await clickThought('a')
+  await press('n', { meta: true, alt: true })
+  await waitForNoteFocus()
+  await press('Space')
+
+  await press('Backspace')
+
+  expect(await exportThoughts()).toBe(`
+- a
+`)
+})

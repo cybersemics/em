@@ -1,5 +1,6 @@
 import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
+import clickNote from '../helpers/clickNote'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
@@ -11,6 +12,7 @@ import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import setClipboard from '../helpers/setClipboard'
 import setSelection from '../helpers/setSelection'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForNoteFocus from '../helpers/waitForNoteFocus'
@@ -95,6 +97,31 @@ it('undoes and redoes contiguous note typing with its caret', async () => {
       offset: 0,
       text: '',
     },
+  })
+})
+
+// https://github.com/cybersemics/em/pull/6277
+it('redoes a pasted no-break space with the caret after it in a note', async () => {
+  await paste(`
+    - a
+      - =note
+        - one two
+  `)
+  await clickNote('one two')
+  await press('Home')
+  await setClipboard({ text: '\u00a0' })
+  await press('v', { ctrl: true })
+  await waitForNoteText('\u00a0one two')
+  await press('z', { ctrl: true })
+  await waitForNoteText('one two')
+
+  await press('z', { ctrl: true, shift: true })
+
+  await waitForNoteText('\u00a0one two')
+  expect(await getNoteState()).toEqual({
+    focusInsideNote: true,
+    offset: 1,
+    text: '\u00a0one two',
   })
 })
 
