@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { dropHoverRecipe } from '../../styled-system/recipes'
@@ -7,6 +7,7 @@ import { token } from '../../styled-system/tokens'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../actions/toggleUserSetting'
+import { isTouch } from '../browser'
 import { Settings } from '../constants'
 import useDragAndDropFavorites from '../hooks/useDragDropFavorites'
 import useDragHold from '../hooks/useDragHold'
@@ -41,14 +42,35 @@ const DragAndDropFavorite = ({
     simplePath,
     path: simplePath,
   })
+  const [longPressed, setLongPressed] = useState(false)
   const dragHoldResult = useDragHold({ simplePath, sourceZone: DragThoughtZone.Favorites })
+
+  // Mark the row once the press becomes a hold, so the drawer can consume the release click after the hold state has cleared.
+  useEffect(() => {
+    if (dragHoldResult.isPressed) setLongPressed(true)
+  }, [dragHoldResult.isPressed])
+  // Link stops mousedown from propagating, so the row starts a desktop hold in capture.
+  const { onMouseDown: startLongPress, ...dragHoldProps } = dragHoldResult.props
+
+  /** Clears the mark on the next press. On touch, the release's compatibility mousedown still belongs to the hold. */
+  const resetLongPressed = () => setLongPressed(false)
 
   return (
     // Set display:flow-root to create a new block formatting context so the drop target fully wraps its contents.
     // Otherwise the context-breadcrumbs margin-top will leak out and create a dead zone where the favorite cannot be dropped.
     // Note: overflow:auto also creates a BFC but causes a scrollbar on empty thoughts (#3817). overflow:hidden clips content.
     <div
-      {...dragHoldResult.props}
+      {...dragHoldProps}
+      onTouchStartCapture={isTouch ? resetLongPressed : undefined}
+      onMouseDownCapture={
+        isTouch
+          ? undefined
+          : e => {
+              resetLongPressed()
+              startLongPress?.(e)
+            }
+      }
+      data-favorite-long-pressed={longPressed ? '' : undefined}
       className={css({ display: 'flow-root' })}
       data-testid='drag-and-drop-favorite'
       ref={dndRef(node => dragSource(dropTarget(node)))}

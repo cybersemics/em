@@ -198,6 +198,8 @@ The `Thought` component itself is the primary `ThoughtDrop` zone. There's no ded
 
 [`Favorites`](../src/components/Favorites.tsx) — the favorites panel; uses `useDragDropFavorites` for drag and drop within the panel.
 
+When [`useDragHold`](../src/hooks/useDragHold.ts) recognizes a hold, the favorite marks its row until the next press. [`SidebarDrawer`](../src/components/Sidebar/SidebarDrawer.tsx) checks that mark in click capture, before its right-edge tap-to-close handler or the favorite's link can act. A browser can deliver the click after `state.longPress` has already reset, so the mark survives that transition ([#3693](https://github.com/cybersemics/em/issues/3693)). On touch the next `touchstart` clears the mark, since a release can produce a compatibility `mousedown` before its click. On desktop the next `mousedown` clears it. Desktop hold recognition also starts in capture because [`Link`](../src/components/Link.tsx) stops `mousedown` from bubbling.
+
 ### Quick drops
 
 [`DropGutter`](../src/components/DropGutter.tsx) — an invisible 2em-wide panel pinned to the right edge of the screen, mounted only while a drag is in progress (the file's default export is `QuickDropController`, which subscribes to `state.longPress === DragInProgress` and conditionally mounts `DropGutter`).
