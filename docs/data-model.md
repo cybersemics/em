@@ -13,7 +13,7 @@ state.thoughts: {
 }
 ```
 
-Only thoughts that are *currently visible* (cursor + ancestors + expanded paths + context-view contexts) are kept in `thoughtIndex`. Everything else is loaded on demand by the pull queue (see [persistence.md](persistence.md)) and freed when no longer visible.
+Only thoughts that are *currently visible* (cursor + ancestors + expanded paths + context-view contexts), and the thoughts that the undo and redo history needs, are kept in `thoughtIndex`. Everything else is loaded on demand by the pull queue (see [persistence.md](persistence.md)) and freed when no longer visible.
 
 ## Tree topology
 
