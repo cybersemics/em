@@ -3,9 +3,6 @@ import getGestureBounds from './getGestureBounds'
 import serializeGesturePath from './serializeGesturePath'
 import GestureArrowhead from './types/GestureArrowhead'
 import GestureGeometry from './types/GestureGeometry'
-import GestureSegment from './types/GestureSegment'
-
-type ArcGestureSegment = Extract<GestureSegment, { kind: 'arc' }>
 
 interface SolidGestureRendererProps {
   /** Marker style attached to the final rendered path. */
@@ -25,10 +22,6 @@ interface SolidGestureRendererProps {
   /** Base gesture stroke width. */
   strokeWidth: number
 }
-
-/** Serializes a legacy rounded segment, which is always a circular arc. */
-const serializeArc = (segment: ArcGestureSegment) =>
-  `M ${segment.from.x} ${segment.from.y} A ${segment.radius} ${segment.radius} 0 0 ${segment.sweepFlag} ${segment.to.x} ${segment.to.y}`
 
 /**
  * Paints the solid, binary highlight treatment used by the Gesture Menu.
@@ -84,8 +77,9 @@ const SolidGestureRenderer = ({
   )
   const shaftClip = chevron ? `url(#${instanceId}-chevron)` : undefined
 
-  // A single path prevents rounded caps from overlapping into visible beads at joins.
-  if (segments[0]?.kind === 'line' && path !== 'rdld') {
+  // Lines and arcs are each drawn as a single path.
+  // One path per segment would overlap their round caps into visible beads at joins, since the colors are translucent.
+  if (path !== 'rdld') {
     if (allHighlighted || noneHighlighted) {
       return (
         <>
@@ -120,39 +114,22 @@ const SolidGestureRenderer = ({
   }
 
   // The Command Universe question mark combines its quadratic and line segments into one path.
-  if (path === 'rdld') {
-    if (allHighlighted || noneHighlighted) {
-      return (
-        <path
-          d={serializeGesturePath(segments)}
-          stroke={allHighlighted ? activeColor : inactiveColor}
-          {...commonPathProps}
-        />
-      )
-    }
-
-    const highlighted = segments.filter(segment => segment.gestureIndex < highlight!)
-    const remaining = segments.slice(highlighted.length)
+  if (allHighlighted || noneHighlighted) {
     return (
-      <>
-        <path d={serializeGesturePath(highlighted)} stroke={activeColor} {...commonPathProps} />
-        <path d={serializeGesturePath(remaining)} stroke={inactiveColor} {...commonPathProps} />
-      </>
+      <path
+        d={serializeGesturePath(segments)}
+        stroke={allHighlighted ? activeColor : inactiveColor}
+        {...commonPathProps}
+      />
     )
   }
 
-  // Legacy rounded gestures are independent arcs and cannot use the continuous line serializer.
+  const highlighted = segments.filter(segment => segment.gestureIndex < highlight!)
+  const remaining = segments.slice(highlighted.length)
   return (
     <>
-      {(segments as readonly ArcGestureSegment[]).map((segment, index) => (
-        <path
-          d={serializeArc(segment)}
-          key={index}
-          stroke={highlight != null && segment.gestureIndex < highlight ? activeColor : inactiveColor}
-          {...commonPathProps}
-          markerEnd={index === segments.length - 1 ? markerEnd : undefined}
-        />
-      ))}
+      <path d={serializeGesturePath(highlighted)} stroke={activeColor} {...commonPathProps} />
+      <path d={serializeGesturePath(remaining)} stroke={inactiveColor} {...commonPathProps} />
     </>
   )
 }

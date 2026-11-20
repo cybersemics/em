@@ -97,6 +97,7 @@ const GestureMenuItem: FC<{
           strokeWidth={3}
           maxHeight={21.6}
           maxWidth={21.6}
+          rounded={command.rounded}
         />
       </div>
 

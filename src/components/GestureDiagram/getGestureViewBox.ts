@@ -33,7 +33,6 @@ const getGestureViewBox = (
   const strokeRadius = (strokeWidth * 1.5) / 2
   // A filled arrowhead can be either a chevron drawn in the gesture geometry or an SVG marker at the line end.
   // The rdld glyph draws neither, so it takes the padding of the gestures listed beside it.
-  // A rounded gesture has no chevron and draws the marker, so it keeps the marker padding.
   const useChevronPadding =
     arrowhead === 'filled' && (geometry.chevron !== null || (filledChevron && geometry.path === 'rdld'))
   // Retain the conventional-marker allowance. Arrowhead-free and filled-chevron diagrams need only stroke padding here.

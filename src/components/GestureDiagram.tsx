@@ -125,7 +125,6 @@ const GestureDiagram = ({
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
 
   // Only the solid renderer paints 'filled' as a chevron. The gradient renderers draw the filled marker.
-  // Rounded gestures end in an arc, so getGestureGeometry returns no chevron and the marker comes back.
   const filledChevron = arrowhead === 'filled' && !gradient && !useGradient
 
   const geometry = useMemo(
