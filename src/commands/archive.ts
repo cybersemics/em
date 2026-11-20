@@ -61,7 +61,6 @@ const archiveCommand = {
     'lrdrl',
     'lrdldr',
     'lrdldlr',
-    'ldru',
     'ldrlru',
     'ldllru',
     'ldlru',
