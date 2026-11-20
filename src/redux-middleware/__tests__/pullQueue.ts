@@ -4,9 +4,11 @@ import Thought from '../../@types/Thought'
 import { clearActionCreator as clear } from '../../actions/clear'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { undoActionCreator as undo } from '../../actions/undo'
 import { HOME_TOKEN } from '../../constants'
 import type { DataProvider } from '../../data-providers/DataProvider'
 import getContext from '../../data-providers/data-helpers/getContext'
+import getLexeme from '../../data-providers/data-helpers/getLexeme'
 import getThoughtByIdFromDB from '../../data-providers/data-helpers/getThoughtById'
 import db from '../../data-providers/thoughtspace'
 import store from '../../stores/app'
@@ -18,6 +20,7 @@ import { editThoughtByContextActionCreator as editThought } from '../../test-hel
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 
 /*
   Note: sinon js fake timer is used to overcome some shortcomings we have with jest's fake timer.
@@ -146,11 +149,13 @@ it('load buffered thoughts', async () => {
   expect(getAllChildrenByContext(state, ['a', 'b', 'c', 'd', 'e'])).toMatchObject([])
 })
 
-it('delete thought with buffered descendants', async () => {
+/** Imports `a` with descendants four levels deep, which a refresh leaves unloaded, and a second `e` under `x`. */
+const importBufferedDescendants = async () => {
   await dispatch([
     importText({
       text: `
         - x
+          - e
         - a
           - b
             - c
@@ -162,6 +167,21 @@ it('delete thought with buffered descendants', async () => {
   ])
 
   await act(vi.runOnlyPendingTimersAsync)
+
+  const state = store.getState()
+  return {
+    descendants: [
+      ['a', 'b'],
+      ['a', 'b', 'c'],
+      ['a', 'b', 'c', 'd'],
+      ['a', 'b', 'c', 'd', 'e'],
+    ].map(context => contextToThought(state, context)!.id),
+    otherE: contextToThought(state, ['x', 'e'])!.id,
+  }
+}
+
+it('delete thought with buffered descendants', async () => {
+  const { descendants, otherE } = await importBufferedDescendants()
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'a' }])
   await matchContextsChildren(db, ['a'], [{ value: 'b' }])
@@ -175,13 +195,25 @@ it('delete thought with buffered descendants', async () => {
   // delete thought with buffered descendants
   // this causes getContext to hang
   await dispatch(deleteThoughtAtFirstMatchActionCreator(['a']))
+  await waitForThoughtspaceIdle()
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }])
   expect(await getContextAsync(db, ['a'])).toBeFalsy()
-  expect(await getContextAsync(db, ['a', 'b'])).toBeFalsy()
-  expect(await getContextAsync(db, ['a', 'b', 'c'])).toBeFalsy()
-  expect(await getContextAsync(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
-  expect(await getContextAsync(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
+  // The descendants that were not loaded are deleted too, so e is left with one context.
+  expect(await db.getThoughtsByIds(descendants)).toEqual(descendants.map(() => undefined))
+  expect((await getLexeme(db, 'e'))?.contexts).toEqual([otherE])
+})
+
+it('undo restores the buffered descendants of a deleted thought', async () => {
+  const { descendants, otherE } = await importBufferedDescendants()
+  await refreshTestApp()
+
+  await dispatch(deleteThoughtAtFirstMatchActionCreator(['a']))
+  await dispatch(undo())
+  await waitForThoughtspaceIdle()
+
+  expect((await db.getThoughtsByIds(descendants)).map(thought => thought?.value)).toEqual(['b', 'c', 'd', 'e'])
+  expect((await getLexeme(db, 'e'))?.contexts).toEqual(expect.arrayContaining([otherE, descendants[3]]))
 })
 
 it('move thought with buffered descendants', async () => {
