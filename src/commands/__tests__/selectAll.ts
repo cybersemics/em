@@ -10,7 +10,7 @@ import selectAllCommand from '../selectAll'
 beforeEach(initStore)
 
 // https://github.com/cybersemics/em/issues/3561
-it.skip('selects all thoughts at the cursor depth and clears the deeper selection', () => {
+it('selects all thoughts at the cursor depth and clears the deeper selection', () => {
   store.dispatch([
     importText({
       text: `

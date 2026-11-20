@@ -668,7 +668,7 @@ https://github.com/user-attachments/assets/690450bb-30a2-4858-aa44-132a38498ebb
 
 ### Select All
 
-Selects all thoughts at the current level. May reduce wrist strain.
+Selects all thoughts at the current level and clears selections at other depths. May reduce wrist strain.
 
 <kbd>Command + Option + a</kbd> or <kbd>Command + a</kbd>
 
