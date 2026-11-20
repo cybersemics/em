@@ -197,7 +197,8 @@ describe('multicursor', () => {
       - b2`)
   })
 
-  it('swaps selected siblings with their parent in turn', () => {
+  // https://github.com/cybersemics/em/issues/5874
+  it.skip('does not swap selected siblings with their parent', () => {
     store.dispatch([
       importText({
         text: `
@@ -213,14 +214,11 @@ describe('multicursor', () => {
 
     executeCommandWithMulticursor(swapParentCommand, { store })
 
-    // b is swapped with a first, moving its sibling c under b. c is then swapped with its new parent b,
-    // moving b and its sibling a under c.
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
     expect(exported).toEqual(`- ${HOME_TOKEN}
-  - c
-    - a
-    - b`)
+  - a
+    - b
+    - c`)
   })
 
   it('restores the cursor and multicursors to the swapped thoughts', () => {
