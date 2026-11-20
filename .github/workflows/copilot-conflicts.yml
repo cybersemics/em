@@ -10,6 +10,11 @@ on:
     branches: [main]
   pull_request_target:
     types: [opened, reopened, synchronize]
+  # A due task waits while BrowserStack is busy, so a BrowserStack run finishing is the moment to
+  # look again.
+  workflow_run:
+    workflows: [BrowserStack, BrowserStack Android]
+    types: [completed]
   workflow_dispatch:
     inputs:
       pr:
@@ -27,13 +32,14 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
+  actions: read
   contents: read
   issues: write
   pull-requests: write
 
 jobs:
   resolve:
-    name: Scan conflicting Copilot PRs
+    name: Resolve merge conflicts on Copilot PRs
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -47,6 +53,9 @@ jobs:
           PR_NUMBER: ${{ inputs.pr }}
           DRY_RUN: ${{ inputs.dry_run }}
         with:
+          # The scan makes several API calls per Copilot PR, so a single 5xx from GitHub would
+          # otherwise fail it — and show red on whichever pull request triggered it.
+          retries: 3
           script: |
             await require('./scripts/ci/collect-copilot-conflicts.cjs')({ github, context, core })
 

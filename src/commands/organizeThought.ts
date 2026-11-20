@@ -24,7 +24,7 @@ const organizeThought = {
       /** Waits for the reorganization request before closing the multicursor undo bracket. */
       const organizeAll = async () => {
         await Promise.resolve()
-        dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'organizeThought' }))
+        dispatch(setIsMulticursorExecuting({ value: true }))
         try {
           await dispatch(organizeThoughtAction(cursors))
         } finally {
@@ -54,7 +54,7 @@ const organizeThought = {
       return
     }
 
-    dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'organizeThought' }))
+    dispatch(setIsMulticursorExecuting({ value: true }))
     try {
       await dispatch(organizeThoughtAction(paths))
     } finally {

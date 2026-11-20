@@ -14,7 +14,7 @@ import ProgressiveBlur from '../ProgressiveBlur'
  * (position:fixed, z-index:gestureContentBlur) paints above the in-flow Content but below the
  * position:fixed; z-index:gestureTrace gesture trace — so the content behind the menu blurs while the
  * trace stays sharp. It is a sibling of PopupBase rather than a child so it is ordered in the shared
- * <View> stacking context instead of being trapped inside PopupBase's higher 'popup' stacking context.
+ * <View> stacking context instead of being trapped inside PopupBase's higher 'gestureMenu' stacking context.
  */
 const GestureContentBlur: FC = () => {
   const animationState = gestureStore.useSelector(state => state.gestureMenuAnimationState)

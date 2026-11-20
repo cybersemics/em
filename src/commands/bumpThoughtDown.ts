@@ -9,6 +9,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const bumpThoughtDownCommand = {
   id: 'bumpThoughtDown',
   label: 'Bump Thought Down' as const,
+  systemMenu: 'Edit',
   description: 'Bump the current thought down one level and replace it with a new, empty thought.',
   gesture: 'drd',
   // Command + Option + d is unusable, as macOS reserves it for "Turn Dock Hiding On/Off" and never delivers the

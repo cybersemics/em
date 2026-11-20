@@ -6,6 +6,7 @@ import Patch from '../@types/Patch'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { isMac } from '../browser'
 import { commandById, formatKeyboardShortcut, gestureString } from '../commands'
 import { HOME_TOKEN } from '../constants'
 import head from '../util/head'
@@ -60,6 +61,9 @@ const target = (state: State, path: Path | null): string => {
 const touchedIds = (patch: Patch): ThoughtId[] =>
   uniq(patch.ops.flatMap(op => op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)/)?.[1] ?? [])) as ThoughtId[]
 
+/** The arrow for each swipe direction of a gesture. */
+const ARROWS: Record<string, string> = { l: '←', r: '→', u: '↑', d: '↓' }
+
 /** Describes how a command was invoked. */
 const describeCommandInvocation = (patch: Patch): string => {
   if (patch.metadata.source !== 'command') return ''
@@ -74,13 +78,18 @@ const describeCommandInvocation = (patch: Patch): string => {
       return `Press \`${formatKeyboardShortcut(shortcut)}\`.`
     }
     case 'gesture':
-      return `Swipe \`${gestureString(command)}\`.`
+      return `${command.label} (${Array.from(gestureString(command), direction => ARROWS[direction] ?? direction).join('')}).`
     case 'toolbar':
       return `Tap the ${command.label} button.`
     case 'commandCenter':
       return `Tap ${command.label} in the Command Center.`
     case 'desktopCommandUniverse':
       return `Choose ${command.label} in the Command Universe.`
+    case 'systemMenu':
+      // Repeat records the command that it repeated, which may not be in the menu.
+      if (!command.systemMenu) return `Run ${command.label}.`
+      // The App menu is titled with the app's name on macOS. Windows and Linux have none, and list its commands in File.
+      return `Choose ${command.systemMenu === 'App' ? (isMac ? 'em' : 'File') : command.systemMenu} > ${command.label} in the menu bar.`
   }
 
   return `Run ${command.label}.`

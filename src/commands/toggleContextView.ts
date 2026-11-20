@@ -6,6 +6,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 const toggleContextViewCommand = {
   id: 'toggleContextView',
   label: 'Context View' as const,
+  systemMenu: 'View',
   description:
     'Opens the context view of the current thought. The context view shows all contexts throughout your thoughtspace in which the thought can be found. Use the same command to close the context view.',
   descriptionInverse:

@@ -22,6 +22,8 @@ export type PopupBaseProps = PropsWithChildren<
     circledCloseButton?: boolean
     /** If true, the popup will take up the full width and height of the screen. */
     fullScreen?: boolean
+    /** The stacking layer for the popup. */
+    layer?: 'popup' | 'gestureMenu'
     /** If defined, will show a small x in the upper right corner. */
     onClose?: () => void
     padding?: string
@@ -41,6 +43,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       children,
       circledCloseButton,
       fullScreen = false,
+      layer = 'popup',
       onClose,
       padding,
       showXOnHover,
@@ -103,7 +106,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
         className={css({
           boxSizing: 'border-box',
           textAlign,
-          zIndex: 'popup',
+          zIndex: layer === 'gestureMenu' ? 'gestureMenu' : 'popup',
           // leave space so the circledCloseButton doesn't get cut off from the screen
           maxWidth: circledCloseButton ? 'calc(100% - 2rem)' : '100%',
           maxHeight: '100%',

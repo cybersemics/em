@@ -1,4 +1,5 @@
 import { archiveThoughtActionCreator as archiveThought } from '../../actions/archiveThought'
+import { categorizeActionCreator as categorize } from '../../actions/categorize'
 import { clearActionCreator as clear } from '../../actions/clear'
 import { cursorBackActionCreator as cursorBack } from '../../actions/cursorBack'
 import { cursorDownActionCreator as cursorDown } from '../../actions/cursorDown'
@@ -16,9 +17,11 @@ import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import { HOME_TOKEN } from '../../constants'
+import db from '../../data-providers/thoughtspace'
 import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import isUndoEnabled from '../../selectors/isUndoEnabled'
@@ -33,6 +36,7 @@ import archiveCommand from '../archive'
 import deleteCommand from '../delete'
 import indentCommand from '../indent'
 import moveCursorForward from '../moveCursorForward'
+import noteCommand from '../note'
 
 beforeEach(initStore)
 
@@ -46,6 +50,7 @@ beforeEach(initStore)
  * from previous tests.
  */
 describe('undo persistence', () => {
+  // increase timeout to give time for two calls to initialize()
   it('persists undo thought change', async () => {
     await initialize({ storage: 'memory' })
 
@@ -76,8 +81,27 @@ describe('undo persistence', () => {
 
     await vi.runAllTimersAsync()
     vi.useRealTimers()
-  }, 10000 /* increase timeout to give time for two calls to initialize() */)
+  }, 10000)
 
+  it('persists the removal of the empty category when undoing Categorize', async () => {
+    store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
+    await waitForThoughtspaceIdle()
+    const thoughtId = contextToThoughtId(store.getState(), ['a'])!
+
+    store.dispatch(categorize())
+    await waitForThoughtspaceIdle()
+    const categoryId = contextToThoughtId(store.getState(), [''])!
+    await expect(db.getThoughtById(thoughtId)).resolves.toMatchObject({ parentId: categoryId })
+
+    store.dispatch(undo())
+    await waitForThoughtspaceIdle()
+
+    await expect(db.getThoughtById(thoughtId)).resolves.toMatchObject({ parentId: HOME_TOKEN })
+    const home = await db.getThoughtById(HOME_TOKEN)
+    expect(Object.values(home!.childrenMap)).toEqual([thoughtId])
+  })
+
+  // increase timeout to give time for two calls to initialize()
   it('persists undo move placement after reload', async () => {
     await initialize({ storage: 'memory' })
 
@@ -120,8 +144,9 @@ describe('undo persistence', () => {
   - c
   - d
   - e`)
-  }, 10000 /* increase timeout to give time for two calls to initialize() */)
+  }, 10000)
 
+  // increase timeout to give time for two calls to initialize()
   it('persists redo move placement after reload', async () => {
     await initialize({ storage: 'memory' })
 
@@ -173,7 +198,7 @@ describe('undo persistence', () => {
   - b
   - c
   - e`)
-  }, 10000 /* increase timeout to give time for two calls to initialize() */)
+  }, 10000)
 })
 
 describe('undo', () => {
@@ -448,6 +473,27 @@ describe('undo', () => {
     store.dispatch(undo())
 
     expect(store.getState().alert?.value).toBe('Undo: Text Color')
+  })
+
+  // The Note command runs inside a multicursor undo bracket, so the setDescendant that adds each note merges into the
+  // bracket's patch. Its undoLabel has to survive the merge and name the step instead of the command.
+  it('name a multicursor note in the undo alert', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b`,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+    ])
+
+    executeCommandWithMulticursor(noteCommand, { store })
+
+    store.dispatch(undo())
+
+    expect(store.getState().alert?.value).toBe('Undo: Add Note')
   })
 
   it('undo should stay enabled and not throw after a multicursor command that nets to no change', () => {

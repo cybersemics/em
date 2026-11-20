@@ -1,8 +1,7 @@
-import type { Element } from 'webdriverio'
 import getElementRectByScreen from './getElementRectByScreen.js'
 
 /**
- * Press the center of an element, hold the finger still, then drag it horizontally without lifting.
+ * Press the center of an element, hold the finger still, then drag it without lifting.
  *
  * A W3C `pause` between `pointerDown` and `pointerMove` is not a reliable hold on a device: in a measured run the touch
  * started moving within 100ms of a 1000ms pause, so the press never became a long press. XCUITest's
@@ -10,13 +9,16 @@ import getElementRectByScreen from './getElementRectByScreen.js'
  * Uses the global browser object from WDIO.
  */
 const holdAndSwipe = async (
-  element: Element,
+  element: WebdriverIO.Element,
   {
-    dx,
+    dx = 0,
+    dy = 0,
     holdMs,
   }: {
     /** Horizontal distance to drag after the hold, in pixels. Negative drags left. */
-    dx: number
+    dx?: number
+    /** Vertical distance to drag after the hold, in pixels. Negative drags up. */
+    dy?: number
     /** Milliseconds to hold the finger still before dragging. */
     holdMs: number
   },
@@ -30,7 +32,7 @@ const holdAndSwipe = async (
     fromX: x,
     fromY: y,
     toX: x + dx,
-    toY: y,
+    toY: y + dy,
   })
 }
 

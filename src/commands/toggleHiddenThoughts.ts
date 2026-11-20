@@ -5,6 +5,7 @@ import HiddenThoughtsIcon from '../components/icons/HiddenThoughtsIcon'
 const toggleHiddenThoughtsCommand = {
   id: 'toggleHiddenThoughts',
   label: 'Show Hidden Thoughts' as const,
+  systemMenu: 'View',
   labelInverse: 'Hide Hidden Thoughts',
   description: 'Show all hidden thoughts.',
   descriptionInverse: 'Hide hidden thoughts.',

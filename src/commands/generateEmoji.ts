@@ -22,7 +22,7 @@ const generateEmoji = {
         // The command framework's synchronous bracket closes before inference resolves, so open an async bracket after
         // yielding and keep it open until every selected thought has settled.
         await Promise.resolve()
-        dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'generateEmoji' }))
+        dispatch(setIsMulticursorExecuting({ value: true }))
         try {
           await dispatch(generateEmojiAtPaths(cursors))
         } finally {

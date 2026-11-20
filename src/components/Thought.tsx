@@ -295,6 +295,7 @@ const ThoughtContainer = ({
     dragSourceBullet,
     dragSourceEditable,
     isHovering,
+    isOver,
     dropTarget,
     canDropThought,
     isDeepHovering,
@@ -570,6 +571,7 @@ const ThoughtContainer = ({
     <div
       ref={dndRef(node => dragPreview(dropTarget(node)))}
       aria-label='child'
+      data-drop-over={isOver}
       data-divider={isDivider(value)}
       data-editing={isEditing}
       onClick={isTouch ? undefined : handleMultiselect}

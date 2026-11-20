@@ -38,4 +38,18 @@ describe('closeDropdowns', () => {
     expect(stateNew.showCommandCenter).toBe(true)
     expect(Object.keys(stateNew.multicursors)).toHaveLength(1)
   })
+
+  it('keepUndoSlider keeps the Undo Slider open and closes the other dropdowns', () => {
+    const steps = [
+      newThought('a'),
+      (state: State) => toggleDropdown(state, { dropDownType: 'commandCenter', value: true }),
+      (state: State) => toggleDropdown(state, { dropDownType: 'undoSlider', value: true }),
+      (state: State) => closeDropdowns(state, { keepUndoSlider: true }),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.showUndoSlider).toBe(true)
+    expect(stateNew.showCommandCenter).toBe(false)
+  })
 })

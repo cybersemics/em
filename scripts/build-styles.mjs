@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Runs `panda codegen`, skipping it when its inputs are unchanged since the last run.
+ * Runs `panda codegen`, skipping it when its inputs are unchanged since the last run, then `panda cssgen`, which
+ * always runs.
  *
  * `styled-system/` is generated output that only changes when codegen runs, so a stamp file written
  * after each run records a fingerprint of the inputs it was generated from, and codegen is skipped
@@ -103,3 +104,8 @@ if (force || !before || before !== lastBuilt) {
 } else {
   console.info('styled-system is up to date, skipping codegen. Use `yarn build:styles --force` to rebuild.')
 }
+
+// Generate the CSS now, so that the background image list it writes (see backgroundImageManifestPlugin) exists *before*
+// Vite bundles the app. It runs every time, unlike codegen above, because the list depends on the source files rather
+// than the config. (This adds about 500ms to the build. It does not affect the dev server.)
+execSync('panda cssgen', { cwd: repoDir, stdio: 'inherit' })

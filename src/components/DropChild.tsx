@@ -33,7 +33,7 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
   const dropHoverColorValue = useSelector(state => dropHoverColor(state, depth || 0))
   const fontSize = useSelector(state => state.fontSize)
 
-  const { isHovering, dropTarget } = useDragAndDropSubThought({ path, simplePath })
+  const { isHovering, isOver, dropTarget } = useDragAndDropSubThought({ path, simplePath })
 
   // Calculate the height for the child thought over cliff
   // If the thought is at a cliff (cliff < 0) or is the last visible thought, calculate the drop target height
@@ -62,6 +62,7 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
           }),
         )}
         ref={dndRef(dropTarget)}
+        data-drop-over={isOver}
         style={{
           height: `${0.5 + dropTargetHeight}em`,
           // Adjust position to compensate for cliff padding on parent thought
