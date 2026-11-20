@@ -44,6 +44,32 @@ describe('multicursor', () => {
       - a2`)
   })
 
+  // https://github.com/cybersemics/em/issues/5874
+  it('does not swap selected siblings with their grandparent', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - g
+            - p
+              - a
+              - b
+        `,
+      }),
+      setCursor(['g', 'p', 'a']),
+      addMulticursor(['g', 'p', 'a']),
+      addMulticursor(['g', 'p', 'b']),
+    ])
+
+    executeCommandWithMulticursor(swapGrandparentCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - g
+    - p
+      - a
+      - b`)
+  })
+
   it('does not swap a selected thought that has no grandparent', () => {
     store.dispatch([
       importText({

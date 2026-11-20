@@ -426,7 +426,7 @@ https://github.com/user-attachments/assets/0ca1a77b-e174-4884-9606-739a94cde039
 
 ### Swap Grandparent
 
-Swap the current thought with its grandparent, leaving the parent in between where it is. The two thoughts exchange places in the tree and each adopts the other's children.
+Swap the current thought with its grandparent, leaving the parent in between where it is. The two thoughts exchange places in the tree and each adopts the other's children. Swap Grandparent is disabled when two or more selected thoughts are siblings, since swapping each of them with the grandparent in turn would scramble the subtree. Selected thoughts with different parents are each swapped with their own grandparent.
 
 ### Command Universe
 
