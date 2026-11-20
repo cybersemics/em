@@ -1,8 +1,15 @@
 import durations from '../../durations.config'
+import testFlags from '../../e2e/testFlags'
 import durationsHelper from '../durations'
 
+const initialAnimationEnabled = testFlags.animationEnabled
+
 beforeEach(() => {
-  durationsHelper.setInTest(false)
+  testFlags.animationEnabled = true
+})
+
+afterEach(() => {
+  testFlags.animationEnabled = initialAnimationEnabled
 })
 /** Return the first configurad duration. */
 const getTestVals = (): [keyof typeof durations, number] => {
@@ -25,7 +32,7 @@ describe('getDuration', () => {
   it('should return the zero duration when in test state', () => {
     const [key] = getTestVals()
 
-    durationsHelper.setInTest(true)
+    testFlags.animationEnabled = false
     expect(durationsHelper.get(key)).toBe(0)
   })
 })
@@ -44,7 +51,7 @@ describe('getDurations', () => {
   })
 
   it('should return the zero duration when in test state', () => {
-    durationsHelper.setInTest(true)
+    testFlags.animationEnabled = false
     const actualDurations = durationsHelper.getAll()
 
     // SHould have same number of keys

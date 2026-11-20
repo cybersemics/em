@@ -23,6 +23,7 @@ import {
   TOOLBAR_DEFAULT_COMMANDS,
   TOOLBAR_PRESS_ANIMATION_DURATION,
 } from '../constants'
+import testFlags from '../e2e/testFlags'
 import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
 import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
@@ -193,10 +194,10 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           ? colorPickerRect.right - toolbarRect.right
           : 0
 
-    // Scroll instantly under automation, as scrollTo and scrollCursorIntoView do. A smooth scroll keeps the swatches
+    // Scroll instantly when animations are disabled, as scrollTo and scrollCursorIntoView do. A smooth scroll keeps the swatches
     // moving for ~200ms after they are visible, so a test that clicks one races the animation and hits its neighbor.
     if (scrollOffset !== 0)
-      toolbar.scrollBy({ behavior: navigator.webdriver ? 'instant' : 'smooth', left: scrollOffset })
+      toolbar.scrollBy({ behavior: !testFlags.animationEnabled ? 'instant' : 'smooth', left: scrollOffset })
   }, [customize, showColorPicker])
 
   // disable pressing on drag

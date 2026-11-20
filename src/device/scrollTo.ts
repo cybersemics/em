@@ -1,7 +1,8 @@
+import testFlags from '../e2e/testFlags'
 import debugLog from '../util/debugLog'
 import scheduleScrollCursorIntoView from './scheduleScrollCursorIntoView'
 
-/** Scrolls the content to the top, the bottom, or a given scrollTop. Always scrolls instantly in integration tests, ignoring the passed behavior. */
+/** Scrolls the content to the top, the bottom, or a given scrollTop. Scrolls instantly when animations are disabled, ignoring the passed behavior. */
 const scrollTo = (target: 'top' | 'bottom' | number, behavior?: ScrollBehavior) => {
   const top =
     typeof target === 'number' ? target : target === 'top' ? 0 : target === 'bottom' ? document.body.scrollHeight : null
@@ -22,7 +23,7 @@ const scrollTo = (target: 'top' | 'bottom' | number, behavior?: ScrollBehavior) 
   window.scrollTo({
     top,
     left: 0,
-    behavior: navigator.webdriver ? 'instant' : behavior,
+    behavior: !testFlags.animationEnabled ? 'instant' : behavior,
   })
 }
 

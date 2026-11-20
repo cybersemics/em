@@ -11,6 +11,9 @@ import { register } from './serviceWorkerRegistration'
 import store from './stores/app'
 import initEvents from './util/initEvents'
 
+// Apply the shared playback policy before rendering; data-env still controls unrelated test adaptations.
+document.body.setAttribute('data-animation-enabled', String(testFlags.animationEnabled))
+
 const container = document.getElementById('root')
 const root = createRoot(container!)
 

@@ -26,7 +26,7 @@ const modalRecipe = defineSlotRecipe({
       // ^above are .modal styles, below are .popup
       animation: {
         base: 'fademostlyin 0.4s',
-        _test: 'none',
+        _animationsDisabled: 'none',
       },
       minWidth: '200px',
       boxShadow: 'none',
@@ -38,7 +38,7 @@ const modalRecipe = defineSlotRecipe({
       backgroundColor: 'bg',
       transition: {
         base: 'all {durations.medium} ease-out',
-        _test: 'none',
+        _animationsDisabled: 'none',
       },
       '& p': { margin: '0 0 1em 0' },
     },
