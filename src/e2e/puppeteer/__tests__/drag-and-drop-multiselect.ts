@@ -1,3 +1,4 @@
+import clickThought from '../helpers/clickThought'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
@@ -138,6 +139,28 @@ describe('drag and drop multiple thoughts', () => {
 - x
   - =pin
     - true
+`)
+  })
+
+  // https://github.com/cybersemics/em/issues/3561
+  it.skip('drags only the new thought when it is at a different depth from the selection', async () => {
+    await paste(`
+      - a
+        - b
+        - c
+      - d
+      `)
+
+    await clickThought('a')
+    await multiselectThoughts(['b', 'c'])
+    await dragAndDropThought('d', 'a', { position: 'before' })
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- d
+- a
+  - b
+  - c
 `)
   })
 
