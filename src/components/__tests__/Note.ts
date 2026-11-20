@@ -1,10 +1,13 @@
 import { fireEvent, screen } from '@testing-library/dom'
+import userEvent from '@testing-library/user-event'
 import { act } from 'react'
+import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { redoActionCreator as redo } from '../../actions/redo'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { HOME_TOKEN } from '../../constants'
+import * as selection from '../../device/selection'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getChildrenSorted } from '../../selectors/getChildren'
@@ -20,13 +23,19 @@ afterEach(cleanupTestApp)
 
 describe('=note', () => {
   // https://github.com/cybersemics/em/issues/5084
+  // A note left with only whitespace is emptied as it is typed, as a thought is, so nothing is shown while typing.
   test.each([
-    ['plain whitespace', '  hello  world  ', 'hello  world'],
-    ['formatted whitespace', '<b>  hello <i>world  </i></b>', '<b>hello <i>world</i></b>'],
-    ['only whitespace', '   ', ''],
+    ['plain whitespace', '  hello  world  ', '  hello  world  ', 'hello  world'],
+    [
+      'formatted whitespace',
+      '<b>  hello <i>world  </i></b>',
+      '<b>  hello <i>world  </i></b>',
+      '<b>hello <i>world</i></b>',
+    ],
+    ['only whitespace', '   ', '', ''],
   ])(
     'saves %s trimmed as it is typed, and shows it trimmed once the note blurs',
-    async (_description, input, expected) => {
+    async (_description, input, shown, expected) => {
       await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
       await act(vi.runOnlyPendingTimersAsync)
       const noteEditor = screen.getByLabelText('note-editable')
@@ -34,7 +43,7 @@ describe('=note', () => {
       await act(async () => {
         fireEvent.input(noteEditor, { target: { innerHTML: input } })
       })
-      expect(noteEditor.innerHTML).toBe(input)
+      expect(noteEditor.innerHTML).toBe(shown)
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain(`<li>${expected}</li>`)
 
       await act(async () => {
@@ -77,6 +86,109 @@ describe('=note', () => {
       await vi.runOnlyPendingTimersAsync()
     })
     expect(screen.getByLabelText('note-editable').innerHTML).toBe('hello')
+  })
+
+  // https://github.com/cybersemics/em/pull/6277#discussion_r4545966728
+  test('undoes and redoes typing after a leading space with the caret where it was', async () => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - x' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      noteEditor.focus()
+      selection.set(noteEditor, { offset: 0 })
+    })
+
+    const user = userEvent.setup({ delay: null })
+    await user.keyboard(' y')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      store.dispatch(undo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('x')
+    expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe(0)
+
+    await act(async () => {
+      store.dispatch(redo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('yx')
+    expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe('y'.length)
+  })
+
+  // https://github.com/cybersemics/em/pull/6277#discussion_r4570542744
+  test('undoes and redoes deleting the first word of a note with the caret where it was', async () => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - x y' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      noteEditor.focus()
+      selection.setRange(noteEditor, { start: 0, end: 'x'.length })
+    })
+
+    const user = userEvent.setup({ delay: null })
+    await user.keyboard('{Backspace}')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      store.dispatch(undo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('x y')
+    expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe('x'.length)
+
+    await act(async () => {
+      store.dispatch(redo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('y')
+    expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe(0)
+  })
+
+  // https://github.com/cybersemics/em/pull/6277#discussion_r4570526756
+  test('bolds the selected word after a leading space', async () => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - one two' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      noteEditor.focus()
+      selection.set(noteEditor, { offset: 0 })
+    })
+
+    const user = userEvent.setup({ delay: null })
+    await user.keyboard(' ')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      selection.setRange(noteEditor, { start: ' '.length, end: ' one'.length })
+      store.dispatch(formatSelection('bold'))
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    const noteId = contextToThoughtId(store.getState(), ['a', '=note'])!
+    expect(getChildrenSorted(store.getState(), noteId).map(child => child.value)).toEqual(['<b>one</b> two'])
+  })
+
+  // https://github.com/cybersemics/em/pull/6277
+  test('a space typed into an empty note does not appear, as in an empty thought', async () => {
+    await dispatch([importText({ text: '- a' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      noteEditor.focus()
+      selection.set(noteEditor, { offset: 0 })
+    })
+
+    const user = userEvent.setup({ delay: null })
+    await user.keyboard(' ')
+    await act(vi.runOnlyPendingTimersAsync)
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('')
+
+    // The caret stays in the note, so the next character starts the note's text.
+    await user.keyboard('y')
+    await act(vi.runOnlyPendingTimersAsync)
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('y')
   })
 
   test('adds no undo step when the note blurs', async () => {

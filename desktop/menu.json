@@ -310,6 +310,11 @@
       "id": "exportContext",
       "label": "Export",
       "checkable": false
+    },
+    {
+      "id": "importFile",
+      "label": "Import",
+      "checkable": false
     }
   ],
   "Help": [
