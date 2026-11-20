@@ -49,7 +49,7 @@ describe('chained commands', () => {
 
 describe('excluded commands', () => {
   // https://github.com/cybersemics/em/issues/5874
-  it.skip('does not chain Sort, which sorts the same parent as Sort alone', () => {
+  it('does not chain Sort, which sorts the same parent as Sort alone', () => {
     store.dispatch([
       importText({
         text: `
