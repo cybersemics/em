@@ -115,7 +115,7 @@ it('applies letter case to the selected text only', async () => {
 
 it('the selected text remains selected when the thought has trailing whitespace', async () => {
   // Typed rather than pasted: Editable trims the value on its way into Redux while the live editable keeps the
-  // trailing space, so the text the editable re-renders to is not the text the DOM had before the edit.
+  // trailing space. Letter case is applied to the saved value and the space is kept around it (#6346).
   await newThought('hello beautiful world')
   await keyboard.type(' ')
 
@@ -125,9 +125,9 @@ it('the selected text remains selected when the thought has trailing whitespace'
 
   await clickToolbar('Letter Case', 'UpperCase')
 
-  // waitForEditable polls on an animation frame, and the re-selection runs in the mutation observer callback for the
-  // same re-render, so the selection is already restored by the time the new value is visible.
-  await waitForEditable('hello BEAUTIFUL world')
+  // The letter-cased value is written to the editable and the selection restored in the same task, so the selection
+  // is already restored by the time the new value is visible.
+  await waitForEditable('hello BEAUTIFUL world ')
 
   expect(await getSelection().toString()).toBe('BEAUTIFUL')
 })
