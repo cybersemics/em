@@ -85,6 +85,8 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
     behavior,
   }))
 
+  // Cursor navigation takes control from any elastic return before moving the viewport.
+  window.dispatchEvent(new Event('em-scroll'))
   window.scrollTo({
     top,
     behavior: navigator.webdriver ? 'instant' : behavior,
@@ -97,6 +99,7 @@ const scrollCursorIntoView = (y: number, height: number) => {
   // otherwise Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
   if (window.scrollY === 0 && isTouch && isSafari()) {
+    window.dispatchEvent(new Event('em-scroll'))
     window.scrollBy(0, 1)
   }
 

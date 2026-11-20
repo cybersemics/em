@@ -65,6 +65,8 @@ const NavBar = ({ position }: { position: string }) => {
     <div
       className={css({
         zIndex: 'navbar',
+        // Bounce with the footer at the bottom; retain the sticky position during top overscroll.
+        transform: 'translateY(min(0px, var(--layout-tree-elastic-offset, 0px)))',
         ...(!isTouch || !editing
           ? {
               position: 'sticky',
