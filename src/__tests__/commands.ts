@@ -190,7 +190,7 @@ describe('handleGestureEnd', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5874
-  it.skip('chain Swap Parent after Select All rather than New Thought (above), whose gesture collapses into the same swipes', () => {
+  it('chain Swap Parent after Select All rather than New Thought (above), whose gesture collapses into the same swipes', () => {
     store.dispatch([
       importText({
         text: `

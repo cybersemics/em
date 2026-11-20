@@ -870,9 +870,12 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     const chainedGesture1 = gestureString(chainableCommandInProgressExclusive)
     const chainedGestureCollapsed = sequence!.toString().slice(chainedGesture1.length - 1)
     const chainedGesture = sequence!.toString().slice(chainedGesture1.length)
-    const commandMatch = commandGestureIndex[chainedGestureCollapsed] ?? commandGestureIndex[chainedGesture]
-    // only chain a command that the first command allows to follow it, as the gesture menu does
-    if (commandMatch && chainableCommandInProgressExclusive.isChainable?.(commandMatch)) {
+    // Only chain a command that the first command allows to follow it, as the gesture menu does.
+    // Prefer the collapsed match, but fall back to the uncollapsed one when the collapsed match cannot be chained, e.g. Select All + Swap Parent (ldr + ul), whose collapsed swipes (rul) are New Thought (above).
+    const commandMatch = [commandGestureIndex[chainedGestureCollapsed], commandGestureIndex[chainedGesture]].find(
+      match => match && chainableCommandInProgressExclusive.isChainable?.(match),
+    )
+    if (commandMatch) {
       command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
     }
   }
