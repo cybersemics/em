@@ -45,6 +45,12 @@ const formattingNodeToHtml = (node: Element) => {
       : content
   }
 
+  // A link keeps its URL. A link without one, such as one whose unsafe URL was sanitized away, is reduced to its text.
+  if (newNode.tagName === 'a') {
+    const href = newNode.attributes.find(attr => attr.key === 'href')?.value
+    return href ? `<a href="${href}">${content}</a>` : content
+  }
+
   return `<${newNode.tagName}>${content}</${newNode.tagName}>`
 }
 

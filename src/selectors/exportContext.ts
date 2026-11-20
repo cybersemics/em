@@ -4,7 +4,7 @@ import MimeType from '../@types/MimeType'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { REGEX_TAGS } from '../constants'
+import { REGEX_LINK, REGEX_TAGS } from '../constants'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getChildrenRanked } from '../selectors/getChildren'
 import thoughtToContext from '../selectors/thoughtToContext'
@@ -21,8 +21,12 @@ const replaceTitle = (text: string, title: string, format: MimeType) => {
       : text
 }
 
-/** Convert formatting HTML tags to markdown asterisks. */
-const formattingTagsToMarkdown = (s: string) => s.replace(/(<\/?(b|strong)>)/gi, '**').replace(/(<\/?(i|em)>)/gi, '*')
+/** Convert formatting HTML tags to markdown: bold and italics to asterisks, and a link to [text](url), which pastes back in as the same link. */
+const formattingTagsToMarkdown = (s: string) =>
+  s
+    .replace(/(<\/?(b|strong)>)/gi, '**')
+    .replace(/(<\/?(i|em)>)/gi, '*')
+    .replace(REGEX_LINK, '[$2]($1)')
 
 /** Creates a filter predicate that filters thoughts by various export options. */
 export const exportFilter =

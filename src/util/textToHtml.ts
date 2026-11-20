@@ -19,6 +19,9 @@ const REGEX_MARKDOWN_BOLD = /\*\*([^<]+?)\*\*/g
 // Example: *markdown italics*
 const REGEX_MARKDOWN_ITALICS = /\*([^<]+?)\*/g
 
+/** Matches the opening and closing tags of a link, but not of another tag that starts with "a", such as <abbr>. */
+const REGEX_LINK_TAG = /<\/?a(?:\s[^>]*)?>/gi
+
 /** Detects an RTF document. */
 const REGEX_RTF = /^\s*\{\\rtf/i
 
@@ -275,19 +278,22 @@ const blocksToHtml = (parsedBlocks: Block[]): string =>
 const textToHtml = (input: string) => {
   // marked discards block-level HTML up to the next blank line, so only markdown without any is converted here.
   // Markdown wrapped in HTML is left for parse-then-route (#5175) to unwrap after sanitizing, and convert as pure markdown.
-  const normalizedInput = REGEX_RTF.test(input)
-    ? rtfToTaggedText(input)
-    : isMarkdown(input) && !marked.lexer(input.trim()).some(token => token.type === 'html')
-      ? markdownToText(input)
-      : input
+  const isRtf = REGEX_RTF.test(input)
+  const isMarkdownInput =
+    !isRtf && isMarkdown(input) && !marked.lexer(input.trim()).some(token => token.type === 'html')
+  const normalizedInput = isRtf ? rtfToTaggedText(input) : isMarkdownInput ? markdownToText(input) : input
 
   // if the input text starts with a closed html tag
   const isHtml =
     REGEX_NONFORMATTING_HTML.test(normalizedInput) || REGEX_STARTS_WITH_CLOSED_TAG.test(normalizedInput.trim())
 
+  // Only a markdown link becomes link formatting (#6325). The links in any other input, such as pasted HTML or a
+  // dropped HTML file, are reduced to their text. This is the only step that still knows whether the input was markdown.
+  const linkedInput = isMarkdownInput ? normalizedInput : normalizedInput.replace(REGEX_LINK_TAG, '')
+
   // if text is HTML page, return the innerHTML of the body tag
   // otherwise use text-block-parser to convert indented plaintext into nested HTML lists
-  const html = isHtml ? normalizedInput : blocksToHtml(parse(normalizedInput, Infinity))
+  const html = isHtml ? linkedInput : blocksToHtml(parse(linkedInput, Infinity))
 
   return (
     html
