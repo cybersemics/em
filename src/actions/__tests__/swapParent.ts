@@ -519,7 +519,7 @@ describe('reconcile', () => {
       updateThoughts({ thoughtIndexUpdates: stalePull, lexemeIndexUpdates: {}, local: false, remote: false }),
     ])(state1)
 
-    // If the stale BBB were applied, exportContext would recurse infinitely on the cycle.
+    // Without the last-write-wins guard, exportContext would recurse infinitely on the cycle.
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
   - AAA
@@ -533,8 +533,9 @@ describe('reconcile', () => {
   // lastUpdated millisecond, and each moveThought queues its own push batch, including the transient
   // intermediate state where the moved-in child (CCC) has been added under AAA but the moved-out child
   // (BBB) has not yet been removed from AAA's childrenMap. A forced pull that reads that intermediate
-  // snapshot re-delivers AAA with BBB still listed as a child, stamped with the swap's lastUpdated. Applying it
-  // would clobber the correct result, leaving BBB in two contexts (AAA and CCC) → parent-chain cycle → hang.
+  // snapshot re-delivers AAA with BBB still listed as a child, stamped with the swap's lastUpdated. If a
+  // strict `<` guard let it through it would clobber the correct result, leaving BBB in two contexts
+  // (AAA and CCC) → parent-chain cycle → hang.
   it('stale reconcile of the swap intermediate state (equal lastUpdated) must not create a cycle', () => {
     const text = `
     - AAA
@@ -555,18 +556,16 @@ describe('reconcile', () => {
       lastUpdated: aaa.lastUpdated,
     }
 
-    // Pulls never replace a loaded thought, so send it as materialization (repairCursor), which checks lastUpdated.
     const stateNew = reducerFlow([
       updateThoughts({
         thoughtIndexUpdates: { [idAAA]: staleIntermediateAAA },
         lexemeIndexUpdates: {},
         local: false,
         remote: false,
-        repairCursor: true,
       }),
     ])(stateSwapped)
 
-    // If the stale AAA were applied, BBB would be exported under both AAA and CCC.
+    // With a strict `<` guard the stale intermediate slips through and exportContext recurses infinitely.
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
   - AAA

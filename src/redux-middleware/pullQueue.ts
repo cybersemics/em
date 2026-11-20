@@ -225,7 +225,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       lastExpandedPullQueue = {}
     }
     // Update pullQueue and flush on authenticate to force a remote fetch.
-    // Otherwise, because thoughts are previously loaded from local storage which turns off pending on the root context, a normal pull will short circuit. Even a forced pull only adds missing thoughts and fills pending ones (see updateThoughts).
+    // Otherwise, because thoughts are previously loaded from local storage which turns off pending on the root context, a normal pull will short circuit. Even a forced pull only adds missing thoughts and fills pending ones (see pull).
     else if (isAuthenticateAction(action)) {
       pullQueue = { ...pullQueue, ...initialPullQueue() }
       // do not debounce, as forceRemote could be overwritten by other calls to the debounced function
