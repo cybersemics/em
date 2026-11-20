@@ -16,7 +16,7 @@ beforeEach(initStore)
 
 describe('canExecute', () => {
   // https://github.com/cybersemics/em/issues/5874
-  it.skip('cannot execute when every selected thought is at the root', () => {
+  it('cannot execute when every selected thought is at the root', () => {
     store.dispatch([
       importText({
         text: `

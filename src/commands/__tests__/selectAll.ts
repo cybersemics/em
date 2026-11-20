@@ -29,7 +29,7 @@ describe('chained commands', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5874
-  it.skip('disables New Subthought (next) on an only child, where it gives the same result as New Subthought (next) alone', () => {
+  it('disables New Subthought (next) on an only child, where it gives the same result as New Subthought (next) alone', () => {
     store.dispatch([
       importText({
         text: `
