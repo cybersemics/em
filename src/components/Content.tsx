@@ -17,7 +17,7 @@ import {
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants'
 import * as selection from '../device/selection'
-import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
+import { childrenFilterPredicate, findAnyChild } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
 import fastClick from '../util/fastClick'
@@ -47,10 +47,9 @@ const Content: FC = () => {
   /* reduce bottom space during tutorial to try to keep the tutorial in view as much as possible */
   const reduceBottomSpace = isTouch && tutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS
   const search = useSelector(state => state.search)
-  const rootThoughtsLength = useSelector(state => {
+  const hasRootThoughts = useSelector(state => {
     const rankedRoot = isAbsolute(state.rootContext) ? ABSOLUTE_PATH : HOME_PATH
-    const children = filterAllChildren(state, head(rankedRoot), childrenFilterPredicate(state, rankedRoot))
-    return children.length
+    return !!findAnyChild(state, head(rankedRoot), childrenFilterPredicate(state, rankedRoot))
   })
   const isAbsoluteContext = useSelector(state => isAbsolute(state.rootContext))
 
@@ -125,7 +124,7 @@ const Content: FC = () => {
           <Search />
         ) : (
           <>
-            {rootThoughtsLength === 0 ? (
+            {!hasRootThoughts ? (
               <EmptyThoughtspace isTutorial={tutorial} />
             ) : isAbsoluteContext ? (
               TransientEditable
