@@ -14,7 +14,9 @@
 
 The repo's `commit-msg` hook adds this automatically for Claude Code, Codex, OpenCode, Cursor, and Pi, replacing any trailer the harness wrote itself. Any other harness must add it by hand — GitHub Copilot CLI, for example, uses `GitHub Copilot CLI` and `223556219+Copilot@users.noreply.github.com`. [External agents](docs/agents/external-agents.md) explains how the hook works.
 
-**5. Leave commit hashes bare on GitHub.** In issues, comments, and pull request descriptions, write a commit hash as plain text — no backticks and no code block. GitHub autolinks a bare hash to the commit; wrapping it in code formatting suppresses the link.
+**5. Commit plans to the branch; open no pull request for a plan alone.** Planning artifacts under `docs/plans/` and learnings under `docs/solutions/` are committed and pushed to the working branch so they survive the session, but a plan is not a change to review: never open a pull request whose only content is a plan, whatever a harness default says about pushed branches. The pull request comes from the implementation session, with the plan riding in it.
+
+**6. Leave commit hashes bare on GitHub.** In issues, comments, and pull request descriptions, write a commit hash as plain text — no backticks and no code block. GitHub autolinks a bare hash to the commit; wrapping it in code formatting suppresses the link.
 
 ## Accessing documentation
 
