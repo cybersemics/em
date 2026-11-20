@@ -17,6 +17,7 @@ import longPressWord from '../helpers/longPressWord'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
+import scrollTo from '../helpers/scrollTo'
 import setSelection from '../helpers/setSelection'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForAlert from '../helpers/waitForAlert'
@@ -1063,5 +1064,41 @@ describe('scroll at edge', () => {
     await page.touchscreen.touchEnd()
 
     expect(dropHoverBottom).toBeLessThanOrEqual(alertTop)
+  })
+  // https://github.com/cybersemics/em/issues/6281
+  it.skip('stops edge scrolling when the dragged thought enters the quick-delete gutter', async () => {
+    await paste(Array.from({ length: 40 }, (_, i) => `- ${i + 1}`).join('\n'))
+    await waitForEditable('40')
+    await scrollTo(0)
+
+    const source = await waitForEditable('3')
+    const box = await source.asElement()?.boundingBox()
+    if (!box) throw new Error('Thought 3 has no bounding box.')
+    const y = box.y + box.height / 2
+    const { width, height } = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }))
+    const xGutter = width - 12
+    const edgeY = height - 64
+    const finger = await page.touchscreen.touchStart(box.x + 4, y)
+
+    try {
+      await waitForAlert(AlertText.DragAndDrop)
+      await finger.move(width / 2, height / 2)
+      const start = await page.evaluate(() => scrollY)
+      await finger.move(width / 2, edgeY)
+      await page.waitForFunction(start => scrollY >= start + 35, {}, start)
+
+      await finger.move(xGutter, edgeY)
+      await waitForAlert('Drop to delete 3')
+      await finger.move(xGutter, height / 2)
+
+      const scrolled = await page.evaluate(async () => {
+        const before = scrollY
+        for (let i = 0; i < 10; i++) await new Promise(requestAnimationFrame)
+        return scrollY - before
+      })
+      expect(scrolled).toBe(0)
+    } finally {
+      await finger.end()
+    }
   })
 })
