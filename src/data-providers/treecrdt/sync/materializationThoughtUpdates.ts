@@ -11,17 +11,21 @@ export default async function refreshThoughtsFromMaterializationChanges(
 ): Promise<Index<Thought | null>> {
   const deleted = new Set<ThoughtId>()
   const touched = new Set<ThoughtId>()
+  /** Thoughts inserted, moved or restored, so their siblings' positions may have shifted. */
+  const placed = new Set<ThoughtId>()
   const orderParents = new Set<ThoughtId>()
   for (const ch of changes) {
     switch (ch.kind) {
       case 'insert':
         deleted.delete(ch.node as ThoughtId)
         touched.add(ch.node as ThoughtId)
+        placed.add(ch.node as ThoughtId)
         touched.add(ch.parentAfter as ThoughtId)
         orderParents.add(ch.parentAfter as ThoughtId)
         break
       case 'move':
         touched.add(ch.node as ThoughtId)
+        placed.add(ch.node as ThoughtId)
         if (ch.parentBefore) {
           touched.add(ch.parentBefore as ThoughtId)
           orderParents.add(ch.parentBefore as ThoughtId)
@@ -39,6 +43,7 @@ export default async function refreshThoughtsFromMaterializationChanges(
       case 'restore':
         deleted.delete(ch.node as ThoughtId)
         touched.add(ch.node as ThoughtId)
+        placed.add(ch.node as ThoughtId)
         if (ch.parentAfter) {
           touched.add(ch.parentAfter as ThoughtId)
           orderParents.add(ch.parentAfter as ThoughtId)
@@ -54,13 +59,14 @@ export default async function refreshThoughtsFromMaterializationChanges(
     touched.delete(id)
   }
 
-  // Read the touched thoughts, then their parents, then the parents' children, each batch as soon as the one before it
-  // names its thoughts. That is at most three reads.
+  // Read the touched thoughts and the parents whose order changed, then those parents' children. A placed thought whose
+  // change named no parent, or another one, adds its current parent, which takes one more read.
   const thoughts: Index<Thought | undefined> = {}
   for (;;) {
     for (const id of touched) {
       const thought = thoughts[id]
-      if (thought) orderParents.add(thought.parentId)
+      // A rename moves no sibling, and a parent keeps its place when its children change.
+      if (thought && placed.has(id)) orderParents.add(thought.parentId)
     }
     const childIds = [...orderParents].flatMap(id => Object.values(thoughts[id]?.childrenMap ?? {}))
     const ids = [...new Set([...touched, ...orderParents, ...childIds])].filter(id => !(id in thoughts))
