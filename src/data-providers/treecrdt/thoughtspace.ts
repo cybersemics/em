@@ -1,6 +1,7 @@
 import type { Operation } from '@treecrdt/interface'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Index from '../../@types/IndexType'
+import type Lexeme from '../../@types/Lexeme'
 import type Thought from '../../@types/Thought'
 import type ThoughtId from '../../@types/ThoughtId'
 import type Timestamp from '../../@types/Timestamp'
@@ -85,6 +86,9 @@ const getThoughtByIdFromClient = async (client: TreecrdtClient, id: ThoughtId): 
   const payload = decodeThoughtPayload(payloadBytes)
 
   const parent = await node.parent()
+  // Only the root has no parent. Any other node without a visible parent is not in the tree, such as one whose payload
+  // arrived from a peer before its insert.
+  if (!parent && id !== GLOBAL_ROOT_TOKEN) return undefined
   const parentId: ThoughtId = parent ? (parent.id as ThoughtId) : (ROOT_PARENT_ID as ThoughtId)
   const siblingIds = parent ? (await parent.children()).map(sibling => sibling.id) : []
   const rank = Math.max(0, siblingIds.indexOf(id))
@@ -164,15 +168,6 @@ const updateThoughtsForClient = async (
   { thoughtIndexUpdates, lexemeIndexUpdates, movePlacements }: Parameters<DataProvider['updateThoughts']>[0],
 ): Promise<readonly Operation[]> => {
   const ops: Operation[] = []
-
-  for (const [id, lexeme] of Object.entries(lexemeIndexUpdates)) {
-    if (lexeme === null) {
-      await deleteLexemeRow(client, id)
-    } else {
-      await upsertLexeme(client, id, lexeme)
-    }
-  }
-
   const updates: Index<Thought> = {}
   const deletes: ThoughtId[] = []
 
@@ -233,6 +228,15 @@ const updateThoughtsForClient = async (
       if (payloadChanged) {
         ops.push(await client.local.payload(replicaId, thoughtId, payloadBytes, createTreecrdtLocalWriteOptions()))
       }
+    }
+  }
+
+  // Lexeme reads leave out the contexts TreeCRDT doesn't show, so a Lexeme is written after the thoughts it lists.
+  for (const [id, lexeme] of Object.entries(lexemeIndexUpdates)) {
+    if (lexeme === null) {
+      await deleteLexemeRow(client, id)
+    } else {
+      await upsertLexeme(client, id, lexeme)
     }
   }
 
@@ -321,10 +325,23 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
   }
 }
 
+/**
+ * Leaves out the contexts that TreeCRDT doesn't show. Deleting a thought hides its subtree, but the Lexemes of the
+ * descendants that weren't loaded still list them, and undoing the delete shows them again.
+ */
+const withVisibleContexts = async (client: TreecrdtClient, lexeme: Lexeme | undefined): Promise<Lexeme | undefined> => {
+  if (!lexeme) return undefined
+  const visible = await Promise.all(lexeme.contexts.map(async id => (await client.tree.get(id)) !== undefined))
+  if (visible.every(Boolean)) return lexeme
+  const contexts = lexeme.contexts.filter((_, i) => visible[i])
+  return contexts.length > 0 ? { ...lexeme, contexts } : undefined
+}
+
 /** Creates a data provider whose operations are permanently bound to one TreeCRDT client. */
 const createClientDataProvider = ({ client, replicaId }: TreecrdtClientIdentity): TreecrdtClientDataProvider => ({
-  getLexemeById: key => getLexemeByIdSql(client, key),
-  getLexemesByIds: keys => getLexemesByIdsSql(client, keys),
+  getLexemeById: async key => withVisibleContexts(client, await getLexemeByIdSql(client, key)),
+  getLexemesByIds: async keys =>
+    Promise.all((await getLexemesByIdsSql(client, keys)).map(lexeme => withVisibleContexts(client, lexeme))),
   getThoughtById: id => getThoughtByIdFromClient(client, id),
   getThoughtsByIds: async ids => {
     await waitForTestReplicationDelay()
