@@ -17,8 +17,8 @@ usePersistentTreecrdtStorage()
 /** Waits a single animation frame, long enough for the cursor navigation throttle to reset after the move that just landed. The cursorUp and cursorDown commands are throttled to one execution per animation frame by throttleByAnimationFrame, and the cursor moves during the keydown that dispatched the move, so a key pressed as soon as waitForCursor resolves can still be dropped. */
 const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
-/** Returns the persistent tree node that contains the editable with the given value. */
-const getTreeNode = async (value: string) => {
+/** Captures the outer tree node before autofocus replaces its editable with a height shim. */
+const captureTreeNode = async (value: string) => {
   const editable = (await waitForEditable(value)).asElement()
   if (!editable) throw new Error(`Editable "${value}" not found.`)
 
@@ -104,7 +104,7 @@ it('set the cursor on the cursor grandparent', async () => {
   expect(thoughtValue).toBe('a')
 })
 
-it('do nothing when clicking on a hidden ancestor', async () => {
+it('do nothing when clicking on a hidden ancestor shim', async () => {
   const importText = `
   - a
     - b
@@ -112,7 +112,7 @@ it('do nothing when clicking on a hidden ancestor', async () => {
         - d`
   await paste(importText)
   await waitForEditable('d')
-  const ancestorTreeNode = await getTreeNode('a')
+  const ancestorTreeNode = await captureTreeNode('a')
   await clickThought('d')
   await ancestorTreeNode.waitForSelector('[data-editable]', { hidden: true })
   await click(ancestorTreeNode)
@@ -121,7 +121,7 @@ it('do nothing when clicking on a hidden ancestor', async () => {
   expect(thoughtValue).toBe('d')
 })
 
-it('do nothing when clicking on a hidden great uncle', async () => {
+it('do nothing when clicking on a hidden great uncle shim', async () => {
   const importText = `
   - a
     - b
@@ -129,7 +129,7 @@ it('do nothing when clicking on a hidden great uncle', async () => {
   - d`
   await paste(importText)
 
-  const greatUncleTreeNode = await getTreeNode('d')
+  const greatUncleTreeNode = await captureTreeNode('d')
 
   // click a to expand b and c
   await waitForEditable('a')
