@@ -7,6 +7,7 @@ import gesture from '../helpers/gesture'
 import getClearedPlaceholderStyle from '../helpers/getClearedPlaceholderStyle'
 import getEditingText from '../helpers/getEditingText'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
+import nativeUndo from '../helpers/nativeUndo'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import tapToolbar from '../helpers/tapToolbar.js'
@@ -51,10 +52,9 @@ describe('Format', () => {
      * Reads the innerHTML of the (single) thought, independent of edit/keyboard state. */
     const thoughtHtml = () => browser.execute(() => document.querySelector('[data-editable]')?.innerHTML)
 
-    // Trigger native undo the way iOS shake-to-undo / three-finger swipe does. In real WebKit, document.execCommand('undo')
-    // fires the same cancelable historyUndo beforeinput event as the native gesture. em's beforeinput handler blocks the
-    // native DOM undo (preventDefault) and routes it through em's single-step undo, which re-renders the editable (#3954).
-    await browser.execute(() => document.execCommand('undo'))
+    // em's beforeinput handler blocks the native DOM undo (preventDefault) and routes it through em's single-step undo,
+    // which re-renders the editable (#3954).
+    await nativeUndo()
 
     expect(await thoughtHtml()).toBe('One')
   })
