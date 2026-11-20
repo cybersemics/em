@@ -65,7 +65,7 @@ export default async function refreshThoughtsFromMaterializationChanges(
   while (true) {
     for (const id of touched) {
       const thought = thoughts[id]
-      // A rename moves no sibling, and a parent keeps its place when its children change.
+      // A payload change moves no sibling, and a parent keeps its place when its children change.
       if (thought && placed.has(id)) orderParents.add(thought.parentId)
     }
     const childIds = [...orderParents].flatMap(id => Object.values(thoughts[id]?.childrenMap ?? {}))
