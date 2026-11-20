@@ -2,6 +2,7 @@ import React from 'react'
 import { SwitchTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
 import useCommandList from '../../hooks/useCommandList'
+import commandUniverseSearchSortStore from '../../stores/commandUniverseSearchSortStore'
 import CommandUniverseGrid from '../CommandUniverseGrid'
 import CommandUniverseSearch from '../CommandUniverseSearch'
 import CommandUniverseSortButton from '../CommandUniverseSortButton'
@@ -15,7 +16,8 @@ import DialogContent from '../dialog/DialogContent'
  * gestures are inputted.
  */
 const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
-  const { search, setSearch, sortOrder, setSortOrder, sections } = useCommandList()
+  const { search, sortOrder } = commandUniverseSearchSortStore.useState()
+  const { sections } = useCommandList({ search, sortOrder })
 
   // Pass this ref to `DialogContent`, which owns the scrollable element, so that we can reset
   // the scroll position to the top as results crossfade.
@@ -44,8 +46,11 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
           paddingBlock: '0.5rem',
         })}
       >
-        <CommandUniverseSearch onInput={setSearch} />
-        <CommandUniverseSortButton onSortChange={setSortOrder} />
+        <CommandUniverseSearch value={search} onInput={search => commandUniverseSearchSortStore.update({ search })} />
+        <CommandUniverseSortButton
+          sortOrder={sortOrder}
+          onSortChange={sortOrder => commandUniverseSearchSortStore.update({ sortOrder })}
+        />
       </div>
 
       <DialogContent scrollRef={scrollRef}>
