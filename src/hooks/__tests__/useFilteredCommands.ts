@@ -324,9 +324,7 @@ describe('useFilteredCommands', () => {
         expect(commandIds).not.toContain('contextView')
       })
 
-      // Searching with `thOUGHT` should return `New Thought` and `New Subthought`, but it returns empty now.
-      // TODO: remove `.skip` after `useFilteredCommands` hook is updated
-      it.skip('should support case insensitive search', () => {
+      it('should support case insensitive search', () => {
         const { result } = renderHook(() => useFilteredCommands('thOUGHT', {}), { wrapper })
 
         const commandIds = result.current.map(cmd => cmd.id)
@@ -334,12 +332,32 @@ describe('useFilteredCommands', () => {
         expect(commandIds).toContain('newSubthought')
       })
 
-      it('should support fuzzy search', () => {
-        const { result } = renderHook(() => useFilteredCommands('nw tht', {}), { wrapper })
+      it('should match a query whose characters jump to the starts of words', () => {
+        const { result } = renderHook(() => useFilteredCommands('net', {}), { wrapper })
 
-        // Should find "New Thought" with fuzzy matching
-        const commandIds = result.current.map(cmd => cmd.id)
-        expect(commandIds).toContain('newThought')
+        const labels = result.current.map(cmd => cmd.label)
+        expect(labels).toContain('New Thought')
+        // n, e, and t all appear in these labels, but scattered within words rather than at their starts
+        expect(labels).not.toContain('Close Command Center')
+        expect(labels).not.toContain('Bind Context')
+      })
+
+      it('should only narrow the results as the query grows', () => {
+        const { result, rerender } = renderHook(({ search }) => useFilteredCommands(search, {}), {
+          wrapper,
+          initialProps: { search: 'n' },
+        })
+
+        const queries = ['ne', 'new', 'new ', 'new t', 'new th']
+        queries.reduce(
+          (previousIds, search) => {
+            rerender({ search })
+            const ids = result.current.map(cmd => cmd.id)
+            expect(ids.every(id => previousIds.includes(id))).toBe(true)
+            return ids
+          },
+          result.current.map(cmd => cmd.id),
+        )
       })
 
       it('should sort exact match to top', () => {
