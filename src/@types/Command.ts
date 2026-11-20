@@ -154,6 +154,9 @@ interface Command {
 
   /** Return true if the given command's gesture can be chained after the current command's gesture without lifting the finger to execute one after another. For example, after entering the gesture for Select All, all of the multicursor commands can be executed by continuing with their gesture. */
   isChainable?: (command: Command) => boolean
+
+  /** Return false to disable a chain into a command that isChainable allows, in the given state. It is checked against the state before the current command runs, in addition to the chained command's own canExecute, and covers a chain that does run but gives the same result as the chained command alone in that state. For example, Select All + New Subthought (next) on an only child. */
+  canExecuteChain?: (state: State, command: Command) => boolean
 }
 
 export default Command
