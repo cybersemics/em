@@ -65,7 +65,7 @@ export default async function refreshThoughtsFromMaterializationChanges(
     const thought = await db.getThoughtById(id)
     if (!thought) continue
     thoughtIndexUpdates[thought.id] = thought
-    // A rename moves no sibling, and a parent keeps its place when its children change.
+    // A payload change moves no sibling, and a parent keeps its place when its children change.
     if (placed.has(id)) orderParents.add(thought.parentId)
   }
 

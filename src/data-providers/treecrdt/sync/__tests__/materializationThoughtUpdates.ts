@@ -75,7 +75,7 @@ it('projects TreeCRDT sibling order for both parents after a cross-parent move',
   })
 })
 
-it('reads only a renamed thought, since a rename moves no sibling', async () => {
+it('reads only a thought whose payload changed, since that moves no sibling', async () => {
   const thoughts = {
     [HOME_TOKEN]: thought(HOME_TOKEN, HOME_TOKEN, 0, ROOT_PARENT_ID, [A_ID, B_ID]),
     [A_ID]: thought(A_ID, 'a', 0, HOME_TOKEN),
