@@ -146,6 +146,24 @@ describe('cursorUp Shift+Up multiselect in table view second column', () => {
   })
 })
 
+// https://github.com/cybersemics/em/issues/3561
+it.skip('selects only the parent when Shift+Up moves above the first child', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+          - c
+      `,
+    }),
+    setCursor(['a', 'b']),
+  ])
+
+  executeCommand(cursorUpCommand, { store, event: shiftUpEvent })
+
+  expect(multicursorValues()).toEqual(['a'])
+})
+
 describe('cursorUp Up (no shift) with an active multiselect', () => {
   // https://github.com/cybersemics/em/issues/4741
   it('collapses the multiselect and moves the cursor to the first selected thought in document order', () => {
