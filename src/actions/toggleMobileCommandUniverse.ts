@@ -7,7 +7,7 @@ import commandUniverseSearchSortStore from '../stores/commandUniverseSearchSortS
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import { saveSelectionOffsetsActionCreator as saveSelectionOffsets } from './saveSelectionOffsets'
 
-/** Toggles (hide/show) the mobile command universe. Opening it starts a fresh navigation session at the grid root. */
+/** Toggles (hide/show) the mobile command universe. Opening it starts a fresh navigation session at the commands root. */
 const toggleMobileCommandUniverse = (
   state: State,
   { value, entryId = 'root' }: { value?: boolean; entryId?: string },
@@ -20,7 +20,7 @@ const toggleMobileCommandUniverse = (
     ...(isOpening
       ? {
           commandUniverseNavigation: {
-            entries: [{ entryId, page: { pageId: 'grid', props: {} }, arrival: null }],
+            entries: [{ entryId, page: { pageId: 'commands', props: {} }, arrival: null }],
             index: 0,
           },
         }

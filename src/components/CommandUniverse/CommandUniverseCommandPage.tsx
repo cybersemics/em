@@ -15,7 +15,7 @@ import DialogContent from '../dialog/DialogContent'
  * remain subscribed to gestureStore, and this would trigger unnecessary re-renders when
  * gestures are inputted.
  */
-const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
+const CommandUniverseCommandPage: React.FC<Record<string, never>> = () => {
   const { search, sortOrder } = commandUniverseSearchSortStore.useState()
   const { sections } = useCommandList({ search, sortOrder })
 
@@ -134,7 +134,7 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
   )
 }
 
-const CommandUniverseGridPageMemo = React.memo(CommandUniverseGridPage)
-CommandUniverseGridPageMemo.displayName = 'CommandUniverseGridPage'
+const CommandUniverseCommandPageMemo = React.memo(CommandUniverseCommandPage)
+CommandUniverseCommandPageMemo.displayName = 'CommandUniverseCommandPage'
 
-export default CommandUniverseGridPageMemo
+export default CommandUniverseCommandPageMemo
