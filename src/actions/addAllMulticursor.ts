@@ -8,7 +8,10 @@ import addMulticursor from './addMulticursor'
 
 /** Adds all siblings of the current cursor (or all root thoughts) to the multicursor set. */
 const addAllMulticursor = (state: State): State => {
-  const addMulticursorSteps = getSiblingPaths(state).map(path => addMulticursor({ path }))
+  // All siblings share a depth, so clear other depths once for the entire selection.
+  const addMulticursorSteps = getSiblingPaths(state).map((path, index) =>
+    addMulticursor({ path, clearOtherDepths: index === 0 }),
+  )
 
   return reducerFlow(addMulticursorSteps)(state)
 }

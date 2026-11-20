@@ -99,36 +99,35 @@ const canDrag = (props: ThoughtContainerProps) => {
 }
 
 /** Handles drag start. */
-const beginDrag = ({ path }: ThoughtContainerProps): DragThoughtItem[] => {
-  const state = store.getState()
-  const offset = selection.offset()
-  const isMulticursorActive = hasMulticursor(state)
-  const isCurrentThoughtSelected = isMulticursorPath(state, path)
+const beginDrag = ({ path }: ThoughtContainerProps): DragThoughtItem[] =>
+  store.dispatch((dispatch, getState) => {
+    const state = getState()
+    const offset = selection.offset()
+    const isMulticursorActive = hasMulticursor(state)
 
-  // Add the current thought to the multicursor if it is not already selected
-  if (isMulticursorActive && !isCurrentThoughtSelected) {
-    store.dispatch(addMulticursor({ path }))
-  }
+    if (isMulticursorActive && !isMulticursorPath(state, path)) {
+      dispatch(addMulticursor({ path, clearOtherDepths: true }))
+    }
 
-  const multicursorPaths = [...Object.values(state.multicursors), ...(!isCurrentThoughtSelected ? [path] : [])]
+    const multicursorPaths = isMulticursorActive ? Object.values(getState().multicursors) : [path]
 
-  const draggingThoughts = documentSort(state, multicursorPaths).map(path => ({
-    path,
-    simplePath: simplifyPath(state, path),
-    zone: DragThoughtZone.Thoughts,
-  }))
+    const draggingThoughts = documentSort(state, multicursorPaths).map(path => ({
+      path,
+      simplePath: simplifyPath(state, path),
+      zone: DragThoughtZone.Thoughts,
+    }))
 
-  store.dispatch([
-    longPress({
-      value: LongPressState.DragInProgress,
-      draggingThoughts: draggingThoughts.map(item => item.simplePath),
-      sourceZone: DragThoughtZone.Thoughts,
-      ...(offset != null ? { offset } : null),
-    }),
-  ])
+    dispatch([
+      longPress({
+        value: LongPressState.DragInProgress,
+        draggingThoughts: draggingThoughts.map(item => item.simplePath),
+        sourceZone: DragThoughtZone.Thoughts,
+        ...(offset != null ? { offset } : null),
+      }),
+    ])
 
-  return draggingThoughts
-}
+    return draggingThoughts
+  })
 
 /** Memoized function that returns true if the thought can be dropped at the destination path. This does not need to account for hidden thoughts since they have pointer-events:none. This function will be called in a continuous loop by react-dnd so it needs to be fast. */
 const canDropPath = moize((from: Path, to: Path) => !isDescendantPath(to, from, { exclusive: true }), {
