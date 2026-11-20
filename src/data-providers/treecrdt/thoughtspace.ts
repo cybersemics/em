@@ -1,5 +1,5 @@
 import type { Operation } from '@treecrdt/interface'
-import type { MaterializationEvent } from '@treecrdt/interface/engine'
+import type { MaterializationEvent, TreecrdtReadNode, TreecrdtReadResult } from '@treecrdt/interface/engine'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Index from '../../@types/IndexType'
 import type Thought from '../../@types/Thought'
@@ -11,11 +11,6 @@ import { childrenMapKey } from '../../util/createChildrenMap'
 import sleep from '../../util/sleep'
 import type { DataProvider } from '../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../thoughtspace'
-import {
-  clearAttributeChildren,
-  getAttributeChildrenByParent,
-  refreshAttributeChildrenFromChanges,
-} from './attributeChildren'
 import createLexemeIndex from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
 import { type MaterializationContext, applyMaterializedThoughtsToStore } from './sync/applyMaterializedThoughtsToStore'
@@ -45,19 +40,6 @@ const createProviderReadiness = () => {
   return { promise, reject, resolve }
 }
 
-/** Creates em's childrenMap read-model index while preserving TreeCRDT's strict child ids as values. */
-export const createIndexedChildrenMap = (
-  childIds: ThoughtId[],
-  attributeValueByChildId: Index<string>,
-): Index<ThoughtId> => {
-  const childrenMap: Index<ThoughtId> = {}
-  for (const childId of childIds) {
-    const value = attributeValueByChildId[childId]
-    childrenMap[value ? childrenMapKey(childrenMap, { id: childId, value }) : childId] = childId
-  }
-  return childrenMap
-}
-
 /** Injects delayed TreeCRDT reads for e2e tests that exercise slow local materialization after refresh. */
 const waitForTestReplicationDelay = async (): Promise<void> => {
   if (testFlags.replicationDelay > 0) {
@@ -65,35 +47,39 @@ const waitForTestReplicationDelay = async (): Promise<void> => {
   }
 }
 
-/** Fetches a thought by ID from the given TreeCRDT client. */
-const getThoughtByIdFromClient = async (client: TreecrdtClient, id: ThoughtId): Promise<Thought | undefined> => {
-  const node = client.tree.node(id)
-  const payloadBytes = await node.payload()
-  if (payloadBytes === null) return undefined
+/** Maps a TreeCRDT node read to a thought. Keying attribute children by value needs the child payloads. */
+const nodeToThought = (id: ThoughtId, node: TreecrdtReadNode | null): Thought | undefined => {
+  if (!node?.payload) return undefined
 
-  const payload = decodeThoughtPayload(payloadBytes)
+  const payload = decodeThoughtPayload(node.payload)
 
-  const parent = await node.parent()
-  const parentId: ThoughtId = parent ? (parent.id as ThoughtId) : (ROOT_PARENT_ID as ThoughtId)
-  const siblingIds = parent ? (await parent.children()).map(sibling => sibling.id) : []
-  const rank = Math.max(0, siblingIds.indexOf(id))
-
-  const childIds = (await node.children()).map(child => child.id as ThoughtId)
-  const childrenMap = createIndexedChildrenMap(childIds, await getAttributeChildrenByParent(client, id))
+  const childrenMap: Index<ThoughtId> = {}
+  for (const child of node.children) {
+    const childId = child.id as ThoughtId
+    const value = child.payload && decodeThoughtPayload(child.payload).value
+    childrenMap[value ? childrenMapKey(childrenMap, { id: childId, value }) : childId] = childId
+  }
 
   const thought: Thought = {
     id,
     value: payload.value,
-    rank,
+    rank: node.index,
     created: payload.created as Timestamp,
     lastUpdated: payload.lastUpdated as Timestamp,
     updatedBy: payload.updatedBy,
-    parentId,
+    parentId: (node.parent ?? ROOT_PARENT_ID) as ThoughtId,
     childrenMap,
     ...(payload.archived !== undefined && { archived: payload.archived as Timestamp }),
   }
 
   return thought
+}
+
+/** Reads thoughts in the order of `ids` with one TreeCRDT read. */
+const readThoughts = async (client: TreecrdtClient, ids: ThoughtId[]): Promise<(Thought | undefined)[]> => {
+  if (ids.length === 0) return []
+  const { nodes } = await client.tree.read(ids, { children: { payloads: true } })
+  return ids.map(id => nodeToThought(id, nodes[id]))
 }
 
 /** Converts em's root parent id to TreeCRDT's global root id. */
@@ -104,15 +90,9 @@ const treeParentId = (id: ThoughtId): ThoughtId => (id === ROOT_PARENT_ID ? GLOB
  * This is the compatibility bridge while the app still treats rank as canonical display order.
  * TODO: Remove when create/import/newThought paths pass explicit placement and selectors read provider-backed order.
  */
-const getRankPlacement = async (
-  client: TreecrdtClient,
-  parentId: ThoughtId,
-  thoughtId: ThoughtId,
-  rank: number,
-): Promise<TreecrdtPlacement> => {
-  const childIds = (await client.tree.node(parentId).children()).map(child => child.id)
-  const afterId = childIds.reduce<ThoughtId | undefined>(
-    (previousId, childId, index) => (childId !== thoughtId && index < rank ? (childId as ThoughtId) : previousId),
+const getRankPlacement = (parent: TreecrdtReadNode | null, thoughtId: ThoughtId, rank: number): TreecrdtPlacement => {
+  const afterId = (parent?.children ?? []).reduce<ThoughtId | undefined>(
+    (previousId, child, index) => (child.id !== thoughtId && index < rank ? (child.id as ThoughtId) : previousId),
     undefined,
   )
 
@@ -120,28 +100,28 @@ const getRankPlacement = async (
 }
 
 /** Resolves caller-provided TreeCRDT placement, falling back to rank when old callers or stale siblings omit it. */
-const getTreecrdtPlacement = async (
-  client: TreecrdtClient,
+const getTreecrdtPlacement = (
+  nodes: TreecrdtReadResult['nodes'],
   thoughtId: ThoughtId,
   thought: Thought,
   movePlacements?: Index<ThoughtId | null>,
   options?: { requireExplicit?: boolean },
-): Promise<TreecrdtPlacement> => {
+): TreecrdtPlacement => {
   const parentId = treeParentId(thought.parentId)
 
   if (!movePlacements || !Object.prototype.hasOwnProperty.call(movePlacements, thoughtId)) {
     if (options?.requireExplicit) {
       throw new Error(`TreeCRDT move for ${thoughtId} requires explicit placement.`)
     }
-    return getRankPlacement(client, parentId, thoughtId, thought.rank)
+    return getRankPlacement(nodes[parentId], thoughtId, thought.rank)
   }
 
   const afterId = movePlacements[thoughtId]
   if (afterId == null) return { type: 'first' }
   if (afterId === thoughtId) throw new Error(`TreeCRDT move for ${thoughtId} cannot be placed after itself.`)
 
-  if ((await client.tree.node(afterId).parent())?.id !== parentId) {
-    return getRankPlacement(client, parentId, thoughtId, thought.rank)
+  if (nodes[afterId]?.parent !== parentId) {
+    return getRankPlacement(nodes[parentId], thoughtId, thought.rank)
   }
 
   return { type: 'after', after: afterId }
@@ -177,11 +157,14 @@ const updateThoughtsForClient = async (
       ...(thought.archived !== undefined && { archived: thought.archived }),
     })
 
-    const exists = (await client.tree.get(thoughtId)) !== undefined
     const parentId = treeParentId(thought.parentId)
+    const afterId = movePlacements?.[thoughtId]
+    // One read before each write, so a thought placed by rank sees the siblings written before it. The comparison
+    // below reads only the thought's own fields, so it needs no child payloads.
+    const { nodes } = await client.tree.read([thoughtId, parentId, ...(afterId ? [afterId] : [])])
 
-    if (!exists) {
-      const placement = await getTreecrdtPlacement(client, thoughtId, thought, movePlacements)
+    if (!nodes[thoughtId]) {
+      const placement = getTreecrdtPlacement(nodes, thoughtId, thought, movePlacements)
       ops.push(
         await client.local.insert(
           replicaId,
@@ -193,13 +176,13 @@ const updateThoughtsForClient = async (
         ),
       )
     } else {
-      const existing = await getThoughtByIdFromClient(client, thoughtId)
+      const existing = nodeToThought(thoughtId, nodes[thoughtId])
       if (!existing) continue
 
       const parentChanged = existing.parentId !== thought.parentId
       const orderChanged = thoughtId in (movePlacements || {})
       if (parentChanged || orderChanged) {
-        const placement = await getTreecrdtPlacement(client, thoughtId, thought, movePlacements, {
+        const placement = getTreecrdtPlacement(nodes, thoughtId, thought, movePlacements, {
           requireExplicit: true,
         })
         ops.push(await client.local.move(replicaId, thoughtId, parentId, placement, createTreecrdtLocalWriteOptions()))
@@ -339,16 +322,12 @@ const createTreecrdtDataProvider = () => {
     const indexes = await client.onMaterializedDurable(
       'em-derived-indexes',
       async event => {
-        await refreshAttributeChildrenFromChanges(client, event.changes)
         const keys = await lexemes.applyChanges(event.changes)
         publish?.(event, keys)
       },
       {
         version: INDEX_VERSION,
-        reset: async () => {
-          await lexemes.clear()
-          await clearAttributeChildren(client)
-        },
+        reset: () => lexemes.clear(),
         onError: err => console.error('TreeCRDT derived indexing failed', err),
       },
     )
@@ -359,14 +338,10 @@ const createTreecrdtDataProvider = () => {
         await indexes.idle()
         return lexemes.getLexemesByIds(keys)
       },
-      getThoughtById: id => getThoughtByIdFromClient(client, id),
+      getThoughtById: async id => (await readThoughts(client, [id]))[0],
       getThoughtsByIds: async ids => {
         await waitForTestReplicationDelay()
-        // Pulls read thoughts here. Their attribute keys come from an index that catches up after each write, so wait
-        // for the updates already queued, as getLexemesByIds does. The readback reads through getThoughtById and starts
-        // over when an event is indexed while it reads.
-        await indexes.idle()
-        return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
+        return readThoughts(client, ids)
       },
       updateThoughts: async updates => {
         if (updates.favoriteOrder) await lexemes.setFavoriteOrder(updates.favoriteOrder)

@@ -34,7 +34,9 @@ const thought = (
 })
 
 /** Creates the minimal thoughtspace provider surface needed by refreshThoughtsFromMaterializationChanges. */
-const fakeProvider = (thoughts: Index<Thought>) => ({ getThoughtById: async (id: ThoughtId) => thoughts[id] })
+const fakeProvider = (thoughts: Index<Thought>) => ({
+  getThoughtsByIds: vi.fn(async (ids: ThoughtId[]) => ids.map(id => thoughts[id])),
+})
 
 it('projects TreeCRDT sibling order into compatibility ranks', async () => {
   const updates = await refreshThoughtsFromMaterializationChanges(
@@ -54,17 +56,20 @@ it('projects TreeCRDT sibling order into compatibility ranks', async () => {
 })
 
 it('projects TreeCRDT sibling order for both parents after a cross-parent move', async () => {
+  const db = fakeProvider({
+    [LEFT_ID]: thought(LEFT_ID, 'left', 0, HOME_TOKEN, [B_ID]),
+    [RIGHT_ID]: thought(RIGHT_ID, 'right', 1, HOME_TOKEN, [C_ID, A_ID]),
+    [A_ID]: thought(A_ID, 'a', 1, RIGHT_ID),
+    [B_ID]: thought(B_ID, 'b', 1, LEFT_ID),
+    [C_ID]: thought(C_ID, 'c', 0, RIGHT_ID),
+  })
   const updates = await refreshThoughtsFromMaterializationChanges(
     [{ kind: 'move', node: A_ID, parentBefore: LEFT_ID, parentAfter: RIGHT_ID }],
-    fakeProvider({
-      [LEFT_ID]: thought(LEFT_ID, 'left', 0, HOME_TOKEN, [B_ID]),
-      [RIGHT_ID]: thought(RIGHT_ID, 'right', 1, HOME_TOKEN, [C_ID, A_ID]),
-      [A_ID]: thought(A_ID, 'a', 1, RIGHT_ID),
-      [B_ID]: thought(B_ID, 'b', 1, LEFT_ID),
-      [C_ID]: thought(C_ID, 'c', 0, RIGHT_ID),
-    }),
+    db,
   )
 
+  // The moved thought and both parents, then the parents' parent and children. The fake has no Home to read further.
+  expect(db.getThoughtsByIds.mock.calls).toEqual([[[A_ID, LEFT_ID, RIGHT_ID]], [[HOME_TOKEN, B_ID, C_ID]]])
   expect(Object.values(updates[LEFT_ID]!.childrenMap)).toEqual([B_ID])
   expect(Object.values(updates[RIGHT_ID]!.childrenMap)).toEqual([C_ID, A_ID])
   expect(updates[B_ID]?.rank).toBe(0)

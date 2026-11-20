@@ -8,7 +8,7 @@ import refreshThoughtsFromMaterializationChanges from './materializationThoughtU
 
 export type MaterializationContext = {
   bridge: ThoughtspaceMaterializationBridge
-  db: Pick<DataProvider, 'getThoughtById' | 'getLexemesByIds'>
+  db: Pick<DataProvider, 'getThoughtsByIds' | 'getLexemesByIds'>
   pending: { event: MaterializationEvent; keys: string[] }[]
   isActive: () => boolean
 }
@@ -39,9 +39,9 @@ export const applyMaterializedThoughtsToStore = async ({ bridge, db, pending, is
           return thought !== snapshot.thoughtIndex[id] && (!thought || hashThought(thought.value) !== keys[i])
         }),
       ) ||
-      // An event indexed during the reads can split the thought reads, which also use the attribute index, or make a
-      // Lexeme list a remote change Redux does not have yet. A local event can wait for the next round when this one
-      // reads no thoughts, since the checks above cover its edit.
+      // An event indexed during the reads can split the thought reads or make a Lexeme list a remote change Redux does
+      // not have yet. A local event can wait for the next round when this one reads no thoughts, since the checks above
+      // cover its edit.
       pending
         .slice(entries.length)
         .some(({ event }) => remoteChanges.length > 0 || !isTreecrdtLocalMaterialization(event))
