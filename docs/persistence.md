@@ -183,7 +183,7 @@ When the cursor moves, the previous pull's `cancelRef.canceled` is set to `true`
 
 ### `fetchDescendants` (the actual pull engine)
 
-[`data-providers/data-helpers/fetchDescendants.ts`](../src/data-providers/data-helpers/fetchDescendants.ts) is an async iterable that does breadth-first traversal of thought IDs and yields `{ thoughtIndex, lexemeIndex }` chunks. The `pull` thunk dispatches each chunk into Redux via `updateThoughts` so the UI can paint partial results as the pull progresses.
+[`data-providers/data-helpers/fetchDescendants.ts`](../src/data-providers/data-helpers/fetchDescendants.ts) is an async iterable that does breadth-first traversal of thought IDs and yields `{ thoughtIndex, lexemeIndex }` chunks. The `pull` thunk dispatches each chunk into Redux via `updateThoughts` so the UI can paint partial results as the pull progresses. It dispatches only missing and pending thoughts, because a pull can read storage before a local edit or undo lands. Loaded thoughts change through local edits and the materialization bridge instead.
 
 Notable behavior:
 

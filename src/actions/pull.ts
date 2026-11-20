@@ -12,6 +12,7 @@ import db from '../data-providers/thoughtspace'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
+import keyValueBy from '../util/keyValueBy'
 import mergeThoughts from '../util/mergeThoughts'
 
 const BUFFER_DEPTH = 2
@@ -49,7 +50,7 @@ const getPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId
   })
 
 /**
- * Fetch, reconciles, and updates descendants of any number of contexts up to a given depth.
+ * Loads missing and pending descendants of any number of contexts up to a given depth.
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
 export const pullActionCreator =
@@ -88,11 +89,16 @@ export const pullActionCreator =
     await itForEach(thoughtsIterable, (thoughtsChunk: ThoughtIndices) => {
       thoughtChunks.push(thoughtsChunk)
 
-      // mergeUpdates will prevent overwriting non-pending thoughtsChunk with pending thoughtsChunk
+      // A pull reads storage asynchronously, so its records can predate an edit or undo made in the meantime, and
+      // replacing a loaded thought with one can corrupt the tree (#3947, #3948, #5622). So only add missing thoughts and
+      // fill pending ones. Loaded thoughts change through local edits and the materialization bridge.
+      const { thoughtIndex } = getState().thoughts
       // cannot set isLoading to false here because we do not know which chunk contains the root context
       dispatch(
         updateThoughts({
-          thoughtIndexUpdates: thoughtsChunk.thoughtIndex,
+          thoughtIndexUpdates: keyValueBy(thoughtsChunk.thoughtIndex, (id, thought) =>
+            thoughtIndex[id] && !thoughtIndex[id].pending ? null : { [id]: thought },
+          ),
           lexemeIndexUpdates: thoughtsChunk.lexemeIndex,
           local: false,
           remote: false,
