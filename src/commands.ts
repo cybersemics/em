@@ -14,6 +14,7 @@ import Key from './@types/Key'
 import { CommandPatchMetadata } from './@types/Patch'
 import Path from './@types/Path'
 import State from './@types/State'
+import addAllMulticursor from './actions/addAllMulticursor'
 import { addMulticursorActionCreator as addMulticursor } from './actions/addMulticursor'
 import { alertActionCreator as alert } from './actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
@@ -351,6 +352,11 @@ export const chainCommand = (command1: Command, command2: Command): Command => {
     ...command2,
     gesture: chainedGesture,
     label: `${command1.label} + ${command2.label}`,
+    // Evaluate the second command against the state it will run in, so that a chain that can never do anything is shown disabled in the gesture menu (#5874).
+    // Select All runs first unless every sibling is already selected (see handleGestureEnd).
+    canExecute: state =>
+      !command2.canExecute ||
+      command2.canExecute(command1.id === 'selectAll' && !isAllSelected(state) ? addAllMulticursor(state) : state),
   }
   return chainedCommand
 }
@@ -907,26 +913,29 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
   ) {
     commandEmitter.trigger('command', command)
     if (chainableCommandInProgressExclusive) {
-      const commandMetadata = createCommandMetadata(command, { type: 'gesture', event: e })
-      store.dispatch(
-        commandTransaction(commandMetadata, dispatch => {
-          const scopedStore = { ...store, dispatch }
-          if (!isAllSelected(state)) {
-            executeCommandWithMulticursor(chainableCommandInProgressExclusive, {
+      // Run neither command when the chain cannot run, so that Select All does not leave an empty step in the undo history.
+      if (!command.canExecute || command.canExecute(state)) {
+        const commandMetadata = createCommandMetadata(command, { type: 'gesture', event: e })
+        store.dispatch(
+          commandTransaction(commandMetadata, dispatch => {
+            const scopedStore = { ...store, dispatch }
+            if (!isAllSelected(state)) {
+              executeCommandWithMulticursor(chainableCommandInProgressExclusive, {
+                event: e,
+                type: 'gesture',
+                store: scopedStore,
+              })
+            }
+            executeCommandWithMulticursor(command, {
               event: e,
               type: 'gesture',
               store: scopedStore,
             })
-          }
-          executeCommandWithMulticursor(command, {
-            event: e,
-            type: 'gesture',
-            store: scopedStore,
-          })
-          if (chainableCommandInProgressExclusive.id === 'selectAll') dispatch(clearMulticursors())
-        }),
-      )
-      recordLastCommand(command, commandMetadata, store.getState())
+            if (chainableCommandInProgressExclusive.id === 'selectAll') dispatch(clearMulticursors())
+          }),
+        )
+        recordLastCommand(command, commandMetadata, store.getState())
+      }
     } else {
       executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
     }
