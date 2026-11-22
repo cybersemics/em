@@ -31,6 +31,10 @@ it('buffers branches at the depth limit while still loading leaves and attribute
     ],
     [['content', false]],
   ])
+
+  // A buffered thought is the stored thought marked pending, so it keeps the stored lastUpdated and updatedBy.
+  const branch = Object.values(chunks[1].thoughtIndex).find(thought => thought.value === 'branch')!
+  expect(branch).toEqual({ ...(await db.getThoughtById(branch.id)), pending: true })
 })
 
 it('loads EM descendants beyond the depth limit while buffering the other requested root', async () => {

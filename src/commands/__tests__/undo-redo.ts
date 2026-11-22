@@ -10,6 +10,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { pullAncestorsActionCreator as pullAncestors } from '../../actions/pullAncestors'
 import { redoActionCreator as redo } from '../../actions/redo'
 import { setNoteFocusActionCreator as setNoteFocus } from '../../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
@@ -25,13 +26,16 @@ import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import isUndoEnabled from '../../selectors/isUndoEnabled'
+import thoughtToPath from '../../selectors/thoughtToPath'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initStore from '../../test-helpers/initStore'
+import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
+import head from '../../util/head'
 import archiveCommand from '../archive'
 import deleteCommand from '../delete'
 import indentCommand from '../indent'
@@ -39,6 +43,43 @@ import moveCursorForward from '../moveCursorForward'
 import noteCommand from '../note'
 
 beforeEach(initStore)
+
+/**
+ * Moves a/x to b/x, then runs the forced ancestor pull that Recently Edited starts for b/x. The given action runs after
+ * the pull has read storage and before it applies what it read, as when the user undoes while those reads are in
+ * flight. Returns the path of x under b.
+ */
+const pullAroundMove = async (action: () => void) => {
+  store.dispatch(
+    importText({
+      text: `
+      - a
+        - x
+      - b`,
+    }),
+  )
+  await vi.runAllTimersAsync()
+  store.dispatch(moveThought({ from: ['a', 'x'], to: ['b', 'x'], newRank: 0 }))
+  await vi.runAllTimersAsync()
+
+  const path = contextToPath(store.getState(), ['b', 'x'])!
+  const getThoughtsByIds = db.getThoughtsByIds
+  let ran = false
+  const read = vi.spyOn(db, 'getThoughtsByIds').mockImplementation(async ids => {
+    const thoughts = await getThoughtsByIds(ids)
+    if (!ran && ids.includes(head(path))) {
+      ran = true
+      action()
+    }
+    return thoughts
+  })
+  await store.dispatch(pullAncestors(path, { force: true, maxDepth: 0 }))
+  read.mockRestore()
+  expect(ran).toBe(true)
+  await vi.runAllTimersAsync()
+
+  return path
+}
 
 /******************************************************************
  * UNDO
@@ -676,6 +717,13 @@ describe('undo', () => {
   - g`
     expect(exported).toEqual(expectedOutput)
   })
+
+  // https://github.com/cybersemics/em/issues/5622
+  it('keeps a move undone when a forced pull that read the move resolves after the undo', async () => {
+    const path = await pullAroundMove(() => store.dispatch(undo()))
+
+    expect(thoughtToPath(store.getState(), head(path))).toEqual(contextToPath(store.getState(), ['a', 'x']))
+  })
 })
 
 /******************************************************************
@@ -752,6 +800,16 @@ describe('redo', () => {
     store.dispatch(newThought({ value: 'Atlantic City' }))
 
     expect(store.getState().redoPatches.length).toEqual(0)
+  })
+
+  // https://github.com/cybersemics/em/issues/5623
+  it('persists a redone move after a forced pull that read the move resolves after the undo', async () => {
+    const path = await pullAroundMove(() => store.dispatch(undo()))
+    store.dispatch(redo())
+    await vi.runAllTimersAsync()
+    await waitForThoughtspaceIdle()
+
+    expect((await db.getThoughtById(head(path)))?.parentId).toBe(head(contextToPath(store.getState(), ['b'])!))
   })
 })
 
