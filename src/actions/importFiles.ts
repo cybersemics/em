@@ -1,14 +1,12 @@
 // there are multiple function callling it self (recursive) so we just disable the lint error
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable import/prefer-default-export */
-import * as idb from 'idb-keyval'
-import _ from 'lodash'
 import { nanoid } from 'nanoid'
 import Block from '../@types/Block'
 import Context from '../@types/Context'
 import Dispatch from '../@types/Dispatch'
-import Index from '../@types/IndexType'
 import Path from '../@types/Path'
+import ResumeImport from '../@types/ResumeImport'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
@@ -27,7 +25,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
 import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
-import abandonImportStore from '../stores/abandonImportStore'
 import syncStatusStore from '../stores/syncStatusStore'
 import addContext from '../util/addContext'
 import appendToPath from '../util/appendToPath'
@@ -38,10 +35,9 @@ import isAttribute from '../util/isAttribute'
 import newLexeme from '../util/newLexeme'
 import numBlocks from '../util/numBlocks'
 import parentOf from '../util/parentOf'
-import parseJsonSafe from '../util/parseJsonSafe'
 import pathToContext from '../util/pathToContext'
+import resumeImports from '../util/resumeImports'
 import series from '../util/series'
-import storage from '../util/storage'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
 import { setImportThoughtPathActionCreator as setImportThoughtPath } from './setImportThoughtPath'
@@ -54,22 +50,6 @@ interface VirtualFile {
   text: () => Promise<string>
 }
 
-/** Meta information for a file import that is stored in IDB and automatically resumed on initialize. */
-interface ResumeImport {
-  /** Unique id for the import.
-      Importing the same file a second time will generate a new ResumeImport with a new id. */
-  id: string
-  /** Insert the imported thoughts before the path instead of as children of the path. Creates a new empty thought to import into. */
-  insertBefore?: boolean
-  lastModified: number
-  /** Number of thoughts that have already been imported. */
-  thoughtsImported: number
-  name: string
-  /** Import destination path. */
-  path: Path
-  size: number
-}
-
 type ResumableFile = VirtualFile & ResumeImport
 
 interface ImportFilesPayload {
@@ -79,80 +59,8 @@ interface ImportFilesPayload {
   insertBefore?: boolean
   /** Import destination path. Ignored during resume import, where the path is stored in the ResumeImport manifest. */
   path?: Path
-  /** If true, resumes unfinished imports. Either files or resume must be set. */
-  resume?: boolean
-}
-
-// key for localStorage ResumeImport manifest
-// base for idb resume import file
-const RESUME_IMPORTS_KEY = 'resume-imports'
-
-/** Generate the IDB key for a ResumeImport file. */
-const resumeImportKey = (id: string) => `${RESUME_IMPORTS_KEY}-${id}`
-
-/** Deletes the ResumeImport file manifest and raw file in IDB. */
-export const deleteResumableFile = async (id: string) => {
-  await idb.del(resumeImportKey(id))
-  const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
-  storage.setItem(RESUME_IMPORTS_KEY, JSON.stringify(_.omit(resumeImports, id)))
-}
-
-/** Creates a small object that can be used to manage the persistence of a ResumableFile. */
-const resumeImportsManager = (file: ResumableFile) => {
-  /** Initializes the ResumeImport file manifest and raw file in IDB. */
-  const init = async (text: string) => {
-    await update(file.path, 0, file.insertBefore)
-    await idb.set(resumeImportKey(file.id), text)
-  }
-
-  /** Updates the persisted ResumeImport file to the latest number of imported thoughts. */
-  // TODO: throttling update breaks resume file.path for some reason
-  const update = async (path: Path | null, thoughtsImported: number, insertBefore?: boolean) => {
-    if (abandonImportStore.getState()) return
-
-    const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
-    storage.setItem(
-      RESUME_IMPORTS_KEY,
-      JSON.stringify({
-        ...(resumeImports || {}),
-        [file.id]: {
-          id: file.id,
-          // use the original insertBefore for the first import of the first thought
-          // See: insertBeforeNew
-          insertBefore: thoughtsImported === 1 ? insertBefore : file.insertBefore,
-          lastModified: file.lastModified,
-          thoughtsImported,
-          name: file.name,
-          path: path || file.path,
-          size: file.size,
-        },
-      }),
-    )
-  }
-
-  return { del: () => deleteResumableFile(file.id), init, update }
-}
-
-/** Gets all saved imports as ResumableFiles. */
-resumeImportsManager.getFiles = async (): Promise<ResumableFile[]> => {
-  const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
-  return Object.values(resumeImports).map(resumeImport => ({
-    id: resumeImport.id,
-    insertBefore: resumeImport.insertBefore,
-    lastModified: resumeImport.lastModified,
-    thoughtsImported: resumeImport.thoughtsImported,
-    name: resumeImport.name,
-    path: resumeImport.path,
-    size: resumeImport.size,
-    text: async () => {
-      const text = await idb.get<string>(resumeImportKey(resumeImport.id))
-      if (text == null) {
-        console.warn(`Resume file missing from IDB: ${resumeImport.id}`, resumeImport)
-        return ''
-      }
-      return text
-    },
-  }))
+  /** Unfinished imports to resume from their checkpoints, reconstructed from storage by initialize. Either files or resume must be set. */
+  resume?: (ResumeImport & { text: string })[]
 }
 
 /** Pulls the thoughts in the given context if they exist. */
@@ -215,7 +123,7 @@ export const importFilesActionCreator =
         : rootedParentOf(stateStart, importPath)
       : importPath
 
-    // normalize native files from drag-and-drop and resumed files stored in IDB
+    // normalize native files from drag-and-drop and the unfinished imports reconstructed by initialize
     const resumableFiles: ResumableFile[] = files
       ? files.map(file => ({
           id: nanoid(),
@@ -227,7 +135,7 @@ export const importFilesActionCreator =
           size: file.size,
           text: () => file.text(),
         }))
-      : await resumeImportsManager.getFiles()
+      : (resume ?? []).map(({ text, ...resumeImport }) => ({ ...resumeImport, text: async () => text }))
 
     // Keep track of whether the cursor has been set.
     // This is necessary because the cursor is set on the first visible thought that is imported, which may be preceded by one or more hidden meta attributes. We wait until the first visible thought, then flip didSetCursor so that the cursor is not set again.
@@ -425,7 +333,7 @@ export const importFilesActionCreator =
           })
         }
 
-      const manager = resumeImportsManager(file)
+      const manager = resumeImports.manager(file)
       const fileProgressString = file.name + (resumableFiles.length > 1 ? ` (${i + 1}/${resumableFiles.length})` : '')
 
       dispatch(

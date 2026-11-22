@@ -6,12 +6,12 @@ import { anchorButtonRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import { alertActionCreator } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
-import { deleteResumableFile } from '../actions/importFiles'
 import { isTouch } from '../browser'
 import { AlertType } from '../constants'
 import alertStore from '../stores/alertStore'
 import syncStatusStore from '../stores/syncStatusStore'
 import fastClick from '../util/fastClick'
+import resumeImports from '../util/resumeImports'
 import Notification from './Notification'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
@@ -90,7 +90,7 @@ const Alert: FC = () => {
         <a
           className={cx(anchorButtonRecipe(), css({ margin: '0 1rem 1rem' }))}
           onClick={() => {
-            deleteResumableFile(alert.importFileId!)
+            resumeImports.delete(alert.importFileId!)
             syncStatusStore.update({ importProgress: 1 })
             onClose?.()
           }}
