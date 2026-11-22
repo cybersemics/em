@@ -233,6 +233,26 @@ it('reads sibling order once per thought when inserting a wide batch', async () 
   }
 })
 
+it('reads a thought without a visible parent as missing', async () => {
+  const client = await createTreecrdtClient({ docId: 'parentless-thought' })
+  const provider = createTreecrdtDataProvider()
+  const replicaId = new Uint8Array(32).fill(1)
+
+  try {
+    await provider.bindClient(client, replicaId)
+    // A payload that arrives before the node's insert leaves the node in TreeCRDT without a parent.
+    await client.local.payload(
+      replicaId,
+      THOUGHT_X_ID,
+      encodeThoughtPayload({ value: 'x', created: 1, lastUpdated: 1, updatedBy: 'test' }),
+    )
+
+    expect(await provider.db.getThoughtById(THOUGHT_X_ID)).toBeUndefined()
+  } finally {
+    await client.drop()
+  }
+})
+
 it('queues writes issued before initialization and applies them to the bound client', async () => {
   let writeSettled = false
   const write = persistThoughts([thought(PARENT_ID, EM_TOKEN, 'queued', 0)]).finally(() => {
