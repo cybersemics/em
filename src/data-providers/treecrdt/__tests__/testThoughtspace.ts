@@ -3,28 +3,10 @@ import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import hashThought from '../../../util/hashThought'
-import sleep from '../../../util/sleep'
 import type { DataProvider } from '../../DataProvider'
 import { encodeThoughtPayload } from '../payload'
 import createTreecrdtThoughtspace from '../runtime'
-import createTreecrdtDataProvider, { createIndexedChildrenMap } from '../thoughtspace'
-
-/** While set, the attribute index waits for it before indexing a change, as behind a backlog of writes. */
-let attributeIndexHold: Promise<void> | undefined
-let releaseAttributeIndex: (() => void) | undefined
-
-vi.mock('../attributeChildren', async importOriginal => {
-  const actual = await importOriginal<typeof import('../attributeChildren')>()
-  return {
-    ...actual,
-    refreshAttributeChildrenFromChanges: async (
-      ...args: Parameters<typeof actual.refreshAttributeChildrenFromChanges>
-    ) => {
-      await attributeIndexHold
-      return actual.refreshAttributeChildrenFromChanges(...args)
-    },
-  }
-})
+import createTreecrdtDataProvider from '../thoughtspace'
 
 /** Initializes an isolated in-memory TreeCRDT client and thoughtspace for unit tests. */
 const treecrdt = createTreecrdtThoughtspace()
@@ -75,8 +57,6 @@ const persistThoughts = (
 ) => persistThoughtsTo(treecrdtThoughtspace, thoughts, movePlacements)
 
 afterEach(async () => {
-  // A failed test can leave the attribute index held. Release it, or this drop and every later test wait forever.
-  releaseAttributeIndex?.()
   await treecrdt.drop()
 })
 
@@ -138,19 +118,18 @@ it('does not require an initialized TreeCRDT client when freeing lexeme cache', 
   await expect(treecrdtThoughtspace.freeLexeme(hashThought('missing'))).resolves.toBeUndefined()
 })
 
-it('uses indexed attribute values as childrenMap keys without changing TreeCRDT node ids', async () => {
-  const valueById = {
-    [PIN_ID]: '=pin',
-    [PIN_DUPLICATE_ID]: '=pin',
-  }
+it('keys attribute children by value and a duplicate attribute by its id', async () => {
+  await initTestThoughtspace()
+  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
+  await persistThoughts([
+    thought(PIN_ID, PARENT_ID, '=pin', 0),
+    thought(PIN_DUPLICATE_ID, PARENT_ID, '=pin', 1),
+    thought(FALSE_ID, PARENT_ID, 'false', 2),
+  ])
 
-  const childrenMap = createIndexedChildrenMap([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID], valueById)
-
-  expect(childrenMap['=pin']).toBe(PIN_ID)
-  expect(childrenMap[PIN_DUPLICATE_ID]).toBe(PIN_DUPLICATE_ID)
-  expect(childrenMap[FALSE_ID]).toBe(FALSE_ID)
-  expect(childrenMap.false).toBeUndefined()
-  expect(Object.values(childrenMap)).toEqual([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID])
+  const childrenMap = (await treecrdtThoughtspace.getThoughtById(PARENT_ID))?.childrenMap
+  expect(childrenMap).toEqual({ '=pin': PIN_ID, [PIN_DUPLICATE_ID]: PIN_DUPLICATE_ID, [FALSE_ID]: FALSE_ID })
+  expect(Object.values(childrenMap ?? {})).toEqual([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID])
 })
 
 it('keys an attribute under its new parent and drops the key once it is renamed', async () => {
@@ -159,26 +138,10 @@ it('keys an attribute under its new parent and drops the key once it is renamed'
   await persistThoughts([thought(PIN_ID, PARENT_ID, '=pin', 0)])
 
   await persistThoughts([thought(PIN_ID, OTHER_PARENT_ID, '=pin', 0)], { [PIN_ID]: null })
-  // The attribute index catches up after the write; waiting for idle includes it.
-  await treecrdt.waitForIdle()
   expect((await treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID))?.childrenMap['=pin']).toBe(PIN_ID)
 
   await persistThoughts([thought(PIN_ID, OTHER_PARENT_ID, 'pin', 0)])
-  await treecrdt.waitForIdle()
   expect((await treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID))?.childrenMap['=pin']).toBeUndefined()
-})
-
-it('keys an attribute by its value when a pull reads it before the attribute index catches up', async () => {
-  await initTestThoughtspace()
-  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
-  attributeIndexHold = new Promise(resolve => (releaseAttributeIndex = resolve))
-  await persistThoughts([thought(PIN_ID, PARENT_ID, '=pin', 0)])
-
-  // A read that does not wait for the index finishes while it is held, and keys the attribute by its id.
-  const reading = treecrdtThoughtspace.getThoughtsByIds([PARENT_ID])
-  await Promise.race([reading, sleep(50)])
-  releaseAttributeIndex?.()
-  expect((await reading)[0]?.childrenMap['=pin']).toBe(PIN_ID)
 })
 
 it('falls back to rank placement when explicit afterId is stale', async () => {
@@ -236,15 +199,15 @@ it('reads sibling order once per thought when inserting a wide batch', async () 
     await persistThoughtsTo(provider.db, [thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
 
     const childIds = Array.from({ length: 40 }, (_, index) => (index + 512).toString(16).padStart(32, '0') as ThoughtId)
-    const nodeSpy = vi.spyOn(client.tree, 'node')
+    const read = vi.spyOn(client.tree, 'read')
 
     await persistThoughtsTo(
       provider.db,
       childIds.map((id, index) => thought(id, PARENT_ID, `child-${index}`, index + 0.5)),
     )
 
-    // Each sibling-order read goes through the parent's node.
-    expect(nodeSpy.mock.calls.filter(([id]) => id === PARENT_ID)).toHaveLength(childIds.length)
+    // Each thought reads its siblings in the one read it makes.
+    expect(read).toHaveBeenCalledTimes(childIds.length)
     const children = await client.tree.node(PARENT_ID).children()
     expect(children.map(child => child.id)).toEqual(childIds)
   } finally {
@@ -352,7 +315,6 @@ it('resumes from its cursor after an interrupted index update', async () => {
     const reopened = createTreecrdtDataProvider()
     const closeReopened = await reopened.bindClient(client, replicaId)
     await expect(reopened.db.getLexemeById(hashThought('=pin'))).resolves.toMatchObject({ contexts: [PIN_ID] })
-    expect((await reopened.db.getThoughtById(EM_TOKEN))?.childrenMap['=pin']).toBe(PIN_ID)
     await closeReopened()
   } finally {
     await client.drop()

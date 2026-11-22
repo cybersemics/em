@@ -36,7 +36,7 @@ Thoughts that are known to exist but haven't been loaded yet are flagged with `p
 
 The client surface em uses:
 
-- `client.tree` — the materialized read model: `children`, `parent`, `exists`, `getPayload`.
+- `client.tree` — the materialized read model. em reads it with `read`, which returns each requested node's live parent, its index among its siblings, its payload, and its children with their payloads, all from one materialized state.
 - `client.local` — local write ops minted for a replica id: `insert`, `move`, `delete`, `payload`. Each returns an `Operation`.
 - `client.runner` — raw SQLite access, used for em's own derived tables.
 - `client.onMaterialized` — subscription fired after ops are materialized into SQLite.
@@ -60,25 +60,22 @@ Each node carries a payload: a JSON-encoded `ThoughtPayload` ([`payload.ts`](../
 
 ### Derived tables
 
-Two app-owned derived indexes live alongside the CRDT tables in the same SQLite database. Neither is part of the CRDT, so neither replicates; both are rebuilt or maintained locally.
+One app-owned derived index lives alongside the CRDT tables in the same SQLite database. It is not part of the CRDT, so it does not replicate; it is maintained locally.
 
 - **`em_lexeme_memberships`** ([`lexemes.ts`](../src/data-providers/treecrdt/lexemes.ts)) — one row per live thought, indexed by `hashThought(value)`. The provider assembles complete Lexemes from these rows, including contexts not loaded in Redux.
-- **`em_attribute_children`** ([`attributeChildren.ts`](../src/data-providers/treecrdt/attributeChildren.ts)) — `child_id` → (`parent_id`, `value`) for `=attribute` children only, indexed by `parent_id`. This restores em's `childrenMap` contract, where meta-attributes are keyed by value rather than by id.
 
-Both indexes follow TreeCRDT's change events through one durable subscription, `em-derived-indexes`. TreeCRDT keeps its position, catches both indexes up after a gap such as startup or a failed update, and, when `INDEX_VERSION` changes, clears them and delivers every node again.
+The index follows TreeCRDT's change events through a durable subscription, `em-derived-indexes`. TreeCRDT keeps its position, catches the index up after a gap such as startup or a failed update, and, when `INDEX_VERSION` changes, clears it and delivers every node again.
 
 Favorites' manual order is a separate local preference in `em_favorite_order`. It orders only live `=favorite` memberships; missing IDs cannot add members, and newly added favorites follow the saved list. Rebuilding derived indexes does not discard this preference.
 
 ### Reading a thought
 
-`getThoughtByIdFromClient` assembles a `Thought` from the tree plus the attribute index:
+`getThoughtById` and `getThoughtsByIds` each make one `client.tree.read`, and `nodeToThought` assembles a `Thought` from each node it returns:
 
 - `value` / `created` / `lastUpdated` / `updatedBy` / `archived` come from the decoded payload.
 - `parentId` is the tree parent, falling back to `ROOT_PARENT_ID` when the tree reports none.
 - `rank` is the node's **index among its siblings** (`0` when it has no parent). It is a projection of the tree's order, computed per read, not a persisted field.
-- `childrenMap` is built by `createIndexedChildrenMap`: attribute children are keyed by their value (via `childrenMapKey`, which disambiguates duplicates), all other children by their `ThoughtId`. Insertion order follows `client.tree.children`, so `Object.values(childrenMap)` is the authoritative sibling order.
-
-The attribute index catches up after each write, so `getThoughtsByIds`, which pulls read through, first waits for the index updates already queued. Otherwise a pull could key an attribute by its id. The readback reads through `getThoughtById` and starts over instead (see [Change observation](#change-observation-materialization)).
+- In `childrenMap`, attribute children are keyed by the value in their payload (via `childrenMapKey`, which disambiguates duplicates), all other children by their `ThoughtId`. Insertion order follows the tree's child order, so `Object.values(childrenMap)` is the authoritative sibling order.
 
 `testFlags.replicationDelay` injects an artificial delay into `getThoughtsByIds`, used by e2e tests that need to observe slow local materialization after a refresh.
 
@@ -86,12 +83,12 @@ The attribute index catches up after each write, so `getThoughtsByIds`, which pu
 
 `updateThoughtsForClient` applies one push-queue batch:
 
-1. **Upserts.** For a thought that doesn't exist yet, a `client.local.insert` with a resolved placement (see below); for one that does, a `client.local.move` when the parent or the order changed, and a `client.local.payload` when any payload field actually changed. Redundant payload writes are skipped so no-op edits don't mint operations.
+1. **Upserts.** For a thought that doesn't exist yet, a `client.local.insert` with a resolved placement (see below); for one that does, a `client.local.move` when the parent or the order changed, and a `client.local.payload` when any payload field actually changed. Redundant payload writes are skipped so no-op edits don't mint operations. Each thought takes one `client.tree.read` before its writes, of the thought, its parent's children and any sibling its placement names, so a rank placement sees the siblings written before it.
 2. **Deletions.** Each `null` entry in `thoughtIndexUpdates` becomes a `client.local.delete`. Deletions run after upserts so that moves out of a deleted parent's subtree are included in its delete's `knownState`.
 
 The function returns the `readonly Operation[]` it minted. That array is what the runtime forwards to remote sync.
 
-`DataProvider.updateThoughts` accepts whole thought records, optional move placements, and an optional `favoriteOrder` preference—not derived lexeme updates. It resolves once the batch is committed, without waiting for the derived indexes, which catch up from the batch's change events. Writes that arrive before the client is bound wait on a readiness promise; a failed initialization or a `drop` rejects those waiters so the next initialization starts clean.
+`DataProvider.updateThoughts` accepts whole thought records, optional move placements, and an optional `favoriteOrder` preference—not derived lexeme updates. It resolves once the batch is committed, without waiting for the derived index, which catches up from the batch's change events. Writes that arrive before the client is bound wait on a readiness promise; a failed initialization or a `drop` rejects those waiters so the next initialization starts clean.
 
 #### Order and placement
 
@@ -121,7 +118,7 @@ It also stamps every local write with a `writeId` of the form `em-local:${source
 [`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) then:
 
 1. Reads a Redux snapshot, then waits for the local writes queued so far. Every edit the snapshot shows has queued its write by then, so storage has it once the wait ends. Writes queued later are not waited for; step 3 catches any that matter.
-2. For incoming changes only, refreshes affected thoughts and projects sibling order onto numeric ranks.
+2. For incoming changes only, refreshes affected thoughts, their parents and their siblings in at most three batched reads, and projects sibling order onto numeric ranks.
 3. Waits for indexing, then reads complete memberships for affected old and new values. A round starts over if Redux meanwhile changes a Lexeme it read or a thought it writes, or renames or deletes a thought its Lexemes list. It also starts over if an event is indexed while it reads, unless the event is local and the round read no thoughts.
 4. Applies changed memberships and incoming thoughts through the *materialization bridge*.
 
