@@ -188,9 +188,7 @@ describe('all platforms', () => {
     // press backspace to delete the empty thought
     await press('Backspace')
 
-    // The wait is the assertion. It times out well inside the 20s test timeout and reports what was rendered, so that
-    // the intermittent CI failure (#6258) shows whether Backspace left the empty thought in place or deleted it without
-    // placing the caret back in `first`.
+    // The wait is the assertion. It times out well inside the 20s test timeout and reports what was rendered.
     try {
       await waitUntil(
         () => {
