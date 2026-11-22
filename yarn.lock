@@ -6694,9 +6694,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/jest-dom@npm:^7.0.1":
-  version: 7.0.1
-  resolution: "@testing-library/jest-dom@npm:7.0.1"
+"@testing-library/jest-dom@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@testing-library/jest-dom@npm:8.0.0"
   dependencies:
     "@adobe/css-tools": "npm:^4.4.0"
     aria-query: "npm:^5.0.0"
@@ -6706,11 +6706,11 @@ __metadata:
     redent: "npm:^3.0.0"
   peerDependencies:
     "@testing-library/dom": ">=10 <11"
-    vitest: ">= 0.32"
+    vitest: ">=5 <6"
   peerDependenciesMeta:
     vitest:
       optional: true
-  checksum: 10c0/4450af11d3580749949c6eee749077267c70d18f794952b9e24839f8f66afe28c6f83dd3d93b135cfd9aae8401b9861260cc309dee4ad4f2845b52b94e5c5e11
+  checksum: 10c0/1b0f6445ea43d3d2d25537c9a50cf41016a7056f11c885dbee50434374602732c80e6f4bb7954116ddfe1765cc48afc4502075f316996ebf3270d992ad5e9780
   languageName: node
   linkType: hard
 
@@ -6734,12 +6734,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/user-event@npm:^14.6.9":
-  version: 14.6.9
-  resolution: "@testing-library/user-event@npm:14.6.9"
+"@testing-library/user-event@npm:^14.6.13":
+  version: 14.6.13
+  resolution: "@testing-library/user-event@npm:14.6.13"
   peerDependencies:
     "@testing-library/dom": ">=7.21.4"
-  checksum: 10c0/cb23d520bbfe2a9bf1586b2c508729014e06c8e04a19e3015c4a3e8a4eaca62884dcf74c38b7da04f4d90fea92dd55d909b22b9a65afd98ea578900443607691
+  checksum: 10c0/29cb1c17275ac8b0be3800fbcbcfd3b87c2fc7134aa91df4dc404e3962c4204e720c2286d654d15669eb9e0ee9428a9e246e162149ef9704ea6082b5e303ba85
   languageName: node
   linkType: hard
 
@@ -11820,9 +11820,9 @@ __metadata:
     "@tauri-apps/api": "npm:^2.12.4"
     "@tauri-apps/cli": "npm:^2.12.4"
     "@testing-library/dom": "npm:^10.4.2"
-    "@testing-library/jest-dom": "npm:^7.0.1"
+    "@testing-library/jest-dom": "npm:^8.0.0"
     "@testing-library/react": "npm:^16.3.3"
-    "@testing-library/user-event": "npm:^14.6.9"
+    "@testing-library/user-event": "npm:^14.6.13"
     "@total-typescript/ts-reset": "npm:^0.6.1"
     "@treecrdt/interface": "npm:0.6.0"
     "@treecrdt/sync": "npm:0.2.3"
