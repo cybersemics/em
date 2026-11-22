@@ -15,10 +15,11 @@ import { setDescendantActionCreator as setDescendant } from '../actions/setDesce
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
-import { firstVisibleChild, getChildrenSorted } from '../selectors/getChildren'
+import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import noteThought from '../selectors/noteThought'
 import noteValue from '../selectors/noteValue'
@@ -32,7 +33,9 @@ import equalPathHead from '../util/equalPathHead'
 import getCommandState from '../util/getCommandState'
 import head from '../util/head'
 import strip from '../util/strip'
+import stripTags from '../util/stripTags'
 import trimHtml from '../util/trimHtml'
+import trimmedTextOffset from '../util/trimmedTextOffset'
 import useCaretRestore from './Editable/useCaretRestore'
 import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
@@ -59,13 +62,22 @@ const Note = React.memo(
     const generating = useSelector(state => !!getThoughtById(state, head(path))?.generating)
     const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
-    // A draft preserves the user's comma spacing while typing. A forced editor refresh (e.g. undo/redo)
-    // invalidates it in the same render, before the caret effect runs, so it cannot mask the restored value.
+    // A draft preserves what the user typed, including the boundary spaces and comma spacing that are trimmed from the
+    // saved values, until editing ends. A forced editor refresh (e.g. undo/redo) invalidates it in the same render,
+    // before the caret effect runs, so it cannot mask the restored value.
     const [noteDraft, setNoteDraft] = useState<{ value: string; editableNonce: number } | null>(null)
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
     const editableNonce = useSelector(state => state.editableNonce)
+    const html = (noteDraft?.editableNonce === editableNonce ? noteDraft.value : note) ?? ''
+
+    // What the note held before the input in progress: the html last rendered, or last typed when typing outpaces the
+    // render. onChange compares it with the html after the input to find where the caret was before the input.
+    const htmlBeforeInputRef = useRef(html)
+    useEffect(() => {
+      htmlBeforeInputRef.current = html
+    }, [html])
 
     // Formatting applied to the note while it was empty is held on the note's thought until the user types (#3910).
     // Style the placeholder with it so that the empty note previews the formatting its text will take.
@@ -179,14 +191,24 @@ const Note = React.memo(
         if (editableSyncStore.getState().suppressChange) return
 
         // calculate pathToContext onChange not in render for performance
-        const value = justPasted
+        const typedValue = justPasted
           ? // if just pasted, strip all HTML from value
             (setJustPasted(false), strip(e.target.value))
           : // Mobile Safari inserts <br> when all text is deleted
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
 
-        const noteOffset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
+        const domOffset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
+        const textAfter = noteRef.current?.textContent ?? ''
+
+        // As in a thought, a note left with only whitespace is emptied as it is typed, so a space typed into an empty
+        // note never appears and adds no undo step (see Editable's onChangeHandler).
+        const blank = !stripTags(trimHtml(typedValue))
+        if (blank && noteRef.current?.innerHTML) noteRef.current.innerHTML = ''
+        const value = blank ? '' : typedValue
+
+        const htmlBefore = htmlBeforeInputRef.current
+        htmlBeforeInputRef.current = blank ? '' : e.target.value
 
         // update the referenced thought directly if it exists
         dispatch((dispatch, getState) => {
@@ -196,13 +218,16 @@ const Note = React.memo(
           const targetPath = resolvedTargetPath ?? path
           const { noteId } = resolveNoteKey(state, head(path))
 
-          if (!noteId && resolvedTargetPath) {
-            const values = value.split(',').map(value => value.trim())
+          // As with thoughts, the note's whitespace never goes into Redux: each value is trimmed as it is typed, while the
+          // draft keeps what the browser holds, boundary spaces and comma spacing included, until editing ends.
+          setNoteDraft({ value, editableNonce: state.editableNonce })
 
-            setNoteDraft({ value, editableNonce: state.editableNonce })
+          if (!noteId && resolvedTargetPath) {
+            const values = value.split(',').map(trimHtml)
+
             dispatch(
               editNotePath({
-                noteOffset: noteOffset ?? undefined,
+                noteOffset: domOffset === null ? undefined : trimmedTextOffset(domOffset, textAfter, textAfter.trim()),
                 path: targetPath,
                 values,
                 undoLabel: 'Edit Note',
@@ -221,13 +246,28 @@ const Note = React.memo(
               noteThoughtValue.pendingFormat && noteThoughtValue.value.length === 0 && value.length > 0
                 ? applyOuterTags(value, noteThoughtValue.pendingFormat)
                 : value
+            const trimmedValue = trimHtml(wrappedValue)
+            // A value that is only tags once trimmed stays empty so it keeps its held formatting until text is typed.
+            const newValue = stripTags(trimmedValue) ? trimmedValue : ''
+            const textBefore = getTextContentFromHTML(htmlBefore)
+            const savedTextBefore =
+              htmlBefore === noteThoughtValue.value ? textBefore : getTextContentFromHTML(noteThoughtValue.value)
+            const savedTextAfter = e.target.value === newValue ? textAfter : getTextContentFromHTML(newValue)
+            const noteOffset = domOffset === null ? undefined : trimmedTextOffset(domOffset, textAfter, savedTextAfter)
+
+            // Infer the pre-edit caret from the change in draft length. Then map it into the old saved value for Undo.
+            const noteOffsetBefore =
+              domOffset === null
+                ? undefined
+                : trimmedTextOffset(domOffset + textBefore.length - textAfter.length, textBefore, savedTextBefore)
 
             dispatch(
               editThought({
                 path: appendToPath(targetPath, noteThoughtValue.id) as SimplePath,
                 oldValue: noteThoughtValue.value,
-                newValue: wrappedValue,
-                noteOffset: noteOffset ?? undefined,
+                newValue,
+                noteOffset,
+                noteOffsetBefore,
                 force: wrappedValue !== value,
                 undoLabel: 'Edit Note',
               }),
@@ -236,7 +276,7 @@ const Note = React.memo(
             dispatch(
               setDescendant({
                 path: targetPath,
-                values: [value],
+                values: [trimHtml(value)],
                 undoLabel: 'Edit Note',
               }),
             )
@@ -246,41 +286,11 @@ const Note = React.memo(
       [dispatch, path, justPasted],
     )
 
-    /** Trims the saved note and updates focus and keyboard state when editing ends. */
+    /** Ends editing: drops the draft, so that the note shows its trimmed value, and updates focus and keyboard state. */
     const onBlur = useFreshCallback(
       (e: React.FocusEvent) => {
         if (editableSyncStore.getState().suppressBlurSync || editableSyncStore.getState().suppressChange) return
 
-        // Input saves synchronously. Trim fresh state rather than replaying the DOM, which may be stale after a
-        // command or undo. Only update an existing note so blur cannot recreate one that was just deleted.
-        dispatch((dispatch, getState) => {
-          const state = getState()
-          const targetPath = resolveNotePath(state, path)
-          if (!targetPath) return
-
-          const { noteId } = resolveNoteKey(state, head(path))
-          if (noteId) {
-            const thought = firstVisibleChild(state, head(targetPath))
-            if (!thought) return
-            const value = trimHtml(thought.value)
-            if (value !== thought.value) {
-              dispatch(
-                editThought({
-                  path: appendToPath(targetPath, thought.id) as SimplePath,
-                  oldValue: thought.value,
-                  newValue: value,
-                  undoLabel: 'Edit Note',
-                }),
-              )
-            }
-          } else {
-            const children = getChildrenSorted(state, head(targetPath))
-            const values = children.map(child => trimHtml(child.value))
-            if (values.some((value, index) => value !== children[index].value)) {
-              dispatch(editNotePath({ path: targetPath, values, undoLabel: 'Edit Note' }))
-            }
-          }
-        })
         setNoteDraft(null)
         if (!selection.isNote(e.relatedTarget)) {
           dispatch(setNoteFocus({ value: false }))
@@ -335,7 +345,7 @@ const Note = React.memo(
           <FauxCaret caretType='noteStart' />
         </span>
         <ContentEditable
-          html={(noteDraft?.editableNonce === editableNonce ? noteDraft.value : note) ?? ''}
+          html={html}
           innerRef={noteRef as React.RefObject<HTMLElement>}
           aria-label='note-editable'
           data-thought-id={head(path)}
