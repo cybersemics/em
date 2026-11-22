@@ -95,3 +95,13 @@ it('Select All leaves the selection out of edit mode when invoked from the Comma
   expect(focused).toBe(null)
   expect(await page.$$('[data-testid="faux-caret-multicursor"]')).toHaveLength(0)
 })
+
+it('Bold applies only to the selected word when invoked from Command Universe', async () => {
+  await paste('- alpha beta gamma')
+  await clickThought('alpha beta gamma')
+  await setSelection(6, 10)
+
+  await command('Bold', { inputType: 'commandPalette' })
+
+  expect(await getEditingText()).toBe('alpha <b>beta</b> gamma')
+})
