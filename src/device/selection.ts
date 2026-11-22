@@ -756,6 +756,12 @@ export const isCaretNear = (x: number, y: number): boolean => {
   // A range is handled by isNear and by selectionRangeStore, which disable the same interactions ahead of the press.
   if (!isActive() || !isCollapsed()) return false
 
+  // A selection outside the focused editable is not a caret iOS can raise the magnifier for, though caretRectViewport
+  // still measures it: a quick magnifier flick has moved it into the next thought's line start faux caret, just below
+  // the editable (#6314). iOS takes a drag beside it as a pan, so it must not be latched as a press on the caret (#5844).
+  const focusNode = window.getSelection()?.focusNode
+  if (!focusNode || !document.activeElement?.contains(focusNode)) return false
+
   const caret = caretRectViewport()
   if (!caret) return false
 

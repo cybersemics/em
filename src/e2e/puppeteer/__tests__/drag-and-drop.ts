@@ -761,8 +761,9 @@ describe('mobile only', () => {
       const boundingBox = await emptyEditable.boundingBox()
       if (!boundingBox) throw new Error('Editable has no bounding box.')
 
-      // An empty thought renders its caret at the start of its content, so the left inside edge is a press on it.
-      await page.touchscreen.touchStart(boundingBox.x + 1, boundingBox.y + boundingBox.height / 2)
+      // An empty thought renders its caret at the start of its content, so the left inside edge is a press on it. The
+      // bullet overlaps the editable's first 2px and takes a touch there, which is a press on the bullet, not the caret.
+      await page.touchscreen.touchStart(boundingBox.x + 4, boundingBox.y + boundingBox.height / 2)
       // A long press that must NOT happen offers nothing to wait for, so hold well past the delay that would start one.
       await sleep(TIMEOUT_LONG_PRESS_THOUGHT * 2)
       // Read the highlight while the finger is still down; releasing clears it and would pass either way.
