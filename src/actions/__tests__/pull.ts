@@ -13,6 +13,7 @@ import { deleteThoughtActionCreator as deleteThought } from '../deleteThought'
 import { pullActionCreator as pull } from '../pull'
 import { redoActionCreator as redo } from '../redo'
 import { undoActionCreator as undo } from '../undo'
+import { updateThoughtsActionCreator as updateThoughts } from '../updateThoughts'
 
 beforeEach(initStore)
 afterEach(() => vi.restoreAllMocks())
@@ -22,6 +23,26 @@ const pathTo = (pathUnranked: string[]) => contextToPathOrThrow(store.getState()
 
 /** The contexts of the Lexeme in Redux for a value. */
 const lexemeContexts = (value: string) => store.getState().thoughts.lexemeIndex[hashThought(value)]?.contexts ?? []
+
+it('leaves a loaded thought as Redux has it when a forced pull reads it', async () => {
+  store.dispatch(importToContext('- a\n  - x'))
+  await vi.runAllTimersAsync()
+  const xId = head(pathTo(['a', 'x']))
+  // Hold formatting on x the way formatSelection does. It exists only in Redux, so a stored copy lacks it.
+  store.dispatch(
+    updateThoughts({
+      thoughtIndexUpdates: { [xId]: { ...store.getState().thoughts.thoughtIndex[xId], pendingFormat: '<b></b>' } },
+      lexemeIndexUpdates: {},
+      local: false,
+      remote: false,
+      overwritePending: true,
+    }),
+  )
+
+  await store.dispatch(pull([xId], { force: true }))
+
+  expect(store.getState().thoughts.thoughtIndex[xId].pendingFormat).toBe('<b></b>')
+})
 
 it('keeps an undo of a pending thought that lands while its pull reads', async () => {
   store.dispatch(importToContext('- a\n  - x\n    - y\n- b'))

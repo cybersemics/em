@@ -15,7 +15,6 @@ import isRoot from '../../util/isRoot'
 import keyValueBy from '../../util/keyValueBy'
 import nonNull from '../../util/nonNull'
 import { DataProvider } from '../DataProvider'
-import { minHeadSeq } from '../treecrdt/readFreshness'
 
 // default maxDepth before thoughts become pending
 const MAX_DEPTH = 100
@@ -131,8 +130,6 @@ async function* fetchDescendants(
 
     // get thoughts from the database
     const providerThoughtsRaw = await provider.getThoughtsByIds(ids)
-    // A chunk is as fresh as its oldest read.
-    let headSeq = providerThoughtsRaw.headSeq
 
     const providerThoughtsValidated = providerThoughtsRaw.filter(nonNull)
     const thoughtIdsValidated = ids.filter((value, i) => providerThoughtsRaw[i])
@@ -239,7 +236,6 @@ async function* fetchDescendants(
     let pinIdsValidated: ThoughtId[] = []
     let pinChildrenIdsValidated: ThoughtId[] = []
     const pinnedThoughtsRaw = await provider.getThoughtsByIds(pinIds)
-    headSeq = minHeadSeq(headSeq, pinnedThoughtsRaw.headSeq)
     const pinnedThoughtsValidated = pinnedThoughtsRaw.filter(nonNull)
     const pinnedThoughtIndex: Index<Thought> = keyValueBy(pinnedThoughtsValidated, (thought, i) => ({
       [pinIds[i]]: thought,
@@ -248,7 +244,6 @@ async function* fetchDescendants(
     pinIdsValidated = pinIds.filter(id => pinnedThoughtIndex[id])
     const pinChildrenIds = pinnedThoughtsValidated.flatMap(thought => Object.values(thought.childrenMap))
     const pinnedChildrenRaw = await provider.getThoughtsByIds(pinChildrenIds)
-    headSeq = minHeadSeq(headSeq, pinnedChildrenRaw.headSeq)
     const pinnedChildrenValidated = pinnedChildrenRaw.filter(nonNull)
     const pinnedChildrenIndex: Index<Thought> = keyValueBy(pinnedChildrenValidated, (thought, i) => ({
       [pinChildrenIds[i]]: thought,
@@ -282,8 +277,6 @@ async function* fetchDescendants(
     yield {
       thoughtIndex,
       lexemeIndex,
-      headSeq,
-      lexemeHeadSeq: lexemes.headSeq,
     }
 
     depth.inc()

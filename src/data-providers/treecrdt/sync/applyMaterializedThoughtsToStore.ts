@@ -1,53 +1,38 @@
-import type { Change, MaterializationEvent } from '@treecrdt/interface/engine'
+import type { MaterializationEvent } from '@treecrdt/interface/engine'
 import _ from 'lodash'
-import type ThoughtId from '../../../@types/ThoughtId'
 import hashThought from '../../../util/hashThought'
 import type { DataProvider } from '../../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../../thoughtspace'
-import { isReadFresh, isUnconfirmed, keepInMemoryFields, markRead } from '../readFreshness'
 import { isTreecrdtLocalMaterialization, waitForQueuedTreecrdtWrites } from '../writeBarrier'
 import refreshThoughtsFromMaterializationChanges from './materializationThoughtUpdates'
+
+/** Fields that exist only in Redux. A stored copy lacks them, so they are kept while the value is unchanged. */
+const IN_MEMORY_FIELDS = ['pendingFormat', 'generating', 'generatingPlaceholder', 'splitSource'] as const
 
 export type MaterializationContext = {
   bridge: ThoughtspaceMaterializationBridge
   db: Pick<DataProvider, 'getThoughtsByIds' | 'getLexemesByIds'>
   pending: { event: MaterializationEvent; keys: string[] }[]
-  /** Thoughts to read again in the next round, because a round skipped a read of them that was older than Redux. */
-  reread: Set<ThoughtId>
-  /** Thoughts to read again once their local writes return, because a round skipped them while those were unconfirmed. */
-  rereadAfterWrites: Set<ThoughtId>
   isActive: () => boolean
 }
 
 /** Publishes complete memberships after persistence; local thoughts keep their optimistic view. */
-export const applyMaterializedThoughtsToStore = async ({
-  bridge,
-  db,
-  pending,
-  reread,
-  rereadAfterWrites,
-  isActive,
-}: MaterializationContext) => {
-  while ((pending.length || reread.size) && isActive()) {
+export const applyMaterializedThoughtsToStore = async ({ bridge, db, pending, isActive }: MaterializationContext) => {
+  while (pending.length && isActive()) {
     // pushQueue queues each edit's write in the reducer that makes it, so once the writes queued by now are done, storage
-    // has every edit this snapshot shows. Writes queued later are not waited for: their thoughts are unconfirmed until
-    // the writes return, so the reads of them are skipped below.
+    // has every edit this snapshot shows. Writes queued later are not waited for; the checks below catch any that matter.
     const snapshot = bridge.getSnapshot()
     await waitForQueuedTreecrdtWrites()
     const entries = pending.slice()
-    const rereading = [...reread]
     const keys = [...new Set(entries.flatMap(entry => entry.keys))]
-    const remoteChanges: Change[] = [
-      ...entries.flatMap(({ event }) => (isTreecrdtLocalMaterialization(event) ? [] : event.changes)),
-      // A payload change reads just the thought.
-      ...rereading.map(id => ({ kind: 'payload' as const, node: id, payload: null })),
-    ]
-    const { thoughtIndexUpdates, headSeq } = await refreshThoughtsFromMaterializationChanges(remoteChanges, db)
+    const remoteChanges = entries.flatMap(({ event }) => (isTreecrdtLocalMaterialization(event) ? [] : event.changes))
+    const thoughtIndexUpdates = await refreshThoughtsFromMaterializationChanges(remoteChanges, db)
     const values = await db.getLexemesByIds(keys)
     const { thoughtIndex, lexemeIndex } = bridge.getSnapshot()
     if (
-      // A newer edit to a Lexeme this round reads.
+      // A newer edit to a Lexeme this round reads or a thought it writes.
       keys.some(key => lexemeIndex[key] !== snapshot.lexemeIndex[key]) ||
+      Object.keys(thoughtIndexUpdates).some(id => thoughtIndex[id] !== snapshot.thoughtIndex[id]) ||
       // A newer edit that renamed a listed thought into another Lexeme or deleted it. The first check misses this if
       // Redux has no Lexeme for the value at both reads, as when it has not loaded that Lexeme.
       // Only changed thoughts count, or a remote rename this round publishes would restart it forever.
@@ -67,20 +52,14 @@ export const applyMaterializedThoughtsToStore = async ({
       continue
     if (!isActive()) return
 
-    rereading.forEach(id => reread.delete(id))
-    for (const [id, latest] of Object.entries(thoughtIndexUpdates)) {
-      if (!latest) continue
-      // Redux has a newer copy: a local edit whose write has not returned, or a read newer than this one. Keep it, and
-      // read the thought again once that is settled, or the change this round read would never reach Redux.
-      if (!isReadFresh(latest.id, headSeq)) {
-        delete thoughtIndexUpdates[id]
-        ;(isUnconfirmed(latest.id) ? rereadAfterWrites : reread).add(latest.id)
-        continue
-      }
-      markRead(latest.id, headSeq)
-      const stored = keepInMemoryFields(thoughtIndex[latest.id], latest)
-      const loading = thoughtIndex[latest.id]?.pending || thoughtIndex[latest.parentId]?.pending
-      thoughtIndexUpdates[id] = loading ? { ...stored, pending: loading } : stored
+    for (const latest of _.compact(Object.values(thoughtIndexUpdates))) {
+      const current = thoughtIndex[latest.id]
+      const stored =
+        current?.value === latest.value
+          ? { ...latest, ..._.omitBy(_.pick(current, IN_MEMORY_FIELDS), _.isUndefined) }
+          : latest
+      const loading = current?.pending || thoughtIndex[latest.parentId]?.pending
+      thoughtIndexUpdates[latest.id] = loading ? { ...stored, pending: loading } : stored
     }
     const lexemeIndexUpdates = Object.fromEntries(
       keys.flatMap((key, i) => (_.isEqual(values[i], snapshot.lexemeIndex[key]) ? [] : [[key, values[i] ?? null]])),

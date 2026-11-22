@@ -7,8 +7,6 @@ import createTreecrdtThoughtspace from './treecrdt/runtime'
 
 export type PersistThoughtspaceBatch = Parameters<DataProvider['updateThoughts']>[0] & {
   local?: boolean
-  /** Lexemes the edit changed in Redux. They stay unconfirmed until the batch is written, like its thoughts. */
-  lexemeKeys?: string[]
 }
 
 /** Storage lifetime requested from the active thoughtspace provider. */
@@ -41,6 +39,8 @@ export interface ThoughtspaceRuntime {
   init: (options: ThoughtspaceRuntimeInitOptions) => Promise<{ clientId: string; storage: string }>
   drop: () => Promise<unknown>
   waitForIdle: () => Promise<void>
+  /** Resolves once the writes queued so far have settled, failed or not. Unlike waitForIdle, it does not wait for later ones. */
+  waitForQueuedWrites: () => Promise<void>
   persistPushQueueBatches: (batches: readonly PersistThoughtspaceBatch[]) => Promise<void>
 }
 

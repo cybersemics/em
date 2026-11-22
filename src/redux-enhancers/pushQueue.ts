@@ -10,7 +10,6 @@ import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import debugLog from '../util/debugLog'
-import hashThought from '../util/hashThought'
 import isAttribute from '../util/isAttribute'
 import keyValueBy from '../util/keyValueBy'
 import mergeBatch from '../util/mergeBatch'
@@ -49,19 +48,6 @@ const cacheSetting = (name: keyof typeof cachedSettingsIds, value: string | null
     storage.removeItem(key)
   }
 }
-
-/**
- * Keys of the Lexemes a batch can change in storage: those of each thought's value before and after, plus any the batch
- * updates itself. Undo updates Redux's Lexemes without listing them in its batch, so the thoughts are the reliable source.
- */
-const changedLexemeKeys = (state: State, batch: PushBatch): string[] => [
-  ...new Set([
-    ...Object.keys(batch.lexemeIndexUpdates),
-    ...Object.entries(batch.thoughtIndexUpdates).flatMap(([id, thought]) =>
-      [state.thoughts.thoughtIndex[id as ThoughtId], thought].flatMap(t => (t ? [hashThought(t.value)] : [])),
-    ),
-  ]),
-]
 
 /** Pushes database batches, frees provider cache for state-only batches, and caches settings. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -132,7 +118,6 @@ const pushQueue: StoreEnhancer<any> =
               thoughtIndexUpdates: batch.thoughtIndexUpdates,
               movePlacements: batch.movePlacements,
               local: batch.local,
-              lexemeKeys: changedLexemeKeys(state, batch),
             })),
           )
         }

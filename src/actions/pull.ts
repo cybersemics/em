@@ -8,11 +8,12 @@ import Thunk from '../@types/Thunk'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import { HOME_TOKEN } from '../constants'
 import fetchDescendants from '../data-providers/data-helpers/fetchDescendants'
-import db from '../data-providers/thoughtspace'
-import { freshPulledLexemes, freshPulledThoughts } from '../data-providers/treecrdt/readFreshness'
+import db, { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
+import hashThought from '../util/hashThought'
+import keyValueBy from '../util/keyValueBy'
 import mergeThoughts from '../util/mergeThoughts'
 
 const BUFFER_DEPTH = 2
@@ -50,7 +51,7 @@ const getPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId
   })
 
 /**
- * Fetch, reconciles, and updates descendants of any number of contexts up to a given depth.
+ * Loads missing and pending descendants of any number of contexts up to a given depth.
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
 export const pullActionCreator =
@@ -81,6 +82,12 @@ export const pullActionCreator =
 
     const thoughtChunks: ThoughtIndices[] = []
 
+    // Redux makes each edit before it queues the write, so once the writes queued by now have settled, storage has every
+    // edit this snapshot shows. A thought or Lexeme that changes in Redux after it may be newer than what the pull reads,
+    // so it is skipped.
+    const { thoughtIndex: thoughtIndexStart, lexemeIndex: lexemeIndexStart } = getState().thoughts
+    await thoughtspaceRuntime.waitForQueuedWrites()
+
     const thoughtsIterable = fetchDescendants(db, filteredThoughtIds, getState, {
       cancelRef,
       maxDepth: maxDepth ?? BUFFER_DEPTH,
@@ -89,14 +96,27 @@ export const pullActionCreator =
     await itForEach(thoughtsIterable, (thoughtsChunk: ThoughtIndices) => {
       thoughtChunks.push(thoughtsChunk)
 
-      // A pull reads storage asynchronously, so its records can predate an edit or undo made meanwhile, and replacing a
-      // loaded thought with one can corrupt the tree (#3947, #3948, #5622). freshPulledThoughts drops those by headSeq.
-      // mergeUpdates will prevent overwriting non-pending thoughtsChunk with pending thoughtsChunk
+      // A pull reads storage asynchronously, so its records can predate an edit or undo made in the meantime, and
+      // replacing a loaded thought with one can corrupt the tree (#3947, #3948, #5622). So a pull only adds missing
+      // thoughts and fills pending ones. Loaded thoughts change through local edits and the TreeCRDT readback.
+      const { thoughtIndex, lexemeIndex } = getState().thoughts
+      const thoughtIndexUpdates = keyValueBy(thoughtsChunk.thoughtIndex, (id, thought) =>
+        (thoughtIndex[id] && !thoughtIndex[id].pending) || thoughtIndex[id] !== thoughtIndexStart[id]
+          ? null
+          : { [id]: thought },
+      )
+      // freeThoughts drops a Lexeme once none of its contexts are loaded, which can happen while the pull reads. The pull
+      // still applies a dropped Lexeme when it adds or fills a thought with that value, so the thought keeps a Lexeme.
+      const keysAdded = new Set(Object.values(thoughtIndexUpdates).map(thought => hashThought(thought.value)))
       // cannot set isLoading to false here because we do not know which chunk contains the root context
       dispatch(
         updateThoughts({
-          thoughtIndexUpdates: freshPulledThoughts(getState().thoughts.thoughtIndex, thoughtsChunk),
-          lexemeIndexUpdates: freshPulledLexemes(thoughtsChunk),
+          thoughtIndexUpdates,
+          lexemeIndexUpdates: keyValueBy(thoughtsChunk.lexemeIndex, (key, lexeme) =>
+            lexemeIndex[key] === lexemeIndexStart[key] || (!lexemeIndex[key] && keysAdded.has(key))
+              ? { [key]: lexeme }
+              : null,
+          ),
           local: false,
           remote: false,
         }),

@@ -9,11 +9,10 @@ import { EM_TOKEN, GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID, SETTINGS_TOKEN, SETTINGS_V
 import testFlags from '../../e2e/testFlags'
 import { childrenMapKey } from '../../util/createChildrenMap'
 import sleep from '../../util/sleep'
-import type { DataProvider, LexemesRead, ThoughtsRead } from '../DataProvider'
+import type { DataProvider } from '../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../thoughtspace'
 import createLexemeIndex from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
-import { onWritesSettled, withHeadSeq } from './readFreshness'
 import { type MaterializationContext, applyMaterializedThoughtsToStore } from './sync/applyMaterializedThoughtsToStore'
 import { enqueueMaterializedThoughtsToStoreWork } from './sync/materializationQueue'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
@@ -24,10 +23,7 @@ type TreecrdtPlacement = { type: 'first' } | { type: 'last' } | { type: 'after';
 type TreecrdtClientDataProvider = Pick<
   DataProvider,
   'getLexemeById' | 'getLexemesByIds' | 'getThoughtById' | 'getThoughtsByIds' | 'updateThoughts'
-> & {
-  /** How far storage has got: the headSeq that a read made now would report. */
-  readHeadSeq: () => Promise<number>
-}
+>
 
 /** Creates the private provider-readiness state used by writes that race startup. */
 const createProviderReadiness = () => {
@@ -79,14 +75,11 @@ const nodeToThought = (id: ThoughtId, node: TreecrdtReadNode | null): Thought | 
   return thought
 }
 
-/** Reads thoughts in the order of `ids` with one TreeCRDT read, and the headSeq it saw. */
-const readThoughts = async (client: TreecrdtClient, ids: ThoughtId[]): Promise<ThoughtsRead> => {
+/** Reads thoughts in the order of `ids` with one TreeCRDT read. */
+const readThoughts = async (client: TreecrdtClient, ids: ThoughtId[]): Promise<(Thought | undefined)[]> => {
   if (ids.length === 0) return []
-  const { headSeq, nodes } = await client.tree.read(ids, { children: { payloads: true } })
-  return withHeadSeq(
-    ids.map(id => nodeToThought(id, nodes[id])),
-    headSeq,
-  )
+  const { nodes } = await client.tree.read(ids, { children: { payloads: true } })
+  return ids.map(id => nodeToThought(id, nodes[id]))
 }
 
 /** Converts em's root parent id to TreeCRDT's global root id. */
@@ -326,13 +319,10 @@ const createTreecrdtDataProvider = () => {
     // update. The startup catch-up runs before `publish` is set and publishes nothing; Redux loads lexemes on demand.
     let publish: ((event: MaterializationEvent, keys: string[]) => void) | undefined
     const lexemes = await createLexemeIndex(client)
-    /** The headSeq of the last event the Lexeme index applied. */
-    let indexedSeq: number | undefined
     const indexes = await client.onMaterializedDurable(
       'em-derived-indexes',
       async event => {
         const keys = await lexemes.applyChanges(event.changes)
-        indexedSeq = event.headSeq
         publish?.(event, keys)
       },
       {
@@ -344,11 +334,9 @@ const createTreecrdtDataProvider = () => {
 
     const clientDb: TreecrdtClientDataProvider = {
       getLexemeById: async key => (await clientDb.getLexemesByIds([key]))[0],
-      getLexemesByIds: async (keys): Promise<LexemesRead> => {
+      getLexemesByIds: async keys => {
         await indexes.idle()
-        // Taken before the read, which then sees at least this much.
-        const headSeq = indexedSeq
-        return withHeadSeq(await lexemes.getLexemesByIds(keys), headSeq)
+        return lexemes.getLexemesByIds(keys)
       },
       getThoughtById: async id => (await readThoughts(client, [id]))[0],
       getThoughtsByIds: async ids => {
@@ -359,55 +347,38 @@ const createTreecrdtDataProvider = () => {
         if (updates.favoriteOrder) await lexemes.setFavoriteOrder(updates.favoriteOrder)
         return updateThoughtsForClient(client, replicaId, updates)
       },
-      readHeadSeq: async () => (await client.tree.read([])).headSeq,
     }
 
     // A publication is queued only once its event is indexed, so the idle barrier waits for the indexes too.
     const unsubscribeMaterialized = client.onMaterialized(
       () => void enqueueMaterializedThoughtsToStoreWork(() => indexes.idle()),
     )
-    let unsubscribeWritesSettled: (() => void) | undefined
     if (materialization) {
       const context: MaterializationContext = {
         bridge: materialization,
         db: clientDb,
         pending: [],
-        reread: new Set(),
-        rereadAfterWrites: new Set(),
         isActive: () => activeDb === clientDb,
       }
-      /** Queues a readback round. One that finds nothing to do returns at once. */
-      const refresh = () =>
+      publish = (event, keys) => {
+        context.pending.push({ event, keys })
+        // Each event queues a publication; one that finds the buffer already drained returns at once.
         void enqueueMaterializedThoughtsToStoreWork(() => applyMaterializedThoughtsToStore(context)).catch(err =>
           console.error('TreeCRDT materialized UI sync failed', err),
         )
-      publish = (event, keys) => {
-        context.pending.push({ event, keys })
-        refresh()
       }
-      // A round skips a remote change to a thought whose local write is unconfirmed. Read it again once the write
-      // returns, since nothing else would bring the change in.
-      unsubscribeWritesSettled = onWritesSettled(ids => {
-        const ready = ids.filter(id => context.rereadAfterWrites.delete(id))
-        if (ready.length === 0) return
-        ready.forEach(id => context.reread.add(id))
-        refresh()
-      })
     }
 
     activeDb = clientDb
     providerReadiness.resolve(clientDb)
     return async () => {
       unsubscribeMaterialized()
-      unsubscribeWritesSettled?.()
       await indexes.close()
     }
   }
 
   return {
     db,
-    /** How far the bound client's storage has got. See readFreshness. */
-    readHeadSeq: () => getActiveDb().readHeadSeq(),
     bindClient,
     resetBinding,
   }
