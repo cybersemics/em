@@ -103,7 +103,7 @@ const statePropertiesToOmit: (keyof State)[] = [
   'selectionOffsets',
 ]
 
-/** Reconstructs TreeCRDT move updates and placement metadata from the final state produced by an undo/redo patch. */
+/** Reconstructs TreeCRDT move updates and placement metadata from the final state produced by an undo/redo patch. It places a moved thought after its previous loaded sibling, so freeThoughts keeps every child of the parents that a patch moves a thought between (see getHistoryThoughtIds). */
 const restoreMoveUpdatesFromThoughtUpdates = (
   state: State,
   oldState: State,
