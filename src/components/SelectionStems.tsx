@@ -55,11 +55,31 @@ const SelectionStems = () => {
       if (!frame.id) frame.id = requestAnimationFrame(update)
     }
 
-    document.addEventListener('selectionchange', schedule)
+    // An edit of the selected text can move its edges without a selectionchange, when the selection's boundaries are
+    // in nodes the edit does not touch, e.g. a letter case change on a word that was just bolded, whose boundaries are
+    // in the empty text nodes on either side of the <b> (see editInPlace). Setting the selection again would fire one,
+    // but on Android it makes the next edit dismiss the native selection menu. So the editable that holds the
+    // selection is watched for changes to its content as well.
+    const observer = new MutationObserver(schedule)
+    const observed: { editable: Element | null } = { editable: null }
+
+    /** Watches the editable that now holds the selection, and schedules an update. */
+    const onSelectionChange = () => {
+      const editable = selection.selectedEditable()
+      if (editable !== observed.editable) {
+        observer.disconnect()
+        if (editable) observer.observe(editable, { characterData: true, childList: true, subtree: true })
+        observed.editable = editable
+      }
+      schedule()
+    }
+
+    document.addEventListener('selectionchange', onSelectionChange)
     window.addEventListener('resize', schedule)
     return () => {
-      document.removeEventListener('selectionchange', schedule)
+      document.removeEventListener('selectionchange', onSelectionChange)
       window.removeEventListener('resize', schedule)
+      observer.disconnect()
       cancelAnimationFrame(frame.id)
     }
   }, [])
