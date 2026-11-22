@@ -5750,12 +5750,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@redux-devtools/extension@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "@redux-devtools/extension@npm:4.0.0"
+"@redux-devtools/extension@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "@redux-devtools/extension@npm:4.0.1"
   peerDependencies:
     redux: ^3.1.0 || ^4.0.0 || ^5.0.0
-  checksum: 10c0/bb3b5b48245f4eb40ffc4384df31f7fe1a14cff2749f8a4058ae5d266436f33e1e97f633daf724e131fc69edfa5c2bcd0f9562bdf9493058fec813641961ccb6
+  checksum: 10c0/29e9484f4b0ff163dd2ca12dde96ed52a5859c117806d54fdfe5e4f64e705585ae6c10b5f66176e74b931ffadf33282c66fe8679b9147b3e009ca92092204513
   languageName: node
   linkType: hard
 
@@ -11822,7 +11822,7 @@ __metadata:
     "@pixi/react": "npm:^8.0.5"
     "@radix-ui/react-dialog": "npm:^1.3.1"
     "@radix-ui/react-visually-hidden": "npm:^1.2.13"
-    "@redux-devtools/extension": "npm:^4.0.0"
+    "@redux-devtools/extension": "npm:^4.0.1"
     "@sinonjs/fake-timers": "npm:^15.5.0"
     "@stylistic/eslint-plugin": "npm:^6.0.1"
     "@stylistic/eslint-plugin-ts": "npm:^4.4.1"
