@@ -5,16 +5,17 @@ import { css, cx } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import Modal from '../@types/Modal'
+import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import fontSizeDown from '../actions/fontSizeDown'
 import fontSizeUp from '../actions/fontSizeUp'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { tsid } from '../data-providers/thoughtspaceSession'
-import scrollTo from '../device/scrollTo'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
 import backgroundGlowStore from '../stores/backgroundGlowStore'
+import fontSizeAnchorStore from '../stores/fontSizeAnchorStore'
 import offlineStatusStore from '../stores/offlineStatusStore'
 import syncStatusStore from '../stores/syncStatusStore'
 import fastClick from '../util/fastClick'
@@ -252,10 +253,19 @@ const Footer = () => {
     // prevent alert dispatch when rendered for first time
     if (_fontSize.current !== fontSize) {
       dispatch(alert(`Font size: ${fontSize}`))
-      scrollTo('bottom')
       _fontSize.current = fontSize
     }
   }, [dispatch, fontSize])
+
+  /** Changes the font size from a font size button, and has the footer held still in the viewport while the thoughts above it are laid out at the new size, so that the buttons stay under the pointer (#1152). At the minimum or maximum font size the button changes nothing, so there is nothing to hold, and a later change from a command holds the cursor as usual. */
+  const changeFontSize = (action: Thunk) =>
+    dispatch((dispatch, getState) => {
+      const fontSizeBefore = getState().fontSize
+      dispatch(action)
+      if (getState().fontSize !== fontSizeBefore) {
+        fontSizeAnchorStore.update('footer')
+      }
+    })
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
@@ -292,7 +302,7 @@ const Footer = () => {
               paddingRight: '12px',
               userSelect: 'none',
             })}
-            {...fastClick(() => dispatch(fontSizeUp()))}
+            {...fastClick(() => changeFontSize(fontSizeUp()))}
           >
             A
           </a>
@@ -305,7 +315,7 @@ const Footer = () => {
               paddingRight: '12px',
               userSelect: 'none',
             })}
-            {...fastClick(() => dispatch(fontSizeDown()))}
+            {...fastClick(() => changeFontSize(fontSizeDown()))}
           >
             A
           </a>
