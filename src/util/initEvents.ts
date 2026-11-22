@@ -127,6 +127,8 @@ const scrollAtEdge = (() => {
       return
     }
 
+    // Drag edge scrolling deliberately moves the viewport even while native touch scrolling is disabled.
+    if (el === window) window.dispatchEvent(new Event('em-scroll'))
     el.scrollTo(scrollLeftNew, scrollTopNew)
     // Record where the window actually landed, which the browser clamps at the end of the page, so that the touch
     // backend does not mistake the scroll event that follows for a native scroll and end the drag (#6281).
