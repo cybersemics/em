@@ -11898,7 +11898,7 @@ __metadata:
     jest-extended: "npm:^7.0.0"
     jest-image-snapshot: "npm:^6.5.2"
     jsdom: "npm:^30.1.2"
-    lockfile-lint: "npm:^5.0.1"
+    lockfile-lint: "npm:^5.1.0"
     lodash: "npm:^4.18.1"
     lottie-react: "npm:^3.1.2"
     marked: "npm:^18.1.2"
@@ -17113,29 +17113,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lockfile-lint-api@npm:^5.9.2":
-  version: 5.9.2
-  resolution: "lockfile-lint-api@npm:5.9.2"
+"lockfile-lint-api@npm:^5.10.0":
+  version: 5.10.0
+  resolution: "lockfile-lint-api@npm:5.10.0"
   dependencies:
     "@yarnpkg/parsers": "npm:^3.0.0-rc.48.1"
     debug: "npm:^4.3.4"
     object-hash: "npm:^3.0.0"
-  checksum: 10c0/5fc80286a5172064946bd370e281a98954c973747e4308b56eae837c71ca4fa03f7f38bed410660355406bc7c41240cc17558dcf91ef68d5b63ee5357c4beb91
+  checksum: 10c0/3d0e6a13f4d5561d2d895c4d15fabe5d9c51580c4b461c236a7c19c21145d7cf4df3eed6ccfbd6b980622bdfa95828265e625bc66612dc523c511a8082aea820
   languageName: node
   linkType: hard
 
-"lockfile-lint@npm:^5.0.1":
-  version: 5.0.1
-  resolution: "lockfile-lint@npm:5.0.1"
+"lockfile-lint@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "lockfile-lint@npm:5.1.0"
   dependencies:
     cosmiconfig: "npm:^9.0.0"
     debug: "npm:^4.3.4"
-    lockfile-lint-api: "npm:^5.9.2"
+    lockfile-lint-api: "npm:^5.10.0"
     tinyglobby: "npm:^0.2.15"
     yargs: "npm:^17.7.2"
   bin:
     lockfile-lint: bin/lockfile-lint.js
-  checksum: 10c0/76aa88b0537353f94248a51cd49b7d2f4e2718191a2766d4a6260b297cee0adccb6af1146bc42594cf79f2f6af78bb2f9dc4b0d50026c502b1fc106306dfd53c
+  checksum: 10c0/4bb7c90c0883f604c66135cdc65314dafdbe49b3e799e8589c816a3183de1303d0c1f99e51704ec25afb7aa644d93569396fbd0ac862115ec68fa94b4c19cd2b
   languageName: node
   linkType: hard
 
