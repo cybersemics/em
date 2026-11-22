@@ -88,13 +88,14 @@ const useFilteredCommands = (
             ? command.labelInverse
             : command.label
         ).toLowerCase()
+        // lowercase the search chars so that they can be matched against the lowercased label
         const chars = search.toLowerCase().split('')
 
         return (
           // include commands with at least one included char and no more than three chars non-matching chars
           // fuzzy matching will prioritize the best commands
           chars.some(char => char !== ' ' && label.includes(char)) &&
-          search.split('').filter(char => char !== ' ' && !label.includes(char)).length <= 3
+          chars.filter(char => char !== ' ' && !label.includes(char)).length <= 3
         )
       }
     })
