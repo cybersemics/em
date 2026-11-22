@@ -36,7 +36,7 @@ Thoughts that are known to exist but haven't been loaded yet are flagged with `p
 
 The client surface em uses:
 
-- `client.tree` — the materialized read model. em reads it with `read`, which returns each requested node's live parent, its index among its siblings, its payload, and its children with their payloads, all from one materialized state.
+- `client.tree` — the materialized read model. em reads thoughts with `read`, which returns each requested node's live parent, its index among its siblings, its payload, and its children with their payloads, all from one materialized state.
 - `client.local` — local write ops minted for a replica id: `insert`, `move`, `delete`, `payload`. Each returns an `Operation`.
 - `client.runner` — raw SQLite access, used for em's own derived tables.
 - `client.onMaterialized` — subscription fired after ops are materialized into SQLite.
