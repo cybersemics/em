@@ -6516,6 +6516,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@sinonjs/fake-timers@npm:^15.5.0":
+  version: 15.5.0
+  resolution: "@sinonjs/fake-timers@npm:15.5.0"
+  dependencies:
+    "@sinonjs/commons": "npm:^3.0.1"
+  checksum: 10c0/9f06d62e6c23bd1a2ac32ef1e06bff3caef6d477c7422e17d93cf43abb5cd38f0f2757df2dc5cf4afb151de7cd7c694581a340996fa3dbd02ed45e2d3c0cbbc1
+  languageName: node
+  linkType: hard
+
 "@stylistic/eslint-plugin-ts@npm:^4.4.1":
   version: 4.4.1
   resolution: "@stylistic/eslint-plugin-ts@npm:4.4.1"
@@ -11814,7 +11823,7 @@ __metadata:
     "@radix-ui/react-dialog": "npm:^1.3.1"
     "@radix-ui/react-visually-hidden": "npm:^1.2.13"
     "@redux-devtools/extension": "npm:^4.0.0"
-    "@sinonjs/fake-timers": "npm:^15.4.0"
+    "@sinonjs/fake-timers": "npm:^15.5.0"
     "@stylistic/eslint-plugin": "npm:^6.0.1"
     "@stylistic/eslint-plugin-ts": "npm:^4.4.1"
     "@tauri-apps/api": "npm:^2.12.4"
