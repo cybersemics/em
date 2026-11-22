@@ -19,6 +19,11 @@ describe('thoughts that contain a url', () => {
     ['Trailing whitespace https://test.com  ', 'https://test.com'],
     ['<b>See</b> <i>test.com</i>', 'test.com'],
     ['<span style="color: rgb(255, 255, 255);">https://test.com</span>', 'https://test.com'],
+    // a link counts as its own URL, in place of its text (#6325)
+    ['A <a href="https://example.com">link</a> B', 'https://example.com'],
+    ['<a href="https://link.com">text.com</a>', 'https://link.com'],
+    ['first.com then <a href="https://second.com">link</a>', 'https://second.com'],
+    ['<a href="https://first.com">link</a> then second.com', 'second.com'],
   ]
 
   cases.forEach(([input, url]) => {

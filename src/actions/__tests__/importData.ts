@@ -1568,6 +1568,66 @@ it('splice pasted single-line markdown into the thought', async () => {
   expect(resumeManifestWritten).toBe(false)
 })
 
+// https://github.com/cybersemics/em/issues/6325
+it('keep a link in pasted markdown as link formatting', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    newThought({ value: '' }),
+    importDataAtFirstMatch([''], { text: 'A [link](https://example.com)\nB' }),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const values = getChildrenRankedByContext(store.getState(), [HOME_TOKEN]).map(child => child.value)
+
+  cleanup()
+
+  expect(values).toEqual(['A <a href="https://example.com">link</a> B'])
+})
+
+// https://github.com/cybersemics/em/issues/6325
+it('reduce a link in pasted HTML to its text', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    newThought({ value: '' }),
+    importDataAtFirstMatch([''], {
+      html: '<ul><li>A <a href="https://example.com">link</a></li><li>B</li></ul>',
+      text: 'A link\nB',
+    }),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const values = getChildrenRankedByContext(store.getState(), [HOME_TOKEN]).map(child => child.value)
+
+  cleanup()
+
+  expect(values).toEqual(['A link', 'B'])
+})
+
+// https://github.com/cybersemics/em/issues/6325
+it('reduce a link in pasted markdown with an unsafe URL to its text', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    newThought({ value: '' }),
+    importDataAtFirstMatch([''], { text: 'A [link](javascript:alert(1))\nB' }),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const values = getChildrenRankedByContext(store.getState(), [HOME_TOKEN]).map(child => child.value)
+
+  cleanup()
+
+  expect(values).toEqual(['A link B'])
+})
+
 // TODO: Indentation broke when switching from importText to importData
 it.skip(`import bold thoughts with bold descendants`, async () => {
   const text = `

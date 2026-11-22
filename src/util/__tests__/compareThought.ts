@@ -132,6 +132,8 @@ it('compareFormatting', () => {
   expect(compareFormatting('<p>a</p>', '<b>B</b>')).toBe(1)
   expect(compareFormatting('<p>a</p>', '<strike>B</strike>')).toBe(1)
   expect(compareFormatting('<i>a</i>', '<a>B</a>')).toBe(-1)
+  // a link does not change where a thought sorts (#6325)
+  expect(compareFormatting('<a href="https://example.com">a</a>', 'B')).toBe(0)
   expect(compareFormatting('<u>a</u>', 'B')).toBe(-1)
   expect(compareFormatting('<strike>a</strike>', 'B')).toBe(-1)
   expect(compareFormatting('<b>A</b>', '<b>B</b>')).toBe(0)

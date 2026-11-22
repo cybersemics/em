@@ -18,7 +18,8 @@ const CURRENT_YEAR = new Date().getFullYear()
 
 const REGEX_PUNCTUATION = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const REGEX_IGNORED_PREFIXES = new RegExp(`^(${IGNORED_PREFIXES.join('|')})(.*)`, 'gmi')
-const REGEX_FORMATTING = new RegExp(`^<(${ALLOWED_FORMATTING_TAGS.join('|')})[^>]*>`)
+// A link does not change where a thought sorts, so it is not counted as formatting here (#6325).
+const REGEX_FORMATTING = new RegExp(`^<(${ALLOWED_FORMATTING_TAGS.filter(tag => tag !== 'a').join('|')})[^>]*>`)
 
 /** Priority ordering for HTML formatting tags. Lower number = sorted first. Bold is highest priority (1), strikethrough is lower priority (4). */
 const FORMATTING_TAG_PRIORITY: Record<string, number> = {

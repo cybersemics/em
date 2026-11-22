@@ -163,6 +163,21 @@ it('export as markdown', () => {
   expect(exported).toBe(`- Hello **wor*ld***`)
 })
 
+// https://github.com/cybersemics/em/issues/6325
+it('export a link as markdown', () => {
+  // not indented, since markdown reads text indented by four spaces as a code block
+  const text = `- a
+  - A [link](https://example.com) B`
+
+  const steps = [importText({ text }), setCursor(['a'])]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, ['a'], 'text/plain')
+
+  expect(exported).toBe(`- a
+  - A [link](https://example.com) B`)
+})
+
 it('export as markdown without escaping metaprogramming attributes', () => {
   const text = `
     - Hello <b>wor<i>ld</i></b>
