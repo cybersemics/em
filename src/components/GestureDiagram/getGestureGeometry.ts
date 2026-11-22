@@ -299,8 +299,8 @@ const getGestureGeometry = (
     rounded,
     size,
   }: {
-    /** Dimensions of a geometry-based chevron, or undefined for an SVG marker. */
-    chevron?: { apexAngle: number; halfSpan: number }
+    /** Dimensions of a geometry-based chevron, or undefined for an SVG marker. A filled chevron applies only to a final line. */
+    chevron?: { apexAngle: number; halfSpan: number; filled?: boolean }
     /** Radius used to soften vertices in line geometry. */
     cornerRadius?: number
     /** Orthogonal offset used to separate reversing directions. */
@@ -313,10 +313,29 @@ const getGestureGeometry = (
 ): GestureGeometry => {
   const base = getBaseGestureGeometry(path, { reversalRatio: size === 0 ? 0 : reversalOffset / size, rounded })
   const geometry = softenCorners(scaleGeometryToSize(base, size), cornerRadius)
-  if (!chevron || path === 'rdld') return { ...geometry, chevron: null }
+  const finalSegment = geometry.segments.at(-1)
+  if (path === 'rdld' || !finalSegment || !chevron) return { ...geometry, chevron: null }
 
-  const finalSegment = geometry.segments.at(-1)!
   const chevronPoints = getChevron(finalSegment.to, getEndTangent(finalSegment), chevron)
+
+  if (chevron.filled) {
+    if (finalSegment.kind !== 'line') return { ...geometry, chevron: null }
+    const legs = {
+      x: (chevronPoints[0].x + chevronPoints[2].x) / 2,
+      y: (chevronPoints[0].y + chevronPoints[2].y) / 2,
+    }
+    const segmentLength = Math.hypot(finalSegment.to.x - finalSegment.from.x, finalSegment.to.y - finalSegment.from.y)
+    const legsBehindEnd = Math.hypot(finalSegment.to.x - legs.x, finalSegment.to.y - legs.y)
+    // The shaft stops between the legs so its round cap stays inside the filled chevron.
+    // A final line shorter than that distance collapses to its start rather than reversing.
+    const shaftEnd = segmentLength > legsBehindEnd ? legs : finalSegment.from
+    return {
+      ...geometry,
+      segments: [...geometry.segments.slice(0, -1), { ...finalSegment, to: shaftEnd }],
+      chevron: chevronPoints,
+    }
+  }
+
   return {
     ...geometry,
     // An arc's endpoint is fixed by its circle and angles. Add a tangent line so the
