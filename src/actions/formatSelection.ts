@@ -73,8 +73,6 @@ const holdFormat = (state: State, id: ThoughtId, options: ReturnType<typeof form
     // pendingFormat is not part of the persisted ThoughtPayload, so there is nothing to write or sync
     local: false,
     remote: false,
-    // Holding formatting is not an edit, so lastUpdated does not advance. Without this the update looks like a stale
-    // echo from another device and is discarded. Same reason generateEmoji sets it for `generating`.
     overwritePending: true,
   })
 }
