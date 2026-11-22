@@ -7,6 +7,8 @@ import createTreecrdtThoughtspace from './treecrdt/runtime'
 
 export type PersistThoughtspaceBatch = Parameters<DataProvider['updateThoughts']>[0] & {
   local?: boolean
+  /** Lexemes the edit changed in Redux. They stay unconfirmed until the batch is written, like its thoughts. */
+  lexemeKeys?: string[]
 }
 
 /** Storage lifetime requested from the active thoughtspace provider. */

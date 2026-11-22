@@ -117,12 +117,23 @@ It also stamps every local write with a `writeId` of the form `em-local:${source
 
 [`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) then:
 
-1. Reads a Redux snapshot, then waits for the local writes queued so far. Every edit the snapshot shows has queued its write by then, so storage has it once the wait ends. Writes queued later are not waited for; step 3 catches any that matter.
+1. Reads a Redux snapshot, then waits for the local writes queued so far. Every edit the snapshot shows has queued its write by then, so storage has it once the wait ends. Writes queued later are not waited for: their thoughts are unconfirmed, so step 4 keeps Redux's copies of them.
 2. For incoming changes only, refreshes affected thoughts, their parents and their siblings in at most three batched reads, and projects sibling order onto numeric ranks.
-3. Waits for indexing, then reads complete memberships for affected old and new values. A round starts over if Redux meanwhile changes a Lexeme it read or a thought it writes, or renames or deletes a thought its Lexemes list. It also starts over if an event is indexed while it reads, unless the event is local and the round read no thoughts.
-4. Applies changed memberships and incoming thoughts through the *materialization bridge*.
+3. Waits for indexing, then reads complete memberships for affected old and new values. A round starts over if Redux meanwhile changes a Lexeme it read, or renames or deletes a thought its Lexemes list. It also starts over if an event is indexed while it reads, unless the event is local and the round read no thoughts.
+4. Drops each thought that Redux has a newer copy of, by [read freshness](#read-freshness), and reads it again later: in the next round if a newer read got there first, or once its local write returns.
+5. Applies changed memberships and incoming thoughts through the *materialization bridge*.
 
-The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.
+The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload. So are `pendingFormat`, `generating`, `generatingPlaceholder` and `splitSource` while the value is unchanged.
+
+### Read freshness
+
+Pulls and the readback read storage asynchronously, so a read can resolve after Redux has moved on: after a local edit or undo, or after a newer read. [`readFreshness.ts`](../src/data-providers/treecrdt/readFreshness.ts) decides whether a stored copy may replace the one in Redux. It goes by `headSeq`, TreeCRDT's count of how far storage has got, which every `tree.read` reports, rather than by `lastUpdated`, which is the clock of whichever device wrote last and goes backwards on undo.
+
+- A local edit is unconfirmed from the dispatch that makes it until its writes return. `persistPushQueueBatches` marks each batch's thoughts as it is called, in the same dispatch, then confirms them at the `headSeq` storage has reached once the batch is written. A read of an unconfirmed thought is skipped.
+- A read that saw a lower `headSeq` than the copy in Redux is skipped, since it can predate an edit or a newer read. A read Redux takes moves the thought up to that read's `headSeq`.
+- A failed write leaves its thoughts at the `headSeq` they had, so the next read can show what storage has.
+
+`updateThoughts` applies non-local updates as given; the callers above have already dropped stale ones.
 
 A failed readback retains the pending events; the next materialization event retries publication. This is separate from an indexing failure, after which TreeCRDT delivers the same changes again with the next event, and they are published once they are indexed. Later changes are delivered with them and wait too, so a change that can never be indexed holds back the changes after it. Waiting for indexing (including `waitForIdle`) waits for the queued updates without retrying a failed one.
 
@@ -188,7 +199,7 @@ When the cursor moves, the previous pull's `cancelRef.canceled` is set to `true`
 
 ### `fetchDescendants` (the actual pull engine)
 
-[`data-providers/data-helpers/fetchDescendants.ts`](../src/data-providers/data-helpers/fetchDescendants.ts) is an async iterable that does breadth-first traversal of thought IDs and yields `{ thoughtIndex, lexemeIndex }` chunks. The `pull` thunk dispatches each chunk into Redux via `updateThoughts` so the UI can paint partial results as the pull progresses.
+[`data-providers/data-helpers/fetchDescendants.ts`](../src/data-providers/data-helpers/fetchDescendants.ts) is an async iterable that does breadth-first traversal of thought IDs and yields `{ thoughtIndex, lexemeIndex, headSeq }` chunks, where `headSeq` is that of the chunk's oldest read. The `pull` thunk dispatches each chunk into Redux via `updateThoughts` so the UI can paint partial results as the pull progresses. It keeps only the thoughts that [read freshness](#read-freshness) allows. A pull fills in missing and pending thoughts; it replaces a loaded thought only when storage differs, as after a failed readback, and keeps its rank while its parent is unchanged, since the readback owns sibling order.
 
 Notable behavior:
 

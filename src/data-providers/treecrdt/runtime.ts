@@ -1,5 +1,6 @@
 import type { Operation } from '@treecrdt/interface'
 import { type ClientOptions, type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
+import type ThoughtId from '../../@types/ThoughtId'
 import type { DataProvider } from '../DataProvider'
 import { initPermissionsStore } from '../permissionsStore'
 import type {
@@ -9,6 +10,7 @@ import type {
   ThoughtspaceStorage,
 } from '../thoughtspace'
 import { clientIdReady, tsid } from '../thoughtspaceSession'
+import { beginLocalWrite } from './readFreshness'
 import acquireTreecrdtSessionLock from './sessionLock'
 import { getMaterializedThoughtsToStoreVersion, waitForMaterializedThoughtsToStore } from './sync/materializationQueue'
 import createTreecrdtWebSocketSync from './sync/treecrdtWebSocketSync'
@@ -17,6 +19,8 @@ import { getTreecrdtWriteBarrierVersion, waitForTreecrdtWriteBarrier, withTreecr
 
 type PersistTreecrdtBatch = Parameters<DataProvider['updateThoughts']>[0] & {
   local?: boolean
+  /** Lexemes the edit changed in Redux. See readFreshness. */
+  lexemeKeys?: string[]
 }
 
 /** One app-scoped TreeCRDT thoughtspace with its bound data provider and lifecycle. */
@@ -153,17 +157,35 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
 
   const db: DataProvider = { ...provider.db, clear: drop }
 
-  /** Persists push queue batches through the bound provider and forwards local ops to remote sync. */
-  const persistPushQueueBatches = (batches: readonly PersistTreecrdtBatch[]): Promise<void> =>
-    withTreecrdtWriteBarrier(async () => {
-      for (const batch of batches) {
-        const { local: isLocal, ...updates } = batch
-        const maybeOps = await db.updateThoughts(updates)
-        if (isLocal && Array.isArray(maybeOps) && maybeOps.length > 0) {
-          void websocketSync.pushLocalOps(maybeOps as readonly Operation[])
+  /**
+   * Persists push queue batches through the bound provider and forwards local ops to remote sync. The push queue calls
+   * this in the dispatch that made the edits, so each batch's thoughts are unconfirmed before any read can resolve, and
+   * stay so until the batch's writes return. See readFreshness.
+   */
+  const persistPushQueueBatches = (batches: readonly PersistTreecrdtBatch[]): Promise<void> => {
+    const writes = batches.map(batch =>
+      beginLocalWrite(Object.keys(batch.thoughtIndexUpdates) as ThoughtId[], batch.lexemeKeys ?? []),
+    )
+    return withTreecrdtWriteBarrier(async () => {
+      let written = 0
+      try {
+        for (const batch of batches) {
+          const { local: isLocal, lexemeKeys: _lexemeKeys, ...updates } = batch
+          const maybeOps = await db.updateThoughts(updates)
+          writes[written].confirm(
+            Object.keys(updates.thoughtIndexUpdates).length > 0 ? await provider.readHeadSeq() : 0,
+          )
+          written += 1
+          if (isLocal && Array.isArray(maybeOps) && maybeOps.length > 0) {
+            void websocketSync.pushLocalOps(maybeOps as readonly Operation[])
+          }
         }
+      } finally {
+        // A batch that failed, and the ones after it, are not in storage.
+        writes.slice(written).forEach(write => write.fail())
       }
     })
+  }
 
   /** Opens and binds one client. Lifecycle serialization provides retryable single-flight behavior. */
   const initializeClient = async (options: ThoughtspaceRuntimeInitOptions): Promise<InitResult> => {

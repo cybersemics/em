@@ -3,12 +3,13 @@ import type Index from '../../../@types/IndexType'
 import type Thought from '../../../@types/Thought'
 import type ThoughtId from '../../../@types/ThoughtId'
 import type { DataProvider } from '../../DataProvider'
+import { minHeadSeq } from '../readFreshness'
 
-/** Collects affected ids from materialization changes, loads fresh thoughts from the provider. */
+/** Collects affected ids from materialization changes, loads fresh thoughts from the provider, and returns the headSeq of the oldest read. */
 export default async function refreshThoughtsFromMaterializationChanges(
   changes: Change[],
   db: Pick<DataProvider, 'getThoughtsByIds'>,
-): Promise<Index<Thought | null>> {
+): Promise<{ thoughtIndexUpdates: Index<Thought | null>; headSeq: number | undefined }> {
   const deleted = new Set<ThoughtId>()
   const touched = new Set<ThoughtId>()
   /** Thoughts inserted, moved or restored, so their siblings' positions may have shifted. */
@@ -62,6 +63,7 @@ export default async function refreshThoughtsFromMaterializationChanges(
   // Read the touched thoughts and the parents whose order changed, then those parents' children. A placed thought whose
   // change named no parent, or another one, adds its current parent, which takes one more read.
   const thoughts: Index<Thought | undefined> = {}
+  let headSeq: number | undefined
   while (true) {
     for (const id of touched) {
       const thought = thoughts[id]
@@ -72,6 +74,7 @@ export default async function refreshThoughtsFromMaterializationChanges(
     const ids = [...new Set([...touched, ...orderParents, ...childIds])].filter(id => !(id in thoughts))
     if (ids.length === 0) break
     const read = await db.getThoughtsByIds(ids)
+    headSeq = minHeadSeq(headSeq, read.headSeq)
     ids.forEach((id, i) => (thoughts[id] = read[i]))
   }
 
@@ -99,5 +102,5 @@ export default async function refreshThoughtsFromMaterializationChanges(
     thoughtIndexUpdates[id] = null
   }
 
-  return thoughtIndexUpdates
+  return { thoughtIndexUpdates, headSeq }
 }

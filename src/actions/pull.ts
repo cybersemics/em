@@ -9,6 +9,7 @@ import { updateThoughtsActionCreator as updateThoughts } from '../actions/update
 import { HOME_TOKEN } from '../constants'
 import fetchDescendants from '../data-providers/data-helpers/fetchDescendants'
 import db from '../data-providers/thoughtspace'
+import { freshPulledLexemes, freshPulledThoughts } from '../data-providers/treecrdt/readFreshness'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
@@ -88,12 +89,14 @@ export const pullActionCreator =
     await itForEach(thoughtsIterable, (thoughtsChunk: ThoughtIndices) => {
       thoughtChunks.push(thoughtsChunk)
 
+      // A pull reads storage asynchronously, so its records can predate an edit or undo made meanwhile, and replacing a
+      // loaded thought with one can corrupt the tree (#3947, #3948, #5622). freshPulledThoughts drops those by headSeq.
       // mergeUpdates will prevent overwriting non-pending thoughtsChunk with pending thoughtsChunk
       // cannot set isLoading to false here because we do not know which chunk contains the root context
       dispatch(
         updateThoughts({
-          thoughtIndexUpdates: thoughtsChunk.thoughtIndex,
-          lexemeIndexUpdates: thoughtsChunk.lexemeIndex,
+          thoughtIndexUpdates: freshPulledThoughts(getState().thoughts.thoughtIndex, thoughtsChunk),
+          lexemeIndexUpdates: freshPulledLexemes(thoughtsChunk),
           local: false,
           remote: false,
         }),

@@ -39,7 +39,7 @@ const fakeProvider = (thoughts: Index<Thought>) => ({
 })
 
 it('projects TreeCRDT sibling order into compatibility ranks', async () => {
-  const updates = await refreshThoughtsFromMaterializationChanges(
+  const { thoughtIndexUpdates: updates } = await refreshThoughtsFromMaterializationChanges(
     [{ kind: 'move', node: C_ID, parentBefore: HOME_TOKEN, parentAfter: HOME_TOKEN }],
     fakeProvider({
       [HOME_TOKEN]: thought(HOME_TOKEN, HOME_TOKEN, 0, ROOT_PARENT_ID, [C_ID, A_ID, B_ID]),
@@ -63,7 +63,7 @@ it('projects TreeCRDT sibling order for both parents after a cross-parent move',
     [B_ID]: thought(B_ID, 'b', 1, LEFT_ID),
     [C_ID]: thought(C_ID, 'c', 0, RIGHT_ID),
   })
-  const updates = await refreshThoughtsFromMaterializationChanges(
+  const { thoughtIndexUpdates: updates } = await refreshThoughtsFromMaterializationChanges(
     [{ kind: 'move', node: A_ID, parentBefore: LEFT_ID, parentAfter: RIGHT_ID }],
     db,
   )
@@ -88,7 +88,10 @@ it('reads only a thought whose payload changed, since that moves no sibling', as
   }
   const db = fakeProvider(thoughts)
 
-  const updates = await refreshThoughtsFromMaterializationChanges([{ kind: 'payload', node: A_ID, payload: null }], db)
+  const { thoughtIndexUpdates: updates } = await refreshThoughtsFromMaterializationChanges(
+    [{ kind: 'payload', node: A_ID, payload: null }],
+    db,
+  )
 
   expect(updates).toEqual({ [A_ID]: thoughts[A_ID] })
   expect(db.getThoughtsByIds.mock.calls).toEqual([[[A_ID]]])
@@ -96,7 +99,7 @@ it('reads only a thought whose payload changed, since that moves no sibling', as
 
 it('keeps a thought restored after deletion in the same buffered refresh', async () => {
   const restored = thought(A_ID, 'a', 0, HOME_TOKEN)
-  const result = await refreshThoughtsFromMaterializationChanges(
+  const { thoughtIndexUpdates: result } = await refreshThoughtsFromMaterializationChanges(
     [
       { kind: 'delete', node: A_ID, parentBefore: HOME_TOKEN },
       { kind: 'restore', node: A_ID, parentAfter: HOME_TOKEN, payload: null },
