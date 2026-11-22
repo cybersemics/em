@@ -255,6 +255,30 @@ it.each([
   },
 )
 
+// https://github.com/cybersemics/em/issues/6347
+it('undoes a space typed before other text together with that text', async () => {
+  await dispatch([importText({ text: '- x' }), setCursor(['x'])])
+  const editable = (await findThoughtByText('x'))!
+  await act(async () => {
+    editable.focus()
+    selection.set(editable, { offset: 0 })
+    await vi.runOnlyPendingTimersAsync()
+  })
+
+  const user = userEvent.setup({ delay: null })
+  await user.keyboard(' y')
+  await act(vi.runAllTimersAsync)
+  expect(editable.textContent).toBe(' yx')
+
+  await act(async () => {
+    executeCommand(undo)
+    await vi.runAllTimersAsync()
+  })
+
+  // The space was typed before the y, so it is not the last thing done, and Undo reverts the typing as a whole.
+  expect(editable.textContent).toBe('x')
+})
+
 describe('Generate Thought', () => {
   const mockFetch = vi.fn()
   const originalFetch = global.fetch

@@ -117,6 +117,44 @@ describe('=note', () => {
     expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe('y'.length)
   })
 
+  // https://github.com/cybersemics/em/pull/6277#issuecomment-7029019056
+  test.each([
+    { position: 'start', offset: 0, typed: ' ddd' },
+    { position: 'end', offset: 3, typed: 'ddd ' },
+  ])(
+    'undoes a space typed at the $position of a note without undoing the step before it',
+    async ({ offset, typed }) => {
+      await dispatch([importText({ text: '- aaa\n- bbb\n- ccc\n  - =note\n    - ddd' }), setCursor(['aaa'])])
+      await act(async () => {
+        store.dispatch(formatSelection('foreColor', 'green'))
+        await vi.runOnlyPendingTimersAsync()
+      })
+
+      await dispatch([setCursor(['ccc']), toggleNote()])
+      await act(vi.runOnlyPendingTimersAsync)
+      const noteEditor = screen.getByLabelText('note-editable')
+      await act(async () => {
+        noteEditor.focus()
+        selection.set(noteEditor, { offset })
+      })
+
+      const user = userEvent.setup({ delay: null })
+      await user.keyboard(' ')
+      await act(vi.runOnlyPendingTimersAsync)
+      expect(noteEditor.textContent).toBe(typed)
+
+      await act(async () => {
+        store.dispatch(undo())
+        await vi.runOnlyPendingTimersAsync()
+      })
+
+      expect(screen.getByLabelText('note-editable').innerHTML).toBe('ddd')
+      // The caret stays where the space was typed, counted in the text without it.
+      expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe(offset)
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<font color=')
+    },
+  )
+
   // https://github.com/cybersemics/em/pull/6277#discussion_r4570542744
   test('undoes and redoes deleting the first word of a note with the caret where it was', async () => {
     await dispatch([importText({ text: '- a\n  - =note\n    - x y' }), setCursor(['a']), toggleNote()])
