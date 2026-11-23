@@ -140,7 +140,7 @@ fn submenu<R: Runtime>(
 pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     // on_event judges an item by the key press that chose it.
     #[cfg(target_os = "macos")]
-    record_key_presses();
+    monitor_key_presses();
     let definition: Definition = serde_json::from_str(include_str!("../menu.json"))?;
     let mut registry = HashMap::new();
     let package = app.package_info();
@@ -275,6 +275,22 @@ fn is_loose_key_match(accelerator: &str, shift: bool, typed: &str) -> bool {
         && !typed.eq_ignore_ascii_case(key)
 }
 
+/// Whether a key press was made with Command and Fn on a key that Fn does not change, as Command + Fn + - is. WebKit
+/// does not report Fn to the page, which would take the key for its shortcut without Fn, although AppKit does not match
+/// it to that shortcut's item. AppKit marks the keys that Fn makes, such as the arrows, Forward Delete, and F1 to F12,
+/// with Fn even when Fn is not pressed, and those type a character from the function key range (U+F700 to U+F8FF).
+/// Fn with Control is left to macOS, which gives it window shortcuts such as Fn + Control + F (Fill).
+///
+/// `typed` is the key event's `charactersIgnoringModifiers`.
+#[cfg(any(target_os = "macos", test))]
+fn is_fn_chord(command: bool, function: bool, typed: &str) -> bool {
+    command
+        && function
+        && !typed
+            .chars()
+            .any(|character| ('\u{F700}'..='\u{F8FF}').contains(&character))
+}
+
 /// A key press as the app dispatched it: whether Shift was held, what the key typed (`charactersIgnoringModifiers`), and
 /// when.
 #[cfg(any(target_os = "macos", test))]
@@ -304,26 +320,40 @@ impl KeyPress {
 #[cfg(target_os = "macos")]
 static LAST_KEY_PRESS: Mutex<Option<KeyPress>> = Mutex::new(None);
 
-/// Records each key press as the app dispatches it, for `chosen_by_loose_key_match`. Tauri reports a chosen item from its
-/// event loop, after AppKit has dispatched the key, by which time the app may already have taken the key's release or a
-/// modifier's release off its queue, so the event current then is not always the key press that chose the item. A mouse
-/// button press forgets the key press, so that an item chosen with the pointer is not judged by an earlier key.
+/// Watches each key press as the app dispatches it. A Command + Fn key press (see `is_fn_chord`) is dropped, so that it
+/// does nothing in the page either. Any other key press is recorded for `chosen_by_loose_key_match`. Tauri reports a
+/// chosen item from its event loop, after AppKit has dispatched the key, by which time the app may already have taken the
+/// key's release or a modifier's release off its queue, so the event current then is not always the key press that
+/// chose the item. A mouse button press forgets the key press, so that an item chosen with the pointer is not judged by
+/// an earlier key.
 #[cfg(target_os = "macos")]
-fn record_key_presses() {
+fn monitor_key_presses() {
     use objc2_app_kit::{NSEvent, NSEventMask, NSEventModifierFlags, NSEventType};
     use std::ptr::NonNull;
 
     let handler = block2::RcBlock::new(|event: NonNull<NSEvent>| -> *mut NSEvent {
         // SAFETY: AppKit passes the event it is about to dispatch, which outlives the call.
         let dispatched = unsafe { event.as_ref() };
-        let press = (dispatched.r#type() == NSEventType::KeyDown).then(|| KeyPress {
-            shift: dispatched
-                .modifierFlags()
-                .contains(NSEventModifierFlags::Shift),
-            typed: dispatched
+        let is_key_down = dispatched.r#type() == NSEventType::KeyDown;
+        let modifiers = dispatched.modifierFlags();
+        let typed = || {
+            dispatched
                 .charactersIgnoringModifiers()
                 .map(|characters| characters.to_string())
-                .unwrap_or_default(),
+                .unwrap_or_default()
+        };
+        if is_key_down
+            && is_fn_chord(
+                modifiers.contains(NSEventModifierFlags::Command),
+                modifiers.contains(NSEventModifierFlags::Function),
+                &typed(),
+            )
+        {
+            return std::ptr::null_mut();
+        }
+        let press = is_key_down.then(|| KeyPress {
+            shift: modifiers.contains(NSEventModifierFlags::Shift),
+            typed: typed(),
             at: Instant::now(),
         });
         if let Ok(mut last) = LAST_KEY_PRESS.lock() {
@@ -335,7 +365,7 @@ fn record_key_presses() {
         | NSEventMask::LeftMouseDown
         | NSEventMask::RightMouseDown
         | NSEventMask::OtherMouseDown;
-    // SAFETY: the handler returns the event it was given, so every event is dispatched unchanged.
+    // SAFETY: the handler returns either the event it was given, which is then dispatched unchanged, or null, which drops it.
     let monitor = unsafe { NSEvent::addLocalMonitorForEventsMatchingMask_handler(mask, &handler) };
     // The monitor records for as long as the app runs.
     std::mem::forget(monitor);
@@ -407,7 +437,7 @@ pub fn update_system_menu<R: Runtime>(
 
 #[cfg(test)]
 mod tests {
-    use super::{is_loose_key_match, KeyPress, KEY_PRESS_LIFETIME};
+    use super::{is_fn_chord, is_loose_key_match, KeyPress, KEY_PRESS_LIFETIME};
     use std::time::Instant;
 
     #[test]
@@ -430,6 +460,27 @@ mod tests {
     fn shift_that_types_the_accelerator_key_is_not_loose() {
         // A layout where = is Shift + 0.
         assert!(!is_loose_key_match("Cmd+=", true, "="));
+    }
+
+    #[test]
+    fn command_and_fn_on_a_key_that_fn_does_not_change_is_a_fn_chord() {
+        // Command + Fn + - and Command + Fn + =.
+        assert!(is_fn_chord(true, true, "-"));
+        assert!(is_fn_chord(true, true, "="));
+    }
+
+    #[test]
+    fn a_key_that_fn_makes_is_not_a_fn_chord() {
+        // Command + Up, which AppKit marks with Fn although Fn is not pressed, and Command + Fn + Delete (Forward Delete).
+        assert!(!is_fn_chord(true, true, "\u{F700}"));
+        assert!(!is_fn_chord(true, true, "\u{F728}"));
+    }
+
+    #[test]
+    fn a_key_press_without_both_command_and_fn_is_not_a_fn_chord() {
+        assert!(!is_fn_chord(true, false, "-"));
+        // Fn + Control + F (Fill).
+        assert!(!is_fn_chord(false, true, "f"));
     }
 
     #[test]
