@@ -210,6 +210,10 @@ const Note = React.memo(
         const htmlBefore = htmlBeforeInputRef.current
         htmlBeforeInputRef.current = blank ? '' : e.target.value
 
+        // Undo discards an input that changed nothing saved, such as whitespace typed at either end (#6347). The note edit
+        // dispatches synchronously, so the saved value can be compared on either side of it.
+        const savedBefore = noteValue(store.getState(), path)
+
         // update the referenced thought directly if it exists
         dispatch((dispatch, getState) => {
           const state = getState()
@@ -281,6 +285,10 @@ const Note = React.memo(
               }),
             )
           }
+        })
+        const stateAfter = store.getState()
+        editableSyncStore.update({
+          unsavedInputUndoPatches: noteValue(stateAfter, path) === savedBefore ? stateAfter.undoPatches : null,
         })
       },
       [dispatch, path, justPasted],
