@@ -26,7 +26,7 @@ const oppositeDirection = (dir: Direction) =>
     d: 'u',
   })[dir]
 
-/** Unit vector for each direction, with y pointing down as in SVG. */
+/** One step in each direction. SVG's y points down, so up is y: -1. */
 const directionVector = (dir: Direction): GesturePoint =>
   ({
     l: { x: -1, y: 0 },
@@ -35,34 +35,52 @@ const directionVector = (dir: Direction): GesturePoint =>
     d: { x: 0, y: 1 },
   })[dir]
 
-/** Returns the point at the given angle on a unit circle around center. */
-const pointOnCircle = (center: GesturePoint, angle: number): GesturePoint => ({
+/**
+ * Returns the point on a radius-1 circle around center, at the given angle in degrees.
+ * 0° is right of the center and 90° is below it, because SVG's y points down.
+ */
+const getPointAtAngle = (center: GesturePoint, angle: number): GesturePoint => ({
   x: center.x + Math.cos((angle * Math.PI) / 180),
   y: center.y + Math.sin((angle * Math.PI) / 180),
 })
 
 /**
- * Builds one quarter arc per turn, each centered on the inside of its own turn, so that
- * consecutive turns may bend in opposite directions. Each arc is split in half so the swipe
- * before the turn and the swipe after it each own one piece.
+ * Builds a rounded gesture one turn at a time. Each turn is a quarter circle around its own center,
+ * so one turn can bend clockwise and the next counterclockwise, e.g. lul (←↑←) becomes an S, not a C.
+ * Each quarter circle is split in half, so the swipe going into the turn and the swipe coming out of it
+ * each own one piece for progress highlighting.
  */
 const generateTurnArcs = (directions: Direction[]): ArcGestureSegment[] => {
-  let position: GesturePoint = { x: 0, y: 0 }
+  // Where the pen is now. Each turn moves it to the end of that turn.
+  let currentPoint: GesturePoint = { x: 0, y: 0 }
+
+  // A turn sits between two swipes, so a gesture with n swipes has n - 1 turns.
   return directions.slice(0, -1).flatMap((dir, i) => {
     const next = directions[i + 1]
+    // Decided for every turn, not once for the whole gesture.
     const clockwise = rotateClockwise(dir) === next
-    const turn = directionVector(next)
-    const center = { x: position.x + turn.x, y: position.y + turn.y }
-    const startAngle = (Math.atan2(position.y - center.y, position.x - center.x) * 180) / Math.PI
-    const endAngle = startAngle + (clockwise ? 90 : -90)
-    const midAngle = (startAngle + endAngle) / 2
-    position = pointOnCircle(center, endAngle)
 
-    /** Builds the part of this turn's arc between two angles. */
-    const arc = (from: number, to: number, gestureIndex: number): ArcGestureSegment => ({
+    // The center is the point the pen swings around. It is never on the drawn line.
+    // It sits one step from the pen, toward the direction we are turning into,
+    // like the inside of a car's turn.
+    const turn = directionVector(next)
+    const center = { x: currentPoint.x + turn.x, y: currentPoint.y + turn.y }
+
+    // Angle of the pen as seen from the center: where the quarter circle starts.
+    const startAngle = (Math.atan2(currentPoint.y - center.y, currentPoint.x - center.x) * 180) / Math.PI
+    // A turn is a quarter circle: +90° clockwise, -90° counterclockwise.
+    const endAngle = startAngle + (clockwise ? 90 : -90)
+    // Halfway point, where the turn is split between the two swipes.
+    const midAngle = (startAngle + endAngle) / 2
+
+    // The end of this turn is where the next turn starts.
+    currentPoint = getPointAtAngle(center, endAngle)
+
+    /** Builds the part of this turn's quarter circle between two angles. */
+    const createArcSegment = (from: number, to: number, gestureIndex: number): ArcGestureSegment => ({
       kind: 'arc',
-      from: pointOnCircle(center, from),
-      to: pointOnCircle(center, to),
+      from: getPointAtAngle(center, from),
+      to: getPointAtAngle(center, to),
       center,
       radius: 1,
       startAngle: from,
@@ -70,7 +88,9 @@ const generateTurnArcs = (directions: Direction[]): ArcGestureSegment[] => {
       sweepFlag: clockwise ? 1 : 0,
       gestureIndex,
     })
-    return [arc(startAngle, midAngle, i), arc(midAngle, endAngle, i + 1)]
+
+    // First half belongs to the swipe going into the turn, second half to the swipe coming out.
+    return [createArcSegment(startAngle, midAngle, i), createArcSegment(midAngle, endAngle, i + 1)]
   })
 }
 
