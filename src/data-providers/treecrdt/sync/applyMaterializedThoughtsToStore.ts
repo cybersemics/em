@@ -11,8 +11,6 @@ import { type MaterializationStore, refreshThoughtsFromMaterializationChanges } 
 type MaterializationContext = Readonly<{
   bridge: ThoughtspaceMaterializationBridge
   db: MaterializationStore
-  /** Resolves once every change materialized so far is in the attribute index. */
-  indexed: () => Promise<void>
 }>
 
 /**
@@ -21,17 +19,13 @@ type MaterializationContext = Readonly<{
  */
 export async function applyMaterializedThoughtsToStore(
   event: MaterializationEvent,
-  { bridge, db, indexed }: MaterializationContext,
+  { bridge, db }: MaterializationContext,
 ): Promise<void> {
   if (event.changes.length === 0) return
 
   // Local writes and materialization callbacks can race. Wait for queued em -> TreeCRDT writes before reading
   // SQLite back into app state, otherwise a remote refresh can reapply stale rows over newer optimistic state.
   await waitForTreecrdtWriteBarrier()
-
-  // Thought reads include attribute children, and writes don't wait for the index, so wait until it has applied this
-  // event and the local writes before it.
-  await indexed()
 
   const snapshot = bridge.getSnapshot()
   const { deletedIds, thoughts, lexemeIndexUpdates } = await refreshThoughtsFromMaterializationChanges(

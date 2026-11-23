@@ -76,8 +76,8 @@ it('retains the originating materialization context after rebinding the provider
 
     expect(context.bridge).toBe(bridgeOne)
     expect(context.db).not.toBe(provider.db)
-    await expect(context.db.getThoughtById(THOUGHT_ID)).resolves.toMatchObject({ value: 'client one' })
-    await expect(provider.db.getThoughtById(THOUGHT_ID)).resolves.toMatchObject({ value: 'client two' })
+    await expect(context.db.getThoughtsByIds([THOUGHT_ID])).resolves.toMatchObject([{ value: 'client one' }])
+    await expect(provider.db.getThoughtsByIds([THOUGHT_ID])).resolves.toMatchObject([{ value: 'client two' }])
   } finally {
     await clientOne.drop()
     await clientTwo.drop()
