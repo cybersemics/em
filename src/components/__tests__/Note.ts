@@ -7,6 +7,7 @@ import { redoActionCreator as redo } from '../../actions/redo'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand } from '../../commands'
+import bold from '../../commands/bold'
 import undoCommand from '../../commands/undo'
 import { HOME_TOKEN } from '../../constants'
 import * as selection from '../../device/selection'
@@ -128,7 +129,7 @@ describe('=note', () => {
     async ({ offset, typed }) => {
       await dispatch([importText({ text: '- aaa\n- bbb\n- ccc\n  - =note\n    - ddd' }), setCursor(['aaa'])])
       await act(async () => {
-        store.dispatch(formatSelection('foreColor', 'green'))
+        executeCommand(bold)
         await vi.runOnlyPendingTimersAsync()
       })
 
@@ -153,7 +154,7 @@ describe('=note', () => {
       expect(screen.getByLabelText('note-editable').innerHTML).toBe('ddd')
       // The caret stays where the space was typed, counted in the text without it.
       expect(selection.offsetFromNode(screen.getByLabelText('note-editable'))).toBe(offset)
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<font color=')
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<b>aaa</b>')
     },
   )
 
