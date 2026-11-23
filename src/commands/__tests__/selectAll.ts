@@ -49,6 +49,33 @@ describe('chained commands', () => {
 
 describe('excluded commands', () => {
   // https://github.com/cybersemics/em/issues/5874
+  it('does not chain Table View, which toggles the same parent as Table View alone', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - p
+            - a
+              - a1
+            - b
+              - b1
+        `,
+      }),
+      setCursor(['p', 'b']),
+    ])
+
+    // Select All (ldr) + Table View (rdlu)
+    handleGestureEnd({ sequence: 'ldr' + 'dlu', e: {} as GestureResponderEvent })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - p
+    - a
+      - a1
+    - b
+      - b1`)
+  })
+
+  // https://github.com/cybersemics/em/issues/5874
   it('does not chain Sort, which sorts the same parent as Sort alone', () => {
     store.dispatch([
       importText({
