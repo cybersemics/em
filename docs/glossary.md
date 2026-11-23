@@ -42,7 +42,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **cliff** — A drop in visible depth between consecutive thoughts. `cliff = next.depth - node.depth` when negative; `cliff = -3` means three levels shallower. Drives extra padding (`cliffPadding`) and the number of `DropEnd` zones rendered. See [`DropCliff.tsx`](../src/components/DropCliff.tsx) and [layout-rendering.md → usePositionedThoughts](layout-rendering.md#usepositionedthoughts-x-and-y).
 
-**clientId** — Public key of the writer, derived as base64(SHA-256(accessToken)). Stamped on every Thought/Lexeme write as `updatedBy`. Available asynchronously via the `clientIdReady` promise. See [persistence.md → Identity & sharing](persistence.md#identity--sharing).
+**clientId** — Public key of the writer, derived as base64(SHA-256(accessToken)). Stored in Thought payloads as `updatedBy`. Available asynchronously via the `clientIdReady` promise. See [persistence.md → Identity & sharing](persistence.md#identity--sharing).
 
 **command** — A user-triggered operation (keyboard shortcut, gesture, toolbar button, Command Universe entry, or system menu item). Single-file definition under [`/src/commands`](../src/commands) implementing the [`Command`](../src/@types/Command.ts) interface; auto-registered via the barrel import in [`commands.ts`](../src/commands.ts). The legacy name *shortcut* still appears in some places. See [commands.md](commands.md).
 
@@ -212,7 +212,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **undo step** — What one Undo reverts: one patch, or a directional pair when trailing navigation belongs with the preceding change or an edit gives a newly created thought its value. A command transaction may collect several underlying actions into one patch. The undo slider uses the same grouping. See [commands.md → Undo history and the undo slider](commands.md#undo-history-and-the-undo-slider).
 
-**updatedBy** — `clientId` of the writer. Stamped on every Thought and Lexeme write. (Self-originated materialization events are filtered by *writeId*, not by this field.)
+**updatedBy** — `clientId` of the writer, stored in each thought's payload. Persisted Lexemes derive it from their most recently updated member. Local materialization is identified by *writeId*, not by this field.
 
 **updateThoughts** — The action ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that mutates Redux and queues a push. The push queue persists those batches through the active data provider's `updateThoughts`.
 

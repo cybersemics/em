@@ -9,8 +9,8 @@ import hashThought from '../../../util/hashThought'
 import type { DataProvider } from '../../DataProvider'
 import type { ThoughtspaceMaterializationSnapshot } from '../../thoughtspace'
 
-/** Data-provider operations needed to persist materialized TreeCRDT changes. */
-export type MaterializationStore = Pick<DataProvider, 'getLexemeById' | 'getThoughtsByIds' | 'updateThoughts'>
+/** Data-provider reads used to refresh Redux after incoming TreeCRDT changes. */
+export type MaterializationStore = Pick<DataProvider, 'getLexemeById' | 'getThoughtsByIds'>
 
 export type MaterializationThoughtRefresh = {
   /** Thought ids removed from the tree. */

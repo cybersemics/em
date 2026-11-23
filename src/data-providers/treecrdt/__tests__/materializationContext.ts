@@ -34,7 +34,6 @@ const thought = (value: string) => ({
 const persistThought = (db: Pick<DataProvider, 'updateThoughts'>, value: string) =>
   db.updateThoughts({
     thoughtIndexUpdates: { [THOUGHT_ID]: thought(value) },
-    lexemeIndexUpdates: {},
   })
 
 it('retains the originating materialization context after rebinding the provider', async () => {

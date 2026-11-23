@@ -4,6 +4,7 @@ import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import hashThought from '../../../util/hashThought'
 import type { DataProvider } from '../../DataProvider'
+import { encodeThoughtPayload } from '../payload'
 import createTreecrdtThoughtspace from '../runtime'
 import createTreecrdtDataProvider from '../thoughtspace'
 
@@ -46,7 +47,6 @@ const persistThoughtsTo = (
 ) =>
   db.updateThoughts({
     thoughtIndexUpdates: Object.fromEntries(thoughts.map(thought => [thought.id, thought])),
-    lexemeIndexUpdates: {},
     movePlacements,
   })
 
@@ -93,17 +93,7 @@ it('does not write seed operations again when binding a seeded client', async ()
 
 it('preserves requested order, duplicates, and missing entries when reading persisted thoughts and lexemes', async () => {
   await initTestThoughtspace()
-  await treecrdtThoughtspace.updateThoughts({
-    thoughtIndexUpdates: { [PARENT_ID]: thought(PARENT_ID, EM_TOKEN, 'parent', 0) },
-    lexemeIndexUpdates: {
-      [hashThought('parent')]: {
-        contexts: [PARENT_ID],
-        created: 1 as Timestamp,
-        lastUpdated: 1 as Timestamp,
-        updatedBy: 'test',
-      },
-    },
-  })
+  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
 
   await expect(treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID)).resolves.toBeUndefined()
   await expect(treecrdtThoughtspace.getLexemeById(hashThought('missing'))).resolves.toBeUndefined()
@@ -254,5 +244,37 @@ it('keeps separately created thoughtspace instances isolated', async () => {
   } finally {
     await first.drop()
     await second.drop()
+  }
+})
+
+it('derives memberships from existing thoughts and preserves the saved order of live favorites on upgrade', async () => {
+  const client = await createTreecrdtClient({ docId: 'upgrade-favorites' })
+  const replicaId = new Uint8Array(32).fill(1)
+  try {
+    const older = await client.onMaterializedDurable('em-derived-indexes', () => undefined, { version: 1 })
+    const payload = encodeThoughtPayload({ value: '=favorite', created: 1, lastUpdated: 1, updatedBy: 'test' })
+    await client.local.insert(replicaId, client.tree.root.id, THOUGHT_B_ID, { type: 'last' }, payload)
+    await client.local.insert(replicaId, client.tree.root.id, THOUGHT_Y_ID, { type: 'last' }, payload)
+    await older.close()
+    // The old cache contains a stale member and explicitly orders B before Y (the reverse of their id order).
+    await client.runner.exec('CREATE TABLE em_lexemes (id TEXT PRIMARY KEY, payload_json TEXT NOT NULL)')
+    await client.runner.run('INSERT INTO em_lexemes VALUES (?1, ?2)', [
+      hashThought('=favorite'),
+      JSON.stringify({
+        contexts: [THOUGHT_B_ID, THOUGHT_X_ID, THOUGHT_Y_ID],
+        created: 1,
+        lastUpdated: 1,
+        updatedBy: 'test',
+      }),
+    ])
+
+    const provider = createTreecrdtDataProvider()
+    const close = await provider.bindClient(client, replicaId)
+    await expect(provider.db.getLexemeById(hashThought('=favorite'))).resolves.toMatchObject({
+      contexts: [THOUGHT_B_ID, THOUGHT_Y_ID],
+    })
+    await close()
+  } finally {
+    await client.drop()
   }
 })

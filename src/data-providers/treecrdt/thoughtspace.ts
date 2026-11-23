@@ -8,28 +8,17 @@ import type Timestamp from '../../@types/Timestamp'
 import { EM_TOKEN, GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../constants'
 import testFlags from '../../e2e/testFlags'
 import { childrenMapKey } from '../../util/createChildrenMap'
-import hashThought from '../../util/hashThought'
 import sleep from '../../util/sleep'
 import type { DataProvider } from '../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../thoughtspace'
-import {
-  deleteLexeme as deleteLexemeRow,
-  ensureLexemesSchema,
-  getLexemeById as getLexemeByIdSql,
-  getLexemesByIds as getLexemesByIdsSql,
-  upsertLexeme,
-} from './lexemes'
+import createLexemeIndex from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
 import { enqueueMaterializedThoughtsToStore } from './sync'
+import { enqueueMaterializedThoughtsToStoreWork } from './sync/materializationQueue'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 import { createTreecrdtLocalWriteOptions, isTreecrdtLocalMaterialization } from './writeBarrier'
 
 type TreecrdtPlacement = { type: 'first' } | { type: 'last' } | { type: 'after'; after: ThoughtId }
-
-type TreecrdtClientIdentity = Readonly<{
-  client: TreecrdtClient
-  replicaId: Uint8Array
-}>
 
 type TreecrdtClientDataProvider = Pick<
   DataProvider,
@@ -133,18 +122,11 @@ const getTreecrdtPlacement = (
 
 /** Applies thought index updates and move placements to one exact TreeCRDT client. */
 const updateThoughtsForClient = async (
-  { client, replicaId }: TreecrdtClientIdentity,
-  { thoughtIndexUpdates, lexemeIndexUpdates, movePlacements }: Parameters<DataProvider['updateThoughts']>[0],
+  client: TreecrdtClient,
+  replicaId: Uint8Array,
+  { thoughtIndexUpdates, movePlacements }: Parameters<DataProvider['updateThoughts']>[0],
 ): Promise<readonly Operation[]> => {
   const ops: Operation[] = []
-
-  for (const [id, lexeme] of Object.entries(lexemeIndexUpdates)) {
-    if (lexeme === null) {
-      await deleteLexemeRow(client, id)
-    } else {
-      await upsertLexeme(client, id, lexeme)
-    }
-  }
 
   const updates: Index<Thought> = {}
   const deletes: ThoughtId[] = []
@@ -230,7 +212,6 @@ const ROOT_PAYLOAD = encodeThoughtPayload({
 
 /** Seeds TreeCRDT storage for an em thoughtspace. */
 const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: Uint8Array): Promise<void> => {
-  await ensureLexemesSchema(client)
   // Ensure root has payload so getThoughtById can use the generic path.
   if ((await client.tree.root.payload()) === null) {
     await client.local.payload(replicaId, GLOBAL_ROOT_TOKEN, ROOT_PAYLOAD, createTreecrdtLocalWriteOptions())
@@ -254,61 +235,31 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
     }
   }
 
-  let settingsId: ThoughtId | null = null
+  // em/Settings may already exist, possibly under another id.
   for (const child of await client.tree.node(EM_TOKEN).children()) {
     const payloadBytes = await child.payload()
-    if (!payloadBytes) continue
-    const payload = decodeThoughtPayload(payloadBytes)
-    if (payload.value === SETTINGS_VALUE) {
-      settingsId = child.id as ThoughtId
-      break
-    }
+    if (payloadBytes && decodeThoughtPayload(payloadBytes).value === SETTINGS_VALUE) return
   }
+  if ((await client.tree.node(SETTINGS_TOKEN).parent())?.id === EM_TOKEN) return
 
-  if (!settingsId && (await client.tree.node(SETTINGS_TOKEN).parent())?.id === EM_TOKEN) {
-    settingsId = SETTINGS_TOKEN
-  }
-
-  if (!settingsId) {
-    const now = Date.now()
-    await client.local.insert(
-      replicaId,
-      EM_TOKEN,
-      SETTINGS_TOKEN,
-      { type: 'last' },
-      encodeThoughtPayload({
-        value: SETTINGS_VALUE,
-        created: now,
-        lastUpdated: now,
-        updatedBy: '',
-      }),
-      createTreecrdtLocalWriteOptions(),
-    )
-    settingsId = SETTINGS_TOKEN
-  }
-
-  if (settingsId) {
-    const now = Date.now()
-    await upsertLexeme(client, hashThought(SETTINGS_VALUE), {
-      contexts: [settingsId],
-      created: now as Timestamp,
-      lastUpdated: now as Timestamp,
+  const now = Date.now()
+  await client.local.insert(
+    replicaId,
+    EM_TOKEN,
+    SETTINGS_TOKEN,
+    { type: 'last' },
+    encodeThoughtPayload({
+      value: SETTINGS_VALUE,
+      created: now,
+      lastUpdated: now,
       updatedBy: '',
-    })
-  }
+    }),
+    createTreecrdtLocalWriteOptions(),
+  )
 }
 
-/** Creates a data provider whose operations are permanently bound to one TreeCRDT client. */
-const createClientDataProvider = ({ client, replicaId }: TreecrdtClientIdentity): TreecrdtClientDataProvider => ({
-  getLexemeById: key => getLexemeByIdSql(client, key),
-  getLexemesByIds: keys => getLexemesByIdsSql(client, keys),
-  getThoughtById: async id => (await readThoughts(client, [id]))[0],
-  getThoughtsByIds: async ids => {
-    await waitForTestReplicationDelay()
-    return readThoughts(client, ids)
-  },
-  updateThoughts: updates => updateThoughtsForClient({ client, replicaId }, updates),
-})
+/** Bump when an index is added or changes, so databases indexed by an older version are rebuilt once. */
+const INDEX_VERSION = 2
 
 /**
  * Creates the stable app-facing TreeCRDT data provider.
@@ -358,10 +309,37 @@ const createTreecrdtDataProvider = () => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
-    const clientDb = createClientDataProvider({ client, replicaId })
+    const lexemes = await createLexemeIndex(client)
+    const indexes = await client.onMaterializedDurable(
+      'em-derived-indexes',
+      event => lexemes.applyChanges(event.changes),
+      {
+        version: INDEX_VERSION,
+        reset: lexemes.clear,
+        onError: err => console.error('TreeCRDT derived indexing failed', err),
+      },
+    )
+    const clientDb: TreecrdtClientDataProvider = {
+      getLexemeById: async key => (await clientDb.getLexemesByIds([key]))[0],
+      getLexemesByIds: async keys => {
+        await indexes.idle()
+        return lexemes.getLexemesByIds(keys)
+      },
+      getThoughtById: async id => (await readThoughts(client, [id]))[0],
+      getThoughtsByIds: async ids => {
+        await waitForTestReplicationDelay()
+        return readThoughts(client, ids)
+      },
+      updateThoughts: async updates => {
+        if (updates.favoriteOrder) await lexemes.setFavoriteOrder(updates.favoriteOrder)
+        return updateThoughtsForClient(client, replicaId, updates)
+      },
+    }
     const materializationContext = materialization ? { bridge: materialization, db: clientDb } : null
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
+      // Runtime idle includes index maintenance, even when an optimistic edit needs no Redux refresh.
+      void enqueueMaterializedThoughtsToStoreWork(() => indexes.idle())
       // Local writes are already reflected optimistically. Other materialization uses the exact provider and client
       // that created this subscription, even if the app later binds a new client.
       if (isTreecrdtLocalMaterialization(event) || !materializationContext) return
@@ -373,7 +351,10 @@ const createTreecrdtDataProvider = () => {
 
     activeDb = clientDb
     providerReadiness.resolve(clientDb)
-    return async () => unsubscribeMaterialized()
+    return async () => {
+      unsubscribeMaterialized()
+      await indexes.close()
+    }
   }
 
   return {
