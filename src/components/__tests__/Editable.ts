@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event'
 import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
-import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { setCursorActionCreator as setCursorPath } from '../../actions/setCursor'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
+import bold from '../../commands/bold'
 import defineTerm from '../../commands/defineTerm'
 import generateEmoji from '../../commands/generateEmoji'
 import generateThought from '../../commands/generateThought'
@@ -226,7 +226,7 @@ it.each([
   async ({ space, entered, offset, typed }) => {
     await dispatch([importText({ text: '- aaa\n- bbb' }), setCursor(['aaa'])])
     await act(async () => {
-      store.dispatch(formatSelection('foreColor', 'green'))
+      executeCommand(bold)
       await vi.runOnlyPendingTimersAsync()
     })
 
@@ -254,7 +254,7 @@ it.each([
     expect(editable.textContent).toBe('bbb')
     // The caret stays where the space was typed, counted in the text without it.
     expect(selection.offsetThought()).toBe(offset)
-    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<font color=')
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<b>aaa</b>')
   },
 )
 
