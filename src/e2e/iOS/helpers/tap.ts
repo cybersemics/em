@@ -7,6 +7,10 @@ interface Options {
   // toolbar buttons are inline-block with no margin, so their padding boxes touch and an edge tap is half a
   // pixel of rounding away from landing on the neighboring command.
   horizontalTapLine?: 'left' | 'center' | 'right'
+  // Where in the vertical line (inside) of the target should be tapped. Defaults to center. 'top' and 'bottom' are 1px
+  // inside the edge, as 'left' and 'right' are. Unlike horizontalTapLine, it also applies with an offset, where the
+  // target is the line of text at that offset rather than the whole node.
+  verticalTapLine?: 'top' | 'center' | 'bottom'
   // Pointer type to use for the tap action. Defaults to 'mouse'.
   pointerType?: 'mouse' | 'touch'
   // Specify specific node on editable to tap. Overrides horizontalTapLine
@@ -30,6 +34,7 @@ const tap = async (
   nodeHandle: WebdriverIO.Element,
   {
     horizontalTapLine = 'center',
+    verticalTapLine = 'center',
     offset,
     x = 0,
     y = 0,
@@ -65,10 +70,19 @@ const tap = async (
               ? boundingBox.width - 1
               : boundingBox.width / 2),
         y: boundingBox.y + boundingBox.height / 2,
+        height: boundingBox.height,
       }
     : await getTextOffsetCoordinates(nodeHandle, offset)
 
   if (!coordinate) throw new Error('Coordinate not found.')
+
+  const tapLineY =
+    coordinate.y +
+    (verticalTapLine === 'top'
+      ? 1 - coordinate.height / 2
+      : verticalTapLine === 'bottom'
+        ? coordinate.height / 2 - 1
+        : 0)
 
   console.info(
     `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} bb-x ${boundingBox.x} bby ${boundingBox.y}`,
@@ -77,7 +91,7 @@ const tap = async (
   const finalCoords = {
     x: coordinate.x + x,
     // element rects are viewport-relative while touches are delivered in screen coordinates
-    y: coordinate.y + y + (await getScreenOffsetY()),
+    y: tapLineY + y + (await getScreenOffsetY()),
   }
 
   console.info(`Tapping at coordinates {x: ${finalCoords.x}, y: ${finalCoords.y}}`)

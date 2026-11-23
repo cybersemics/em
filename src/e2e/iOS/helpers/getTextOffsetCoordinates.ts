@@ -1,11 +1,11 @@
 /**
- * Returns the page coordinates of a character offset within an element's first text node, or undefined if it has none.
- * Uses the global browser object from WDIO.
+ * Returns the page coordinates of a character offset within an element's first text node, at the vertical middle of
+ * its line, with the height of that line's text, or undefined if it has none. Uses the global browser object from WDIO.
  */
 const getTextOffsetCoordinates = (
   nodeHandle: WebdriverIO.Element,
   offset: number,
-): Promise<{ x: number; y: number } | undefined> =>
+): Promise<{ x: number; y: number; height: number } | undefined> =>
   browser.execute(
     function (ele, offset) {
       // Element does not contain native properties like nodeName, textContent, etc
@@ -19,6 +19,7 @@ const getTextOffsetCoordinates = (
       return {
         x: right,
         y: top + height / 2,
+        height,
       }
     },
     nodeHandle,

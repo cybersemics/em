@@ -481,6 +481,27 @@ describe('Caret', () => {
     await waitForCaretOffset(offsetBeforeIn)
   })
 
+  // https://github.com/cybersemics/em/issues/6178
+  it('Tap just below the line moves the caret to the tapped word, not the end of the thought', async () => {
+    const value = 'Hello beautiful people in the world'
+    await newThought(value)
+    const editable = await waitForEditable(value)
+    await waitUntil(isKeyboardShown)
+
+    // place the caret before "world"
+    const offsetBeforeWorld = 'Hello beautiful people in the '.length
+    await tap(editable, { offset: offsetBeforeWorld, pointerType: 'touch' })
+    await waitForCaretOffset(offsetBeforeWorld)
+
+    // Tap the "h" of "the", three characters to the left of the caret, 1px below its line box, where iOS first moves
+    // the caret to the end of the thought. 'bottom' is 1px inside the line, so 2px more is 1px below it.
+    const offsetInThe = 'Hello beautiful people in t'.length
+    await tap(editable, { offset: offsetInThe, verticalTapLine: 'bottom', y: 2, pointerType: 'touch' })
+
+    // the tap rounds to the nearer end of "the"
+    await waitForCaretOffset('Hello beautiful people in '.length)
+  })
+
   // https://github.com/cybersemics/em/issues/4247
   it('Tap near the bottom edge of a non-cursor thought places the caret at the tapped word', async () => {
     const importText = `
