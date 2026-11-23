@@ -54,9 +54,12 @@ import ministore from './stores/ministore'
 import commandTransaction from './util/commandTransaction'
 import createId from './util/createId'
 import debugLog from './util/debugLog'
+import ellipsize from './util/ellipsize'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
+import hashPath from './util/hashPath'
 import head from './util/head'
+import headValue from './util/headValue'
 import isAttribute from './util/isAttribute'
 import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
@@ -493,6 +496,37 @@ export const executeCommand = (
   )
 }
 
+/**
+ * Alerts the selected thoughts that a multicursor command cannot be executed on, e.g. `New Grandchild cannot be executed on 1 of the selected thoughts: "c"`. A command must be executable on every selected thought to execute on a multiselect, and its canExecute judges the selection as a whole, so each selected thought is judged again as if it were the only one selected. Alerts only when some but not all of the selected thoughts block the command, since a command that none of them can unblock, such as one that requires an editable document, is not blocked by any thought in particular. Returns true if it alerted.
+ */
+export const alertMulticursorBlockers = (
+  command: Command,
+  {
+    store: commandStore,
+  }: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    store: Store<State, any>
+  },
+): boolean => {
+  const state = commandStore.getState()
+  if (!command.canExecute || !command.multicursor || !hasMulticursor(state)) return false
+
+  const filter = typeof command.multicursor === 'boolean' ? undefined : command.multicursor.filter
+  const paths = filterCursors(state, documentSort(state, Object.values(state.multicursors)), filter)
+  const blockers = paths.filter(
+    path => !command.canExecute!({ ...state, cursor: path, multicursors: { [hashPath(path)]: path } }),
+  )
+  if (blockers.length === 0 || blockers.length === paths.length) return false
+
+  const values = blockers.map(path => `"${ellipsize(headValue(state, path))}"`).join(', ')
+  commandStore.dispatch(
+    alert(`${command.label} cannot be executed on ${blockers.length} of the selected thoughts: ${values}`, {
+      alertType: AlertType.MulticursorError,
+    }),
+  )
+  return true
+}
+
 /** Execute command. Defaults to global store and keyboard shortcuts. */
 export const executeCommandWithMulticursor = (
   commandArg: Command,
@@ -561,9 +595,12 @@ export const executeCommandWithMulticursor = (
   // For each multicursor, place the cursor on the path and execute the command by calling executeCommand.
   const filteredPaths = filterCursors(state, paths, multicursor.filter)
 
-  // Exit early if the command cannot execute on any of the filtered paths
+  // Exit early if the command cannot execute on any of the filtered paths, naming the selected thoughts that block it
   const canExecute = filteredPaths.every(path => !command.canExecute || command.canExecute({ ...state, cursor: path }))
-  if (!canExecute) return
+  if (!canExecute) {
+    alertMulticursorBlockers(command, { store: commandStore })
+    return
+  }
 
   /** Whether the command is active on the thought alone, i.e. in the state that exec will see after setCursor clears the multicursors. */
   const isActiveOnPath = (path: Path) => !!command.isActive?.({ ...state, cursor: path, multicursors: {} })

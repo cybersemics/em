@@ -455,7 +455,7 @@ describe('multiselect', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5335
-  it.skip('names the selected thoughts that a command cannot be executed on', async () => {
+  it('names the selected thoughts that a command cannot be executed on', async () => {
     await paste(`
         - a
           - b
@@ -479,7 +479,8 @@ describe('multiselect', () => {
     expect(exported).toBe(`
 - a
   - b
-- c`)
+- c
+`)
   })
 
   it('should delete all selected thoughts when Backspace is pressed with Select All active', async () => {

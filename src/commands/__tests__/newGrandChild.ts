@@ -1,7 +1,7 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
-import { HOME_TOKEN } from '../../constants'
+import { AlertType, HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
@@ -122,6 +122,52 @@ describe('multicursor', () => {
   - a
     - b
   - c`)
+  })
+
+  // https://github.com/cybersemics/em/issues/5335
+  it('alerts the selected thoughts that have no visible child', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - c
+          - a thought too long to be named in full
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['c']),
+      addMulticursor(['a thought too long to be named in full']),
+    ])
+
+    executeCommandWithMulticursor(newGrandChildCommand, { store, type: 'gesture' })
+
+    expect(store.getState().alert).toMatchObject({
+      alertType: AlertType.MulticursorError,
+      value: 'New Grandchild cannot be executed on 2 of the selected thoughts: "c", "a thought too ..."',
+    })
+  })
+
+  it('does not alert when no selected thought has a visible child', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+    ])
+
+    const alertBefore = store.getState().alert
+
+    executeCommandWithMulticursor(newGrandChildCommand, { store, type: 'gesture' })
+
+    // initStore does not clear the alert, so compare with the one in place before the command rather than with null
+    expect(store.getState().alert).toBe(alertBefore)
   })
 
   it('creates a new empty grandchild in each selected thought', () => {

@@ -7,8 +7,7 @@ import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import Key from '../@types/Key'
 import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../actions/desktopCommandUniverse'
-import { hashCommand, hashKeyDown } from '../commands'
-import { executeCommandWithMulticursor } from '../commands'
+import { alertMulticursorBlockers, executeCommandWithMulticursor, hashCommand, hashKeyDown } from '../commands'
 import openDesktopCommandUniverseCommand from '../commands/openDesktopCommandUniverse'
 import * as selection from '../device/selection'
 import useFilteredCommands from '../hooks/useFilteredCommands'
@@ -136,12 +135,13 @@ const DesktopCommandUniverse: FC<{
     (e: React.MouseEvent<Element, MouseEvent> | KeyboardEvent, command: Command) => {
       e.stopPropagation()
       e.preventDefault()
-      if (
-        unmounted.current ||
-        (command.canExecute && !command.canExecute(store.getState())) ||
-        (store.getState().showModal && !command.allowExecuteFromModal)
-      )
+      if (unmounted.current || (store.getState().showModal && !command.allowExecuteFromModal)) return
+      if (command.canExecute && !command.canExecute(store.getState())) {
+        // A multiselect that some of the selected thoughts block is refused with an alert naming them. Close the Command
+        // Universe so that the alert and the selection it refers to can be seen.
+        if (alertMulticursorBlockers(command, { store })) dispatch(desktopCommandUniverse())
         return
+      }
       const commandsNew = [command.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
       dispatch(desktopCommandUniverse())
       // Hand the selection back before the command runs rather than when the Command Universe unmounts after its
