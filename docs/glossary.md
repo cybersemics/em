@@ -122,7 +122,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## M
 
-**materialization** — TreeCRDT applying operations to its SQLite read model, after which `client.onMaterialized` fires. em ignores events produced by its own writes (identified by *writeId*) and refreshes Redux from the rest. See [persistence.md → Change observation](persistence.md#change-observation-materialization).
+**materialization** — TreeCRDT applying operations to its SQLite read model, after which `client.onMaterialized` fires. em updates derived indexes and refreshes Redux memberships for both local and incoming changes; only incoming changes refresh thoughts. See [persistence.md → Change observation](persistence.md#change-observation-materialization).
 
 **meta-attribute** — See *attribute*.
 
@@ -224,6 +224,6 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## W
 
-**write barrier** — [`writeBarrier.ts`](../src/data-providers/treecrdt/writeBarrier.ts). Serializes em → TreeCRDT persistence and exposes an idle barrier, so a materialization refresh cannot reapply stale rows over newer optimistic state. Also mints each write's *writeId*.
+**write barrier** — [`writeBarrier.ts`](../src/data-providers/treecrdt/writeBarrier.ts). Serializes em → TreeCRDT persistence and exposes waits for it, so a materialization refresh cannot reapply stale rows over newer optimistic state. Also mints each write's *writeId*.
 
-**writeId** — `em-local:${sourceId}:${n}`, attached to every local TreeCRDT write and echoed on the materialization changes it produces. Lets this tab recognize and skip its own already-applied writes.
+**writeId** — `em-local:${sourceId}:${n}`, attached to every local TreeCRDT write and echoed on the materialization changes it produces. Lets this tab refresh memberships without reading back its already-optimistic local thoughts.

@@ -1,5 +1,5 @@
 import type { Operation } from '@treecrdt/interface'
-import type { TreecrdtReadNode, TreecrdtReadResult } from '@treecrdt/interface/engine'
+import type { MaterializationEvent, TreecrdtReadNode, TreecrdtReadResult } from '@treecrdt/interface/engine'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Index from '../../@types/IndexType'
 import type Thought from '../../@types/Thought'
@@ -13,10 +13,10 @@ import type { DataProvider } from '../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../thoughtspace'
 import createLexemeIndex from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
-import { enqueueMaterializedThoughtsToStore } from './sync'
+import { type MaterializationContext, applyMaterializedThoughtsToStore } from './sync/applyMaterializedThoughtsToStore'
 import { enqueueMaterializedThoughtsToStoreWork } from './sync/materializationQueue'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
-import { createTreecrdtLocalWriteOptions, isTreecrdtLocalMaterialization } from './writeBarrier'
+import { createTreecrdtLocalWriteOptions } from './writeBarrier'
 
 type TreecrdtPlacement = { type: 'first' } | { type: 'last' } | { type: 'after'; after: ThoughtId }
 
@@ -309,16 +309,23 @@ const createTreecrdtDataProvider = () => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
+    // TreeCRDT remembers how far the derived indexes got and catches them up after a gap such as startup or a failed
+    // update. The startup catch-up runs before `publish` is set and publishes nothing; Redux loads lexemes on demand.
+    let publish: ((event: MaterializationEvent, keys: string[]) => void) | undefined
     const lexemes = await createLexemeIndex(client)
     const indexes = await client.onMaterializedDurable(
       'em-derived-indexes',
-      event => lexemes.applyChanges(event.changes),
+      async event => {
+        const keys = await lexemes.applyChanges(event.changes)
+        publish?.(event, keys)
+      },
       {
         version: INDEX_VERSION,
         reset: lexemes.clear,
         onError: err => console.error('TreeCRDT derived indexing failed', err),
       },
     )
+
     const clientDb: TreecrdtClientDataProvider = {
       getLexemeById: async key => (await clientDb.getLexemesByIds([key]))[0],
       getLexemesByIds: async keys => {
@@ -335,19 +342,26 @@ const createTreecrdtDataProvider = () => {
         return updateThoughtsForClient(client, replicaId, updates)
       },
     }
-    const materializationContext = materialization ? { bridge: materialization, db: clientDb } : null
 
-    const unsubscribeMaterialized = client.onMaterialized(event => {
-      // Runtime idle includes index maintenance, even when an optimistic edit needs no Redux refresh.
-      void enqueueMaterializedThoughtsToStoreWork(() => indexes.idle())
-      // Local writes are already reflected optimistically. Other materialization uses the exact provider and client
-      // that created this subscription, even if the app later binds a new client.
-      if (isTreecrdtLocalMaterialization(event) || !materializationContext) return
-
-      void enqueueMaterializedThoughtsToStore(event, materializationContext).catch(err =>
-        console.error('TreeCRDT materialized UI sync failed', err),
-      )
-    })
+    // A publication is queued only once its event is indexed, so the idle barrier waits for the indexes too.
+    const unsubscribeMaterialized = client.onMaterialized(
+      () => void enqueueMaterializedThoughtsToStoreWork(() => indexes.idle()),
+    )
+    if (materialization) {
+      const context: MaterializationContext = {
+        bridge: materialization,
+        db: clientDb,
+        pending: [],
+        isActive: () => activeDb === clientDb,
+      }
+      publish = (event, keys) => {
+        context.pending.push({ event, keys })
+        // Each event queues a publication; one that finds the buffer already drained returns at once.
+        void enqueueMaterializedThoughtsToStoreWork(() => applyMaterializedThoughtsToStore(context)).catch(err =>
+          console.error('TreeCRDT materialized UI sync failed', err),
+        )
+      }
+    }
 
     activeDb = clientDb
     providerReadiness.resolve(clientDb)
