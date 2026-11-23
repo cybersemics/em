@@ -10,7 +10,7 @@ import type { DataProvider } from '../../DataProvider'
 import type { ThoughtspaceMaterializationSnapshot } from '../../thoughtspace'
 
 /** Data-provider operations needed to persist materialized TreeCRDT changes. */
-export type MaterializationStore = Pick<DataProvider, 'getLexemeById' | 'getThoughtById' | 'updateThoughts'>
+export type MaterializationStore = Pick<DataProvider, 'getLexemeById' | 'getThoughtsByIds' | 'updateThoughts'>
 
 export type MaterializationThoughtRefresh = {
   /** Thought ids removed from the tree. */
@@ -87,28 +87,6 @@ const removeLexemeContext = async (
         }
 }
 
-/** Applies TreeCRDT sibling order to em's temporary rank projection for one parent. */
-const addTreeOrderRankProjection = async (
-  updates: Index<Thought>,
-  db: MaterializationStore,
-  parentId: ThoughtId,
-): Promise<void> => {
-  const parent = await db.getThoughtById(parentId)
-  if (!parent) return
-
-  updates[parent.id] = parent
-
-  const orderedChildIds = Object.values(parent.childrenMap || {})
-  for (const [rank, childId] of orderedChildIds.entries()) {
-    const child = await db.getThoughtById(childId)
-    if (!child) continue
-    updates[child.id] = {
-      ...child,
-      rank,
-    }
-  }
-}
-
 /** Collects affected ids from materialization changes, loads fresh thoughts + lexemes from the provider. */
 export async function refreshThoughtsFromMaterializationChanges(
   changes: Change[],
@@ -158,12 +136,21 @@ export async function refreshThoughtsFromMaterializationChanges(
     touched.delete(id)
   }
 
-  const thoughts: Thought[] = []
+  const thoughts: Index<Thought | undefined> = {}
+  /** Batch each set of newly discovered ids, including missing rows only once per refresh. */
+  const readThoughts = async (ids: Iterable<ThoughtId>) => {
+    const missing = [...new Set(ids)].filter(id => !(id in thoughts))
+    if (missing.length === 0) return
+    const rows = await db.getThoughtsByIds(missing)
+    missing.forEach((id, i) => (thoughts[id] = rows[i]))
+  }
+  await readThoughts(touched)
+
   const thoughtIndexUpdates: Index<Thought> = {}
   const lexemeIndexUpdates: Index<Lexeme | null> = {}
 
   for (const id of touched) {
-    const thought = await db.getThoughtById(id)
+    const thought = thoughts[id]
     if (!thought) continue
     thoughtIndexUpdates[thought.id] = thought
     orderParents.add(thought.parentId)
@@ -177,15 +164,21 @@ export async function refreshThoughtsFromMaterializationChanges(
   // Current em selectors still sort by numeric rank. For remote/order-only TreeCRDT changes, derive a local rank
   // projection from the authoritative TreeCRDT child order without exposing TreeCRDT's internal order keys.
   // TODO: Remove when read-side selectors consume provider-backed sibling order instead of rank projection.
+  await readThoughts(orderParents)
+  await readThoughts([...orderParents].flatMap(id => Object.values(thoughts[id]?.childrenMap ?? {})))
   for (const parentId of orderParents) {
-    await addTreeOrderRankProjection(thoughtIndexUpdates, db, parentId)
+    const parent = thoughts[parentId]
+    if (!parent) continue
+    thoughtIndexUpdates[parent.id] = parent
+    for (const [rank, childId] of Object.values(parent.childrenMap).entries()) {
+      const child = thoughts[childId]
+      if (child) thoughtIndexUpdates[child.id] = { ...child, rank }
+    }
   }
 
   for (const id of deleted) {
     delete thoughtIndexUpdates[id]
   }
-
-  thoughts.push(...Object.values(thoughtIndexUpdates))
 
   for (const id of deleted) {
     await removeLexemeContext(lexemeIndexUpdates, snapshot, db, snapshot.thoughtIndex[id])
@@ -193,7 +186,7 @@ export async function refreshThoughtsFromMaterializationChanges(
 
   return {
     deletedIds: [...deleted],
-    thoughts,
+    thoughts: Object.values(thoughtIndexUpdates),
     lexemeIndexUpdates,
   }
 }

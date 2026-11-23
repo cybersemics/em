@@ -91,7 +91,7 @@ it('projects TreeCRDT sibling order into compatibility ranks', async () => {
   expect(updates[B_ID].rank).toBe(2)
 })
 
-it('projects TreeCRDT sibling order for both parents after a cross-parent move', async () => {
+it('reads untouched siblings in one batch to project their ranks after a cross-parent move', async () => {
   const oldLeft = thought(LEFT_ID, 'left', 0, HOME_TOKEN, [A_ID, B_ID])
   const oldRight = thought(RIGHT_ID, 'right', 1, HOME_TOKEN, [C_ID])
   const newLeft = thought(LEFT_ID, 'left', 0, HOME_TOKEN, [B_ID])
@@ -114,15 +114,17 @@ it('projects TreeCRDT sibling order for both parents after a cross-parent move',
     },
   }
 
+  const db = fakeProvider({
+    [LEFT_ID]: newLeft,
+    [RIGHT_ID]: newRight,
+    [A_ID]: thoughtANew,
+    [B_ID]: thoughtB,
+    [C_ID]: thoughtC,
+  })
+  const read = vi.spyOn(db, 'getThoughtsByIds')
   const result = await refreshThoughtsFromMaterializationChanges(
     [{ kind: 'move', node: A_ID, parentBefore: LEFT_ID, parentAfter: RIGHT_ID }],
-    fakeProvider({
-      [LEFT_ID]: newLeft,
-      [RIGHT_ID]: newRight,
-      [A_ID]: thoughtANew,
-      [B_ID]: thoughtB,
-      [C_ID]: thoughtC,
-    }),
+    db,
     materializationSnapshot(state),
   )
 
@@ -130,6 +132,7 @@ it('projects TreeCRDT sibling order for both parents after a cross-parent move',
 
   expect(Object.values(updates[LEFT_ID].childrenMap)).toEqual([B_ID])
   expect(Object.values(updates[RIGHT_ID].childrenMap)).toEqual([C_ID, A_ID])
+  expect(read).toHaveBeenCalledWith(expect.arrayContaining([B_ID, C_ID]))
   expect(updates[B_ID].rank).toBe(0)
   expect(updates[C_ID].rank).toBe(0)
   expect(updates[A_ID]).toMatchObject({
