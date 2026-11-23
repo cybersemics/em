@@ -10,6 +10,19 @@ const fillOf = (value: string) => {
 }
 
 describe('getThoughtFill', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it.each(['hello', '', '&lt;font color="red"&gt;hello&lt;/font&gt;'])(
+    'returns no fill without parsing text with no HTML tags: %j',
+    value => {
+      const state = newThought(initialState(), { value })
+      const parseFromString = vi.spyOn(DOMParser.prototype, 'parseFromString')
+
+      expect(getThoughtFill(state, head(state.cursor!))).toBeUndefined()
+      expect(parseFromString).not.toHaveBeenCalled()
+    },
+  )
+
   it('gets the fill from a fully colored thought', () => {
     expect(fillOf('<font color="#ff573d">hello</font>')).toBe('#ff573d')
   })
