@@ -39,6 +39,8 @@ export interface ThoughtspaceRuntime {
   init: (options: ThoughtspaceRuntimeInitOptions) => Promise<{ clientId: string; storage: string }>
   drop: () => Promise<unknown>
   waitForIdle: () => Promise<void>
+  /** Waits only for previously queued writes and rejects if the barrier reports a write failure. */
+  waitForQueuedWrites: () => Promise<void>
   persistPushQueueBatches: (batches: readonly PersistThoughtspaceBatch[]) => Promise<void>
 }
 

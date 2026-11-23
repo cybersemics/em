@@ -10,6 +10,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { pullAncestorsActionCreator as pullAncestors } from '../../actions/pullAncestors'
 import { redoActionCreator as redo } from '../../actions/redo'
 import { setNoteFocusActionCreator as setNoteFocus } from '../../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
@@ -25,13 +26,16 @@ import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import isUndoEnabled from '../../selectors/isUndoEnabled'
+import thoughtToPath from '../../selectors/thoughtToPath'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initStore from '../../test-helpers/initStore'
+import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
+import head from '../../util/head'
 import archiveCommand from '../archive'
 import deleteCommand from '../delete'
 import indentCommand from '../indent'
@@ -675,6 +679,39 @@ describe('undo', () => {
   - f
   - g`
     expect(exported).toEqual(expectedOutput)
+  })
+
+  // https://github.com/cybersemics/em/issues/5622
+  // https://github.com/cybersemics/em/issues/5623
+  it('keeps a move undone during a forced pull and persists its redo', async () => {
+    store.dispatch(importText({ text: '- a\n  - x\n- b' }))
+    await vi.runAllTimersAsync()
+    const oldPath = contextToPath(store.getState(), ['a', 'x'])!
+    store.dispatch(moveThought({ from: ['a', 'x'], to: ['b', 'x'], newRank: 0 }))
+    await vi.runAllTimersAsync()
+
+    const path = contextToPath(store.getState(), ['b', 'x'])!
+    const xId = head(path)
+    // Undo after the forced pull from Recently Edited has read x, but before it publishes that read.
+    const getThoughtsByIds = db.getThoughtsByIds
+    let undone = false
+    const read = vi.spyOn(db, 'getThoughtsByIds').mockImplementation(async ids => {
+      const thoughts = await getThoughtsByIds(ids)
+      if (!undone && ids.includes(xId)) {
+        undone = true
+        store.dispatch(undo())
+      }
+      return thoughts
+    })
+    await store.dispatch(pullAncestors(path, { force: true, maxDepth: 0 }))
+    read.mockRestore()
+    await vi.runAllTimersAsync()
+    expect(undone).toBe(true)
+    expect(thoughtToPath(store.getState(), xId)).toEqual(oldPath)
+
+    store.dispatch(redo())
+    await waitForThoughtspaceIdle()
+    expect((await db.getThoughtById(xId))?.parentId).toBe(head(contextToPath(store.getState(), ['b'])!))
   })
 })
 

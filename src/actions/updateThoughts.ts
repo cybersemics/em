@@ -14,7 +14,6 @@ import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
-import keyValueBy from '../util/keyValueBy'
 import mergeUpdates from '../util/mergeUpdates'
 import reducerFlow from '../util/reducerFlow'
 
@@ -98,44 +97,10 @@ const updateThoughts = (
 ) => {
   if (Object.keys(thoughtIndexUpdates).length === 0 && Object.keys(lexemeIndexUpdates).length === 0) return state
 
-  const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
-  const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
-
-  // Last-write-wins guard for reconcile updates (local === false), e.g. a forced pull (RecentlyEdited's
-  // pullJumpHistory) or a cross-device onThoughtChange. The pulled snapshot is read asynchronously from
-  // the data provider and may predate a local edit that landed in the meantime; if it overwrote the newer
-  // in-memory thought it would corrupt parent/child links (e.g. after Swap Parent, producing a parent-chain
-  // cycle and hanging the app). Drop any incoming thought that is no newer than the existing non-pending
-  // thought.
-  //
-  // The comparison must be `<=`, not `<`: a single high-level action such as swapParent runs several
-  // moveThought reducers synchronously in one reducerFlow, so every thought it touches is stamped with the
-  // *same* lastUpdated millisecond, and each moveThought queues its own push batch — including the
-  // transient intermediate state (e.g. the old parent's childrenMap before the moved child is removed). A
-  // forced pull that reads that intermediate snapshot re-dispatches it with a lastUpdated equal to the
-  // final state's, so a strict `<` would let it through and clobber the correct result (planting a child in
-  // two contexts → cycle → hang, https://github.com/cybersemics/em/issues/3948). Because the final state is
-  // emitted last, its lastUpdated is always >= any intermediate, so `<=` reliably discards the stale echo
-  // while genuinely newer cross-device edits (strictly greater) still win.
-  //
-  // Skip when overwritePending is set (freeThoughts/deleteThought/generateThought intentionally overwrite)
-  // and keep deletions (null) and missing/pending thoughts so pulls still load them.
-  const thoughtIndexUpdatesFresh =
-    local || overwritePending
-      ? thoughtIndexUpdates
-      : keyValueBy(thoughtIndexUpdates, (id, thoughtUpdate) => {
-          const thoughtOld = thoughtIndexOld[id]
-          return thoughtUpdate &&
-            thoughtOld &&
-            !thoughtOld.pending &&
-            thoughtUpdate.lastUpdated <= thoughtOld.lastUpdated
-            ? null
-            : { [id]: thoughtUpdate }
-        })
-
   // TODO: Can we use { overwritePending: !local } and get rid of the overwritePending option to updateThoughts? i.e. Are there any false positives when local is false?
-  const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdatesFresh, { overwritePending })
-  const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates, { overwritePending })
+  // Pulls and the TreeCRDT readback check freshness before dispatch.
+  const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates, { overwritePending })
+  const lexemeIndex = mergeUpdates(state.thoughts.lexemeIndex, lexemeIndexUpdates, { overwritePending })
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 
@@ -148,7 +113,7 @@ const updateThoughts = (
     movePlacements,
     pendingDeletes,
     remote,
-    thoughtIndexUpdates: thoughtIndexUpdatesFresh,
+    thoughtIndexUpdates,
   }
 
   /** Returns true if the thoughtspace is still loading because root thought is missing or pending and the tutorial is not running. */
@@ -159,7 +124,7 @@ const updateThoughts = (
     // disable isLoading if tutorial is on
     if (getSetting(state, 'Tutorial') === 'On') return false
 
-    const rootThought: Thought | null = thoughtIndexUpdatesFresh[HOME_TOKEN] || thoughtIndex[HOME_TOKEN]
+    const rootThought: Thought | null = thoughtIndexUpdates[HOME_TOKEN] || thoughtIndex[HOME_TOKEN]
     const isRootLoaded =
       rootThought &&
       !rootThought.pending &&

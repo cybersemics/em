@@ -13,7 +13,12 @@ import acquireTreecrdtSessionLock from './sessionLock'
 import { getMaterializedThoughtsToStoreVersion, waitForMaterializedThoughtsToStore } from './sync/materializationQueue'
 import createTreecrdtWebSocketSync from './sync/treecrdtWebSocketSync'
 import createTreecrdtDataProvider from './thoughtspace'
-import { getTreecrdtWriteBarrierVersion, waitForTreecrdtWriteBarrier, withTreecrdtWriteBarrier } from './writeBarrier'
+import {
+  getTreecrdtWriteBarrierVersion,
+  waitForQueuedTreecrdtWrites,
+  waitForTreecrdtWriteBarrier,
+  withTreecrdtWriteBarrier,
+} from './writeBarrier'
 
 type PersistTreecrdtBatch = Parameters<DataProvider['updateThoughts']>[0] & {
   local?: boolean
@@ -224,6 +229,7 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
     init,
     drop,
     waitForIdle: (): Promise<void> => withIdleTimeout(waitForStableIdle()),
+    waitForQueuedWrites: waitForQueuedTreecrdtWrites,
     persistPushQueueBatches,
   }
 }

@@ -6,6 +6,9 @@ import type { ThoughtspaceMaterializationBridge } from '../../thoughtspace'
 import { isTreecrdtLocalMaterialization, waitForQueuedTreecrdtWrites } from '../writeBarrier'
 import refreshThoughtsFromMaterializationChanges from './materializationThoughtUpdates'
 
+/** Fields that exist only in Redux. A stored copy lacks them, so they are kept while the value is unchanged. */
+const IN_MEMORY_FIELDS = ['pendingFormat', 'generating', 'generatingPlaceholder', 'splitSource'] as const
+
 export type MaterializationContext = {
   bridge: ThoughtspaceMaterializationBridge
   db: Pick<DataProvider, 'getThoughtsByIds' | 'getLexemesByIds'>
@@ -50,8 +53,13 @@ export const applyMaterializedThoughtsToStore = async ({ bridge, db, pending, is
     if (!isActive()) return
 
     for (const latest of _.compact(Object.values(thoughtIndexUpdates))) {
-      const loading = thoughtIndex[latest.id]?.pending || thoughtIndex[latest.parentId]?.pending
-      if (loading) thoughtIndexUpdates[latest.id] = { ...latest, pending: loading }
+      const current = thoughtIndex[latest.id]
+      const stored =
+        current?.value === latest.value
+          ? { ...latest, ..._.omitBy(_.pick(current, IN_MEMORY_FIELDS), _.isUndefined) }
+          : latest
+      const loading = current?.pending || thoughtIndex[latest.parentId]?.pending
+      thoughtIndexUpdates[latest.id] = loading ? { ...stored, pending: loading } : stored
     }
     const lexemeIndexUpdates = Object.fromEntries(
       keys.flatMap((key, i) => (_.isEqual(values[i], snapshot.lexemeIndex[key]) ? [] : [[key, values[i] ?? null]])),
