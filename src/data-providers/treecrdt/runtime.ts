@@ -82,6 +82,13 @@ const waitForStableIdle = async (): Promise<void> => {
   )
 }
 
+/**
+ * TEMPORARY (Command Universe glass dials): true when this dev-server tab was let past the single-tab lock that another
+ * tab holds. It then runs on in-memory storage, so it never opens the database the other tab owns. Remove with
+ * CommandUniverseGlassDebugPanel.
+ */
+let isDevExtraTab = false
+
 /** Creates an inert TreeCRDT client owner whose storage is selected during initialization. */
 const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
   type InitResult = { clientId: string; storage: string }
@@ -97,6 +104,15 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
   /** Applies the app's single-tab policy before the TreeCRDT client is opened. */
   const acquireAccess = async (): Promise<ThoughtspaceAccessResult> => {
     const lockStatus = await acquireTreecrdtSessionLock()
+
+    // TEMPORARY: on the dev server, open extra tabs on in-memory storage instead of blocking them.
+    if (lockStatus === 'unavailable' && import.meta.env.DEV) {
+      isDevExtraTab = true
+      console.warn(
+        'em is already open in another tab. This dev-server tab is using temporary in-memory storage; its changes will be lost when it closes.',
+      )
+      return { status: 'acquired' }
+    }
 
     return lockStatus === 'acquired'
       ? { status: 'acquired' }
@@ -172,7 +188,7 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
       if (client) throw new Error('TreeCRDT client cleanup is incomplete. Retry drop before initialization.')
       const clientId = await clientIdReady
       await initPermissionsStore()
-      nextClient = await createTreecrdtClient(getTreecrdtClientOptions(options.storage))
+      nextClient = await createTreecrdtClient(getTreecrdtClientOptions(isDevExtraTab ? 'memory' : options.storage))
       nextUnsubscribeMaterialization = await provider.bindClient(
         nextClient,
         clientIdToReplicaId(clientId),

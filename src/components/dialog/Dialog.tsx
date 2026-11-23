@@ -3,18 +3,22 @@ import React, { PropsWithChildren, useCallback, useEffect, useRef } from 'react'
 import { dialogRecipe } from '../../../styled-system/recipes'
 import useBreakpoint from '../../hooks/useBreakpoint'
 import useOnClickOutside from '../../hooks/useOnClickOutside'
-import ProgressiveBlur from '../ProgressiveBlur'
 
 interface DialogProps {
   animation: { opacity: MotionValue<number>; scale: MotionValue<number> }
   onClose: () => void
   nodeRef: React.RefObject<HTMLDivElement | null>
+  /**
+   * Painted in the overlay just before the scaling wrapper, over the app and its scrim and under the glass. A
+   * backdrop-filter must live here rather than in children: inside the wrapper Chrome cannot see the app behind it.
+   */
+  backdrop?: React.ReactNode
 }
 
 /**
  * Full-screen overlay and scaling wrapper for a liminal glass dialog. Callers compose its parts as children: the glass sheet (DialogGlass) and anything that sits outside it, such as a footer. All styling lives in dialogRecipe.
  */
-const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, nodeRef, animation }) => {
+const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, nodeRef, animation, backdrop }) => {
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const dialog = dialogRecipe()
   const isDesktop = useBreakpoint('lg')
@@ -58,13 +62,11 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
 
   return (
     <>
-      <div className={dialog.progressiveBlurLayer}>
-        <ProgressiveBlur direction='to bottom' maxBlur={8} minBlur={0} layers={3} opacity={animation.opacity} />
-      </div>
       <motion.div ref={nodeRef} className={dialog.overlay} style={{ opacity: isDesktop ? 1 : animation.opacity }}>
         <motion.div className={dialog.appScrim} style={{ opacity: animation.opacity }} />
         {/* Soft full-screen color glow rendered behind the glass. */}
         <div className={dialog.backgroundGlow} />
+        {backdrop}
 
         {/* Wrapper around the glass sheet — lets unclipped highlights bleed past the glass edges. */}
         <motion.div ref={wrapperRef} className={dialog.wrapper} style={{ scale: animation.scale }}>

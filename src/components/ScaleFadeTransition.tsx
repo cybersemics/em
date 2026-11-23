@@ -26,17 +26,28 @@ const TransitionSurface = ({ duration, children }: Omit<ScaleFadeTransitionProps
       if (!isPresent) safeToRemove?.()
       return
     }
-    const fade = animate(opacity, isPresent ? 1 : 0, { duration })
-    const zoom = animate(scale, isPresent || reducedMotion ? 1 : SCALE_FROM, {
-      duration,
-      ease: [0.2, 0.8, 0.2, 1],
-    })
-    void fade.then(() => {
-      if (!isPresent && !present.current) safeToRemove?.()
-    })
+    let fade: ReturnType<typeof animate> | undefined
+    let zoom: ReturnType<typeof animate> | undefined
+    /** Starts the fade and the zoom. */
+    const start = () => {
+      fade = animate(opacity, isPresent ? 1 : 0, { duration })
+      zoom = animate(scale, isPresent || reducedMotion ? 1 : SCALE_FROM, {
+        duration,
+        ease: [0.2, 0.8, 0.2, 1],
+      })
+      void fade.then(() => {
+        if (!isPresent && !present.current) safeToRemove?.()
+      })
+    }
+    // Opening waits two frames, so the work of mounting the surface lands while it is still invisible. Started at
+    // once, the animation's clock ran through that stall and the first frame drawn was already a third of the way in.
+    let frame = 0
+    if (isPresent) frame = requestAnimationFrame(() => (frame = requestAnimationFrame(start)))
+    else start()
     return () => {
-      fade.stop()
-      zoom.stop()
+      cancelAnimationFrame(frame)
+      fade?.stop()
+      zoom?.stop()
     }
   }, [duration, isPresent, opacity, reducedMotion, safeToRemove, scale])
 

@@ -15,7 +15,6 @@ const dialogRecipe = defineSlotRecipe({
   className: 'dialog',
   slots: [
     'overlay',
-    'progressiveBlurLayer',
     'glassBackdropBlur',
     'appScrim',
     'backgroundGlow',
@@ -39,7 +38,7 @@ const dialogRecipe = defineSlotRecipe({
     'contentInner',
   ],
   base: {
-    /** Full-viewport backdrop. Mobile keeps its existing filter; desktop uses ProgressiveBlur. */
+    /** Full-viewport backdrop. Mobile keeps its existing filter; desktop dims the app with appScrim and blurs it only behind the glass (glassBackdropBlur). */
     overlay: {
       position: 'fixed',
       top: 0,
@@ -59,30 +58,19 @@ const dialogRecipe = defineSlotRecipe({
       touchAction: 'none',
     },
     /**
-     * Desktop progressive blur of the app. A sibling painted just below the overlay (same layer, earlier in the DOM),
-     * not a child of it; see Dialog. It covers the top 85% of the screen, fading to no blur at its bottom edge, rather
-     * than all of it: each blur layer costs the GPU in proportion to its area, most of all in the frame the dialog opens.
-     */
-    progressiveBlurLayer: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: '85vh',
-      zIndex: 'dialogContainer',
-      pointerEvents: 'none',
-      display: 'none',
-      lg: { display: 'block' },
-    },
-    /**
-     * Desktop blur of whatever is directly behind the glass, so the app never reads through the commands. It fills the same containing block as the glass, so CSS maintains its bounds.
+     * Desktop blur of whatever is directly behind the glass, so the app never reads through the commands. Rendered in the
+     * overlay rather than inside the scaling wrapper, which would cut it off from the app; CommandUniverseGlassBackdrop
+     * sizes and scales it to match the glass.
      */
     glassBackdropBlur: {
       position: 'absolute',
-      inset: 0,
       borderRadius: '32px',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
+      // One layer only. A blur that varied down the glass took eight masked layers, and redrawing them as the glass
+      // scaled and faded dropped patches of the screen for a frame at a time.
+      backdropFilter:
+        'blur(var(--cu-glass-blur, 6px)) saturate(var(--cu-glass-saturate, 1)) brightness(var(--cu-glass-brightness, 1)) contrast(var(--cu-glass-contrast, 1))',
+      WebkitBackdropFilter:
+        'blur(var(--cu-glass-blur, 6px)) saturate(var(--cu-glass-saturate, 1)) brightness(var(--cu-glass-brightness, 1)) contrast(var(--cu-glass-contrast, 1))',
       pointerEvents: 'none',
       display: 'none',
       lg: { display: 'block' },
@@ -95,7 +83,16 @@ const dialogRecipe = defineSlotRecipe({
       position: 'fixed',
       inset: 0,
       pointerEvents: 'none',
-      background: 'rgba(0, 0, 0, 0.15)',
+      background:
+        // Sized and placed in multiples of the glass's box (published by CommandUniverseGlassBackdrop), so it keeps its
+        // shape around the glass at any window size. Sized from the glass rather than the window on purpose: on a large
+        // window a window-sized scrim swallows the page, while the area around the glass should look the same. The centre is offset from the glass's centre in glass widths, and
+        // measured down from the glass's top edge in glass heights. The colour stops run from the centre (0%) to the
+        // radius (100%): clear at the glass's centre, darkest around its edge, easing off beyond it; past the last stop
+        // its colour carries on to the edges of the screen.
+        // TEMPORARY: --cu-scrim-* are dialed by CommandUniverseGlassDebugPanel.
+        'radial-gradient(calc(var(--cu-glass-width, 650px) * var(--cu-scrim-rx, 1.55)) calc(var(--cu-glass-height, 540px) * var(--cu-scrim-ry, 1.71)) at calc(var(--cu-glass-centre-x, 50%) + var(--cu-glass-width, 650px) * var(--cu-scrim-cx, 0)) calc(var(--cu-glass-top, 10.8vh) + var(--cu-glass-height, 540px) * var(--cu-scrim-cy, 0.5)), var(--cu-scrim-stops, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.9) 33.49%, rgba(0, 0, 0, 0.8) 61.1%, rgba(0, 0, 0, 0.39) 83.82%))',
+
       display: 'none',
       lg: { display: 'block' },
     },
@@ -267,8 +264,10 @@ radial-gradient(56.44% 37.35% at 40.5% 67.11%, rgba(255, 255, 120, 0.0171) 0%, r
       lg: {
         background: 'none',
         overflow: 'hidden',
-        maskImage: desktopLightMaskOnGlass,
-        WebkitMaskImage: desktopLightMaskOnGlass,
+        // The second layer is a flat floor that the fill never fades below (mask layers add).
+        opacity: 'var(--cu-glass-fill-opacity, 1)',
+        maskImage: `${desktopLightMaskOnGlass}, linear-gradient(rgba(0, 0, 0, var(--cu-glass-fill-floor, 0)), rgba(0, 0, 0, var(--cu-glass-fill-floor, 0)))`,
+        WebkitMaskImage: `${desktopLightMaskOnGlass}, linear-gradient(rgba(0, 0, 0, var(--cu-glass-fill-floor, 0)), rgba(0, 0, 0, var(--cu-glass-fill-floor, 0)))`,
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -296,9 +295,14 @@ radial-gradient(56.44% 37.35% at 40.5% 67.11%, rgba(255, 255, 120, 0.0171) 0%, r
       inset: 0,
       borderRadius: '32px',
       pointerEvents: 'none',
+      // TEMPORARY: --cu-border-* are dialed by CommandUniverseGlassDebugPanel. At their defaults this is the shared
+      // falloff (desktopLightMaskOnGlass); --cu-border-reach stretches it and --cu-border-floor is the least the edge
+      // fades to (mask layers add).
       lg: {
-        maskImage: desktopLightMaskOnGlass,
-        WebkitMaskImage: desktopLightMaskOnGlass,
+        maskImage:
+          'radial-gradient(calc(125.07% * var(--cu-border-reach, 1)) calc(141.6% * var(--cu-border-reach, 1)) at calc(50% + 5.5px) -19px, rgba(0, 0, 0, 1.000) 0%, rgba(0, 0, 0, 0.793) 10%, rgba(0, 0, 0, 0.612) 20%, rgba(0, 0, 0, 0.456) 30%, rgba(0, 0, 0, 0.325) 40%, rgba(0, 0, 0, 0.218) 50%, rgba(0, 0, 0, 0.133) 60%, rgba(0, 0, 0, 0.071) 70%, rgba(0, 0, 0, 0.029) 80%, rgba(0, 0, 0, 0.006) 90%, rgba(0, 0, 0, 0.000) 100%), linear-gradient(rgba(0, 0, 0, var(--cu-border-floor, 0)), rgba(0, 0, 0, var(--cu-border-floor, 0)))',
+        WebkitMaskImage:
+          'radial-gradient(calc(125.07% * var(--cu-border-reach, 1)) calc(141.6% * var(--cu-border-reach, 1)) at calc(50% + 5.5px) -19px, rgba(0, 0, 0, 1.000) 0%, rgba(0, 0, 0, 0.793) 10%, rgba(0, 0, 0, 0.612) 20%, rgba(0, 0, 0, 0.456) 30%, rgba(0, 0, 0, 0.325) 40%, rgba(0, 0, 0, 0.218) 50%, rgba(0, 0, 0, 0.133) 60%, rgba(0, 0, 0, 0.071) 70%, rgba(0, 0, 0, 0.029) 80%, rgba(0, 0, 0, 0.006) 90%, rgba(0, 0, 0, 0.000) 100%), linear-gradient(rgba(0, 0, 0, var(--cu-border-floor, 0)), rgba(0, 0, 0, var(--cu-border-floor, 0)))',
       },
       maskImage:
         'radial-gradient(94.3% 90.61% at 46.96% 13.01%, {colors.white} 0%, {colors.dialogGlassMaskFade} 94.3%)',
@@ -315,7 +319,10 @@ radial-gradient(56.44% 37.35% at 40.5% 67.11%, rgba(255, 255, 120, 0.0171) 0%, r
       borderWidth: '1px',
       // Past lg, a slate-blue to light-grey edge; glassStrokeMask fades it out below the light.
       lg: {
-        background: 'linear-gradient(180deg, rgb(127, 139, 175) 0%, rgb(240, 240, 240) 100%) border-box',
+        background:
+          'linear-gradient(180deg, var(--cu-border-top, rgb(127, 139, 175)) 0%, var(--cu-border-bottom, rgb(240, 240, 240)) 100%) border-box',
+        borderWidth: 'var(--cu-border-width, 1px)',
+        opacity: 'var(--cu-border-opacity, 1)',
       },
       background:
         'linear-gradient(180deg, {colors.dialogGlassStrokeMuted} 0%, {colors.dialogGlassStrokeMuted} 76%, {colors.dialogGlassStrokeBright} 100%) border-box',

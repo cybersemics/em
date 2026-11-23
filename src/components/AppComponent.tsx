@@ -41,7 +41,11 @@ import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 import UndoSlider from './UndoSlider'
 import CommandUniverse from './dialog/CommandUniverse'
+import CommandUniverseGlassDebugPanel from './dialog/CommandUniverseGlassDebugPanel'
 import * as modals from './modals'
+
+/** TEMPORARY: shows the Command Universe glass dials (CommandUniverseGlassDebugPanel). Read once, at load. */
+const showGlassDials = new URLSearchParams(window.location.search).has('dials')
 
 /** A hook that sets an attribute on the document.body element. */
 const useBodyAttribute = (name: string, value: string) => {
@@ -213,6 +217,8 @@ const AppComponent: FC = () => {
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
       <CommandUniverse />
+      {/* TEMPORARY: dev-only dials for the desktop Command Universe glass, hidden unless the address has ?dials. */}
+      {import.meta.env.DEV && !navigator.webdriver && showGlassDials && <CommandUniverseGlassDebugPanel />}
 
       {isDocumentEditable() && !tutorial && !showModal && (
         <>

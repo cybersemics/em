@@ -32,6 +32,7 @@ import CommandUniverseSearch from '../CommandUniverseSearch'
 import CommandUniverseSortButton from '../CommandUniverseSortButton'
 import Kbd from '../Kbd'
 import ScaleFadeTransition from '../ScaleFadeTransition'
+import CommandUniverseGlassBackdrop from './CommandUniverseGlassBackdrop'
 import Dialog from './Dialog'
 import DialogFooter from './DialogFooter'
 import DialogGlass from './DialogGlass'
@@ -191,6 +192,7 @@ const CommandUniverseSession = ({
   const isDesktop = useBreakpoint('lg')
   const restoreSelection = useCommandUniverseSelection({ enabled: isDesktop })
   const nodeRef = useRef<HTMLDivElement>(null)
+  const [positioner, setPositioner] = useState<HTMLDivElement | null>(null)
   const listRef = useRef<ComponentRef<typeof CommandUniverseList>>(null)
   const nav = useSelector(state => state.commandUniverseNavigation)
   const { search, sortOrder } = commandUniverseSearchSortStore.useState()
@@ -237,8 +239,14 @@ const CommandUniverseSession = ({
   }, [dispatch, isCommandsPage, isDesktop, isOpen, onBack, onClose, onForward])
 
   return (
-    <Dialog animation={animation} onClose={onClose} nodeRef={nodeRef}>
+    <Dialog
+      animation={animation}
+      onClose={onClose}
+      nodeRef={nodeRef}
+      backdrop={isDesktop ? <CommandUniverseGlassBackdrop positioner={positioner} animation={animation} /> : null}
+    >
       <div
+        ref={setPositioner}
         data-cu-glass-positioner='true'
         className={css({
           position: 'relative',
@@ -249,9 +257,10 @@ const CommandUniverseSession = ({
           '& > *': { gridArea: '1 / 1' },
         })}
       >
-        <motion.div className={dialog.glassBackdropBlur} style={{ opacity: animation.opacity }} />
+        {/* will-change gives the light layers their own compositor layer, so the fade changes only how they are
+            composited. Without it Chrome repainted these large gradients every frame and the open ran at 60fps. */}
         <motion.div
-          className={css({ position: 'absolute', inset: 0, pointerEvents: 'none' })}
+          className={css({ position: 'absolute', inset: 0, pointerEvents: 'none', willChange: 'opacity' })}
           style={{ opacity: animation.opacity }}
         >
           <div className={dialog.roomLight} />
@@ -296,8 +305,9 @@ const CommandUniverseSession = ({
             />
           </div>
         </DialogGlass>
+        {/* Its own compositor layer, like the room light above: topLight was the largest per-frame repaint. */}
         <motion.div
-          className={css({ position: 'absolute', inset: 0, pointerEvents: 'none' })}
+          className={css({ position: 'absolute', inset: 0, pointerEvents: 'none', willChange: 'opacity' })}
           style={{ opacity: animation.opacity }}
         >
           <div className={dialog.topLight} />

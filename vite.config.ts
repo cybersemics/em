@@ -8,6 +8,7 @@ import { type Plugin, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
+import commandUniverseGlassDialsSync from './src/vite-middleware/commandUniverseGlassDialsSync'
 import tunnelTokenGateMiddleware from './src/vite-middleware/tunnelTokenGate'
 
 const useHttps = !process.env.HTTP
@@ -89,6 +90,8 @@ export default defineConfig({
     // Do not run vite-plugin-checker during tests, as it will clear the test output.
     // The dev server is usually running anyway, and tsc is run in lint:tsc which is triggered prepush.
     ...[!process.env.VITEST && !process.env.PUPPETEER ? checker({ typescript: true }) : undefined],
+    // TEMPORARY: syncs CommandUniverseGlassDebugPanel between devices. Delete with the panel.
+    ...(process.env.VITEST ? [] : [commandUniverseGlassDialsSync()]),
     VitePWA({
       injectRegister: null,
       strategies: 'injectManifest',

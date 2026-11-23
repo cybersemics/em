@@ -3,7 +3,6 @@ import {
   Fragment,
   KeyboardEvent,
   forwardRef,
-  startTransition,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -27,6 +26,8 @@ const SCROLL_ANIM_KEY = '__cuScrollAnim'
 
 const INITIAL_ROW_LIMIT = 12
 const REMAINING_ROWS_DELAY = durations.get('fast') + 50
+/** Rows added per frame after the opening animation. Small enough that each frame stays well inside 8ms at 120Hz. */
+const ROWS_PER_FRAME = 6
 
 interface CommandUniverseListHandle {
   /**
@@ -131,12 +132,33 @@ const CommandUniverseList = forwardRef<CommandUniverseListHandle, CommandUnivers
       )),
     })
 
-    // Render INITIAL_ROW_LIMIT rows on mount and the rest once the opening animation has finished. The transition
-    // lets React split that work across frames if anything else is animating.
+    // Render INITIAL_ROW_LIMIT rows on mount and the rest once the opening animation has finished, ROWS_PER_FRAME at a
+    // time. Rendering them all at once was one long task (about 25ms in production, 100ms on the dev server) that
+    // dropped frames just as the panel settled; a transition did not split it, since the commit is not interruptible.
     const [rowLimit, setRowLimit] = useState(INITIAL_ROW_LIMIT)
+    // Rows across every section, under the current search.
+    const totalRows = [...state.collection].reduce((total, section) => total + [...section.childNodes].length, 0)
+    // The latest row count, for the frame loop below, which runs once and must not restart when a search changes it.
+    const totalRowsRef = useRef(totalRows)
+    totalRowsRef.current = totalRows
     useEffect(() => {
-      const timeout = window.setTimeout(() => startTransition(() => setRowLimit(Infinity)), REMAINING_ROWS_DELAY)
-      return () => clearTimeout(timeout)
+      let limit = INITIAL_ROW_LIMIT
+      let frame = 0
+      /** Adds the next batch of rows, then schedules another until every row is rendered, and stops limiting. */
+      const addRows = () => {
+        limit += ROWS_PER_FRAME
+        if (limit >= totalRowsRef.current) {
+          setRowLimit(Infinity)
+          return
+        }
+        setRowLimit(limit)
+        frame = requestAnimationFrame(addRows)
+      }
+      const timeout = window.setTimeout(() => (frame = requestAnimationFrame(addRows)), REMAINING_ROWS_DELAY)
+      return () => {
+        clearTimeout(timeout)
+        cancelAnimationFrame(frame)
+      }
     }, [])
     // Sections trimmed to rowLimit rows in total, dropping any section left with none.
     let rowsLeft = rowLimit
