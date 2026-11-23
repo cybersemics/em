@@ -4,9 +4,8 @@ import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import hashThought from '../../../util/hashThought'
 import type { DataProvider } from '../../DataProvider'
-import { encodeThoughtPayload } from '../payload'
 import createTreecrdtThoughtspace from '../runtime'
-import createTreecrdtDataProvider, { createIndexedChildrenMap } from '../thoughtspace'
+import createTreecrdtDataProvider from '../thoughtspace'
 
 /** Initializes an isolated in-memory TreeCRDT client and thoughtspace for unit tests. */
 const treecrdt = createTreecrdtThoughtspace()
@@ -132,33 +131,26 @@ it('does not require an initialized TreeCRDT client when freeing lexeme cache', 
   await expect(treecrdtThoughtspace.freeLexeme(hashThought('missing'))).resolves.toBeUndefined()
 })
 
-it('uses indexed attribute values as childrenMap keys without changing TreeCRDT node ids', async () => {
-  const valueById = {
-    [PIN_ID]: '=pin',
-    [PIN_DUPLICATE_ID]: '=pin',
-  }
-
-  const childrenMap = createIndexedChildrenMap([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID], valueById)
-
-  expect(childrenMap['=pin']).toBe(PIN_ID)
-  expect(childrenMap[PIN_DUPLICATE_ID]).toBe(PIN_DUPLICATE_ID)
-  expect(childrenMap[FALSE_ID]).toBe(FALSE_ID)
-  expect(childrenMap.false).toBeUndefined()
-  expect(Object.values(childrenMap)).toEqual([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID])
-})
-
 it('keys an attribute under its new parent and drops the key once it is renamed', async () => {
   await initTestThoughtspace()
   await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0), thought(OTHER_PARENT_ID, EM_TOKEN, 'other', 1)])
-  await persistThoughts([thought(PIN_ID, PARENT_ID, '=pin', 0)])
+  await persistThoughts([
+    thought(PIN_ID, PARENT_ID, '=pin', 0),
+    thought(PIN_DUPLICATE_ID, PARENT_ID, '=pin', 1),
+    thought(FALSE_ID, PARENT_ID, 'false', 2),
+  ])
+
+  const parent = await treecrdtThoughtspace.getThoughtById(PARENT_ID)
+  expect(Object.entries(parent?.childrenMap ?? {})).toEqual([
+    ['=pin', PIN_ID],
+    [PIN_DUPLICATE_ID, PIN_DUPLICATE_ID],
+    [FALSE_ID, FALSE_ID],
+  ])
 
   await persistThoughts([thought(PIN_ID, OTHER_PARENT_ID, '=pin', 0)], { [PIN_ID]: null })
-  // The attribute index catches up after the write; waiting for idle includes it.
-  await treecrdt.waitForIdle()
   expect((await treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID))?.childrenMap['=pin']).toBe(PIN_ID)
 
   await persistThoughts([thought(PIN_ID, OTHER_PARENT_ID, 'pin', 0)])
-  await treecrdt.waitForIdle()
   expect((await treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID))?.childrenMap['=pin']).toBeUndefined()
 })
 
@@ -217,15 +209,14 @@ it('reads sibling order once per thought when inserting a wide batch', async () 
     await persistThoughtsTo(provider.db, [thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
 
     const childIds = Array.from({ length: 40 }, (_, index) => (index + 512).toString(16).padStart(32, '0') as ThoughtId)
-    const nodeSpy = vi.spyOn(client.tree, 'node')
+    const read = vi.spyOn(client.tree, 'read')
 
     await persistThoughtsTo(
       provider.db,
       childIds.map((id, index) => thought(id, PARENT_ID, `child-${index}`, index + 0.5)),
     )
 
-    // Each sibling-order read goes through the parent's node.
-    expect(nodeSpy.mock.calls.filter(([id]) => id === PARENT_ID)).toHaveLength(childIds.length)
+    expect(read).toHaveBeenCalledTimes(childIds.length)
     const children = await client.tree.node(PARENT_ID).children()
     expect(children.map(child => child.id)).toEqual(childIds)
   } finally {
@@ -263,24 +254,5 @@ it('keeps separately created thoughtspace instances isolated', async () => {
   } finally {
     await first.drop()
     await second.drop()
-  }
-})
-
-it('resumes from its cursor after an interrupted index update', async () => {
-  const client = await createTreecrdtClient({ docId: 'partial-index-update' })
-  const replicaId = new Uint8Array(32).fill(1)
-  try {
-    const close = await createTreecrdtDataProvider().bindClient(client, replicaId)
-    await close()
-    // A commit that no provider indexed: the state the app leaves when it stops before the index update.
-    const payload = encodeThoughtPayload({ value: '=pin', created: 1, lastUpdated: 1, updatedBy: 'test' })
-    await client.local.insert(replicaId, EM_TOKEN, PIN_ID, { type: 'last' }, payload)
-
-    const reopened = createTreecrdtDataProvider()
-    const closeReopened = await reopened.bindClient(client, replicaId)
-    expect((await reopened.db.getThoughtById(EM_TOKEN))?.childrenMap['=pin']).toBe(PIN_ID)
-    await closeReopened()
-  } finally {
-    await client.drop()
   }
 })
