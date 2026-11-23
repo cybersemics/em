@@ -17,7 +17,7 @@ const addContext = (
   },
 ): Lexeme => ({
   ...lexeme,
-  contexts: [...(lexeme.contexts || []).filter(cxid => !(id === cxid)), id],
+  contexts: lexeme.contexts?.includes(id) ? lexeme.contexts : [...(lexeme.contexts ?? []), id],
   lastUpdated: timestamp(),
   updatedBy: clientId,
 })
