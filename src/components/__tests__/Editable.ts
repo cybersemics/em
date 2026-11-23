@@ -216,11 +216,14 @@ it('toggles the multicursor on a click that follows a new touchstart', async () 
 
 // https://github.com/cybersemics/em/issues/6347
 it.each([
-  { position: 'start', entered: 3, offset: 0, typed: ' bbb' },
-  { position: 'end', entered: 0, offset: 3, typed: 'bbb ' },
+  { space: ' ', name: 'a space', position: 'start', entered: 3, offset: 0, typed: ' bbb' },
+  { space: ' ', name: 'a space', position: 'end', entered: 0, offset: 3, typed: 'bbb ' },
+  // trimHtml trims Unicode spaces too, so the caret must not count them either
+  { space: '\u3000', name: 'an ideographic space', position: 'start', entered: 3, offset: 0, typed: '\u3000bbb' },
+  { space: '\u3000', name: 'an ideographic space', position: 'end', entered: 0, offset: 3, typed: 'bbb\u3000' },
 ])(
-  'undoes a space typed at the $position of a thought without undoing the step before it',
-  async ({ entered, offset, typed }) => {
+  'undoes $name typed at the $position of a thought without undoing the step before it',
+  async ({ space, entered, offset, typed }) => {
     await dispatch([importText({ text: '- aaa\n- bbb' }), setCursor(['aaa'])])
     await act(async () => {
       store.dispatch(formatSelection('foreColor', 'green'))
@@ -239,7 +242,7 @@ it.each([
     // Move the caret with the arrow keys, which records nothing.
     await act(async () => selection.set(editable, { offset }))
     const user = userEvent.setup({ delay: null })
-    await user.keyboard(' ')
+    await user.keyboard(space)
     await act(vi.runAllTimersAsync)
     expect(editable.textContent).toBe(typed)
 

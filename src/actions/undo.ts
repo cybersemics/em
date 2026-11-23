@@ -10,9 +10,13 @@ import getLatestActionLabel from '../util/getLatestActionLabel'
 import trimHtml from '../util/trimHtml'
 import { alertActionCreator as alert } from './alert'
 
-/** Matches the whitespace that trimHtml removes from either end of a value, which excludes the no-break space. */
-const REGEX_LEADING_WHITESPACE = /^[ \t\r\n]+/
-const REGEX_BOUNDARY_WHITESPACE = /^[ \t\r\n]+|[ \t\r\n]+$/g
+/**
+ * Matches the whitespace that trimHtml removes from either end of a value, in the text rather than the HTML: everything
+ * that \s matches, including Unicode spaces such as the ideographic space, except the no-break space. trimHtml keeps
+ * that one because the HTML holds it as &nbsp;, which \s does not match, while textContent holds it as U+00A0.
+ */
+const REGEX_LEADING_WHITESPACE = /^[^\S\u00a0]+/
+const REGEX_BOUNDARY_WHITESPACE = /^[^\S\u00a0]+|[^\S\u00a0]+$/g
 
 /** Returns where to place the caret if the cursor's editable, or its note's while the caret is on the note, shows whitespace at either end that was never saved, or null if it shows its saved value. A thought's value and a note's are saved trimmed, so whitespace typed at either end of either is no undo step of its own (#6347). */
 const unsavedWhitespaceCaret = (state: State): { cursorOffset: number } | { noteOffset: number } | null => {
