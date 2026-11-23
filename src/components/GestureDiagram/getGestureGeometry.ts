@@ -26,40 +26,52 @@ const oppositeDirection = (dir: Direction) =>
     d: 'u',
   })[dir]
 
-/** Calculates the coordinates for a curved segment that can be consumed by other functions. */
-const generateArcCoordinates = (index: number, pathDirs: Direction[]) => {
-  const radius = 1
-  const center = { x: 0, y: 0 }
+/** Unit vector for each direction, with y pointing down as in SVG. */
+const directionVector = (dir: Direction): GesturePoint =>
+  ({
+    l: { x: -1, y: 0 },
+    r: { x: 1, y: 0 },
+    u: { x: 0, y: -1 },
+    d: { x: 0, y: 1 },
+  })[dir]
 
-  /** Determine base angle based on first direction and second direction. */
-  const getBaseAngle = (first: Direction, second: Direction): number => {
-    if (first === 'l' || first === 'r') {
-      return second === 'u' ? 90 : -90
-    } else {
-      return second === 'r' ? 0 : 180
-    }
-  }
+/** Returns the point at the given angle on a unit circle around center. */
+const pointOnCircle = (center: GesturePoint, angle: number): GesturePoint => ({
+  x: center.x + Math.cos((angle * Math.PI) / 180),
+  y: center.y + Math.sin((angle * Math.PI) / 180),
+})
 
-  const clockwise = rotateClockwise(pathDirs[0]) === pathDirs[1]
-  const sweepFlag = clockwise ? 1 : 0
-  const baseAngle = getBaseAngle(pathDirs[0], pathDirs[1])
-  const totalAngle = (pathDirs.length - 1) * (clockwise ? 90 : -90)
-  const segmentAngle = totalAngle / pathDirs.length
-  const [startAngle, endAngle] = [baseAngle + index * segmentAngle, baseAngle + (index + 1) * segmentAngle]
-  const startRad = (startAngle * Math.PI) / 180
-  const endRad = (endAngle * Math.PI) / 180
+/**
+ * Builds one quarter arc per turn, each centered on the inside of its own turn, so that
+ * consecutive turns may bend in opposite directions. Each arc is split in half so the swipe
+ * before the turn and the swipe after it each own one piece.
+ */
+const generateTurnArcs = (directions: Direction[]): ArcGestureSegment[] => {
+  let position: GesturePoint = { x: 0, y: 0 }
+  return directions.slice(0, -1).flatMap((dir, i) => {
+    const next = directions[i + 1]
+    const clockwise = rotateClockwise(dir) === next
+    const turn = directionVector(next)
+    const center = { x: position.x + turn.x, y: position.y + turn.y }
+    const startAngle = (Math.atan2(position.y - center.y, position.x - center.x) * 180) / Math.PI
+    const endAngle = startAngle + (clockwise ? 90 : -90)
+    const midAngle = (startAngle + endAngle) / 2
+    position = pointOnCircle(center, endAngle)
 
-  return {
-    startX: center.x + radius * Math.cos(startRad),
-    startY: center.y + radius * Math.sin(startRad),
-    radius,
-    sweepFlag,
-    endX: center.x + radius * Math.cos(endRad),
-    endY: center.y + radius * Math.sin(endRad),
-    startAngle,
-    endAngle,
-    center,
-  }
+    /** Builds the part of this turn's arc between two angles. */
+    const arc = (from: number, to: number, gestureIndex: number): ArcGestureSegment => ({
+      kind: 'arc',
+      from: pointOnCircle(center, from),
+      to: pointOnCircle(center, to),
+      center,
+      radius: 1,
+      startAngle: from,
+      endAngle: to,
+      sweepFlag: clockwise ? 1 : 0,
+      gestureIndex,
+    })
+    return [arc(startAngle, midAngle, i), arc(midAngle, endAngle, i + 1)]
+  })
 }
 
 // Question-mark template, scaled to the requested size by the same rule as other gestures.
@@ -105,25 +117,7 @@ const getBaseGestureGeometry = (
   if (path === 'rdld') return { path, extendedPath: path, segments: RDLD_SEGMENTS }
 
   if (rounded) {
-    const directions = Array.from(path) as Direction[]
-    const segments = directions.map<ArcGestureSegment>((_, gestureIndex) => {
-      const { startX, startY, radius, sweepFlag, endX, endY, startAngle, endAngle, center } = generateArcCoordinates(
-        gestureIndex,
-        directions,
-      )
-      return {
-        kind: 'arc',
-        from: { x: startX, y: startY },
-        to: { x: endX, y: endY },
-        center,
-        radius,
-        startAngle,
-        endAngle,
-        sweepFlag: sweepFlag as 0 | 1,
-        gestureIndex,
-      }
-    })
-    return { path, extendedPath: path, segments }
+    return { path, extendedPath: path, segments: generateTurnArcs(Array.from(path) as Direction[]) }
   }
 
   const extendedPath: Gesture = path === 'rdl' ? 'rddl' : path === 'ldr' ? 'lddr' : path
