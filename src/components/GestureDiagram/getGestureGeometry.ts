@@ -109,40 +109,38 @@ const getTurn = (from: Direction, to: Direction): Turn | null =>
  * Each quarter is split at its midpoint so that the direction entering and the direction leaving the turn each own half of it.
  */
 const getInflectedArcSegments = (directions: Direction[], turns: Turn[]): ArcGestureSegment[] =>
-  turns
-    .reduce<{ point: GesturePoint; segments: ArcGestureSegment[] }>(
-      ({ point, segments }, turn, i) => {
-        const heading = directionVector(directions[i])
-        // The center lies on the side the gesture turns toward, one radius from the current point.
-        // Rotating (x, y) clockwise in y-down space gives (-y, x).
-        const toCenter = turn === 'cw' ? { x: -heading.y, y: heading.x } : { x: heading.y, y: -heading.x }
-        const center = { x: point.x + toCenter.x, y: point.y + toCenter.y }
-        const startAngle = (Math.atan2(point.y - center.y, point.x - center.x) * 180) / Math.PI
-        // Clockwise travel increases the angle in y-down space, matching sweepFlag 1.
-        const step = turn === 'cw' ? 45 : -45
+  turns.reduce<{ point: GesturePoint; segments: ArcGestureSegment[] }>(
+    ({ point, segments }, turn, i) => {
+      const heading = directionVector(directions[i])
+      // The center lies on the side the gesture turns toward, one radius from the current point.
+      // Rotating (x, y) clockwise in y-down space gives (-y, x).
+      const toCenter = turn === 'cw' ? { x: -heading.y, y: heading.x } : { x: heading.y, y: -heading.x }
+      const center = { x: point.x + toCenter.x, y: point.y + toCenter.y }
+      const startAngle = (Math.atan2(point.y - center.y, point.x - center.x) * 180) / Math.PI
+      // Clockwise travel increases the angle in y-down space, matching sweepFlag 1.
+      const step = turn === 'cw' ? 45 : -45
 
-        /** Returns the point on this turn's circle at the given angle. */
-        const pointAt = (angle: number): GesturePoint => ({
-          x: center.x + Math.cos((angle * Math.PI) / 180),
-          y: center.y + Math.sin((angle * Math.PI) / 180),
-        })
+      /** Returns the point on this turn's circle at the given angle. */
+      const pointAt = (angle: number): GesturePoint => ({
+        x: center.x + Math.cos((angle * Math.PI) / 180),
+        y: center.y + Math.sin((angle * Math.PI) / 180),
+      })
 
-        const halves = [0, 1].map<ArcGestureSegment>(half => ({
-          kind: 'arc',
-          from: pointAt(startAngle + half * step),
-          to: pointAt(startAngle + (half + 1) * step),
-          center,
-          radius: 1,
-          startAngle: startAngle + half * step,
-          endAngle: startAngle + (half + 1) * step,
-          sweepFlag: turn === 'cw' ? 1 : 0,
-          gestureIndex: i + half,
-        }))
-        return { point: halves[1].to, segments: [...segments, ...halves] }
-      },
-      { point: { x: 0, y: 0 }, segments: [] },
-    )
-    .segments
+      const halves = [0, 1].map<ArcGestureSegment>(half => ({
+        kind: 'arc',
+        from: pointAt(startAngle + half * step),
+        to: pointAt(startAngle + (half + 1) * step),
+        center,
+        radius: 1,
+        startAngle: startAngle + half * step,
+        endAngle: startAngle + (half + 1) * step,
+        sweepFlag: turn === 'cw' ? 1 : 0,
+        gestureIndex: i + half,
+      }))
+      return { point: halves[1].to, segments: [...segments, ...halves] }
+    },
+    { point: { x: 0, y: 0 }, segments: [] },
+  ).segments
 
 type BaseGestureGeometry = Omit<GestureGeometry, 'chevron'>
 
