@@ -56,7 +56,8 @@ const unsavedWhitespaceCaret = (state: State): { cursorOffset: number } | { note
 export const undoActionCreator =
   ({ cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {}): Thunk =>
   (dispatch, getState) => {
-    // The undo slider moves through the saved history by whole steps, so it does not discard unsaved whitespace.
+    // The undo slider passes count to reach a position in the saved history, so it must revert exactly that many patches.
+    // Discarding unsaved whitespace instead would revert nothing and leave the history behind the slider's handle.
     if (count == null) {
       const caret = unsavedWhitespaceCaret(getState())
       if (caret) {
