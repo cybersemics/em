@@ -59,7 +59,6 @@ import ministore from '../stores/ministore'
 import multitouchStore from '../stores/multitouchStore'
 import storageModel from '../stores/storageModel'
 import touchStore from '../stores/touchStore'
-import unsavedInputStore from '../stores/unsavedInputStore'
 import addEmojiSpace from '../util/addEmojiSpace'
 import applyOuterTags from '../util/applyOuterTags'
 import debugLog from '../util/debugLog'
@@ -734,9 +733,7 @@ const Editable = ({
         // disabled={readonly} removes contenteditable property
 
         // An input that changes nothing saved, such as whitespace typed at either end, is discarded first by Undo (#6347).
-        unsavedInputStore.update(
-          newValue === oldValue ? { thoughtId: head(simplePath), note: false, undoPatches: state.undoPatches } : null,
-        )
+        editableSyncStore.update({ unsavedInputUndoPatches: newValue === oldValue ? state.undoPatches : null })
 
         if (newValue === oldValue) {
           if (contentRef.current) {

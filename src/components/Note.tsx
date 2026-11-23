@@ -28,7 +28,6 @@ import resolveNoteKey from '../selectors/resolveNoteKey'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import editableSyncStore from '../stores/editableSyncStore'
-import unsavedInputStore from '../stores/unsavedInputStore'
 import appendToPath from '../util/appendToPath'
 import applyOuterTags from '../util/applyOuterTags'
 import equalPathHead from '../util/equalPathHead'
@@ -42,21 +41,19 @@ import useCaretRestore from './Editable/useCaretRestore'
 import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
 
-// react-contenteditable is CommonJS that sets __esModule. Because em's package.json has "type": "module", Vite resolves
-// its default import to module.exports rather than module.exports.default, while Vitest unwraps it to the component.
-// See https://vite.dev/guide/migration#consistent-commonjs-interop.
-/** Dispatches a note edit, and records in unsavedInputStore whether it left the note's saved value unchanged, as whitespace typed at either end of the note does. Undo discards such an input first (#6347). */
+/** Dispatches a note edit, and records in editableSyncStore whether it left the note's saved value unchanged, as whitespace typed at either end of the note does. Undo discards such an input first (#6347). */
 const recordUnsavedInput =
   (path: Path, edit: Thunk): Thunk =>
   (dispatch, getState) => {
     const before = noteValue(getState(), path)
     dispatch(edit)
     const state = getState()
-    unsavedInputStore.update(
-      noteValue(state, path) === before ? { thoughtId: head(path), note: true, undoPatches: state.undoPatches } : null,
-    )
+    editableSyncStore.update({ unsavedInputUndoPatches: noteValue(state, path) === before ? state.undoPatches : null })
   }
 
+// react-contenteditable is CommonJS that sets __esModule. Because em's package.json has "type": "module", Vite resolves
+// its default import to module.exports rather than module.exports.default, while Vitest unwraps it to the component.
+// See https://vite.dev/guide/migration#consistent-commonjs-interop.
 const ContentEditable =
   (ContentEditableModule as unknown as { default?: typeof ContentEditableModule }).default ?? ContentEditableModule
 

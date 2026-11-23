@@ -5,15 +5,15 @@ import { AlertType } from '../constants'
 import * as selection from '../device/selection'
 import noteValue from '../selectors/noteValue'
 import pathToThought from '../selectors/pathToThought'
-import unsavedInputStore from '../stores/unsavedInputStore'
+import editableSyncStore from '../stores/editableSyncStore'
 import getLatestActionLabel from '../util/getLatestActionLabel'
 import trimHtml from '../util/trimHtml'
 import { alertActionCreator as alert } from './alert'
 
 /**
  * Matches the whitespace that trimHtml removes from either end of a value, in the text rather than the HTML: everything
- * that \s matches, including Unicode spaces such as the ideographic space, except the no-break space. trimHtml keeps
- * that one because the HTML holds it as &nbsp;, which \s does not match, while textContent holds it as U+00A0.
+ * that \s matches, including Unicode spaces such as the ideographic space, except the no-break space. That one is
+ * kept by trimHtml because the HTML holds it as &nbsp;, which \s does not match, while textContent holds it as U+00A0.
  */
 const REGEX_LEADING_WHITESPACE = /^[^\S\u00a0]+/
 const REGEX_BOUNDARY_WHITESPACE = /^[^\S\u00a0]+|[^\S\u00a0]+$/g
@@ -22,18 +22,11 @@ const REGEX_BOUNDARY_WHITESPACE = /^[^\S\u00a0]+|[^\S\u00a0]+$/g
 const unsavedWhitespaceCaret = (state: State): { cursorOffset: number } | { noteOffset: number } | null => {
   if (!state.cursor) return null
   const thought = pathToThought(state, state.cursor)
-  // Only the last thing done is discarded: an input into this editable that changed nothing saved, with no undoable
-  // action since. Whitespace left by an input that did change the saved value, such as the space before "y" in " yx"
-  // or after deleting the first word, goes with that input's own undo step.
-  const input = unsavedInputStore.getState()
-  if (
-    !thought ||
-    input?.thoughtId !== thought.id ||
-    input.note !== state.noteFocus ||
-    input.undoPatches !== state.undoPatches
-  ) {
-    return null
-  }
+  // Only the last thing done is discarded: an input that changed nothing saved, with no undoable action since. Moving
+  // to another editable is undoable navigation, so the input was in the cursor's editable. Whitespace left by an input
+  // that did change the saved value, such as the space before "y" in " yx" or after deleting the first word, goes with
+  // that input's own undo step.
+  if (!thought || editableSyncStore.getState().unsavedInputUndoPatches !== state.undoPatches) return null
   const editable = document.querySelector(
     state.noteFocus
       ? `[aria-label="note-editable"][data-thought-id="${thought.id}"]`
@@ -67,7 +60,7 @@ export const undoActionCreator =
     if (count == null) {
       const caret = unsavedWhitespaceCaret(getState())
       if (caret) {
-        unsavedInputStore.update(null)
+        editableSyncStore.update({ unsavedInputUndoPatches: null })
         dispatch({ type: 'editableRender', ...caret })
         return
       }
