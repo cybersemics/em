@@ -60,7 +60,7 @@ Each node carries a payload: a JSON-encoded `ThoughtPayload` ([`payload.ts`](../
 
 ### Derived tables
 
-[`em_lexeme_memberships`](../src/data-providers/treecrdt/lexemes.ts) stores one row per live thought, indexed by `hashThought(value)`. When a Lexeme is pulled, the provider reads all its members, including thoughts Redux has not loaded. TreeCRDT's durable `em-derived-indexes` subscription updates the rows after materialization and catches up from its checkpoint on restart. Local edits still update Redux optimistically; indexing does not publish missing contexts to Redux.
+[`em_lexeme_memberships`](../src/data-providers/treecrdt/lexemes.ts) stores one row per live thought, indexed by `hashThought(value)`. When a Lexeme is pulled, the provider reads all its members, including thoughts Redux has not loaded. TreeCRDT's durable `em-derived-indexes` subscription updates the rows after materialization and catches up from its checkpoint on restart. Local edits update Redux optimistically; once indexed, changed memberships are read back for publication.
 
 `em_favorite_order` stores the manual order of Favorites separately. On upgrade the provider preserves the order in the old `=favorite` Lexeme, but only live thought memberships determine which favorites appear.
 
@@ -103,21 +103,24 @@ The rank fallback is a compatibility bridge while the app still treats `rank` as
 
 [`writeBarrier.ts`](../src/data-providers/treecrdt/writeBarrier.ts) serializes em → TreeCRDT persistence and exposes an idle barrier. It is a local ordering guard, not a CRDT requirement: it keeps app-state refreshes from racing local persistence, so a materialization refresh can't reapply stale rows over newer optimistic state.
 
-A failed write is recorded and thrown at the next wait for idle. Between tests, a failure that nothing waited for is discarded instead, along with any failure still to come from a write queued before the test boundary, so that it is not thrown at the next test. The materialization queue does the same for failed refreshes. See [testing.md → Isolation and cleanup](testing.md#isolation-and-cleanup).
+A failed write is recorded and thrown once, by the next wait that covers it: a wait for idle, or a readback round's wait for the writes queued so far. Between tests, a failure that nothing waited for is discarded instead, along with any failure still to come from a write queued before the test boundary, so that it is not thrown at the next test. The materialization queue does the same for failed refreshes. See [testing.md → Isolation and cleanup](testing.md#isolation-and-cleanup).
 
-It also stamps every local write with a `writeId` of the form `em-local:${sourceId}:${n}`, where `sourceId` is unique per page load. `isTreecrdtLocalMaterialization` recognizes this tab's own writes by that prefix, so the materialization path can skip events the app already applied optimistically.
+It also stamps every local write with a `writeId` of the form `em-local:${sourceId}:${n}`, where `sourceId` is unique per page load. `isTreecrdtLocalMaterialization` recognizes this tab's own writes, so publication refreshes memberships without reading back already-optimistic local thoughts.
 
 ### Change observation (materialization)
 
-`client.onMaterialized` fires after operations are materialized into SQLite — for remote ops arriving over sync as well as for local writes. Events whose changes all carry this tab's own `writeId` prefix are ignored, because the app already applied them optimistically. Everything else is handed to `enqueueMaterializedThoughtsToStore`, which serializes refreshes through [`materializationQueue.ts`](../src/data-providers/treecrdt/sync/materializationQueue.ts) so overlapping async events cannot apply out of order.
+The durable subscription queues publication only after it has updated membership rows. `client.onMaterialized` also queues a wait for indexing so that `waitForIdle` includes it. [`materializationQueue.ts`](../src/data-providers/treecrdt/sync/materializationQueue.ts) serializes publication for both local and incoming changes.
 
 [`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) then:
 
-1. Waits for the local write barrier.
-2. Runs [`refreshThoughtsFromMaterializationChanges`](../src/data-providers/treecrdt/sync/materializationThoughtUpdates.ts), which reads the affected thoughts, parents and siblings in batches. It derives Lexeme updates (every touched thought adds itself to its value's Lexeme; deletions and value changes remove the stale context; a Lexeme left with no contexts is deleted), and re-projects TreeCRDT sibling order onto `rank` for every parent whose children changed — so the render path, which still sorts by rank, reflects remote reorders.
-3. Applies the batch through the *materialization bridge*. The incoming refresh does not write its Redux Lexeme updates back to SQLite.
+1. Reads a Redux snapshot, then waits for the local writes queued so far. Every edit the snapshot shows has queued its write by then, so storage has it once the wait ends. Writes queued later are not waited for; step 3 catches any that matter.
+2. For incoming changes only, refreshes affected thoughts, their parents and their siblings in at most three batched reads, and projects sibling order onto numeric ranks.
+3. Waits for indexing, then reads complete memberships for affected old and new values. A round starts over if Redux meanwhile changes a Lexeme it read or a thought it writes, or renames or deletes a thought its Lexemes list. It also starts over if an event is indexed while it reads, unless the event is local and the round read no thoughts.
+4. Applies changed memberships and incoming thoughts through the *materialization bridge*.
 
 The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.
+
+If a snapshot or provider read throws, its events remain pending for the next materialization event. This is separate from an indexing failure: TreeCRDT retries that work on a later event, and publication is queued only after the index update succeeds.
 
 ### Memory management
 

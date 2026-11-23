@@ -2,10 +2,12 @@ import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { outdentActionCreator as outdent } from '../../actions/outdent'
 import { toggleSidebarActionCreator as toggleSidebar } from '../../actions/toggleSidebar'
+import { undoActionCreator as undo } from '../../actions/undo'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -17,7 +19,7 @@ const favorites = () =>
   )
 
 // https://github.com/cybersemics/em/pull/6056#issuecomment-5631331940
-it('does not list a thought whose =favorite has been formatted into a normal thought', async () => {
+it('hides a formatted favorite and restores its original position on undo', async () => {
   await dispatch([
     importText({
       text: `
@@ -27,13 +29,19 @@ it('does not list a thought whose =favorite has been formatted into a normal tho
   - =favorite
 `,
     }),
-    editThought(['aaa', '=favorite'], '<b>=favorite</b>'),
     toggleSidebar({ value: true }),
   ])
 
   await act(vi.runOnlyPendingTimersAsync)
+  await act(waitForThoughtspaceIdle)
+  const [first, second] = favorites()
 
-  expect(favorites()).toEqual(['bbb'])
+  await dispatch(editThought([first, '=favorite'], '<b>=favorite</b>'))
+  expect(favorites()).toEqual([second])
+
+  await dispatch(undo())
+  await act(waitForThoughtspaceIdle)
+  expect(favorites()).toEqual([first, second])
 })
 
 // https://github.com/cybersemics/em/issues/6169
