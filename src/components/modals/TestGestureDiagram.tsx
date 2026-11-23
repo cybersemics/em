@@ -8,6 +8,19 @@ const COMMAND_UNIVERSE_GRADIENT = {
   to: token('colors.gestureDiagramGradientEnd'),
 }
 
+/** Mirrors the GestureDiagram props in GestureMenuItem, at the size of the other diagrams in this modal. */
+const GESTURE_MENU_PROPS = {
+  size: 48,
+  arrowhead: 'filled',
+  glow: false,
+  useGradient: false,
+  color: token('colors.dim'),
+  chevronSize: 2.5,
+  chevronApexAngle: 60,
+  strokeWidth: 3,
+  rounded: true,
+} as const
+
 /** Modal used for GestureDiagram snapshot test. */
 const ModalTestGestureDiagram = () => {
   return (
@@ -73,6 +86,14 @@ const ModalTestGestureDiagram = () => {
         gradient={COMMAND_UNIVERSE_GRADIENT}
         glow={false}
       />
+
+      {/* Gesture Menu presentation: rounded gestures drawn as arcs ending in the filled chevron. */}
+      {/* newThoughtAbove */}
+      <GestureDiagram path='rul' {...GESTURE_MENU_PROPS} />
+      {/* cursorPrev (its former gesture; the command has none today but is still marked rounded) */}
+      <GestureDiagram path='lur' {...GESTURE_MENU_PROPS} />
+      {/* toggleSort */}
+      <GestureDiagram path='lurd' {...GESTURE_MENU_PROPS} />
 
       <div className={css({ display: 'inline-block', width: '48px', verticalAlign: 'middle' })}>
         <GestureDiagram
