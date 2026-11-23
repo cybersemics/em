@@ -1,10 +1,12 @@
 import _ from 'lodash'
 import { nanoid } from 'nanoid'
+import Command from '../@types/Command'
 import CommandUniverseNavigation from '../@types/CommandUniverseNavigation'
 import CommandUniversePage from '../@types/CommandUniversePage'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import { discoverCommandActionCreator as discoverCommand } from './discoverCommand'
 
 type Arrival = NonNullable<CommandUniverseNavigation['entries'][number]['arrival']>
 
@@ -55,6 +57,8 @@ export const commandUniverseNavigateActionCreator =
   (...args: NavigateArguments): Thunk =>
   dispatch => {
     const [pageId, props, options = {}] = args
+    // Opening a command's detail page is a deliberate encounter with it.
+    if (pageId === 'detail') dispatch(discoverCommand({ commandId: (props as { command: Command }).command.id }))
     // The tuple union enforces the page-id/props relationship at this public boundary.
     dispatch({
       type: 'commandUniverseNavigate',

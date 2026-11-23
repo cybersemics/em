@@ -48,6 +48,22 @@ export const LATEST_COMMAND_LIMIT = 3
 /** Practice repetitions needed to learn a command. Captured into a command's progress record when it is first pinned, so changing this does not change existing records. Provisional value pending a product decision (see #5485). */
 export const LEARNING_TARGET_REPS = 5
 
+/**
+ * The commands every user starts with discovered, so the Gesture Menu is never empty: the ones the tutorial teaches and
+ * the most basic movement. Every other command starts undiscovered and is met through Command Discovery (see
+ * docs/learning.md). Provisional, pending a product decision.
+ */
+export const LEARNING_STARTER_COMMANDS = [
+  'newThought',
+  'newSubthought',
+  'cursorBack',
+  'cursorForward',
+  'cursorNext',
+  'cursorPrev',
+  'indent',
+  'outdent',
+] as const
+
 /** Width and height of the pinned command ring's box in CSS px, from the Figma export. */
 export const PINNED_COMMAND_RING_SIZE = 73
 

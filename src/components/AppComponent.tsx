@@ -31,6 +31,7 @@ import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
 import HelpGenie from './HelpGenie/HelpGenie'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
+import CommandDiscovery from './Learning/CommandDiscovery'
 import PinnedCommand from './Learning/PinnedCommand'
 import MultiGesture from './MultiGesture'
 import NativeTextDragCaret from './NativeTextDragCaret'
@@ -95,6 +96,8 @@ const shouldCancelGesture = (
     // A touch that landed on the caret belongs to native caret repositioning. Latched at touchstart by initEvents, so
     // it holds for the whole touch rather than only the call that carries coordinates.
     touchStore.getState().pressOnCaret ||
+    // Command Discovery takes the whole screen; nothing traced over it is a gesture.
+    !!state.commandDiscovery ||
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
@@ -247,6 +250,8 @@ const AppComponent: FC = () => {
               </div>
             }
             {/* Inside MultiGesture so that a trace over the pinned command's tooltip is recognized and drawn even where the tooltip sits over the Mobile Command Universe, which is outside it. Its own fixed z-index orders it against the NavBar. */}
+            {/* Before the ring, which shares a layer with the hint's background and must paint over it. */}
+            {isDocumentEditable() && <CommandDiscovery />}
             {isDocumentEditable() && <PinnedCommand />}
           </>
         )}

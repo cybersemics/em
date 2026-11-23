@@ -4,18 +4,26 @@ The learning journey helps early users learn commands gradually through normal u
 
 ## State
 
-`state.learning` ([`LearningState`](../src/@types/LearningState.ts)) holds two independent facts:
+`state.learning` ([`LearningState`](../src/@types/LearningState.ts)) holds the pin, its practice record, and what the user has discovered and learned:
 
 ```ts
 {
   pinnedCommandId: CommandId | null
   progress: Partial<Record<CommandId, { reps: number; targetReps: number }>>
+  discovered: CommandId[]
+  learned: CommandId[]
 }
 ```
 
+A command is in one of three states:
+
+- **Undiscovered**: the user has no recorded deliberate encounter with it. The Gesture Menu does not list it.
+- **Discovered**: it is in `discovered`. The user has revealed it in the Gesture Menu (see [Command Discovery](#command-discovery)), opened its Command Universe detail page, pinned it, or performed it by gesture or keyboard. `discovered` starts as `LEARNING_STARTER_COMMANDS` in [`constants.ts`](../src/constants.ts), so the Gesture Menu is never empty, and learning saved before discovery existed starts from the same list. [`isCommandDiscovered`](../src/selectors/isCommandDiscovered.ts) answers the question, and also counts Cancel and Command Universe, which the menu always lists, and every command while a test has stubbed the command list.
+- **Learned**: it is in `learned`, because the user filled its practice ring. It stays learned after it is unpinned and its reps are erased, and it stays in `discovered`. Nothing reads `learned` yet, and using a command some number of times without pinning it does not learn it.
+
 - Progress is keyed by stable `CommandId`, never by label, category, or position, so relabeling a command preserves its record.
 - Progress exists only for the pinned command. A fresh record is created when a command is pinned, capturing the target from `LEARNING_TARGET_REPS` in [`constants.ts`](../src/constants.ts); unpinning, or pinning a different command, erases it. Changing that constant does not change the existing record.
-- Reaching `targetReps` fills the ring and plays its flourish. Nothing is marked learned: there is no completion flag, journey status, or history across commands. That is deliberate for now; this work covers the mechanics of the pinned command only.
+- Reaching `targetReps` fills the ring, plays its flourish, and adds the command to `learned`.
 
 [`storageModel`](../src/stores/storageModel.ts) saves the pin and progress under the `learning` key. [`initialState`](../src/util/initialState.ts) reads the saved state through that model, just like font size and jump history; no separate hydration action is needed. The decoder validates the stored structure and discards malformed progress records. The widget ignores a saved command that is no longer in the registry. Pinning, unpinning, and awarding a rep save the new learning state through `storageModel.set`. The pinned selection is intentionally device-specific. Practice progress stays local for now; synchronizing learning progress across the user’s devices is deferred. Here, device-local storage means this browser profile and app origin, not shared storage across installations.
 
@@ -31,6 +39,24 @@ These actions are registered `undoable: false`, and `learning` is listed in `sta
 Whether the tooltip is open is UI state, not learning state, so it lives outside `state.learning`: the top-level `showPinnedCommandTooltip` flag sits beside `showSidebar` and the other `show*` flags. It starts false, is never persisted, and like them changes only through a non-undoable action. The pin reducers close it in the same update that changes the pin, the way `setCursor` closes the toolbar pickers, so the flag can never be true for a command that is no longer pinned. `PinnedCommand` also closes it when it unmounts, since a flag that outlived the widget would reopen the tooltip when a modal, such as one opened by the pinned command itself, closes again.
 
 The command runner emits a success event once per top-level invocation, including a multicursor invocation. It does so as soon as `exec` returns, provided the command was executable, did not throw, and did not set a new app error. Asynchronous work the command starts is not awaited: performing the command where it can execute is the rep, whatever a server, the AI disclosure, or the clipboard later returns. A guard that should stop an invocation from earning a rep therefore belongs in `canExecute`, not in an early return from `exec`. Toolbar, Command Center, Command Universe, and internal calls do not earn reps or dispatch a practice action.
+
+## Command Discovery
+
+The Gesture Menu lists only discovered commands, and one undiscovered command as a **ghost**: a row whose gesture is drawn as usual but whose title is a fog the width of its name. Releasing on the ghost opens Command Discovery, a screen that introduces the command, instead of performing it.
+
+**The ghost.** `useDiscoveredCommands` in [`GestureMenu`](../src/components/GestureMenu/GestureMenu.tsx) splits the commands that match the gesture into the discovered ones and the first undiscovered one, placed after them and before Cancel and Command Universe. An exact match sorts first, so when the gesture matches an undiscovered command exactly, that command is the ghost. The split is made in the menu rather than in `useFilteredCommands`, which still sees every command: it also feeds the segment haptics and Command Universe search. A chained command is never the ghost, and during the tutorial, which teaches by gesture, every command is listed. `GhostTitle` in [`GestureMenuItem`](../src/components/GestureMenu/GestureMenuItem.tsx) draws the name in a gradient that runs from a tinted display color into the menu's dark, then blurs it until it cannot be read.
+
+**The hold.** Once the gesture matches the ghost, it excites over 900 ms: a lavender fog crossfades in over the resting one and drifts along the title, the row's subtitle reads "release your finger to discover" in an italic, glowing treatment, the menu's background shifts toward the ghost's hue (`GhostTint`), and a light haptic lands as the build-up completes. The build-up prepares the user for the larger change that follows.
+
+**The release.** `handleGestureEnd` in [`commands.ts`](../src/commands.ts) performs nothing when the Gesture Menu is open and the gesture matches an undiscovered command: it dispatches `discoverCommand` and `commandDiscovery`, closes the menu, and plays a medium haptic. A gesture released before the menu opens is performed as usual, whether or not its command is discovered, and performing it discovers it. So is every gesture during the tutorial. `discoverCommand` dispatches only for a command that is not yet discovered, so performing a command the user already knows still adds no Redux action.
+
+**The screen.** `state.commandDiscovery` holds the command being introduced, or null; it is UI state beside the `show*` flags, never saved. [`CommandDiscovery`](../src/components/Learning/CommandDiscovery.tsx), mounted beside `PinnedCommand`, covers the app on the `commandDiscovery` layer and leaves one focal point. Its sequence is led by a light, and nothing has to be read while anything moves:
+
+1. The backdrop fades in as the menu fades out, Cancel and Command Universe with it. The light starts where the ghost's title was, which the ghost row reports to [`commandDiscoveryStore`](../src/stores/commandDiscoveryStore.ts) as it lays out, and glides to the vertical center over 750 ms, carrying the fog with it. The fog is gone by the time it lands.
+2. At 600 ms the command's gesture and name arrive where the light has settled.
+3. At 950 ms its description follows, and at 1200 ms the note that the gesture will show up in the Gesture Menu from now on, and Done.
+
+Done or Escape closes it. The ring stays raised over the screen. `shouldCancelGesture` cancels any trace while the screen is shown.
 
 ## Pinning from the Command Universe
 
@@ -127,4 +153,4 @@ The folder is laid out by part of the genie rather than by em's usual convention
 
 ## Not yet built
 
-The learning overview, next-command suggestions, and any notion of a command being learned are separate child issues of #5481.
+The learning overview, next-command suggestions, learning a command by using it some number of times without pinning it, and anything that reads `learned` are separate child issues of #5481.

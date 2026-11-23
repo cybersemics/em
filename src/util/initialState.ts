@@ -163,6 +163,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     showHiddenThoughts: false,
     showModal: import.meta.env.VITE_DEMO || (!storage.getItem('welcomeComplete') && !tsidShared) ? 'welcome' : null,
     showPinnedCommandTooltip: false,
+    commandDiscovery: null,
     showSidebar: false,
     status: 'disconnected',
     tip: null,

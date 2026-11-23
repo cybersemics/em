@@ -1,9 +1,9 @@
 import { FC, useEffect, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useSelector, useStore } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
-import { gestureString } from '../../commands'
+import { commandById, gestureString } from '../../commands'
 import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUniverse'
 import * as selection from '../../device/selection'
 import useFilteredCommands from '../../hooks/useFilteredCommands'
@@ -14,6 +14,8 @@ import useGestureMenuLayout, {
   HEADER_TITLE_MARGIN_BOTTOM_REM,
   ROW_GAP_REM,
 } from '../../hooks/useGestureMenuLayout'
+import isCommandDiscovered from '../../selectors/isCommandDiscovered'
+import isTutorial from '../../selectors/isTutorial'
 import gestureStore, {
   onGestureMenuEntered,
   onGestureMenuExited,
@@ -33,7 +35,9 @@ import GestureMenuItem from './GestureMenuItem'
 /** Render a gesture menu with gesture autocomplete. */
 const GestureMenu: FC<{
   commands: Command[]
-}> = ({ commands }) => {
+  /** The menu's one undiscovered command, drawn as a ghost. See useDiscoveredCommands. */
+  ghost?: Command
+}> = ({ commands, ghost }) => {
   const gestureInProgress = gestureStore.useSelector(state => state.gesture)
   const fontSize = useSelector(state => state.fontSize)
 
@@ -79,6 +83,7 @@ const GestureMenu: FC<{
         key={command.id}
         selected={isSelected(command)}
         command={command}
+        ghost={command === ghost}
         isFirstCommand={index === 0}
         isLastCommand={index === items.length - 1}
         autoScroll={!isMultiColumn}
@@ -134,7 +139,7 @@ const GestureMenu: FC<{
               <div
                 className={css({
                   height: '1px',
-                  // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
+
                   background: 'linear-gradient(90deg, {colors.gestureMenuDivider} 0%, {colors.bgTransparent} 100%)',
                 })}
                 style={{ width: dividerWidth }}
@@ -235,6 +240,52 @@ function Glow() {
   )
 }
 
+/**
+ * Shifts the menu's background toward the ghost's hue while the gesture matches the undiscovered command, building up
+ * to its discovery so the change that follows is less abrupt.
+ */
+function GhostTint({ show }: { show: boolean }) {
+  return (
+    <div
+      className={css({
+        pointerEvents: 'none',
+        position: 'absolute',
+        top: 0,
+        width: '100%',
+        height: '100dvh',
+        mixBlendMode: 'screen',
+
+        background:
+          'linear-gradient(180deg, {colors.commandDiscoveryTint} 0%, {colors.commandDiscoveryTintDeep} 22%, {colors.bgTransparent} 55%)',
+        transition: 'opacity 0.9s ease-in',
+      })}
+      style={{ opacity: show ? 0.38 : 0 }}
+    />
+  )
+}
+
+/**
+ * Splits the commands that match the gesture into what the Gesture Menu shows: the discovered ones, and a single
+ * undiscovered one as a ghost, placed after them and before Cancel and Command Universe. The first undiscovered command
+ * is the ghost, which is the one the gesture matches exactly if there is one, since an exact match sorts first.
+ * Chained commands are never ghosts. During the tutorial every command is shown, since it teaches by gesture.
+ */
+const useDiscoveredCommands = (commands: Command[]): { commands: Command[]; ghost: Command | undefined } => {
+  const store = useStore()
+  // Re-renders when a command is discovered or the tutorial ends.
+  useSelector(state => state.learning.discovered)
+  const showAll = useSelector(isTutorial)
+  if (showAll) return { commands, ghost: undefined }
+
+  const state = store.getState()
+  const shown = commands.filter(command => isCommandDiscovered(state, command.id))
+  const ghost = commands.find(command => !isCommandDiscovered(state, command.id) && commandById(command.id) === command)
+  if (!ghost) return { commands: shown, ghost }
+  const fixedIndex = shown.findIndex(command => command.id === 'cancel' || command.id === 'openMobileCommandUniverse')
+  const index = fixedIndex === -1 ? shown.length : fixedIndex
+  return { commands: [...shown.slice(0, index), ghost, ...shown.slice(index)], ghost }
+}
+
 /** Renders a gradient overlay for the gesture menu. */
 function Overlay() {
   return (
@@ -242,7 +293,7 @@ function Overlay() {
       className={css({
         pointerEvents: 'none',
         position: 'absolute',
-        // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
+
         background: 'linear-gradient(180deg, {colors.black} 0%, {colors.bgOverlay80} 60%, {colors.bgOverlay50} 100%)',
         top: 0,
         width: '100%',
@@ -279,10 +330,14 @@ const GestureMenuWithTransition: FC = () => {
 
   // Commands need to be calculated even if the gesture menu is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
   const [recentCommands] = useState(storageModel.get('recentCommands'))
-  const commands = useFilteredCommands('', {
+  const matchingCommands = useFilteredCommands('', {
     recentCommands,
     sortActiveCommandsFirst: true,
   })
+  // The hook above still sees every command, for haptics; the menu itself lists only the discovered ones and a ghost.
+  const { commands, ghost } = useDiscoveredCommands(matchingCommands)
+  const gestureInProgress = gestureStore.useSelector(state => state.gesture)
+  const ghostSelected = !!ghost && gestureInProgress === gestureString(ghost)
 
   useHideSelection(showGestureMenu)
 
@@ -348,8 +403,9 @@ const GestureMenuWithTransition: FC = () => {
               >
                 <Overlay />
                 <Glow />
+                <GhostTint show={ghostSelected} />
                 <div style={{ position: 'relative', zIndex: 1 }}>
-                  <GestureMenu commands={commands} />
+                  <GestureMenu commands={commands} ghost={ghost} />
                 </div>
               </div>
             </FadeTransition>

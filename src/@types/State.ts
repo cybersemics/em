@@ -180,6 +180,8 @@ interface State {
   showModal?: Modal | null
   /** Whether the pinned command's tooltip is expanded. Only ever true while a command is pinned: changing the pin closes it. */
   showPinnedCommandTooltip: boolean
+  /** The command that Command Discovery is introducing, or null while it is closed. See actions/commandDiscovery.ts and docs/learning.md. */
+  commandDiscovery: CommandId | null
   showSidebar: boolean
   showMobileCommandUniverse?: boolean
   showUndoSlider: boolean

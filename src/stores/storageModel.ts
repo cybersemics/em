@@ -1,12 +1,24 @@
 import CommandId from '../@types/CommandId'
 import LearningState from '../@types/LearningState'
 import Path from '../@types/Path'
-import { DEFAULT_FONT_SIZE } from '../constants'
+import { DEFAULT_FONT_SIZE, LEARNING_STARTER_COMMANDS } from '../constants'
 import storage from '../util/storage'
 
 type BackgroundGlowStorageType = { image: string | null; opacity: number }
 
 type CursorStorageType = { path: Path | null; offset: number | null }
+
+/** Learning state for a user with nothing saved: no pin, and only the starter commands discovered. */
+const emptyLearning = (): LearningState => ({
+  pinnedCommandId: null,
+  progress: {},
+  discovered: [...LEARNING_STARTER_COMMANDS],
+  learned: [],
+})
+
+/** A saved list of command ids, or undefined if it is missing or malformed. */
+const commandIds = (value: unknown): CommandId[] | undefined =>
+  Array.isArray(value) ? (value.filter(id => typeof id === 'string') as CommandId[]) : undefined
 
 const storageModel = storage.model({
   // debug background glow overlay behind the thoughtspace (see BackgroundGlow)
@@ -36,17 +48,15 @@ const storageModel = storage.model({
     encode: value => JSON.stringify(value),
   },
   learning: {
-    default: { pinnedCommandId: null, progress: {} } as LearningState,
+    default: emptyLearning(),
     // Validate structure without importing the command registry, which depends on the app store.
     // Consumers resolve saved IDs against the current registry and ignore unavailable commands.
     decode: (s: string | null): LearningState => {
       try {
         const parsed: unknown = s ? JSON.parse(s) : null
-        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
-          return { pinnedCommandId: null, progress: {} }
-        const { pinnedCommandId, progress } = parsed as Record<string, unknown>
-        if (!progress || typeof progress !== 'object' || Array.isArray(progress))
-          return { pinnedCommandId: null, progress: {} }
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return emptyLearning()
+        const { pinnedCommandId, progress, discovered, learned } = parsed as Record<string, unknown>
+        if (!progress || typeof progress !== 'object' || Array.isArray(progress)) return emptyLearning()
 
         return {
           pinnedCommandId: typeof pinnedCommandId === 'string' ? (pinnedCommandId as CommandId) : null,
@@ -64,10 +74,13 @@ const storageModel = storage.model({
               )
             }),
           ) as LearningState['progress'],
+          // Learning saved before commands could be discovered has no list, and starts from the starter commands.
+          discovered: commandIds(discovered) ?? [...LEARNING_STARTER_COMMANDS],
+          learned: commandIds(learned) ?? [],
         }
       } catch (error) {
         console.warn('Could not load learning progress.', error)
-        return { pinnedCommandId: null, progress: {} }
+        return emptyLearning()
       }
     },
     encode: (value: LearningState) => JSON.stringify(value),

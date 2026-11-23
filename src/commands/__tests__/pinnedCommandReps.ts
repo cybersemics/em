@@ -96,7 +96,9 @@ it('keeps counting reps past the target, and unpinning erases them', () => {
 
   store.dispatch(unpinCommand())
 
-  expect(store.getState().learning).toEqual({ pinnedCommandId: null, progress: {} })
+  expect(store.getState().learning).toMatchObject({ pinnedCommandId: null, progress: {} })
+  // Filling the ring learned the command, which outlasts the pin.
+  expect(store.getState().learning.learned).toEqual(['toggleDone'])
   expect(storageModel.get('learning')).toEqual(store.getState().learning)
 })
 

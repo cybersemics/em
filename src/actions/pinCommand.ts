@@ -17,6 +17,11 @@ const pinCommand = (state: State, { commandId }: { commandId: CommandId }): Stat
   // Changing the pin closes its tooltip.
   ...(state.learning.pinnedCommandId !== commandId ? { showPinnedCommandTooltip: false } : null),
   learning: {
+    ...state.learning,
+    // Pinning a command is a deliberate encounter with it.
+    discovered: state.learning.discovered.includes(commandId)
+      ? state.learning.discovered
+      : [...state.learning.discovered, commandId],
     pinnedCommandId: commandId,
     progress: {
       [commandId]: state.learning.progress[commandId] ?? { reps: 0, targetReps: LEARNING_TARGET_REPS },

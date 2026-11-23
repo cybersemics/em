@@ -56,6 +56,8 @@ const PinnedCommand = () => {
   // The pinned command stays visible over the Mobile Command Universe, the dialog the user pins from, by keeping the
   // ring on its raised layer there. Under every other overlay it stays docked beneath.
   const inCommandUniverse = useSelector(state => !!state.showMobileCommandUniverse)
+  // It stays in view over Command Discovery too, where a newly discovered command can be dragged to it.
+  const inCommandDiscovery = useSelector(state => !!state.commandDiscovery)
   // A dry run over the Command Universe earns no rep, so the ring bursts with color instead of filling. The gesture
   // handler announces each one on commandEmitter; the count only exists to tell the ring to play again.
   const [burst, setBurst] = useState(0)
@@ -111,7 +113,7 @@ const PinnedCommand = () => {
           right: 0,
           // The ring center sits 13.5px above the NavBar's bottom edge; its box center is 36.16px above its bottom.
           bottom: 'calc(max(11px, token(spacing.safeAreaBottom)) - 22.5px)',
-          zIndex: isRaised || inCommandUniverse ? 'pinnedCommandExpanded' : 'pinnedCommand',
+          zIndex: isRaised || inCommandUniverse || inCommandDiscovery ? 'pinnedCommandExpanded' : 'pinnedCommand',
           pointerEvents: 'none',
         })}
       >
