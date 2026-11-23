@@ -5,7 +5,6 @@ import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import Thunk from '../@types/Thunk'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
 import { editNotePathActionCreator as editNotePath } from '../actions/editNotePath'
@@ -40,16 +39,6 @@ import trimmedTextOffset from '../util/trimmedTextOffset'
 import useCaretRestore from './Editable/useCaretRestore'
 import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
-
-/** Dispatches a note edit, and records in editableSyncStore whether it left the note's saved value unchanged, as whitespace typed at either end of the note does. Undo discards such an input first (#6347). */
-const recordUnsavedInput =
-  (path: Path, edit: Thunk): Thunk =>
-  (dispatch, getState) => {
-    const before = noteValue(getState(), path)
-    dispatch(edit)
-    const state = getState()
-    editableSyncStore.update({ unsavedInputUndoPatches: noteValue(state, path) === before ? state.undoPatches : null })
-  }
 
 // react-contenteditable is CommonJS that sets __esModule. Because em's package.json has "type": "module", Vite resolves
 // its default import to module.exports rather than module.exports.default, while Vitest unwraps it to the component.
@@ -221,82 +210,86 @@ const Note = React.memo(
         const htmlBefore = htmlBeforeInputRef.current
         htmlBeforeInputRef.current = blank ? '' : e.target.value
 
+        // Undo discards an input that changed nothing saved, such as whitespace typed at either end (#6347). The note edit
+        // dispatches synchronously, so the saved value can be compared on either side of it.
+        const savedBefore = noteValue(store.getState(), path)
+
         // update the referenced thought directly if it exists
-        dispatch(
-          recordUnsavedInput(path, (dispatch, getState) => {
-            const state = getState()
+        dispatch((dispatch, getState) => {
+          const state = getState()
 
-            const resolvedTargetPath = resolveNotePath(state, path)
-            const targetPath = resolvedTargetPath ?? path
-            const { noteId } = resolveNoteKey(state, head(path))
+          const resolvedTargetPath = resolveNotePath(state, path)
+          const targetPath = resolvedTargetPath ?? path
+          const { noteId } = resolveNoteKey(state, head(path))
 
-            // As with thoughts, the note's whitespace never goes into Redux: each value is trimmed as it is typed, while the
-            // draft keeps what the browser holds, boundary spaces and comma spacing included, until editing ends.
-            setNoteDraft({ value, editableNonce: state.editableNonce })
+          // As with thoughts, the note's whitespace never goes into Redux: each value is trimmed as it is typed, while the
+          // draft keeps what the browser holds, boundary spaces and comma spacing included, until editing ends.
+          setNoteDraft({ value, editableNonce: state.editableNonce })
 
-            if (!noteId && resolvedTargetPath) {
-              const values = value.split(',').map(trimHtml)
+          if (!noteId && resolvedTargetPath) {
+            const values = value.split(',').map(trimHtml)
 
-              dispatch(
-                editNotePath({
-                  noteOffset:
-                    domOffset === null ? undefined : trimmedTextOffset(domOffset, textAfter, textAfter.trim()),
-                  path: targetPath,
-                  values,
-                  undoLabel: 'Edit Note',
-                }),
-              )
-              return
-            }
+            dispatch(
+              editNotePath({
+                noteOffset: domOffset === null ? undefined : trimmedTextOffset(domOffset, textAfter, textAfter.trim()),
+                path: targetPath,
+                values,
+                undoLabel: 'Edit Note',
+              }),
+            )
+            return
+          }
 
-            const noteThoughtValue = firstVisibleChild(state, head(targetPath))
+          const noteThoughtValue = firstVisibleChild(state, head(targetPath))
 
-            if (noteThoughtValue) {
-              // The formatting held while the note was empty is transferred onto the first text typed into it (#3910).
-              // editThought drops the held copy, and force re-renders the note with the tags in place so that the browser
-              // carries them through the rest of the typing.
-              const wrappedValue =
-                noteThoughtValue.pendingFormat && noteThoughtValue.value.length === 0 && value.length > 0
-                  ? applyOuterTags(value, noteThoughtValue.pendingFormat)
-                  : value
-              const trimmedValue = trimHtml(wrappedValue)
-              // A value that is only tags once trimmed stays empty so it keeps its held formatting until text is typed.
-              const newValue = stripTags(trimmedValue) ? trimmedValue : ''
-              const textBefore = getTextContentFromHTML(htmlBefore)
-              const savedTextBefore =
-                htmlBefore === noteThoughtValue.value ? textBefore : getTextContentFromHTML(noteThoughtValue.value)
-              const savedTextAfter = e.target.value === newValue ? textAfter : getTextContentFromHTML(newValue)
-              const noteOffset =
-                domOffset === null ? undefined : trimmedTextOffset(domOffset, textAfter, savedTextAfter)
+          if (noteThoughtValue) {
+            // The formatting held while the note was empty is transferred onto the first text typed into it (#3910).
+            // editThought drops the held copy, and force re-renders the note with the tags in place so that the browser
+            // carries them through the rest of the typing.
+            const wrappedValue =
+              noteThoughtValue.pendingFormat && noteThoughtValue.value.length === 0 && value.length > 0
+                ? applyOuterTags(value, noteThoughtValue.pendingFormat)
+                : value
+            const trimmedValue = trimHtml(wrappedValue)
+            // A value that is only tags once trimmed stays empty so it keeps its held formatting until text is typed.
+            const newValue = stripTags(trimmedValue) ? trimmedValue : ''
+            const textBefore = getTextContentFromHTML(htmlBefore)
+            const savedTextBefore =
+              htmlBefore === noteThoughtValue.value ? textBefore : getTextContentFromHTML(noteThoughtValue.value)
+            const savedTextAfter = e.target.value === newValue ? textAfter : getTextContentFromHTML(newValue)
+            const noteOffset = domOffset === null ? undefined : trimmedTextOffset(domOffset, textAfter, savedTextAfter)
 
-              // Infer the pre-edit caret from the change in draft length. Then map it into the old saved value for Undo.
-              const noteOffsetBefore =
-                domOffset === null
-                  ? undefined
-                  : trimmedTextOffset(domOffset + textBefore.length - textAfter.length, textBefore, savedTextBefore)
+            // Infer the pre-edit caret from the change in draft length. Then map it into the old saved value for Undo.
+            const noteOffsetBefore =
+              domOffset === null
+                ? undefined
+                : trimmedTextOffset(domOffset + textBefore.length - textAfter.length, textBefore, savedTextBefore)
 
-              dispatch(
-                editThought({
-                  path: appendToPath(targetPath, noteThoughtValue.id) as SimplePath,
-                  oldValue: noteThoughtValue.value,
-                  newValue,
-                  noteOffset,
-                  noteOffsetBefore,
-                  force: wrappedValue !== value,
-                  undoLabel: 'Edit Note',
-                }),
-              )
-            } else {
-              dispatch(
-                setDescendant({
-                  path: targetPath,
-                  values: [trimHtml(value)],
-                  undoLabel: 'Edit Note',
-                }),
-              )
-            }
-          }),
-        )
+            dispatch(
+              editThought({
+                path: appendToPath(targetPath, noteThoughtValue.id) as SimplePath,
+                oldValue: noteThoughtValue.value,
+                newValue,
+                noteOffset,
+                noteOffsetBefore,
+                force: wrappedValue !== value,
+                undoLabel: 'Edit Note',
+              }),
+            )
+          } else {
+            dispatch(
+              setDescendant({
+                path: targetPath,
+                values: [trimHtml(value)],
+                undoLabel: 'Edit Note',
+              }),
+            )
+          }
+        })
+        const stateAfter = store.getState()
+        editableSyncStore.update({
+          unsavedInputUndoPatches: noteValue(stateAfter, path) === savedBefore ? stateAfter.undoPatches : null,
+        })
       },
       [dispatch, path, justPasted],
     )
