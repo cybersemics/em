@@ -4,12 +4,15 @@ import userEvent from '@testing-library/user-event'
 import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
+import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { setCursorActionCreator as setCursorPath } from '../../actions/setCursor'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import defineTerm from '../../commands/defineTerm'
 import generateEmoji from '../../commands/generateEmoji'
 import generateThought from '../../commands/generateThought'
 import organizeThought from '../../commands/organizeThought'
+import undo from '../../commands/undo'
 import { HOME_TOKEN } from '../../constants'
 import * as selection from '../../device/selection'
 import contextToPath from '../../selectors/contextToPath'
@@ -209,6 +212,74 @@ it('toggles the multicursor on a click that follows a new touchstart', async () 
 
   // the first tap selected b, the second deselected it
   expect(Object.keys(store.getState().multicursors)).toHaveLength(1)
+})
+
+// https://github.com/cybersemics/em/issues/6347
+it.each([
+  { space: ' ', name: 'a space', position: 'start', entered: 3, offset: 0, typed: ' bbb' },
+  { space: ' ', name: 'a space', position: 'end', entered: 0, offset: 3, typed: 'bbb ' },
+  // trimHtml trims Unicode spaces too, so the caret must not count them either
+  { space: '\u3000', name: 'an ideographic space', position: 'start', entered: 3, offset: 0, typed: '\u3000bbb' },
+  { space: '\u3000', name: 'an ideographic space', position: 'end', entered: 0, offset: 3, typed: 'bbb\u3000' },
+])(
+  'undoes $name typed at the $position of a thought without undoing the step before it',
+  async ({ space, entered, offset, typed }) => {
+    await dispatch([importText({ text: '- aaa\n- bbb' }), setCursor(['aaa'])])
+    await act(async () => {
+      store.dispatch(formatSelection('foreColor', 'green'))
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    // Enter bbb at the other end from where the space is typed, so that the caret recorded on entry differs from
+    // where it is when the space is typed.
+    await dispatch(setCursorPath({ path: contextToPath(store.getState(), ['bbb'])!, offset: entered }))
+    const editable = (await findThoughtByText('bbb'))!
+    await act(async () => {
+      editable.focus()
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    // Move the caret with the arrow keys, which records nothing.
+    await act(async () => selection.set(editable, { offset }))
+    const user = userEvent.setup({ delay: null })
+    await user.keyboard(space)
+    await act(vi.runAllTimersAsync)
+    expect(editable.textContent).toBe(typed)
+
+    await act(async () => {
+      executeCommand(undo)
+      await vi.runAllTimersAsync()
+    })
+
+    expect(editable.textContent).toBe('bbb')
+    // The caret stays where the space was typed, counted in the text without it.
+    expect(selection.offsetThought()).toBe(offset)
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<font color=')
+  },
+)
+
+// https://github.com/cybersemics/em/issues/6347
+it('undoes a space typed before other text together with that text', async () => {
+  await dispatch([importText({ text: '- x' }), setCursor(['x'])])
+  const editable = (await findThoughtByText('x'))!
+  await act(async () => {
+    editable.focus()
+    selection.set(editable, { offset: 0 })
+    await vi.runOnlyPendingTimersAsync()
+  })
+
+  const user = userEvent.setup({ delay: null })
+  await user.keyboard(' y')
+  await act(vi.runAllTimersAsync)
+  expect(editable.textContent).toBe(' yx')
+
+  await act(async () => {
+    executeCommand(undo)
+    await vi.runAllTimersAsync()
+  })
+
+  // The space was typed before the y, so it is not the last thing done, and Undo reverts the typing as a whole.
+  expect(editable.textContent).toBe('x')
 })
 
 describe('Generate Thought', () => {
