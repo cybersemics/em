@@ -14,8 +14,7 @@ import { setCursorFirstMatchActionCreator as setCursorFirstMatch } from '../../t
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-// Current functionality is broken in main and won't be fixed soon so this test is skipped.
-it.skip('editing a thought should load the lexeme and merge contexts', async () => {
+it('editing a thought should load the lexeme and merge contexts', async () => {
   // Related issue: https://github.com/cybersemics/em/issues/1074
   await dispatch(
     importText({
@@ -60,11 +59,10 @@ it.skip('editing a thought should load the lexeme and merge contexts', async () 
   const thoughtContextsDb = (await getLexemeFromProvider(db, 'f'))?.contexts
   expect(thoughtContextsDb).toEqual(expect.arrayContaining([thoughtH?.id, thoughtF?.id]))
 
-  expect(thoughtContextsState).toHaveLength(2)
+  expect(thoughtContextsDb).toHaveLength(2)
 })
 
-// Current functionality is broken in main and won't be fixed soon so this test is skipped.
-it.skip('a new thought should merge into an unloaded lexeme and persist both contexts across a refresh', async () => {
+it('a new thought should merge into an unloaded lexeme and persist both contexts across a refresh', async () => {
   // Related issue: https://github.com/cybersemics/em/issues/5426
   await dispatch(
     importText({

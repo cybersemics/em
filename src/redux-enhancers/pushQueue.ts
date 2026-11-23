@@ -103,7 +103,6 @@ const pushQueue: StoreEnhancer<any> =
             batches: (dbQueue ?? []).length,
             thoughtCount: thoughtUpdates.length,
             deleteCount: thoughtUpdates.filter(([, thought]) => !thought).length,
-            lexemeCount: (dbQueue ?? []).reduce((n, batch) => n + Object.keys(batch.lexemeIndexUpdates).length, 0),
             moveCount: (dbQueue ?? []).reduce((n, batch) => n + Object.keys(batch.movePlacements ?? {}).length, 0),
             local: (dbQueue ?? []).some(batch => batch.local !== false),
             remote: (dbQueue ?? []).some(batch => batch.remote !== false),
@@ -115,8 +114,8 @@ const pushQueue: StoreEnhancer<any> =
         const applyDbQueue = async () => {
           await thoughtspaceRuntime.persistPushQueueBatches(
             (dbQueue ?? []).map(batch => ({
+              favoriteOrder: batch.favoriteOrder,
               thoughtIndexUpdates: batch.thoughtIndexUpdates,
-              lexemeIndexUpdates: batch.lexemeIndexUpdates,
               movePlacements: batch.movePlacements,
               local: batch.local,
             })),

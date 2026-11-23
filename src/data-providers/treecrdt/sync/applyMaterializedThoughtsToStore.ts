@@ -1,80 +1,64 @@
-/* eslint-disable import/prefer-default-export -- bridge module */
 import type { MaterializationEvent } from '@treecrdt/interface/engine'
-import type Index from '../../../@types/IndexType'
-import type Thought from '../../../@types/Thought'
+import _ from 'lodash'
+import hashThought from '../../../util/hashThought'
+import type { DataProvider } from '../../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../../thoughtspace'
-import { waitForTreecrdtWriteBarrier } from '../writeBarrier'
-import { enqueueMaterializedThoughtsToStoreWork } from './materializationQueue'
-import { type MaterializationStore, refreshThoughtsFromMaterializationChanges } from './materializationThoughtUpdates'
+import { isTreecrdtLocalMaterialization, waitForQueuedTreecrdtWrites } from '../writeBarrier'
+import refreshThoughtsFromMaterializationChanges from './materializationThoughtUpdates'
 
-/** Dependencies captured when a client registers its materialization listener. */
-type MaterializationContext = Readonly<{
+export type MaterializationContext = {
   bridge: ThoughtspaceMaterializationBridge
-  db: MaterializationStore
-  /** Resolves once every change materialized so far is in the attribute index. */
-  indexed: () => Promise<void>
-}>
-
-/**
- * After remote TreeCRDT ops are materialized into SQLite, refresh the app-facing thoughtspace in one batch.
- * This is used for cross-tab and server sync events; same-tab local writes are already applied optimistically.
- */
-export async function applyMaterializedThoughtsToStore(
-  event: MaterializationEvent,
-  { bridge, db, indexed }: MaterializationContext,
-): Promise<void> {
-  if (event.changes.length === 0) return
-
-  // Local writes and materialization callbacks can race. Wait for queued em -> TreeCRDT writes before reading
-  // SQLite back into app state, otherwise a remote refresh can reapply stale rows over newer optimistic state.
-  await waitForTreecrdtWriteBarrier()
-
-  // Thought reads include attribute children, and writes don't wait for the index, so wait until it has applied this
-  // event and the local writes before it.
-  await indexed()
-
-  const snapshot = bridge.getSnapshot()
-  const { deletedIds, thoughts, lexemeIndexUpdates } = await refreshThoughtsFromMaterializationChanges(
-    event.changes,
-    db,
-    snapshot,
-  )
-
-  if (Object.keys(lexemeIndexUpdates).length > 0) {
-    await db.updateThoughts({
-      thoughtIndexUpdates: {},
-      lexemeIndexUpdates,
-    })
-  }
-
-  const thoughtIndexUpdates: Index<Thought | null> = {}
-
-  for (const id of deletedIds) {
-    thoughtIndexUpdates[id] = null
-  }
-
-  for (const latest of thoughts) {
-    const thoughtInState = snapshot.thoughtIndex[latest.id]
-    const parentInState = snapshot.thoughtIndex[latest.parentId]
-    // Pending is not part of the TreeCRDT payload. Preserve the local UI flag until auth/sync handling owns it.
-    const pending = thoughtInState?.pending || parentInState?.pending
-    const latestWithPending = {
-      ...latest,
-      ...(pending ? { pending } : null),
-    }
-
-    thoughtIndexUpdates[latest.id] = latestWithPending
-  }
-
-  if (Object.keys(thoughtIndexUpdates).length > 0 || Object.keys(lexemeIndexUpdates).length > 0) {
-    await bridge.apply({ thoughtIndex: thoughtIndexUpdates, lexemeIndex: lexemeIndexUpdates })
-  }
+  db: Pick<DataProvider, 'getThoughtsByIds' | 'getLexemesByIds'>
+  pending: { event: MaterializationEvent; keys: string[] }[]
+  isActive: () => boolean
 }
 
-/** Serializes materialization refreshes so overlapping async events cannot apply out of order. */
-export function enqueueMaterializedThoughtsToStore(
-  event: MaterializationEvent,
-  context: MaterializationContext,
-): Promise<void> {
-  return enqueueMaterializedThoughtsToStoreWork(() => applyMaterializedThoughtsToStore(event, context))
+/** Publishes complete memberships after persistence; local thoughts keep their optimistic view. */
+export const applyMaterializedThoughtsToStore = async ({ bridge, db, pending, isActive }: MaterializationContext) => {
+  while (pending.length && isActive()) {
+    // pushQueue queues each edit's write in the reducer that makes it, so once the writes queued by now are done, storage
+    // has every edit this snapshot shows. Writes queued later are not waited for; the checks below catch any that matter.
+    const snapshot = bridge.getSnapshot()
+    await waitForQueuedTreecrdtWrites()
+    const entries = pending.slice()
+    const keys = [...new Set(entries.flatMap(entry => entry.keys))]
+    const remoteChanges = entries.flatMap(({ event }) => (isTreecrdtLocalMaterialization(event) ? [] : event.changes))
+    const thoughtIndexUpdates = await refreshThoughtsFromMaterializationChanges(remoteChanges, db)
+    const values = await db.getLexemesByIds(keys)
+    const { thoughtIndex, lexemeIndex } = bridge.getSnapshot()
+    if (
+      // A newer edit to a Lexeme this round reads or a thought it writes.
+      keys.some(key => lexemeIndex[key] !== snapshot.lexemeIndex[key]) ||
+      Object.keys(thoughtIndexUpdates).some(id => thoughtIndex[id] !== snapshot.thoughtIndex[id]) ||
+      // A newer edit that renamed a listed thought into another Lexeme or deleted it. The first check misses this if
+      // Redux has no Lexeme for the value at both reads, as when it has not loaded that Lexeme.
+      // Only changed thoughts count, or a remote rename this round publishes would restart it forever.
+      values.some((lexeme, i) =>
+        lexeme?.contexts.some(id => {
+          const thought = thoughtIndex[id]
+          return thought !== snapshot.thoughtIndex[id] && (!thought || hashThought(thought.value) !== keys[i])
+        }),
+      ) ||
+      // An event indexed during the reads can split the thought reads or make a Lexeme list a remote change Redux does
+      // not have yet. A local event can wait for the next round when this one reads no thoughts, since the checks above
+      // cover its edit.
+      pending
+        .slice(entries.length)
+        .some(({ event }) => remoteChanges.length > 0 || !isTreecrdtLocalMaterialization(event))
+    )
+      continue
+    if (!isActive()) return
+
+    for (const latest of _.compact(Object.values(thoughtIndexUpdates))) {
+      const loading = thoughtIndex[latest.id]?.pending || thoughtIndex[latest.parentId]?.pending
+      if (loading) thoughtIndexUpdates[latest.id] = { ...latest, pending: loading }
+    }
+    const lexemeIndexUpdates = Object.fromEntries(
+      keys.flatMap((key, i) => (_.isEqual(values[i], snapshot.lexemeIndex[key]) ? [] : [[key, values[i] ?? null]])),
+    )
+    pending.splice(0, entries.length)
+    if (Object.keys(lexemeIndexUpdates).length || Object.keys(thoughtIndexUpdates).length) {
+      await bridge.apply({ thoughtIndex: thoughtIndexUpdates, lexemeIndex: lexemeIndexUpdates })
+    }
+  }
 }
