@@ -6,13 +6,14 @@ import { initialize } from '../../../../initialize'
 import { exportContext } from '../../../../selectors/exportContext'
 import store from '../../../../stores/app'
 import contextToPathOrThrow from '../../../../test-helpers/contextToPathOrThrow'
+import { deleteThoughtAtFirstMatchActionCreator as deleteThought } from '../../../../test-helpers/deleteThoughtAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../../../test-helpers/editThoughtByContext'
 import importToContext from '../../../../test-helpers/importToContext'
 import createId from '../../../../util/createId'
 import head from '../../../../util/head'
 import { thoughtspaceRuntime } from '../../../thoughtspace'
 import { tsid } from '../../../thoughtspaceSession'
-import { encodeThoughtPayload } from '../../payload'
+import { decodeThoughtPayload, encodeThoughtPayload } from '../../payload'
 
 vi.mock(import('@treecrdt/wa-sqlite'), { spy: true })
 
@@ -109,4 +110,35 @@ it('keeps the fields that exist only in Redux when a remote change reads their t
   - X
   - Y`)
   expect(store.getState().thoughts.thoughtIndex[xId].pendingFormat).toBe('<b></b>')
+})
+
+it('shows a deleted branch again after syncing an unseen child edit', async () => {
+  const { appClient: deletingClient, remoteClient: editingClient } = await start('- Container\n  - Parent\n    - Child')
+  const childId = head(contextToPathOrThrow(store.getState(), ['Container', 'Parent', 'Child'], 'defensiveDeletion'))
+  const beforeDelete = await deletingClient.meta.headLamport()
+
+  const childPayload = await editingClient.tree.node(childId).payload()
+  if (!childPayload) throw new Error('The editing client did not receive the child')
+  const edit = await editingClient.local.payload(
+    new Uint8Array(32).fill(2),
+    childId,
+    encodeThoughtPayload({
+      ...decodeThoughtPayload(childPayload),
+      value: 'Edited child',
+      lastUpdated: Date.now(),
+      updatedBy: 'editing-client',
+    }),
+  )
+
+  store.dispatch(deleteThought(['Container', 'Parent']))
+  await thoughtspaceRuntime.waitForIdle()
+  expect(exportContext(store.getState(), ['Container'], 'text/plain')).toBe('- Container')
+
+  await editingClient.ops.appendMany(await deletingClient.ops.since(beforeDelete))
+  await deletingClient.ops.append(edit)
+  await thoughtspaceRuntime.waitForIdle()
+
+  expect(exportContext(store.getState(), ['Container'], 'text/plain')).toBe(`- Container
+  - Parent
+    - Edited child`)
 })

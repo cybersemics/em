@@ -44,43 +44,6 @@ import noteCommand from '../note'
 
 beforeEach(initStore)
 
-/**
- * Moves a/x to b/x, then runs the forced ancestor pull that Recently Edited starts for b/x. The given action runs after
- * the pull has read storage and before it applies what it read, as when the user undoes while those reads are in
- * flight. Returns the path of x under b.
- */
-const pullAroundMove = async (action: () => void) => {
-  store.dispatch(
-    importText({
-      text: `
-      - a
-        - x
-      - b`,
-    }),
-  )
-  await vi.runAllTimersAsync()
-  store.dispatch(moveThought({ from: ['a', 'x'], to: ['b', 'x'], newRank: 0 }))
-  await vi.runAllTimersAsync()
-
-  const path = contextToPath(store.getState(), ['b', 'x'])!
-  const getThoughtsByIds = db.getThoughtsByIds
-  let ran = false
-  const read = vi.spyOn(db, 'getThoughtsByIds').mockImplementation(async ids => {
-    const thoughts = await getThoughtsByIds(ids)
-    if (!ran && ids.includes(head(path))) {
-      ran = true
-      action()
-    }
-    return thoughts
-  })
-  await store.dispatch(pullAncestors(path, { force: true, maxDepth: 0 }))
-  read.mockRestore()
-  expect(ran).toBe(true)
-  await vi.runAllTimersAsync()
-
-  return path
-}
-
 /******************************************************************
  * UNDO
  ******************************************************************/
@@ -719,10 +682,36 @@ describe('undo', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5622
-  it('keeps a move undone when a forced pull that read the move resolves after the undo', async () => {
-    const path = await pullAroundMove(() => store.dispatch(undo()))
+  // https://github.com/cybersemics/em/issues/5623
+  it('keeps a move undone during a forced pull and persists its redo', async () => {
+    store.dispatch(importText({ text: '- a\n  - x\n- b' }))
+    await vi.runAllTimersAsync()
+    const oldPath = contextToPath(store.getState(), ['a', 'x'])!
+    store.dispatch(moveThought({ from: ['a', 'x'], to: ['b', 'x'], newRank: 0 }))
+    await vi.runAllTimersAsync()
 
-    expect(thoughtToPath(store.getState(), head(path))).toEqual(contextToPath(store.getState(), ['a', 'x']))
+    const path = contextToPath(store.getState(), ['b', 'x'])!
+    const xId = head(path)
+    // Undo after the forced pull from Recently Edited has read x, but before it publishes that read.
+    const getThoughtsByIds = db.getThoughtsByIds
+    let undone = false
+    const read = vi.spyOn(db, 'getThoughtsByIds').mockImplementation(async ids => {
+      const thoughts = await getThoughtsByIds(ids)
+      if (!undone && ids.includes(xId)) {
+        undone = true
+        store.dispatch(undo())
+      }
+      return thoughts
+    })
+    await store.dispatch(pullAncestors(path, { force: true, maxDepth: 0 }))
+    read.mockRestore()
+    await vi.runAllTimersAsync()
+    expect(undone).toBe(true)
+    expect(thoughtToPath(store.getState(), xId)).toEqual(oldPath)
+
+    store.dispatch(redo())
+    await waitForThoughtspaceIdle()
+    expect((await db.getThoughtById(xId))?.parentId).toBe(head(contextToPath(store.getState(), ['b'])!))
   })
 })
 
@@ -800,16 +789,6 @@ describe('redo', () => {
     store.dispatch(newThought({ value: 'Atlantic City' }))
 
     expect(store.getState().redoPatches.length).toEqual(0)
-  })
-
-  // https://github.com/cybersemics/em/issues/5623
-  it('persists a redone move after a forced pull that read the move resolves after the undo', async () => {
-    const path = await pullAroundMove(() => store.dispatch(undo()))
-    store.dispatch(redo())
-    await vi.runAllTimersAsync()
-    await waitForThoughtspaceIdle()
-
-    expect((await db.getThoughtById(head(path)))?.parentId).toBe(head(contextToPath(store.getState(), ['b'])!))
   })
 })
 

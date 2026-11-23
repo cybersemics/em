@@ -474,11 +474,16 @@ it('keeps the former parent visible after swapping during a forced pull', async 
   const path = contextToPathOrThrow(store.getState(), ['AAA', 'BBB'], 'swapParent')
   // Recently Edited starts a forced ancestor pull that can still be running when the swap begins.
   const pull = store.dispatch(pullAncestors(path, { force: true, maxDepth: 0 }))
+  // A later readback can fix the final tree after Redux has already shown BBB without AAA.
+  const outlines = new Set<string>()
+  onTestFinished(store.subscribe(() => outlines.add(exportContext(store.getState(), [HOME_TOKEN], 'text/plain'))))
   store.dispatch(swapParentAction())
   await pull
   await vi.runAllTimersAsync()
 
-  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  expect([...outlines]).toEqual([
+    `- ${HOME_TOKEN}
   - BBB
-    - AAA`)
+    - AAA`,
+  ])
 })

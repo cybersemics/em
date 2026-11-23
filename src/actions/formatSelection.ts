@@ -73,7 +73,6 @@ const holdFormat = (state: State, id: ThoughtId, options: ReturnType<typeof form
     // pendingFormat is not part of the persisted ThoughtPayload, so there is nothing to write or sync
     local: false,
     remote: false,
-    overwritePending: true,
   })
 }
 

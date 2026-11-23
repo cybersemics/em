@@ -97,15 +97,10 @@ const updateThoughts = (
 ) => {
   if (Object.keys(thoughtIndexUpdates).length === 0 && Object.keys(lexemeIndexUpdates).length === 0) return state
 
-  const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
-  const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
-
   // TODO: Can we use { overwritePending: !local } and get rid of the overwritePending option to updateThoughts? i.e. Are there any false positives when local is false?
-  // Updates are applied as given. Pulls only add missing thoughts and fill pending ones, and the TreeCRDT readback starts
-  // over when Redux changes what it read, so neither dispatches a copy older than Redux's (see pull and
-  // applyMaterializedThoughtsToStore).
-  const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates, { overwritePending })
-  const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates, { overwritePending })
+  // Pulls and the TreeCRDT readback check freshness before dispatch.
+  const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates, { overwritePending })
+  const lexemeIndex = mergeUpdates(state.thoughts.lexemeIndex, lexemeIndexUpdates, { overwritePending })
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 

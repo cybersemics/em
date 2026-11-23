@@ -13,7 +13,6 @@ import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
 import hashThought from '../util/hashThought'
-import keyValueBy from '../util/keyValueBy'
 import mergeThoughts from '../util/mergeThoughts'
 
 const BUFFER_DEPTH = 2
@@ -100,10 +99,9 @@ export const pullActionCreator =
       // replacing a loaded thought with one can corrupt the tree (#3947, #3948, #5622). So a pull only adds missing
       // thoughts and fills pending ones. Loaded thoughts change through local edits and the TreeCRDT readback.
       const { thoughtIndex, lexemeIndex } = getState().thoughts
-      const thoughtIndexUpdates = keyValueBy(thoughtsChunk.thoughtIndex, (id, thought) =>
-        (thoughtIndex[id] && !thoughtIndex[id].pending) || thoughtIndex[id] !== thoughtIndexStart[id]
-          ? null
-          : { [id]: thought },
+      const thoughtIndexUpdates = _.pickBy(
+        thoughtsChunk.thoughtIndex,
+        (_, id) => (!thoughtIndex[id] || thoughtIndex[id].pending) && thoughtIndex[id] === thoughtIndexStart[id],
       )
       // freeThoughts drops a Lexeme once none of its contexts are loaded, which can happen while the pull reads. The pull
       // still applies a dropped Lexeme when it adds or fills a thought with that value, so the thought keeps a Lexeme.
@@ -112,10 +110,9 @@ export const pullActionCreator =
       dispatch(
         updateThoughts({
           thoughtIndexUpdates,
-          lexemeIndexUpdates: keyValueBy(thoughtsChunk.lexemeIndex, (key, lexeme) =>
-            lexemeIndex[key] === lexemeIndexStart[key] || (!lexemeIndex[key] && keysAdded.has(key))
-              ? { [key]: lexeme }
-              : null,
+          lexemeIndexUpdates: _.pickBy(
+            thoughtsChunk.lexemeIndex,
+            (_, key) => lexemeIndex[key] === lexemeIndexStart[key] || (!lexemeIndex[key] && keysAdded.has(key)),
           ),
           local: false,
           remote: false,

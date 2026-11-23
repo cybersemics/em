@@ -2,7 +2,7 @@ import Index from '../@types/IndexType'
 
 /** Merge two objects together, deleting falsey values. Does not overwrite non-pending objects with pending objects by default. */
 const mergeUpdates = <T>(
-  /** The cloned object that will be merged into and deleted from. */
+  /** The existing index, which is not mutated. */
   mergeInto: Index<T | null>,
   /** The object to merge which may have falsey values. */
   mergee: Index<T | null>,

@@ -159,9 +159,12 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // if there are any visible pending descendants from the pull, we need to add them to the pullQueue and immediately flush
     pulling.add(expandedPullQueueFiltered)
-    await dispatch(pull(Object.keys(expandedPullQueueFiltered) as ThoughtId[], { cancelRef, force }))
-    syncStatusStore.update({ isPulling: false })
-    pulling.delete(expandedPullQueueFiltered)
+    try {
+      await dispatch(pull(Object.keys(expandedPullQueueFiltered) as ThoughtId[], { cancelRef, force }))
+    } finally {
+      pulling.delete(expandedPullQueueFiltered)
+      syncStatusStore.update({ isPulling: pulling.size > 0 })
+    }
 
     // pull favorites in the background on the first pull
     // note that syncStatusStore.isPulling does not include favorites because we want them to load in the background and not block push

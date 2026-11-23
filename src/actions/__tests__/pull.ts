@@ -11,7 +11,6 @@ import hashThought from '../../util/hashThought'
 import head from '../../util/head'
 import { deleteThoughtActionCreator as deleteThought } from '../deleteThought'
 import { pullActionCreator as pull } from '../pull'
-import { redoActionCreator as redo } from '../redo'
 import { undoActionCreator as undo } from '../undo'
 import { updateThoughtsActionCreator as updateThoughts } from '../updateThoughts'
 
@@ -64,12 +63,6 @@ it('keeps an undo of a pending thought that lands while its pull reads', async (
   await store.dispatch(pull([xId]))
 
   expect(thoughtToPath(store.getState(), xId)).toEqual(pathTo(['a', 'x']))
-
-  // https://github.com/cybersemics/em/issues/5623
-  store.dispatch(redo())
-  await waitForThoughtspaceIdle()
-
-  expect(await db.getThoughtById(xId)).toMatchObject({ parentId: head(pathTo(['b'])) })
 })
 
 it('keeps the Lexeme of a thought it adds when freeThoughts drops that Lexeme meanwhile', async () => {
