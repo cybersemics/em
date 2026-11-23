@@ -6,6 +6,8 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { redoActionCreator as redo } from '../../actions/redo'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
+import { executeCommand } from '../../commands'
+import undoCommand from '../../commands/undo'
 import { HOME_TOKEN } from '../../constants'
 import * as selection from '../../device/selection'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
@@ -144,7 +146,7 @@ describe('=note', () => {
       expect(noteEditor.textContent).toBe(typed)
 
       await act(async () => {
-        store.dispatch(undo())
+        executeCommand(undoCommand)
         await vi.runOnlyPendingTimersAsync()
       })
 
