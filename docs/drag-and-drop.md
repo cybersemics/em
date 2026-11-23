@@ -130,7 +130,7 @@ Used by toolbar buttons in the Customize Toolbar modal. Drag source + drop targe
 
 ### `useDragDropFavorites`
 
-Used inside [`Favorites`](../src/components/Favorites.tsx). Each entry is both a drag source and a drop target. Drops within Favorites reorder via the `=favorite` Lexeme's contexts list (mutated in-place via `updateThoughts`). See [`useDragDropFavorites.ts`](../src/hooks/useDragDropFavorites.ts).
+Used inside [`Favorites`](../src/components/Favorites.tsx). Each entry is both a drag source and a drop target. Dropping a favorite reorders the Redux list and saves a `favoriteOrder` preference; it does not change which thoughts are favorites. See [`useDragDropFavorites.ts`](../src/hooks/useDragDropFavorites.ts).
 
 Drops *from* Favorites *to* the main thoughts area are handled by the regular thought drop targets, since the dragged item carries `zone: 'Favorites'` which propagates through.
 

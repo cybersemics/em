@@ -6,6 +6,8 @@ import ThoughtId from './ThoughtId'
 
 /** Defines a single batch of updates added to the push queue. */
 interface PushBatch {
+  /** Explicit Favorites ordering preference; never determines lexeme membership. */
+  favoriteOrder?: ThoughtId[]
   /** Callback invoked after provider persistence has completed. */
   idbSynced?: () => void
   lexemeIndexUpdates: Index<Lexeme | null>

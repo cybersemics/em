@@ -122,6 +122,7 @@ const drop = (
 
   store.dispatch(
     updateThoughts({
+      favoriteOrder: contextsNew,
       thoughtIndexUpdates: {},
       lexemeIndexUpdates: {
         [hashThought('=favorite')]: lexemeNew,

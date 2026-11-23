@@ -8,7 +8,9 @@ import longPressFavorite from '../helpers/longPressFavorite'
 import openSidebar from '../helpers/openSidebar'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import refresh from '../helpers/refresh'
 import { page } from '../session'
+import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -32,6 +34,8 @@ const selectFavoritesText = async () => {
 }
 
 describe('favorites drag and drop', () => {
+  usePersistentTreecrdtStorage()
+
   it('should reorder favorites by dragging and dropping', async () => {
     await paste(`
       - a
@@ -63,6 +67,11 @@ describe('favorites drag and drop', () => {
     await dragAndDropFavorite('d', 'b', { position: 'before' })
 
     // Verify new order - d should now be before b
+    expect(await selectFavoritesText()).toEqual(['a', 'd', 'b', 'c'])
+
+    await refresh()
+    await openSidebar()
+    await page.waitForFunction(() => document.querySelectorAll('[data-testid="drag-and-drop-favorite"]').length === 4)
     expect(await selectFavoritesText()).toEqual(['a', 'd', 'b', 'c'])
   })
 

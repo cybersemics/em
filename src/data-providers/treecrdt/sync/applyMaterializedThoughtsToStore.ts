@@ -34,13 +34,6 @@ export async function applyMaterializedThoughtsToStore(
     snapshot,
   )
 
-  if (Object.keys(lexemeIndexUpdates).length > 0) {
-    await db.updateThoughts({
-      thoughtIndexUpdates: {},
-      lexemeIndexUpdates,
-    })
-  }
-
   const thoughtIndexUpdates: Index<Thought | null> = {}
 
   for (const id of deletedIds) {

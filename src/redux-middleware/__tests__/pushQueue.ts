@@ -63,8 +63,7 @@ it.skip('editing a thought should load the lexeme and merge contexts', async () 
   expect(thoughtContextsState).toHaveLength(2)
 })
 
-// Current functionality is broken in main and won't be fixed soon so this test is skipped.
-it.skip('a new thought should merge into an unloaded lexeme and persist both contexts across a refresh', async () => {
+it('a new thought should merge into an unloaded lexeme and persist both contexts across a refresh', async () => {
   // Related issue: https://github.com/cybersemics/em/issues/5426
   await dispatch(
     importText({
