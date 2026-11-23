@@ -454,6 +454,34 @@ describe('multiselect', () => {
     expect(await page.$$('[data-testid="faux-caret-multicursor"]')).toHaveLength(0)
   })
 
+  // https://github.com/cybersemics/em/issues/5335
+  it.skip('names the selected thoughts that a command cannot be executed on', async () => {
+    await paste(`
+        - a
+          - b
+        - c
+        `)
+
+    await multiselectThoughts(['a', 'c'])
+    await waitForHighlightedBullets(2)
+
+    await command('New Grandchild', { inputType: 'commandPalette' })
+
+    const expectedAlert = 'New Grandchild cannot be executed on 1 of the selected thoughts: "c"'
+    try {
+      await waitForAlert(expectedAlert)
+    } catch {
+      const alert = await page.$eval('[data-testid="alert-content"]', el => el.textContent).catch(() => null)
+      throw new Error(`Expected the alert ${JSON.stringify(expectedAlert)}, but ${JSON.stringify(alert)} was shown.`)
+    }
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- a
+  - b
+- c`)
+  })
+
   it('should delete all selected thoughts when Backspace is pressed with Select All active', async () => {
     await paste(`
         - A
