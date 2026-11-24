@@ -352,7 +352,7 @@ describe('=note', () => {
   })
 
   // https://github.com/cybersemics/em/issues/6345
-  test.skip.each([
+  test.each([
     [
       'the previous thought has no note',
       `

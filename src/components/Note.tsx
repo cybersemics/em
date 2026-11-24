@@ -145,10 +145,16 @@ const Note = React.memo(
           e.preventDefault()
           dispatch(toggleNote())
         }
+        // Backspace in a non-empty note only edits the note text, which the browser does natively. Keep it from reaching
+        // the global Backspace command, which only checks that the caret is at offset 0 and would otherwise merge,
+        // delete, or outdent the thought the note belongs to (#6345). Deleting a non-empty note is still handled by the
+        // delete command, which allows the mobile gesture to work.
+        else if (e.key === 'Backspace' && note) {
+          e.stopPropagation()
+        }
         // delete empty note
-        // (delete non-empty note is handled by delete command, which allows mobile gesture to work)
         // note may be '' or null if the attribute child was deleted
-        else if (e.key === 'Backspace' && !note) {
+        else if (e.key === 'Backspace') {
           e.stopPropagation()
           e.preventDefault()
 
