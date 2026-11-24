@@ -75,6 +75,9 @@ const Notification: FC<
                 alignItems: 'center',
                 padding: '0.85em 1.1em',
                 maxWidth: '30em',
+                // An alert that ellipsizes a thought takes the full width of the screen before cutting it. Other alerts keep
+                // the 30em cap, so that long messages wrap instead of stretching across a desktop screen.
+                '&:has([data-ellipsize])': { maxWidth: 'none' },
                 userSelect: 'none',
               })}
             >
