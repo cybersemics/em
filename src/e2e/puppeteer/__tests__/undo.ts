@@ -1,5 +1,6 @@
 import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
+import clickNote from '../helpers/clickNote'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
@@ -147,6 +148,117 @@ it('restores the note caret after undo so Backspace edits the note without mergi
       offset: 9,
       text: 'The world of birds',
     },
+  })
+})
+
+// https://github.com/cybersemics/em/issues/6327
+it('undoing the first edit after clicking into a note puts the caret back where the note was clicked', async () => {
+  await paste(`
+    - One
+      - =note
+        - Welcome to the Jungle
+  `)
+
+  await clickNote('Welcome to the Jungle')
+  const clicked = await getNoteState()
+  if (clicked.offset === null) throw new Error('The click did not place the caret in the note')
+  // The click must land inside the text, so that restoring it cannot be mistaken for a caret placed at either end.
+  expect(clicked.offset).toBeGreaterThan(0)
+  expect(clicked.offset).toBeLessThan('Welcome to the Jungle'.length)
+
+  await keyboard.type('X')
+  await waitForNoteText(
+    `${'Welcome to the Jungle'.slice(0, clicked.offset)}X${'Welcome to the Jungle'.slice(clicked.offset)}`,
+  )
+
+  await command('undo')
+  await waitForNoteText('Welcome to the Jungle')
+
+  expect(await getNoteState()).toEqual({
+    focusInsideNote: true,
+    offset: clicked.offset,
+    text: 'Welcome to the Jungle',
+  })
+})
+
+// https://github.com/cybersemics/em/issues/6339
+it('undoing Bold in a note leaves the caret where it was when Bold was applied', async () => {
+  await paste(`
+    - foo bar
+      - =note
+        - one two
+  `)
+
+  await clickNote('one two')
+  await press('Home')
+  await command('bold')
+  await waitForSelector('[aria-label="note-editable"] b')
+
+  await press('z', { meta: true })
+  await waitForSelector('[aria-label="note-editable"] b', { hidden: true })
+
+  expect(await getNoteState()).toEqual({
+    focusInsideNote: true,
+    offset: 0,
+    text: 'one two',
+  })
+})
+
+// https://github.com/cybersemics/em/issues/6339
+it('undoing Bold applied to part of a note leaves the caret at the end of what was selected', async () => {
+  await paste(`
+    - foo bar
+      - =note
+        - one two
+  `)
+
+  await clickNote('one two')
+  await press('Home')
+  await press('ArrowRight', { shift: true })
+  await press('ArrowRight', { shift: true })
+  await press('ArrowRight', { shift: true })
+  await command('bold')
+  await waitForSelector('[aria-label="note-editable"] b')
+
+  await press('z', { meta: true })
+  await waitForSelector('[aria-label="note-editable"] b', { hidden: true })
+
+  expect(await getNoteState()).toEqual({
+    focusInsideNote: true,
+    offset: 'one'.length,
+    text: 'one two',
+  })
+})
+
+// https://github.com/cybersemics/em/issues/6338
+it('Backspace edits a note after undoing Bold', async () => {
+  await paste(`
+    - a
+      - =note
+        - x
+  `)
+
+  await clickNote('x')
+  await press('End')
+  await command('bold')
+  await waitForSelector('[aria-label="note-editable"] b')
+  await press('z', { meta: true })
+  await waitForSelector('[aria-label="note-editable"] b', { hidden: true })
+
+  await press('Backspace')
+  // The deletion is the assertion, so report what the note shows if it never happens.
+  try {
+    await page.waitForFunction(() => document.querySelector('[aria-label="note-editable"]')?.textContent === '', {
+      timeout: 6000,
+    })
+  } catch {
+    throw new Error(`Backspace did not delete x. The note shows ${JSON.stringify(await getNoteState())}.`)
+  }
+
+  expect(await getNoteState()).toEqual({
+    focusInsideNote: true,
+    offset: 0,
+    text: '',
   })
 })
 

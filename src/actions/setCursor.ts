@@ -36,7 +36,6 @@ const setCursor = (
     cursorHistoryPop,
     isKeyboardOpen,
     noteFocus = false,
-    noteOffset = null,
     offset,
     path,
     replaceContextViews,
@@ -47,7 +46,6 @@ const setCursor = (
     cursorHistoryPop?: boolean
     isKeyboardOpen?: boolean | null
     noteFocus?: boolean
-    noteOffset?: number | null
     offset?: number | null
     path: Path | null
     replaceContextViews?: Index<boolean>
@@ -152,7 +150,6 @@ const setCursor = (
     cursorOffset: updatedOffset,
     expanded,
     noteFocus,
-    noteOffset,
     cursorInitialized: true,
     ...(!preserveMulticursor
       ? {

@@ -3,6 +3,7 @@ import { categorizeActionCreator as categorize } from '../../actions/categorize'
 import { clearActionCreator as clear } from '../../actions/clear'
 import { cursorBackActionCreator as cursorBack } from '../../actions/cursorBack'
 import { cursorDownActionCreator as cursorDown } from '../../actions/cursorDown'
+import { editNotePathActionCreator as editNotePath } from '../../actions/editNotePath'
 import { editThoughtActionCreator as editThoughtRaw } from '../../actions/editThought'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../../actions/formatLetterCase'
 import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
@@ -11,6 +12,7 @@ import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { redoActionCreator as redo } from '../../actions/redo'
+import { setCursorActionCreator as setCursorPath } from '../../actions/setCursor'
 import { setNoteFocusActionCreator as setNoteFocus } from '../../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
@@ -572,14 +574,14 @@ describe('undo', () => {
       setCursor(['a']),
       editThought(['a'], 'aa'),
       // Open, close, and open the note again with the Note command. It is not undoable, so it records no patch, and it leaves
-      // cursorOffset at the end of the thought.
+      // cursorOffset at the end of the note.
       toggleNote(),
       toggleNote(),
       toggleNote(),
       // Note.tsx dispatches setNoteFocus when the note is blurred. It is undoable, so it records a patch, and noteFocus and
-      // noteOffset are the only two properties it restores.
+      // cursorOffset, which it moves to the end of the thought, are the only two properties it restores.
       setNoteFocus({ value: false }),
-      // The Note command opens the note again, setting noteFocus and noteOffset back to exactly what that patch restores and
+      // The Note command opens the note again, setting noteFocus and cursorOffset back to exactly what that patch restores and
       // leaving it with nothing left to revert.
       toggleNote(),
       // Undoing a patch that reverts nothing produces an empty patch for redo. An empty patch carries no actions, so redoing it
@@ -1277,50 +1279,124 @@ describe('grouping', () => {
     - `)
   })
 
-  it('note offset should round trip with a note edit', () => {
-    const original = 'one two three'
-    const updated = 'one two'
-
+  // https://github.com/cybersemics/em/issues/6327
+  it('undo and redo of a note edit restore the note caret from cursorOffset', () => {
     store.dispatch([
       importText({
         text: `
-        - note-offset
+        - a
           - =note
-            - ${original}`,
+            - one two three`,
       }),
-      setCursor(['note-offset']),
+      setCursor(['a']),
+      // the Note command places the caret at the end of the note
+      toggleNote(),
     ])
 
-    store.dispatch(setNoteFocus({ value: true, offset: null }))
-
-    const path = contextToPath(store.getState(), ['note-offset', '=note', original])!
+    const path = contextToPath(store.getState(), ['a', '=note', 'one two three'])!
     store.dispatch(
       editThoughtRaw({
         path,
-        oldValue: original,
-        newValue: updated,
-        noteOffset: updated.length,
+        oldValue: 'one two three',
+        newValue: 'one two',
+        cursorOffset: 'one two'.length,
       }),
     )
 
-    expect(store.getState().noteOffset).toBe(updated.length)
-
     store.dispatch(undo())
 
-    expect(store.getState().noteFocus).toBe(true)
-    expect(store.getState().noteOffset).toBe(original.length)
-    expect(exportContext(store.getState(), ['note-offset'], 'text/plain')).toEqual(`- note-offset
+    expect(exportContext(store.getState(), ['a'], 'text/plain')).toEqual(`- a
   - =note
-    - ${original}`)
-
-    store.dispatch(setNoteFocus({ value: true, offset: null }))
+    - one two three`)
+    expect(store.getState().noteFocus).toBe(true)
+    // the caret the note was given when it got the focus
+    expect(store.getState().cursorOffset).toBe('one two three'.length)
 
     store.dispatch(redo())
 
-    expect(store.getState().noteOffset).toBe(updated.length)
-    expect(exportContext(store.getState(), ['note-offset'], 'text/plain')).toEqual(`- note-offset
+    expect(exportContext(store.getState(), ['a'], 'text/plain')).toEqual(`- a
   - =note
-    - ${updated}`)
+    - one two`)
+    expect(store.getState().noteFocus).toBe(true)
+    expect(store.getState().cursorOffset).toBe('one two'.length)
+  })
+
+  // https://github.com/cybersemics/em/issues/6327
+  it('undo and redo of a path-based note edit restore the note caret from cursorOffset', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - =path
+              - b
+        - b
+          - c
+          - d`,
+      }),
+    ])
+
+    // the caret is placed after c when the note gets the focus
+    store.dispatch(setCursorPath({ path: contextToPath(store.getState(), ['a'])!, noteFocus: true, offset: 1 }))
+
+    store.dispatch(
+      editNotePath({
+        path: contextToPath(store.getState(), ['b'])!,
+        values: ['cx', 'd'],
+        cursorOffset: 'cx'.length,
+      }),
+    )
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), ['b'], 'text/plain')).toEqual(`- b
+  - c
+  - d`)
+    expect(store.getState().noteFocus).toBe(true)
+    expect(store.getState().cursorOffset).toBe(1)
+
+    store.dispatch(redo())
+
+    expect(exportContext(store.getState(), ['b'], 'text/plain')).toEqual(`- b
+  - cx
+  - d`)
+    expect(store.getState().noteFocus).toBe(true)
+    expect(store.getState().cursorOffset).toBe('cx'.length)
+  })
+
+  // https://github.com/cybersemics/em/issues/6327
+  it('native undo and redo in a note place the caret at the end of the note rather than the thought', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - hello`,
+      }),
+      setCursor(['a']),
+      toggleNote(),
+    ])
+
+    const path = contextToPath(store.getState(), ['a', '=note', 'hello'])!
+    store.dispatch(
+      editThoughtRaw({
+        path,
+        oldValue: 'hello',
+        newValue: 'hello world',
+        cursorOffset: 'hello world'.length,
+      }),
+    )
+
+    // native undo/redo (iOS three-finger swipe or shake-to-undo) passes cursorAtEnd
+    store.dispatch(undo({ cursorAtEnd: true }))
+
+    expect(store.getState().noteFocus).toBe(true)
+    expect(store.getState().cursorOffset).toBe('hello'.length)
+
+    store.dispatch(redo({ cursorAtEnd: true }))
+
+    expect(store.getState().noteFocus).toBe(true)
+    expect(store.getState().cursorOffset).toBe('hello world'.length)
   })
 
   it('contiguous edit additions should should not be grouped with deletions', () => {

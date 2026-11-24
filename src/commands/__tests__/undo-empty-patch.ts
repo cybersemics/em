@@ -25,14 +25,14 @@ it('redo is disabled after redoing an undo whose patch reverted nothing', () => 
     setCursor(['a']),
     editThought(['a'], 'aa'),
     // Open, close, and open the note again with the Note command. It is not undoable, so it records no patch, and it leaves
-    // cursorOffset at the end of the thought.
+    // cursorOffset at the end of the note.
     toggleNote(),
     toggleNote(),
     toggleNote(),
     // Note.tsx dispatches setNoteFocus when the note is blurred. It is undoable, so it records a patch, and noteFocus and
-    // noteOffset are the only two properties it restores.
+    // cursorOffset, which it moves to the end of the thought, are the only two properties it restores.
     setNoteFocus({ value: false }),
-    // The Note command opens the note again, setting noteFocus and noteOffset back to exactly what that patch restores and
+    // The Note command opens the note again, setting noteFocus and cursorOffset back to exactly what that patch restores and
     // leaving it with nothing left to revert.
     toggleNote(),
   ])
