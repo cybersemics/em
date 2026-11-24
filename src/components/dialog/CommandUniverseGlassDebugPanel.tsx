@@ -168,6 +168,32 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    title: 'Grain (Safari banding)',
+    controls: [
+      {
+        name: '--cu-grain',
+        label: 'grain over the page',
+        min: 0,
+        max: 1,
+        step: 1,
+        unit: '',
+        fallback: 0,
+        hint: 'High-contrast noise in soft-light blend over everything, to break up the gradient banding Safari shows (Chrome dithers gradients; Safari does not). Soft-light leaves black untouched, so it does not lift the blacks.',
+        css: `body::after { content: ""; position: fixed; inset: 0; z-index: 2147483647; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27200%27%20height%3D%27200%27%3E%3Cfilter%20id%3D%27n%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%271.2%27%20numOctaves%3D%271%27%20stitchTiles%3D%27stitch%27/%3E%3CfeColorMatrix%20type%3D%27saturate%27%20values%3D%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncR%20type%3D%27linear%27%20slope%3D%275%27%20intercept%3D%27-2%27/%3E%3CfeFuncG%20type%3D%27linear%27%20slope%3D%275%27%20intercept%3D%27-2%27/%3E%3CfeFuncB%20type%3D%27linear%27%20slope%3D%275%27%20intercept%3D%27-2%27/%3E%3CfeFuncA%20type%3D%27linear%27%20slope%3D%270%27%20intercept%3D%271%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect%20width%3D%27100%25%27%20height%3D%27100%25%27%20filter%3D%27url%28%23n%29%27/%3E%3C/svg%3E"); background-size: 200px 200px; opacity: var(--cu-grain-strength, 0.2); mix-blend-mode: soft-light; }`,
+      },
+      {
+        name: '--cu-grain-strength',
+        label: 'strength',
+        min: 0,
+        max: 0.6,
+        step: 0.01,
+        unit: '',
+        fallback: 0.2,
+        hint: 'Opacity of the grain. Around 0.2 broke up the rings in testing without visible texture at normal contrast.',
+      },
+    ],
+  },
+  {
     title: 'Blur fade',
     controls: [
       {
