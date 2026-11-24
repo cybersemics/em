@@ -240,10 +240,13 @@ radial-gradient(56.44% 37.35% at 40.5% 67.11%, rgba(255, 255, 120, 0.0171) 0%, r
     glassSheet: {
       color: 'fg',
       fontFamily: 'radioCanada',
-      borderRadius: '32px',
       width: '100%',
       boxSizing: 'border-box',
+      // Rectangular, so the list's autoscroll still finds the glass as the box that cuts the list off; the clip-path
+      // rounds it. Under a rounded overflow clip, WebKit paints the corners of the glass stroke without most of their
+      // fade, so Safari lit the two bottom corners brighter than the rest of the edge.
       overflow: 'hidden',
+      clipPath: 'inset(0 round 32px)',
       position: 'relative',
       maxHeight: '80dvh',
       // 560px at the default font size, growing with it like the list inside (see CommandUniverse).
