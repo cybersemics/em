@@ -468,7 +468,7 @@ const ScrimHandles = ({ overrides, set }: { overrides: Overrides; set: (name: st
 
 /** The shipped scrim stops. Mirrors the --cu-scrim-stops fallback in dialogRecipe's appScrim. */
 const SCRIM_STOPS =
-  'rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.9) 33.49%, rgba(0, 0, 0, 0.8) 61.1%, rgba(0, 0, 0, 0.39) 83.82%'
+  'rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.8) 33.49%, rgba(0, 0, 0, 0.8) 61.1%, rgba(0, 0, 0, 0.39) 83.82%'
 
 /** One stop of the scrim gradient: a colour, its opacity, and its position from the centre (0) to the edge (100). */
 interface Stop {

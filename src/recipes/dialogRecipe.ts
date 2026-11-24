@@ -88,10 +88,10 @@ const dialogRecipe = defineSlotRecipe({
         // shape around the glass at any window size. Sized from the glass rather than the window on purpose: on a large
         // window a window-sized scrim swallows the page, while the area around the glass should look the same. The centre is offset from the glass's centre in glass widths, and
         // measured down from the glass's top edge in glass heights. The colour stops run from the centre (0%) to the
-        // radius (100%): clear at the glass's centre, darkest around its edge, easing off beyond it; past the last stop
+        // radius (100%): half dark at the glass's centre, darkest around its edge, easing off beyond it; past the last stop
         // its colour carries on to the edges of the screen.
         // TEMPORARY: --cu-scrim-* are dialed by CommandUniverseGlassDebugPanel.
-        'radial-gradient(calc(var(--cu-glass-width, 650px) * var(--cu-scrim-rx, 1.55)) calc(var(--cu-glass-height, 540px) * var(--cu-scrim-ry, 1.71)) at calc(var(--cu-glass-centre-x, 50%) + var(--cu-glass-width, 650px) * var(--cu-scrim-cx, 0)) calc(var(--cu-glass-top, 10.8vh) + var(--cu-glass-height, 540px) * var(--cu-scrim-cy, 0.5)), var(--cu-scrim-stops, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.9) 33.49%, rgba(0, 0, 0, 0.8) 61.1%, rgba(0, 0, 0, 0.39) 83.82%))',
+        'radial-gradient(calc(var(--cu-glass-width, 650px) * var(--cu-scrim-rx, 1.55)) calc(var(--cu-glass-height, 540px) * var(--cu-scrim-ry, 1.71)) at calc(var(--cu-glass-centre-x, 50%) + var(--cu-glass-width, 650px) * var(--cu-scrim-cx, 0)) calc(var(--cu-glass-top, 10.8vh) + var(--cu-glass-height, 540px) * var(--cu-scrim-cy, 0.5)), var(--cu-scrim-stops, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.8) 33.49%, rgba(0, 0, 0, 0.8) 61.1%, rgba(0, 0, 0, 0.39) 83.82%))',
 
       display: 'none',
       lg: { display: 'block' },
