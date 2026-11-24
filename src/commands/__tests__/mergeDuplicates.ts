@@ -1,3 +1,4 @@
+import { addAllMulticursorActionCreator as addAllMulticursor } from '../../actions/addAllMulticursor'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { setCursorActionCreator as setCursorToPath } from '../../actions/setCursor'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
@@ -189,6 +190,31 @@ it('merge the duplicates of the cursor thought when the cursor crosses a context
 })
 
 describe('multicursor', () => {
+  // https://github.com/cybersemics/em/issues/5874
+  it('is disabled when every sibling is selected, since it would merge their level once, the same as Merge Duplicates alone', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - a
+          - b
+        `,
+      }),
+      setCursor(['b']),
+      addAllMulticursor(),
+    ])
+
+    expect(mergeDuplicatesCommand.canExecute(store.getState())).toBe(false)
+
+    executeCommandWithMulticursor(mergeDuplicatesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+  - a
+  - b`)
+  })
+
   it('merge duplicates once per selected level', () => {
     store.dispatch([
       importText({

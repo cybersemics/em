@@ -92,7 +92,20 @@ describe('chained commands', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5874
-  it('does not chain Merge Duplicates, which merges the same level as Merge Duplicates alone', () => {
-    expect(selectAllCommand.isChainable(mergeDuplicatesCommand)).toBe(false)
+  it('disables Merge Duplicates, which would merge the same level as Merge Duplicates alone', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - p
+            - a
+            - a
+            - b
+        `,
+      }),
+      setCursor(['p', 'b']),
+    ])
+
+    const selectAllMergeDuplicates = chainCommand(selectAllCommand, mergeDuplicatesCommand)
+    expect(selectAllMergeDuplicates.canExecute!(store.getState())).toBe(false)
   })
 })
