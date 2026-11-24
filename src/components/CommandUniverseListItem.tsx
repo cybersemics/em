@@ -95,6 +95,10 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
 }) => {
   const isActive = useSelector(state => command.isActive?.(state))
   const disabled = useSelector(state => !isExecutable(state, command))
+  // The icons' size in px: 1rem, so they grow with the user's font size like the text beside them. The icon components
+  // take a px size, so rem cannot be used directly.
+  // TODO: replace with useRemAsPx(1) once the accessibility primitives in #6026 land.
+  const iconSize = useSelector(state => state.fontSize)
   const label = command.labelInverse && isActive ? command.labelInverse : command.label
   const description = useSelector(state => {
     const descriptionStringOrFunction = (isActive && command.descriptionInverse) || command.description
@@ -259,12 +263,12 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '16px',
-          height: '16px',
+          width: '1rem',
+          height: '1rem',
           opacity: disabled ? 'var(--cu-inactive-icon-opacity, 0.35)' : 1,
         })}
       >
-        <Icon className={css({ flex: 'none' })} size={16} fill={token('colors.fg')} />
+        <Icon className={css({ flex: 'none' })} size={iconSize} fill={token('colors.fg')} />
       </div>
 
       {/* Title + description column. Takes the available width so the shortcut chip hugs
@@ -408,7 +412,7 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
                   opacity: disabled ? 0.5 : 1,
                 })}
               >
-                <ArrowRightIcon size={16} fill='white' />
+                <ArrowRightIcon size={iconSize} fill='white' />
               </button>
               <span
                 aria-hidden
