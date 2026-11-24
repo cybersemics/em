@@ -34,6 +34,8 @@ import updateThoughts from './updateThoughts'
 
 export interface editThoughtPayload {
   cursorOffset?: number
+  /** Where the caret was in the thought immediately before the edit, for the undo step the edit starts. The editor reads it before the browser applies the input, since a caret moved with the keyboard is not recorded in state.cursorOffset. Read by undoRedoEnhancer rather than by the reducer. */
+  cursorOffsetBefore?: number
   /** Force the Editable to re-render. */
   // TODO: This is used to force the Editable to re-render on generateThought, which co-opts clearThought during its pending state. Is there a better way to do this?
   force?: boolean

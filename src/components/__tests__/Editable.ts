@@ -162,7 +162,7 @@ it('inserts emoji spacing immediately before colored text', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/6395
-it.skip('redo returns the caret to where typing left it, though the caret moved before the edit was saved', async () => {
+it('redo returns the caret to where typing left it, though the caret moved before the edit was saved', async () => {
   await dispatch(importText({ text: '- one two\n- b' }))
   // a click at the end of the thought
   await dispatch(
