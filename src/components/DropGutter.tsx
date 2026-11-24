@@ -76,19 +76,7 @@ const hoverMessage = (state: State, zone: DragThoughtZone | null) => {
   if (length === 1) {
     const value = getThoughtById(state, head(state.draggingThoughts[0]))?.value
     if (value === undefined) return ''
-    if (!value) return `Drop to ${action} empty thought${suffix}`
-
-    /** Keeps the message on one line and lets CSS ellipsize only the thought, so it uses the full width of the alert before it is cut. */
-    const DropToDeleteMessage: FC = () => (
-      <span className={css({ display: 'flex', minWidth: 0, whiteSpace: 'pre' })}>
-        <span>{`Drop to ${action} `}</span>
-        <span data-ellipsize className={css({ overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 })}>
-          {toVisibleText(value)}
-        </span>
-        {suffix && <span>{suffix}</span>}
-      </span>
-    )
-    return DropToDeleteMessage
+    return `Drop to ${action} ${value ? toVisibleText(value) : 'empty thought'}${suffix}`
   }
 
   return `Drop to ${action} ${length} thoughts${suffix}`
