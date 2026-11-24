@@ -22,6 +22,7 @@ import { importFilesActionCreator as importFiles } from '../importFiles'
 import { importTextActionCreator as importText } from '../importText'
 import { newThoughtActionCreator as newThought } from '../newThought'
 import { pullActionCreator as pull } from '../pull'
+import { setCursorActionCreator } from '../setCursor'
 
 /** Helper function that initializes the store, imports html into the root, and exports it as plaintext to make easily readable assertions. This is async because importFiles is async. */
 const importExport = async (html: string, outputFormat: MimeType = 'text/plain') => {
@@ -1504,6 +1505,69 @@ it('import a dropped markdown file with HTML in its code', async () => {
 </ul>`)
 })
 
+// https://github.com/cybersemics/em/issues/5173
+// Multiline markdown is routed like any other multiline content, so it is imported resumably by importFiles, which
+// writes a resume manifest that importText never writes.
+it('import pasted multiline markdown resumably', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+  const setItem = vi.spyOn(localStorage, 'setItem')
+
+  store.dispatch([
+    importText({ text: '- a' }),
+    importDataAtFirstMatch(['a'], {
+      text: `# Fruits
+
+- Apple
+- Banana
+
+# Vegetables
+
+- Carrot`,
+    }),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+  const resumeManifestWritten = setItem.mock.calls.some(([key]) => key === 'resume-imports')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - Fruits
+    - Apple
+    - Banana
+  - Vegetables
+    - Carrot
+`)
+  expect(resumeManifestWritten).toBe(true)
+})
+
+// https://github.com/cybersemics/em/issues/5173
+// Single-line markdown is spliced into the thought at the caret by importText, which writes no resume manifest.
+it('splice pasted single-line markdown into the thought', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+  const setItem = vi.spyOn(localStorage, 'setItem')
+
+  store.dispatch([importText({ text: '- a' }), importDataAtFirstMatch(['a'], { text: '# Fruits' })])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+  const resumeManifestWritten = setItem.mock.calls.some(([key]) => key === 'resume-imports')
+
+  cleanup()
+
+  // no caret has been placed in the thought, so the text is spliced at offset 0
+  expect(removeHome(exported)).toBe(`
+- # Fruitsa
+`)
+  expect(resumeManifestWritten).toBe(false)
+})
+
 // TODO: Indentation broke when switching from importText to importData
 it.skip(`import bold thoughts with bold descendants`, async () => {
   const text = `
@@ -1920,6 +1984,36 @@ it('paste em text with formatted html and meta charset as inline', async () => {
 
   expect(exported).toContain('<b>Hello</b>')
   expect(exported).not.toContain('<meta')
+})
+
+// https://github.com/cybersemics/em/pull/6283#pullrequestreview-5868347122
+it('paste uncolored em text into colored text without taking on its color', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  const value = '<font color="#00d26a">aaa ccc</font>'
+  store.dispatch([
+    newThought({ value }),
+    // the caret between "aaa " and "ccc"
+    (dispatch, getState) => dispatch(setCursorActionCreator({ path: contextToPath(getState(), [value])!, offset: 4 })),
+    (dispatch, getState) =>
+      dispatch(
+        importDataActionCreator({
+          path: contextToPath(getState(), [value])!,
+          html: 'eee',
+          text: 'eee',
+          isEmText: true,
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/html')
+
+  cleanup()
+
+  expect(exported).toContain('<font color="#00d26a">aaa </font>eee<font color="#00d26a">ccc</font>')
 })
 
 // https://github.com/cybersemics/em/issues/3960

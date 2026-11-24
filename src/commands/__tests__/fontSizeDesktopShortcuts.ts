@@ -4,10 +4,16 @@ import { DEFAULT_FONT_SIZE } from '../../constants'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
-// The shortcuts are bound only in the desktop app, so the commands are loaded as the desktop app loads them.
+// The shortcuts are bound only in the desktop app, so the commands are loaded as the desktop app loads them. The app
+// then also connects its system menu, which has no native side here.
 vi.mock('@tauri-apps/api/core', async importOriginal => ({
   ...(await importOriginal<typeof import('@tauri-apps/api/core')>()),
   isTauri: () => true,
+  invoke: () => Promise.resolve(),
+}))
+
+vi.mock('@tauri-apps/api/event', () => ({
+  listen: () => Promise.resolve(() => {}),
 }))
 
 beforeEach(createTestApp)

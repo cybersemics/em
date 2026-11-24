@@ -98,7 +98,7 @@ const cursorUpCommand = {
 
             // Add the previous cursor to the multicursor, if it exists
             if (prevPath) {
-              dispatch(addMulticursor({ path: prevPath }))
+              dispatch(addMulticursor({ path: prevPath, clearOtherDepths: true }))
             }
 
             return
@@ -106,7 +106,7 @@ const cursorUpCommand = {
 
           // Extend the multicursor set to the previous cursor
           if (isCurrentCursorMulticursor && !isPrevPathMulticursor && prevPath) {
-            dispatch(addMulticursor({ path: prevPath }))
+            dispatch(addMulticursor({ path: prevPath, clearOtherDepths: true }))
             return
           }
 

@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { css } from '../../../styled-system/css'
 import { isAndroid } from '../../browser'
 import Favorites from '../Favorites'
 import RecentlyDeleted from '../RecentlyDeleted'
 import RecentlyEdited from '../RecentlyEdited'
+import ScrollbarThumb from '../ScrollbarThumb'
 import { MEDIUM_DURATION, cssEaseOut } from './constants'
 import { SidebarSectionId } from './sidebarSections'
 
@@ -44,6 +45,7 @@ const SidebarContent = ({
   /** Whether the scrollable content area has been scrolled down.
    * Used to conditionally show a top fade-out mask for scroll overflow indication. */
   const [isScrolled, setIsScrolled] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   // Positions for the 128px dropdown band and 48px scroll fade:
   //   0     = band in place — the region under the open dropdown is hidden
@@ -97,6 +99,7 @@ const SidebarContent = ({
         })}
       >
         <motion.div
+          ref={scrollRef}
           data-scroll-at-edge
           onScroll={e => setIsScrolled(e.currentTarget.scrollTop > 0)}
           style={{
@@ -111,14 +114,12 @@ const SidebarContent = ({
           }}
           className={css({
             flexShrink: 0,
-            overflowY: 'scroll',
+            overflowY: 'auto',
             overflowX: 'hidden',
             overscrollBehavior: 'contain',
-            scrollbarWidth: 'thin',
-            scrollbarColor: '{colors.fgOverlay30} transparent',
+            // The native scrollbar is replaced by ScrollbarThumb below.
+            scrollbarWidth: 'none',
             '&::-webkit-scrollbar': {
-              width: '0px',
-              background: 'transparent',
               display: 'none',
             },
             position: 'relative',
@@ -137,6 +138,9 @@ const SidebarContent = ({
           )}
         </motion.div>
       </div>
+
+      {/* Outside the mask carrier, which would fade it out under the dropdown. The scroller counter-slides the carrier, so its viewport lines up with this container. */}
+      <ScrollbarThumb scrollRef={scrollRef} />
     </div>
   )
 }

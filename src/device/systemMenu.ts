@@ -34,8 +34,9 @@ const reported = new Map<CommandId, ItemState>()
 
 /**
  * Whether the command can run from the system menu. The conditions are those of its keyboard shortcut (see keyDown in
- * commands.ts). The page sees a shortcut before the menu does, so a shortcut only reaches its menu item when keyDown
- * declined it, and the menu item must not then run what the shortcut would not.
+ * commands.ts). On macOS the page sees a shortcut before the menu does, so a shortcut only reaches its menu item when
+ * keyDown declined it, and the menu item must not then run what the shortcut would not. On Windows and Linux a
+ * shortcut does not reach the menu at all (see desktop/src/menu.rs).
  */
 const canExecuteFromMenu = (state: State, command: Command): boolean =>
   !state.showDesktopCommandUniverse &&

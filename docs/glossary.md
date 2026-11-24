@@ -20,7 +20,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **attribute / meta-attribute** — A child thought whose value starts with `=` (e.g. `=pin`, `=style`, `=view`). Meta-attributes change app behaviour for their parent (or, with `=children`/`=grandchildren`, for descendants). Stored under their value in `childrenMap` for `O(1)` lookup. See [metaprogramming.md](metaprogramming.md).
 
-**attribute-child index** — `em_attribute_children`, an app-owned SQLite table mapping each `=attribute` child to its parent and value. It restores the value-keying half of *childrenMap*, which TreeCRDT itself does not store. Rebuilt from the tree when its version changes, then maintained on every write. See [persistence.md → Derived tables](persistence.md#derived-tables).
+**attribute-child index** — `em_attribute_children`, an app-owned SQLite table mapping each `=attribute` child to its parent and value. It restores the value-keying half of *childrenMap*, which TreeCRDT itself does not store. Kept current by a durable subscription to TreeCRDT's change events, and rebuilt when its version changes. See [persistence.md → Derived tables](persistence.md#derived-tables).
 
 **autocrop** — Vertical: hides the empty space above a deep cursor by translating the layout container upward and counter-scrolling to keep visible thoughts stable. Horizontal: see *indent*. See [layout-rendering.md → useAutocrop](layout-rendering.md#useautocrop-vertical-autocrop).
 
@@ -128,7 +128,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **meta-attribute** — See *attribute*.
 
-**ministore** — Lightweight non-Redux store for ephemeral UI state, in [`/src/stores`](../src/stores). Used when the value doesn't need to participate in undo/redo, persistence, or selectors (e.g. `editingValueStore`, `viewportStore`, `scrollTopStore`). A module may also create one for its own bookkeeping that must reset between tests — the pull queue's once-per-session favorites flag, the URL middleware's last path and cursor, the multiselect middleware's parked cursor — since every store the factory creates is restored by `resetStores`, while a module-level `let` would carry its value from one test into the next.
+**ministore** — Lightweight non-Redux store, in [`/src/stores`](../src/stores). Redux is the primary store for UI state, including state that never enters undo/redo or persistence, such as whether a panel is open (the `show*` flags). A ministore is for state that changes in real time, such as on `input` or `selectionchange`, or that is otherwise kept out of Redux on purpose (e.g. `editingValueStore`, `viewportStore`, `scrollTopStore`). A module may also create one for its own bookkeeping that must reset between tests — the pull queue's once-per-session favorites flag, the URL middleware's last path and cursor, the multiselect middleware's parked cursor — since every store the factory creates is restored by `resetStores`, while a module-level `let` would carry its value from one test into the next.
 
 **movePlacements** — `Index<ThoughtId | null>` on `PushBatch`. Keyed by moved thought; the value is the sibling to place it after (`null` = first). Carries reorder intent from the action layer to TreeCRDT, which stores sibling order directly instead of by rank. See [persistence.md → Order and placement](persistence.md#order-and-placement).
 
@@ -188,7 +188,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **=style** — Meta-attribute carrying CSS styles. Variants: `=children/=style` (apply to direct children), `=grandchildren/=style` (one level deeper).
 
-**system menu** — The menu bar of the macOS desktop app. It lists every command with a `systemMenu`, under the top level menu that the property names, with the command's keyboard shortcut as the accelerator. Built natively from [`desktop/menu.json`](../desktop/menu.json), which is generated from the commands. See [commands.md](commands.md#system-menu).
+**system menu** — The menu bar of the desktop app, on macOS, Windows, and Linux. It lists every command with a `systemMenu`, under the top level menu that the property names, with the command's keyboard shortcut beside it. Built natively from [`desktop/menu.json`](../desktop/menu.json), which is generated from the commands. See [commands.md](commands.md#system-menu).
 
 ## T
 
