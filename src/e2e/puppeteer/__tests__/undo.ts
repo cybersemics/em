@@ -181,6 +181,87 @@ it('undoing the first edit after clicking into a note puts the caret back where 
   })
 })
 
+// https://github.com/cybersemics/em/issues/6339
+it('undoing Bold in a note leaves the caret where it was when Bold was applied', async () => {
+  await paste(`
+    - foo bar
+      - =note
+        - one two
+  `)
+
+  await clickNote('one two')
+  await press('Home')
+  await command('bold')
+  await waitForSelector('[aria-label="note-editable"] b')
+
+  await press('z', { meta: true })
+  await waitForSelector('[aria-label="note-editable"] b', { hidden: true })
+
+  expect(await getNoteState()).toEqual({
+    focusInsideNote: true,
+    offset: 0,
+    text: 'one two',
+  })
+})
+
+// https://github.com/cybersemics/em/issues/6339
+it('undoing Bold applied to part of a note leaves the caret at the end of what was selected', async () => {
+  await paste(`
+    - foo bar
+      - =note
+        - one two
+  `)
+
+  await clickNote('one two')
+  await press('Home')
+  await press('ArrowRight', { shift: true })
+  await press('ArrowRight', { shift: true })
+  await press('ArrowRight', { shift: true })
+  await command('bold')
+  await waitForSelector('[aria-label="note-editable"] b')
+
+  await press('z', { meta: true })
+  await waitForSelector('[aria-label="note-editable"] b', { hidden: true })
+
+  expect(await getNoteState()).toEqual({
+    focusInsideNote: true,
+    offset: 'one'.length,
+    text: 'one two',
+  })
+})
+
+// https://github.com/cybersemics/em/issues/6338
+it('Backspace edits a note after undoing Bold', async () => {
+  await paste(`
+    - a
+      - =note
+        - x
+  `)
+
+  await clickNote('x')
+  await press('End')
+  await command('bold')
+  await waitForSelector('[aria-label="note-editable"] b')
+  await press('z', { meta: true })
+  await waitForSelector('[aria-label="note-editable"] b', { hidden: true })
+
+  await press('Backspace')
+  // The deletion is the assertion, so report what the note shows if it never happens.
+  try {
+    await page.waitForFunction(() => document.querySelector('[aria-label="note-editable"]')?.textContent === '', {
+      timeout: 6000,
+    })
+  } catch {
+    throw new Error(`Backspace did not delete x. The note shows ${JSON.stringify(await getNoteState())}.`)
+  }
+
+  expect(await getNoteState()).toEqual({
+    focusInsideNote: true,
+    offset: 0,
+    text: '',
+  })
+})
+
 it('redoes a note edit that was undone after the cursor left the note', async () => {
   await paste(`
     - One
