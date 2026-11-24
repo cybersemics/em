@@ -212,6 +212,87 @@ const RingBurst = ({ burst }: { burst: number }) => {
   ) : null
 }
 
+/** The top and bottom of the ring's stroke in its box, which the glow's gradient and blur bands run between. */
+const GLOW_TOP = CENTER_Y - FILL_RADIUS - STROKE_WIDTH / 2
+const GLOW_BOTTOM = CENTER_Y + FILL_RADIUS + STROKE_WIDTH / 2
+/**
+ * The glow's color, running straight up the ring rather than around it, as in the design: the fill's dark tail rests
+ * across the bottom, where it all but disappears into a dark screen, and both sides rise through rose to near-white
+ * at the top. The colors are the colorful fill's; their positions are matched by eye to the design's export, whose
+ * own gradient is stored skewed.
+ */
+const GLOW_STOPS: Stop[] = [
+  [0, 'rgba(35, 20, 73, 0.87)'],
+  [0.2, 'rgba(35, 20, 73, 0.87)'],
+  [0.36, 'rgba(216, 103, 103, 0.5)'],
+  [0.5, 'rgba(255, 166, 166, 0.6)'],
+  [0.66, 'rgba(255, 201, 201, 1)'],
+  [0.82, 'rgba(255, 215, 215, 1)'],
+  [1, 'rgba(255, 237, 231, 1)'],
+]
+const GLOW_BACKGROUND = `linear-gradient(to top, ${GLOW_STOPS.map(
+  ([offset, color]) =>
+    `${color} ${(PINNED_COMMAND_RING_SIZE - GLOW_BOTTOM + offset * (GLOW_BOTTOM - GLOW_TOP)).toFixed(2)}px`,
+).join(', ')})`
+/**
+ * The glow's progressive blur, from the design: heaviest at the top of the ring and lightest at the bottom. Each band
+ * is [blur in px, where it starts to show, where it shows fully], the last two as fractions of the ring's height from
+ * its top. Each band gives way to the next. The design's values are for a ring 1.28× this size, the size the ring
+ * is drawn at during a drag, so the blurs are divided by that.
+ */
+const GLOW_BANDS: [blur: number, from: number, to: number][] = [
+  [6.04, 0, 0],
+  [4.96, 0.1944, 0.3669],
+  [3.88, 0.3669, 0.5393],
+  [2.8, 0.5393, 0.7118],
+  [1.73, 0.7118, 0.8843],
+]
+
+/**
+ * Lights the whole ring up, whatever its progress, by `illumination` from 0 (off) to 1: the design's ring for a
+ * command being dragged toward it. A full ring of the colorful stops running bottom to top, softened by a blur that
+ * is heaviest at the top. Mounted only while lit, since each of its bands is blurred.
+ */
+const RingGlow = ({ illumination }: { illumination: MotionValue<number> }) => {
+  const [isLit, setIsLit] = useState(illumination.get() > 0.001)
+  useMotionValueEvent(illumination, 'change', value => setIsLit(value > 0.001))
+
+  return isLit ? (
+    <motion.div
+      data-testid='pinned-command-ring-glow'
+      className={css({ position: 'absolute', inset: 0, pointerEvents: 'none' })}
+      style={{ opacity: illumination }}
+    >
+      {GLOW_BANDS.map(([blur, from, to], index) => {
+        /** A fraction of the ring's height, from its top, as px in its box. */
+        const y = (fraction: number) => `${(GLOW_TOP + fraction * (GLOW_BOTTOM - GLOW_TOP)).toFixed(2)}px`
+        // Each band fades in where the one above fades out, so the bands replace one another down the ring rather
+        // than piling up and brightening its lower half.
+        const next = GLOW_BANDS[index + 1]
+        const fadeIn = index === 0 ? 'black 0px' : `transparent ${y(from)}, black ${y(to)}`
+        const fadeOut = next ? `, black ${y(next[1])}, transparent ${y(next[2])}` : ''
+        const bandMask = `linear-gradient(to bottom, ${fadeIn}${fadeOut})`
+        return (
+          // The band's mask sits outside its blur, and the annulus mask inside, so the blur softens the ring's edges
+          // but each band still ends where the next takes over.
+          <div
+            key={index}
+            className={css({ position: 'absolute', inset: 0 })}
+            style={{ maskImage: bandMask, WebkitMaskImage: bandMask }}
+          >
+            <div className={css({ position: 'absolute', inset: 0 })} style={{ filter: `blur(${blur}px)` }}>
+              <div
+                className={css({ position: 'absolute', inset: 0 })}
+                style={{ background: GLOW_BACKGROUND, maskImage: ANNULUS_MASK, WebkitMaskImage: ANNULUS_MASK }}
+              />
+            </div>
+          </div>
+        )
+      })}
+    </motion.div>
+  ) : null
+}
+
 /**
  * Draws the fill, and colors and spins it. The fill and the flourish are animated by their own hooks: useRingFill
  * tweens the fill to the supplied progress, and useRingFlourish plays the spin and color pulse. The two meet in two
@@ -280,9 +361,12 @@ const RingIcon = ({ children }: PropsWithChildren) => (
 const PinnedCommandRing = ({
   children,
   burst = 0,
+  illumination,
   ...progressProps
 }: PropsWithChildren<
   RingProgressProps & {
+    /** Lights the whole ring up, from 0 to 1, while a command is dragged toward it. See RingGlow. */
+    illumination?: MotionValue<number>
     /** Increment to play the burst, which celebrates a success without changing progress. Only changes matter. */
     burst?: number
   }
@@ -294,6 +378,7 @@ const PinnedCommandRing = ({
     <RingTrack />
     <RingBurst burst={burst} />
     <RingProgress {...progressProps} />
+    {illumination && <RingGlow illumination={illumination} />}
     <RingIcon>{children}</RingIcon>
   </div>
 )

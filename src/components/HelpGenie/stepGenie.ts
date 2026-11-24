@@ -20,6 +20,7 @@ const stepGenie = (
     dt,
     bob,
     random,
+    spring,
   }: {
     /** The point the head is moving towards: the pointer, or wherever moveHelpGenie sent it. */
     target: { x: number; y: number }
@@ -29,9 +30,18 @@ const stepGenie = (
     bob: number
     /** Random numbers from 0 to 1, for the sparkles. */
     random: () => number
+    /** A spring to chase the target on instead of the genie's own, such as one that lands without overshooting. */
+    spring?: { stiffness: number; damping: number } | null
   },
 ): GenieFrame => {
-  const motion = genieMotion(frame.motion, { target, dt, memory: MEMORY, stiffness: STIFFNESS, damping: DAMPING, bob })
+  const motion = genieMotion(frame.motion, {
+    target,
+    dt,
+    memory: MEMORY,
+    stiffness: spring?.stiffness ?? STIFFNESS,
+    damping: spring?.damping ?? DAMPING,
+    bob,
+  })
   const speed = Math.hypot(motion.vx, motion.vy)
   return {
     motion,

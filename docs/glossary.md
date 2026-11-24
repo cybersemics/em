@@ -48,6 +48,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **command** — A user-triggered operation (keyboard shortcut, gesture, toolbar button, Command Universe entry, or system menu item). Single-file definition under [`/src/commands`](../src/commands) implementing the [`Command`](../src/@types/Command.ts) interface; auto-registered via the barrel import in [`commands.ts`](../src/commands.ts). The legacy name *shortcut* still appears in some places. See [commands.md](commands.md).
 
+**Command Discovery** — The full-screen moment that introduces a command the user has just discovered by holding still on its *ghost* in the Gesture Menu: its fog falls to rest, the help genie reveals its name and description, and it can be dragged into the pinned command ring. Open while `state.commandDiscovery` holds the command. See [learning.md → Command Discovery](learning.md#command-discovery).
+
 **Command Universe** — Searchable list of all commands, opened with `Command/Ctrl + P` on desktop.
 
 **Context** — `string[]` — a sequence of thought *values* from root to leaf, e.g. `['Animals', 'Cats']`. Ambiguous when duplicate values exist at the same level. Prefer `ThoughtId`/`Path` when an id is in scope. See [data-model.md → Context](data-model.md#context).
@@ -69,6 +71,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 **DataProvider** — The single interface ([`DataProvider.ts`](../src/data-providers/DataProvider.ts)) for storage backends. The active implementation is exported through [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts).
 
 **dbQueue / freeQueue** — Two halves of the push-queue split. `dbQueue` writes batches with `local || remote` set; `freeQueue` releases entries from the in-memory cache. See [persistence.md → Push queue](persistence.md#push-queue-redux--treecrdt).
+
+**discovered / learned** — Stages of a command in the learning journey, recorded in `state.learning`. A *discovered* command is one the user has met deliberately, and the Gesture Menu lists only discovered commands (plus one *ghost*); a *learned* command is one whose pinned command ring the user has filled with reps. See [learning.md](learning.md).
 
 **docId** — The TreeCRDT document identifier for the thoughtspace. Equal to *tsid*. See [persistence.md → The TreeCRDT client](persistence.md#the-treecrdt-client).
 
@@ -94,13 +98,15 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **generating** — Flag on `Thought` set while content is being produced by AI. Distinct from `pending` (loading from storage). Generate Thought, Generate Emoji, Organize Thoughts, and Define Term use it as a display-only signal: empty thoughts show a command-specific placeholder ("Generating Thought", "Generating Emoji", or "Reorganizing Thought") and all generating thoughts and their notes shimmer in their own text color, preserving background highlights, without writing a pending value. The shimmer animates a gradient mask over the existing rendering so colors, backgrounds, native emoji and editable HTML stay intact. Emoji wrappers exist only in the displayed HTML and are not stored. **generatingPlaceholder** is the in-memory label for that empty-thought placeholder and is not persisted.
 
+**ghost** — The one undiscovered command the Gesture Menu shows among the discovered ones, its name drawn as a blur of fog. Holding still on it discovers it (*Command Discovery*); releasing on it cancels. See [learning.md → Command Discovery](learning.md#command-discovery).
+
 **GLOBAL_ROOT_TOKEN** — The root node of the TreeCRDT tree, and the value `ROOT_PARENT_ID` aliases. `HOME_TOKEN`, `EM_TOKEN`, and `ABSOLUTE_TOKEN` are inserted as its children during initialization. See [`constants.ts`](../src/constants.ts).
 
 **gesture** — Swipe pattern for command activation on touch. Defined per command via the `gesture` field on [`Command`](../src/@types/Command.ts). See [commands.md → Gesture activation](commands.md#gesture-activation).
 
 ## H
 
-**help genie** — A glowing orb with a tapering, sparkling trail that flies over the app. The Help button in the Command Universe header and the learning genie button in the pinned command tooltip let it out and put it back. For now it follows the pointer or a finger, and can be sent to a point with `moveHelpGenie`. See [learning.md → Help genie](learning.md#help-genie).
+**help genie** — A glowing orb with a tapering, sparkling trail that flies over the app. The Help button in the Command Universe header and the learning genie button in the pinned command tooltip let it out and put it back. It follows the pointer or a finger, can be sent to a point with `moveHelpGenie`, and performs Command Discovery through a *performance*. See [learning.md → Help genie](learning.md#help-genie).
 
 **HOME_TOKEN** — Sentinel `ThoughtId` for the home root. The path `[HOME_TOKEN]` represents the root thought itself; every regular `Path` starts with a child of HOME (or ABSOLUTE) and the root token is implied. See [data-model.md → Path](data-model.md#path).
 
@@ -143,6 +149,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 ## P
 
 **Path** — `[ThoughtId, ...ThoughtId[]]` — non-empty sequence of thought ids from root to a thought. Root itself is implied (`[HOME_TOKEN]` is the special case). May contain cycles when traversing context views. See [data-model.md → Path](data-model.md#path).
+
+**performance** — The help genie flying where the app tells it, frame by frame, instead of following the pointer, through `geniePerformanceStore`. Command Discovery is the only performer. See [learning.md → Performances](learning.md#performances).
 
 **pending** — Flag on `Thought` indicating the id is known to exist (`thoughtIndex[id]` is set) but the real data hasn't been pulled from local/remote storage yet. UI renders placeholders; the pull queue fetches based on visible pending IDs.
 

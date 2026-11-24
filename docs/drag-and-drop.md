@@ -4,6 +4,8 @@
 
 This doc covers the architecture (backend selection, state machine, zones), the hooks and components, multicursor drag, and the patches we apply to the touch and HTML5 backends.
 
+Dragging a command to the pinned command ring to pin it is separate, and does not use react-dnd; see [learning.md → Pinning by dragging](learning.md#pinning-by-dragging).
+
 ## Architecture overview
 
 ### Backend selection

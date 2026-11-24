@@ -1,3 +1,4 @@
+import { LEARNING_STARTER_COMMANDS } from '../../constants'
 import initialState from '../../util/initialState'
 import storage from '../../util/storage'
 import storageModel from '../storageModel'
@@ -9,26 +10,45 @@ it('restores a saved pin and captured practice target as part of initial state',
   storageModel.set('learning', {
     pinnedCommandId: 'indent',
     progress: { indent: { reps: 2, targetReps: 8 } },
+    discovered: ['indent', 'toggleDone'],
+    learned: ['toggleDone'],
   })
 
   expect(initialState().learning).toEqual({
     pinnedCommandId: 'indent',
     progress: { indent: { reps: 2, targetReps: 8 } },
+    discovered: ['indent', 'toggleDone'],
+    learned: ['toggleDone'],
   })
 })
 
 it.each(['null', '[]', '{}', '{"progress":[]}'])('uses empty learning state for invalid saved data: %s', raw => {
   storage.setItem('learning', raw)
 
-  expect(initialState().learning).toEqual({ pinnedCommandId: null, progress: {} })
+  expect(initialState().learning).toEqual({
+    pinnedCommandId: null,
+    progress: {},
+    discovered: [...LEARNING_STARTER_COMMANDS],
+    learned: [],
+  })
 })
 
 it('recovers from invalid JSON and allows a subsequent save', () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
   storage.setItem('learning', '{invalid json')
 
-  expect(initialState().learning).toEqual({ pinnedCommandId: null, progress: {} })
-  storageModel.set('learning', { pinnedCommandId: 'indent', progress: { indent: { reps: 0, targetReps: 5 } } })
+  expect(initialState().learning).toEqual({
+    pinnedCommandId: null,
+    progress: {},
+    discovered: [...LEARNING_STARTER_COMMANDS],
+    learned: [],
+  })
+  storageModel.set('learning', {
+    pinnedCommandId: 'indent',
+    progress: { indent: { reps: 0, targetReps: 5 } },
+    discovered: [],
+    learned: [],
+  })
   expect(initialState().learning.pinnedCommandId).toBe('indent')
   warn.mockRestore()
 })
@@ -48,8 +68,15 @@ it('drops invalid practice counts while preserving a valid record', () => {
     }),
   )
 
-  expect(initialState().learning).toEqual({
+  expect(initialState().learning).toMatchObject({
     pinnedCommandId: 'indent',
     progress: { indent: { reps: 2, targetReps: 5 } },
   })
+})
+
+it('starts learning saved before commands could be discovered from the starter commands', () => {
+  storage.setItem('learning', JSON.stringify({ pinnedCommandId: null, progress: {} }))
+
+  expect(initialState().learning.discovered).toEqual([...LEARNING_STARTER_COMMANDS])
+  expect(initialState().learning.learned).toEqual([])
 })

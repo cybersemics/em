@@ -10,14 +10,20 @@ const pinnedCommandAddRep = (state: State, { commandId }: { commandId: CommandId
   const record = state.learning.progress[commandId]
   if (state.learning.pinnedCommandId !== commandId || !record) return state
 
+  const reps = record.reps + 1
   return {
     ...state,
     learning: {
       ...state.learning,
       progress: {
         ...state.learning.progress,
-        [commandId]: { ...record, reps: record.reps + 1 },
+        [commandId]: { ...record, reps },
       },
+      // Filling the ring is what learns a command. It stays learned after it is unpinned and its reps are erased.
+      learned:
+        reps >= record.targetReps && !state.learning.learned.includes(commandId)
+          ? [...state.learning.learned, commandId]
+          : state.learning.learned,
     },
   }
 }

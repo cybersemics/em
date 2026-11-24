@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { css } from '../../../styled-system/css'
 import GenieFrame from './GenieFrame'
 import { BOB, MAX_FRAME } from './constants'
+import geniePerformanceStore from './geniePerformanceStore'
 import GenieHalo from './halo/GenieHalo'
 import seededRandom from './seededRandom'
 import GenieSparkles from './sparkles/GenieSparkles'
@@ -27,6 +28,9 @@ const restingFrame = (x: number, y: number): GenieFrame => ({
 /**
  * Runs the genie inside the Pixi canvas. Once per frame, before anything is drawn, it moves the target and steps the
  * genie with stepGenie; then the halo, trail, and sparkles each draw that frame.
+ *
+ * During a performance (geniePerformanceStore) the performance's target replaces the pointer's. A new performance starts
+ * the genie at rest at its first target, and each frame the head's position is written back for the performer.
  *
  * This work runs in JavaScript on the CPU, which is the normal division of labour: the CPU decides where things go
  * (a few hundred numbers a frame), and the GPU turns that into pixels, which is the heavy part.
@@ -57,6 +61,9 @@ const GenieLoop = ({
   const targetRef = useRef({ x: start.motion.x, y: start.motion.y })
   // Whether the first frame has been reported yet.
   const firstFrameRef = useRef(true)
+  // The performance the genie last flew, so it notices when a new one begins. None yet, so a genie let out by a
+  // performance already under way starts at rest at its target rather than in the middle of the canvas.
+  const performanceRef = useRef<number | null>(null)
 
   // Sending the genie with moveHelpGenie points it at the new target, until the pointer next moves.
   useEffect(() => {
@@ -96,12 +103,25 @@ const GenieLoop = ({
     priority: UPDATE_PRIORITY.HIGH,
     callback: (ticker: Ticker) => {
       if (still) return
+      const performance = geniePerformanceStore.getState()
+      if (performance.target) {
+        if (performance.id !== performanceRef.current) {
+          performanceRef.current = performance.id
+          frameRef.current = restingFrame(performance.target.x, performance.target.y)
+        }
+        // Once the performance ends, the genie stays where it left off until the pointer next moves.
+        targetRef.current = performance.target
+      }
       frameRef.current = stepGenie(frameRef.current, {
         target: targetRef.current,
         dt: Math.min(ticker.deltaMS, MAX_FRAME),
         bob: reducedMotion ? 0 : BOB,
         random: Math.random,
+        spring: performance.target ? performance.spring : null,
       })
+      if (performance.target) {
+        geniePerformanceStore.update({ head: { x: frameRef.current.motion.x, y: frameRef.current.motion.y } })
+      }
     },
   })
 

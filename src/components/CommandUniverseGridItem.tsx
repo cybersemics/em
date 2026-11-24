@@ -8,6 +8,7 @@ import State from '../@types/State'
 import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from '../actions/commandUniverseNavigate'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
+import useCommandDrag from '../hooks/useCommandDrag'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import CircleEllipsisIcon from './icons/CircleEllipsisIcon'
@@ -54,6 +55,8 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
   })
 
   const Icon = command.svg ?? SettingsIcon
+  // A long press picks the command up, to drag to the pinned command ring.
+  const drag = useCommandDrag({ commandId: command.id, source: 'universe' })
 
   const isNearViewport = useInView(gestureBoxRef, { root: scrollRootRef, margin: '180px 0px', once: false })
   useEffect(() => {
@@ -69,6 +72,8 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
         <button
           type='button'
           aria-label={label}
+          onPointerDown={drag.onPointerDown}
+          onContextMenu={drag.onContextMenu}
           onClick={event => {
             if (!pageRef.current) throw new Error('Command Universe page root is missing.')
             const cell = event.currentTarget.getBoundingClientRect()
@@ -89,6 +94,9 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
           className={css({
             position: 'relative',
             cursor: 'pointer',
+            // The long press that picks the command up must not select its text or open the platform's menu.
+            userSelect: 'none',
+            WebkitTouchCallout: 'none',
             width: '100%',
             height: '100%',
             background: 'transparent',

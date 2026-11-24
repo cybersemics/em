@@ -1,9 +1,11 @@
 import _ from 'lodash'
+import { motion } from 'motion/react'
 import { Suspense, lazy, useEffect } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { disableHelpGenieActionCreator as disableHelpGenie } from '../../actions/disableHelpGenie'
+import { genieOpacity } from './geniePerformanceStore'
 
 // The canvas brings in Pixi, which is only downloaded the first time the genie is let out. This keeps it out of the
 // main bundle, and out of the JSDOM tests, which have no WebGL.
@@ -54,7 +56,9 @@ const HelpGenie = () => {
 
   return (
     canRun && (
-      <div
+      // Faded in and out by a performance (geniePerformanceStore).
+      <motion.div
+        style={{ opacity: genieOpacity }}
         className={css({
           position: 'fixed',
           inset: 0,
@@ -74,7 +78,7 @@ const HelpGenie = () => {
             <GenieCanvas target={target} followPointer onUnavailable={() => dispatch(disableHelpGenie())} />
           </Suspense>
         </ErrorBoundary>
-      </div>
+      </motion.div>
     )
   )
 }

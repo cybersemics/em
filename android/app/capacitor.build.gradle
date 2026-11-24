@@ -11,10 +11,10 @@ apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
 dependencies {
     implementation project(':capacitor-clipboard')
     implementation project(':capacitor-device')
-    implementation project(':capacitor-haptics')
     implementation project(':capacitor-keyboard')
     implementation project(':capacitor-share')
     implementation project(':capacitor-status-bar')
+    implementation project(':capawesome-capacitor-haptics')
 
 }
 

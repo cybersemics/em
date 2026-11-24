@@ -2267,15 +2267,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/haptics@npm:^8.0.2":
-  version: 8.0.2
-  resolution: "@capacitor/haptics@npm:8.0.2"
-  peerDependencies:
-    "@capacitor/core": ">=8.0.0"
-  checksum: 10c0/cf6c9c0c6035dc66cf6e483aa513d69a147cafde70d9c3bf8792704322478eb0cc7cee6a4179ebea7c5b6effce85a4753ab10a7f0007375527676bf4e2827c6b
-  languageName: node
-  linkType: hard
-
 "@capacitor/ios@npm:^8.6.2":
   version: 8.6.2
   resolution: "@capacitor/ios@npm:8.6.2"
@@ -2309,6 +2300,15 @@ __metadata:
   peerDependencies:
     "@capacitor/core": ">=8.0.0"
   checksum: 10c0/f3c291c00e9898b5876df07d745d8931c107a4b40bee3db66c7b564b2e58fbacebcb4c5b95813f8b64f2acdd5eea413a7072025e49051b374878a85dae4f7d89
+  languageName: node
+  linkType: hard
+
+"@capawesome/capacitor-haptics@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@capawesome/capacitor-haptics@npm:0.2.0"
+  peerDependencies:
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/8fba4a75a630ad4bde14485bc3aae74a1cc0e96c4907f2bbe1bd2de32bc8773bf940d7f001b47734088f86bec69184bb1b9359d76c70200de5fd29c908d4e18f
   languageName: node
   linkType: hard
 
@@ -11806,11 +11806,11 @@ __metadata:
     "@capacitor/clipboard": "npm:^8.0.1"
     "@capacitor/core": "npm:^8.6.2"
     "@capacitor/device": "npm:^8.0.3"
-    "@capacitor/haptics": "npm:^8.0.2"
     "@capacitor/ios": "npm:^8.6.2"
     "@capacitor/keyboard": "npm:^8.0.6"
     "@capacitor/share": "npm:^8.0.3"
     "@capacitor/status-bar": "npm:^8.0.4"
+    "@capawesome/capacitor-haptics": "npm:0.2.0"
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
     "@eslint-community/eslint-plugin-eslint-comments": "npm:^4.8.1"

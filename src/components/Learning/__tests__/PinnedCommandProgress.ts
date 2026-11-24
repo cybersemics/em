@@ -19,6 +19,8 @@ it.each([
   storageModel.set('learning', {
     pinnedCommandId: 'indent',
     progress: { indent: { reps, targetReps } },
+    discovered: ['indent'],
+    learned: [],
   })
   await initStore()
 

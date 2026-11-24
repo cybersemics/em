@@ -6,6 +6,7 @@ import Command from '../../@types/Command'
 import { pinCommandActionCreator as pinCommand } from '../../actions/pinCommand'
 import { unpinCommandActionCreator as unpinCommand } from '../../actions/unpinCommand'
 import { commandById, gestureString } from '../../commands'
+import useCommandDrag from '../../hooks/useCommandDrag'
 import GestureDiagram from '../GestureDiagram'
 import GradientDivider from '../GradientDivider'
 import DialogContent from '../dialog/DialogContent'
@@ -141,12 +142,18 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
   const { label, description } = useCommandLabels(command)
   const Icon = command.svg ?? SettingsIcon
   const iconFill = token('colors.fg')
+  // The header is the command's handle: a long press picks it up, to drag to the pinned command ring.
+  const drag = useCommandDrag({ commandId: command.id, source: 'universe' })
 
   return (
     <DialogContent scrollRef={scrollRef}>
       <div className={css({ paddingInline: '0.75rem', paddingTop: '0.5rem', paddingBottom: '1.5rem' })}>
         <header
+          onPointerDown={drag.onPointerDown}
+          onContextMenu={drag.onContextMenu}
           className={css({
+            userSelect: 'none',
+            WebkitTouchCallout: 'none',
             display: 'flex',
             alignItems: 'flex-start',
             gap: '1.3rem',

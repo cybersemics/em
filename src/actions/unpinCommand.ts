@@ -9,6 +9,7 @@ const unpinCommand = (state: State): State => ({
   // Changing the pin closes its tooltip.
   showPinnedCommandTooltip: false,
   learning: {
+    ...state.learning,
     pinnedCommandId: null,
     progress: {},
   },
