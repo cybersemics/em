@@ -9,13 +9,16 @@ import {
   useTime,
   useTransform,
 } from 'motion/react'
-import { RefObject, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
 import { commandDiscoveryActionCreator as commandDiscovery } from '../../actions/commandDiscovery'
+import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from '../../actions/commandUniverseNavigate'
+import { saveSelectionOffsetsActionCreator as saveSelectionOffsets } from '../../actions/saveSelectionOffsets'
 import { toggleHelpGenieActionCreator as toggleHelpGenie } from '../../actions/toggleHelpGenie'
+import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
 import { commandById, gestureString } from '../../commands'
 import { PINNED_COMMAND_RING_SIZE } from '../../constants'
 import useCommandDrag from '../../hooks/useCommandDrag'
@@ -234,6 +237,7 @@ const Title = ({
   nameRef,
   gestureRef,
   drag,
+  onOpen,
 }: PartProps & {
   command: Command
   reveal: MotionValue<number>
@@ -242,6 +246,8 @@ const Title = ({
   gestureRef: RefObject<HTMLDivElement | null>
   /** The command's gesture and name are its handle, to drag it to the pinned command ring (useCommandDrag). */
   drag: ReturnType<typeof useCommandDrag>
+  /** Opens the command in the Command Universe, once the discovery has finished playing; until then, undefined. */
+  onOpen?: () => void
 }) => {
   const scale = useTransform(t, time => mix(TITLE_SETTLE_FROM, 1, through(time, T.titleSettles)))
   // The gesture comes down with the fog from where it was in the Gesture Menu, rather than appearing as the fog lands.
@@ -275,6 +281,11 @@ const Title = ({
       ref={rowRef}
       onPointerDown={drag.onPointerDown}
       onContextMenu={drag.onContextMenu}
+      // A tap opens the command in the Command Universe, once the discovery has finished, so it cannot cut it short. The
+      // click after a drag is swallowed by useCommandDrag, so dragging the command to the ring does not also open it.
+      onClick={onOpen}
+      role={onOpen ? 'button' : undefined}
+      aria-label={onOpen ? `Open ${command.label} in the Command Universe` : undefined}
       style={{ scale, transformOrigin: `${TYPE.gesture.box / 2}rem 50%`, gap: `${TYPE.gesture.gap}rem` }}
       className={css({ display: 'flex', alignItems: 'center', width: 'fit-content', cursor: 'grab' })}
     >
@@ -692,6 +703,18 @@ const Discovery = ({ command }: { command: Command }) => {
 
   // The playhead, in seconds from the discovery. Everything on the screen is derived from it.
   const t = useMotionValue(0)
+  // Once the discovery has finished playing, tapping the command's name opens it in the Command Universe, on its detail
+  // page, and closes the screen, as holding the pinned command ring does.
+  const [finished, setFinished] = useState(false)
+  useMotionValueEvent(t, 'change', time => {
+    if (time >= T.end) setFinished(true)
+  })
+  const openInCommandUniverse = useCallback(() => {
+    close()
+    dispatch(saveSelectionOffsets())
+    dispatch(toggleMobileCommandUniverse({ value: true, preserveSelectionOffsets: true }))
+    dispatch(commandUniverseNavigate('detail', { command }, { transition: 'none' }))
+  }, [close, command, dispatch])
   // How far right the genie's head has reached, in viewport px. It only grows, so the genie looping back over the name
   // does not hide it again.
   const reveal = useMotionValue(NOTHING_REVEALED)
@@ -814,6 +837,7 @@ const Discovery = ({ command }: { command: Command }) => {
             nameRef={nameRef}
             gestureRef={gestureRef}
             drag={drag}
+            onOpen={finished ? openInCommandUniverse : undefined}
           />
           <Details description={description} t={t} blockRef={blockRef} onDone={close} />
         </motion.div>

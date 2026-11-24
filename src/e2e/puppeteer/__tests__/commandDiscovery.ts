@@ -61,4 +61,22 @@ describe('command discovery', () => {
     await page.waitForSelector('[role=dialog][aria-label="Discovered New Subthought (above)"]', { hidden: true })
     await waitForSelector('[aria-label="Show gesture for New Subthought (above)"]')
   })
+
+  it('tapping the command once the discovery has finished opens it in the Command Universe and closes Command Discovery', async () => {
+    await paste('Hello')
+    await clickThought('Hello')
+    const touch = await startGesture({ yStart: 150 })
+    await touch.move('rdu')
+    await waitForSelector('[role=dialog][aria-label="Discovered New Subthought (above)"]')
+    await touch.end()
+
+    // The name becomes a button once the discovery has finished playing.
+    const name = await page.waitForSelector('[aria-label="Open New Subthought (above) in the Command Universe"]', {
+      timeout: 15000,
+    })
+    await name!.tap()
+
+    await page.waitForSelector('[role=dialog][aria-label="Discovered New Subthought (above)"]', { hidden: true })
+    await waitForSelector('[aria-label="Pin Command"]')
+  })
 })
