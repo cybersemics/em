@@ -1,10 +1,11 @@
+import { useTransform } from 'motion/react'
 import { FC, Ref, useEffect, useLayoutEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { css, cx } from '../../../styled-system/css'
+import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
 import State from '../../@types/State'
-import { gestureString } from '../../commands'
+import { discoverFromGestureMenu, gestureString } from '../../commands'
 import useGestureHighlight from '../../hooks/useGestureHighlight'
 import {
   SELECTED_ITEM_DESCRIPTION_LINE_HEIGHT_REM,
@@ -14,71 +15,49 @@ import {
 } from '../../hooks/useGestureMenuLayout'
 import store from '../../stores/app'
 import commandDiscoveryStore from '../../stores/commandDiscoveryStore'
-import haptics from '../../util/haptics'
 import GestureDiagram from '../GestureDiagram'
+import useGenieWarmup from '../HelpGenie/useGenieWarmup'
+import GhostFog from './GhostFog'
+import useGhostCharge from './useGhostCharge'
 
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
   (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
 
-/** How long the ghost takes to build up to full strength once the gesture matches it, in ms. */
-const GHOST_EXCITE_MS = 900
-
-/** The ghost's two fogs: at rest, a tinted display color running into the menu's dark; excited, lavender. */
-const ghostFog = {
-  resting: css({
-    backgroundImage:
-      'linear-gradient(90deg, {colors.ghostFogStart} 0%, {colors.ghostFogStart} 28%, {colors.ghostFogEnd} 88%, {colors.ghostFogEnd} 100%)',
-  }),
-  excited: css({
-    backgroundImage:
-      'linear-gradient(90deg, {colors.ghostExcitedStart} 0%, {colors.ghostExcitedEnd} 38%, {colors.ghostFogEnd} 62%, {colors.ghostExcitedStart} 100%)',
-  }),
-}
+/** Half the width of the charged fog's soft leading edge, as a percentage of the name's width. */
+const CHARGE_EDGE = 18
 
 /**
- * The undiscovered command's title: a fog the width of its name rather than the name itself. The name is drawn in a
- * gradient that runs from a tinted display color into the menu's dark, then blurred until it cannot be read. Once the
- * gesture matches it, it excites: its color shifts toward lavender, it brightens, and its fog drifts.
+ * The undiscovered command's title: a fog the width of its name rather than the name itself, drawn by blurring the
+ * name until it cannot be read. While the gesture matches it, holding still charges it (useGhostCharge): a denser,
+ * brighter fog spreads across it from the left, with a soft leading edge, and thickens as it goes. Moving the finger
+ * drains it back. When it is full the command is discovered.
  */
-const GhostTitle = ({ label, excited, ref }: { label: string; excited: boolean; ref?: Ref<HTMLDivElement> }) => (
-  <div
-    ref={ref}
-    aria-label='Undiscovered command'
-    className={css({ position: 'relative', lineHeight: '1em', fontSize: '0.95rem', whiteSpace: 'nowrap' })}
-  >
-    {/* Two fogs, crossfaded, since a gradient's colors cannot be transitioned. */}
-    {[false, true].map(isExcitedLayer => (
-      <span
-        key={String(isExcitedLayer)}
-        aria-hidden
-        className={cx(
-          isExcitedLayer ? ghostFog.excited : ghostFog.resting,
-          css({
-            display: 'block',
-            fontWeight: 400,
-            backgroundClip: 'text',
-            color: 'transparent',
-            transitionProperty: 'opacity, filter',
-            transitionTimingFunction: 'ease-in',
-          }),
-        )}
-        style={{
-          position: isExcitedLayer ? 'absolute' : 'relative',
-          backgroundSize: isExcitedLayer ? '200% 100%' : '100% 100%',
-          inset: isExcitedLayer ? 0 : undefined,
-          filter: `blur(${isExcitedLayer ? (excited ? 4 : 6) : 5.5}px)`,
-          opacity: isExcitedLayer ? (excited ? 1 : 0) : excited ? 0 : 0.9,
-          transitionDuration: `${GHOST_EXCITE_MS}ms`,
-          animation: isExcitedLayer && excited ? 'ghostFogDrift 2.6s linear infinite' : undefined,
-        }}
-      >
-        {label}
-      </span>
-    ))}
-  </div>
-)
+const GhostTitle = ({ command, selected, ref }: { command: Command; selected: boolean; ref?: Ref<HTMLDivElement> }) => {
+  const charge = useGhostCharge({ active: selected, onCharged: () => discoverFromGestureMenu(command) })
+  // The genie performs the discovery the hold may lead to, so it starts while the user holds rather than in the middle
+  // of the discovery.
+  useGenieWarmup(selected)
+  // The charged fog's reveal: opaque up to the leading edge and clear beyond it. The edge starts fully off the left at
+  // no charge and ends fully past the right at full charge.
+  const maskImage = useTransform(charge, c => {
+    const edge = c * (100 + 2 * CHARGE_EDGE) - CHARGE_EDGE
+    return `linear-gradient(90deg, black ${edge - CHARGE_EDGE}%, transparent ${edge + CHARGE_EDGE}%)`
+  })
+  // The charged fog thickens as it spreads, so the fill reads as fog gathering rather than a bar lighting up.
+  const chargedOpacity = useTransform(charge, [0, 1], [0.55, 1])
+
+  return (
+    <div
+      ref={ref}
+      aria-label='Undiscovered command'
+      className={css({ position: 'relative', lineHeight: '1em', fontSize: '0.95rem', whiteSpace: 'nowrap' })}
+    >
+      <GhostFog label={command.label} chargedOpacity={chargedOpacity} chargedMask={maskImage} />
+    </div>
+  )
+}
 
 /** Renders a single command row inside the Gesture Menu. */
 const GestureMenuItem: FC<{
@@ -91,12 +70,15 @@ const GestureMenuItem: FC<{
   autoScroll?: boolean
   /**
    * The row is the menu's one undiscovered command: its title is a fog rather than a name, and once the gesture
-   * matches it, it invites a release to discover it instead of describing itself. See docs/learning.md.
+   * matches it, it invites the user to hold still on it to discover it instead of describing itself. See
+   * docs/learning.md.
    */
   ghost?: boolean
 }> = ({ command, selected, gestureInProgress, isFirstCommand, isLastCommand, autoScroll = true, ghost = false }) => {
   const ref = useRef<HTMLDivElement | null>(null)
   const titleRef = useRef<HTMLDivElement | null>(null)
+  // The gesture's box, whose drawing Command Discovery carries down with the title.
+  const gestureRef = useRef<HTMLDivElement | null>(null)
   const disabled = useSelector((state: State) => !isExecutable(state, command))
   const isActive = command.isActive?.(store.getState())
   const description = useSelector((state: State) => {
@@ -106,19 +88,20 @@ const GestureMenuItem: FC<{
 
   const gestureHighlight = useGestureHighlight({ command, gestureInProgress, selected, disabled })
 
-  // Command Discovery starts its light where the ghost's title is, so the ghost reports where that is.
+  // Command Discovery starts the command's fog where the ghost's title is, so the ghost reports where that is.
   useLayoutEffect(() => {
     if (!ghost || !titleRef.current) return
     const rect = titleRef.current.getBoundingClientRect()
-    commandDiscoveryStore.update({ origin: { x: rect.left, y: rect.top + rect.height / 2 } })
+    const gesture = gestureRef.current?.querySelector('svg')?.getBoundingClientRect()
+    commandDiscoveryStore.update({
+      origin: {
+        x: rect.left,
+        y: rect.top + rect.height / 2,
+        width: rect.width,
+        gesture: gesture ? { x: gesture.left + gesture.width / 2, y: gesture.top + gesture.height / 2 } : null,
+      },
+    })
   })
-
-  // Holding on the ghost builds up to the release: a haptic lands as its light reaches full strength.
-  useEffect(() => {
-    if (!ghost || !selected) return
-    const timer = window.setTimeout(() => haptics.light(), GHOST_EXCITE_MS)
-    return () => window.clearTimeout(timer)
-  }, [ghost, selected])
 
   useEffect(() => {
     if (!autoScroll || !selected) return
@@ -154,6 +137,7 @@ const GestureMenuItem: FC<{
       }}
     >
       <div
+        ref={gestureRef}
         className={css({
           display: 'flex',
           justifyContent: 'flex-start',
@@ -185,7 +169,7 @@ const GestureMenuItem: FC<{
         style={{ gap: `${SELECTED_ITEM_GAP_REM}rem` }}
       >
         {ghost ? (
-          <GhostTitle ref={titleRef} label={command.label} excited={selected} />
+          <GhostTitle ref={titleRef} command={command} selected={selected} />
         ) : (
           <div
             className={css({
@@ -223,7 +207,7 @@ const GestureMenuItem: FC<{
             })}
             style={{ lineHeight: `${SELECTED_ITEM_DESCRIPTION_LINE_HEIGHT_REM}rem` }}
           >
-            release your finger to discover
+            hold to discover
           </p>
         )}
 

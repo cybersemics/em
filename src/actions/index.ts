@@ -119,6 +119,7 @@ export { default as toggleMobileCommandUniverse } from './toggleMobileCommandUni
 export { default as updateThoughts } from './updateThoughts'
 export { default as pinCommand } from './pinCommand'
 export { default as discoverCommand } from './discoverCommand'
+export { default as resetDiscoveredCommands } from './resetDiscoveredCommands'
 export { default as commandDiscovery } from './commandDiscovery'
 export { default as unpinCommand } from './unpinCommand'
 export { default as showPinnedCommandTooltip } from './showPinnedCommandTooltip'

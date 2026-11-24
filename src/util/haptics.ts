@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core'
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
+import { Haptics, ImpactStyle, NotificationType } from '@capawesome/capacitor-haptics'
+import ahapToPattern, { Ahap } from './ahap'
 
 /** True if the platform supports haptic feedback. */
 const hapticsSupported = Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('Haptics')
@@ -53,6 +54,16 @@ const haptics = {
       Haptics.vibrate({
         duration,
       })
+    }
+  },
+
+  /**
+   * Plays a custom pattern, written in Apple's AHAP format. IOS plays it with Core Haptics; Android approximates it.
+   * A pattern cannot be stopped once it starts, so keep patterns short.
+   */
+  pattern: (ahap: Ahap) => {
+    if (hapticsSupported) {
+      Haptics.playPattern(ahapToPattern(ahap))
     }
   },
 }

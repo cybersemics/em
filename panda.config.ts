@@ -133,11 +133,7 @@ const hideCaretAnimationNames = [
 ]
 
 const keyframes = defineKeyframes({
-  // The undiscovered command in the Gesture Menu: its excited fog drifts along its title, and its hint rises in.
-  ghostFogDrift: {
-    from: { backgroundPosition: '0% 0' },
-    to: { backgroundPosition: '200% 0' },
-  },
+  // The undiscovered command in the Gesture Menu: its "hold to discover" hint rises in.
   ghostHintIn: {
     from: { opacity: 0, transform: 'translateY(-3px)' },
     to: { opacity: 0.83, transform: 'translateY(0)' },
@@ -547,10 +543,14 @@ export default defineConfig({
             'helpGenie',
             // Above dialogs so the pinned command stays visible over the Mobile Command Universe. See docs/learning.md.
             'pinnedCommandExpanded',
-            // Command Discovery, which the Gesture Menu's light glides into. See docs/learning.md.
+            // Command Discovery's fog, name, genie route and ring, over the closing Gesture Menu. See docs/learning.md.
             'commandDiscovery',
             // Keep the menu above the trace without raising generic popups above dialogs.
             'gestureMenu',
+            // What Command Discovery plays over, beneath the Gesture Menu, whose rows fade over it as the menu closes.
+            // Above the trace, which the menu covers while the user holds, so it does not show through as the menu
+            // fades.
+            'commandDiscoveryBase',
             // Above dialogs so a dry run traced over the pinned command's tooltip is drawn over the Mobile Command
             // Universe, and below the tooltip, as in the thoughtspace.
             'gestureTrace',

@@ -824,9 +824,29 @@ export const handleGestureCancel = () => {
 /** A secret gesture (→↓←↓↑) that downloads the debug log, or shares it in the native apps, while Debug Logging is on. A debugging backdoor rather than a command, so that it appears nowhere a command does: the Command Universe, the gesture menu, help, or the tutorial. */
 const DOWNLOAD_DEBUG_LOG_GESTURE: Gesture = 'rdldu'
 
+/**
+ * Discovers the undiscovered command the Gesture Menu is showing, once the user has held still on it: records it as
+ * discovered, opens Command Discovery to introduce it, and closes the menu. Called by the ghost row while the finger is
+ * still down. The gesture is finished at that point, so the release that follows performs nothing; handleGestureEnd
+ * returns early while Command Discovery is open.
+ */
+export const discoverFromGestureMenu = (command: Command) => {
+  clearGestureMenuTimer()
+  store.dispatch([
+    discoverCommand({ commandId: command.id }),
+    commandDiscovery({ commandId: command.id }),
+    gestureMenu(),
+    alert(null),
+  ])
+}
+
 /** Executes a valid gesture and closes the gesture hint. Special handling for chainable commands. */
 export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e: GestureResponderEvent }) => {
   const state = store.getState()
+
+  // The gesture discovered its command while the finger was still down (discoverFromGestureMenu). The command it
+  // matched is now discovered, so letting the release through would perform it.
+  if (state.commandDiscovery) return
 
   // secret gesture
   if (
@@ -897,9 +917,11 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     return
   }
 
-  // A release on the undiscovered command the Gesture Menu is showing discovers it rather than performing it: the menu
-  // has just revealed a command the user has never met, and Command Discovery introduces it. A gesture released before
-  // the menu opens is performed as usual, discovered or not, as is every gesture during the tutorial.
+  // A release on the undiscovered command the Gesture Menu is showing does nothing: the menu has just revealed a command
+  // the user has never met, which they discover by holding still on it (see discoverFromGestureMenu), not by letting
+  // go. Releasing before the hold completes cancels, so a gesture that happens to match an undiscovered command is
+  // never performed by surprise. A gesture released before the menu opens is performed as usual, discovered or not, as
+  // is every gesture during the tutorial.
   if (
     command &&
     state.showGestureMenu &&
@@ -909,14 +931,7 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     !isTutorial(state) &&
     !isCommandDiscovered(state, command.id)
   ) {
-    haptics.medium()
-    clearGestureMenuTimer()
-    store.dispatch([
-      discoverCommand({ commandId: command.id }),
-      commandDiscovery({ commandId: command.id }),
-      gestureMenu(),
-      alert(null),
-    ])
+    handleGestureCancel()
     return
   }
 

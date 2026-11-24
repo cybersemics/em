@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { extendTapRecipe } from '../../../styled-system/recipes'
 import { fontSizeActionCreator } from '../../actions/fontSize'
+import { resetDiscoveredCommandsActionCreator as resetDiscoveredCommands } from '../../actions/resetDiscoveredCommands'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actions/toggleUserSetting'
 import { isCapacitor } from '../../browser'
@@ -327,6 +328,33 @@ const StorageDiagnostics = () => {
   )
 }
 
+/**
+ * Forgets the commands the user has discovered, so the Gesture Menu lists only the starter commands again and the rest
+ * can be discovered afresh. Confirms once it is done.
+ */
+const ResetDiscoveredCommands = () => {
+  const dispatch = useDispatch()
+  const [done, setDone] = useState(false)
+  return (
+    <div className={css({ marginBottom: '2em' })}>
+      <a
+        {...fastClick(() => {
+          dispatch(resetDiscoveredCommands())
+          setDone(true)
+        })}
+        className={extendTapRecipe()}
+      >
+        Reset discovered commands
+      </a>
+      {done && <span className={css({ marginLeft: '0.5em', color: 'dim' })}>Done</span>}
+      <p className={css({ color: 'dim', fontSize: 'sm', marginTop: '0.5em' })}>
+        Hides every command you have discovered from the Gesture Menu again, except the basics and your pinned command,
+        so you can discover them afresh.
+      </p>
+    </div>
+  )
+}
+
 /** User settings modal. */
 const ModalSettings = () => {
   const dispatch = useDispatch()
@@ -377,6 +405,8 @@ const ModalSettings = () => {
         <AiAcknowledgement />
 
         <ShowTouchesSetting />
+
+        <ResetDiscoveredCommands />
 
         <DebugLogging />
 

@@ -1,7 +1,7 @@
 import { motion, useMotionValue } from 'framer-motion'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
 import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from '../../actions/commandUniverseNavigate'
 import { saveSelectionOffsetsActionCreator as saveSelectionOffsets } from '../../actions/saveSelectionOffsets'
 import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
@@ -10,6 +10,7 @@ import commandEmitter from '../../stores/commandEmitter'
 import PinnedCommandIcon from './PinnedCommandIcon'
 import PinnedCommandRing from './PinnedCommandRing'
 import PinnedCommandTooltip from './PinnedCommandTooltip'
+import pinnedCommandDock from './pinnedCommandDock'
 import usePinnedCommandTooltip from './usePinnedCommandTooltip'
 import useRingExpansion from './useRingExpansion'
 import useRingHold from './useRingHold'
@@ -56,7 +57,7 @@ const PinnedCommand = () => {
   // The pinned command stays visible over the Mobile Command Universe, the dialog the user pins from, by keeping the
   // ring on its raised layer there. Under every other overlay it stays docked beneath.
   const inCommandUniverse = useSelector(state => !!state.showMobileCommandUniverse)
-  // It stays in view over Command Discovery too, where a newly discovered command can be dragged to it.
+  // It stays in view over Command Discovery too, where the genie lands in it.
   const inCommandDiscovery = useSelector(state => !!state.commandDiscovery)
   // A dry run over the Command Universe earns no rep, so the ring bursts with color instead of filling. The gesture
   // handler announces each one on commandEmitter; the count only exists to tell the ring to play again.
@@ -108,14 +109,12 @@ const PinnedCommand = () => {
       {/* Fixed to the screen corner, so the ring stays put however the page scrolls, including over the footer at the end of the page. It sits on the pinnedCommand layer just above the NavBar, and rises above the tooltip's surface while that is visible. Position lives here; scale and lift stay on the button. */}
       <div
         ref={dockRef}
-        className={css({
-          position: 'fixed',
-          right: 0,
-          // The ring center sits 13.5px above the NavBar's bottom edge; its box center is 36.16px above its bottom.
-          bottom: 'calc(max(11px, token(spacing.safeAreaBottom)) - 22.5px)',
-          zIndex: isRaised || inCommandUniverse || inCommandDiscovery ? 'pinnedCommandExpanded' : 'pinnedCommand',
-          pointerEvents: 'none',
-        })}
+        className={cx(
+          pinnedCommandDock,
+          css({
+            zIndex: isRaised || inCommandUniverse || inCommandDiscovery ? 'pinnedCommandExpanded' : 'pinnedCommand',
+          }),
+        )}
       >
         <motion.button
           ref={ringRef}

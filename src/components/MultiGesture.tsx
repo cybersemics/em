@@ -6,6 +6,7 @@ import { noop } from '../constants'
 import { caretRectViewport } from '../device/selection'
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import testFlags from '../e2e/testFlags'
+import gestureFingerStore from '../stores/gestureFingerStore'
 import { clearGesture, updateGesture } from '../stores/gestureStore'
 import viewportStore from '../stores/viewportStore'
 import debugLog from '../util/debugLog'
@@ -476,6 +477,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
   /** Recognizes the swipe, if any, from the current start to a point the finger moved to, and appends it to the sequence. */
   swipe(point: Point, e: GestureResponderEvent) {
+    // Every point of the gesture's own finger passes through here, so this is where its stillness is measured from.
+    gestureFingerStore.update({ point })
+
     const g = gesture(
       this.currentStart!,
       point,
@@ -542,6 +546,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.touchIdentifier = null
     this.firstFinger = null
     this.pendingPoints = []
+    gestureFingerStore.reset()
     clearGesture()
   }
 

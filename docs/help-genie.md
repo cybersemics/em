@@ -4,7 +4,7 @@ Diagrams of how the help genie's modules fit together, for reasoning about chang
 
 ## How it connects to the app
 
-Redux holds what the app wants from the genie: whether it is out, where it has been sent, and whether it can run. The buttons and any other module change that state through actions; `HelpGenie` reads it. The genie's motion never goes through Redux.
+Redux holds what the app wants from the genie: whether it is out, where it has been sent, and whether it can run. The buttons and any other module change that state through actions; `HelpGenie` reads it. The genie's motion never goes through Redux. A performer that steers the genie frame by frame, such as Command Discovery, does it through `geniePerformanceStore` instead, outside the diagram below; see [learning.md → Performances](learning.md#performances).
 
 ```mermaid
 flowchart TB

@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from 'react'
+import { FC, PropsWithChildren, useEffect, useRef, useState } from 'react'
 import { useSelector, useStore } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -24,6 +24,7 @@ import gestureStore, {
 } from '../../stores/gestureStore'
 import storageModel from '../../stores/storageModel'
 import FadeTransition from '../FadeTransition'
+import DiscoveryBase from '../Learning/DiscoveryBase'
 import PopupBase from '../PopupBase'
 import GestureContentBlur from './GestureContentBlur'
 import GestureMenuItem from './GestureMenuItem'
@@ -240,27 +241,27 @@ function Glow() {
   )
 }
 
-/**
- * Shifts the menu's background toward the ghost's hue while the gesture matches the undiscovered command, building up
- * to its discovery so the change that follows is less abrupt.
- */
-function GhostTint({ show }: { show: boolean }) {
-  return (
-    <div
-      className={css({
-        pointerEvents: 'none',
-        position: 'absolute',
-        top: 0,
-        width: '100%',
-        height: '100dvh',
-        mixBlendMode: 'screen',
+/** How long the menu's background takes to give way to Command Discovery's while the gesture matches the ghost, in ms. */
+const GHOST_BASE_FADE = 250
 
-        background:
-          'linear-gradient(180deg, {colors.commandDiscoveryTint} 0%, {colors.commandDiscoveryTintDeep} 22%, {colors.bgTransparent} 55%)',
-        transition: 'opacity 0.9s ease-in',
-      })}
-      style={{ opacity: show ? 0.38 : 0 }}
-    />
+/**
+ * While the gesture matches the undiscovered command, the menu's own background gives way to the picture Command
+ * Discovery plays over (DiscoveryBase): the app dimmed, and the light waiting above the screen. Discovering the command
+ * then begins on the same picture, and only the light moves. `show` fades it in, and `children`, the menu's own
+ * background, out.
+ */
+function GhostBase({ show, children }: PropsWithChildren<{ show: boolean }>) {
+  const transition = `opacity ${GHOST_BASE_FADE}ms ease-in-out`
+  return (
+    <>
+      <div style={{ opacity: show ? 0 : 1, transition }}>{children}</div>
+      <div
+        className={css({ pointerEvents: 'none', position: 'absolute', top: 0, width: '100%', height: '100dvh' })}
+        style={{ opacity: show ? 1 : 0, transition }}
+      >
+        <DiscoveryBase />
+      </div>
+    </>
   )
 }
 
@@ -275,11 +276,17 @@ const useDiscoveredCommands = (commands: Command[]): { commands: Command[]; ghos
   // Re-renders when a command is discovered or the tutorial ends.
   useSelector(state => state.learning.discovered)
   const showAll = useSelector(isTutorial)
+  // The command being discovered stays the ghost while the menu fades out over Command Discovery. It is discovered by
+  // then, and would otherwise be redrawn mid-fade as an ordinary row, with its description, pushing the rows below it
+  // down.
+  const discovering = useSelector(state => state.commandDiscovery)
   if (showAll) return { commands, ghost: undefined }
 
   const state = store.getState()
-  const shown = commands.filter(command => isCommandDiscovered(state, command.id))
-  const ghost = commands.find(command => !isCommandDiscovered(state, command.id) && commandById(command.id) === command)
+  /** Whether the menu lists a command as discovered. */
+  const listed = (command: Command) => isCommandDiscovered(state, command.id) && command.id !== discovering
+  const shown = commands.filter(listed)
+  const ghost = commands.find(command => !listed(command) && commandById(command.id) === command)
   if (!ghost) return { commands: shown, ghost }
   const fixedIndex = shown.findIndex(command => command.id === 'cancel' || command.id === 'openMobileCommandUniverse')
   const index = fixedIndex === -1 ? shown.length : fixedIndex
@@ -401,9 +408,10 @@ const GestureMenuWithTransition: FC = () => {
                   paddingBottom: '11.111rem',
                 })}
               >
-                <Overlay />
-                <Glow />
-                <GhostTint show={ghostSelected} />
+                <GhostBase show={ghostSelected}>
+                  <Overlay />
+                  <Glow />
+                </GhostBase>
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <GestureMenu commands={commands} ghost={ghost} />
                 </div>
