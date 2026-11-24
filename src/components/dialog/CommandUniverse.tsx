@@ -1,4 +1,4 @@
-import { AnimatePresence, MotionValue, motion } from 'motion/react'
+import { AnimatePresence, MotionValue, motion, usePresence } from 'motion/react'
 import {
   ComponentProps,
   ComponentRef,
@@ -94,15 +94,25 @@ const CommandUniverseFooter = ({ canGoBack, canGoDeeper }: { canGoBack: boolean;
 const RowGlow = ({ row, isActive }: { row: HTMLLIElement; isActive: boolean }) => {
   const commandId = row.getAttribute('data-cu-command-id') as CommandId | null
   const disabled = useSelector(state => (commandId ? !isExecutable(state, commandById(commandId)) : false))
+  const [isPresent, safeToRemove] = usePresence()
+  // Removes the light once it has faded out of a row the focus has left. The timer covers a fade that never ends, such as when the light is not displayed. It allows twice the fade, since the fade's clock starts only when the browser renders the next frame.
+  useEffect(() => {
+    if (isPresent) return
+    const timer = setTimeout(safeToRemove, durations.get('fast') * 2)
+    return () => clearTimeout(timer)
+  }, [isPresent, safeToRemove])
 
   return (
-    <motion.div
+    <div
       // Crossfade: fades in when the row gains the focus and out in place once it has moved on. The two fades overlap, so the light crossfades between rows instead of sliding.
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ opacity: { duration: durations.get('fast') / 1000, ease: 'easeOut' } }}
+      // A CSS transition rather than a Motion animation, so the light runs on the same clock as the row's own focus transitions: the Activate pill, the shortcut chip and the title. Motion dates an animation from when JavaScript asked for it, while a CSS transition starts when the browser renders the change. After a slow frame, the light would be well into its fade before the Activate pill had started its own.
+      onTransitionEnd={e => {
+        if (!isPresent && e.target === e.currentTarget) safeToRemove()
+      }}
       className={css({
+        transition: 'opacity {durations.fast} ease-out',
+        opacity: isPresent ? 1 : 0,
+        _starting: { opacity: 0 },
         position: 'absolute',
         // Sits on the row's left edge, at its middle. The browser keeps it there as the list scrolls or resizes.
         // When the search filters the row away while its light is still fading out, the fallback moves the light a box height above the clip box, where it is hidden, rather than to the box's corner.
@@ -140,7 +150,7 @@ const RowGlow = ({ row, isActive }: { row: HTMLLIElement; isActive: boolean }) =
         })}
         style={{ translateY: '-50%' }}
       />
-    </motion.div>
+    </div>
   )
 }
 
