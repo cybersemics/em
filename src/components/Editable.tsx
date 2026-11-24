@@ -410,6 +410,18 @@ const Editable = ({
     [dispatch, path, setCursorOnThought],
   )
 
+  // The caret before an edit, for Undo to restore (#6395). It is read on beforeinput, before the browser applies the input,
+  // because a caret moved with the keyboard is not recorded in state.cursorOffset. Only the first input of an edit that
+  // waits on the throttle is captured, since the edit starts where its first keystroke did. Undefined falls back to
+  // state.cursorOffset.
+  const cursorOffsetBeforeRef = useRef<number | undefined>(undefined)
+  // True while an edit is waiting on the throttle.
+  const editPendingRef = useRef(false)
+  // The range a mouse drag left selected. A drag records where the press began, which Undo returns to, so a capture on
+  // beforeinput would replace it with where the drag ended. Any later change to the selection, such as extending it with
+  // the keyboard, no longer matches.
+  const dragRangeRef = useRef<ReturnType<typeof selection.offsetRange>>(null)
+
   /**
    * Dispatches editThought and has tutorial logic.
    * Debounced from onChangeHandler.
@@ -452,9 +464,13 @@ const Editable = ({
         // Otherwise, the selection offset will not be restored correctly on undo/redo.
         // This will have no effect on useEditMode, which does not subscribe to state.cursorOffset reactively.
         cursorOffset: cursorOffset ?? selection.offsetThought() ?? undefined,
+        cursorOffsetBefore: cursorOffsetBeforeRef.current,
         force,
       }),
     )
+    cursorOffsetBeforeRef.current = undefined
+    editPendingRef.current = false
+    dragRangeRef.current = null
 
     if (isDivider(newValue)) {
       // remove selection so that the focusOffset does not cause a split false positive in newThought
@@ -503,6 +519,36 @@ const Editable = ({
       commandEmitter.off('command', flush)
     }
   }, [])
+
+  // Captures the caret before each edit, and the range a mouse drag leaves selected. Both are discrete events, and neither
+  // dispatches: the caret travels with the edit to the undo history.
+  useEffect(() => {
+    const editable = contentRef.current
+    if (!editable) return
+
+    /** Reads where the caret is before the browser applies the input, unless an edit is already waiting on the throttle. */
+    const onBeforeInput = () => {
+      if (editPendingRef.current) return
+      const range = selection.offsetRange(editable)
+      const isDragRange =
+        !!range && range.start === dragRangeRef.current?.start && range.end === dragRangeRef.current?.end
+      // A selection is collapsed to its focus, the end the user finished selecting at, as Editable's edits do.
+      cursorOffsetBeforeRef.current = isDragRange ? undefined : (selection.offsetThought() ?? undefined)
+    }
+
+    /** Remembers a range left selected by a mouse drag. */
+    const onMouseUp = () => {
+      const range = selection.offsetRange(editable)
+      dragRangeRef.current = range && range.start !== range.end ? range : null
+    }
+
+    editable.addEventListener('beforeinput', onBeforeInput)
+    editable.addEventListener('mouseup', onMouseUp)
+    return () => {
+      editable.removeEventListener('beforeinput', onBeforeInput)
+      editable.removeEventListener('mouseup', onMouseUp)
+    }
+  }, [contentRef])
 
   useEffect(() => {
     if (!isTouch || !isSafari() || !contentRef.current) return
@@ -923,7 +969,10 @@ const Editable = ({
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
           })
-          throttledChangeRef.current(newValue, { rank, simplePath })
+          editPendingRef.current = true
+          // Pass the caret as typing left it. The edit is saved when the throttle fires, by which time the caret may have
+          // moved (#6395).
+          throttledChangeRef.current(newValue, { rank, simplePath, cursorOffset: cursorOffsetWithEmojiSpace })
         }
       })
     },

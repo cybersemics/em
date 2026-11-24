@@ -355,6 +355,81 @@ const dispatchNativeHistory = (inputType: 'historyUndo' | 'historyRedo') =>
 // iOS three-finger swipe and shake-to-undo dispatch a beforeinput event with inputType historyUndo/historyRedo rather than Cmd+Z.
 // Left to run natively, WebKit's contentEditable undo mutates the DOM out of sync with Redux (duplicating text, e.g. an autocorrected
 // word and its original both re-inserted on redo). Verify these events are intercepted and routed through the app's undo/redo. (#4477)
+// https://github.com/cybersemics/em/issues/6395
+it('undo returns the caret to where the arrow keys moved it before the edit', async () => {
+  await paste(`
+    - one two three
+  `)
+
+  await clickThought('one two three')
+  await press('End')
+  for (let i = 0; i < 10; i++) await press('ArrowLeft')
+  await press('Backspace')
+  await waitForEditable('on two three')
+
+  await press('z', { meta: true })
+  await waitForEditable('one two three')
+
+  expect(await getCaretOffset()).toBe('one'.length)
+})
+
+// https://github.com/cybersemics/em/issues/6395
+it('undo of deleting a selection made with the keyboard returns the caret to the end the selection was made to', async () => {
+  await paste(`
+    - one two three
+  `)
+
+  await clickThought('one two three')
+  await press('End')
+  for (let i = 0; i < 10; i++) await press('ArrowLeft')
+  // select one from its end, so the selection ends at the start of the thought
+  for (let i = 0; i < 3; i++) await press('ArrowLeft', { shift: true })
+  await press('Backspace')
+  await waitForEditable(' two three')
+
+  await press('z', { meta: true })
+  await waitForEditable('one two three')
+
+  expect(await getCaretOffset()).toBe(0)
+})
+
+// https://github.com/cybersemics/em/issues/6395
+it('undo of deleting a selection made by dragging returns the caret to where the drag began', async () => {
+  await paste(`
+    - one two three
+  `)
+
+  await clickThought('one two three')
+
+  // drag from the start of one to its end
+  const { start, end } = await page.evaluate(() => {
+    const editable = [...document.querySelectorAll('[data-editable]')].find(el => el.innerHTML === 'one two three')
+    const text = editable?.firstChild
+    if (!text) throw new Error('one two three not found')
+    const range = document.createRange()
+    range.setStart(text, 0)
+    range.setEnd(text, 1)
+    const first = range.getBoundingClientRect()
+    range.setStart(text, 2)
+    range.setEnd(text, 3)
+    const last = range.getBoundingClientRect()
+    const y = first.top + first.height / 2
+    return { start: { x: first.left + 1, y }, end: { x: last.right - 0.5, y } }
+  })
+  await page.mouse.move(start.x, start.y)
+  await page.mouse.down()
+  await page.mouse.move(end.x, end.y, { steps: 5 })
+  await page.mouse.up()
+
+  await press('Backspace')
+  await waitForEditable(' two three')
+
+  await press('z', { meta: true })
+  await waitForEditable('one two three')
+
+  expect(await getCaretOffset()).toBe(0)
+})
+
 it('Native undo/redo beforeinput (iOS three-finger swipe / shake-to-undo) routes through the app undo/redo', async () => {
   // create a thought "hello"
   await press('Enter')
