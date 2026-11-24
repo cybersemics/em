@@ -246,6 +246,7 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
                 color='#ffffff'
                 gradient={{ from: 'rgba(88, 181, 212, 0.45)', to: 'rgba(255, 255, 255, 1)' }}
                 glow={false}
+                rounded={command.rounded}
               />
             </div>
             <p

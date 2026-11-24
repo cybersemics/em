@@ -9,6 +9,7 @@ const jumpBackCommand = {
   description: 'Move the cursor to the last thought that was edited.',
   keyboard: { key: 'j', meta: true },
   gesture: 'lul',
+  rounded: true,
   multicursor: false,
   svg: JumpBackIcon,
   exec: dispatch => {

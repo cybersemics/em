@@ -88,6 +88,80 @@ const RDLD_SEGMENTS: readonly GestureSegment[] = [
   { kind: 'line', from: { x: 45, y: 58.5 }, to: { x: 45, y: 72 }, gestureIndex: 3 },
 ]
 
+type Turn = 'cw' | 'ccw'
+
+/** Unit vector of each direction in SVG space, where y points down. */
+const directionVector = (dir: Direction): GesturePoint =>
+  ({
+    l: { x: -1, y: 0 },
+    r: { x: 1, y: 0 },
+    u: { x: 0, y: -1 },
+    d: { x: 0, y: 1 },
+  })[dir]
+
+/** Returns whether moving from one direction to the next is a clockwise or counterclockwise quarter turn, or null for a reversal or repeat. */
+const getTurn = (from: Direction, to: Direction): Turn | null =>
+  rotateClockwise(from) === to ? 'cw' : rotateClockwise(to) === from ? 'ccw' : null
+
+/**
+ * Returns the point on a radius-1 circle around center, at the given angle in degrees.
+ * 0° is right of the center and 90° is below it, because SVG's y points down.
+ */
+const getPointAtAngle = (center: GesturePoint, angle: number): GesturePoint => ({
+  x: center.x + Math.cos((angle * Math.PI) / 180),
+  y: center.y + Math.sin((angle * Math.PI) / 180),
+})
+
+/**
+ * Builds a rounded gesture one turn at a time. Each turn is a quarter circle around its own center,
+ * so one turn can bend clockwise and the next counterclockwise, e.g. lul (←↑←) becomes an S, not a C.
+ * Each quarter circle is split in half, so the swipe going into the turn and the swipe coming out of it
+ * each own one piece for progress highlighting.
+ */
+const generateTurnArcs = (directions: Direction[]): ArcGestureSegment[] => {
+  // Where the pen is now. Each turn moves it to the end of that turn.
+  let currentPoint: GesturePoint = { x: 0, y: 0 }
+
+  // A turn sits between two swipes, so a gesture with n swipes has n - 1 turns.
+  return directions.slice(0, -1).flatMap((dir, i) => {
+    const next = directions[i + 1]
+    // Decided for every turn, not once for the whole gesture.
+    const clockwise = rotateClockwise(dir) === next
+
+    // The center is the point the pen swings around. It is never on the drawn line.
+    // It sits one step from the pen, toward the direction we are turning into,
+    // like the inside of a car's turn.
+    const turn = directionVector(next)
+    const center = { x: currentPoint.x + turn.x, y: currentPoint.y + turn.y }
+
+    // Angle of the pen as seen from the center: where the quarter circle starts.
+    const startAngle = (Math.atan2(currentPoint.y - center.y, currentPoint.x - center.x) * 180) / Math.PI
+    // A turn is a quarter circle: +90° clockwise, -90° counterclockwise.
+    const endAngle = startAngle + (clockwise ? 90 : -90)
+    // Halfway point, where the turn is split between the two swipes.
+    const midAngle = (startAngle + endAngle) / 2
+
+    // The end of this turn is where the next turn starts.
+    currentPoint = getPointAtAngle(center, endAngle)
+
+    /** Builds the part of this turn's quarter circle between two angles. */
+    const createArcSegment = (from: number, to: number, gestureIndex: number): ArcGestureSegment => ({
+      kind: 'arc',
+      from: getPointAtAngle(center, from),
+      to: getPointAtAngle(center, to),
+      center,
+      radius: 1,
+      startAngle: from,
+      endAngle: to,
+      sweepFlag: clockwise ? 1 : 0,
+      gestureIndex,
+    })
+
+    // First half belongs to the swipe going into the turn, second half to the swipe coming out.
+    return [createArcSegment(startAngle, midAngle, i), createArcSegment(midAngle, endAngle, i + 1)]
+  })
+}
+
 type BaseGestureGeometry = Omit<GestureGeometry, 'chevron'>
 
 /** Builds an unscaled line, circular-arc or question-mark template. */
@@ -106,6 +180,13 @@ const getBaseGestureGeometry = (
 
   if (rounded) {
     const directions = Array.from(path) as Direction[]
+    // A single circle only fits when every turn goes the same way, e.g. lurd or rul.
+    // When the turn direction flips, e.g. lul, the curve needs an inflection and is built turn by turn.
+    const turns = directions.slice(1).map((dir, i) => getTurn(directions[i], dir))
+    if (turns.length > 1 && turns.every(turn => turn !== null) && turns.some(turn => turn !== turns[0])) {
+      return { path, extendedPath: path, segments: generateTurnArcs(directions) }
+    }
+
     const segments = directions.map<ArcGestureSegment>((_, gestureIndex) => {
       const { startX, startY, radius, sweepFlag, endX, endY, startAngle, endAngle, center } = generateArcCoordinates(
         gestureIndex,

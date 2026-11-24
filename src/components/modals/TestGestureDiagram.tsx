@@ -78,6 +78,28 @@ const ModalTestGestureDiagram = () => {
         gradient={COMMAND_UNIVERSE_GRADIENT}
         glow={false}
       />
+      {/* jumpBack: the gradient must follow the S-curve through its change of direction */}
+      <GestureDiagram
+        path='lul'
+        size={48}
+        arrowSize={4}
+        strokeWidth={4}
+        rounded
+        arrowhead='outlined-wide'
+        gradient={COMMAND_UNIVERSE_GRADIENT}
+        glow={false}
+      />
+      {/* jumpForward */}
+      <GestureDiagram
+        path='rur'
+        size={48}
+        arrowSize={4}
+        strokeWidth={4}
+        rounded
+        arrowhead='outlined-wide'
+        gradient={COMMAND_UNIVERSE_GRADIENT}
+        glow={false}
+      />
       <GestureDiagram
         path='rdld'
         size={48}
@@ -94,6 +116,10 @@ const ModalTestGestureDiagram = () => {
       <GestureDiagram path='lur' {...GESTURE_MENU_PROPS} />
       {/* toggleSort */}
       <GestureDiagram path='lurd' {...GESTURE_MENU_PROPS} />
+      {/* jumpBack: the turns change direction, so the curve bends through an S */}
+      <GestureDiagram path='lul' {...GESTURE_MENU_PROPS} />
+      {/* jumpForward */}
+      <GestureDiagram path='rur' {...GESTURE_MENU_PROPS} />
 
       <div className={css({ display: 'inline-block', width: '48px', verticalAlign: 'middle' })}>
         <GestureDiagram

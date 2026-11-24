@@ -94,3 +94,20 @@ it('omits the filled chevron from the question mark', () => {
   expect(geometry.chevron).toBeNull()
   expect(geometry.segments).toEqual(getGestureGeometry('rdld', { size: 50, reversalOffset: 15 }).segments)
 })
+
+it.each(['lul', 'rur', 'rul', 'lurd'])('draws each swipe of rounded %s heading in its own direction', path => {
+  const { segments } = getGestureGeometry(path, { size: 100, reversalOffset: 30, rounded: true })
+
+  // Reads each swipe's direction back from the drawing: the axis it travels furthest along, and which way.
+  // SVG's y points down, so a negative y is up.
+  const drawnPath = [...path]
+    .map((_, gestureIndex) => {
+      const swipe = segments.filter(segment => segment.gestureIndex === gestureIndex)
+      const dx = swipe[swipe.length - 1].to.x - swipe[0].from.x
+      const dy = swipe[swipe.length - 1].to.y - swipe[0].from.y
+      return Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'l' : 'r') : dy < 0 ? 'u' : 'd'
+    })
+    .join('')
+
+  expect(drawnPath).toBe(path)
+})
