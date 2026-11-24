@@ -5,6 +5,7 @@ import {
   KeyboardEvent as ReactKeyboardEvent,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react'
@@ -95,6 +96,60 @@ const RowGlow = ({ row, isActive }: { row: HTMLLIElement; isActive: boolean }) =
   const commandId = row.getAttribute('data-cu-command-id') as CommandId | null
   const disabled = useSelector(state => (commandId ? !isExecutable(state, commandById(commandId)) : false))
   const [isPresent, safeToRemove] = usePresence()
+  const glowRef = useRef<HTMLDivElement>(null)
+
+  // Places the light on the row's left edge, at its middle, and keeps it there as the list scrolls or resizes. Placed from script rather than with CSS anchor positioning: Safari did not move an anchored light when the list scrolled, so it stayed where the row had been instead of scrolling away with it.
+  useLayoutEffect(() => {
+    const glow = glowRef.current
+    if (!glow) return
+    const scroller = row.closest('[data-dialog-scroll="true"]')
+    const list = row.closest('[role="listbox"]')
+    /**
+     * Moves the light to the row, measured against the light's containing block from layout offsets. Offsets ignore
+     * transforms, so the light keeps to the row's resting place while the page holding the row zooms in or out, and is
+     * not scaled along by the glass's open animation either.
+     */
+    const place = () => {
+      const box = glow.offsetParent
+      let x = 0
+      let y = 0
+      let el: Element | null = row
+      while (el instanceof HTMLElement && el !== box) {
+        x += el.offsetLeft
+        y += el.offsetTop
+        el = el.offsetParent
+        // Offsets are measured from inside the next offset parent's border.
+        if (el instanceof HTMLElement && el !== box) {
+          x += el.clientLeft
+          y += el.clientTop
+        }
+      }
+      if (!row.isConnected || !(box instanceof HTMLElement) || el !== box) {
+        // The search filtered the row away while its light was still fading out: hide the light above the clip box rather than leave it where the row was.
+        glow.style.transform = 'translateY(-100vh)'
+        return
+      }
+      // Offsets do not include scrolling, so take off the list's scroll.
+      for (let node = row.parentElement; node && node !== box; node = node.parentElement) {
+        x -= node.scrollLeft
+        y -= node.scrollTop
+      }
+      glow.style.transform = `translate(${x}px, ${y + row.offsetHeight / 2}px)`
+    }
+    place()
+    scroller?.addEventListener('scroll', place, { passive: true })
+    window.addEventListener('resize', place)
+    // Rows above this one change height or are filtered away as the search changes.
+    const observer = new ResizeObserver(place)
+    observer.observe(row)
+    if (list) observer.observe(list)
+    return () => {
+      scroller?.removeEventListener('scroll', place)
+      window.removeEventListener('resize', place)
+      observer.disconnect()
+    }
+  }, [row])
+
   // Removes the light once it has faded out of a row the focus has left. The timer covers a fade that never ends, such as when the light is not displayed. It allows twice the fade, since the fade's clock starts only when the browser renders the next frame.
   useEffect(() => {
     if (isPresent) return
@@ -104,6 +159,7 @@ const RowGlow = ({ row, isActive }: { row: HTMLLIElement; isActive: boolean }) =
 
   return (
     <div
+      ref={glowRef}
       // Crossfade: fades in when the row gains the focus and out in place once it has moved on. The two fades overlap, so the light crossfades between rows instead of sliding.
       // A CSS transition rather than a Motion animation, so the light runs on the same clock as the row's own focus transitions: the Activate pill, the shortcut chip and the title. Motion dates an animation from when JavaScript asked for it, while a CSS transition starts when the browser renders the change. After a slow frame, the light would be well into its fade before the Activate pill had started its own.
       onTransitionEnd={e => {
@@ -114,12 +170,10 @@ const RowGlow = ({ row, isActive }: { row: HTMLLIElement; isActive: boolean }) =
         opacity: isPresent ? 1 : 0,
         _starting: { opacity: 0 },
         position: 'absolute',
-        // Sits on the row's left edge, at its middle. The browser keeps it there as the list scrolls or resizes.
-        // When the search filters the row away while its light is still fading out, the fallback moves the light a box height above the clip box, where it is hidden, rather than to the box's corner.
-        top: 'anchor(center, -100%)',
-        left: 'anchor(left)',
+        // Moved onto the row by the transform set above.
+        top: 0,
+        left: 0,
       })}
-      style={{ positionAnchor: `--cu-row-${commandId}` }}
     >
       <motion.img
         src='/img/dialog/dialog-selection.avif'
@@ -182,8 +236,6 @@ const SelectionGlow = ({
         maskImage:
           'linear-gradient(to right, black calc(100% - 63px), transparent), linear-gradient(to bottom, transparent calc(100% - min(70dvh, 480px) - 36px), black calc(100% - min(70dvh, 480px) - 12px), black calc(100% - 64px), transparent)',
         maskComposite: 'intersect',
-        // Without anchor positioning (Safari before 26), the light could not find its row, so there is none.
-        '@supports not (anchor-name: --row)': { display: 'none' },
       })}
       // Fades with the dialog as it opens and closes.
       style={{ opacity: surfaceOpacity }}

@@ -1,4 +1,4 @@
-import type { Node } from '@react-types/shared'
+import type { Key, Node } from '@react-types/shared'
 import {
   Fragment,
   KeyboardEvent,
@@ -23,6 +23,8 @@ import CommandUniverseListItem from './CommandUniverseListItem'
 type CommandGroup = ReturnType<typeof useCommandList>['sections'][number]
 type OriginRect = Pick<DOMRectReadOnly, 'x' | 'y' | 'width' | 'height'>
 const SCROLL_ANIM_KEY = '__cuScrollAnim'
+/** Set on the scroll container while the user is scrolling it, and read by the rows' autoscroll. */
+const USER_SCROLL_KEY = '__cuUserScrolling'
 
 const INITIAL_ROW_LIMIT = 12
 const REMAINING_ROWS_DELAY = durations.get('fast') + 50
@@ -261,16 +263,35 @@ const CommandUniverseList = forwardRef<CommandUniverseListHandle, CommandUnivers
     }, [])
 
     // Track the cursor position so a *user* scroll can re-home the highlight onto whatever row
-    // ends up under the (stationary) cursor. Stored in a ref — it never needs to trigger a render.
+    // ends up under the (stationary) cursor, and whether the latest `mousemove` actually moved the
+    // cursor. Stored in refs — they never need to trigger a render.
     const mousePosRef = useRef<{ x: number; y: number } | null>(null)
+    const mouseMovedRef = useRef(false)
     useEffect(() => {
-      /** Record the latest cursor position for the user-scroll re-home handler below. */
+      /** Record the latest cursor position, and whether it differs from the one before. */
       const onMouseMove = (e: MouseEvent) => {
+        const prev = mousePosRef.current
+        mouseMovedRef.current = prev?.x !== e.clientX || prev?.y !== e.clientY
         mousePosRef.current = { x: e.clientX, y: e.clientY }
       }
-      window.addEventListener('mousemove', onMouseMove, { passive: true })
-      return () => window.removeEventListener('mousemove', onMouseMove)
+      // Capture phase, so the flag is set before the row's own `mousemove` handler reads it in `onRowHover`.
+      window.addEventListener('mousemove', onMouseMove, { capture: true, passive: true })
+      return () => window.removeEventListener('mousemove', onMouseMove, { capture: true })
     }, [])
+
+    // Moves the focus to the row the cursor moved over. Only real cursor motion counts: WebKit (Safari, and
+    // Tauri on macOS) dispatches a `mousemove` at the cursor's unchanged position about 100ms after a scroll
+    // pauses, so the hover state catches up with the content that slid under it. During a slow trackpad or
+    // wheel scroll that happens many times, and following it would hand the highlight to whichever row is
+    // under the cursor mid-scroll, so the selection glow jumps between rows instead of scrolling with its
+    // own. Chrome sends no such event. The row under the cursor still takes the focus once the scroll comes
+    // to rest, below.
+    const onRowHover = useCallback(
+      (key: Key) => {
+        if (mouseMovedRef.current) state.selectionManager.setFocusedKey(key)
+      },
+      [state.selectionManager],
+    )
 
     // When a USER scroll of the list comes to rest, make the row under the cursor the focused
     // (highlighted) row. Focus does not follow the cursor during the scroll: moving it on every
@@ -282,17 +303,28 @@ const CommandUniverseList = forwardRef<CommandUniverseListHandle, CommandUnivers
     // skip those frames. Otherwise a row sliding under a stationary cursor during keyboard nav
     // would yank the highlight away — the same reason the per-row hover handler binds `mousemove`
     // rather than `mouseenter`.
+    //
+    // From a wheel or touch on the list until the scroll settles, or a key is pressed, the container
+    // carries `USER_SCROLL_KEY`, which the rows' autoscroll reads so it never moves the list under the
+    // user's own scroll. The wheel or touch also cancels an autoscroll already running. Set on input
+    // rather than on `scroll`, since the last frame of an autoscroll arrives as a scroll event after
+    // the animation has ended, and would block the next arrow key's autoscroll.
     useEffect(() => {
       const container = listRef.current?.closest('[data-dialog-scroll="true"]') as HTMLElement | null
       if (!container) return
+      const flags = container as unknown as Record<string, number | boolean | null | undefined>
       const fm = state.selectionManager
-      // Fallback for browsers without `scrollend`: the scroll counts as settled this long after its last event.
-      const SETTLE_MS = 150
+      // The scroll counts as settled this long after its last event. `scrollend` cannot be used for
+      // it: Safari fires it about 100ms after every pause in a slow trackpad scroll, not once at the end
+      // of the gesture as Chrome does, so the highlight jumped to whichever row was under the cursor at
+      // each pause.
+      const SETTLE_MS = 500
       let settleTimer: ReturnType<typeof setTimeout> | undefined
       /** Moves the highlight to the row under the cursor once the user's scroll has come to rest. */
       const rehome = () => {
         clearTimeout(settleTimer)
         settleTimer = undefined
+        flags[USER_SCROLL_KEY] = false
         const pos = mousePosRef.current
         if (!pos) return
         const el = document.elementFromPoint(pos.x, pos.y)
@@ -305,20 +337,32 @@ const CommandUniverseList = forwardRef<CommandUniverseListHandle, CommandUnivers
       /** Restarts the settle timer on each user scroll event, without reading layout. */
       const onScroll = () => {
         // Skip our own animated autoscroll; only react to wheel/trackpad/scrollbar scrolls.
-        if ((container as unknown as Record<string, number | null>)[SCROLL_ANIM_KEY] != null) return
+        if (flags[SCROLL_ANIM_KEY] != null) return
         clearTimeout(settleTimer)
         settleTimer = setTimeout(rehome, SETTLE_MS)
       }
-      /** Settles at once where the browser reports the end of the scroll. */
-      const onScrollEnd = () => {
-        if (settleTimer !== undefined) rehome()
+      /** Hands the list to the user: stops a running autoscroll so it cannot fight their scroll. */
+      const onUserScrollInput = () => {
+        flags[USER_SCROLL_KEY] = true
+        const anim = flags[SCROLL_ANIM_KEY]
+        if (typeof anim === 'number') cancelAnimationFrame(anim)
+        flags[SCROLL_ANIM_KEY] = null
       }
       container.addEventListener('scroll', onScroll, { passive: true })
-      container.addEventListener('scrollend', onScrollEnd)
+      container.addEventListener('wheel', onUserScrollInput, { passive: true })
+      container.addEventListener('touchmove', onUserScrollInput, { passive: true })
+      /** Gives the list back to the keyboard, so an arrow key pressed right after a scroll still brings its row into view. */
+      const onKeyDown = () => {
+        flags[USER_SCROLL_KEY] = false
+      }
+      window.addEventListener('keydown', onKeyDown, true)
       return () => {
         clearTimeout(settleTimer)
+        flags[USER_SCROLL_KEY] = false
         container.removeEventListener('scroll', onScroll)
-        container.removeEventListener('scrollend', onScrollEnd)
+        container.removeEventListener('wheel', onUserScrollInput)
+        container.removeEventListener('touchmove', onUserScrollInput)
+        window.removeEventListener('keydown', onKeyDown, true)
       }
     }, [state.selectionManager, commandsByKey])
 
@@ -520,6 +564,7 @@ const CommandUniverseList = forwardRef<CommandUniverseListHandle, CommandUnivers
                     registerRef={registerRowRef}
                     onActivate={onItemActivate}
                     onZoom={onItemTap}
+                    onHover={onRowHover}
                   />
                 )
               })}

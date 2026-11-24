@@ -1,4 +1,4 @@
-import type { Node } from '@react-types/shared'
+import type { Key, Node } from '@react-types/shared'
 import { FC, MouseEvent, useCallback, useEffect, useRef } from 'react'
 import { mergeProps, useOption } from 'react-aria'
 import { useSelector } from 'react-redux'
@@ -27,6 +27,8 @@ type OriginRect = Pick<DOMRectReadOnly, 'x' | 'y' | 'width' | 'height'>
  * sluggish under rapid keypresses).
  */
 const SCROLL_ANIM_KEY = '__cuScrollAnim'
+/** Set on the scroll container by CommandUniverseList while the user is scrolling it. */
+const USER_SCROLL_KEY = '__cuUserScrolling'
 /** Smoothly scrolls the active row into view, cancelling any prior scroll. */
 const animateScrollTop = (container: HTMLElement, target: number, durationMs: number) => {
   const c = container as unknown as Record<typeof SCROLL_ANIM_KEY, number | null>
@@ -77,6 +79,8 @@ interface CommandUniverseListItemProps {
    * from the index page into the detail level.
    */
   onZoom?: (command: Command, originRect: OriginRect) => void
+  /** Called when the cursor moves over the row. The parent moves the focus to it, unless the cursor did not actually move. */
+  onHover?: (key: Key) => void
 }
 /**
  * Renders a single command as a horizontal row in `CommandUniverseList`. Built on
@@ -92,6 +96,7 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
   registerRef,
   onActivate,
   onZoom,
+  onHover,
 }) => {
   const isActive = useSelector(state => command.isActive?.(state))
   const disabled = useSelector(state => !isExecutable(state, command))
@@ -134,6 +139,9 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
       value: () => {
         const container = el.closest('[data-dialog-scroll="true"]') as HTMLElement | null
         if (!container) return
+        // Never move the list while the user is scrolling it. The focus changes under a scroll only when it settles
+        // onto the row under the cursor, which is already in view.
+        if ((container as unknown as Record<string, boolean | undefined>)[USER_SCROLL_KEY]) return
         const elRect = el.getBoundingClientRect()
         const cRect = container.getBoundingClientRect()
         // pageEntry's CSS `scroll-padding-*` defines the "safe" inner region where focused
@@ -225,9 +233,8 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
   // when autoscroll moves a new row into the cursor's position after arrow-key nav), which
   // would yank the keyboard-selected highlight onto whichever row happened to scroll under
   // the mouse.
-  const onMouseMove = useCallback(() => {
-    state.selectionManager.setFocusedKey(item.key)
-  }, [item.key, state.selectionManager])
+  // The parent also ignores the `mousemove` that WebKit dispatches at a stationary cursor after a scroll.
+  const onMouseMove = useCallback(() => onHover?.(item.key), [item.key, onHover])
   return (
     <li
       {...mergeProps(optionProps, { onMouseMove, onClick: () => onActivate?.(command) })}
@@ -237,8 +244,6 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
       // Lets the parent's user-scroll handler map an `elementFromPoint` hit back to a command
       // key (so the row under the cursor becomes the highlight when the list is scrolled).
       data-cu-command-id={command.id}
-      // Lets the selection glow, which sits outside the list, anchor itself to this row.
-      style={{ anchorName: `--cu-row-${command.id}` }}
       aria-disabled={disabled || undefined}
       className={css({
         position: 'relative',
