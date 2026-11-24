@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/dom'
 import { act } from 'react'
 import SimplePath from '../../@types/SimplePath'
+import { addAllMulticursorActionCreator as addAllMulticursor } from '../../actions/addAllMulticursor'
 import { editThoughtActionCreator as editThought } from '../../actions/editThought'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
@@ -800,6 +801,26 @@ describe('store', () => {
 describe('multicursor', () => {
   beforeEach(initStore)
 
+  // https://github.com/cybersemics/em/issues/5874
+  it('is disabled when every sibling is selected, since it would sort their parent once, the same as Sort alone', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - c
+          - a
+          - b
+        `,
+      }),
+      setCursor(['b']),
+      addAllMulticursor(),
+    ])
+
+    expect(toggleSortCommand.canExecute(store.getState())).toBe(false)
+
+    executeCommandWithMulticursor(toggleSortCommand, { store })
+    expect(attributeByContext(store.getState(), [HOME_TOKEN], '=sort')).toBe(null)
+  })
+
   it('should sort the cursors with first-sibling filter', async () => {
     store.dispatch([
       importText({
@@ -888,6 +909,7 @@ describe('multicursor', () => {
           - a
           - b
           - c
+          - d
         `,
       }),
       setCursor(['a']),
@@ -911,7 +933,8 @@ describe('multicursor', () => {
       - Asc
   - a
   - b
-  - c`)
+  - c
+  - d`)
 
     expect(state.multicursors).toEqual({
       [hashPath(a)]: a,

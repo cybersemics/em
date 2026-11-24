@@ -3,6 +3,8 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { toggleSortActionCreator as toggleSort } from '../actions/toggleSort'
 import Icon from '../components/icons/Sort'
 import getSortPreference from '../selectors/getSortPreference'
+import hasMulticursor from '../selectors/hasMulticursor'
+import isAllSelected from '../selectors/isAllSelected'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -20,6 +22,8 @@ const toggleSortCommand = {
     filter: 'first-sibling',
   },
   svg: Icon,
+  // With every sibling selected, Sort would sort their shared parent once, the same as Sort alone, so the selection adds nothing. This also disables Select All + Sort, whose canExecute sees the state after Select All (#5874).
+  canExecute: state => !(hasMulticursor(state) && isAllSelected(state)),
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()
     if (!state.cursor || isRoot(state.cursor)) return
