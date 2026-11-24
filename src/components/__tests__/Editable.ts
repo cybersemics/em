@@ -161,6 +161,44 @@ it('inserts emoji spacing immediately before colored text', async () => {
   expect(editable.innerHTML).toBe('👋 <font color="#ff0000">Hello</font>')
 })
 
+// https://github.com/cybersemics/em/issues/6395
+it.skip('redo returns the caret to where typing left it, though the caret moved before the edit was saved', async () => {
+  await dispatch(importText({ text: '- one two\n- b' }))
+  // a click at the end of the thought
+  await dispatch(
+    setCursorPath({
+      path: contextToPath(store.getState(), ['one two'])!,
+      offset: 'one two'.length,
+      isKeyboardOpen: true,
+    }),
+  )
+
+  const editable = (await findThoughtByText('one two'))!
+  await act(async () => {
+    editable.focus()
+    selection.set(editable, { offset: 'one two'.length })
+  })
+
+  const user = userEvent.setup({ delay: null })
+  await user.keyboard('X')
+
+  // Home moves the caret without recording it. The edit is still waiting on the throttle.
+  await act(async () => {
+    selection.set(editable, { offset: 0 })
+  })
+
+  act(() => {
+    windowEvent('keydown', { key: 'z', metaKey: true })
+  })
+  act(() => {
+    windowEvent('keydown', { key: 'z', metaKey: true, shiftKey: true })
+  })
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(editable.textContent).toBe('one twoX')
+  expect(selection.offsetThought()).toBe('one twoX'.length)
+})
+
 // A press that is longer than a quick tap but shorter than a long press ("mid press") gets its synthesized click
 // from the browser even though the touchend called preventDefault, which used to toggle the multicursor a second
 // time so that the selection flashed on and off again.

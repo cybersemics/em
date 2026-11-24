@@ -355,6 +355,44 @@ const dispatchNativeHistory = (inputType: 'historyUndo' | 'historyRedo') =>
 // iOS three-finger swipe and shake-to-undo dispatch a beforeinput event with inputType historyUndo/historyRedo rather than Cmd+Z.
 // Left to run natively, WebKit's contentEditable undo mutates the DOM out of sync with Redux (duplicating text, e.g. an autocorrected
 // word and its original both re-inserted on redo). Verify these events are intercepted and routed through the app's undo/redo. (#4477)
+// https://github.com/cybersemics/em/issues/6395
+it.skip('undo returns the caret to where the arrow keys moved it before the edit', async () => {
+  await paste(`
+    - one two three
+  `)
+
+  await clickThought('one two three')
+  await press('End')
+  for (let i = 0; i < 10; i++) await press('ArrowLeft')
+  await press('Backspace')
+  await waitForEditable('on two three')
+
+  await press('z', { meta: true })
+  await waitForEditable('one two three')
+
+  expect(await getCaretOffset()).toBe('one'.length)
+})
+
+// https://github.com/cybersemics/em/issues/6395
+it.skip('undo of deleting a selection made with the keyboard returns the caret to the end the selection was made to', async () => {
+  await paste(`
+    - one two three
+  `)
+
+  await clickThought('one two three')
+  await press('End')
+  for (let i = 0; i < 10; i++) await press('ArrowLeft')
+  // select one from its end, so the selection ends at the start of the thought
+  for (let i = 0; i < 3; i++) await press('ArrowLeft', { shift: true })
+  await press('Backspace')
+  await waitForEditable(' two three')
+
+  await press('z', { meta: true })
+  await waitForEditable('one two three')
+
+  expect(await getCaretOffset()).toBe(0)
+})
+
 it('Native undo/redo beforeinput (iOS three-finger swipe / shake-to-undo) routes through the app undo/redo', async () => {
   // create a thought "hello"
   await press('Enter')
