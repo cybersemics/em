@@ -9,6 +9,7 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import indentCommand from '../indent'
 import outdentCommand from '../outdent'
 import selectAllCommand from '../selectAll'
+import toggleTableViewCommand from '../toggleTableView'
 
 beforeEach(initStore)
 
@@ -45,11 +46,25 @@ describe('chained commands', () => {
     const selectAllOutdent = chainCommand(selectAllCommand, outdentCommand)
     expect(selectAllOutdent.canExecute!(store.getState())).toBe(true)
   })
-})
 
-describe('excluded commands', () => {
   // https://github.com/cybersemics/em/issues/5874
-  it('does not chain Table View, which toggles the same parent as Table View alone', () => {
+  it('disables Table View, which would toggle the same parent as Table View alone', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - p
+            - a
+            - b
+        `,
+      }),
+      setCursor(['p', 'b']),
+    ])
+
+    const selectAllTableView = chainCommand(selectAllCommand, toggleTableViewCommand)
+    expect(selectAllTableView.canExecute!(store.getState())).toBe(false)
+  })
+
+  it('does not run Table View from the Select All + Table View gesture', () => {
     store.dispatch([
       importText({
         text: `

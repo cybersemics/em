@@ -25,17 +25,8 @@ const selectAllCommand = {
   isActive: isAllSelected,
   // Allow chaining Select All into multicursor commands without lifting the finger.
   // Unfortunately categorize is a special case since it has multicursor: false but can still handle multicursor in the action.
-  // Commands that run once per parent (multicursor filter first-sibling or last-sibling), such as Sort, Table View and Merge Duplicates, are excluded. Select All selects every sibling of the cursor, so such a command would act on the cursor's parent once, the same as without Select All (#5874).
-  isChainable: command => {
-    const filter = typeof command.multicursor === 'object' ? command.multicursor.filter : undefined
-    return (
-      !!command.gesture &&
-      command.id !== 'clearThought' &&
-      filter !== 'first-sibling' &&
-      filter !== 'last-sibling' &&
-      (!!command.multicursor || command.id === 'categorize')
-    )
-  },
+  isChainable: command =>
+    !!command.gesture && command.id !== 'clearThought' && (!!command.multicursor || command.id === 'categorize'),
   canExecute: state => {
     if (!isDocumentEditable()) {
       return false
