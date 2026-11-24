@@ -224,17 +224,18 @@ const SelectionGlow = ({
       className={css({
         // Laid over the glass by the positioner's grid rather than absolutely positioned, so the light's containing block is the positioner, which holds the rows the light is anchored to. The mask below clips the light to this box.
         // Room for the light to spill past the glass: far to the left, a little to the right, and over the footer.
-        marginBottom: '-24px',
-        marginLeft: '-240px',
-        marginRight: '-62px',
+        // In rem, like the light, so the room grows with it at larger font sizes (24px, 240px and 62px at the default).
+        marginBottom: '-1.5rem',
+        marginLeft: '-15rem',
+        marginRight: '-3.875rem',
         pointerEvents: 'none',
         zIndex: 10,
         // The mask and the blend share this element. On different elements, the mask would isolate the blend from the glass behind it.
         mixBlendMode: 'screen',
-        /* Fades the light out over the last 63px on the right and the last 64px at the bottom, so it ends softly instead of at the clip box's edge.
-          At the top, it fades in from 12px above the list's scroll viewport to 12px below it, so a row scrolled under the header neither lights the search field nor ends its light in a hard line. The list's top is found from the bottom: the clip box ends 24px below the list, which is min(70dvh, 480px) tall. */
+        /* Fades the light out over the last 3.9375rem on the right and the last 4rem at the bottom, so it ends softly instead of at the clip box's edge.
+          At the top, it fades in from 0.75rem above the list's scroll viewport to 0.75rem below it, so a row scrolled under the header neither lights the search field nor ends its light in a hard line. The list's top is found from the bottom: the clip box ends 1.5rem below the list, which is min(70dvh, 30rem) tall. */
         maskImage:
-          'linear-gradient(to right, black calc(100% - 63px), transparent), linear-gradient(to bottom, transparent calc(100% - min(70dvh, 480px) - 36px), black calc(100% - min(70dvh, 480px) - 12px), black calc(100% - 64px), transparent)',
+          'linear-gradient(to right, black calc(100% - 3.9375rem), transparent), linear-gradient(to bottom, transparent calc(100% - min(70dvh, 30rem) - 2.25rem), black calc(100% - min(70dvh, 30rem) - 0.75rem), black calc(100% - 4rem), transparent)',
         maskComposite: 'intersect',
       })}
       // Fades with the dialog as it opens and closes.
@@ -366,7 +367,7 @@ const CommandUniverseSession = ({
           >
             Commands
           </CommandUniverseHeader>
-          <div className={css({ height: 'min(70vh, 70dvh)', minHeight: 0, lg: { height: 'min(70dvh, 480px)' } })}>
+          <div className={css({ height: 'min(70vh, 70dvh)', minHeight: 0, lg: { height: 'min(70dvh, 30rem)' } })}>
             <CommandUniversePageRouter
               listRef={listRef}
               onFocusedRowChange={setFocusedRow}

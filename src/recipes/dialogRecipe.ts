@@ -121,8 +121,10 @@ const dialogRecipe = defineSlotRecipe({
       position: 'relative',
       maxWidth: '500px',
       width: '87.5%',
-      lg: { width: '80%', maxWidth: '650px' },
-      '2xl': { maxWidth: '826px' },
+      // rem, so the panel grows with the user's font size like its contents (650px and 826px at the default 16px), up
+      // to the 80% of the window it already stops at.
+      lg: { width: '80%', maxWidth: '40.625rem' },
+      '2xl': { maxWidth: '51.625rem' },
     },
     /** Light highlight image pinned to the top of the viewport — bleeds past the top edge of the glass to suggest light spilling onto the surrounding screen. Mobile-only: past lg the modal sits in too much surrounding space for the bleed-out effect to read. */
     highlightUnclipped: {
@@ -172,10 +174,11 @@ radial-gradient(56.44% 37.35% at 40.5% 67.11%, rgba(255, 255, 120, 0.0171) 0%, r
       lg: {
         display: 'block',
         position: 'absolute',
-        left: 'calc(50% - 380px)',
-        top: '-51px',
-        width: '966px',
-        height: '190px',
+        // rem, so the streak keeps its place on the glass's top edge as the glass grows with the font size.
+        left: 'calc(50% - 23.75rem)',
+        top: '-3.1875rem',
+        width: '60.375rem',
+        height: '11.875rem',
         backgroundImage: 'url(/img/dialog/dialog-shell-streak.avif)',
         backgroundSize: '100% 100%',
         // Applied here, not baked into the image, so the image keeps its full range of transparency levels.
@@ -243,7 +246,8 @@ radial-gradient(56.44% 37.35% at 40.5% 67.11%, rgba(255, 255, 120, 0.0171) 0%, r
       overflow: 'hidden',
       position: 'relative',
       maxHeight: '80dvh',
-      lg: { maxHeight: '560px' },
+      // 560px at the default font size, growing with it like the list inside (see CommandUniverse).
+      lg: { maxHeight: '35rem' },
       display: 'flex',
       flexDirection: 'column',
     },
@@ -273,12 +277,14 @@ radial-gradient(56.44% 37.35% at 40.5% 67.11%, rgba(255, 255, 120, 0.0171) 0%, r
           position: 'absolute',
           left: '47.8%',
           top: '71.1%',
-          // Just large enough to cover the largest glass (826 × 560) from the gradient's centre at any rotation: its
-          // farthest corner is 587px away. A larger square only adds area for the browser to rasterise.
-          width: '1200px',
-          height: '1200px',
+          // Just large enough to cover the largest glass (51.625rem × 35rem, 826 × 560 at the default font size) from
+          // the gradient's centre at any rotation: its farthest corner is 36.7rem away. A larger square only adds area
+          // for the browser to rasterise. In rem, so the fill grows with the glass.
+          width: '75rem',
+          height: '75rem',
           transform: 'translate(-50%, -50%) rotate(32deg)',
-          background: 'radial-gradient(594px 456px at 50% 50%, rgb(40, 21, 66) 0%, rgba(127, 123, 206, 0.32) 100%)',
+          background:
+            'radial-gradient(37.125rem 28.5rem at 50% 50%, rgb(40, 21, 66) 0%, rgba(127, 123, 206, 0.32) 100%)',
         },
       },
     },
@@ -365,10 +371,11 @@ radial-gradient(47.39% 55.25% at 37.07% 40.94%, rgba(131, 118, 248, 0.0890) 0%, 
       lg: {
         display: 'block',
         position: 'absolute',
-        left: 'calc(50% - 395px)',
-        top: '-66px',
-        width: '966px',
-        height: '190px',
+        // rem, like shellHalo, so it grows with the glass.
+        left: 'calc(50% - 24.6875rem)',
+        top: '-4.125rem',
+        width: '60.375rem',
+        height: '11.875rem',
         backgroundImage: 'url(/img/dialog/dialog-top-streak.avif)',
         backgroundSize: '100% 100%',
         // Applied here, not baked into the image, so the image keeps its full range of transparency levels.
