@@ -43,45 +43,52 @@ const isExecutable = (state: State, command: Command) =>
   (command.allowExecuteFromModal || !state.showModal || !state.showCommandUniverse)
 
 /** Displays the keyboard controls for moving through the list and between pages. Back and Details only appear when there is a page in that direction to go to. */
-const CommandUniverseFooter = ({ canGoBack, canGoDeeper }: { canGoBack: boolean; canGoDeeper: boolean }) => (
-  <div
-    className={css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      color: 'fgOverlay50',
-      paddingTop: '0.75rem',
-      paddingInline: '1.9rem',
-      fontSize: '0.85em',
-      fontFamily: 'radioCanada',
-    })}
-  >
-    <div className={css({ display: 'flex', alignItems: 'center', gap: '4px' })}>
-      <Kbd size={21}>↑</Kbd>
-      <Kbd size={21}>↓</Kbd>
-      <span className={css({ marginLeft: '6px', fontSize: '0.9em' })}>Navigate</span>
+const CommandUniverseFooter = ({ canGoBack, canGoDeeper }: { canGoBack: boolean; canGoDeeper: boolean }) => {
+  // The key caps' size in px: 21px at the default font size, growing with the user's font size like the text beside
+  // them. Kbd takes a px size, so rem cannot be used directly.
+  // TODO: replace with useRemAsPx(21 / 16) once the accessibility primitives in #6026 land.
+  const keySize = (21 * useSelector(state => state.fontSize)) / 16
+  return (
+    <div
+      className={css({
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        color: 'fgOverlay50',
+        paddingTop: '0.75rem',
+        paddingInline: '1.9rem',
+        // rem, not em: the overlay renders into <body>, which stays at 16px, so em would ignore the user's font size.
+        fontSize: '0.85rem',
+        fontFamily: 'radioCanada',
+      })}
+    >
+      <div className={css({ display: 'flex', alignItems: 'center', gap: '4px' })}>
+        <Kbd size={keySize}>↑</Kbd>
+        <Kbd size={keySize}>↓</Kbd>
+        <span className={css({ marginLeft: '6px', fontSize: '0.9em' })}>Navigate</span>
+      </div>
+      <div className={css({ display: 'flex', alignItems: 'center', gap: '16px' })}>
+        {canGoBack && (
+          <div className={css({ display: 'flex', alignItems: 'center', gap: '2px' })}>
+            <Kbd size={keySize}>⇧</Kbd>
+            <Kbd size={keySize} isText>
+              Tab
+            </Kbd>
+            <span className={css({ marginLeft: '6px', fontSize: '0.9em' })}>Back</span>
+          </div>
+        )}
+        {canGoDeeper && (
+          <div className={css({ display: 'flex', alignItems: 'center', gap: '2px' })}>
+            <Kbd size={keySize} isText>
+              Tab
+            </Kbd>
+            <span className={css({ marginLeft: '6px', fontSize: '0.9em' })}>Details</span>
+          </div>
+        )}
+      </div>
     </div>
-    <div className={css({ display: 'flex', alignItems: 'center', gap: '16px' })}>
-      {canGoBack && (
-        <div className={css({ display: 'flex', alignItems: 'center', gap: '2px' })}>
-          <Kbd size={21}>⇧</Kbd>
-          <Kbd size={21} isText>
-            Tab
-          </Kbd>
-          <span className={css({ marginLeft: '6px', fontSize: '0.9em' })}>Back</span>
-        </div>
-      )}
-      {canGoDeeper && (
-        <div className={css({ display: 'flex', alignItems: 'center', gap: '2px' })}>
-          <Kbd size={21} isText>
-            Tab
-          </Kbd>
-          <span className={css({ marginLeft: '6px', fontSize: '0.9em' })}>Details</span>
-        </div>
-      )}
-    </div>
-  </div>
-)
+  )
+}
 
 /** The light for one focused row. Each focused row gets its own, so two exist while the light crossfades from one row to the next. */
 const RowGlow = ({ row, isActive }: { row: HTMLLIElement; isActive: boolean }) => {
