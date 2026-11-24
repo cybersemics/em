@@ -1,6 +1,26 @@
 {
   "Edit": [
     {
+      "id": "undo",
+      "label": "Undo",
+      "role": "undo",
+      "accelerator": {
+        "macos": "Cmd+Z",
+        "windowsLinux": "Ctrl+Z"
+      },
+      "checkable": false
+    },
+    {
+      "id": "redo",
+      "label": "Redo",
+      "role": "redo",
+      "accelerator": {
+        "macos": "Cmd+Shift+Z",
+        "windowsLinux": "Ctrl+Shift+Z"
+      },
+      "checkable": false
+    },
+    {
       "id": "favorite",
       "label": "Add to Favorites",
       "checkable": false

@@ -7,6 +7,7 @@ import isUndoEnabled from '../selectors/isUndoEnabled'
 import store from '../stores/app'
 import editableSyncStore from '../stores/editableSyncStore'
 import { registerReset } from '../stores/ministore'
+import isTextField from '../util/isTextField'
 import * as selection from './selection'
 
 /** How long after a three-finger swipe recognized from touch events the matching `historyUndo`/`historyRedo` `beforeinput` is treated as the same gesture rather than a new one. */
@@ -265,8 +266,13 @@ const nativeHistory = {
    * thought invisible (#3954). Block the native undo before it touches the DOM and route it through em's undo/redo,
    * which reverts to the correct Redux state and re-renders the editable. The cancelable check gates on the case we
    * can actually prevent; native browser undo is intentionally superseded by em's undo (#3879).
+   *
+   * A text field, such as the search box of the Command Universe, keeps its own undo history, so its history events
+   * are left to the browser: undo there undoes the text field, not the thoughtspace behind it.
    */
   beforeInput: (e: InputEvent): boolean => {
+    if (isTextField(e.target)) return false
+
     const isHistory = (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable
 
     // Pass through the events dispatched by registerRedoStep's own execCommands, including its `historyUndo`.

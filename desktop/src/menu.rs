@@ -41,6 +41,9 @@ struct CommandItem {
     /// Whether the item shows a check mark while the command is active.
     #[serde(default)]
     checkable: bool,
+    /// The native Edit item whose place the item takes, such as `undo`. The page decides what the item does.
+    #[serde(default)]
+    role: Option<String>,
 }
 
 /// A command's accelerators. The modifiers differ, since em binds Command on macOS to Ctrl on Windows and Linux. A
@@ -136,13 +139,16 @@ fn submenu<R: Runtime>(
 /// there the App commands go in File, followed by Exit or Quit, and About goes in Help. The macOS Window menu and Full
 /// Screen item are left out there, since the window frame has those controls.
 ///
-/// On macOS, the Edit menu keeps the native Undo, Redo, Cut, Copy, Paste, and Select All. The webview does not perform
-/// these shortcuts itself: Command + C only copies because a menu item has it as its key equivalent. em's own Undo and
-/// Redo are bound to the same shortcuts and take them first, since the page sees a key before the menu does, as does
-/// its Select All while thoughts are selected. The native items still serve the text fields where em leaves the key to
-/// the browser, such as the search box of the Command Universe. The webview performs these shortcuts itself on Windows
-/// and Linux. Windows keeps the native items, which press the shortcut when chosen. Linux leaves them out, since GTK can
-/// press a shortcut only on X11 and with libxdo.
+/// The Edit menu starts with the command items that take the place of a native item: em's Undo and Redo. The native
+/// ones would act on the webview's own undo history, which has no record of em's changes. The page has em's items undo a
+/// text field instead while it has the focus, as the native items would.
+///
+/// On macOS, the Edit menu keeps the native Cut, Copy, Paste, and Select All. The webview does not perform these
+/// shortcuts itself: Command + C only copies because a menu item has it as its key equivalent. em's own Select All takes
+/// Command + A first while thoughts are selected, since the page sees a key before the menu does. The native items still
+/// serve the text fields where em leaves the key to the browser, such as the search box of the Command Universe. The
+/// webview performs these shortcuts itself on Windows and Linux. Windows keeps the native items, which press the
+/// shortcut when chosen. Linux leaves them out, since GTK can press a shortcut only on X11 and with libxdo.
 ///
 /// `NATIVE_ACCELERATORS` in `src/util/systemMenuDefinition.ts` lists the shortcuts of the native items, so that no
 /// command item is given one of them. Update it along with the native items.
@@ -166,7 +172,12 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     )?);
     let app_items = command_items(app, &definition.app, &mut registry)?;
     let file_items = command_items(app, &definition.file, &mut registry)?;
-    let edit_items = command_items(app, &definition.edit, &mut registry)?;
+    let (role_commands, edit_commands): (Vec<_>, Vec<_>) = definition
+        .edit
+        .into_iter()
+        .partition(|command| command.role.is_some());
+    let role_items = command_items(app, &role_commands, &mut registry)?;
+    let edit_items = command_items(app, &edit_commands, &mut registry)?;
     let cursor_items = command_items(app, &definition.cursor, &mut registry)?;
     let view_items = command_items(app, &definition.view, &mut registry)?;
     let help_items = command_items(app, &definition.help, &mut registry)?;
@@ -211,10 +222,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
                 None,
                 "Edit",
                 vec![
-                    vec![
-                        MenuItemKind::Predefined(PredefinedMenuItem::undo(app, None)?),
-                        MenuItemKind::Predefined(PredefinedMenuItem::redo(app, None)?),
-                    ],
+                    role_items,
                     vec![
                         MenuItemKind::Predefined(PredefinedMenuItem::cut(app, None)?),
                         MenuItemKind::Predefined(PredefinedMenuItem::copy(app, None)?),
@@ -261,18 +269,12 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             MenuItemKind::MenuItem(MenuItem::with_id(app, QUIT_ID, "Quit", true, None::<&str>)?)
         };
         let native_edit_items = if cfg!(windows) {
-            vec![
-                vec![
-                    MenuItemKind::Predefined(PredefinedMenuItem::undo(app, None)?),
-                    MenuItemKind::Predefined(PredefinedMenuItem::redo(app, None)?),
-                ],
-                vec![
-                    MenuItemKind::Predefined(PredefinedMenuItem::cut(app, None)?),
-                    MenuItemKind::Predefined(PredefinedMenuItem::copy(app, None)?),
-                    MenuItemKind::Predefined(PredefinedMenuItem::paste(app, None)?),
-                    MenuItemKind::Predefined(PredefinedMenuItem::select_all(app, None)?),
-                ],
-            ]
+            vec![vec![
+                MenuItemKind::Predefined(PredefinedMenuItem::cut(app, None)?),
+                MenuItemKind::Predefined(PredefinedMenuItem::copy(app, None)?),
+                MenuItemKind::Predefined(PredefinedMenuItem::paste(app, None)?),
+                MenuItemKind::Predefined(PredefinedMenuItem::select_all(app, None)?),
+            ]]
         } else {
             Vec::new()
         };
@@ -282,7 +284,10 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
                 app,
                 None,
                 "Edit",
-                native_edit_items.into_iter().chain([edit_items]).collect(),
+                std::iter::once(role_items)
+                    .chain(native_edit_items)
+                    .chain([edit_items])
+                    .collect(),
             )?,
             cursor_menu,
             submenu(app, None, "View", vec![view_items])?,

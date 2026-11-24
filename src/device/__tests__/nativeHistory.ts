@@ -76,3 +76,25 @@ it('reports em undo and redo availability to iOS', () => {
   store.dispatch(undo())
   expect(mockHistoryAvailability).toEqual({ canUndo: false, canRedo: true })
 })
+
+// https://github.com/cybersemics/em/issues/6214
+it('leaves the native undo of a text field to the text field', () => {
+  store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
+  store.dispatch(editThought(['a'], 'ab'))
+  const input = document.createElement('input')
+  document.body.appendChild(input)
+  let consumed: boolean | undefined
+  input.addEventListener('beforeinput', e => {
+    consumed = nativeHistory.beforeInput(e as InputEvent)
+  })
+
+  const event = new InputEvent('beforeinput', { inputType: 'historyUndo', cancelable: true })
+  input.dispatchEvent(event)
+
+  expect(consumed).toBe(false)
+  expect(event.defaultPrevented).toBe(false)
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - ab`)
+
+  input.remove()
+})
