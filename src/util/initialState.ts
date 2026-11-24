@@ -141,7 +141,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     multicursorRange: {},
     multicursors: {},
     noteFocus: false,
-    noteOffset: null,
     recentlyEdited: {},
     redoPatches: [],
     rootContext: [HOME_TOKEN],

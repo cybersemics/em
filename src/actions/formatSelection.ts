@@ -34,10 +34,8 @@ export interface formatSelectionPayload {
   color?: ColorToken
   /** The plain-text range of the cursor thought or note to format. Omitted to format the whole value. */
   range?: { start: number; end: number }
-  /** The caret offset to restore in the cursor thought after the edit. */
-  cursorOffset?: number
-  /** The caret offset to restore in the note after the edit, since overwriting its value drops the caret (#4630). */
-  noteOffset?: number | null
+  /** The caret offset to restore in the cursor thought, or in the note when it has the focus, after the edit. Overwriting a note's value drops its caret, so it must be placed back (#4630). */
+  cursorOffset?: number | null
   /** Names the undo step. Read by undoRedoEnhancer rather than by the reducer. */
   undoLabel?: string
 }
@@ -81,10 +79,7 @@ const holdFormat = (state: State, id: ThoughtId, options: ReturnType<typeof form
 
 /** Formats the cursor thought or note, over the given range or in full, or colors every thought of a multiselection in
  * full. An empty thought holds the formatting until text is typed into it. */
-const formatSelection = (
-  state: State,
-  { command, color, range, cursorOffset, noteOffset }: formatSelectionPayload,
-): State => {
+const formatSelection = (state: State, { command, color, range, cursorOffset }: formatSelectionPayload): State => {
   // Multicursor: apply the color to each selected thought in full, since there is no browser selection. A single
   // action is a single undo step, so the selected thoughts do not have to be undone individually (#4841).
   if (hasMulticursor(state) && (command === 'foreColor' || command === 'backColor')) {
@@ -132,10 +127,10 @@ const formatSelection = (
 
   return reducerFlow(
     state.noteFocus
-      ? [setDescendant({ path, values: [newValue] }), setNoteFocus({ value: true, offset: noteOffset ?? null })]
+      ? [setDescendant({ path, values: [newValue] }), setNoteFocus({ value: true, offset: cursorOffset ?? null })]
       : [
           editThought({
-            cursorOffset,
+            cursorOffset: cursorOffset ?? undefined,
             oldValue: value,
             newValue,
             path: simplifyPath(state, path),
@@ -248,7 +243,7 @@ export const formatSelectionActionCreator =
     // re-renders the note's ContentEditable, which drops the caret; restoring the offset via setNoteFocus
     // places it back where the user left off instead of jumping to the start/end of the note (#4630).
     // noteFocus is only true when the caret is on a note, so it's not necessary to check whether the keyboard is open.
-    const noteOffset = state.noteFocus ? selection.offsetFromNode(contentEditable) : null
+    const cursorOffset = state.noteFocus ? selection.offsetFromNode(contentEditable) : offsets?.end
 
     // Only call document.execCommand when the keyboard is open and the caret is on a thought.
     // This avoids messy and buggy focus-management logic.
@@ -266,8 +261,7 @@ export const formatSelectionActionCreator =
       command,
       color,
       range,
-      cursorOffset: offsets?.end,
-      noteOffset,
+      cursorOffset,
     })
 
     // Update the toolbar command state when formatting a sub-range (the whole-thought state is derived from the caret).

@@ -15,6 +15,7 @@ import editableRender from '../actions/editableRender'
 import updateThoughts from '../actions/updateThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import noteValue from '../selectors/noteValue'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
 import debugLog from '../util/debugLog'
 import equalArrays from '../util/equalArrays'
@@ -36,27 +37,11 @@ function isEditThoughtAction(action: UnknownAction): action is UnknownAction & e
   return action.type === 'editThought'
 }
 
-/** Returns true when a restored note offset is being cleared after the caret has been placed. */
-function isClearNoteOffsetAction(action: UnknownAction): boolean {
-  return action.type === 'setNoteFocus' && action.value === true && action.offset === null
-}
-
 /** Gets plain text from html. */
 function getTextContent(value: string): string {
   const element = document.createElement('div')
   element.innerHTML = value
   return element.textContent || ''
-}
-
-/** Infers the note caret offset before an edit from its post-edit offset and plain-text length delta. */
-function getNoteOffsetBeforeEdit(action: UnknownAction): number | null {
-  if (!isEditThoughtAction(action) || action.noteOffset == null) return null
-
-  const oldTextLength = getTextContent(action.oldValue).length
-  const newTextLength = getTextContent(action.newValue).length
-  const noteOffsetBeforeEdit = action.noteOffset + oldTextLength - newTextLength
-
-  return Math.max(0, Math.min(oldTextLength, noteOffsetBeforeEdit))
 }
 
 /** Compare the text contents of the old and new values to determine the direction of the edit.
@@ -317,10 +302,12 @@ const redoOneReducer = (state: State): State => {
   }
 }
 
-/** Moves the caret to the end of the cursor thought. Undo/redo otherwise restores the cursorOffset captured before the undone action, which can be anywhere in the thought (the tap position on iOS, or 0), leaving the caret away from the word that was just restored. */
+/** Moves the caret to the end of the cursor thought, or of its note when the note has the focus. Undo/redo otherwise restores the cursorOffset captured before the undone action, which can be anywhere in the thought (the tap position on iOS, or 0), leaving the caret away from the word that was just restored. */
 const cursorOffsetAtEnd = (state: State): State => ({
   ...state,
-  cursorOffset: state.cursor ? stripTags(headValue(state, state.cursor) ?? '').length : null,
+  cursorOffset: state.cursor
+    ? stripTags((state.noteFocus ? noteValue(state, state.cursor) : headValue(state, state.cursor)) ?? '').length
+    : null,
 })
 
 /**
@@ -476,9 +463,6 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       if (
         // bail if state has not changed
         state === newState ||
-        // Clearing a one-shot note offset after restoring the caret is ephemeral. Recording it as a navigation
-        // action would clear the redo stack immediately after undo.
-        isClearNoteOffsetAction(action) ||
         // bail if the action is not undoable.
         // Exception: multicursor actions dispatched while a multicursor command is executing belong to the command's
         // single undo entry, e.g. the addMulticursor calls that restore the multiselect at the end of
@@ -592,11 +576,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       lastEditThoughtDirection = editThoughtDirection
 
       // add a new undo patch
-      // Note focus intentionally does not dispatch on every caret movement. For the first note edit after focus,
-      // infer the pre-edit caret so the inverse patch can restore it instead of leaving the caret at the end.
-      const noteOffsetBeforeEdit = getNoteOffsetBeforeEdit(action)
-      const stateBeforeAction = noteOffsetBeforeEdit == null ? state : { ...state, noteOffset: noteOffsetBeforeEdit }
-      const undoPatch = diffState(newState as Index, stateBeforeAction)
+      const undoPatch = diffState(newState as Index, state)
       return undoPatch.length
         ? {
             ...newState,

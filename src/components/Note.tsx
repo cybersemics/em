@@ -18,6 +18,7 @@ import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
+import usePrevious from '../hooks/usePrevious'
 import { firstVisibleChild, getChildrenSorted } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import noteThought from '../selectors/noteThought'
@@ -55,6 +56,10 @@ const Note = React.memo(
   }) => {
     const dispatch = useDispatch()
     const noteRef: { current: HTMLElement | null } = useRef(null)
+    // True from the press of a click or tap that gives the note the focus until its release. The browser fires focus
+    // before it moves the selection into the note, and focusing moves the cursor, which can shift the layout the click
+    // is resolved against, so the caret can only be read once the press is released.
+    const pointerFocusingRef = useRef(false)
     const fontSize = useSelector(state => state.fontSize)
     const generating = useSelector(state => !!getThoughtById(state, head(path))?.generating)
     const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
@@ -65,6 +70,8 @@ const Note = React.memo(
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
+    // The value at the previous render, so that the caret effect can tell whether a forced render replaced the note.
+    const previousNote = usePrevious(note)
     const editableNonce = useSelector(state => state.editableNonce)
 
     // Formatting applied to the note while it was empty is held on the note's thought until the user types (#3910).
@@ -98,35 +105,41 @@ const Note = React.memo(
         setNoteDraft({ value: noteValue(state, path) ?? '', editableNonce: state.editableNonce })
       }
       // Bail if state already has the caret on this note. Then the focus did not come from the user: it came from the
-      // effect below placing the caret, which focuses the note as a side effect. There is no cursor to move, but
-      // setCursor would still clear the one-shot noteOffset the effect is in the middle of honoring and recompute
-      // cursorOffset, and the undo enhancer records those as a fresh navigation action — discarding the redo stack the
-      // moment an undo restores a note caret, so the note edit that was just undone has no redo step.
-      if (state.noteFocus && equalPathHead(state.cursor, path)) return
+      // effect below placing the caret, which focuses the note as a side effect. There is no cursor to move, but the
+      // undo enhancer would record setCursor as a fresh navigation action — discarding the redo stack the moment an
+      // undo restores a note caret, so the note edit that was just undone has no redo step.
+      // Moving the caret out of the thought blurs it, which closes the keyboard on touch devices, so open it again.
+      // keyboardOpen is not undoable.
+      if (state.noteFocus && equalPathHead(state.cursor, path)) {
+        if (!state.isKeyboardOpen) dispatch(keyboardOpen({ value: true }))
+        return
+      }
       dispatch(
         setCursor({
           path,
           cursorHistoryClear: true,
           isKeyboardOpen: true,
-          noteOffset: null,
           noteFocus: true,
+          // Record where the caret is, so that undoing the first edit puts it back there. A click records it on release.
+          offset: !pointerFocusingRef.current && noteRef.current ? selection.offsetFromNode(noteRef.current) : null,
         }),
       )
     }, [dispatch, path])
 
-    // set the caret on the note if editing this thought and noteFocus is true
+    // Place the caret in the note at cursorOffset when state gives the note the focus (the Note command, undo, redo) or
+    // replaces its value while it has the focus (undo, redo, formatting), since either way the browser has no caret in
+    // the note to keep. A forced render that leaves the focused note unchanged, such as Generate Emoji, must not move
+    // the caret: cursorOffset is not updated as the caret moves (e.g. with the arrow keys), so it may be stale.
+    // cursorOffset is read from the store rather than subscribed to, so that recording it with each edit does not
+    // re-place the caret while typing.
     useEffect(() => {
-      const { noteOffset } = store.getState()
-      // cursor must be true if note is focused
-      if (hasFocus && noteOffset !== null) {
-        selection.set(noteRef.current!, { offset: noteOffset })
-        // Clear noteOffset after placing the caret so it acts as a one-shot request. Otherwise repeatedly
-        // restoring the caret to the same offset (e.g. applying a font color over a background color multiple
-        // times) would set noteOffset to an unchanged value, the effect would not re-run, and the caret would
-        // be left wherever the note's re-render dropped it instead of the requested offset (#4630).
-        dispatch(setNoteFocus({ value: true, offset: null }))
-      }
-    }, [dispatch, editableNonce, hasFocus])
+      if (!hasFocus || !noteRef.current) return
+      const { cursorOffset } = store.getState()
+      if (cursorOffset === null) return
+      if (document.activeElement === noteRef.current && note === previousNote) return
+      selection.set(noteRef.current, { offset: cursorOffset })
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editableNonce, hasFocus])
 
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(
@@ -186,7 +199,7 @@ const Note = React.memo(
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
 
-        const noteOffset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
+        const cursorOffset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
 
         // update the referenced thought directly if it exists
         dispatch((dispatch, getState) => {
@@ -202,7 +215,7 @@ const Note = React.memo(
             setNoteDraft({ value, editableNonce: state.editableNonce })
             dispatch(
               editNotePath({
-                noteOffset: noteOffset ?? undefined,
+                cursorOffset: cursorOffset ?? undefined,
                 path: targetPath,
                 values,
                 undoLabel: 'Edit Note',
@@ -227,7 +240,7 @@ const Note = React.memo(
                 path: appendToPath(targetPath, noteThoughtValue.id) as SimplePath,
                 oldValue: noteThoughtValue.value,
                 newValue: wrappedValue,
-                noteOffset: noteOffset ?? undefined,
+                cursorOffset: cursorOffset ?? undefined,
                 force: wrappedValue !== value,
                 undoLabel: 'Edit Note',
               }),
@@ -282,6 +295,8 @@ const Note = React.memo(
           }
         })
         setNoteDraft(null)
+        // a press released outside the note never reaches onMouseUp
+        pointerFocusingRef.current = false
         if (!selection.isNote(e.relatedTarget)) {
           dispatch(setNoteFocus({ value: false }))
         }
@@ -292,7 +307,26 @@ const Note = React.memo(
       [dispatch, path],
     )
 
-    const onMouseDown = useCallback(() => preventAutoscroll(noteRef.current), [noteRef])
+    /** Prevents autoscroll, and notes whether the press gives the note the focus. */
+    const onMouseDown = useCallback(() => {
+      preventAutoscroll(noteRef.current)
+      pointerFocusingRef.current = document.activeElement !== noteRef.current
+    }, [noteRef])
+
+    /** Records where a click or tap that gave the note the focus placed the caret. */
+    const onMouseUp = useCallback(() => {
+      if (!pointerFocusingRef.current) return
+      pointerFocusingRef.current = false
+      const offset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
+      if (offset === null) return
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        // Only if the press gave this note the focus. setCursor is a navigation action, so it merges into the undo step
+        // of the setCursor that onFocus dispatched.
+        if (!state.noteFocus || !equalPathHead(state.cursor, path)) return
+        dispatch(setCursor({ path, noteFocus: true, offset }))
+      })
+    }, [dispatch, path])
 
     const onCopy = useCallback((e: React.ClipboardEvent) => {
       const html = selection.html()
@@ -390,6 +424,7 @@ const Note = React.memo(
           onBlur={onBlur}
           onFocus={onFocus}
           onMouseDown={onMouseDown}
+          onMouseUp={onMouseUp}
           role='button'
         />
         <span className={css({ fontSize: '1.1em', position: 'absolute', margin: '-0.15em 0 0 -1.175em' })}>

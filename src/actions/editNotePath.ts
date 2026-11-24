@@ -15,7 +15,8 @@ import deleteThought from './deleteThought'
 import editThought from './editThought'
 
 interface Payload {
-  noteOffset?: number
+  /** The caret in the note after the edit, counted in its text, so that undo and redo can restore it. */
+  cursorOffset?: number
   path: Path
   values: string[]
   /** Names the undo step. Read by undoRedoEnhancer rather than by the reducer. */
@@ -23,7 +24,7 @@ interface Payload {
 }
 
 /** Reconciles the visible children referenced by a path-based note in a single undoable action. */
-const editNotePath = (state: State, { noteOffset, path, values }: Payload): State => {
+const editNotePath = (state: State, { cursorOffset, path, values }: Payload): State => {
   const parentId = head(path)
   if (!getThoughtById(state, parentId)) return state
 
@@ -75,7 +76,7 @@ const editNotePath = (state: State, { noteOffset, path, values }: Payload): Stat
       .map(child => child.id)
       .filter(id => !matchedChildIds.has(id))
       .map(id => deleteThought({ pathParent: path, thoughtId: id })),
-    noteOffset == null ? null : state => ({ ...state, noteOffset }),
+    cursorOffset == null ? null : state => ({ ...state, cursorOffset }),
   ])(state)
 }
 

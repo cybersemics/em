@@ -4,7 +4,10 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { redoActionCreator as redo } from '../../actions/redo'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
+import { executeCommand } from '../../commands'
+import generateEmoji from '../../commands/generateEmoji'
 import { HOME_TOKEN } from '../../constants'
+import * as selection from '../../device/selection'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getChildrenSorted } from '../../selectors/getChildren'
@@ -14,6 +17,7 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import { acknowledgeAiDisclosure, clearAiDisclosureAcknowledgement } from '../../util/aiDisclosure'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -348,6 +352,58 @@ describe('=note', () => {
     expect(screen.getByTestId('alert-content').textContent).toBe('Redo: Edit Note')
     expect(screen.getByTestId('alert-content')).toBeVisible()
     expect(screen.getByLabelText('note-editable').textContent).toBe('Redoo')
+  })
+
+  describe('Generate Emoji', () => {
+    const mockFetch = vi.fn()
+    const originalFetch = global.fetch
+
+    beforeEach(() => {
+      global.fetch = mockFetch
+      mockFetch.mockReset()
+      clearAiDisclosureAcknowledgement()
+    })
+
+    afterEach(() => {
+      global.fetch = originalFetch
+      vi.unstubAllEnvs()
+    })
+
+    // Generate Emoji re-renders every editable without changing the note, so the caret in the note must stay where the
+    // user moved it rather than return to the last offset that was recorded (#6327).
+    test('leaves the caret where it was moved in the note when the thought is re-rendered', async () => {
+      vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+      acknowledgeAiDisclosure()
+      // the AI service returns ten alternatives for each thought
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve({ emojis: [['🐕', '🐕‍🦺', '🦮', '🐾', '🦴', '🐶', '🐩', '🐺', '🏠', '🦊']] }),
+      })
+
+      // the Note command places the caret at the end of the note
+      await dispatch([importText({ text: '- Dog\n  - =note\n    - barks loudly' }), setCursor(['Dog']), toggleNote()])
+      await act(vi.runOnlyPendingTimersAsync)
+      const noteEditor = screen.getByLabelText('note-editable')
+      expect(selection.offsetFromNode(noteEditor)).toBe('barks loudly'.length)
+
+      // The arrow keys move the caret without recording it. JSDOM does not focus an editable when the selection is
+      // placed in it, as a browser does, so focus it explicitly.
+      await act(async () => {
+        noteEditor.focus()
+        selection.set(noteEditor, { offset: 'barks'.length })
+      })
+
+      await act(async () => {
+        executeCommand(generateEmoji)
+        await vi.runOnlyPendingTimersAsync()
+      })
+
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - 🐕 Dog
+    - =note
+      - barks loudly`)
+      expect(document.activeElement).toBe(noteEditor)
+      expect(selection.offsetFromNode(noteEditor)).toBe('barks'.length)
+    })
   })
 })
 

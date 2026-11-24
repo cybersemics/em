@@ -70,7 +70,8 @@ const generateEmoji =
 
         dispatch(
           editThought({
-            ...(isCursor && !state.isMulticursorExecuting && state.cursorOffset != null
+            // While a note has the focus, cursorOffset is the caret in the note, which the new prefix does not move.
+            ...(isCursor && !state.isMulticursorExecuting && !state.noteFocus && state.cursorOffset != null
               ? { cursorOffset: Math.max(0, state.cursorOffset + cursorOffsetDelta) }
               : null),
             force: true,
@@ -225,7 +226,11 @@ const generateEmoji =
         ...(emoji
           ? [
               editThought({
-                ...(isCursor && !getState().isMulticursorExecuting && state.cursorOffset != null
+                // While a note has the focus, cursorOffset is the caret in the note, which the new prefix does not move.
+                ...(isCursor &&
+                !getState().isMulticursorExecuting &&
+                !getState().noteFocus &&
+                state.cursorOffset != null
                   ? { cursorOffset: Math.max(0, state.cursorOffset + cursorOffsetDelta) }
                   : null),
                 force: true,

@@ -2,6 +2,7 @@ import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { keyboardOpenActionCreator as keyboardOpen } from '../../actions/keyboardOpen'
 import { setCursorActionCreator as setCursorPath } from '../../actions/setCursor'
+import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
@@ -239,6 +240,32 @@ it('adjusts the caret by the generated prefix length while cycling variable-leng
     executeCommand(generateEmoji)
   })
   expect(store.getState().cursorOffset).toBe(8)
+})
+
+// https://github.com/cybersemics/em/issues/6327
+it('leaves the caret in the note where it is while generating and cycling emoji for its thought', async () => {
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({ json: () => Promise.resolve({ emojis: [emojis] }) })
+  // the Note command places the caret at the end of the note
+  await dispatch([importText({ text: '- Dog\n  - =note\n    - barks' }), setCursor(['Dog']), toggleNote()])
+
+  await act(async () => {
+    executeCommand(generateEmoji)
+  })
+  expect(exportContext(store.getState(), ['🐕 Dog'], 'text/plain')).toBe(`- 🐕 Dog
+  - =note
+    - barks`)
+  expect(store.getState().noteFocus).toBe(true)
+  expect(store.getState().cursorOffset).toBe('barks'.length)
+
+  await act(async () => {
+    executeCommand(generateEmoji)
+  })
+  expect(exportContext(store.getState(), ['🐕‍🦺 Dog'], 'text/plain')).toBe(`- 🐕‍🦺 Dog
+  - =note
+    - barks`)
+  expect(store.getState().noteFocus).toBe(true)
+  expect(store.getState().cursorOffset).toBe('barks'.length)
 })
 
 const bookEmojis = ['📚', '📖', '📘', '📕', '📗', '📙', '📓', '📔', '📒', '🔖']
