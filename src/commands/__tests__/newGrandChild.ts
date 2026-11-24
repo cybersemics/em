@@ -149,7 +149,7 @@ describe('multicursor', () => {
     })
   })
 
-  it('does not alert when no selected thought has a visible child', () => {
+  it('alerts every selected thought when none has a visible child', () => {
     store.dispatch([
       importText({
         text: `
@@ -162,12 +162,31 @@ describe('multicursor', () => {
       addMulticursor(['b']),
     ])
 
-    const alertBefore = store.getState().alert
+    executeCommandWithMulticursor(newGrandChildCommand, { store, type: 'gesture' })
+
+    expect(store.getState().alert).toMatchObject({
+      alertType: AlertType.MulticursorError,
+      value: 'New Grandchild cannot be executed on 2 of the selected thoughts: "a", "b"',
+    })
+  })
+
+  it('alerts the cursor thought when it has no visible child', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+      setCursor(['a']),
+    ])
 
     executeCommandWithMulticursor(newGrandChildCommand, { store, type: 'gesture' })
 
-    // initStore does not clear the alert, so compare with the one in place before the command rather than with null
-    expect(store.getState().alert).toBe(alertBefore)
+    expect(store.getState().alert).toMatchObject({
+      alertType: AlertType.MulticursorError,
+      value: 'New Grandchild cannot be executed on "a"',
+    })
   })
 
   it('creates a new empty grandchild in each selected thought', () => {

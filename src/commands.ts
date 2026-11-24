@@ -497,9 +497,9 @@ export const executeCommand = (
 }
 
 /**
- * Alerts the selected thoughts that a multicursor command cannot be executed on, e.g. `New Grandchild cannot be executed on 1 of the selected thoughts: "c"`. A command must be executable on every selected thought to execute on a multiselect, and its canExecute judges the selection as a whole, so each selected thought is judged again as if it were the only one selected. Alerts only when some but not all of the selected thoughts block the command, since a command that none of them can unblock, such as one that requires an editable document, is not blocked by any thought in particular. Returns true if it alerted.
+ * Alerts the thoughts that a command which acts on thoughts cannot be executed on. On a multiselect it names the selected thoughts that block it, e.g. `New Grandchild cannot be executed on 1 of the selected thoughts: "c"`. A command must be executable on every selected thought to execute on a multiselect, and its canExecute judges the selection as a whole, so each selected thought is judged again as if it were the only one selected. A requirement that only the selection as a whole fails, such as needing two or more selected thoughts, is not blocked by any thought in particular and raises no alert. Without a multiselect it names the cursor thought, e.g. `New Grandchild cannot be executed on "a"`. Returns true if it alerted.
  */
-export const alertMulticursorBlockers = (
+export const alertCommandBlockers = (
   command: Command,
   {
     store: commandStore,
@@ -509,14 +509,24 @@ export const alertMulticursorBlockers = (
   },
 ): boolean => {
   const state = commandStore.getState()
-  if (!command.canExecute || !command.multicursor || !hasMulticursor(state)) return false
+  if (!command.canExecute || !command.multicursor) return false
+
+  if (!hasMulticursor(state)) {
+    if (!state.cursor || command.canExecute(state)) return false
+    commandStore.dispatch(
+      alert(`${command.label} cannot be executed on "${ellipsize(headValue(state, state.cursor))}"`, {
+        alertType: AlertType.MulticursorError,
+      }),
+    )
+    return true
+  }
 
   const filter = typeof command.multicursor === 'boolean' ? undefined : command.multicursor.filter
   const paths = filterCursors(state, documentSort(state, Object.values(state.multicursors)), filter)
   const blockers = paths.filter(
     path => !command.canExecute!({ ...state, cursor: path, multicursors: { [hashPath(path)]: path } }),
   )
-  if (blockers.length === 0 || blockers.length === paths.length) return false
+  if (blockers.length === 0) return false
 
   const values = blockers.map(path => `"${ellipsize(headValue(state, path))}"`).join(', ')
   commandStore.dispatch(
@@ -582,7 +592,11 @@ export const executeCommandWithMulticursor = (
       event,
       keyboardIndex,
     })
-    if (result === false) return
+    if (result === false) {
+      // A gesture is an unambiguous invocation, so name the cursor thought that blocks it rather than refusing silently
+      if (type === 'gesture') alertCommandBlockers(command, { store: commandStore })
+      return
+    }
     reportSuccess()
     return result
   }
@@ -598,7 +612,7 @@ export const executeCommandWithMulticursor = (
   // Exit early if the command cannot execute on any of the filtered paths, naming the selected thoughts that block it
   const canExecute = filteredPaths.every(path => !command.canExecute || command.canExecute({ ...state, cursor: path }))
   if (!canExecute) {
-    alertMulticursorBlockers(command, { store: commandStore })
+    alertCommandBlockers(command, { store: commandStore })
     return
   }
 
