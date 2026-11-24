@@ -732,6 +732,9 @@ const Editable = ({
         // e.preventDefault() does not work
         // disabled={readonly} removes contenteditable property
 
+        // An input that changes nothing saved, such as whitespace typed at either end, is discarded first by Undo (#6347).
+        editableSyncStore.update({ unsavedInputUndoPatches: newValue === oldValue ? state.undoPatches : null })
+
         if (newValue === oldValue) {
           if (contentRef.current) {
             contentRef.current.style.opacity = '1.0'
