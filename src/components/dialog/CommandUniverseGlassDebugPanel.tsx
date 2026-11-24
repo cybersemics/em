@@ -6,7 +6,7 @@ import storage from '../../util/storage'
 
 /*
  * TEMPORARY. A dev-only panel for dialing in how the desktop Command Universe glass sits over the thoughtspace. Every
- * control writes a custom property on <html> that dialogRecipe or Dialog reads with the shipped value as its fallback,
+ * control writes a custom property on <html> that dialogRecipe, Dialog or CommandUniverseListItem reads with the shipped value as its fallback,
  * so clearing a field restores the shipped look. Once the values are settled, bake them into those fallbacks and delete
  * this file, its mount in AppComponent, and its sync plugin (src/vite-middleware/commandUniverseGlassDialsSync.ts, its
  * vite.config entry, and commandUniverseGlassDials.json). Mounted in development builds only, never in automated runs,
@@ -179,6 +179,41 @@ const SECTIONS: Section[] = [
         unit: '',
         fallback: 1,
         hint: 'How far into the panel fade the blurs reach full opacity (1 = with the panel). Applies on the next open.',
+      },
+    ],
+  },
+  {
+    title: 'Inactive commands',
+    controls: [
+      {
+        name: '--cu-inactive-text-opacity',
+        label: 'title + description',
+        min: 0,
+        max: 1,
+        step: 0.01,
+        unit: '',
+        fallback: 0.5,
+        hint: 'Opacity of the title and description of a list row whose command cannot run right now (1 = as bright as an active row).',
+      },
+      {
+        name: '--cu-inactive-icon-opacity',
+        label: 'icon',
+        min: 0,
+        max: 1,
+        step: 0.01,
+        unit: '',
+        fallback: 0.35,
+        hint: 'Opacity of the icon of an inactive list row.',
+      },
+      {
+        name: '--cu-inactive-shortcut-opacity',
+        label: 'shortcut',
+        min: 0,
+        max: 1,
+        step: 0.01,
+        unit: '',
+        fallback: 0.25,
+        hint: 'Opacity of the keyboard shortcut of an inactive list row while it is not highlighted (an active row shows it at 0.5).',
       },
     ],
   },

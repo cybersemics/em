@@ -261,7 +261,7 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
           justifyContent: 'center',
           width: '16px',
           height: '16px',
-          opacity: disabled ? 0.25 : 1,
+          opacity: disabled ? 'var(--cu-inactive-icon-opacity, 0.35)' : 1,
         })}
       >
         <Icon className={css({ flex: 'none' })} size={16} fill={token('colors.fg')} />
@@ -280,7 +280,7 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
           display: 'flex',
           flexDirection: 'column',
           gap: '0.2rem',
-          opacity: disabled ? 0.25 : 1,
+          opacity: disabled ? 'var(--cu-inactive-text-opacity, 0.5)' : 1,
         })}
       >
         <span
@@ -470,7 +470,7 @@ const CommandUniverseListItem: FC<CommandUniverseListItemProps> = ({
                   gridArea: '1 / 1',
                   // When focused: hidden (give the stage to the action pills).
                   // When not focused: dimmed if disabled, otherwise solid.
-                  opacity: isFocused ? 0 : disabled ? 0.25 : 0.5,
+                  opacity: isFocused ? 0 : disabled ? 'var(--cu-inactive-shortcut-opacity, 0.25)' : 0.5,
                   mixBlendMode: 'normal',
                   // Same defensive pointer-events as the action layer — chip is decorative
                   // here, no interactive surface, but this prevents stray hit-testing while
