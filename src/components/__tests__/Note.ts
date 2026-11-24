@@ -13,6 +13,7 @@ import editableSyncStore from '../../stores/editableSyncStore'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import selectRange from '../../test-helpers/selectRange'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
@@ -348,6 +349,52 @@ describe('=note', () => {
     expect(screen.getByTestId('alert-content').textContent).toBe('Redo: Edit Note')
     expect(screen.getByTestId('alert-content')).toBeVisible()
     expect(screen.getByLabelText('note-editable').textContent).toBe('Redoo')
+  })
+
+  // https://github.com/cybersemics/em/issues/6345
+  test.each([
+    [
+      'the previous thought has no note',
+      `
+      - aaa
+      - bbb
+        - =note
+          - ccc`,
+      `- ${HOME_TOKEN}
+  - aaa
+  - bbb
+    - =note
+      - ccc`,
+    ],
+    [
+      'the previous thought has a note',
+      `
+      - aaa
+        - =note
+          - xxx
+      - bbb
+        - =note
+          - ccc`,
+      `- ${HOME_TOKEN}
+  - aaa
+    - =note
+      - xxx
+  - bbb
+    - =note
+      - ccc`,
+    ],
+  ])('Backspace at the start of a non-empty note does nothing when %s', async (_description, text, expected) => {
+    await dispatch([importText({ text }), setCursor(['bbb']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByText('ccc')
+    selectRange(noteEditor, 0, 0)
+
+    await act(async () => {
+      fireEvent.keyDown(noteEditor, { key: 'Backspace' })
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(expected)
   })
 })
 
