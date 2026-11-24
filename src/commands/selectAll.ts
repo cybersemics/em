@@ -3,7 +3,6 @@ import { addAllMulticursorActionCreator as addAllMulticursor } from '../actions/
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { isTouch } from '../browser'
 import * as selection from '../device/selection'
-import getSiblingPaths from '../selectors/getSiblingPaths'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isAllSelected from '../selectors/isAllSelected'
 import isMultiEditing from '../selectors/isMultiEditing'
@@ -28,9 +27,6 @@ const selectAllCommand = {
   // Unfortunately categorize is a special case since it has multicursor: false but can still handle multicursor in the action.
   isChainable: command =>
     !!command.gesture && command.id !== 'clearThought' && (!!command.multicursor || command.id === 'categorize'),
-  // Disable chains that give the same result as the chained command alone in this state (#5874):
-  // - newUncle: on an only child, Select All selects only the cursor, so New Subthought (next) inserts the same single thought after the parent.
-  canExecuteChain: (state, command) => command.id !== 'newUncle' || getSiblingPaths(state).length > 1,
   canExecute: state => {
     if (!isDocumentEditable()) {
       return false

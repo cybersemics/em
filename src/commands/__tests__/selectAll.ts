@@ -29,16 +29,15 @@ describe('chained commands', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5874
-  it('disables New Subthought (next) on an only child, where it gives the same result as New Subthought (next) alone', () => {
+  it('disables New Subthought (next) at the root, which has no level up', () => {
     store.dispatch([
       importText({
         text: `
-          - x
-            - p
-              - a
+          - a
+          - b
         `,
       }),
-      setCursor(['x', 'p', 'a']),
+      setCursor(['b']),
     ])
 
     const selectAllNewUncle = chainCommand(selectAllCommand, newUncleCommand)

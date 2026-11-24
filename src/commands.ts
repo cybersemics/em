@@ -354,11 +354,9 @@ export const chainCommand = (command1: Command, command2: Command): Command => {
     label: `${command1.label} + ${command2.label}`,
     // Evaluate the second command against the state it will run in, so that a chain that can never do anything is shown disabled in the gesture menu (#5874).
     // Select All runs first unless every sibling is already selected (see handleGestureEnd).
-    // The first command can also disable a chain that runs but gives the same result as the second command alone (canExecuteChain).
     canExecute: state =>
-      (!command1.canExecuteChain || command1.canExecuteChain(state, command2)) &&
-      (!command2.canExecute ||
-        command2.canExecute(command1.id === 'selectAll' && !isAllSelected(state) ? addAllMulticursor(state) : state)),
+      !command2.canExecute ||
+      command2.canExecute(command1.id === 'selectAll' && !isAllSelected(state) ? addAllMulticursor(state) : state),
   }
   return chainedCommand
 }
