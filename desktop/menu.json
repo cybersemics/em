@@ -274,11 +274,19 @@
     {
       "id": "fontSizeDown",
       "label": "Decrease Font Size",
+      "accelerator": {
+        "macos": "Cmd+-",
+        "windowsLinux": "Ctrl+-"
+      },
       "checkable": false
     },
     {
       "id": "fontSizeUp",
       "label": "Increase Font Size",
+      "accelerator": {
+        "macos": "Cmd+=",
+        "windowsLinux": "Ctrl+="
+      },
       "checkable": false
     },
     {

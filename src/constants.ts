@@ -665,6 +665,8 @@ export const COMMAND_DIFFICULTIES = [
           'toggleDone',
           'toggleHiddenThoughts',
           'settings',
+          'fontSizeUp',
+          'fontSizeDown',
           'customizeToolbar',
         ],
       },
