@@ -496,8 +496,11 @@ export const executeCommand = (
   )
 }
 
+/** Names a thought in an alert: its value quoted and ellipsized, or `an empty thought` when it has no value to quote. */
+const thoughtLabel = (value: string | undefined) => (value ? `"${ellipsize(value)}"` : 'an empty thought')
+
 /**
- * Alerts the thoughts that a command which acts on thoughts cannot be executed on. On a multiselect it names the selected thoughts that block it, e.g. `New Grandchild cannot be executed on 1 of the selected thoughts: "c"`. A command must be executable on every selected thought to execute on a multiselect, and its canExecute judges the selection as a whole, so each selected thought is judged again as if it were the only one selected. A requirement that only the selection as a whole fails, such as needing two or more selected thoughts, is not blocked by any thought in particular and raises no alert. Without a multiselect it names the cursor thought, e.g. `New Grandchild cannot be executed on "a"`. Returns true if it alerted.
+ * Alerts the thoughts that a command which acts on thoughts cannot be executed on. On a multiselect it names the selected thoughts that block it, e.g. `New Grandchild cannot be executed on 1 of the selected thoughts: "c"`. A command must be executable on every selected thought to execute on a multiselect, and its canExecute judges the selection as a whole, so each selected thought is judged again as if it were the only one selected. A requirement that only the selection as a whole fails, such as needing two or more selected thoughts, is not blocked by any thought in particular and raises no alert. Without a multiselect it names the cursor thought, e.g. `New Grandchild cannot be executed on "a"`. An empty thought has no value to quote, so it is called `an empty thought`, and several empty thoughts are counted after the named ones, e.g. `…3 of the selected thoughts: "a", 2 empty thoughts`. Returns true if it alerted.
  */
 export const alertCommandBlockers = (
   command: Command,
@@ -514,7 +517,7 @@ export const alertCommandBlockers = (
   if (!hasMulticursor(state)) {
     if (!state.cursor || command.canExecute(state)) return false
     commandStore.dispatch(
-      alert(`${command.label} cannot be executed on "${ellipsize(headValue(state, state.cursor))}"`, {
+      alert(`${command.label} cannot be executed on ${thoughtLabel(headValue(state, state.cursor))}`, {
         alertType: AlertType.MulticursorError,
       }),
     )
@@ -528,7 +531,12 @@ export const alertCommandBlockers = (
   )
   if (blockers.length === 0) return false
 
-  const values = blockers.map(path => `"${ellipsize(headValue(state, path))}"`).join(', ')
+  const named = blockers.map(path => headValue(state, path)).filter(value => value)
+  const emptyCount = blockers.length - named.length
+  const values = [
+    ...named.map(thoughtLabel),
+    ...(emptyCount === 1 ? [thoughtLabel('')] : emptyCount > 1 ? [`${emptyCount} empty thoughts`] : []),
+  ].join(', ')
   commandStore.dispatch(
     alert(`${command.label} cannot be executed on ${blockers.length} of the selected thoughts: ${values}`, {
       alertType: AlertType.MulticursorError,
