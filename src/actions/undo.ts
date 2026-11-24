@@ -63,6 +63,8 @@ export const undoActionCreator =
       if (caret) {
         editableSyncStore.update({ unsavedInputUndoPatches: null })
         dispatch({ type: 'editableRender', ...caret })
+        // Named as the edit would be had it changed the saved value, so that Undo reads the same for any typing.
+        dispatch(alert(`Undo: ${'noteOffset' in caret ? 'Edit Note' : 'Edit Thought'}`, { alertType: AlertType.Undo }))
         return
       }
     }

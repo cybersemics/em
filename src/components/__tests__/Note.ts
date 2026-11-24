@@ -146,10 +146,10 @@ describe('=note', () => {
       await act(vi.runOnlyPendingTimersAsync)
       expect(noteEditor.textContent).toBe(typed)
 
-      await act(async () => {
-        executeCommand(undoCommand)
-        await vi.runOnlyPendingTimersAsync()
-      })
+      await act(async () => executeCommand(undoCommand))
+      // Checked before the timers run, which dismiss the alert.
+      expect(store.getState().alert?.value).toBe('Undo: Edit Note')
+      await act(vi.runOnlyPendingTimersAsync)
 
       expect(screen.getByLabelText('note-editable').innerHTML).toBe('ddd')
       // The caret stays where the space was typed, counted in the text without it.

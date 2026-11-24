@@ -246,10 +246,10 @@ it.each([
     await act(vi.runAllTimersAsync)
     expect(editable.textContent).toBe(typed)
 
-    await act(async () => {
-      executeCommand(undo)
-      await vi.runAllTimersAsync()
-    })
+    await act(async () => executeCommand(undo))
+    // Checked before the timers run, which dismiss the alert.
+    expect(store.getState().alert?.value).toBe('Undo: Edit Thought')
+    await act(vi.runAllTimersAsync)
 
     expect(editable.textContent).toBe('bbb')
     // The caret stays where the space was typed, counted in the text without it.
