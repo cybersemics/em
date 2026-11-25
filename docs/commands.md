@@ -680,6 +680,11 @@ https://github.com/user-attachments/assets/690450bb-30a2-4858-aa44-132a38498ebb
 
 Selects all thoughts at the current level and clears selections at other depths. May reduce wrist strain.
 
+When all thoughts at the current level are already selected, it becomes Deselect All and clears the selection instead,
+on every platform. This includes a selection that is being edited with Clear Thought
+([Multi edit mode](cursor-and-caret.md#multi-edit-mode)): the other thoughts are deselected and the cursor thought stays
+in edit mode.
+
 <kbd>Command + Option + a</kbd> or <kbd>Command + a</kbd>
 
 ### Select Between

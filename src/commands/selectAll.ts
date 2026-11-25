@@ -1,7 +1,6 @@
 import Command from '../@types/Command'
 import { addAllMulticursorActionCreator as addAllMulticursor } from '../actions/addAllMulticursor'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
-import { isTouch } from '../browser'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isAllSelected from '../selectors/isAllSelected'
@@ -48,14 +47,15 @@ const selectAllCommand = {
   exec: (dispatch, getState) => {
     const state = getState()
 
-    // Toggle between Select All and Deselect All
-    // i.e. If all thoughts at the current level are selected, clear the multicursor instead.
-    // Only Deselect All on mobile, since desktop has Escape to easily deselect all.
-    const isDeselectAll = isTouch && isAllSelected(state)
-
     // A multiselection that is already being edited (Clear Thought) holds the caret on purpose. Clearing it would blur
     // the thought being edited, closing the keyboard and exiting the cleared state (see onBlur in Editable).
     const isEdited = isMultiEditing(state)
+
+    // Toggle between Select All and Deselect All
+    // i.e. If all thoughts at the current level are selected, clear the multicursor instead.
+    // This applies while the multiselection is being edited too, on every platform. The caret is left in the cursor
+    // thought (see below), so the thought being edited stays in edit mode after the others are deselected.
+    const isDeselectAll = isAllSelected(state)
 
     dispatch(isDeselectAll ? clearMulticursors() : addAllMulticursor())
 

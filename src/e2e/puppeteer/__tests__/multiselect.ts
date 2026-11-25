@@ -246,7 +246,7 @@ describe('multiselect', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5108
-  it('keeps multiselect edit mode active when Select All runs while multiselect is being edited', async () => {
+  it('deselects all when Select All runs while multiselect is being edited', async () => {
     await paste(`
         - a
         - b
@@ -261,11 +261,11 @@ describe('multiselect', () => {
     await press('c', { alt: true, shift: true, meta: true })
     await page.waitForSelector('[data-testid="faux-caret-multicursor"]')
 
+    // All thoughts are selected, so Select All toggles to Deselect All, as it does on touch.
     await command('selectAll')
 
-    // Select All should preserve edit mode in this branch, keeping the faux carets rendered.
-    await page.waitForSelector('[data-testid="faux-caret-multicursor"]')
-    await waitForHighlightedBullets(3)
+    await waitForHighlightedBullets(0)
+    await page.waitForFunction(() => !document.querySelector('[data-testid="faux-caret-multicursor"]'))
   })
 
   // https://github.com/cybersemics/em/issues/4738
