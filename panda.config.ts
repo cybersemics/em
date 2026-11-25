@@ -536,6 +536,10 @@ export default defineConfig({
             // The help genie flies over everything, including the Command Universe dialog it is let out from. Its
             // canvas ignores pointer events, so it never blocks what is beneath it.
             'helpGenie',
+            // Mobile Safari only: the strips along the left and right edges that disable swipe navigation sit above
+            // everything that takes touches, since a swipe from an edge must land on one wherever it starts. See
+            // MultiGesture.
+            'swipeNavigationEdge',
             // Above dialogs so the pinned command stays visible over the Mobile Command Universe. See docs/learning.md.
             'pinnedCommandExpanded',
             // Keep the menu above the trace without raising generic popups above dialogs.
