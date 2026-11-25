@@ -561,6 +561,7 @@ export const COMMAND_DIFFICULTIES = [
           'navigateBack',
           'navigateForward',
           'openDesktopCommandUniverse',
+          'find',
           'home',
           'selectAll',
           'selectBetween',

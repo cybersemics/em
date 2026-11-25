@@ -357,6 +357,9 @@ const globalCss = defineGlobalStyles({
     border: 'solid 1px {colors.inputBorder}',
     outline: '0 none',
   },
+  /** The matches of the find bar (see FindBar), painted with the CSS Custom Highlight API. */
+  '::highlight(find-match)': { backgroundColor: 'yellow', color: 'black' },
+  '::highlight(find-match-current)': { backgroundColor: 'orange', color: 'black' },
   /** Aligns checkbox and label vertically. */
   "input[type='checkbox']": {
     verticalAlign: 'middle',

@@ -1,0 +1,160 @@
+diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
+--- a/dist/TouchBackendImpl.js
++++ b/dist/TouchBackendImpl.js
+@@ -42,6 +42,8 @@
+     // Cancel drag-and-drop if a scroll event is received so that scroll doesn't interfere with dragging.
+     // Use an arrow function to bind this event handler to the TouchBackendImpl object so that we can use `this`.
+     handleScroll = () => {
++        // Ignore a scroll that the app reports as its own, such as scroll-at-edge, and keep listening. See em issue #6281.
++        if (this.options.args?.ignoreScroll?.()) return;
+         if (this.timeout) {
+             clearTimeout(this.timeout);
+             this.timeout = 0;
+@@ -52,6 +54,30 @@
+         window.removeEventListener('scroll', this.handleScroll)
+     }
+ 
++    // Hover again at the finger's last position when the page scrolls during a drag. Otherwise, while the finger is held
++    // still at the edge and scroll-at-edge scrolls the page, the drop target stays on the thought the finger was over when
++    // it last moved, as thoughts scroll past under it. Replays the move handlers in the order the move itself reaches
++    // them: the capture on the root, each drop target's handler on the body, then the root. See em issue #6281.
++    handleDragScroll = () => {
++        const replay = this.lastMoveEvent;
++        if (!replay || !this.monitor.isDragging()) return;
++        this.handleTopMoveCapture();
++        this.targetMoveHandlers.forEach((handleMove)=>handleMove(replay));
++        this.handleTopMove(replay);
++    }
++
++    /** Resolves the drop point and its topmost element once for the targets handling the same move. */
++    getMoveDropHit(event, point) {
++        const hit = this.moveDropHit;
++        if (hit && hit.event === event && hit.point.x === point.x && hit.point.y === point.y) {
++            return hit;
++        }
++        const dropPoint = this.options.args?.dropPoint?.(point.x, point.y) ?? point;
++        const element = this.document.elementFromPoint(dropPoint.x, dropPoint.y);
++        this.moveDropHit = { event, point, dropPoint, element };
++        return this.moveDropHit;
++    }
++
+     setup() {
+         const root = this.options.rootElement;
+         if (!root) {
+@@ -64,6 +90,7 @@
+         this.addEventListener(root, 'move', this.handleTopMove);
+         this.addEventListener(root, 'move', this.handleTopMoveCapture, true);
+         this.addEventListener(root, 'end', this.handleTopMoveEndCapture, true);
++        window.addEventListener('scroll', this.handleDragScroll);
+         // iOS WKWebView intermittently drops the terminating `touchend` event, which leaves the drag
+         // stuck at DragInProgress (the dragged thought never drops/archives and "blinks"). The pointer
+         // events `pointerup`/`pointercancel` ARE reliably delivered on finger-lift, so register them as
+@@ -91,6 +118,9 @@
+         this.removeEventListener(root, 'move', this.handleTopMoveCapture, true);
+         this.removeEventListener(root, 'move', this.handleTopMove);
+         this.removeEventListener(root, 'end', this.handleTopMoveEndCapture, true);
++        window.removeEventListener('scroll', this.handleDragScroll);
++        this.lastMoveEvent = undefined;
++        this.moveDropHit = undefined;
+         if (this.pointerEndTimeout) {
+             clearTimeout(this.pointerEndTimeout);
+             this.pointerEndTimeout = undefined;
+@@ -179,7 +209,7 @@
+             /**
+ 			 * Use the coordinates to grab the element the drag ended on.
+ 			 * If the element is the same as the target node (or any of it's children) then we have hit a drop target and can handle the move.
+-			 */ const droppedOn = coords != null ? this.document.elementFromPoint(coords.x, coords.y) : undefined;
++			 */ const droppedOn = coords != null ? this.getMoveDropHit(e, coords).element : undefined;
+             const childMatch = droppedOn && node.contains(droppedOn);
+             if (droppedOn === node || childMatch) {
+                 return this.handleMove(e, targetId);
+@@ -189,7 +219,9 @@
+ 		 * Attaching the event listener to the body so that touchmove will work while dragging over multiple target elements.
+ 		 */ this.addEventListener(this.document.body, 'move', handleMove);
+         this.targetNodes.set(targetId, node);
++        this.targetMoveHandlers.set(targetId, handleMove);
+         return ()=>{
++            this.targetMoveHandlers.delete(targetId);
+             if (this.document) {
+                 this.targetNodes.delete(targetId);
+                 this.removeEventListener(this.document.body, 'move', handleMove);
+@@ -300,6 +332,8 @@
+         };
+         this.handleTopMoveCapture = ()=>{
+             this.dragOverTargetIds = [];
++            // A scroll replay reuses the last move event after the elements beneath the finger have moved.
++            this.moveDropHit = undefined;
+         };
+         this.handleMove = (_evt, targetId)=>{
+             if (this.dragOverTargetIds) {
+@@ -308,6 +342,30 @@
+         };
+         this.handleTopMove = (e1)=>{
+             if (this.timeout) this.scrollHasBegun = true
++            // Keep a copy of the last real move for handleDragScroll to replay. Copy the coordinates rather than keep the
++            // event: the browser owns the event's touch lists, so they are not guaranteed to still describe the finger
++            // once the event has been handled.
++            if (e1 instanceof Event) {
++                const offset = getEventClientOffset(e1, this.lastTargetTouchFallback);
++                if (offset) {
++                    const touch = {
++                        clientX: offset.x,
++                        clientY: offset.y,
++                        target: e1.target
++                    };
++                    const touches = isTouchEvent(e1) ? [touch] : undefined;
++                    this.lastMoveEvent = {
++                        type: e1.type,
++                        touches,
++                        targetTouches: touches,
++                        changedTouches: touches,
++                        clientX: offset.x,
++                        clientY: offset.y,
++                        cancelable: false,
++                        preventDefault: ()=>{}
++                    };
++                }
++            }
+ 
+             const clientOffset = getEventClientOffset(e1, this.lastTargetTouchFallback)
+ 
+@@ -355,13 +413,20 @@
+             const sourceNode = this.sourceNodes.get(this.monitor.getSourceId());
+             this.installSourceNodeRemovalObserver(sourceNode);
+             this.actions.publishDragSource();
+-            if (e1.cancelable) e1.preventDefault();
++            if (e1.cancelable) {
++                e1.preventDefault();
++                // A cancelable move during the drag means the browser has not started a native scroll, and preventing
++                // it keeps one from starting. Any scroll from here on is the app's own, such as scroll-at-edge, so stop
++                // listening for the native scroll that would end the drag. See em issue #6281.
++                window.removeEventListener('scroll', this.handleScroll);
++            }
+             // Get the node elements of the hovered DropTargets
+             const dragOverTargetNodes = (dragOverTargetIds || []).map((key)=>this.targetNodes.get(key)
+             ).filter((e)=>!!e
+             );
+             // Get the a ordered list of nodes that are touched by
+-            const elementsAtPoint = this.options.getDropTargetElementsAtPoint ? this.options.getDropTargetElementsAtPoint(clientOffset.x, clientOffset.y, dragOverTargetNodes) : this.document.elementsFromPoint(clientOffset.x, clientOffset.y);
++            const { dropPoint } = this.getMoveDropHit(e1, clientOffset);
++            const elementsAtPoint = this.options.getDropTargetElementsAtPoint ? this.options.getDropTargetElementsAtPoint(dropPoint.x, dropPoint.y, dragOverTargetNodes) : this.document.elementsFromPoint(dropPoint.x, dropPoint.y);
+             // Extend list with parents that are not receiving elementsFromPoint events (size 0 elements and svg groups)
+             const elementsAtPointExtended = [];
+             for(const nodeId in elementsAtPoint){
+@@ -440,6 +505,8 @@
+             this._isScrolling = false;
+             this.lastTargetTouchFallback = undefined;
+             this._mouseClientOffset = {};
++            this.lastMoveEvent = undefined;
++            this.moveDropHit = undefined;
+             if (!eventShouldEndDrag(e)) {
+                 return;
+             }
+@@ -470,6 +537,7 @@
+         this.sourcePreviewNodes = new Map();
+         this.sourcePreviewNodeOptions = new Map();
+         this.targetNodes = new Map();
++        this.targetMoveHandlers = new Map();
+         this.listenerTypes = [];
+         this._mouseClientOffset = {};
+         this._isScrolling = false;
