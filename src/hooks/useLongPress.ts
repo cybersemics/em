@@ -31,7 +31,7 @@ export interface LongPressProps {
  **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
-  onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent | MouseEvent) => void) | null = noop,
+  onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => void) | null = noop,
   {
     delay = TIMEOUT_LONG_PRESS_THOUGHT,
     lockScroll = true,
@@ -45,6 +45,8 @@ const useLongPress = (
   const [pressing, setPressing] = useState(false)
   const longPressState = useSelector(state => state.longPress)
   const timerIdRef = useRef<number | undefined>(undefined)
+  // The element the press's touch began on, while the press lasts. Read by the unmount cleanup below.
+  const touchTargetRef = useRef<EventTarget | null>(null)
   const dispatch = useDispatch()
   const dragDropManager = useDragDropManager()
 
@@ -110,6 +112,7 @@ const useLongPress = (
       // On iOS 27 a withheld tap on an empty thought gives no sign that it lifted (#5660).
       if (touchStore.getState().pressInEmptyThought) return
 
+      touchTargetRef.current = e.type === 'touchstart' ? e.nativeEvent.target : null
       setPressing(true)
     },
     [setPressing],
@@ -119,7 +122,8 @@ const useLongPress = (
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.)
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
-    (e?: React.MouseEvent | React.TouchEvent | MouseEvent) => {
+    (e?: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => {
+      touchTargetRef.current = null
       setPressing(false)
 
       // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
@@ -138,6 +142,30 @@ const useLongPress = (
       }, 10)
     },
     [onLongPressEnd, setPressing],
+  )
+
+  // The page can scroll while a press is held, e.g. to bring the cursor into view, and virtualization then unmounts a
+  // pressed thought that scrolls below the viewport. The touch's touchend still goes to the element it began on, but
+  // once that element is detached the event no longer reaches React, so onTouchEnd never ends the press, and DragHold
+  // outlives the finger with nothing to clear it. A listener on the detached target itself still receives the event,
+  // so when the component unmounts mid-press, end the press from there.
+  const stopRef = useRef(stop)
+  stopRef.current = stop
+  useEffect(
+    () => () => {
+      const target = touchTargetRef.current
+      if (!target) return
+
+      /** Ends the press when the touch that began it ends. */
+      const onTouchEnd = (e: Event) => {
+        target.removeEventListener('touchend', onTouchEnd)
+        target.removeEventListener('touchcancel', onTouchEnd)
+        stopRef.current(e as TouchEvent)
+      }
+      target.addEventListener('touchend', onTouchEnd)
+      target.addEventListener('touchcancel', onTouchEnd)
+    },
+    [],
   )
 
   // iOS 27 can withhold a press's touchend until the next touch, but still fires mouseup when the finger lifts (#5660).
