@@ -3,7 +3,7 @@ import { isTouch } from '../../browser'
 import { formatKeyboardShortcut } from '../../commands'
 import toggleContextViewCommand from '../../commands/toggleContextView'
 import { TUTORIAL_CONTEXT } from '../../constants'
-import getContexts from '../../selectors/getContexts'
+import getContextCount from '../../selectors/getContextCount'
 import getSetting from '../../selectors/getSetting'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
@@ -13,7 +13,7 @@ import TutorialGestureDiagram from './TutorialGestureDiagram'
 const Tutorial2StepContextViewToggle = () => {
   const tutorialChoice = useSelector(selectTutorialChoice)
   const caseSensitiveValue = useSelector(state =>
-    getContexts(state, TUTORIAL_CONTEXT[tutorialChoice]).length > 0
+    getContextCount(state, TUTORIAL_CONTEXT[tutorialChoice]) > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase(),
   )

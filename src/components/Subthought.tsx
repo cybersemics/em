@@ -11,7 +11,7 @@ import useChangeRef from '../hooks/useChangeRef'
 import attributeEquals from '../selectors/attributeEquals'
 import findFirstEnvContextWithZoom from '../selectors/findFirstEnvContextWithZoom'
 import { findAnyChild } from '../selectors/getChildren'
-import getContexts from '../selectors/getContexts'
+import getContextCount from '../selectors/getContextCount'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -69,7 +69,7 @@ const Subthought = ({
       thought &&
       (!!state.expanded[hashPath(path)] || equalPath(state.expandHoverDownPath, path)) &&
       isContextViewActive(state, simplePath) &&
-      getContexts(state, thought.value).length <= 1,
+      getContextCount(state, thought.value) <= 1,
   )
   const grandparentId = simplePath[simplePath.length - 3]
   const isVisible = autofocus === 'show' || autofocus === 'dim'

@@ -3,6 +3,8 @@ import Timestamp from './Timestamp'
 
 /** An object that contains a list of contexts where a lexeme appears in different word forms (plural, different cases, emojis, etc). All word forms hash to a given lexeme. */
 interface Lexeme {
+  /** Additional live occurrences whose IDs have not been requested yet. */
+  unloadedCount?: number
   contexts: ThoughtId[]
   created: Timestamp
   lastUpdated: Timestamp

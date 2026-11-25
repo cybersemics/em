@@ -271,7 +271,17 @@ async function* fetchDescendants(
       return hashThought(thought.value)
     })
 
-    const lexemes = await provider.getLexemesByIds(thoughtHashes)
+    // Synchronous editors need the IDs already in memory. Other occurrences contribute
+    // to the count until a Context View opens. The sidebar consumes complete attribute lists.
+    const knownContexts: Index<ThoughtId[]> = {}
+    for (const id of thoughtIdsValidated) {
+      const value = pulledThoughtIndex[id].value
+      if (isAttribute(value)) continue
+      const key = hashThought(value)
+      const contexts = (knownContexts[key] ??= [...(getState().thoughts.lexemeIndex[key]?.contexts ?? [])])
+      contexts.push(id)
+    }
+    const lexemes = await provider.getLexemesByIds(thoughtHashes, knownContexts)
 
     const lexemeIndex = keyValueBy(thoughtHashes, (id, i) => (lexemes[i] ? { [id]: lexemes[i]! } : null))
 

@@ -1,12 +1,14 @@
 import type { Operation } from '@treecrdt/interface'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Index from '../../@types/IndexType'
+import type Lexeme from '../../@types/Lexeme'
 import type Thought from '../../@types/Thought'
 import type ThoughtId from '../../@types/ThoughtId'
 import type Timestamp from '../../@types/Timestamp'
 import { EM_TOKEN, GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../constants'
 import testFlags from '../../e2e/testFlags'
 import { childrenMapKey } from '../../util/createChildrenMap'
+import equalArrays from '../../util/equalArrays'
 import hashThought from '../../util/hashThought'
 import sleep from '../../util/sleep'
 import type { DataProvider } from '../DataProvider'
@@ -16,18 +18,16 @@ import {
   getAttributeChildrenByParent,
   refreshAttributeChildrenFromChanges,
 } from './attributeChildren'
-import {
-  deleteLexeme as deleteLexemeRow,
-  ensureLexemesSchema,
-  getLexemeById as getLexemeByIdSql,
-  getLexemesByIds as getLexemesByIdsSql,
-  upsertLexeme,
-} from './lexemes'
+import lexemes from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
 import { enqueueMaterializedThoughtsToStore } from './sync'
 import { enqueueMaterializedThoughtsToStoreWork } from './sync/materializationQueue'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
-import { createTreecrdtLocalWriteOptions, isTreecrdtLocalMaterialization } from './writeBarrier'
+import {
+  createTreecrdtLocalWriteOptions,
+  isTreecrdtLocalMaterialization,
+  waitForTreecrdtWriteBarrier,
+} from './writeBarrier'
 
 type TreecrdtPlacement = { type: 'first' } | { type: 'last' } | { type: 'after'; after: ThoughtId }
 
@@ -162,16 +162,9 @@ const getTreecrdtPlacement = async (
 const updateThoughtsForClient = async (
   { client, replicaId }: TreecrdtClientIdentity,
   { thoughtIndexUpdates, lexemeIndexUpdates, movePlacements }: Parameters<DataProvider['updateThoughts']>[0],
-): Promise<readonly Operation[]> => {
+) => {
   const ops: Operation[] = []
-
-  for (const [id, lexeme] of Object.entries(lexemeIndexUpdates)) {
-    if (lexeme === null) {
-      await deleteLexemeRow(client, id)
-    } else {
-      await upsertLexeme(client, id, lexeme)
-    }
-  }
+  let movedSubtree = false
 
   const updates: Index<Thought> = {}
   const deletes: ThoughtId[] = []
@@ -189,6 +182,10 @@ const updateThoughtsForClient = async (
     const thoughtId = id as ThoughtId
     const payloadBytes = encodeThoughtPayload({
       value: thought.value,
+      valueHash:
+        thoughtId === GLOBAL_ROOT_TOKEN || SYSTEM_ROOT_THOUGHT_IDS.some(id => id === thoughtId)
+          ? undefined
+          : hashThought(thought.value),
       created: thought.created,
       lastUpdated: thought.lastUpdated,
       updatedBy: thought.updatedBy,
@@ -216,6 +213,7 @@ const updateThoughtsForClient = async (
 
       const parentChanged = existing.parentId !== thought.parentId
       const orderChanged = thoughtId in (movePlacements || {})
+      if (parentChanged) movedSubtree = true
       if (parentChanged || orderChanged) {
         const placement = await getTreecrdtPlacement(client, thoughtId, thought, movePlacements, {
           requireExplicit: true,
@@ -241,7 +239,12 @@ const updateThoughtsForClient = async (
     ops.push(await client.local.delete(replicaId, id, createTreecrdtLocalWriteOptions()))
   }
 
-  return ops
+  if (lexemes.favoritesKey in lexemeIndexUpdates) {
+    await client.runner.run('INSERT OR REPLACE INTO em_favorites_order VALUES (1, ?1)', [
+      JSON.stringify(lexemeIndexUpdates[lexemes.favoritesKey]?.contexts ?? []),
+    ])
+  }
+  return { ops, refreshSubtrees: movedSubtree || deletes.length > 0 }
 }
 
 const ROOT_PAYLOAD = encodeThoughtPayload({
@@ -253,7 +256,7 @@ const ROOT_PAYLOAD = encodeThoughtPayload({
 
 /** Seeds TreeCRDT storage for an em thoughtspace. */
 const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: Uint8Array): Promise<void> => {
-  await ensureLexemesSchema(client)
+  await client.installPayloadSchema(lexemes.payloadSchema)
   // Ensure root has payload so getThoughtById can use the generic path.
   if ((await client.tree.root.payload()) === null) {
     await client.local.payload(replicaId, GLOBAL_ROOT_TOKEN, ROOT_PAYLOAD, createTreecrdtLocalWriteOptions())
@@ -301,37 +304,89 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
       { type: 'last' },
       encodeThoughtPayload({
         value: SETTINGS_VALUE,
+        valueHash: hashThought(SETTINGS_VALUE),
         created: now,
         lastUpdated: now,
         updatedBy: '',
       }),
       createTreecrdtLocalWriteOptions(),
     )
-    settingsId = SETTINGS_TOKEN
-  }
-
-  if (settingsId) {
-    const now = Date.now()
-    await upsertLexeme(client, hashThought(SETTINGS_VALUE), {
-      contexts: [settingsId],
-      created: now as Timestamp,
-      lastUpdated: now as Timestamp,
-      updatedBy: '',
-    })
   }
 }
 
 /** Creates a data provider whose operations are permanently bound to one TreeCRDT client. */
-const createClientDataProvider = ({ client, replicaId }: TreecrdtClientIdentity): TreecrdtClientDataProvider => ({
-  getLexemeById: key => getLexemeByIdSql(client, key),
-  getLexemesByIds: keys => getLexemesByIdsSql(client, keys),
-  getThoughtById: id => getThoughtByIdFromClient(client, id),
-  getThoughtsByIds: async ids => {
-    await waitForTestReplicationDelay()
-    return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
-  },
-  updateThoughts: updates => updateThoughtsForClient({ client, replicaId }, updates),
-})
+const createClientDataProvider = (
+  identity: TreecrdtClientIdentity,
+  bridge?: ThoughtspaceMaterializationBridge,
+): TreecrdtClientDataProvider => {
+  const { client } = identity
+  const pendingKeys = new Set<string>()
+  let refreshQueued = false
+
+  /** Reconciles optimistic counts when other occurrences exist outside the loaded tree. */
+  const refreshCounts = async () => {
+    try {
+      await waitForTreecrdtWriteBarrier()
+    } finally {
+      refreshQueued = false
+    }
+    const keys = [...pendingKeys]
+    pendingKeys.clear()
+    if (!bridge || !keys.length) return
+
+    const before = bridge.getSnapshot().lexemeIndex
+    const known = Object.fromEntries(
+      keys.filter(key => key !== lexemes.favoritesKey).map(key => [key, before[key]?.contexts ?? []]),
+    )
+    const result = await lexemes.getLexemesByIds(client, keys, known)
+    const current = bridge.getSnapshot().lexemeIndex
+    const changes: Index<Lexeme | null> = {}
+    keys.forEach((key, i) => {
+      const previous = before[key]
+      const next = result[i]
+      if (
+        previous !== current[key] ||
+        (previous?.unloadedCount === next?.unloadedCount &&
+          previous?.contexts.length === next?.contexts.length &&
+          (key !== lexemes.favoritesKey || equalArrays(previous?.contexts ?? [], next?.contexts ?? [])))
+      )
+        return
+      // Keep optimistic ordering among the known IDs. Membership is authoritative in SQLite.
+      const live = new Set(next?.contexts)
+      changes[key] =
+        next && previous && key !== lexemes.favoritesKey
+          ? { ...previous, contexts: previous.contexts.filter(id => live.has(id)), unloadedCount: next.unloadedCount }
+          : (next ?? null)
+    })
+    if (Object.keys(changes).length) await bridge.apply({ thoughtIndex: {}, lexemeIndex: changes })
+  }
+
+  return {
+    getLexemeById: async key => (await lexemes.getLexemesByIds(client, [key]))[0],
+    getLexemesByIds: (keys, known) => lexemes.getLexemesByIds(client, keys, known),
+    getThoughtById: id => getThoughtByIdFromClient(client, id),
+    getThoughtsByIds: async ids => {
+      await waitForTestReplicationDelay()
+      return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
+    },
+    updateThoughts: async updates => {
+      const { ops, refreshSubtrees } = await updateThoughtsForClient(identity, updates)
+      if (bridge && ops.length) {
+        for (const key of Object.keys(updates.lexemeIndexUpdates)) pendingKeys.add(key)
+        if (refreshSubtrees) {
+          for (const key of Object.keys(bridge.getSnapshot().lexemeIndex)) pendingKeys.add(key)
+        }
+        if (pendingKeys.size && !refreshQueued) {
+          refreshQueued = true
+          void enqueueMaterializedThoughtsToStoreWork(refreshCounts).catch(err =>
+            console.error('TreeCRDT lexeme refresh failed', err),
+          )
+        }
+      }
+      return ops
+    },
+  }
+}
 
 /** Bump when an index is added or changes, so databases indexed by an older version are rebuilt once. */
 const INDEX_VERSION = 1
@@ -366,7 +421,7 @@ const createTreecrdtDataProvider = () => {
   const db = {
     name: 'treecrdt',
     getLexemeById: key => getActiveDb().getLexemeById(key),
-    getLexemesByIds: keys => getActiveDb().getLexemesByIds(keys),
+    getLexemesByIds: (keys, known) => getActiveDb().getLexemesByIds(keys, known),
     getThoughtById: id => getActiveDb().getThoughtById(id),
     getThoughtsByIds: ids => getActiveDb().getThoughtsByIds(ids),
     updateThoughts,
@@ -397,7 +452,7 @@ const createTreecrdtDataProvider = () => {
     )
     /** Resolves once every change materialized so far is indexed. A failed update is logged and retried, not thrown. */
     const indexed = () => indexes.settled().catch(err => console.error('TreeCRDT derived indexing failed', err))
-    const clientDb = createClientDataProvider({ client, replicaId })
+    const clientDb = createClientDataProvider({ client, replicaId }, materialization)
     const materializationContext = materialization ? { bridge: materialization, db: clientDb, indexed } : null
 
     const unsubscribeMaterialized = client.onMaterialized(event => {

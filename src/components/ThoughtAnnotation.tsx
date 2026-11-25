@@ -13,6 +13,7 @@ import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, filterAllChildren } from '../selectors/getChildren'
+import getContextCount from '../selectors/getContextCount'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
@@ -28,7 +29,6 @@ import isVisibleContext from '../util/isVisibleContext'
 import lastURL from '../util/lastURL'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
-import resolveArray from '../util/resolveArray'
 import stripTags from '../util/stripTags'
 import FauxCaret from './FauxCaret'
 import StaticSuperscript from './StaticSuperscript'
@@ -241,30 +241,34 @@ const ThoughtAnnotationContainer = React.memo(
 
     const isExpanded = useSelector(state => !!state.expanded[hashPath(simplePath)])
 
-    const numContexts = useSelector(
-      moize(
-        (state: State): number => {
-          if (!calculateContexts || hideSuperscriptsSetting) return 0
-
-          // only show real time update if being edited while having meta validation error
-          // do not increase numContexts when in an invalid state since the thought has not been updated in state
-          const isRealTimeContextUpdate = isEditing && invalidStateIfEditing && liveValueIfEditing !== null
-
-          const contexts = getContexts(state, isRealTimeContextUpdate ? liveValueIfEditing! : value)
-          return value === ''
-            ? 0
-            : contexts.filter(id => isVisibleContext(state, id)).length + (isRealTimeContextUpdate ? 1 : 0)
-        },
-        {
-          maxSize: 1000,
-          profileName: 'numContexts',
-          transformArgs: ([state]) => {
-            const isRealTimeContextUpdate = isEditing && invalidStateIfEditing && liveValueIfEditing !== null
-            return [resolveArray(getContexts(state, isRealTimeContextUpdate ? liveValueIfEditing! : value))]
+    // Walking loaded ancestors is only necessary when their tree or the occurrence list changes.
+    const countVisible = useMemo(
+      () =>
+        moize(
+          (state: State, value: string) => {
+            const total = getContextCount(state, value)
+            return state.showHiddenThoughts
+              ? total
+              : total - getContexts(state, value).filter(id => !isVisibleContext(state, id)).length
           },
-        },
-      ),
+          {
+            maxSize: 1,
+            transformArgs: ([state, value]) => [
+              getContextCount(state, value),
+              getContexts(state, value),
+              state.showHiddenThoughts,
+              state.thoughts.thoughtIndex,
+            ],
+          },
+        ),
+      [],
     )
+
+    const numContexts = useSelector(state => {
+      if (!calculateContexts || hideSuperscriptsSetting || value === '') return 0
+      const preview = isEditing && invalidStateIfEditing && liveValueIfEditing !== null
+      return countVisible(state, preview ? liveValueIfEditing : value) + (preview ? 1 : 0)
+    })
 
     const showSuperscript =
       !hideSuperscriptsSetting &&

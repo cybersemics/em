@@ -116,7 +116,7 @@ const editThought = (
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   // eslint-disable-next-line jsdoc/require-jsdoc
-  const isThoughtOldOrphan = () => lexemeOld && (!lexemeOld.contexts || lexemeOld.contexts.length < 2)
+  const isThoughtOldOrphan = () => lexemeOld && lexemeOld.contexts.length + (lexemeOld.unloadedCount ?? 0) < 2
 
   // do not add floating thought to context
   const lexemeNewWithoutContext: Lexeme = thoughtCollision || {
