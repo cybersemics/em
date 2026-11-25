@@ -1,3 +1,4 @@
+import { addAllMulticursorActionCreator as addAllMulticursor } from '../../actions/addAllMulticursor'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
@@ -77,6 +78,26 @@ it('toggle off table view of parent of cursor', () => {
 })
 
 describe('multicursor', () => {
+  // https://github.com/cybersemics/em/issues/5874
+  it('is disabled when every sibling is selected, since it would toggle their parent once, the same as Table View alone', () => {
+    store.dispatch([
+      importText({
+        text: `
+            - a
+              - b
+              - d
+          `,
+      }),
+      setCursor(['a', 'b']),
+      addAllMulticursor(),
+    ])
+
+    expect(toggleTableViewCommand.canExecute(store.getState())).toBe(false)
+
+    executeCommandWithMulticursor(toggleTableViewCommand, { store })
+    expect(attributeByContext(store.getState(), ['a'], '=view')).toBe(null)
+  })
+
   it('toggles table view once when multiple selected thoughts share a parent', () => {
     store.dispatch([
       importText({
@@ -86,6 +107,7 @@ describe('multicursor', () => {
                 - c
               - d
                 - e
+              - f
           `,
       }),
       setCursor(['a', 'b']),
@@ -109,6 +131,7 @@ describe('multicursor', () => {
                 - c
               - d
                 - e
+              - f
           `,
       }),
       setCursor(['a', 'b']),

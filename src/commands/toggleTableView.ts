@@ -3,6 +3,7 @@ import { toggleAttributeActionCreator as toggleAttribute } from '../actions/togg
 import TableViewIcon from '../components/icons/TableViewIcon'
 import attributeEquals from '../selectors/attributeEquals'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isAllSelected from '../selectors/isAllSelected'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -20,6 +21,8 @@ const toggleTableViewCommand = {
   },
   svg: TableViewIcon,
   canExecute: state => {
+    // With every sibling selected, Table View would toggle their shared parent once, the same as Table View alone, so the selection adds nothing. This also disables Select All + Table View, whose canExecute sees the state after Select All (#5874).
+    if (hasMulticursor(state) && isAllSelected(state)) return false
     return !!state.cursor || hasMulticursor(state)
   },
   exec: (dispatch, getState) => {

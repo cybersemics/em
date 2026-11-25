@@ -1,5 +1,8 @@
+import { GestureResponderEvent } from 'react-native'
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { chainCommand, executeCommand } from '../../commands'
+import { chainCommand, executeCommand, handleGestureEnd } from '../../commands'
+import { HOME_TOKEN } from '../../constants'
+import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import multicursorValues from '../../test-helpers/multicursorValues'
@@ -8,6 +11,7 @@ import { toggleMulticursorAtFirstMatchActionCreator as toggleMulticursor } from 
 import indentCommand from '../indent'
 import outdentCommand from '../outdent'
 import selectAllCommand from '../selectAll'
+import toggleTableViewCommand from '../toggleTableView'
 
 beforeEach(initStore)
 
@@ -64,5 +68,48 @@ describe('chained commands', () => {
 
     const selectAllOutdent = chainCommand(selectAllCommand, outdentCommand)
     expect(selectAllOutdent.canExecute!(store.getState())).toBe(true)
+  })
+
+  // https://github.com/cybersemics/em/issues/5874
+  it('disables Table View, which would toggle the same parent as Table View alone', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - p
+            - a
+            - b
+        `,
+      }),
+      setCursor(['p', 'b']),
+    ])
+
+    const selectAllTableView = chainCommand(selectAllCommand, toggleTableViewCommand)
+    expect(selectAllTableView.canExecute!(store.getState())).toBe(false)
+  })
+
+  it('does not run Table View from the Select All + Table View gesture', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - p
+            - a
+              - a1
+            - b
+              - b1
+        `,
+      }),
+      setCursor(['p', 'b']),
+    ])
+
+    // Select All (ldr) + Table View (rdlu)
+    handleGestureEnd({ sequence: 'ldr' + 'dlu', e: {} as GestureResponderEvent })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - p
+    - a
+      - a1
+    - b
+      - b1`)
   })
 })
