@@ -39,6 +39,8 @@ interface Payload {
   /** If both local and remote are false, only deallocate thoughts from State, but do not delete them permanently. This is used by freeThoughts. The parent is marked as pending so that the thought will be automatically restored if it becomes visible again. */
   local?: boolean
   remote?: boolean
+  /** Names the undo step. Read by undoRedoEnhancer rather than by the reducer. */
+  undoLabel?: string
 }
 
 interface ThoughtUpdates {

@@ -133,6 +133,31 @@ describe('=note', () => {
   - a`)
   })
 
+  // https://github.com/cybersemics/em/issues/6397
+  test('names deleting an empty note in the undo alert', async () => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+
+    // empty the note, then delete it with Backspace
+    await act(async () => {
+      fireEvent.input(noteEditor, { target: { innerHTML: '' } })
+      await vi.runOnlyPendingTimersAsync()
+    })
+    await act(async () => {
+      fireEvent.keyDown(noteEditor, { key: 'Backspace' })
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.queryByLabelText('note-editable')).toBeNull()
+
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true })
+    })
+    expect(screen.getByTestId('alert-content').textContent).toBe('Undo: Delete Note')
+    expect(screen.getByTestId('alert-content')).toBeVisible()
+    await act(vi.runOnlyPendingTimersAsync)
+  })
+
   test('basic', async () => {
     await dispatch([
       importText({

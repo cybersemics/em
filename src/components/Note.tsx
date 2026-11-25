@@ -159,7 +159,7 @@ const Note = React.memo(
             const targetThought = targetPath ? getThoughtById(state, head(targetPath)) : undefined
 
             if (targetThought) {
-              dispatch(deleteThought({ pathParent: path, thoughtId: targetThought.id }))
+              dispatch(deleteThought({ pathParent: path, thoughtId: targetThought.id, undoLabel: 'Delete Note' }))
             }
           })
 
