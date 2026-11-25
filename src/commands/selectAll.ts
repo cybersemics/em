@@ -25,8 +25,12 @@ const selectAllCommand = {
   isActive: isAllSelected,
   // Allow chaining Select All into multicursor commands without lifting the finger.
   // Unfortunately categorize is a special case since it has multicursor: false but can still handle multicursor in the action.
+  // New Thought (above) is excluded so that its chained gesture, which collapses into the same swipes as Swap Parent's (←↓→↑←), runs Select All + Swap Parent (#5874).
   isChainable: command =>
-    !!command.gesture && command.id !== 'clearThought' && (!!command.multicursor || command.id === 'categorize'),
+    !!command.gesture &&
+    command.id !== 'clearThought' &&
+    command.id !== 'newThoughtAbove' &&
+    (!!command.multicursor || command.id === 'categorize'),
   canExecute: state => {
     if (!isDocumentEditable()) {
       return false

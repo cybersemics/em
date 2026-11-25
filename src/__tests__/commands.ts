@@ -189,6 +189,27 @@ describe('handleGestureEnd', () => {
   - a`)
   })
 
+  // https://github.com/cybersemics/em/issues/5874
+  it('chain Swap Parent after Select All rather than New Thought (above), whose gesture collapses into the same swipes', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - x
+            - a
+        `,
+      }),
+      setCursor(['x', 'a']),
+    ])
+
+    // Select All (ldr) + Swap Parent (ul)
+    handleGestureEnd({ sequence: 'ldr' + 'ul', e: {} as GestureResponderEvent })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - x`)
+  })
+
   // Select All (ldr) + Context View (ru) collapses the shared swipe into ldru, which was once an Archive alias.
   // https://github.com/cybersemics/em/issues/6350
   it('do not archive the cursor thought on Select All + Context View', () => {
