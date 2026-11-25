@@ -12,12 +12,17 @@ const SWIPE_STEP_MS = 30
  * page: a touch dispatched in the web context never reaches it. The web context is restored afterwards, looked up
  * again because a navigation caused by the swipe replaces the webview the test was in.
  */
-const swipeFromLeftEdge = async (): Promise<void> => {
+const swipeFromLeftEdge = async ({
+  y: startY,
+}: {
+  /** The screen y coordinate to swipe along, as returned by getElementRectByScreen. Defaults to the middle of the screen. */
+  y?: number
+} = {}): Promise<void> => {
   await browser.switchContext('NATIVE_APP')
 
   try {
     const { height, width } = await browser.getWindowSize()
-    const y = Math.round(height / 2)
+    const y = Math.round(startY ?? height / 2)
 
     // performActions directly: XCUITest does not implement the releaseActions endpoint that
     // action().perform() calls afterwards.

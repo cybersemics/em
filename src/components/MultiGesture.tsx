@@ -88,6 +88,9 @@ const SWIPE_BACK_EDGE = 20
 /** Mobile Safari navigates back when a swipe starts at the left edge of the screen. The app's webview does not. */
 const hasSwipeBack = isTouch && isSafari() && !isCapacitor()
 
+/** How far a touch at the left edge can move and still count as a tap on the control it started on (in pixels). */
+const TAP_TOLERANCE = 10
+
 /** Return the closest gesture based on the angle between two points. See: https://github.com/cybersemics/em/issues/1379. */
 const gesture = (p1: Point, p2: Point, minDistanceSquared: number, bias: BiasType = 'NoBias'): Direction | null => {
   // Instead of calculating the actual distance, calculate distance squared.
@@ -148,18 +151,51 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // cancel it, so the second edge swipe slides the previous page in over em, whether or not the sidebar is open. em's
     // gestures start from the same edge, and nothing else in em responds to a swipe there, so the native gesture is
     // always disabled. Only cancelling the touch as it starts keeps the swipe on the page. It does not stop the touch
-    // events, so the gesture and the sidebar swipe still see it. A touch on a control is left alone, because cancelling
-    // it would also cancel the click it produces, and the hamburger button reaches the left edge. Registered in the
-    // capture phase so that no handler can stop it first. See #6272.
+    // events, so the gesture and the sidebar swipe still see it. Registered in the capture phase so that no handler can
+    // stop it first. See #6272.
+    //
+    // Cancelling the touchstart also cancels the click the touch would produce, and the hamburger button and the
+    // sidebar's favorites reach the left edge and act on click (see fastClick). A touch on a control cannot simply be
+    // left alone, since Safari then swipes back from it, so a tap on a control is clicked again when it lifts.
     if (hasSwipeBack) {
+      // the control an edge touch started on and where it started, while that touch is down
+      let edgeTap: { control: HTMLElement; x: number; y: number } | null = null
+
       document.addEventListener(
         'touchstart',
         e => {
+          edgeTap = null
           if (e.touches.length !== 1 || e.touches[0].clientX >= SWIPE_BACK_EDGE) return
-          if (e.target instanceof Element && e.target.closest('button, a, [role="button"]')) return
           e.preventDefault()
+          const control =
+            e.target instanceof Element ? e.target.closest<HTMLElement>('button, a, [role="button"]') : null
+          if (control) {
+            edgeTap = { control, x: e.touches[0].clientX, y: e.touches[0].clientY }
+          }
         },
         { capture: true, passive: false },
+      )
+
+      document.addEventListener(
+        'touchend',
+        e => {
+          if (!edgeTap) return
+          const { control, x, y } = edgeTap
+          edgeTap = null
+          const touch = e.changedTouches[0]
+          // a touch that moved is a swipe or a scroll, not a tap
+          if (Math.abs(touch.clientX - x) > TAP_TOLERANCE || Math.abs(touch.clientY - y) > TAP_TOLERANCE) return
+          control.click()
+        },
+        true,
+      )
+
+      document.addEventListener(
+        'touchcancel',
+        () => {
+          edgeTap = null
+        },
+        true,
       )
     }
 

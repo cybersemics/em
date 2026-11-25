@@ -3,6 +3,7 @@
  * Uses WDIO test runner with Mocha framework.
  */
 import exportThoughts from '../helpers/exportThoughts'
+import getElementRectByScreen from '../helpers/getElementRectByScreen'
 import newThought from '../helpers/newThought'
 import resetApp from '../helpers/resetApp'
 import swipeFromLeftEdge from '../helpers/swipeFromLeftEdge'
@@ -20,7 +21,7 @@ const openAfterAnotherPage = async () => {
 
 describe('Safari swipe-back', () => {
   // https://github.com/cybersemics/em/issues/6272
-  it('a swipe right from the left edge of the screen does not navigate back while the sidebar is open', async () => {
+  it('a swipe right from the left edge of the screen does not navigate back from a favorite in the sidebar', async () => {
     await openAfterAnotherPage()
 
     await newThought('hello')
@@ -29,9 +30,13 @@ describe('Safari swipe-back', () => {
     await waitForElement('[data-testid="sidebar"]:not([inert])')
     const urlBeforeSwipe = await browser.getUrl()
 
+    // Swipe along the favorite, which is a control that reaches the left edge of the screen.
+    const favorite = await getElementRectByScreen(await waitForElement('[data-testid="drag-and-drop-favorite"]'))
+    const y = favorite.y + favorite.height / 2
+
     // Safari ignores the first edge swipe after a page loads and navigates back on the second.
-    await swipeFromLeftEdge()
-    await swipeFromLeftEdge()
+    await swipeFromLeftEdge({ y })
+    await swipeFromLeftEdge({ y })
     expect(await browser.getUrl()).toBe(urlBeforeSwipe)
 
     // Close the sidebar by tapping the backdrop. This can only succeed if em is still the page on screen, so it rules
