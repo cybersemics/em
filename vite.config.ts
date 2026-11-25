@@ -138,9 +138,12 @@ export default defineConfig({
       // Agent worktrees live in .claude/worktrees and are full checkouts of the repo. Creating or
       // updating one writes files the watcher would otherwise pick up — a nested tsconfig.json in
       // particular makes Vite clear its cache and force a full reload. Nothing under .claude is app
-      // source, so exclude the whole directory. Appended to Vite's defaults (.git, node_modules,
-      // test-results, cacheDir), not a replacement for them.
-      ignored: ['**/.claude/**'],
+      // source, so exclude the whole directory. The pattern is anchored to the project root rather
+      // than written as **/.claude/**: a dev server started inside a worktree has a root whose own
+      // path contains .claude, and an unanchored glob would make it ignore every file it serves.
+      // Appended to Vite's defaults (.git, node_modules, test-results, cacheDir), not a replacement
+      // for them.
+      ignored: [path.join(__dirname, '.claude', '**')],
     },
     ...(process.env.PUPPETEER
       ? {
