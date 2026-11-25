@@ -1,7 +1,7 @@
 import Command from '../@types/Command'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import NewSubthoughtNextIcon from '../components/icons/NewSubthoughtNextIcon'
-import hasMulticursor from '../selectors/hasMulticursor'
+import selectedPaths from '../selectors/selectedPaths'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 
@@ -21,9 +21,8 @@ const newUncleCommand = {
   },
   svg: NewSubthoughtNextIcon,
   canExecute: state => {
-    const { cursor } = state
-    // hasMulticursor allows the command to execute when thoughts are selected but the cursor is missing or on a root thought. Selected root thoughts (which have no parent to insert at) do not block the multicursor run: the loop's per-iteration setCursor clears the selection, so the per-iteration canExecute check fails for them and they are skipped.
-    return isDocumentEditable() && ((!!cursor && cursor.length > 1) || hasMulticursor(state))
+    // A root thought has no parent to insert at, so the command needs at least one selected thought below the root, whether that is the cursor or a selected thought when the cursor is missing or on a root thought. Selected root thoughts alongside it do not block the multicursor run: the loop's per-iteration setCursor clears the selection, so the per-iteration canExecute check fails for them and they are skipped.
+    return isDocumentEditable() && selectedPaths(state).some(path => path.length > 1)
   },
   exec: (dispatch, getState) => {
     const { cursor } = getState()

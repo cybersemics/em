@@ -14,6 +14,25 @@ import newUncleCommand from '../newUncle'
 
 beforeEach(initStore)
 
+describe('canExecute', () => {
+  // https://github.com/cybersemics/em/issues/5874
+  it('cannot execute when every selected thought is at the root', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+    ])
+
+    expect(newUncleCommand.canExecute!(store.getState())).toBe(false)
+  })
+})
+
 describe('multicursor', () => {
   it('creates an empty uncle for each selected sibling', () => {
     store.dispatch([
