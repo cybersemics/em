@@ -15,8 +15,9 @@ const mousePositionHasMoved = (newMousePosition: { x: number; y: number } | null
   )
 }
 
-/** Throttle callback until the pointer position moves. */
-const throttleByMousePosition = (callback: () => void, mousePosition: XYCoord | null) => {
+/** Throttle callback until the pointer position moves. The position is compared relative to the document rather than the viewport, so that a pointer held still while the page scrolls under it, such as during scroll-at-edge, counts as moving onto whatever scrolls beneath it (#6281). */
+const throttleByMousePosition = (callback: () => void, clientPosition: XYCoord | null) => {
+  const mousePosition = clientPosition && { x: clientPosition.x + window.scrollX, y: clientPosition.y + window.scrollY }
   if (!mousePositionHasMoved(mousePosition)) return
 
   if (mousePosition !== undefined) lastMouseDownPositionStore.update({ position: mousePosition })

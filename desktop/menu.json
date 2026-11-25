@@ -78,6 +78,15 @@
       "checkable": false
     },
     {
+      "id": "find",
+      "label": "Find",
+      "accelerator": {
+        "macos": "Cmd+F",
+        "windowsLinux": "Ctrl+F"
+      },
+      "checkable": false
+    },
+    {
       "id": "indent",
       "label": "Indent",
       "checkable": false

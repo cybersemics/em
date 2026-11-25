@@ -170,6 +170,8 @@ interface State {
   showHiddenThoughts: boolean
   showSortPicker: boolean
   showCommandCenter: boolean
+  /** Whether the find bar is open. Desktop only (see FindBar). */
+  showFindBar: boolean
   /**
    * The currently shown modal dialog box.
    * Initialized to the welcome modal, unless already completed.
