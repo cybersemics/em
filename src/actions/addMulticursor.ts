@@ -6,14 +6,23 @@ import { AlertType } from '../constants'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import hashPath from '../util/hashPath'
 
+interface AddMulticursorPayload {
+  /** The thought to add to the selection. */
+  path: Path
+  /** Let the added thought set the selection depth, clearing selected thoughts at other depths. */
+  clearOtherDepths?: boolean
+}
+
 /** Adds a cursor to the multicursor set. */
-const addMulticursor = (state: State, { path }: { path: Path }): State => ({
+const addMulticursor = (state: State, { path, clearOtherDepths }: AddMulticursorPayload): State => ({
   ...state,
   ...(state.alert?.alertType === AlertType.ScrollZoneHelp ? { alert: null } : null),
   multicursorAnchor: null,
   multicursorRange: {},
   multicursors: {
-    ...state.multicursors,
+    ...(clearOtherDepths
+      ? _.pickBy(state.multicursors, selectedPath => selectedPath.length === path.length)
+      : state.multicursors),
     [hashPath(path)]: path,
   },
 })

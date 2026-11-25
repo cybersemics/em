@@ -96,7 +96,7 @@ const cursorDownCommand = {
 
             // Add the next cursor to the multicursor, if it exists
             if (nextPath) {
-              dispatch(addMulticursor({ path: nextPath }))
+              dispatch(addMulticursor({ path: nextPath, clearOtherDepths: true }))
             }
 
             return
@@ -104,7 +104,7 @@ const cursorDownCommand = {
 
           // Extend the multicursor set to the next cursor
           if (isCurrentCursorMulticursor && !isNextPathMulticursor && nextPath) {
-            dispatch(addMulticursor({ path: nextPath }))
+            dispatch(addMulticursor({ path: nextPath, clearOtherDepths: true }))
             return
           }
 

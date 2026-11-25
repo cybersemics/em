@@ -122,10 +122,15 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
               opacity: showXOnHover ? 1 : undefined,
             },
           },
-          /** It should be possible to drag elements through a popup without interference. */
-          pointerEvents: { _dragHold: 'none' },
+          /** It should be possible to drag elements through a popup without interference. During the drag too, since the
+           * touch backend finds the drop target under the finger with elementFromPoint, which would otherwise find the
+           * popup, such as the drag-and-drop alert at the bottom edge where scroll-at-edge scrolls (#6281). */
+          pointerEvents: { _dragHold: 'none', _dragInProgress: 'none' },
         })}
         {...swipeProps}
+        // A drag held over a popup at the bottom of the screen, such as the drag-and-drop alert, drops just above it
+        // (see dropPoint in DragAndDropContext).
+        data-drop-above={anchorFromBottom && !fullScreen ? true : undefined}
         // the hook measures the element whether or not swipe-to-dismiss is enabled, so its ref is always attached
         ref={useCombinedRefs([ref, innerRef, useSwipeToDismissProps.ref])}
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)

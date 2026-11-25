@@ -1,7 +1,7 @@
 import path from 'path'
 import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
-import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../../constants'
+import { AlertText, TIMEOUT_LONG_PRESS_THOUGHT } from '../../../constants'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
@@ -17,6 +17,7 @@ import longPressWord from '../helpers/longPressWord'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
+import scrollTo from '../helpers/scrollTo'
 import setSelection from '../helpers/setSelection'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForAlert from '../helpers/waitForAlert'
@@ -818,5 +819,286 @@ describe('mobile only', () => {
       throw new Error(`Drag-and-drop did not start when the finger moved (data-drag-hold="${dragHold}").`)
     })
     await page.touchscreen.touchEnd()
+  })
+})
+
+describe('scroll at edge', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+  // https://github.com/cybersemics/em/issues/6281
+  it('keeps dragging while the page scrolls at the bottom edge, and stops scrolling when the finger leaves the edge', async () => {
+    await paste(Array.from({ length: 40 }, (_, i) => `- ${i + 1}`).join('\n'))
+    await waitForEditable('40')
+    await page.evaluate(() => window.scrollTo(0, 0))
+
+    const source = await waitForEditable('3')
+    const box = await source.asElement()?.boundingBox()
+    if (!box) throw new Error('Thought 3 has no bounding box.')
+    const x = box.x + 1
+    const y = box.y + box.height / 2
+
+    await page.touchscreen.touchStart(x, y)
+
+    // A finger on iOS Safari drifts a pixel or two while it is held, and Safari delivers each of those moves. Chromium
+    // suppresses every move within its own touch slop, so Puppeteer cannot send one. Dispatch it on the page instead.
+    await page.evaluate(
+      ({ x, y }) => {
+        const target = document.elementFromPoint(x, y)!
+        const touch = new Touch({ identifier: 0, target, clientX: x, clientY: y + 2 })
+        target.dispatchEvent(
+          new TouchEvent('touchmove', {
+            touches: [touch],
+            targetTouches: [touch],
+            changedTouches: [touch],
+            bubbles: true,
+            cancelable: true,
+          }),
+        )
+      },
+      { x, y },
+    )
+
+    await page.waitForSelector('body[data-drag-hold="true"]', { timeout: 5000 })
+
+    const { innerHeight, scrollYStart } = await page.evaluate(() => ({
+      innerHeight: window.innerHeight,
+      scrollYStart: window.scrollY,
+    }))
+
+    // drag to the bottom edge until the page scrolls
+    const steps = 10
+    const edgeY = innerHeight - 20
+    for (let i = 1; i <= steps; i++) {
+      await page.touchscreen.touchMove(x, y + ((edgeY - y) * i) / steps)
+    }
+    await page.waitForFunction(scrollYStart => window.scrollY > scrollYStart + 50, { timeout: 5000 }, scrollYStart)
+
+    // drag back to the middle of the screen
+    const middleY = innerHeight / 2
+    for (let i = 1; i <= steps; i++) {
+      await page.touchscreen.touchMove(x, edgeY + ((middleY - edgeY) * i) / steps)
+    }
+
+    const dragInProgress = await page.evaluate(() => document.body.dataset.dragInProgress)
+
+    // Measure the scroll over a few frames with the finger held still away from the edge.
+    const scrolled = await page.evaluate(async () => {
+      const before = window.scrollY
+      for (let i = 0; i < 10; i++) await new Promise(requestAnimationFrame)
+      return window.scrollY - before
+    })
+
+    await page.touchscreen.touchEnd()
+
+    expect(dragInProgress).toBe('true')
+    expect(scrolled).toBe(0)
+  })
+
+  // https://github.com/cybersemics/em/issues/6281
+  it('keeps dragging while the page scrolls at the bottom edge when the moves that start the drag cannot be cancelled', async () => {
+    await paste(Array.from({ length: 40 }, (_, i) => `- ${i + 1}`).join('\n'))
+    await waitForEditable('40')
+    await page.evaluate(() => window.scrollTo(0, 0))
+
+    const source = await waitForEditable('3')
+    const box = await source.asElement()?.boundingBox()
+    if (!box) throw new Error('Thought 3 has no bounding box.')
+    const x = box.x + 1
+    const y = box.y + box.height / 2
+
+    await page.touchscreen.touchStart(x, y)
+
+    // iOS Safari delivers the small moves of a held finger, and when the finger then moves quickly as the drag begins,
+    // it can deliver those moves as non-cancelable. Puppeteer sends neither: Chromium suppresses every move within its
+    // own touch slop, and every move it sends is cancelable. Dispatch them on the page instead.
+    /** Dispatches a touchmove of the held finger to a given y position. */
+    const dispatchTouchMove = (moveY: number, cancelable: boolean) =>
+      page.evaluate(
+        ({ x, y, moveY, cancelable }) => {
+          const target = document.elementFromPoint(x, y)!
+          const touch = new Touch({ identifier: 0, target, clientX: x, clientY: moveY })
+          target.dispatchEvent(
+            new TouchEvent('touchmove', {
+              touches: [touch],
+              targetTouches: [touch],
+              changedTouches: [touch],
+              bubbles: true,
+              cancelable,
+            }),
+          )
+        },
+        { x, y, moveY, cancelable },
+      )
+
+    await dispatchTouchMove(y + 2, true)
+    await page.waitForSelector('body[data-drag-hold="true"]', { timeout: 5000 })
+
+    const { innerHeight, scrollYStart } = await page.evaluate(() => ({
+      innerHeight: window.innerHeight,
+      scrollYStart: window.scrollY,
+    }))
+
+    // drag quickly to the bottom edge until the page scrolls
+    await dispatchTouchMove((y + innerHeight) / 2, false)
+    await dispatchTouchMove(innerHeight - 20, false)
+    await page.waitForFunction(scrollYStart => window.scrollY > scrollYStart + 50, { timeout: 5000 }, scrollYStart)
+
+    const dragInProgress = await page.evaluate(() => document.body.dataset.dragInProgress)
+
+    await page.touchscreen.touchEnd()
+
+    expect(dragInProgress).toBe('true')
+  })
+
+  // https://github.com/cybersemics/em/issues/6281
+  it('moves the drop target onto the thoughts that scroll under a finger held still on the alert at the bottom edge', async () => {
+    await paste(Array.from({ length: 40 }, (_, i) => `- ${i + 1}`).join('\n'))
+    await waitForEditable('40')
+    await page.evaluate(() => window.scrollTo(0, 0))
+
+    const source = await waitForEditable('1')
+    const box = await source.asElement()?.boundingBox()
+    if (!box) throw new Error('Thought 1 has no bounding box.')
+    const x = box.x + 1
+    const y = box.y + box.height / 2
+
+    await page.touchscreen.touchStart(x, y)
+
+    // A finger on iOS Safari drifts a pixel or two while it is held, and Safari delivers each of those moves. Chromium
+    // suppresses every move within its own touch slop, so Puppeteer cannot send one. Dispatch it on the page instead.
+    await page.evaluate(
+      ({ x, y }) => {
+        const target = document.elementFromPoint(x, y)!
+        const touch = new Touch({ identifier: 0, target, clientX: x, clientY: y + 2 })
+        target.dispatchEvent(
+          new TouchEvent('touchmove', {
+            touches: [touch],
+            targetTouches: [touch],
+            changedTouches: [touch],
+            bubbles: true,
+            cancelable: true,
+          }),
+        )
+      },
+      { x, y },
+    )
+
+    await waitForAlert(AlertText.DragAndDrop)
+
+    // drag quickly onto the alert at the bottom edge, and hold the finger still there
+    const innerHeight = await page.evaluate(() => window.innerHeight)
+    const edgeY = innerHeight - 40
+    await page.touchscreen.touchMove(x, (y + edgeY) / 2)
+    await page.touchscreen.touchMove(x, edgeY)
+
+    /** Returns the text of the thought that is the drop target, if any. */
+    const dropTarget = () =>
+      page.evaluate(() => document.querySelector('[data-drop-over="true"] [data-editable]')?.textContent ?? null)
+
+    // wait for a drop target, then for the page to scroll a few thoughts further under the finger
+    await page.waitForSelector('[data-drop-over="true"] [data-editable]', { timeout: 5000 })
+    const dropTargetBefore = await dropTarget()
+    const scrollYBefore = await page.evaluate(() => window.scrollY)
+    await page.waitForFunction(scrollYBefore => window.scrollY > scrollYBefore + 150, { timeout: 5000 }, scrollYBefore)
+    const dropTargetAfter = await dropTarget()
+
+    await page.touchscreen.touchEnd()
+
+    expect(dropTargetBefore).not.toBeNull()
+    expect(dropTargetAfter).not.toBeNull()
+    expect(dropTargetAfter).not.toBe(dropTargetBefore)
+  })
+
+  it('shows the drop hover above the alert while the finger is held on the alert', async () => {
+    await paste(Array.from({ length: 40 }, (_, i) => `- ${i + 1}`).join('\n'))
+    await waitForEditable('40')
+    await page.evaluate(() => window.scrollTo(0, 0))
+
+    const source = await waitForEditable('1')
+    const box = await source.asElement()?.boundingBox()
+    if (!box) throw new Error('Thought 1 has no bounding box.')
+    const x = box.x + 1
+    const y = box.y + box.height / 2
+
+    await page.touchscreen.touchStart(x, y)
+
+    // A finger on iOS Safari drifts a pixel or two while it is held, and Safari delivers each of those moves. Chromium
+    // suppresses every move within its own touch slop, so Puppeteer cannot send one. Dispatch it on the page instead.
+    await page.evaluate(
+      ({ x, y }) => {
+        const target = document.elementFromPoint(x, y)!
+        const touch = new Touch({ identifier: 0, target, clientX: x, clientY: y + 2 })
+        target.dispatchEvent(
+          new TouchEvent('touchmove', {
+            touches: [touch],
+            targetTouches: [touch],
+            changedTouches: [touch],
+            bubbles: true,
+            cancelable: true,
+          }),
+        )
+      },
+      { x, y },
+    )
+
+    await waitForAlert(AlertText.DragAndDrop)
+
+    // drag quickly onto the alert at the bottom edge, and hold the finger still there
+    const innerHeight = await page.evaluate(() => window.innerHeight)
+    const edgeY = innerHeight - 40
+    await page.touchscreen.touchMove(x, (y + edgeY) / 2)
+    await page.touchscreen.touchMove(x, edgeY)
+
+    // Wait for the page to scroll, then measure the drop hover and the alert in the same frame.
+    const scrollYBefore = await page.evaluate(() => window.scrollY)
+    await page.waitForFunction(scrollYBefore => window.scrollY > scrollYBefore + 150, { timeout: 5000 }, scrollYBefore)
+    await page.waitForSelector('[data-testid="drop-hover"]', { timeout: 5000 })
+    const { dropHoverBottom, alertTop } = await page.evaluate(() => {
+      const alert = document.querySelector('[data-testid="alert-content"]')!.closest('[data-drop-above]')!
+      return {
+        dropHoverBottom: document.querySelector('[data-testid="drop-hover"]')!.getBoundingClientRect().bottom,
+        alertTop: alert.getBoundingClientRect().top,
+      }
+    })
+
+    await page.touchscreen.touchEnd()
+
+    expect(dropHoverBottom).toBeLessThanOrEqual(alertTop)
+  })
+  // https://github.com/cybersemics/em/issues/6281
+  it('stops edge scrolling when the dragged thought enters the quick-delete gutter', async () => {
+    await paste(Array.from({ length: 40 }, (_, i) => `- ${i + 1}`).join('\n'))
+    await waitForEditable('40')
+    await scrollTo(0)
+
+    const source = await waitForEditable('3')
+    const box = await source.asElement()?.boundingBox()
+    if (!box) throw new Error('Thought 3 has no bounding box.')
+    const y = box.y + box.height / 2
+    const { width, height } = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }))
+    const xGutter = width - 12
+    const edgeY = height - 64
+    const finger = await page.touchscreen.touchStart(box.x + 4, y)
+
+    try {
+      await waitForAlert(AlertText.DragAndDrop)
+      await finger.move(width / 2, height / 2)
+      const start = await page.evaluate(() => scrollY)
+      await finger.move(width / 2, edgeY)
+      await page.waitForFunction(start => scrollY >= start + 35, {}, start)
+
+      await finger.move(xGutter, edgeY)
+      await waitForAlert('Drop to delete 3')
+      await finger.move(xGutter, height / 2)
+
+      const scrolled = await page.evaluate(async () => {
+        const before = scrollY
+        for (let i = 0; i < 10; i++) await new Promise(requestAnimationFrame)
+        return scrollY - before
+      })
+      expect(scrolled).toBe(0)
+    } finally {
+      await finger.end()
+    }
   })
 })
