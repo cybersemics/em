@@ -11,6 +11,7 @@ import { toggleMulticursorAtFirstMatchActionCreator as toggleMulticursor } from 
 import indentCommand from '../indent'
 import outdentCommand from '../outdent'
 import selectAllCommand from '../selectAll'
+import toggleSortCommand from '../toggleSort'
 import toggleTableViewCommand from '../toggleTableView'
 
 beforeEach(initStore)
@@ -111,5 +112,47 @@ describe('chained commands', () => {
       - a1
     - b
       - b1`)
+  })
+
+  // https://github.com/cybersemics/em/issues/5874
+  it('disables Sort, which would sort the same parent as Sort alone', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - p
+            - c
+            - a
+            - b
+        `,
+      }),
+      setCursor(['p', 'b']),
+    ])
+
+    const selectAllSort = chainCommand(selectAllCommand, toggleSortCommand)
+    expect(selectAllSort.canExecute!(store.getState())).toBe(false)
+  })
+
+  it('does not run Sort from the Select All + Sort gesture', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - p
+            - c
+            - a
+            - b
+        `,
+      }),
+      setCursor(['p', 'b']),
+    ])
+
+    // Select All (ldr) + Sort (lurd)
+    handleGestureEnd({ sequence: 'ldr' + 'lurd', e: {} as GestureResponderEvent })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - p
+    - c
+    - a
+    - b`)
   })
 })
