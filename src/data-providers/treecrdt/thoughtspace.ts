@@ -8,15 +8,13 @@ import { EM_TOKEN, GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID, SETTINGS_TOKEN, SETTINGS_V
 import testFlags from '../../e2e/testFlags'
 import { childrenMapKey } from '../../util/createChildrenMap'
 import hashThought from '../../util/hashThought'
-import isAttribute from '../../util/isAttribute'
 import sleep from '../../util/sleep'
 import type { DataProvider } from '../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../thoughtspace'
 import {
-  deleteAttributeChild,
-  ensureAttributeChildrenIndexReady,
+  clearAttributeChildren,
   getAttributeChildrenByParent,
-  upsertAttributeChild,
+  refreshAttributeChildrenFromChanges,
 } from './attributeChildren'
 import {
   deleteLexeme as deleteLexemeRow,
@@ -27,6 +25,7 @@ import {
 } from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
 import { enqueueMaterializedThoughtsToStore } from './sync'
+import { enqueueMaterializedThoughtsToStoreWork } from './sync/materializationQueue'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 import { createTreecrdtLocalWriteOptions, isTreecrdtLocalMaterialization } from './writeBarrier'
 
@@ -79,17 +78,18 @@ const waitForTestReplicationDelay = async (): Promise<void> => {
 
 /** Fetches a thought by ID from the given TreeCRDT client. */
 const getThoughtByIdFromClient = async (client: TreecrdtClient, id: ThoughtId): Promise<Thought | undefined> => {
-  const payloadBytes = await client.tree.getPayload(id)
+  const node = client.tree.node(id)
+  const payloadBytes = await node.payload()
   if (payloadBytes === null) return undefined
 
   const payload = decodeThoughtPayload(payloadBytes)
 
-  const parentIdRaw = await client.tree.parent(id)
-  const parentId: ThoughtId = parentIdRaw === null ? (ROOT_PARENT_ID as ThoughtId) : (parentIdRaw as ThoughtId)
-  const siblingIds = parentIdRaw === null ? [] : await client.tree.children(parentIdRaw)
-  const rank = parentIdRaw === null ? 0 : Math.max(0, siblingIds.indexOf(id))
+  const parent = await node.parent()
+  const parentId: ThoughtId = parent ? (parent.id as ThoughtId) : (ROOT_PARENT_ID as ThoughtId)
+  const siblingIds = parent ? (await parent.children()).map(sibling => sibling.id) : []
+  const rank = Math.max(0, siblingIds.indexOf(id))
 
-  const childIds = (await client.tree.children(id)) as ThoughtId[]
+  const childIds = (await node.children()).map(child => child.id as ThoughtId)
   const childrenMap = createIndexedChildrenMap(childIds, await getAttributeChildrenByParent(client, id))
 
   const thought: Thought = {
@@ -121,7 +121,7 @@ const getRankPlacement = async (
   thoughtId: ThoughtId,
   rank: number,
 ): Promise<TreecrdtPlacement> => {
-  const childIds = await client.tree.children(parentId)
+  const childIds = (await client.tree.node(parentId).children()).map(child => child.id)
   const afterId = childIds.reduce<ThoughtId | undefined>(
     (previousId, childId, index) => (childId !== thoughtId && index < rank ? (childId as ThoughtId) : previousId),
     undefined,
@@ -151,8 +151,7 @@ const getTreecrdtPlacement = async (
   if (afterId == null) return { type: 'first' }
   if (afterId === thoughtId) throw new Error(`TreeCRDT move for ${thoughtId} cannot be placed after itself.`)
 
-  const childIds = await client.tree.children(parentId)
-  if (!childIds.includes(afterId)) {
+  if ((await client.tree.node(afterId).parent())?.id !== parentId) {
     return getRankPlacement(client, parentId, thoughtId, thought.rank)
   }
 
@@ -186,11 +185,6 @@ const updateThoughtsForClient = async (
     }
   }
 
-  for (const id of deletes) {
-    ops.push(await client.local.delete(replicaId, id, createTreecrdtLocalWriteOptions()))
-    await deleteAttributeChild(client, id)
-  }
-
   for (const [id, thought] of Object.entries(updates)) {
     const thoughtId = id as ThoughtId
     const payloadBytes = encodeThoughtPayload({
@@ -201,7 +195,7 @@ const updateThoughtsForClient = async (
       ...(thought.archived !== undefined && { archived: thought.archived }),
     })
 
-    const exists = await client.tree.exists(thoughtId)
+    const exists = (await client.tree.get(thoughtId)) !== undefined
     const parentId = treeParentId(thought.parentId)
 
     if (!exists) {
@@ -216,15 +210,11 @@ const updateThoughtsForClient = async (
           createTreecrdtLocalWriteOptions(),
         ),
       )
-      if (isAttribute(thought.value)) {
-        await upsertAttributeChild(client, parentId, thoughtId, thought.value)
-      }
     } else {
       const existing = await getThoughtByIdFromClient(client, thoughtId)
       if (!existing) continue
 
       const parentChanged = existing.parentId !== thought.parentId
-      const valueChanged = existing.value !== thought.value
       const orderChanged = thoughtId in (movePlacements || {})
       if (parentChanged || orderChanged) {
         const placement = await getTreecrdtPlacement(client, thoughtId, thought, movePlacements, {
@@ -243,15 +233,12 @@ const updateThoughtsForClient = async (
       if (payloadChanged) {
         ops.push(await client.local.payload(replicaId, thoughtId, payloadBytes, createTreecrdtLocalWriteOptions()))
       }
-
-      if (parentChanged || valueChanged) {
-        if (isAttribute(thought.value)) {
-          await upsertAttributeChild(client, parentId, thoughtId, thought.value)
-        } else if (isAttribute(existing.value)) {
-          await deleteAttributeChild(client, thoughtId)
-        }
-      }
     }
+  }
+
+  // Moves out of a deleted parent must precede its delete, so its knownState covers the move.
+  for (const id of deletes) {
+    ops.push(await client.local.delete(replicaId, id, createTreecrdtLocalWriteOptions()))
   }
 
   return ops
@@ -268,9 +255,11 @@ const ROOT_PAYLOAD = encodeThoughtPayload({
 const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: Uint8Array): Promise<void> => {
   await ensureLexemesSchema(client)
   // Ensure root has payload so getThoughtById can use the generic path.
-  await client.local.payload(replicaId, GLOBAL_ROOT_TOKEN, ROOT_PAYLOAD, createTreecrdtLocalWriteOptions())
+  if ((await client.tree.root.payload()) === null) {
+    await client.local.payload(replicaId, GLOBAL_ROOT_TOKEN, ROOT_PAYLOAD, createTreecrdtLocalWriteOptions())
+  }
   for (const id of SYSTEM_ROOT_THOUGHT_IDS) {
-    if (!(await client.tree.exists(id))) {
+    if (!(await client.tree.get(id))) {
       const now = Date.now()
       await client.local.insert(
         replicaId,
@@ -289,21 +278,17 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
   }
 
   let settingsId: ThoughtId | null = null
-  for (const childId of await client.tree.children(EM_TOKEN)) {
-    const payloadBytes = await client.tree.getPayload(childId)
+  for (const child of await client.tree.node(EM_TOKEN).children()) {
+    const payloadBytes = await child.payload()
     if (!payloadBytes) continue
     const payload = decodeThoughtPayload(payloadBytes)
     if (payload.value === SETTINGS_VALUE) {
-      settingsId = childId as ThoughtId
+      settingsId = child.id as ThoughtId
       break
     }
   }
 
-  if (
-    !settingsId &&
-    (await client.tree.exists(SETTINGS_TOKEN)) &&
-    (await client.tree.parent(SETTINGS_TOKEN)) === EM_TOKEN
-  ) {
+  if (!settingsId && (await client.tree.node(SETTINGS_TOKEN).parent())?.id === EM_TOKEN) {
     settingsId = SETTINGS_TOKEN
   }
 
@@ -334,8 +319,6 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
       updatedBy: '',
     })
   }
-
-  await ensureAttributeChildrenIndexReady(client)
 }
 
 /** Creates a data provider whose operations are permanently bound to one TreeCRDT client. */
@@ -349,6 +332,9 @@ const createClientDataProvider = ({ client, replicaId }: TreecrdtClientIdentity)
   },
   updateThoughts: updates => updateThoughtsForClient({ client, replicaId }, updates),
 })
+
+/** Bump when an index is added or changes, so databases indexed by an older version are rebuilt once. */
+const INDEX_VERSION = 1
 
 /**
  * Creates the stable app-facing TreeCRDT data provider.
@@ -394,14 +380,29 @@ const createTreecrdtDataProvider = () => {
     client: TreecrdtClient,
     replicaId: Uint8Array,
     materialization?: ThoughtspaceMaterializationBridge,
-  ): Promise<() => void> => {
+  ): Promise<() => Promise<void>> => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
+    // The derived indexes (attribute children) follow TreeCRDT's change events. TreeCRDT remembers how far they
+    // got, so a gap such as startup or a failed update is caught up without rebuilding.
+    const indexes = await client.onMaterializedDurable(
+      'em-derived-indexes',
+      event => refreshAttributeChildrenFromChanges(client, event.changes),
+      {
+        version: INDEX_VERSION,
+        reset: () => clearAttributeChildren(client),
+        onError: err => console.error('TreeCRDT derived indexing failed', err),
+      },
+    )
+    /** Resolves once every change materialized so far is indexed. A failed update is logged and retried, not thrown. */
+    const indexed = () => indexes.settled().catch(err => console.error('TreeCRDT derived indexing failed', err))
     const clientDb = createClientDataProvider({ client, replicaId })
-    const materializationContext = materialization ? { bridge: materialization, client, db: clientDb } : null
+    const materializationContext = materialization ? { bridge: materialization, db: clientDb, indexed } : null
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
+      // Writes don't wait for the index, so every event queues a wait for it and waiting for idle includes the index.
+      void enqueueMaterializedThoughtsToStoreWork(indexed)
       // Local writes are already reflected optimistically. Other materialization uses the exact provider and client
       // that created this subscription, even if the app later binds a new client.
       if (isTreecrdtLocalMaterialization(event) || !materializationContext) return
@@ -413,11 +414,9 @@ const createTreecrdtDataProvider = () => {
 
     activeDb = clientDb
     providerReadiness.resolve(clientDb)
-    let subscribed = true
-    return () => {
-      if (!subscribed) return
-      subscribed = false
+    return async () => {
       unsubscribeMaterialized()
+      await indexes.close()
     }
   }
 

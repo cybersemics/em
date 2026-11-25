@@ -11,7 +11,7 @@ import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isMac, isSafari, isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, DEFAULT_FONT_SIZE, LongPressState } from '../constants'
 import initKeyboardSelection from '../device/initKeyboardSelection'
@@ -55,6 +55,9 @@ const WINDOW_SCROLLATEDGE_SPEED = 2
 /** How often to save the selection offset to storage when it changes. */
 const SELECTION_CHANGE_THROTTLE = 200
 
+/** Set in sessionStorage once a selection has been shown in the tab on WebKit 27, after which WebKit withholds touches near the caret for the life of the tab, across reloads (#5895). */
+const WITHHOLDS_TOUCHES_KEY = 'em-withholds-touches'
+
 /** The pending selection.clear that fires if the device stays in the passive state (see onStateChange). A ministore whose dispose clears the timer, so that cleanup and a reset between tests cancel it rather than leaving it to fire later. */
 const passiveTimeoutStore = ministore<{ timer: Timer | null }>(
   { timer: null },
@@ -85,7 +88,11 @@ const scrollEndTimeoutStore = ministore<{ timer: Timer | null }>(
   { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
 )
 
-/** An scroll-at-edge function that will continue scrolling smoothly in a given direction until scroll-at-edge.stop is called. Takes a number of pixels to scroll each iteration. */
+/** Whether a thought drag can scroll vertically at the edge of the screen. */
+const canScrollThoughtAtEdge = (state: State) =>
+  state.longPress === LongPressState.DragInProgress && state.alert?.alertType !== AlertType.DeleteDropHint
+
+/** A scroll-at-edge function that will continue scrolling smoothly in a given direction until scroll-at-edge.stop is called. Takes a number of pixels to scroll each iteration. */
 const scrollAtEdge = (() => {
   /** Cubic easing function. */
   const ease = (n: number) => Math.pow(n, 3)
@@ -98,6 +105,13 @@ const scrollAtEdge = (() => {
 
   /** Scroll vertically in the direction given by rate until stop is called. Defaults to scrolling the window, or you can pass an element to scroll. */
   const scroll = () => {
+    // Recheck eligibility even when the finger is still. The drag may have ended or entered the quick-delete gutter.
+    const state = store.getState()
+    if (!state.dragCommand && !canScrollThoughtAtEdge(state)) {
+      autoscrolling = false
+      return
+    }
+
     const scrollContainer = scrollContainerStore.getState().element
     const el = scrollContainer || window
 
@@ -114,6 +128,11 @@ const scrollAtEdge = (() => {
     }
 
     el.scrollTo(scrollLeftNew, scrollTopNew)
+    // Record where the window actually landed, which the browser clamps at the end of the page, so that the touch
+    // backend does not mistake the scroll event that follows for a native scroll and end the drag (#6281).
+    if (!scrollContainer || scrollContainer === window) {
+      scrollContainerStore.update({ windowScrollTop: document.documentElement.scrollTop })
+    }
     window.requestAnimationFrame(() => {
       if (autoscrolling) {
         scroll()
@@ -255,6 +274,9 @@ const initEvents = (store: Store<State, any>) => {
     () => {
       // editables are not long-pressable on desktop, so the range will only be a concern on mobile
       if (isTouch) selectionRangeStore.update(!selection.isCollapsed())
+      if (isTouch && !selection.isCollapsed() && (osVersionStore.getState() ?? 0) >= 27) {
+        sessionStorage.setItem(WITHHOLDS_TOUCHES_KEY, 'true')
+      }
       storageModel.set('cursor', value => ({
         path: value?.path || store.getState().cursor,
         offset: selection.offsetThought(),
@@ -317,12 +339,7 @@ const initEvents = (store: Store<State, any>) => {
       else {
         scrollAtEdge.stop()
       }
-    }
-    // do not scroll-at-edge when hovering over DropGutter component
-    else if (
-      state.longPress === LongPressState.DragInProgress &&
-      !(state.alert?.alertType === AlertType.DeleteDropHint)
-    ) {
+    } else if (canScrollThoughtAtEdge(state)) {
       const y = e.touches[0].clientY
       scrollContainerStore.update({ element: (target.closest('[data-scroll-at-edge]') as HTMLElement) || window })
 
@@ -371,7 +388,13 @@ const initEvents = (store: Store<State, any>) => {
     const isEmptyThought = !!state.cursor && getThoughtById(state, head(state.cursor))?.value === ''
     touchStore.update({
       pressOnCaret:
-        isTouch && (isSafari() || isEmptyThought) && !!touch && selection.isCaretNear(touch.clientX, touch.clientY),
+        isTouch &&
+        (isSafari() || isEmptyThought) &&
+        !!touch &&
+        (selection.isCaretNear(touch.clientX, touch.clientY) ||
+          // a long press here could start a drag whose touchend never arrives
+          (!!sessionStorage.getItem(WITHHOLDS_TOUCHES_KEY) &&
+            selection.isInWithheldCaretZone(touch.clientX, touch.clientY))),
       pressInEmptyThought:
         isTouch &&
         isEmptyThought &&
@@ -637,8 +660,8 @@ const initEvents = (store: Store<State, any>) => {
   // Route iOS native undo/redo gestures through em's undo/redo in the Capacitor app
   nativeHistory.init()
 
-  // Connect the commands to the system menu, which the desktop app only installs on macOS
-  if (isTauri() && isMac) {
+  // Connect the commands to the system menu of the desktop app
+  if (isTauri()) {
     systemMenu.init()
   }
 
