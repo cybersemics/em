@@ -9,6 +9,7 @@ import multicursorValues from '../../test-helpers/multicursorValues'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { toggleMulticursorAtFirstMatchActionCreator as toggleMulticursor } from '../../test-helpers/toggleMulticursorAtFirstMatch'
 import indentCommand from '../indent'
+import mergeDuplicatesCommand from '../mergeDuplicates'
 import outdentCommand from '../outdent'
 import selectAllCommand from '../selectAll'
 import toggleTableViewCommand from '../toggleTableView'
@@ -111,5 +112,23 @@ describe('chained commands', () => {
       - a1
     - b
       - b1`)
+  })
+
+  // https://github.com/cybersemics/em/issues/5874
+  it('disables Merge Duplicates, which would merge the same level as Merge Duplicates alone', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - p
+            - a
+            - a
+            - b
+        `,
+      }),
+      setCursor(['p', 'b']),
+    ])
+
+    const selectAllMergeDuplicates = chainCommand(selectAllCommand, mergeDuplicatesCommand)
+    expect(selectAllMergeDuplicates.canExecute!(store.getState())).toBe(false)
   })
 })
