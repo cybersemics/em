@@ -6,7 +6,7 @@ Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of i
 
 ## What it is
 
-A bounded buffer of 5000 entries, sharded across ten rotating `localStorage` keys so appending one entry rewrites 500 entries rather than all of them. Writes are **synchronous**, which is the whole point: an entry survives the freeze that happens on the next line. Nothing is ever transmitted — the log leaves the device only when a person exports it.
+A bounded buffer of 5000 entries, sharded across ten rotating `localStorage` keys so appending one entry rewrites 500 entries rather than all of them. [`storage.ts`](../src/util/storage.ts) stores each chunk in slices of 512 characters and rewrites only the slices that changed, so in practice an entry writes its own few hundred characters (see [Data Storage](persistence.md)). Writes are **synchronous**, which is the whole point: an entry survives the freeze that happens on the next line. Nothing is ever transmitted — the log leaves the device only when a person exports it.
 
 Every entry shares an envelope and adds its own fields. As `format()` exports it:
 

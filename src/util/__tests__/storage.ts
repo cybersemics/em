@@ -152,3 +152,69 @@ describe('encode/decode', () => {
     expect(storageModel.get('x')).toBe(1)
   })
 })
+
+// https://github.com/cybersemics/em/issues/6156
+describe('long values', () => {
+  /** Returns every key and value in localStorage. */
+  const stored = () =>
+    Array.from({ length: localStorage.length }, (_, i) => {
+      const key = localStorage.key(i)!
+      return [key, localStorage.getItem(key)!] as const
+    })
+
+  it('stores a long value in slices of at most 512 characters, and reads it back whole', () => {
+    const value = 'abcdefghij'.repeat(500)
+    const storageModel = storage.model({ ids: { default: [] as string[] } })
+    const ids = Array.from({ length: 100 }, (_, i) => `${i}`.padStart(32, '0'))
+
+    storage.setItem('long', value)
+    storageModel.set('ids', ids)
+    // a short value that begins as a header does is not mistaken for one
+    storage.setItem('marked', '\u001F2:abc')
+
+    expect(Math.max(...stored().map(([, slice]) => slice.length))).toBeLessThanOrEqual(512)
+    expect(storage.getItem('long')).toBe(value)
+    expect(storageModel.get('ids')).toEqual(ids)
+    expect(storage.getItem('marked')).toBe('\u001F2:abc')
+  })
+
+  it('rewrites only the slices that changed when a long value is appended to', () => {
+    storage.setItem('long', 'abcdefghij'.repeat(200))
+    const setItem = vi.spyOn(localStorage, 'setItem')
+    // The localStorage of the test environment is a mock that keeps every call made to it.
+    setItem.mockClear()
+
+    storage.setItem('long', 'abcdefghij'.repeat(200) + 'k')
+
+    // the slice that the appended character starts, and the header
+    expect(setItem).toHaveBeenCalledTimes(2)
+    expect(storage.getItem('long')).toBe('abcdefghij'.repeat(200) + 'k')
+    setItem.mockRestore()
+  })
+
+  it('removes the slices that a shorter value leaves over, and the slices of a removed value', () => {
+    storage.setItem('long', 'x'.repeat(2000))
+    storage.setItem('other', 'value')
+
+    storage.setItem('long', 'y'.repeat(600))
+    expect(stored()).toHaveLength(4)
+    expect(storage.getItem('long')).toBe('y'.repeat(600))
+
+    storage.setItem('long', 'short')
+    expect(stored()).toHaveLength(2)
+    expect(storage.getItem('long')).toBe('short')
+
+    storage.setItem('long', 'z'.repeat(2000))
+    storage.removeItem('long')
+    expect(stored()).toEqual([['other', 'value']])
+  })
+
+  it('reads a long value whose slices do not match its header as no value', () => {
+    storage.setItem('long', 'x'.repeat(2000))
+
+    // a slice written before a crash, without the header written after it
+    localStorage.setItem('long\u001F1', 'y'.repeat(512))
+
+    expect(storage.getItem('long')).toBeNull()
+  })
+})
