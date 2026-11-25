@@ -1275,6 +1275,9 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
+      // A thought that autofocus hides is still rendered, faded out, but the cursor cannot be set on it (see onFocus), so
+      // the find bar does not match it.
+      data-invisible={!isVisible || undefined}
       data-generating={generating || undefined}
       data-placeholder-cleared={isCursorCleared || undefined}
       data-placeholder-bold={placeholderCommandState?.bold || undefined}

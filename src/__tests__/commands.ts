@@ -209,6 +209,29 @@ describe('handleGestureEnd', () => {
   - a
     - x`)
   })
+
+  // Select All (ldr) + Context View (ru) collapses the shared swipe into ldru, which was once an Archive alias.
+  // https://github.com/cybersemics/em/issues/6350
+  it('do not archive the cursor thought on Select All + Context View', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+          - c
+        `,
+      }),
+      setCursor(['b']),
+    ])
+
+    handleGestureEnd({ sequence: 'ldru', e: {} as GestureResponderEvent })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c`)
+  })
 })
 
 // Each pair below depends on its order: the first test leaves module state behind in commands.ts, and the second checks
