@@ -2,6 +2,7 @@ import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, PanResponderInstance, View, ViewStyle } from 'react-native'
 import Direction from '../@types/Direction'
 import Gesture from '../@types/Gesture'
+import { isCapacitor, isSafari, isTouch } from '../browser'
 import { noop } from '../constants'
 import { caretRectViewport } from '../device/selection'
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
@@ -81,6 +82,12 @@ const dirToRad = {
 
 type BiasType = keyof typeof dirToRad
 
+/** Width of the strip along the left edge of the screen where a touch can start Mobile Safari's swipe-back gesture (in pixels). */
+const SWIPE_BACK_EDGE = 20
+
+/** Mobile Safari navigates back when a swipe starts at the left edge of the screen. The app's webview does not. */
+const hasSwipeBack = isTouch && isSafari() && !isCapacitor()
+
 /** Return the closest gesture based on the angle between two points. See: https://github.com/cybersemics/em/issues/1379. */
 const gesture = (p1: Point, p2: Point, minDistanceSquared: number, bias: BiasType = 'NoBias'): Direction | null => {
   // Instead of calculating the actual distance, calculate distance squared.
@@ -136,6 +143,25 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.leftHanded = !!props.leftHanded
 
     this.reset()
+
+    // Mobile Safari claims a swipe from the left edge for its swipe-back gesture before the touchmove handler below can
+    // cancel it, so the second edge swipe slides the previous page in over em, whether or not the sidebar is open. em's
+    // gestures start from the same edge, and nothing else in em responds to a swipe there, so the native gesture is
+    // always disabled. Only cancelling the touch as it starts keeps the swipe on the page. It does not stop the touch
+    // events, so the gesture and the sidebar swipe still see it. A touch on a control is left alone, because cancelling
+    // it would also cancel the click it produces, and the hamburger button reaches the left edge. Registered in the
+    // capture phase so that no handler can stop it first. See #6272.
+    if (hasSwipeBack) {
+      document.addEventListener(
+        'touchstart',
+        e => {
+          if (e.touches.length !== 1 || e.touches[0].clientX >= SWIPE_BACK_EDGE) return
+          if (e.target instanceof Element && e.target.closest('button, a, [role="button"]')) return
+          e.preventDefault()
+        },
+        { capture: true, passive: false },
+      )
+    }
 
     // disable scroll by preventing default touchmove
     // allow enabling/disabling scroll with this.disableScroll
