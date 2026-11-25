@@ -103,6 +103,10 @@ const SwipeNavigationEdge = ({ side }: { side: 'left' | 'right' }) => (
       bottom: 0,
       zIndex: 'swipeNavigationEdge',
       touchAction: 'none',
+      // Gives the strip a compositing layer of its own, so that Safari keeps its touch-action region fixed to the
+      // screen. Painted into the page's layer instead, the strip rendered on load let 3 of every 10 edge swipes go
+      // back on an iPhone, while the same strip inserted again later stopped every one.
+      transform: 'translateZ(0)',
     })}
     style={{ [side]: 0, width: SWIPE_NAVIGATION_EDGE }}
   />
@@ -172,10 +176,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // Two things disable them, and on an iPhone neither is enough alone. Cancelling the touchstart stops only some
     // swipes: measured on device, 2 to 9 of every 20 still went back, since Safari can begin the gesture before the
     // page's handler has run, and a swipe that moves at once wins that race. The edge strips rendered below carry
-    // touch-action: none, which the browser knows before any handler runs, and with both no swipe of 30 went back.
-    // Neither stops the touch events, so the gesture and the sidebar swipe still see the touch. The listener is
-    // registered in the capture phase so that no handler can stop it first. A touch that starts in the right strip
-    // does not scroll, which costs the scroll zone its outermost 20px.
+    // touch-action: none, which the browser knows before any handler runs, and with both no swipe of 40 went back,
+    // with the sidebar open or closed. Neither stops the touch events, so the gesture and the sidebar swipe still see
+    // the touch. The listener is registered in the capture phase so that no handler can stop it first. A touch that
+    // starts in the right strip does not scroll, which costs the scroll zone its outermost 20px. One case is out of
+    // reach: right after a swipe navigation back to em, Safari shows a snapshot until the page has painted, and a
+    // swipe on the snapshot never reaches the page. See docs/cursor-and-caret.md.
     //
     // Cancelling the touchstart also cancels the click the touch would produce, and the left strip lies over the
     // hamburger button and the sidebar's favorites, which reach the edge and act on click (see fastClick). A tap on
@@ -648,11 +654,14 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         <GestureMenu />
         <TraceGesture eventNodeRef={ref} />
         <ScrollZone leftHanded={this.leftHanded} />
-        {/* Rendered inside the View so that a gesture which starts on a strip is still recognized, and stacked above
-            the sidebar and dialogs so that every edge swipe lands on one. See the constructor. */}
-        {hasSwipeNavigation && <SwipeNavigationEdge side='left' />}
-        {hasSwipeNavigation && <SwipeNavigationEdge side='right' />}
-        <div ref={ref}>{this.props.children}</div>
+        <div ref={ref}>
+          {/* Rendered inside the trace's event node, so that a gesture which starts on a strip is recognized and
+              traced from its first point, and stacked above the sidebar and dialogs so that every edge swipe lands on
+              one. See the constructor. */}
+          {hasSwipeNavigation && <SwipeNavigationEdge side='left' />}
+          {hasSwipeNavigation && <SwipeNavigationEdge side='right' />}
+          {this.props.children}
+        </div>
       </View>
     )
   }
