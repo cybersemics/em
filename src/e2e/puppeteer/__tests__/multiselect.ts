@@ -619,7 +619,7 @@ describe('Android', () => {
   deviceEmulation.useForSuite(KnownDevices['Pixel 5'])
 
   // https://github.com/cybersemics/em/issues/6171
-  it.skip('double tapping a word in a selected thought places the caret where tapped instead of selecting the word', async () => {
+  it('double tapping a word in a selected thought places the caret where tapped instead of selecting the word', async () => {
     await paste(`
         - Lorem ipsum dolor sit amet
         `)
