@@ -107,6 +107,10 @@ const SwipeNavigationEdge = ({ side }: { side: 'left' | 'right' }) => (
       // screen. Painted into the page's layer instead, the strip rendered on load let 3 of every 10 edge swipes go
       // back on an iPhone, while the same strip inserted again later stopped every one.
       transform: 'translateZ(0)',
+      // The touch backend finds the drop target under the finger with elementFromPoint, so during a drag the strip
+      // would hide the drop targets at the edge beneath it, such as the one that removes a dragged favorite. A drag is
+      // a touch already in progress, which Safari's edge swipe cannot claim, so the strip can step aside.
+      pointerEvents: { _dragHold: 'none', _dragInProgress: 'none' },
     })}
     style={{ [side]: 0, width: SWIPE_NAVIGATION_EDGE }}
   />
