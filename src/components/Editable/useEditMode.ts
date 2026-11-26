@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
 import State from '../../@types/State'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
-import { isSafari, isTouch } from '../../browser'
+import { isAndroid, isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
 import getCaretOffset from '../../device/getCaretOffset'
@@ -333,6 +333,9 @@ const useEditMode = ({
         })
 
         if (offset !== null) {
+          // Read before setCaretOffset, which focuses the editable.
+          const focused = document.activeElement === editable
+
           // Prevent the browser from autoscrolling to this editable element.
           // For some reason doesn't work on touchend.
           preventAutoscroll(editable, {
@@ -348,7 +351,13 @@ const useEditMode = ({
           // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
           // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
           // truly in a void area, then preventDefault will stop the caret from being placed on the wrong thought.
-          if (inVoidArea) {
+          //
+          // The exception to leaving a double tap to the browser is the second tap of a double tap whose first tap
+          // never focused the editable, such as one that ended a multiselect (#6171). Chrome for Android would still
+          // select the word under the finger, but without selection handles, since the selection was set and the
+          // editable focused from script during the gesture. A double tap that starts on an editable that is not
+          // focused places only the caret in Chrome, so keep the caret set above and stop the word selection.
+          if (inVoidArea || (isAndroid && e.detail >= 2 && !focused)) {
             e.preventDefault()
           }
         }

@@ -7,8 +7,10 @@ import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
+import doubleTapWord from '../helpers/doubleTapWord'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
+import getSelection from '../helpers/getSelection'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
@@ -610,5 +612,26 @@ describe('mobile only', () => {
 
     // the cursor lands on the first selected thought, not on b where it started
     await waitForCursor('a')
+  })
+})
+
+describe('Android', () => {
+  deviceEmulation.useForSuite(KnownDevices['Pixel 5'])
+
+  // https://github.com/cybersemics/em/issues/6171
+  it('double tapping a word in a selected thought places the caret where tapped instead of selecting the word', async () => {
+    await paste(`
+        - Lorem ipsum dolor sit amet
+        `)
+
+    const thought = await waitForEditable('Lorem ipsum dolor sit amet')
+    await longPressThought(thought)
+    await waitForMultiselect(['Lorem ipsum dolor sit amet'])
+
+    await doubleTapWord(thought, 'dolor')
+
+    const selection = getSelection()
+    expect(await selection.toString()).toBe('')
+    expect(await selection.focusOffset).toBe(14)
   })
 })
