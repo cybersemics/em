@@ -17,7 +17,8 @@ const throttledAlert = _.throttle(
 /** A middleware that manages multicursor alerts and shows/hides the Command Center on mobile. This is done so that the Alert and Command Center are updated regardless of which action the multiselect is triggered from. Note that this only works in one direction: Multiselect -> Alert/CommandCenter. If the Command Center is closed somewhere else (e.g. toggleDropdown) it will need to clear the multicursors itself. */
 const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
   return next => action => {
-    const prevNumMulticursors = Object.keys(getState().multicursors).length
+    const prevState = getState()
+    const prevNumMulticursors = Object.keys(prevState.multicursors).length
 
     next(action)
 
@@ -76,8 +77,10 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
         if (state.alert?.alertType === AlertType.MulticursorActive) {
           throttledAlert(dispatch, null, { alertType: AlertType.MulticursorActive })
         }
-      } else if (numMulticursors !== prevNumMulticursors) {
-        // show or update multicursor alert
+      } else if (numMulticursors !== prevNumMulticursors || (prevState.alert && !state.alert)) {
+        // Show or update the multicursor alert. Also restore it when another alert that replaced it, such as a
+        // MulticursorError naming the thoughts that block a command, is dismissed while the selection is still active.
+        // Otherwise the selection would remain without its count or its Cancel button.
         throttledAlert(
           dispatch,
           numMulticursors === 1 ? '1 thought selected' : `${numMulticursors} thoughts selected`,

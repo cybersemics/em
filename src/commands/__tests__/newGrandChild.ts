@@ -260,6 +260,32 @@ describe('multicursor', () => {
     })
   })
 
+  // https://github.com/cybersemics/em/pull/6382#pullrequestreview-6068513847
+  it('names at most three blocking thoughts and counts the rest', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+          - c
+          - d
+          - e
+          - f
+            - g
+        `,
+      }),
+      setCursor(['a']),
+      ...['a', 'b', 'c', 'd', 'e', 'f'].map(value => addMulticursor([value])),
+    ])
+
+    executeCommandWithMulticursor(newGrandChildCommand, { store, type: 'gesture' })
+
+    expect(store.getState().alert).toMatchObject({
+      alertType: AlertType.MulticursorError,
+      value: 'New Grandchild cannot be executed on 5 of the selected thoughts: "a", "b", "c", and 2 other thoughts',
+    })
+  })
+
   it('creates a new empty grandchild in each selected thought', () => {
     store.dispatch([
       importText({

@@ -53,3 +53,25 @@ it('does not dismiss an alert that replaced the multicursor alert before the thr
   await vi.runAllTimersAsync()
   expect(store.getState().alert?.value).toBe('Rate limit reached. Please try again later.')
 })
+
+// https://github.com/cybersemics/em/pull/6382#pullrequestreview-6068513847
+it('restores the multicursor alert when an alert that replaced it is dismissed', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b`,
+    }),
+    setCursor(['a']),
+    addMulticursor(['a']),
+    addMulticursor(['b']),
+  ])
+  await vi.runAllTimersAsync()
+  expect(store.getState().alert?.value).toBe('2 thoughts selected')
+
+  // An error alert replaces the multicursor alert, then times out.
+  store.dispatch(alert('Cannot bump down thoughts from different parents.'))
+  store.dispatch(alert(null))
+  await vi.runAllTimersAsync()
+  expect(store.getState().alert?.value).toBe('2 thoughts selected')
+})

@@ -483,6 +483,26 @@ describe('multiselect', () => {
 `)
   })
 
+  // https://github.com/cybersemics/em/pull/6382#pullrequestreview-6068513847
+  it('names the selected thoughts that block a command clicked in the Command Universe', async () => {
+    await paste(`
+        - a
+          - b
+        - c
+        `)
+
+    await multiselectThoughts(['a', 'c'])
+    await waitForHighlightedBullets(2)
+
+    await press('P', { meta: true })
+    await waitForSelector('[data-testid=desktop-command-universe]')
+    await page.keyboard.type('New Grandchild')
+    await click('[data-testid=desktop-command-universe] ::-p-text(Create a thought within the first subthought)')
+
+    await waitForAlert('New Grandchild cannot be executed on 1 of the selected thoughts: "c"')
+    expect(await page.$('[data-testid=desktop-command-universe]')).toBeNull()
+  })
+
   it('should delete all selected thoughts when Backspace is pressed with Select All active', async () => {
     await paste(`
         - A
