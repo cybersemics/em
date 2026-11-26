@@ -12,7 +12,6 @@ import {
 } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import { getAllChildrenAsThoughts, getChildrenRanked } from '../../selectors/getChildren'
-import getContextCount from '../../selectors/getContextCount'
 import getContexts from '../../selectors/getContexts'
 import parentOfThought from '../../selectors/parentOfThought'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
@@ -33,8 +32,8 @@ const numeralToWord = (n: number) => {
 const Tutorial2StepContext2Subthought = () => {
   const tutorialChoice = useSelector(selectTutorialChoice)
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
-  const caseSensitiveValue = useSelector(state => (getContextCount(state, value) > 0 ? value : value.toLowerCase()))
-  const numContexts = useSelector(state => getContextCount(state, caseSensitiveValue))
+  const caseSensitiveValue = useSelector(state => (getContexts(state, value).length > 0 ? value : value.toLowerCase()))
+  const numContexts = useSelector(state => getContexts(state, caseSensitiveValue).length)
   const contextParentThoughts = useSelector(state => {
     const contexts = getContexts(state, caseSensitiveValue)
     return contexts.map(thoughtId => parentOfThought(state, thoughtId))

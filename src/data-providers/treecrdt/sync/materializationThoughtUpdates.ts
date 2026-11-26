@@ -124,13 +124,7 @@ export async function refreshThoughtsFromMaterializationChanges(
       ...thoughts.filter(thought => !ROOT_THOUGHT_IDS.has(thought.id)).map(thought => hashThought(thought.value)),
     ]),
   ]
-  const known: Index<ThoughtId[]> = {}
-  for (const key of keys) {
-    const lexeme = snapshot.lexemeIndex[key]
-    if (lexeme?.unloadedCount) known[key] = [...lexeme.contexts]
-  }
-  for (const thought of thoughts) known[hashThought(thought.value)]?.push(thought.id)
-  const lexemes = await db.getLexemesByIds(keys, known)
+  const lexemes = await db.getLexemesByIds(keys)
   const lexemeIndexUpdates = Object.fromEntries(keys.map((key, i) => [key, lexemes[i] ?? null]))
 
   return {

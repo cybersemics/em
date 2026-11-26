@@ -1,5 +1,6 @@
 import type { Operation } from '@treecrdt/interface'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
+import _ from 'lodash'
 import type Index from '../../@types/IndexType'
 import type Lexeme from '../../@types/Lexeme'
 import type Thought from '../../@types/Thought'
@@ -8,7 +9,6 @@ import type Timestamp from '../../@types/Timestamp'
 import { EM_TOKEN, GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../constants'
 import testFlags from '../../e2e/testFlags'
 import { childrenMapKey } from '../../util/createChildrenMap'
-import equalArrays from '../../util/equalArrays'
 import hashThought from '../../util/hashThought'
 import sleep from '../../util/sleep'
 import type { DataProvider } from '../DataProvider'
@@ -323,8 +323,8 @@ const createClientDataProvider = (
   const pendingKeys = new Set<string>()
   let refreshQueued = false
 
-  /** Reconciles optimistic counts when other occurrences exist outside the loaded tree. */
-  const refreshCounts = async () => {
+  /** Refreshes optimistic lexemes from all live occurrences after local writes settle. */
+  const refreshLexemes = async () => {
     try {
       await waitForTreecrdtWriteBarrier()
     } finally {
@@ -335,35 +335,21 @@ const createClientDataProvider = (
     if (!bridge || !keys.length) return
 
     const before = bridge.getSnapshot().lexemeIndex
-    const known = Object.fromEntries(
-      keys.filter(key => key !== lexemes.favoritesKey).map(key => [key, before[key]?.contexts ?? []]),
-    )
-    const result = await lexemes.getLexemesByIds(client, keys, known)
+    const result = await lexemes.getLexemesByIds(client, keys)
     const current = bridge.getSnapshot().lexemeIndex
     const changes: Index<Lexeme | null> = {}
     keys.forEach((key, i) => {
       const previous = before[key]
       const next = result[i]
-      if (
-        previous !== current[key] ||
-        (previous?.unloadedCount === next?.unloadedCount &&
-          previous?.contexts.length === next?.contexts.length &&
-          (key !== lexemes.favoritesKey || equalArrays(previous?.contexts ?? [], next?.contexts ?? [])))
-      )
-        return
-      // Keep optimistic ordering among the known IDs. Membership is authoritative in SQLite.
-      const live = new Set(next?.contexts)
-      changes[key] =
-        next && previous && key !== lexemes.favoritesKey
-          ? { ...previous, contexts: previous.contexts.filter(id => live.has(id)), unloadedCount: next.unloadedCount }
-          : (next ?? null)
+      // A newer optimistic edit owns its key until its own write settles.
+      if (previous === current[key] && !_.isEqual(previous, next)) changes[key] = next ?? null
     })
     if (Object.keys(changes).length) await bridge.apply({ thoughtIndex: {}, lexemeIndex: changes })
   }
 
   return {
     getLexemeById: async key => (await lexemes.getLexemesByIds(client, [key]))[0],
-    getLexemesByIds: (keys, known) => lexemes.getLexemesByIds(client, keys, known),
+    getLexemesByIds: keys => lexemes.getLexemesByIds(client, keys),
     getThoughtById: id => getThoughtByIdFromClient(client, id),
     getThoughtsByIds: async ids => {
       await waitForTestReplicationDelay()
@@ -378,7 +364,7 @@ const createClientDataProvider = (
         }
         if (pendingKeys.size && !refreshQueued) {
           refreshQueued = true
-          void enqueueMaterializedThoughtsToStoreWork(refreshCounts).catch(err =>
+          void enqueueMaterializedThoughtsToStoreWork(refreshLexemes).catch(err =>
             console.error('TreeCRDT lexeme refresh failed', err),
           )
         }
@@ -421,7 +407,7 @@ const createTreecrdtDataProvider = () => {
   const db = {
     name: 'treecrdt',
     getLexemeById: key => getActiveDb().getLexemeById(key),
-    getLexemesByIds: (keys, known) => getActiveDb().getLexemesByIds(keys, known),
+    getLexemesByIds: keys => getActiveDb().getLexemesByIds(keys),
     getThoughtById: id => getActiveDb().getThoughtById(id),
     getThoughtsByIds: ids => getActiveDb().getThoughtsByIds(ids),
     updateThoughts,

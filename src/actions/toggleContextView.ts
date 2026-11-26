@@ -4,7 +4,7 @@ import Thunk from '../@types/Thunk'
 import settings from '../actions/settings'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE } from '../constants'
 import expandThoughts from '../selectors/expandThoughts'
-import getContextCount from '../selectors/getContextCount'
+import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
 import heldKeysStore from '../stores/heldKeysStore'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -44,7 +44,7 @@ const toggleContextView = (state: State): State => {
       return Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE && cursorValue !== undefined
         ? settings(state, {
             key: 'Tutorial Step',
-            value: (tutorialStep + (getContextCount(state, cursorValue) > 1 ? 1 : 0.1)).toString(),
+            value: (tutorialStep + (getContexts(state, cursorValue).length > 1 ? 1 : 0.1)).toString(),
           })
         : state
     },

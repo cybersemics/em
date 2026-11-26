@@ -13,7 +13,6 @@ import attributeEquals from '../selectors/attributeEquals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, filterAllChildren } from '../selectors/getChildren'
-import getContextCount from '../selectors/getContextCount'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
@@ -246,15 +245,14 @@ const ThoughtAnnotationContainer = React.memo(
       () =>
         moize(
           (state: State, value: string) => {
-            const total = getContextCount(state, value)
+            const contexts = getContexts(state, value)
             return state.showHiddenThoughts
-              ? total
-              : total - getContexts(state, value).filter(id => !isVisibleContext(state, id)).length
+              ? contexts.length
+              : contexts.filter(id => isVisibleContext(state, id)).length
           },
           {
             maxSize: 1,
             transformArgs: ([state, value]) => [
-              getContextCount(state, value),
               getContexts(state, value),
               state.showHiddenThoughts,
               state.thoughts.thoughtIndex,

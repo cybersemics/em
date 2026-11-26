@@ -8,9 +8,8 @@ import Thunk from '../@types/Thunk'
 import { AuthenticateAction } from '../actions/authenticate'
 import { pullActionCreator as pull } from '../actions/pull'
 import { pullAncestorsActionCreator as pullAncestors } from '../actions/pullAncestors'
-import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import db, { thoughtspaceRuntime } from '../data-providers/thoughtspace'
+import db from '../data-providers/thoughtspace'
 import { getChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
@@ -39,7 +38,7 @@ const initialPullQueue = (): Record<ThoughtId, true> => ({
 })
 
 /** Appends all visible paths and their visible children to the pullQueue. */
-const expandPullQueue = (state: State, loadContexts: (key: string) => void): Record<ThoughtId, true> => {
+const expandPullQueue = (state: State): Record<ThoughtId, true> => {
   const { cursor } = state
   const path = cursor || [HOME_TOKEN]
 
@@ -60,10 +59,6 @@ const expandPullQueue = (state: State, loadContexts: (key: string) => void): Rec
     if (!thought) return null
 
     const showContexts = isContextViewActive(state, path)
-    if (showContexts) {
-      const key = hashThought(thought.value)
-      if (state.thoughts.lexemeIndex[key]?.unloadedCount) loadContexts(key)
-    }
 
     // get visible children
     const children = getChildren(state, thoughtId)
@@ -176,39 +171,6 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     }
   }
 
-  const loadingContexts = new Set<string>()
-
-  /** Loads the remaining occurrence IDs for an open Context View and wakes its ancestor pull. */
-  const loadContexts = async (key: string) => {
-    if (loadingContexts.has(key)) return
-    loadingContexts.add(key)
-    const previous = getState().thoughts.lexemeIndex[key]
-    try {
-      await thoughtspaceRuntime.waitForIdle()
-      const lexeme = await db.getLexemeById(key)
-      // A newer edit or pull owns this key. The next queue pass will use that state.
-      if (getState().thoughts.lexemeIndex[key] === previous) {
-        dispatch(
-          updateThoughts({
-            thoughtIndexUpdates: {},
-            lexemeIndexUpdates: { [key]: lexeme ?? null },
-            local: false,
-            remote: false,
-          }),
-        )
-      }
-    } catch (error) {
-      console.error('Could not load Context View occurrences', error)
-    } finally {
-      loadingContexts.delete(key)
-      if (getState().thoughts.lexemeIndex[key] !== previous && getState().thoughts.lexemeIndex[key]?.unloadedCount) {
-        // An edit can supersede this read while a second queue pass still sees it in flight.
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        updatePullQueueDebounced()
-      }
-    }
-  }
-
   /**
    * Adds unloaded contexts based on cursor and state.expanded to the pull queue.
    *
@@ -230,7 +192,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     const state = getState()
 
     // expand pull queue to include visible ancestors, descendants, and search contexts
-    const expandedPullQueue = { ...pullQueue, ...expandPullQueue(state, loadContexts) }
+    const expandedPullQueue = { ...pullQueue, ...expandPullQueue(state) }
 
     // short circuit if no visible thoughts have changed
     if (!forceFlush && !force && equalArrays(Object.keys(expandedPullQueue), Object.keys(lastExpandedPullQueue))) return

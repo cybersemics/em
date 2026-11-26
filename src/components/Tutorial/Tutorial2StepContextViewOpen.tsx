@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
-import getContextCount from '../../selectors/getContextCount'
+import getContexts from '../../selectors/getContexts'
 import isContextViewActive from '../../selectors/isContextViewActive'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import thoughtToPath from '../../selectors/thoughtToPath'
@@ -11,7 +11,7 @@ import thoughtToPath from '../../selectors/thoughtToPath'
 const Tutorial2StepContextViewOpen = () => {
   const tutorialChoice = useSelector(selectTutorialChoice)
   const caseSensitiveValue = useSelector(state =>
-    getContextCount(state, TUTORIAL_CONTEXT[tutorialChoice]) > 0
+    getContexts(state, TUTORIAL_CONTEXT[tutorialChoice]).length > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase(),
   )

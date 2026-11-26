@@ -8,8 +8,7 @@ export interface DataProvider {
   name?: string
   clear: () => Promise<unknown>
   getLexemeById: (key: string) => Promise<Lexeme | undefined>
-  /** Keys present in knownContexts need only their count and their known, live occurrence IDs. */
-  getLexemesByIds: (keys: string[], knownContexts?: Index<ThoughtId[]>) => Promise<(Lexeme | undefined)[]>
+  getLexemesByIds: (keys: string[]) => Promise<(Lexeme | undefined)[]>
   getThoughtById: (id: ThoughtId) => Promise<Thought | undefined>
   getThoughtsByIds: (ids: ThoughtId[]) => Promise<(Thought | undefined)[]>
   /** Resolved value is provider-specific; the treecrdt provider returns `readonly Operation[]` for local tree mutations. */

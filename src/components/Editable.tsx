@@ -41,7 +41,7 @@ import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutosc
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
-import getContextCount from '../selectors/getContextCount'
+import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
@@ -798,11 +798,11 @@ const Editable = ({
           return
         }
 
-        const newNumContext = getContextCount(state, newValue)
+        const newNumContext = getContexts(state, newValue).length
         const isNewValueURL = !!lastURL(newValue)
 
         const contextLengthChange =
-          newNumContext > 0 || newNumContext !== getContextCount(state, oldValueRef.current) - 1
+          newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
         const urlChange = isNewValueURL || isNewValueURL !== !!lastURL(oldValueRef.current)
 
         // A formatting-only edit changes the markup but not the plain text (e.g. applying a font or background color).
