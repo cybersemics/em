@@ -1,7 +1,9 @@
 import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, PanResponderInstance, View, ViewStyle } from 'react-native'
+import { css } from '../../styled-system/css'
 import Direction from '../@types/Direction'
 import Gesture from '../@types/Gesture'
+import { isCapacitor, isSafari, isTouch } from '../browser'
 import { noop } from '../constants'
 import { caretRectViewport } from '../device/selection'
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
@@ -81,6 +83,39 @@ const dirToRad = {
 
 type BiasType = keyof typeof dirToRad
 
+/** Width of the strips along the left and right edges of the screen where a touch can start Mobile Safari's swipe-back and swipe-forward gestures (in pixels). */
+const SWIPE_NAVIGATION_EDGE = 20
+
+/** Mobile Safari navigates back or forward when a swipe starts at the left or right edge of the screen. The app's webview does not. */
+const hasSwipeNavigation = isTouch && isSafari() && !isCapacitor()
+
+/** How far a touch at an edge can move and still count as a tap on the element beneath it (in pixels). */
+const TAP_TOLERANCE = 10
+
+/** Renders a strip along one edge of the screen that disables Mobile Safari's swipe navigation from that edge. See the MultiGesture constructor. */
+const SwipeNavigationEdge = ({ side }: { side: 'left' | 'right' }) => (
+  <div
+    data-swipe-navigation-edge
+    data-testid={`swipe-navigation-edge-${side}`}
+    className={css({
+      position: 'fixed',
+      top: 0,
+      bottom: 0,
+      zIndex: 'swipeNavigationEdge',
+      touchAction: 'none',
+      // Gives the strip a compositing layer of its own, so that Safari keeps its touch-action region fixed to the
+      // screen. Painted into the page's layer instead, the strip rendered on load let 3 of every 10 edge swipes go
+      // back on an iPhone, while the same strip inserted again later stopped every one.
+      transform: 'translateZ(0)',
+      // The touch backend finds the drop target under the finger with elementFromPoint, so during a drag the strip
+      // would hide the drop targets at the edge beneath it, such as the one that removes a dragged favorite. A drag is
+      // a touch already in progress, which Safari's edge swipe cannot claim, so the strip can step aside.
+      pointerEvents: { _dragHold: 'none', _dragInProgress: 'none' },
+    })}
+    style={{ [side]: 0, width: SWIPE_NAVIGATION_EDGE }}
+  />
+)
+
 /** Return the closest gesture based on the angle between two points. See: https://github.com/cybersemics/em/issues/1379. */
 const gesture = (p1: Point, p2: Point, minDistanceSquared: number, bias: BiasType = 'NoBias'): Direction | null => {
   // Instead of calculating the actual distance, calculate distance squared.
@@ -136,6 +171,72 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.leftHanded = !!props.leftHanded
 
     this.reset()
+
+    // Mobile Safari's swipe navigation slides the previous page in over em when a swipe starts at the left edge, and the
+    // next page when one starts at the right edge after going back, whether or not the sidebar is open. em's gestures
+    // start from the same edges, so the native gestures are always disabled
+    // ([#6272](https://github.com/cybersemics/em/issues/6272)).
+    //
+    // Two things disable them, and on an iPhone neither is enough alone. Cancelling the touchstart stops only some
+    // swipes: measured on device, 2 to 9 of every 20 still went back, since Safari can begin the gesture before the
+    // page's handler has run, and a swipe that moves at once wins that race. The edge strips rendered below carry
+    // touch-action: none, which the browser knows before any handler runs, and with both no swipe of 40 went back,
+    // with the sidebar open or closed. Neither stops the touch events, so the gesture and the sidebar swipe still see
+    // the touch. The listener is registered in the capture phase so that no handler can stop it first. A touch that
+    // starts in the right strip does not scroll, which costs the scroll zone its outermost 20px. One case is out of
+    // reach: right after a swipe navigation back to em, Safari shows a snapshot until the page has painted, and a
+    // swipe on the snapshot never reaches the page. See docs/cursor-and-caret.md.
+    //
+    // Cancelling the touchstart also cancels the click the touch would produce, and the strips lie over things that act
+    // on click: on the left the hamburger button and the sidebar's favorites (see fastClick), on the right the sidebar,
+    // which closes on a click near its right edge (see SidebarDrawer). A tap on a strip is therefore replayed when it
+    // lifts, as a click at the same point on the element beneath the strip, so that handlers which read the click's
+    // position see where the finger was.
+    if (hasSwipeNavigation) {
+      // the element beneath an edge touch and where the touch started, while that touch is down
+      let edgeTap: { beneath: Element; x: number; y: number } | null = null
+
+      document.addEventListener(
+        'touchstart',
+        e => {
+          edgeTap = null
+          if (e.touches.length !== 1) return
+          const { clientX: x, clientY: y } = e.touches[0]
+          if (x >= SWIPE_NAVIGATION_EDGE && x <= window.innerWidth - SWIPE_NAVIGATION_EDGE) return
+          e.preventDefault()
+          // the touch lands on a strip, so look past it for the element the user meant to touch
+          const beneath = document.elementsFromPoint(x, y).find(el => !el.hasAttribute('data-swipe-navigation-edge'))
+          if (beneath) {
+            edgeTap = { beneath, x, y }
+          }
+        },
+        { capture: true, passive: false },
+      )
+
+      document.addEventListener(
+        'touchend',
+        e => {
+          if (!edgeTap) return
+          const { beneath, x, y } = edgeTap
+          edgeTap = null
+          const touch = e.changedTouches[0]
+          // a touch that moved is a swipe or a scroll, not a tap
+          if (Math.abs(touch.clientX - x) > TAP_TOLERANCE || Math.abs(touch.clientY - y) > TAP_TOLERANCE) return
+          beneath.dispatchEvent(
+            new MouseEvent('click', { bubbles: true, cancelable: true, view: window, clientX: x, clientY: y }),
+          )
+        },
+        true,
+      )
+
+      document.addEventListener(
+        'touchcancel',
+        () => {
+          edgeTap = null
+        },
+        true,
+      )
+    }
 
     // disable scroll by preventing default touchmove
     // allow enabling/disabling scroll with this.disableScroll
@@ -560,7 +661,14 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         <GestureMenu />
         <TraceGesture eventNodeRef={ref} />
         <ScrollZone leftHanded={this.leftHanded} />
-        <div ref={ref}>{this.props.children}</div>
+        <div ref={ref}>
+          {/* Rendered inside the trace's event node, so that a gesture which starts on a strip is recognized and
+              traced from its first point, and stacked above the sidebar and dialogs so that every edge swipe lands on
+              one. See the constructor. */}
+          {hasSwipeNavigation && <SwipeNavigationEdge side='left' />}
+          {hasSwipeNavigation && <SwipeNavigationEdge side='right' />}
+          {this.props.children}
+        </div>
       </View>
     )
   }
