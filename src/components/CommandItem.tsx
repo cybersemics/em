@@ -161,11 +161,9 @@ const CommandItem: FC<{
         paddingInline: viewType === 'grid' || tableMode ? undefined : paddingSize,
         paddingBlock: viewType === 'grid' ? undefined : paddingSize,
       })}
-      onClick={e => {
-        if (!disabled) {
-          onClick?.(e, command)
-        }
-      }}
+      // A click on a disabled command is passed on too, as Enter is, so that the Command Universe can explain why it cannot
+      // be executed (see alertCommandBlockers). onClick must therefore check canExecute itself.
+      onClick={e => onClick?.(e, command)}
     >
       <Cell
         className={css(

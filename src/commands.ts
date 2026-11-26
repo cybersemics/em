@@ -54,9 +54,12 @@ import ministore from './stores/ministore'
 import commandTransaction from './util/commandTransaction'
 import createId from './util/createId'
 import debugLog from './util/debugLog'
+import ellipsize from './util/ellipsize'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
+import hashPath from './util/hashPath'
 import head from './util/head'
+import headValue from './util/headValue'
 import isAttribute from './util/isAttribute'
 import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
@@ -493,6 +496,64 @@ export const executeCommand = (
   )
 }
 
+/** The most thoughts that alertCommandBlockers names before it counts the rest. */
+const MAX_NAMED_BLOCKERS = 3
+
+/** Names a thought in an alert: its value quoted and ellipsized, or `an empty thought` when it has no value to quote. */
+const thoughtLabel = (value: string | undefined) => (value ? `"${ellipsize(value)}"` : 'an empty thought')
+
+/**
+ * Alerts the thoughts that a command which acts on thoughts cannot be executed on. On a multiselect it names the selected thoughts that block it, e.g. `New Grandchild cannot be executed on 1 of the selected thoughts: "c"`. A command must be executable on every selected thought to execute on a multiselect, and its canExecute judges the selection as a whole, so each selected thought is judged again as if it were the only one selected. A requirement that only the selection as a whole fails, such as needing two or more selected thoughts, is not blocked by any thought in particular and raises no alert. Without a multiselect it names the cursor thought, e.g. `New Grandchild cannot be executed on "a"`. An empty thought has no value to quote, so it is called `an empty thought`, and several empty thoughts are counted after the named ones, e.g. `…3 of the selected thoughts: "a", 2 empty thoughts`. At most three thoughts are named and the rest are counted, e.g. `…5 of the selected thoughts: "a", "b", "c", and 2 other thoughts`, so that a long selection does not overflow the alert. Returns true if it alerted.
+ */
+export const alertCommandBlockers = (
+  command: Command,
+  {
+    store: commandStore,
+  }: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    store: Store<State, any>
+  },
+): boolean => {
+  const state = commandStore.getState()
+  if (!command.canExecute || !command.multicursor) return false
+
+  if (!hasMulticursor(state)) {
+    if (!state.cursor || command.canExecute(state)) return false
+    commandStore.dispatch(
+      alert(`${command.label} cannot be executed on ${thoughtLabel(headValue(state, state.cursor))}`, {
+        alertType: AlertType.MulticursorError,
+      }),
+    )
+    return true
+  }
+
+  const filter = typeof command.multicursor === 'boolean' ? undefined : command.multicursor.filter
+  const paths = filterCursors(state, documentSort(state, Object.values(state.multicursors)), filter)
+  const blockers = paths.filter(
+    path => !command.canExecute!({ ...state, cursor: path, multicursors: { [hashPath(path)]: path } }),
+  )
+  if (blockers.length === 0) return false
+
+  const named = blockers.map(path => headValue(state, path)).filter(value => value)
+  const emptyCount = blockers.length - named.length
+  const labels = [
+    ...named.map(thoughtLabel),
+    ...(emptyCount === 1 ? [thoughtLabel('')] : emptyCount > 1 ? [`${emptyCount} empty thoughts`] : []),
+  ]
+  // Name at most MAX_NAMED_BLOCKERS thoughts and count the rest, so that a long selection does not overflow the alert
+  const otherCount = blockers.length - MAX_NAMED_BLOCKERS
+  const values =
+    labels.length > MAX_NAMED_BLOCKERS
+      ? `${labels.slice(0, MAX_NAMED_BLOCKERS).join(', ')}, and ${otherCount} other ${otherCount === 1 ? 'thought' : 'thoughts'}`
+      : labels.join(', ')
+  commandStore.dispatch(
+    alert(`${command.label} cannot be executed on ${blockers.length} of the selected thoughts: ${values}`, {
+      alertType: AlertType.MulticursorError,
+    }),
+  )
+  return true
+}
+
 /** Execute command. Defaults to global store and keyboard shortcuts. */
 export const executeCommandWithMulticursor = (
   commandArg: Command,
@@ -548,7 +609,11 @@ export const executeCommandWithMulticursor = (
       event,
       keyboardIndex,
     })
-    if (result === false) return
+    if (result === false) {
+      // A gesture is an unambiguous invocation, so name the cursor thought that blocks it rather than refusing silently
+      if (type === 'gesture') alertCommandBlockers(command, { store: commandStore })
+      return
+    }
     reportSuccess()
     return result
   }
@@ -561,9 +626,12 @@ export const executeCommandWithMulticursor = (
   // For each multicursor, place the cursor on the path and execute the command by calling executeCommand.
   const filteredPaths = filterCursors(state, paths, multicursor.filter)
 
-  // Exit early if the command cannot execute on any of the filtered paths
+  // Exit early if the command cannot execute on any of the filtered paths, naming the selected thoughts that block it
   const canExecute = filteredPaths.every(path => !command.canExecute || command.canExecute({ ...state, cursor: path }))
-  if (!canExecute) return
+  if (!canExecute) {
+    alertCommandBlockers(command, { store: commandStore })
+    return
+  }
 
   /** Whether the command is active on the thought alone, i.e. in the state that exec will see after setCursor clears the multicursors. */
   const isActiveOnPath = (path: Path) => !!command.isActive?.({ ...state, cursor: path, multicursors: {} })
