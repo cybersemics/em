@@ -47,7 +47,8 @@ const useDragHold = ({
       const multiselectModifier = !!e && (e.shiftKey || isCommandKey(e))
 
       // touchcancel means the system claimed the touch, e.g. when the user swipes up from the bottom edge of the screen to switch apps on iOS. The page sees a touchstart with no touchmove, so the press outlasts the long press timer. A cancelled press is not a deliberate release, so it must not activate the multiselect, which would open the Command Center.
-      const cancelled = e?.type === 'touchcancel'
+      // On desktop a context menu ends the press in the same way, since the menu takes the mouseup (#6406).
+      const cancelled = e?.type === 'touchcancel' || e?.type === 'contextmenu'
 
       dispatch((dispatch, getState) => {
         const state = getState()

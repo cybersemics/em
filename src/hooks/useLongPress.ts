@@ -194,6 +194,15 @@ const useLongPress = (
   // Web passes React.MouseEvent
   const onContextMenu = useCallback(
     (e: React.MouseEvent | React.PointerEvent) => {
+      // On desktop the native context menu takes the mouseup that would end the press, so end it here. Otherwise
+      // DragHold outlives the click, and the caret is no longer placed on new thoughts. A right-click never starts a
+      // press, but a Ctrl+click on macOS is a left click that opens the menu, so it arrives here right after
+      // mousedown, before the long press delay elapses (#6406).
+      if (!isTouch) {
+        stop(e)
+        return
+      }
+
       // On Android, double tap activation of context menu produces a pointerType of `mouse` whereas long press produces `touch`
       if ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch') {
         const state = store.getState()
@@ -212,7 +221,7 @@ const useLongPress = (
         dispatch(keyboardOpen({ value: false }))
       }
     },
-    [dispatch],
+    [dispatch, stop],
   )
 
   const props: LongPressProps = useMemo(
