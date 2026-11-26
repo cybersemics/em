@@ -3,14 +3,13 @@ import type Index from '../../../@types/IndexType'
 import type Lexeme from '../../../@types/Lexeme'
 import type Thought from '../../../@types/Thought'
 import type ThoughtId from '../../../@types/ThoughtId'
-import type Timestamp from '../../../@types/Timestamp'
 import { ABSOLUTE_TOKEN, EM_TOKEN, GLOBAL_ROOT_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../../../constants'
 import hashThought from '../../../util/hashThought'
 import type { DataProvider } from '../../DataProvider'
 import type { ThoughtspaceMaterializationSnapshot } from '../../thoughtspace'
 
 /** Data-provider operations needed to persist materialized TreeCRDT changes. */
-export type MaterializationStore = Pick<DataProvider, 'getLexemeById' | 'getThoughtById' | 'updateThoughts'>
+export type MaterializationStore = Pick<DataProvider, 'getLexemesByIds' | 'getThoughtById'>
 
 export type MaterializationThoughtRefresh = {
   /** Thought ids removed from the tree. */
@@ -22,70 +21,6 @@ export type MaterializationThoughtRefresh = {
 }
 
 const ROOT_THOUGHT_IDS = new Set<string>([GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID, HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN])
-
-/** True when a thought should be represented as a Lexeme context. */
-const isLexemeContextThought = (thought: Thought | undefined): thought is Thought =>
-  !!thought && !ROOT_THOUGHT_IDS.has(thought.id)
-
-/** Returns the latest timestamp while preserving the branded Timestamp type. */
-const maxTimestamp = (...values: (Timestamp | number | undefined)[]): Timestamp =>
-  Math.max(...values.map(value => value || 0)) as Timestamp
-
-/** Gets the latest lexeme from already staged updates, app state, or the local derived lexeme table. */
-const getCurrentLexeme = async (
-  key: string,
-  updates: Index<Lexeme | null>,
-  snapshot: ThoughtspaceMaterializationSnapshot,
-  db: MaterializationStore,
-): Promise<Lexeme | undefined> => {
-  if (updates[key] === null) return undefined
-  return updates[key] || snapshot.lexemeIndex[key] || (await db.getLexemeById(key))
-}
-
-/** Adds the thought id to the locally derived lexeme for the thought value. */
-const addLexemeContext = async (
-  updates: Index<Lexeme | null>,
-  snapshot: ThoughtspaceMaterializationSnapshot,
-  db: MaterializationStore,
-  thought: Thought,
-): Promise<void> => {
-  if (!isLexemeContextThought(thought)) return
-
-  const key = hashThought(thought.value)
-  const lexeme = await getCurrentLexeme(key, updates, snapshot, db)
-  const contexts = [...(lexeme?.contexts || []).filter(id => id !== thought.id), thought.id]
-  updates[key] = {
-    contexts,
-    created: lexeme?.created || thought.created,
-    lastUpdated: maxTimestamp(lexeme?.lastUpdated, thought.lastUpdated),
-    updatedBy: thought.updatedBy || lexeme?.updatedBy || '',
-  }
-}
-
-/** Removes the thought id from the locally derived lexeme for the previous thought value. */
-const removeLexemeContext = async (
-  updates: Index<Lexeme | null>,
-  snapshot: ThoughtspaceMaterializationSnapshot,
-  db: MaterializationStore,
-  thought: Thought | undefined,
-): Promise<void> => {
-  if (!isLexemeContextThought(thought)) return
-
-  const key = hashThought(thought.value)
-  const lexeme = await getCurrentLexeme(key, updates, snapshot, db)
-  if (!lexeme) return
-
-  const contexts = lexeme.contexts.filter(id => id !== thought.id)
-  updates[key] =
-    contexts.length === 0
-      ? null
-      : {
-          ...lexeme,
-          contexts,
-          lastUpdated: maxTimestamp(lexeme.lastUpdated, thought.lastUpdated),
-          updatedBy: thought.updatedBy || lexeme.updatedBy,
-        }
-}
 
 /** Applies TreeCRDT sibling order to em's temporary rank projection for one parent. */
 const addTreeOrderRankProjection = async (
@@ -160,18 +95,12 @@ export async function refreshThoughtsFromMaterializationChanges(
 
   const thoughts: Thought[] = []
   const thoughtIndexUpdates: Index<Thought> = {}
-  const lexemeIndexUpdates: Index<Lexeme | null> = {}
 
   for (const id of touched) {
     const thought = await db.getThoughtById(id)
     if (!thought) continue
     thoughtIndexUpdates[thought.id] = thought
     orderParents.add(thought.parentId)
-    const previous = snapshot.thoughtIndex[id]
-    if (previous && previous.value !== thought.value) {
-      await removeLexemeContext(lexemeIndexUpdates, snapshot, db, previous)
-    }
-    await addLexemeContext(lexemeIndexUpdates, snapshot, db, thought)
   }
 
   // Current em selectors still sort by numeric rank. For remote/order-only TreeCRDT changes, derive a local rank
@@ -187,9 +116,16 @@ export async function refreshThoughtsFromMaterializationChanges(
 
   thoughts.push(...Object.values(thoughtIndexUpdates))
 
-  for (const id of deleted) {
-    await removeLexemeContext(lexemeIndexUpdates, snapshot, db, snapshot.thoughtIndex[id])
-  }
+  // An ancestor move can change the membership of descendants absent from the event.
+  // An unloaded occurrence can also change value without a previous payload in the cache.
+  const keys = [
+    ...new Set([
+      ...Object.keys(snapshot.lexemeIndex),
+      ...thoughts.filter(thought => !ROOT_THOUGHT_IDS.has(thought.id)).map(thought => hashThought(thought.value)),
+    ]),
+  ]
+  const lexemes = await db.getLexemesByIds(keys)
+  const lexemeIndexUpdates = Object.fromEntries(keys.map((key, i) => [key, lexemes[i] ?? null]))
 
   return {
     deletedIds: [...deleted],

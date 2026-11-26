@@ -1,5 +1,6 @@
 export type ThoughtPayload = {
   value: string
+  valueHash?: string
   created: number
   lastUpdated: number
   updatedBy: string
