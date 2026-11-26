@@ -89,7 +89,7 @@ const SWIPE_NAVIGATION_EDGE = 20
 /** Mobile Safari navigates back or forward when a swipe starts at the left or right edge of the screen. The app's webview does not. */
 const hasSwipeNavigation = isTouch && isSafari() && !isCapacitor()
 
-/** How far a touch at an edge can move and still count as a tap on the control it started on (in pixels). */
+/** How far a touch at an edge can move and still count as a tap on the element beneath it (in pixels). */
 const TAP_TOLERANCE = 10
 
 /** Renders a strip along one edge of the screen that disables Mobile Safari's swipe navigation from that edge. See the MultiGesture constructor. */
@@ -187,12 +187,14 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // reach: right after a swipe navigation back to em, Safari shows a snapshot until the page has painted, and a
     // swipe on the snapshot never reaches the page. See docs/cursor-and-caret.md.
     //
-    // Cancelling the touchstart also cancels the click the touch would produce, and the left strip lies over the
-    // hamburger button and the sidebar's favorites, which reach the edge and act on click (see fastClick). A tap on
-    // the control beneath a strip is therefore clicked again when it lifts.
+    // Cancelling the touchstart also cancels the click the touch would produce, and the strips lie over things that act
+    // on click: on the left the hamburger button and the sidebar's favorites (see fastClick), on the right the sidebar,
+    // which closes on a click near its right edge (see SidebarDrawer). A tap on a strip is therefore replayed when it
+    // lifts, as a click at the same point on the element beneath the strip, so that handlers which read the click's
+    // position see where the finger was.
     if (hasSwipeNavigation) {
-      // the control beneath an edge touch and where the touch started, while that touch is down
-      let edgeTap: { control: HTMLElement; x: number; y: number } | null = null
+      // the element beneath an edge touch and where the touch started, while that touch is down
+      let edgeTap: { beneath: Element; x: number; y: number } | null = null
 
       document.addEventListener(
         'touchstart',
@@ -204,9 +206,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           e.preventDefault()
           // the touch lands on a strip, so look past it for the element the user meant to touch
           const beneath = document.elementsFromPoint(x, y).find(el => !el.hasAttribute('data-swipe-navigation-edge'))
-          const control = beneath?.closest<HTMLElement>('button, a, [role="button"]')
-          if (control) {
-            edgeTap = { control, x, y }
+          if (beneath) {
+            edgeTap = { beneath, x, y }
           }
         },
         { capture: true, passive: false },
@@ -216,12 +217,14 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         'touchend',
         e => {
           if (!edgeTap) return
-          const { control, x, y } = edgeTap
+          const { beneath, x, y } = edgeTap
           edgeTap = null
           const touch = e.changedTouches[0]
           // a touch that moved is a swipe or a scroll, not a tap
           if (Math.abs(touch.clientX - x) > TAP_TOLERANCE || Math.abs(touch.clientY - y) > TAP_TOLERANCE) return
-          control.click()
+          beneath.dispatchEvent(
+            new MouseEvent('click', { bubbles: true, cancelable: true, view: window, clientX: x, clientY: y }),
+          )
         },
         true,
       )
