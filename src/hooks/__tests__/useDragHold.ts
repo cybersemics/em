@@ -9,9 +9,9 @@ import dispatch from '../../test-helpers/dispatch'
 import getBulletByContext from '../../test-helpers/queries/getBulletByContext'
 
 /*
-  On desktop a native context menu takes the mouseup that would end a press on a bullet. On macOS a Ctrl+click is a left
-  click that opens the menu, so before #6406 it started a long press that nothing ended: the bullet stayed highlighted,
-  and the caret was no longer placed on new thoughts. JSDOM runs as desktop.
+  On desktop a native context menu takes the mouseup that would end a press on a bullet, so before #6406 a press that
+  opened one was never ended: the bullet stayed highlighted, and the caret was no longer placed on new thoughts. JSDOM
+  runs as desktop. Ctrl+click on macOS is covered in useDragHold.mac.ts.
 */
 
 beforeEach(async () => {
@@ -22,7 +22,7 @@ afterEach(async () => {
   await cleanupTestApp()
 })
 
-it('a Ctrl+click on a bullet does not activate drag and drop', async () => {
+it('a left click on a bullet that opens a context menu does not activate drag and drop', async () => {
   await dispatch(importText({ text: '- One' }))
   await act(vi.runOnlyPendingTimersAsync)
   const bullet = getBulletByContext(['One'])
