@@ -12,12 +12,9 @@ const underline = {
   systemMenu: 'Edit',
   description: 'Underlines the current thought or selected text.',
   descriptionInverse: 'Removes the underline from the current thought or selected text.',
+  multicursor: { toggle: true },
   svg: Icon,
   keyboard: { key: 'u', meta: true },
-  multicursor: {
-    preventSetCursor: true,
-    toggle: true,
-  },
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },

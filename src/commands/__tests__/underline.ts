@@ -21,7 +21,7 @@ const keyDown = async (key: string, { meta }: { meta?: boolean } = {}) => {
 
 describe('multicursor', () => {
   // https://github.com/cybersemics/em/issues/6398
-  it.skip('keeps the cursor where it was after underlining the selected thoughts', async () => {
+  it('keeps the cursor where it was after underlining the selected thoughts', async () => {
     act(() => {
       store.dispatch([
         importText({
