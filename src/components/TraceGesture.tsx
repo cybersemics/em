@@ -84,17 +84,17 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad._ctx.shadowColor = colors.highlight
     signaturePad._ctx.shadowOffsetX = 0
     signaturePad._ctx.shadowOffsetY = 0
-    signaturePad._ctx.shadowBlur = GESTURE_GLOW_BLUR
+    // shadowBlur is in canvas pixels and ignores the transform, so the glow is multiplied by the canvas's current scale.
+    // SignaturePad's scaleCanvas sets that scale to the device pixel ratio.
+    signaturePad._ctx.shadowBlur = GESTURE_GLOW_BLUR * signaturePad._ctx.getTransform().a
   }, [colors])
 
-  // Resize the signature pad when the screen orientation changes.
+  // Resize the canvas when the viewport changes, e.g. on rotation or when the Safari toolbar collapses.
+  // SignaturePad's handleResize must be the only code that sizes the canvas. It sizes it at the device pixel ratio,
+  // and a second writer at another ratio would change how wide the glow renders from one stroke to the next.
+  // SignaturePad is given both width and height, so it does not resize on its own window resize listener.
   useEffect(() => {
-    if (!signaturePadRef.current) return
-
-    const signaturePad = signaturePadRef.current['signaturePad'] as SignaturePadOverride
-
-    signaturePad.canvas.width = innerWidth
-    signaturePad.canvas.height = innerHeight
+    signaturePadRef.current?.handleResize()
   }, [innerHeight, innerWidth])
 
   /** Disable signaturePad’s preventDefault on move events since newer version of signaturePad breaks iOS native text-selection drag feature. See issue: https://github.com/cybersemics/em/issues/3483. */
@@ -154,11 +154,6 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
     const eventNode = eventNodeRef?.current
     const signaturePad = signaturePadRef.current['signaturePad'] as SignaturePadOverride
-
-    // update canvas dimensions, otherwise the initial height on load is too large for some reason
-    // https://github.com/szimek/signature_pad/issues/118#issuecomment-146207233
-    signaturePad.canvas.width = signaturePad.canvas.offsetWidth
-    signaturePad.canvas.height = signaturePad.canvas.offsetHeight
 
     /** Forwards the touchstart event of the first finger to the signaturePad if in the gesture zone. */
     const onTouchStart = (e: TouchEvent) => {
@@ -247,7 +242,10 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
         style={{ WebkitUserSelect: 'none' }}
       >
         <SignaturePad
+          width={innerWidth}
           height={innerHeight}
+          // The canvas backing store is scaled by the device pixel ratio, so its CSS size must be set explicitly.
+          canvasProps={{ style: { width: `${innerWidth}px`, height: `${innerHeight}px` } }}
           ref={signaturePadRef}
           options={{
             penColor: colors.fg,

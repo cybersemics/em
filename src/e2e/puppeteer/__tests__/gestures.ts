@@ -447,3 +447,72 @@ describe('gesture menu', () => {
     expect(selected).toBe('Hello')
   })
 })
+
+describe('gesture trace', () => {
+  /** Waits until the gesture trace has ink in the column at x, in CSS pixels. */
+  const waitForTraceAt = (x: number) =>
+    page.waitForFunction(
+      // The column is read in canvas pixels, which differ from CSS pixels by the canvas's scale.
+      (x: number) => {
+        const canvas = document.querySelector('[data-testid=gesture-trace] canvas') as HTMLCanvasElement
+        const scale = canvas.width / canvas.clientWidth
+        const column = canvas.getContext('2d')!.getImageData(Math.round(x * scale), 0, 1, canvas.height).data
+        return column.some((value, i) => i % 4 === 3 && value > 0)
+      },
+      {},
+      x,
+    )
+
+  /**
+   * Measures how thick the gesture trace is across a horizontal stroke, in CSS pixels.
+   * Counts the pixels of the canvas column at x that are more than 10% opaque, within 40px of y. Dividing by the
+   * canvas's scale lets canvases drawn at different device pixel ratios compare in CSS pixels.
+   */
+  const getTraceThickness = (x: number, y: number) =>
+    page.$eval(
+      '[data-testid=gesture-trace] canvas',
+      (element, x, y) => {
+        const canvas = element as HTMLCanvasElement
+        const scale = canvas.width / canvas.clientWidth
+        const top = Math.round((y - 40) * scale)
+        const height = Math.round(80 * scale)
+        const pixels = canvas.getContext('2d')!.getImageData(Math.round(x * scale), top, 1, height).data
+        const opaque = pixels.filter((value, i) => i % 4 === 3 && value > 25).length
+        return opaque / scale
+      },
+      x,
+      y,
+    )
+
+  // https://github.com/cybersemics/em/issues/3880
+  it('keeps the same glow width after the screen rotates', async () => {
+    // The glow's blur is measured in canvas pixels, so on a device pixel ratio above 1 the glow only keeps its width in
+    // CSS pixels if every canvas size uses that same ratio. Most of the trace's thickness is glow, so a canvas resized
+    // at another ratio shows up as a thinner trace.
+    const portraitStroke = await startGesture({ xStart: 100, yStart: 200 })
+    await portraitStroke.move('r', { segmentLength: 150 })
+    await waitForTraceAt(175)
+    const portraitThickness = await getTraceThickness(175, 200)
+    await portraitStroke.end()
+
+    // Wait for the trace canvas to cover the new window width at the device pixel ratio before drawing again.
+    await page.setViewport(KnownDevices['iPhone 15 Pro landscape'].viewport)
+    await waitUntil(() => {
+      const canvas = document.querySelector('[data-testid=gesture-trace] canvas') as HTMLCanvasElement
+      return (
+        canvas.clientWidth === window.innerWidth &&
+        canvas.width === Math.round(canvas.clientWidth * window.devicePixelRatio)
+      )
+    })
+
+    const landscapeStroke = await startGesture({ xStart: 100, yStart: 200 })
+    await landscapeStroke.move('r', { segmentLength: 150 })
+    await waitForTraceAt(175)
+    const landscapeThickness = await getTraceThickness(175, 200)
+    await landscapeStroke.end()
+
+    // Allow 2px for differences in stroke speed and anti-aliasing between the two strokes.
+    expect(landscapeThickness).toBeGreaterThanOrEqual(portraitThickness - 2)
+    expect(landscapeThickness).toBeLessThanOrEqual(portraitThickness + 2)
+  })
+})
