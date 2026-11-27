@@ -84,7 +84,7 @@ describe('Gestures', () => {
   })
 
   // https://github.com/cybersemics/em/issues/6313
-  it.skip('does not run a command when a gesture starts on the caret in a note', async () => {
+  it('does not run a command when a gesture starts on the caret in a note', async () => {
     const text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit'
     // The note slides into place after the paste, and a tap aimed at it mid-slide lands on the parent thought.
     await disableTransitions()
