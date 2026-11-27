@@ -149,6 +149,9 @@ interface Command {
   /** The top level menu of the desktop app's system menu bar that lists the command, with its keyboard shortcut as the accelerator. A command without one is not in the system menu. See desktop/menu.json, which is generated from it with `yarn tauri:menu`. */
   systemMenu?: SystemMenu
 
+  /** The native Edit item that the command's item takes the place of, at the top of the Edit menu. While a text field has the focus, choosing the item performs the text field's own undo or redo, as the native item would, since a text field keeps its own undo history. */
+  systemMenuRole?: 'undo' | 'redo'
+
   /** When true, hides the title for this command when shown in panels. */
   hideTitleInPanels?: boolean
 

@@ -278,7 +278,7 @@ const FindBarOpen = () => {
   }, [])
 
   // The global beforeinput handler would treat a space typed in the query as Space to Indent when the cursor is on an
-  // empty thought, and native undo and redo as the thoughtspace's own.
+  // empty thought.
   useEffect(() => {
     const input = inputRef.current
     if (!input) return

@@ -131,7 +131,7 @@ it('gives a shortcut no accelerator on a platform where a native item already ha
   const commands: Command[] = [
     { ...inert, id: 'home', label: 'Home', systemMenu: 'Cursor', keyboard: { key: 'h', meta: true, alt: true } },
     { ...inert, id: 'pin', label: 'Pin', systemMenu: 'View', keyboard: { key: 'p', meta: true, alt: true } },
-    { ...inert, id: 'redo', label: 'Redo', systemMenu: 'Edit', keyboard: { key: 'y', meta: true } },
+    { ...inert, id: 'copyCursor', label: 'Copy Cursor', systemMenu: 'Edit', keyboard: { key: 'c', meta: true } },
   ]
 
   expect(systemMenuDefinition(commands)).toEqual({
@@ -140,8 +140,62 @@ it('gives a shortcut no accelerator on a platform where a native item already ha
     View: [
       { id: 'pin', label: 'Pin', accelerator: { macos: 'Cmd+Alt+P', windowsLinux: 'Ctrl+Alt+P' }, checkable: false },
     ],
-    // Redo has Ctrl + Y on Windows.
-    Edit: [{ id: 'redo', label: 'Redo', accelerator: { macos: 'Cmd+Y' }, checkable: false }],
+    // Copy has Command + C on macOS and Ctrl + C on Windows.
+    Edit: [{ id: 'copyCursor', label: 'Copy Cursor', accelerator: undefined, checkable: false }],
+  })
+})
+
+// https://github.com/cybersemics/em/issues/6214
+it('lists the items that take the place of a native item first, in the order of the native items, with their role', () => {
+  const commands: Command[] = [
+    {
+      ...inert,
+      id: 'archive',
+      label: 'Archive',
+      systemMenu: 'Edit',
+      keyboard: { key: 'Backspace', meta: true, shift: true },
+    },
+    {
+      ...inert,
+      id: 'redo',
+      label: 'Redo',
+      systemMenu: 'Edit',
+      systemMenuRole: 'redo',
+      keyboard: { key: 'z', meta: true, shift: true },
+    },
+    {
+      ...inert,
+      id: 'undo',
+      label: 'Undo',
+      systemMenu: 'Edit',
+      systemMenuRole: 'undo',
+      keyboard: { key: 'z', meta: true },
+    },
+  ]
+
+  expect(systemMenuDefinition(commands)).toEqual({
+    Edit: [
+      {
+        id: 'undo',
+        label: 'Undo',
+        role: 'undo',
+        accelerator: { macos: 'Cmd+Z', windowsLinux: 'Ctrl+Z' },
+        checkable: false,
+      },
+      {
+        id: 'redo',
+        label: 'Redo',
+        role: 'redo',
+        accelerator: { macos: 'Cmd+Shift+Z', windowsLinux: 'Ctrl+Shift+Z' },
+        checkable: false,
+      },
+      {
+        id: 'archive',
+        label: 'Archive',
+        accelerator: { macos: 'Cmd+Shift+Backspace', windowsLinux: 'Ctrl+Shift+Backspace' },
+        checkable: false,
+      },
+    ],
   })
 })
 

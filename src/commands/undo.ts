@@ -21,6 +21,8 @@ const undoCommand = {
   keyboard: { key: 'z', meta: true },
   // Undo moves through the undo history rather than making a new undoable change, so Repeat should skip it and repeat the last edit instead.
   repeatable: false,
+  systemMenu: 'Edit',
+  systemMenuRole: 'undo',
   svg: UndoIcon,
   exec: (dispatch, getState) => {
     if (!isUndoEnabled(getState())) return

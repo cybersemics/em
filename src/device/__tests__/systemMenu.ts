@@ -1,6 +1,7 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { executeCommand } from '../../commands'
+import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import pinCommand from '../../commands/pin'
 import toggleTableViewCommand from '../../commands/toggleTableView'
 import { HOME_TOKEN } from '../../constants'
@@ -181,4 +182,111 @@ it('sends the state of a chosen check item again, even when its command did not 
   await vi.runAllTimersAsync()
 
   expect(mockUpdates.flat()).toEqual([{ id: 'toggleTableView', enabled: false, text: 'Table View', checked: false }])
+})
+
+// https://github.com/cybersemics/em/issues/6214
+it('enables Undo and Redo while em has a change to undo and redo, and undoes and redoes it when chosen', async () => {
+  systemMenu.init()
+  await vi.runAllTimersAsync()
+
+  expect(menuItem('undo')).toEqual({ enabled: false, text: 'Undo', checked: false })
+  expect(menuItem('redo')).toEqual({ enabled: false, text: 'Redo', checked: false })
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+      `,
+    }),
+    setCursor(['a']),
+  ])
+  executeCommand(moveThoughtDownCommand, { store })
+  await vi.runAllTimersAsync()
+
+  expect(menuItem('undo')).toEqual({ enabled: true, text: 'Undo', checked: false })
+
+  chooseMenuItem('undo')
+  await vi.runAllTimersAsync()
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+  - b`)
+  expect(menuItem('redo')).toEqual({ enabled: true, text: 'Redo', checked: false })
+
+  chooseMenuItem('redo')
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - b
+  - a`)
+})
+
+// https://github.com/cybersemics/em/issues/6214
+it('undoes and redoes the text field that has the focus instead of the thoughtspace', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+      `,
+    }),
+    setCursor(['a']),
+  ])
+  executeCommand(moveThoughtDownCommand, { store })
+  systemMenu.init()
+  const execCommand = vi.spyOn(document, 'execCommand').mockReturnValue(true)
+  const input = document.createElement('input')
+  document.body.appendChild(input)
+
+  input.focus()
+  await vi.runAllTimersAsync()
+
+  chooseMenuItem('undo')
+  chooseMenuItem('redo')
+
+  expect(execCommand.mock.calls).toEqual([['undo'], ['redo']])
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - b
+  - a`)
+
+  input.blur()
+  await vi.runAllTimersAsync()
+
+  expect(menuItem('redo')).toEqual({ enabled: false, text: 'Redo', checked: false })
+
+  input.remove()
+  execCommand.mockRestore()
+})
+
+// https://github.com/cybersemics/em/issues/6214
+it('enables Undo and Redo in a text field only while it has an edit of its own to undo and redo', async () => {
+  store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
+  systemMenu.init()
+  // The webview has an edit to undo and redo, such as the typing of a thought.
+  const queryCommandEnabled = vi.spyOn(document, 'queryCommandEnabled').mockReturnValue(true)
+  const input = document.createElement('input')
+  document.body.appendChild(input)
+
+  input.focus()
+  await vi.runAllTimersAsync()
+
+  expect(menuItem('undo')).toEqual({ enabled: false, text: 'Undo', checked: false })
+  expect(menuItem('redo')).toEqual({ enabled: false, text: 'Redo', checked: false })
+
+  input.dispatchEvent(new InputEvent('input', { inputType: 'insertText', data: 'x', bubbles: true }))
+  await vi.runAllTimersAsync()
+
+  expect(menuItem('undo')).toEqual({ enabled: true, text: 'Undo', checked: false })
+  expect(menuItem('redo')).toEqual({ enabled: false, text: 'Redo', checked: false })
+
+  // The webview has undone the edit when it fires the input event.
+  queryCommandEnabled.mockImplementation(command => command === 'redo')
+  input.dispatchEvent(new InputEvent('input', { inputType: 'historyUndo', bubbles: true }))
+  await vi.runAllTimersAsync()
+
+  expect(menuItem('undo')).toEqual({ enabled: false, text: 'Undo', checked: false })
+  expect(menuItem('redo')).toEqual({ enabled: true, text: 'Redo', checked: false })
+
+  input.remove()
+  queryCommandEnabled.mockRestore()
 })

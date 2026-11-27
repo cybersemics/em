@@ -7,6 +7,7 @@ import State from '../@types/State'
 import { commandById, executeCommandWithMulticursor, globalCommands } from '../commands'
 import store from '../stores/app'
 import { registerReset } from '../stores/ministore'
+import isTextField from '../util/isTextField'
 import systemMenuDefinition from '../util/systemMenuDefinition'
 
 /** How often, at most, the menu items are brought in step with the state, in ms. Every action notifies the store's subscribers, and a menu that lags by a fraction of a second is not noticeable. */
@@ -44,7 +45,29 @@ const canExecuteFromMenu = (state: State, command: Command): boolean =>
   (!state.showModal || !!command.allowExecuteFromModal) &&
   (!command.canExecute || command.canExecute(state))
 
-/** Sends the states of the menu items that changed since they were last sent. Throttled, since it runs on every action. */
+/** The text fields that have been edited, and those that have had an edit undone, by the user. */
+const edited = new WeakSet<EventTarget>()
+const undone = new WeakSet<EventTarget>()
+
+/**
+ * Whether the item of a command that takes the place of a native Edit item, such as Undo, performs the text field's own
+ * edit instead of the command: while a text field has the focus. A text field keeps its own undo history, and em leaves
+ * its shortcuts to the browser there, so the shortcut reaches the item.
+ */
+const isTextFieldEdit = (command: Command): command is Command & { systemMenuRole: 'undo' | 'redo' } =>
+  !!command.systemMenuRole && isTextField(document.activeElement)
+
+/**
+ * Whether the text field that has the focus has an edit to undo or redo. The webview keeps one undo history for the
+ * whole page, which `queryCommandEnabled` reports, so it also holds the typing of thoughts. A text field that the user
+ * has not edited, or has not undone an edit in, has nothing of its own to undo or redo.
+ */
+const canEditTextField = (role: 'undo' | 'redo'): boolean =>
+  !!document.activeElement &&
+  (role === 'undo' ? edited : undone).has(document.activeElement) &&
+  document.queryCommandEnabled(role)
+
+/** Sends the states of the menu items that changed since they were last sent. Throttled, since it runs on every action, every change of focus, and every edit of a text field. */
 const update = _.throttle(() => {
   const state = store.getState()
   const changed = menuItems()
@@ -53,7 +76,9 @@ const update = _.throttle(() => {
       const isActive = !!command.isActive?.(state)
       return {
         id,
-        enabled: canExecuteFromMenu(state, command),
+        enabled: isTextFieldEdit(command)
+          ? canEditTextField(command.systemMenuRole)
+          : canExecuteFromMenu(state, command),
         text: isActive && command.labelInverse ? command.labelInverse : command.label,
         checked: checkable && isActive,
       }
@@ -71,6 +96,20 @@ const update = _.throttle(() => {
   })
 }, UPDATE_THROTTLE)
 
+/** Records the edits of a text field, which decide whether its Undo and Redo are enabled. */
+const onInput = (e: Event) => {
+  if (!e.target || !isTextField(e.target)) return
+  const { inputType } = e as InputEvent
+  if (inputType === 'historyUndo') {
+    undone.add(e.target)
+  } else if (inputType !== 'historyRedo') {
+    edited.add(e.target)
+    // A new edit discards the edits that were undone.
+    undone.delete(e.target)
+  }
+  update()
+}
+
 /** Executes the command of the menu item that was chosen. */
 const onMenuItem = ({ payload: id }: { payload: CommandId }) => {
   // The menu is compiled from desktop/menu.json, which can name a command that a newer web build no longer has.
@@ -81,7 +120,10 @@ const onMenuItem = ({ payload: id }: { payload: CommandId }) => {
   // describes the menu. Forget it, so that the next update sends the command's actual state.
   reported.delete(id)
 
-  if (canExecuteFromMenu(store.getState(), command)) {
+  if (isTextFieldEdit(command)) {
+    // nativeHistory leaves the history events of a text field to the browser, so this undoes the text field.
+    document.execCommand(command.systemMenuRole)
+  } else if (canExecuteFromMenu(store.getState(), command)) {
     executeCommandWithMulticursor(command, { store, type: 'systemMenu' })
   }
   update()
@@ -95,6 +137,11 @@ const systemMenu = {
     listener = listen<CommandId>('system-menu', onMenuItem)
     update()
     unsubscribe = store.subscribe(update)
+    // Whether a text field has the focus decides what the items that take the place of a native Edit item do, and its
+    // edits whether they are enabled.
+    window.addEventListener('focusin', update)
+    window.addEventListener('focusout', update)
+    window.addEventListener('input', onInput)
   },
   /** Removes the menu event listener and the store subscription. Removes the listener once registration resolves, so that a destroy that beats the pending registration still takes effect. */
   destroy: () => {
@@ -102,6 +149,9 @@ const systemMenu = {
     listener = null
     unsubscribe?.()
     unsubscribe = null
+    window.removeEventListener('focusin', update)
+    window.removeEventListener('focusout', update)
+    window.removeEventListener('input', onInput)
     update.cancel()
     reported.clear()
   },

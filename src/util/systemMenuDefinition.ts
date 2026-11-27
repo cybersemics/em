@@ -32,23 +32,10 @@ interface Accelerators {
 
 /** The accelerators of the native items that desktop/src/menu.rs adds on each platform, as toAccelerators writes them. A command item with one of them would show the shortcut twice, and a shortcut that the page leaves unhandled could reach only one of the two items. */
 const NATIVE_ACCELERATORS: Record<keyof Accelerators, string[]> = {
-  // Hide, Hide Others, Quit, Close Window, Undo, Redo, Cut, Copy, Paste, Select All, Enter Full Screen, and Minimize.
-  macos: [
-    'Cmd+H',
-    'Cmd+Alt+H',
-    'Cmd+Q',
-    'Cmd+W',
-    'Cmd+Z',
-    'Cmd+Shift+Z',
-    'Cmd+X',
-    'Cmd+C',
-    'Cmd+V',
-    'Cmd+A',
-    'Cmd+Ctrl+F',
-    'Cmd+M',
-  ],
-  // Undo, Redo, Cut, Copy, Paste, and Select All, which only the Windows menu has.
-  windowsLinux: ['Ctrl+Z', 'Ctrl+Y', 'Ctrl+X', 'Ctrl+C', 'Ctrl+V', 'Ctrl+A'],
+  // Hide, Hide Others, Quit, Close Window, Cut, Copy, Paste, Select All, Enter Full Screen, and Minimize.
+  macos: ['Cmd+H', 'Cmd+Alt+H', 'Cmd+Q', 'Cmd+W', 'Cmd+X', 'Cmd+C', 'Cmd+V', 'Cmd+A', 'Cmd+Ctrl+F', 'Cmd+M'],
+  // Cut, Copy, Paste, and Select All, which only the Windows menu has.
+  windowsLinux: ['Ctrl+X', 'Ctrl+C', 'Ctrl+V', 'Ctrl+A'],
 }
 
 /**
@@ -83,12 +70,17 @@ const toAccelerators = (command: Command, keyboard: Key): Accelerators | undefin
   return accelerators.macos || accelerators.windowsLinux ? accelerators : undefined
 }
 
+/** The native items that a command's item can take the place of (see systemMenuRole), in the order they lead their menu. */
+const SYSTEM_MENU_ROLES = ['undo', 'redo'] as const
+
 /**
  * Builds the definition of the desktop app's system menu from the commands: the commands that name a systemMenu,
- * grouped by it and sorted by label. Each item has the command's id and label, and the accelerators of the keyboard
- * shortcut that the app displays for it on each platform, except one that a native item already has. The page still
- * runs such a command from its shortcut, since the page sees a key before the menu does. The definition is committed
- * as desktop/menu.json, which desktop/src/menu.rs builds the native menu from. Regenerate it with `yarn tauri:menu`.
+ * grouped by it, with the items that take the place of a native item first, in SYSTEM_MENU_ROLES order, and the rest
+ * sorted by label. Each item has the command's id and label, its role if it has one, and the accelerators of the
+ * keyboard shortcut that the app displays for it on each platform, except one that a native item already has. The page
+ * still runs such a command from its shortcut, since the page sees a key before the menu does. The definition is
+ * committed as desktop/menu.json, which desktop/src/menu.rs builds the native menu from. Regenerate it with
+ * `yarn tauri:menu`.
  */
 const systemMenuDefinition = (commands: Command[]) =>
   _.mapValues(
@@ -97,12 +89,17 @@ const systemMenuDefinition = (commands: Command[]) =>
       command => command.systemMenu,
     ),
     menuCommands =>
-      _.sortBy(menuCommands, command => command.label).map(command => {
+      _.sortBy(menuCommands, [
+        command =>
+          command.systemMenuRole ? SYSTEM_MENU_ROLES.indexOf(command.systemMenuRole) : SYSTEM_MENU_ROLES.length,
+        command => command.label,
+      ]).map(command => {
         // The first shortcut of an array is the one the app displays, unless keyboardDisplay overrides it.
         const keyboard = command.keyboardDisplay ?? [command.keyboard].flat()[0]
         return {
           id: command.id,
           label: command.label,
+          ...(command.systemMenuRole ? { role: command.systemMenuRole } : null),
           accelerator: keyboard
             ? toAccelerators(command, typeof keyboard === 'string' ? { key: keyboard } : keyboard)
             : undefined,
