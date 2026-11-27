@@ -1,14 +1,19 @@
 /** Native iOS gesture regression tests. */
 import gestures from '../../../test-helpers/gestures'
 import $ from '../helpers/$'
+import disableTransitions from '../helpers/disableTransitions'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import getSelectionEndHandlePosition from '../helpers/getSelectionEndHandlePosition'
+import isKeyboardShown from '../helpers/isKeyboardShown'
 import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
+import paste from '../helpers/paste'
 import setSelection from '../helpers/setSelection'
+import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
 
 /** Pixels the Safari chrome offsets the page by: `getBoundingClientRect` reports page coordinates while
@@ -75,6 +80,26 @@ describe('Gestures', () => {
     await gesture(gestures.newThought, { xStart: caret.x, yStart: caret.y })
 
     // A press on the caret belongs to the magnifier, so the swipe must not be read as New Thought.
+    expect(await thoughtCount()).toBe(1)
+  })
+
+  // https://github.com/cybersemics/em/issues/6313
+  it.skip('does not run a command when a gesture starts on the caret in a note', async () => {
+    const text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit'
+    // The note slides into place after the paste, and a tap aimed at it mid-slide lands on the parent thought.
+    await disableTransitions()
+    await paste(`
+    - a
+      - =note
+        - ${text}`)
+
+    const note = await waitForElement('[aria-label="note-editable"]')
+    await tap(note, { pointerType: 'touch', offset: 'Lorem ipsum '.length })
+    await waitUntil(isKeyboardShown)
+
+    const caret = await getCaretPosition()
+    await gesture(gestures.newThought, { xStart: caret.x, yStart: caret.y })
+
     expect(await thoughtCount()).toBe(1)
   })
 
