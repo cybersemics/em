@@ -33,6 +33,9 @@ document.execCommand = () => {
   return false
 }
 
+// jsdom does not implement queryCommandEnabled either. A command that is not supported is not enabled.
+document.queryCommandEnabled = () => false
+
 const ResizeObserverMock = vi.fn(
   /** A no-op ResizeObserver, which jsdom does not implement. */
   class implements ResizeObserver {

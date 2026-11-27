@@ -98,3 +98,31 @@ it('leaves the native undo of a text field to the text field', () => {
 
   input.remove()
 })
+
+// https://github.com/cybersemics/em/issues/6214
+it('does not undo the thoughtspace when the native undo of a text field reaches past it to a thought', () => {
+  store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
+  store.dispatch(editThought(['a'], 'ab'))
+  const input = document.createElement('input')
+  const editable = document.createElement('div')
+  editable.contentEditable = 'true'
+  document.body.append(input, editable)
+  let consumed: boolean | undefined
+  editable.addEventListener('beforeinput', e => {
+    consumed = nativeHistory.beforeInput(e as InputEvent)
+  })
+
+  // The webview keeps one undo history for the page, so with nothing of its own left to undo, the undo of the text
+  // field that has the focus undoes the typing of a thought.
+  input.focus()
+  const event = new InputEvent('beforeinput', { inputType: 'historyUndo', cancelable: true })
+  editable.dispatchEvent(event)
+
+  expect(consumed).toBe(true)
+  expect(event.defaultPrevented).toBe(true)
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - ab`)
+
+  input.remove()
+  editable.remove()
+})

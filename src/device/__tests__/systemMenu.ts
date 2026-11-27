@@ -241,9 +241,6 @@ it('undoes and redoes the text field that has the focus instead of the thoughtsp
   input.focus()
   await vi.runAllTimersAsync()
 
-  // The browser does not tell em whether the text field has anything to redo, so the item stays enabled.
-  expect(menuItem('redo')).toEqual({ enabled: true, text: 'Redo', checked: false })
-
   chooseMenuItem('undo')
   chooseMenuItem('redo')
 
@@ -259,4 +256,37 @@ it('undoes and redoes the text field that has the focus instead of the thoughtsp
 
   input.remove()
   execCommand.mockRestore()
+})
+
+// https://github.com/cybersemics/em/issues/6214
+it('enables Undo and Redo in a text field only while it has an edit of its own to undo and redo', async () => {
+  store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
+  systemMenu.init()
+  // The webview has an edit to undo and redo, such as the typing of a thought.
+  const queryCommandEnabled = vi.spyOn(document, 'queryCommandEnabled').mockReturnValue(true)
+  const input = document.createElement('input')
+  document.body.appendChild(input)
+
+  input.focus()
+  await vi.runAllTimersAsync()
+
+  expect(menuItem('undo')).toEqual({ enabled: false, text: 'Undo', checked: false })
+  expect(menuItem('redo')).toEqual({ enabled: false, text: 'Redo', checked: false })
+
+  input.dispatchEvent(new InputEvent('input', { inputType: 'insertText', data: 'x', bubbles: true }))
+  await vi.runAllTimersAsync()
+
+  expect(menuItem('undo')).toEqual({ enabled: true, text: 'Undo', checked: false })
+  expect(menuItem('redo')).toEqual({ enabled: false, text: 'Redo', checked: false })
+
+  // The webview has undone the edit when it fires the input event.
+  queryCommandEnabled.mockImplementation(command => command === 'redo')
+  input.dispatchEvent(new InputEvent('input', { inputType: 'historyUndo', bubbles: true }))
+  await vi.runAllTimersAsync()
+
+  expect(menuItem('undo')).toEqual({ enabled: false, text: 'Undo', checked: false })
+  expect(menuItem('redo')).toEqual({ enabled: true, text: 'Redo', checked: false })
+
+  input.remove()
+  queryCommandEnabled.mockRestore()
 })

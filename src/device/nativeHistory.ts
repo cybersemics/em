@@ -268,7 +268,9 @@ const nativeHistory = {
    * can actually prevent; native browser undo is intentionally superseded by em's undo (#3879).
    *
    * A text field, such as the search box of the Command Universe, keeps its own undo history, so its history events
-   * are left to the browser: undo there undoes the text field, not the thoughtspace behind it.
+   * are left to the browser: undo there undoes the text field, not the thoughtspace behind it. The webview keeps one
+   * undo history for the page, though, so once a text field has nothing of its own left to undo, its undo reaches the
+   * typing of a thought, whose history event is prevented without undoing em.
    */
   beforeInput: (e: InputEvent): boolean => {
     if (isTextField(e.target)) return false
@@ -294,6 +296,8 @@ const nativeHistory = {
     if (!isHistory) return false
 
     e.preventDefault()
+
+    if (isTextField(document.activeElement)) return true
 
     // On iOS Mobile Safari, a three-finger swipe reaches em twice: once as the touch events recognized above, and
     // again here a moment later. The default is still prevented so WebKit cannot mutate the contenteditable, but the
