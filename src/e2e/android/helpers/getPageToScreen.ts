@@ -1,3 +1,5 @@
+import touchPath from './touchPath'
+
 /** A point in CSS pixels relative to the page's viewport, or in device pixels on the screen. */
 interface Point {
   x: number
@@ -9,12 +11,25 @@ interface Point {
  * viewport (CSS pixels, as getBoundingClientRect reports them) into the screen pixels that native touches are delivered
  * in (touchPath).
  *
- * Chrome draws the page in its compositor view, and its toolbar overlays the top of that view, so the page's top edge
- * cannot be read off the view. Its bottom edge can: it is the view's bottom edge. Measure while the keyboard is hidden,
- * since the keyboard overlays the bottom of both (interactive-widget=overlays-content).
+ * The scale is the width of Chrome's compositor view over the viewport's. The offset is calibrated with a real touch:
+ * a tap at the centre of the compositor view, whose position in the page is read from its touchstart. Chrome's toolbar
+ * and infobars overlay the page by amounts that vary with the device and the session, so the page's edges cannot be
+ * read off the view. The tap lands on whatever is at the centre of the page, so measure before anything a tap there
+ * would disturb, and while the keyboard is hidden.
  */
 const getPageToScreen = async (): Promise<(point: Point) => Point> => {
-  const viewport = await browser.execute(() => ({ width: window.innerWidth, height: window.innerHeight }))
+  const viewportWidth = await browser.execute(() => {
+    const w = window as Window & { pageToScreenTouch?: { x: number; y: number } | null }
+    w.pageToScreenTouch = null
+    window.addEventListener(
+      'touchstart',
+      e => {
+        w.pageToScreenTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      },
+      { capture: true, once: true, passive: true },
+    )
+    return window.innerWidth
+  })
 
   const webContext = (await browser.getContext()) as string
   await browser.switchContext('NATIVE_APP')
@@ -31,9 +46,26 @@ const getPageToScreen = async (): Promise<(point: Point) => Point> => {
     await browser.switchContext(webContext)
   }
 
-  const scale = view.width / viewport.width
-  const top = view.y + view.height - viewport.height * scale
-  return ({ x, y }) => ({ x: Math.round(view.x + x * scale), y: Math.round(top + y * scale) })
+  const scale = view.width / viewportWidth
+  const centre = { x: Math.round(view.x + view.width / 2), y: Math.round(view.y + view.height / 2) }
+  await touchPath([centre])
+
+  let touch: Point | null = null
+  await browser.waitUntil(
+    async () => {
+      touch = await browser.execute(
+        () => (window as Window & { pageToScreenTouch?: Point | null }).pageToScreenTouch ?? null,
+      )
+      return !!touch
+    },
+    {
+      timeout: 5000,
+      timeoutMsg: `getPageToScreen: a tap at screen ${JSON.stringify(centre)}, the centre of Chrome's compositor view ${JSON.stringify(view)}, never reached the page`,
+    },
+  )
+
+  const origin = { x: centre.x - touch!.x * scale, y: centre.y - touch!.y * scale }
+  return ({ x, y }) => ({ x: Math.round(origin.x + x * scale), y: Math.round(origin.y + y * scale) })
 }
 
 export default getPageToScreen
