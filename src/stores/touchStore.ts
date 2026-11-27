@@ -5,7 +5,9 @@ const touchStore = ministore({
   /** Set when the current press landed on the caret, i.e. the user is reaching for native caret repositioning rather
    * than starting a drag or a gesture: on iOS Safari the text magnifier, on any caret; elsewhere only on an empty
    * thought, where the context menu is the only route to paste. Set by the capture-phase touchstart listener in
-   * initEvents and cleared on touchend, so its lifetime is the press. Read by useLongPress (both the press itself and
+   * initEvents and cleared on touchend, so its lifetime is the press. On iOS Safari it is also set partway through a
+   * press when the caret moves under the finger, since iOS drags the caret from a press held anywhere in the text
+   * being edited (#6313). Read by useLongPress (both the press itself and
    * the context menu it would suppress), canDrag, and shouldCancelGesture — react-dnd's own timer can begin a drag
    * without going through the long press state machine. */
   pressOnCaret: false,

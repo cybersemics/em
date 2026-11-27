@@ -588,12 +588,12 @@ export const split = (el: HTMLElement): SplitResult | null => {
 
 /**
  * Returns the caret's geometry in viewport coordinates, along with the rect of the editable that holds it, or null if
- * the caret is not in a thought. The editable's rect is returned rather than the element so that callers needing it
- * do not measure it again.
+ * the caret is not in a thought or a note. The editable's rect is returned rather than the element so that callers
+ * needing it do not measure it again.
  */
 export const caretRectViewport = (): { editableRect: DOMRect; x: number; y: number; height: number } | null => {
   const editable = document.activeElement
-  if (!isHTMLElement(editable) || !isContentEditable(editable)) return null
+  if (!isHTMLElement(editable) || !(isContentEditable(editable) || isNoteEditable(editable))) return null
 
   const editableRect = editable.getBoundingClientRect()
   const sel = window.getSelection()

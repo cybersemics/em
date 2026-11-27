@@ -92,8 +92,9 @@ const shouldCancelGesture = (
     // Cancel when the touch starts on a range input (e.g. the background glow debug sliders). Otherwise the gesture disables scrolling by calling preventDefault on touchmove, which blocks the slider's native drag.
     !!(x && y && document.elementFromPoint(x, y)?.closest('input[type="range"]')) ||
     (x && y && selection.isNear(x, y, distance)) ||
-    // A touch that landed on the caret belongs to native caret repositioning. Latched at touchstart by initEvents, so
-    // it holds for the whole touch rather than only the call that carries coordinates.
+    // A touch that landed on the caret, or that iOS has started dragging the caret with, belongs to native caret
+    // repositioning. Latched by initEvents, so it holds for the rest of the touch rather than only the call that
+    // carries coordinates.
     touchStore.getState().pressOnCaret ||
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||

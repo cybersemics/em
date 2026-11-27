@@ -1,14 +1,20 @@
 /** Native iOS gesture regression tests. */
 import gestures from '../../../test-helpers/gestures'
 import $ from '../helpers/$'
+import disableTransitions from '../helpers/disableTransitions'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import getSelectionEndHandlePosition from '../helpers/getSelectionEndHandlePosition'
+import holdAndSwipe from '../helpers/holdAndSwipe'
+import isKeyboardShown from '../helpers/isKeyboardShown'
 import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
+import paste from '../helpers/paste'
 import setSelection from '../helpers/setSelection'
+import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
 
 /** Pixels the Safari chrome offsets the page by: `getBoundingClientRect` reports page coordinates while
@@ -76,6 +82,53 @@ describe('Gestures', () => {
 
     // A press on the caret belongs to the magnifier, so the swipe must not be read as New Thought.
     expect(await thoughtCount()).toBe(1)
+  })
+
+  // https://github.com/cybersemics/em/issues/6313
+  it('does not run a command when a gesture starts on the caret in a note', async () => {
+    const text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit'
+    // The note slides into place after the paste, and a tap aimed at it mid-slide lands on the parent thought.
+    await disableTransitions()
+    await paste(`
+    - a
+      - =note
+        - ${text}`)
+
+    const note = await waitForElement('[aria-label="note-editable"]')
+    await tap(note, { pointerType: 'touch', offset: 'Lorem ipsum '.length })
+    await waitUntil(isKeyboardShown)
+
+    const caret = await getCaretPosition()
+    await gesture(gestures.newThought, { xStart: caret.x, yStart: caret.y })
+
+    expect(await thoughtCount()).toBe(1)
+  })
+
+  // https://github.com/cybersemics/em/issues/6313
+  it('does not run a command when a held press away from the caret drags the caret of a note', async () => {
+    const text =
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+    await disableTransitions()
+    await paste(`
+    - a
+      - =note
+        - ${text}`)
+
+    // The caret goes at the end of the note's last line, so the center of the note is well away from it.
+    const note = await waitForElement('[aria-label="note-editable"]')
+    await tap(note, { pointerType: 'touch', offset: text.length })
+    await waitUntil(isKeyboardShown)
+
+    // A press held in the text raises the magnifier wherever it lands, and the drag then moves the caret. Drawn as a
+    // gesture, the drag up would be Open Command Center.
+    await holdAndSwipe(note, { dy: -60, holdMs: 1000 })
+
+    // the command would have run when the finger lifted, which holdAndSwipe waits for
+    expect(
+      await browser.execute(() =>
+        document.querySelector('[data-testid="command-center-panel"]')?.getAttribute('data-sheet-state'),
+      ),
+    ).not.toBe('open')
   })
 
   // https://github.com/cybersemics/em/issues/3763
