@@ -48,6 +48,7 @@ import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import commandEmitter from './stores/commandEmitter'
 import editingValueStore from './stores/editingValueStore'
+import gestureMenuSwitchStore from './stores/gestureMenuSwitchStore'
 import gestureStore from './stores/gestureStore'
 import heldKeysStore from './stores/heldKeysStore'
 import ministore from './stores/ministore'
@@ -780,6 +781,9 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
   // While the pinned command tooltip is open the user is practicing the gesture it shows, so the gesture menu would
   // only cover it. Haptics still confirm each segment.
   if (state.showPinnedCommandTooltip) return
+
+  // GestureMenuSwitcher can turn the Gesture Menu off for a demo. Haptics still confirm each segment.
+  if (!gestureMenuSwitchStore.getState().enabled) return
 
   // gesture menu
   // alert after a delay of COMMAND_PALETTE_TIMEOUT

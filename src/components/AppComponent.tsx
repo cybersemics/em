@@ -28,6 +28,7 @@ import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
 import FindBar from './FindBar'
 import Footer from './Footer'
+import GestureMenuSwitcher from './GestureMenu/GestureMenuSwitcher'
 import HamburgerMenu from './HamburgerMenu'
 import HelpGenie from './HelpGenie/HelpGenie'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
@@ -268,6 +269,7 @@ const AppComponent: FC = () => {
       <HelpGenie />
       {/* Outside the modal condition so touches are drawn over dialogs and modals too. */}
       <ShowTouches />
+      <GestureMenuSwitcher />
     </div>
   )
 }
