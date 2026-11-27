@@ -6,6 +6,7 @@ import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import getSelectionEndHandlePosition from '../helpers/getSelectionEndHandlePosition'
+import holdAndSwipe from '../helpers/holdAndSwipe'
 import isKeyboardShown from '../helpers/isKeyboardShown'
 import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
@@ -101,6 +102,33 @@ describe('Gestures', () => {
     await gesture(gestures.newThought, { xStart: caret.x, yStart: caret.y })
 
     expect(await thoughtCount()).toBe(1)
+  })
+
+  // https://github.com/cybersemics/em/issues/6313
+  it.skip('does not run a command when a held press away from the caret drags the caret of a note', async () => {
+    const text =
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+    await disableTransitions()
+    await paste(`
+    - a
+      - =note
+        - ${text}`)
+
+    // The caret goes at the end of the note's last line, so the center of the note is well away from it.
+    const note = await waitForElement('[aria-label="note-editable"]')
+    await tap(note, { pointerType: 'touch', offset: text.length })
+    await waitUntil(isKeyboardShown)
+
+    // A press held in the text raises the magnifier wherever it lands, and the drag then moves the caret. Drawn as a
+    // gesture, the drag up would be Open Command Center.
+    await holdAndSwipe(note, { dy: -60, holdMs: 1000 })
+
+    // the command would have run when the finger lifted, which holdAndSwipe waits for
+    expect(
+      await browser.execute(() =>
+        document.querySelector('[data-testid="command-center-panel"]')?.getAttribute('data-sheet-state'),
+      ),
+    ).not.toBe('open')
   })
 
   // https://github.com/cybersemics/em/issues/3763
