@@ -199,6 +199,9 @@ const initEvents = (store: Store<State, any>) => {
 
   let lastState: number = historyState()
   let lastPath: Path | null
+  /** Where the caret was in the thought or note being edited when the current single-finger touch began on iOS, or null
+   * outside such a touch. Set by onTouchStart, cleared by onTouchEnd, and compared by onSelectionChange. */
+  let caretAtTouchStart: selection.SavedSelection | null = null
 
   /** Tracks pushState/replaceState writes so popstate direction is based on fresh history state. */
   const trackHistoryState = () => {
@@ -288,6 +291,17 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Selection change event listener; save selection offset to storage, update command state store. */
   const onSelectionChange = () => {
+    // iOS moves the caret under a finger that is still down only when it is dragging it, whether the press began on the
+    // caret or was held elsewhere in the text. Either way the touch belongs to native caret repositioning, so it is
+    // latched like a press on the caret, and its gesture is abandoned on the next move (#6313). A gesture leaves the
+    // caret where it is until the finger lifts.
+    if (caretAtTouchStart && !touchStore.getState().pressOnCaret) {
+      const caret = selection.save()
+      if (caret && (caret.node !== caretAtTouchStart.node || caret.offset !== caretAtTouchStart.offset)) {
+        touchStore.update({ pressOnCaret: true })
+      }
+    }
+
     // save selection offset to storage, throttled
     saveSelectionOffset()
 
@@ -369,6 +383,7 @@ const initEvents = (store: Store<State, any>) => {
   const onTouchEnd = () => {
     scrollAtEdge.stop()
     scrollContainerStore.reset()
+    caretAtTouchStart = null
     touchStore.update({ pressOnCaret: false, pressInEmptyThought: false })
   }
 
@@ -407,6 +422,12 @@ const initEvents = (store: Store<State, any>) => {
        * phase (see the note on the touchmove listener below). */
       suppressCursorAfterTouch: false,
     })
+    // On iOS a press held anywhere in the text being edited raises the magnifier there, not only a press on the caret.
+    // Remember where the caret was, so that onSelectionChange can tell when iOS starts dragging it (#6313).
+    caretAtTouchStart =
+      isTouch && isSafari() && e.touches.length === 1 && selection.isThought() && selection.isCollapsed()
+        ? selection.save()
+        : null
   }
 
   /**

@@ -105,7 +105,7 @@ describe('Gestures', () => {
   })
 
   // https://github.com/cybersemics/em/issues/6313
-  it.skip('does not run a command when a held press away from the caret drags the caret of a note', async () => {
+  it('does not run a command when a held press away from the caret drags the caret of a note', async () => {
     const text =
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
     await disableTransitions()
