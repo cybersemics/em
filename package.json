@@ -62,6 +62,7 @@
     "tauri:version": "node scripts/set-tauri-version.mjs",
     "test:android": "wdio run src/e2e/android/config/wdio.browserstack.conf.ts",
     "test:android:browserstack": "wdio run src/e2e/android/config/wdio.browserstack.conf.ts",
+    "test:android:local": "wdio run src/e2e/android/config/wdio.local.conf.ts",
     "test:ios": "wdio run src/e2e/iOS/config/wdio.browserstack.conf.ts",
     "test:ios:local": "wdio run src/e2e/iOS/config/wdio.local.conf.ts",
     "test:ios:browserstack": "wdio run src/e2e/iOS/config/wdio.browserstack.conf.ts",
