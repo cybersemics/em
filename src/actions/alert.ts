@@ -21,7 +21,8 @@ const ALERT_WITH_MINITORE = '__ALERT_WITH_MINITORE__'
 
 /** Set an alert with an optional close link. */
 const alertReducer = (state: State, { alertType, value, importFileId, clearDelay }: Options) => {
-  if (value === state.alert?.value) return state
+  // Compare deeply, since an alertMessage value is a new array on every dispatch.
+  if (_.isEqual(value, state.alert?.value)) return state
   // Default clearDelay to 5000ms when undefined. Use null to prevent auto-dismiss.
   const resolvedClearDelay = clearDelay === undefined ? 5000 : clearDelay
   // Guard against an invalid clearDelay, which must be a finite number of milliseconds or null.
@@ -49,7 +50,7 @@ const alertReducer = (state: State, { alertType, value, importFileId, clearDelay
 /**
  * Dispatches an alert action.
  *
- * @param value The string or React Component that will be rendered in the alert.
+ * @param value The string, alertMessage pieces, or React Component that will be rendered in the alert.
  * @param type An arbitrary alert type that can be added to the alert. This is useful if specific alerts needs to be detected later on, for example, to determine if the alert should be closed, or if it has been superceded by a different alert type.
  * @param clearDelay Timeout after which alert will be cleared. Default: 5000ms. Set to null to prevent auto-dismiss. When clearDelay is set, a close link is shown.
  */
@@ -69,7 +70,8 @@ export const alertActionCreator =
 
     // do not show the same alert twice
     // do not clear an alert with a non-matching alertType
-    if (value === (alert?.value || null) || (!value && alert && alertType && alertType !== alert.alertType)) return
+    if (_.isEqual(value, alert?.value || null) || (!value && alert && alertType && alertType !== alert.alertType))
+      return
 
     // clear alert store value
     if (!value) {
