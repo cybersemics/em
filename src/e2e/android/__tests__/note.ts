@@ -15,35 +15,53 @@ describe('note', () => {
     await browser.$('[aria-label="note-editable"]').waitForExist()
     const pageToScreen = await getPageToScreen()
 
-    const points = await browser.execute(() => {
-      const note = document.querySelector('[aria-label="note-editable"]')!
-      const text = note.firstChild!
-      /** Returns the rect of a collapsed range at the given offset in the note's text. */
-      const caretRect = (offset: number) => {
-        const range = document.createRange()
-        range.setStart(text, offset)
-        range.collapse(true)
-        return range.getClientRects()[0]
-      }
-      const between = caretRect(4)
-      const end = caretRect(text.textContent!.length)
-      const bullet = document.querySelector('[aria-label="bullet"]')!.getBoundingClientRect()
-      // Chrome draws the caret handle just below the caret.
-      const handleY = between.bottom + 12
-      return {
-        tap: { x: between.left, y: (between.top + between.bottom) / 2 },
-        handle: { x: between.left, y: handleY },
-        outside: { x: bullet.left - 10, y: handleY },
-        end: { x: end.left + 10, y: handleY },
-      }
-    })
+    /** Measures, in the page, where to tap between "Bbb" and "ccc", and the path to drag the caret handle along. */
+    const measure = () =>
+      browser.execute(() => {
+        const note = document.querySelector('[aria-label="note-editable"]')!
+        const text = note.firstChild!
+        /** Returns the rect of a collapsed range at the given offset in the note's text. */
+        const caretRect = (offset: number) => {
+          const range = document.createRange()
+          range.setStart(text, offset)
+          range.collapse(true)
+          return range.getClientRects()[0]
+        }
+        const between = caretRect(4)
+        const end = caretRect(text.textContent!.length)
+        const bullet = document.querySelector('[aria-label="bullet"]')!.getBoundingClientRect()
+        // Chrome draws the caret handle just below the caret.
+        const handleY = between.bottom + 12
+        return {
+          tap: { x: between.left, y: (between.top + between.bottom) / 2 },
+          handle: { x: between.left, y: handleY },
+          outside: { x: bullet.left - 10, y: handleY },
+          end: { x: end.left + 10, y: handleY },
+          innerHeight: window.innerHeight,
+        }
+      })
 
     // place the caret between "Bbb" and "ccc"
-    await touchPath([pageToScreen(points.tap)])
+    const before = await measure()
+    await touchPath(await pageToScreen([before.tap]))
     await waitUntil(isKeyboardShown)
 
+    // The page can move when the keyboard opens, so the handle is measured after it has.
+    const points = await measure()
+    const path = await pageToScreen([points.handle, points.outside, points.end])
+    // A touch on the caret handle is consumed by Chrome, so a touchstart on the page means the drag missed it.
+    await browser.execute(() => {
+      const w = window as Window & { noteTestTouches?: number }
+      w.noteTestTouches = 0
+      window.addEventListener('touchstart', () => w.noteTestTouches!++, { capture: true, passive: true })
+    })
+
     // drag the caret handle past the bullet and back past the end of the text without lifting
-    await touchPath([points.handle, points.outside, points.end].map(pageToScreen))
+    await touchPath(path)
+
+    // Printed so that a failure on a device can be told apart from a drag that missed the handle.
+    const touches = await browser.execute(() => (window as Window & { noteTestTouches?: number }).noteTestTouches)
+    console.info(`note caret handle: ${JSON.stringify({ before, after: points, path, touches })}`)
 
     const caret = await browser.execute(() => {
       const note = document.querySelector('[aria-label="note-editable"]')!

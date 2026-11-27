@@ -7,9 +7,9 @@ interface Point {
 }
 
 /**
- * Measures where Chrome draws the page on the screen and returns a function that converts a point in the page's
+ * Measures where Chrome draws the page on the screen and returns a function that converts points in the page's
  * viewport (CSS pixels, as getBoundingClientRect reports them) into the screen pixels that native touches are delivered
- * in (touchPath).
+ * in (touchPath). Convert points just before touching them, since the page can move on screen when the keyboard opens.
  *
  * The scale is the width of Chrome's compositor view over the viewport's. The offset is calibrated with a real touch:
  * a tap at the centre of the compositor view, whose position in the page is read from its touchstart. Chrome's toolbar
@@ -17,7 +17,7 @@ interface Point {
  * read off the view. The tap lands on whatever is at the centre of the page, so measure before anything a tap there
  * would disturb, and while the keyboard is hidden.
  */
-const getPageToScreen = async (): Promise<(point: Point) => Point> => {
+const getPageToScreen = async (): Promise<(points: Point[]) => Promise<Point[]>> => {
   const viewportWidth = await browser.execute(() => {
     const w = window as Window & { pageToScreenTouch?: { x: number; y: number } | null }
     w.pageToScreenTouch = null
@@ -64,8 +64,17 @@ const getPageToScreen = async (): Promise<(point: Point) => Point> => {
     },
   )
 
-  const origin = { x: centre.x - touch!.x * scale, y: centre.y - touch!.y * scale }
-  return ({ x, y }) => ({ x: Math.round(origin.x + x * scale), y: Math.round(origin.y + y * scale) })
+  // Chrome's toolbar can take a few dozen pixels from the top of the viewport when the keyboard opens (24px on a
+  // Pixel 8), which moves the page down while its bottom edge stays put. So the page's bottom edge is what is kept,
+  // and the top is recomputed from the viewport's height at each conversion.
+  const innerHeight = await browser.execute(() => window.innerHeight)
+  const left = centre.x - touch!.x * scale
+  const bottom = centre.y - touch!.y * scale + innerHeight * scale
+  return async points => {
+    const height = await browser.execute(() => window.innerHeight)
+    const top = bottom - height * scale
+    return points.map(({ x, y }) => ({ x: Math.round(left + x * scale), y: Math.round(top + y * scale) }))
+  }
 }
 
 export default getPageToScreen
