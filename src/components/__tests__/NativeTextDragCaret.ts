@@ -536,3 +536,25 @@ it('reselects dragged text when the drag ends without a drop', async () => {
   expect(window.getSelection()!.toString()).toBe('fringilla')
   expect(document.body.dataset.nativeTextDrag).toBeUndefined()
 })
+
+// https://github.com/cybersemics/em/issues/6403
+it('does not move selected text that is long pressed and released without dragging', async () => {
+  await importOutline(`- one two three
+- four five six`)
+  const target = getEditable('one two three')
+  const source = getEditable('four five six')
+  layOutCaretBefore(target, 'three')
+  selectWord(source, 'five')
+
+  // the long press starts a native drag, and the browser sends dragover and drop where the finger was pressed, under
+  // the drop point above it
+  const finger = { bubbles: true, cancelable: true, clientX: 30, clientY: 100 }
+  source.firstChild!.dispatchEvent(new MouseEvent('dragstart', finger))
+  await act(vi.runOnlyPendingTimersAsync)
+  await dropBelowCaret(source)
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - one two three
+  - four five six`)
+  expect(window.getSelection()!.toString()).toBe('five')
+})
