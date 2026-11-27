@@ -49,19 +49,27 @@ describe('note', () => {
     // The page can move when the keyboard opens, so the handle is measured after it has.
     const points = await measure()
     const path = await pageToScreen([points.handle, points.outside, points.end])
-    // A touch on the caret handle is consumed by Chrome, so a touchstart on the page means the drag missed it.
+    // Records what the drag does to the page: a touchstart means it missed the caret handle, which Chrome consumes,
+    // and the selection changes show where the caret went.
     await browser.execute(() => {
-      const w = window as Window & { noteTestTouches?: number }
-      w.noteTestTouches = 0
-      window.addEventListener('touchstart', () => w.noteTestTouches!++, { capture: true, passive: true })
+      const w = window as Window & { noteTestEvents?: string[] }
+      const events: string[] = (w.noteTestEvents = [])
+      const note = document.querySelector('[aria-label="note-editable"]')!
+      document.addEventListener('selectionchange', () => {
+        const selection = window.getSelection()!
+        const node = selection.focusNode
+        events.push(!node ? 'none' : note.contains(node) ? `note:${selection.focusOffset}` : `out:${node.nodeName}`)
+      })
+      window.addEventListener('touchstart', () => events.push('touchstart'), { capture: true, passive: true })
+      window.addEventListener('focusout', () => events.push('focusout'), true)
     })
 
     // drag the caret handle past the bullet and back past the end of the text without lifting
     await touchPath(path)
 
-    // Printed so that a failure on a device can be told apart from a drag that missed the handle.
-    const touches = await browser.execute(() => (window as Window & { noteTestTouches?: number }).noteTestTouches)
-    console.info(`note caret handle: ${JSON.stringify({ before, after: points, path, touches })}`)
+    // Printed so that a failure on a device shows whether the drag missed the handle and where the caret went.
+    const events = await browser.execute(() => (window as Window & { noteTestEvents?: string[] }).noteTestEvents)
+    console.info(`note caret handle: ${JSON.stringify({ before, after: points, path, events })}`)
 
     const caret = await browser.execute(() => {
       const note = document.querySelector('[aria-label="note-editable"]')!
