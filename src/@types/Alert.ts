@@ -1,7 +1,14 @@
 import type { FC } from 'react'
 import { AlertType } from '../constants'
 
-export type AlertValue = string | FC | null
+/**
+ * One piece of an alert message built with `alertMessage`. A plain string is fixed text. A `{ thought }` piece holds a
+ * thought value, which AlertMessage shrinks with an ellipsis when the line is wider than the screen.
+ */
+export type AlertPart = string | { thought: string }
+
+/** Alert values must stay serializable, since they are stored in Redux. A function component is the one exception. */
+export type AlertValue = string | AlertPart[] | FC | null
 
 type Alert = {
   alertType?: keyof typeof AlertType
