@@ -213,6 +213,8 @@ When a thought is dropped on the gutter:
 
 When the user hovers the gutter without dropping, a contextual alert is shown (e.g. *"Drop to delete cat"*, or *"Drop to remove cat from favorites"* when dragged from favorites). An empty thought is named *empty thought*, without quotes, since quotes mark literal thought text.
 
+The hover alert and the *"Removed cat from favorites"* alert are built with [`alertMessage`](../src/util/alertMessage.ts), which stores the alert value as an array of pieces and marks the thought value as `{ thought }`. [`AlertMessage`](../src/components/AlertMessage.tsx) renders those pieces on one line that may use the full screen width. When the line is still too wide, only the thought shrinks with an ellipsis, so *"from favorites"* stays visible. Other alerts still cut the thought to 16 characters with [`ellipsize`](../src/util/ellipsize.ts).
+
 The previous `QuickDropIcon` / `DeleteDrop` / `CopyOneDrop` / `ExportDrop` icon stack has been removed; only the delete gutter remains.
 
 ### Helpers
