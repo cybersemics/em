@@ -334,64 +334,71 @@ const Note = React.memo(
         <span className={css({ fontSize: '1.2em', position: 'absolute', margin: '-0.175em 0 0 0.0875em' })}>
           <FauxCaret caretType='noteStart' />
         </span>
-        <ContentEditable
-          html={(noteDraft?.editableNonce === editableNonce ? noteDraft.value : note) ?? ''}
-          innerRef={noteRef as React.RefObject<HTMLElement>}
-          aria-label='note-editable'
-          data-thought-id={head(path)}
-          placeholder='Enter a note'
-          data-placeholder-bold={placeholderCommandState?.bold || undefined}
-          data-placeholder-code={placeholderCommandState?.code || undefined}
-          data-placeholder-italic={placeholderCommandState?.italic || undefined}
-          data-placeholder-strikethrough={placeholderCommandState?.strikethrough || undefined}
-          data-placeholder-underline={placeholderCommandState?.underline || undefined}
-          style={{
-            ...(placeholderForeColor ? { '--placeholder-color': placeholderForeColor } : null),
-            ...(placeholderBackColor ? { '--placeholder-background-color': placeholderBackColor } : null),
-            ...(placeholderForeColor || placeholderBackColor ? { '--placeholder-opacity': 0.5 } : null),
-          }}
-          className={css({
-            display: 'inline-block',
-            padding: '0 1em 0 0.333em',
-            // Match thoughts so the browser keeps typed spaces as whitespace that trimHtml can trim.
-            whiteSpace: 'pre-wrap',
-          })}
-          // For some reason, pointerEvents: 'none' on ContentEditable or its parent does prevent onFocus.
-          // This is strange, as it seems to prevent onFocus in Subthought.tsx.
-          disabled={disabled}
-          // Prevent drag-and-drop of text selection between thoughts and notes. This also disables dragging
-          // text within the note, which was previously possible on mobile but not desktop. This may be addressed
-          // on both platforms by https://github.com/cybersemics/em/issues/3739.
-          onDrop={isTouch ? (e: React.DragEvent) => e.preventDefault() : undefined}
-          onKeyDown={onKeyDown}
-          onChange={onChange}
-          // Text copied from a note and pasted on a thought should not bring along the note's default color and italicization. (#3779)
-          onCopy={onCopy}
-          onCut={onCut}
-          onPaste={(e: React.ClipboardEvent) => {
-            // mobile Safari copies URLs as 'text/uri-list' when the share button is used
-            const text = e.clipboardData.getData('text/plain') || e.clipboardData.getData('text/uri-list')
+        {/* The editing host is a block in an inline-block wrapper, like a thought's, rather than an inline-block
+            itself. Chrome maps a dragged caret or selection that leaves an atomic inline box to a position outside
+            it, in the non-editable wrapper, so the caret handle dragged beside the note lost the selection, which
+            dismissed the keyboard on Android, and could not reattach. A block editing host clamps it to its own
+            text instead. (#6393) */}
+        <span className={css({ display: 'inline-block' })}>
+          <ContentEditable
+            html={(noteDraft?.editableNonce === editableNonce ? noteDraft.value : note) ?? ''}
+            innerRef={noteRef as React.RefObject<HTMLElement>}
+            aria-label='note-editable'
+            data-thought-id={head(path)}
+            placeholder='Enter a note'
+            data-placeholder-bold={placeholderCommandState?.bold || undefined}
+            data-placeholder-code={placeholderCommandState?.code || undefined}
+            data-placeholder-italic={placeholderCommandState?.italic || undefined}
+            data-placeholder-strikethrough={placeholderCommandState?.strikethrough || undefined}
+            data-placeholder-underline={placeholderCommandState?.underline || undefined}
+            style={{
+              ...(placeholderForeColor ? { '--placeholder-color': placeholderForeColor } : null),
+              ...(placeholderBackColor ? { '--placeholder-background-color': placeholderBackColor } : null),
+              ...(placeholderForeColor || placeholderBackColor ? { '--placeholder-opacity': 0.5 } : null),
+            }}
+            className={css({
+              display: 'block',
+              padding: '0 1em 0 0.333em',
+              // Match thoughts so the browser keeps typed spaces as whitespace that trimHtml can trim.
+              whiteSpace: 'pre-wrap',
+            })}
+            // For some reason, pointerEvents: 'none' on ContentEditable or its parent does prevent onFocus.
+            // This is strange, as it seems to prevent onFocus in Subthought.tsx.
+            disabled={disabled}
+            // Prevent drag-and-drop of text selection between thoughts and notes. This also disables dragging
+            // text within the note, which was previously possible on mobile but not desktop. This may be addressed
+            // on both platforms by https://github.com/cybersemics/em/issues/3739.
+            onDrop={isTouch ? (e: React.DragEvent) => e.preventDefault() : undefined}
+            onKeyDown={onKeyDown}
+            onChange={onChange}
+            // Text copied from a note and pasted on a thought should not bring along the note's default color and italicization. (#3779)
+            onCopy={onCopy}
+            onCut={onCut}
+            onPaste={(e: React.ClipboardEvent) => {
+              // mobile Safari copies URLs as 'text/uri-list' when the share button is used
+              const text = e.clipboardData.getData('text/plain') || e.clipboardData.getData('text/uri-list')
 
-            // Pasting from mobile copy (e.g. Choose "Share" in Twitter and select "Copy") can result in a blank clipboard
-            // that the browser still pastes, so fall back to the default paste and strip the HTML it inserts in onChange.
-            // See: https://github.com/cybersemics/em/issues/286
-            if (!text) {
-              setJustPasted(true)
-              return
-            }
+              // Pasting from mobile copy (e.g. Choose "Share" in Twitter and select "Copy") can result in a blank clipboard
+              // that the browser still pastes, so fall back to the default paste and strip the HTML it inserts in onChange.
+              // See: https://github.com/cybersemics/em/issues/286
+              if (!text) {
+                setJustPasted(true)
+                return
+              }
 
-            // Insert the plain text rather than letting the browser paste HTML. WebKit wraps pasted text in a span with
-            // inline styles and a trailing newline, and stripping them in onChange leaves a value that no longer matches
-            // the DOM, so the note re-renders and the caret jumps to the end on iOS and is dropped on Android (#3828).
-            // insertText leaves the caret after the pasted text and the DOM in sync with the value.
-            e.preventDefault()
-            document.execCommand('insertText', false, text)
-          }}
-          onBlur={onBlur}
-          onFocus={onFocus}
-          onMouseDown={onMouseDown}
-          role='button'
-        />
+              // Insert the plain text rather than letting the browser paste HTML. WebKit wraps pasted text in a span with
+              // inline styles and a trailing newline, and stripping them in onChange leaves a value that no longer matches
+              // the DOM, so the note re-renders and the caret jumps to the end on iOS and is dropped on Android (#3828).
+              // insertText leaves the caret after the pasted text and the DOM in sync with the value.
+              e.preventDefault()
+              document.execCommand('insertText', false, text)
+            }}
+            onBlur={onBlur}
+            onFocus={onFocus}
+            onMouseDown={onMouseDown}
+            role='button'
+          />
+        </span>
         <span className={css({ fontSize: '1.1em', position: 'absolute', margin: '-0.15em 0 0 -1.175em' })}>
           <FauxCaret caretType='noteEnd' />
         </span>

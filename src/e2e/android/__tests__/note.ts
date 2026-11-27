@@ -6,7 +6,7 @@ import touchPath from '../helpers/touchPath'
 
 describe('note', () => {
   // https://github.com/cybersemics/em/issues/6393
-  it.skip('the caret handle follows the finger out of a note and back', async () => {
+  it('the caret handle follows the finger out of a note and back', async () => {
     await paste(`
       - Aaa
         - =note
