@@ -11,7 +11,9 @@ import { isTouch } from '../browser'
 import { AlertType } from '../constants'
 import alertStore from '../stores/alertStore'
 import syncStatusStore from '../stores/syncStatusStore'
+import alertMessageText from '../util/alertMessageText'
 import fastClick from '../util/fastClick'
+import AlertMessage from './AlertMessage'
 import Notification from './Notification'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
@@ -50,11 +52,16 @@ const Alert: FC = () => {
   const alert = useSelector(state => state.alert)
   const alertStoreValue = alertStore.useState()
   const alertValue = alertStoreValue ?? alert?.value ?? null
-  const valueText = typeof alertValue === 'string' ? alertValue : null
+  const valueText =
+    typeof alertValue === 'string' ? alertValue : Array.isArray(alertValue) ? alertMessageText(alertValue) : null
   const AlertValue = typeof alertValue === 'function' ? alertValue : null
-  const value = valueText ?? (AlertValue ? <AlertValue /> : null)
+  const value = Array.isArray(alertValue) ? (
+    <AlertMessage parts={alertValue} />
+  ) : (
+    (valueText ?? (AlertValue ? <AlertValue /> : null))
+  )
   const transitionKey =
-    typeof alertValue === 'string' ? valueText || '' : AlertValue ? AlertValue.name || alert?.alertType || 'alert' : ''
+    valueText !== null ? valueText : AlertValue ? AlertValue.name || alert?.alertType || 'alert' : ''
   const iconSize = useSelector(state => 0.78 * state.fontSize)
   const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
   const dispatch = useDispatch()

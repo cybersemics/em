@@ -4,6 +4,7 @@ import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import type { AlertValue } from '../@types/Alert'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
@@ -16,8 +17,8 @@ import { toggleAttributeActionCreator as toggleAttribute } from '../actions/togg
 import { AlertText, AlertType, DELETE_VIBRATE_DURATION, LongPressState } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
+import alertMessage from '../util/alertMessage'
 import dndRef from '../util/dndRef'
-import ellipsize from '../util/ellipsize'
 import haptics from '../util/haptics'
 import head from '../util/head'
 
@@ -40,7 +41,7 @@ const drop = (state: State, items: DragThoughtItem[]) => {
       haptics.light()
       store.dispatch([
         toggleAttribute({ path: simplePath, values: ['=favorite', 'true'] }),
-        alert(`Removed ${ellipsize(value)} from favorites`),
+        alert(alertMessage`Removed ${{ thought: value }} from favorites`),
       ])
     } else if (zone === DragThoughtZone.Thoughts) {
       haptics.vibrate(DELETE_VIBRATE_DURATION)
@@ -65,17 +66,17 @@ const drop = (state: State, items: DragThoughtItem[]) => {
 }
 
 /** Show an alert on hover that notifies the user the thought will be copied if dropped on the icon. */
-const hoverMessage = (state: State, zone: DragThoughtZone | null) => {
+const hoverMessage = (state: State, zone: DragThoughtZone | null): AlertValue => {
   const length = state.draggingThoughts.length
-  if (length === 0) return ''
+  if (length === 0) return null
 
   const action = zone === DragThoughtZone.Thoughts ? 'delete' : 'remove'
   const suffix = zone === DragThoughtZone.Favorites ? ' from favorites' : ''
 
   if (length === 1) {
     const value = getThoughtById(state, head(state.draggingThoughts[0]))?.value
-    if (value === undefined) return ''
-    return `Drop to ${action} ${value ? ellipsize(value) : 'empty thought'}${suffix}`
+    if (value === undefined) return null
+    return alertMessage`Drop to ${action} ${value ? { thought: value } : 'empty thought'}${suffix}`
   }
 
   return `Drop to ${action} ${length} thoughts${suffix}`

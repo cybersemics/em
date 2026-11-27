@@ -75,6 +75,9 @@ const Notification: FC<
                 alignItems: 'center',
                 padding: '0.85em 1.1em',
                 maxWidth: '30em',
+                // An alert built with alertMessage uses the full screen width before its thought pieces shrink.
+                // PopupBase still bounds the popup by the viewport.
+                '&:has([data-alert-line])': { maxWidth: 'none' },
                 userSelect: 'none',
               })}
             >
