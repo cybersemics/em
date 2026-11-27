@@ -538,7 +538,7 @@ it('reselects dragged text when the drag ends without a drop', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/6403
-it.skip('does not move selected text that is long pressed and released without dragging', async () => {
+it('does not move selected text that is long pressed and released without dragging', async () => {
   await importOutline(`- one two three
 - four five six`)
   const target = getEditable('one two three')

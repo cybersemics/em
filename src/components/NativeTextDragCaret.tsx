@@ -5,6 +5,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isAndroid } from '../browser'
+import { TOUCH_SLOP } from '../constants'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
@@ -62,8 +63,19 @@ const useNativeTextDrag = () => {
   useEffect(() => {
     if (!isAndroid) return
 
-    /** The thought, its editable, and the plain-text offsets of the selected text being dragged natively on Android, or null if no native text drag is in progress. See #4225. */
-    let nativeTextDrag: { id: ThoughtId; editable: HTMLElement; start: number; end: number } | null = null
+    /**
+     * The thought, its editable, and the plain-text offsets of the selected text being dragged natively on Android, or
+     * null if no native text drag is in progress. Also the position of the finger when the drag started, if the
+     * dragstart event had one, and whether the finger has since moved away from it. See #4225 and hasMoved.
+     */
+    let nativeTextDrag: {
+      id: ThoughtId
+      editable: HTMLElement
+      start: number
+      end: number
+      origin: { x: number; y: number } | null
+      moved: boolean
+    } | null = null
 
     /** The selected range when the last touch began, or null if the selection was collapsed. See onAndroidContextMenu. */
     let pressedSelection: selection.SavedRange | null = null
@@ -105,6 +117,20 @@ const useNativeTextDrag = () => {
       return { ...target, offset: before.toString().length, rect: range.getBoundingClientRect() }
     }
 
+    /**
+     * Returns whether the finger of a native text drag on Android has moved more than TOUCH_SLOP from where the drag
+     * started. The long press that starts a native drag on selected text also sends dragover and drop when the finger is
+     * released without moving, and since the drop point is NATIVE_TEXT_DRAG_CARET_OFFSET above the finger, that would
+     * move the text into whatever is drawn above it (#6403). So there is no drop point until the finger has moved.
+     * Once it has, it is remembered, so that a finger that is dragged away and back still drops at the drop caret.
+     */
+    const hasMoved = (e: DragEvent) => {
+      if (!nativeTextDrag) return false
+      const { origin } = nativeTextDrag
+      nativeTextDrag.moved ||= !origin || Math.hypot(e.clientX - origin.x, e.clientY - origin.y) > TOUCH_SLOP
+      return nativeTextDrag.moved
+    }
+
     /** Ends a native text drag on Android, hiding the drop caret. */
     const endNativeTextDrag = () => {
       nativeTextDrag = null
@@ -132,7 +158,13 @@ const useNativeTextDrag = () => {
       }
 
       const { id, editable } = source
-      nativeTextDrag = { id, editable, ...offsets }
+      nativeTextDrag = {
+        id,
+        editable,
+        ...offsets,
+        origin: typeof e.clientX === 'number' ? { x: e.clientX, y: e.clientY } : null,
+        moved: false,
+      }
       document.body.dataset.nativeTextDrag = 'true'
 
       // The default drag image of selected text is only its glyphs, with no background, and Android draws a text drag
@@ -200,7 +232,7 @@ const useNativeTextDrag = () => {
     const onAndroidDragOver = (e: DragEvent) => {
       if (!nativeTextDrag) return
       e.preventDefault()
-      const target = nativeTextDropPoint(e.clientX, e.clientY)
+      const target = hasMoved(e) ? nativeTextDropPoint(e.clientX, e.clientY) : null
       if (e.dataTransfer) e.dataTransfer.dropEffect = target ? 'move' : 'none'
       setCaret(
         target && target.rect.height > 0
@@ -220,11 +252,12 @@ const useNativeTextDrag = () => {
     const onAndroidDrop = (e: DragEvent) => {
       if (!nativeTextDrag) return
       e.preventDefault()
+      const moved = hasMoved(e)
       const source = nativeTextDrag
       endNativeTextDrag()
       if (!source.editable.isConnected) return
 
-      const target = nativeTextDropPoint(e.clientX, e.clientY)
+      const target = moved ? nativeTextDropPoint(e.clientX, e.clientY) : null
       const isSameThought = target?.id === source.id
       if (!target || (isSameThought && target.offset >= source.start && target.offset <= source.end)) {
         selection.setRange(source.editable, source)
