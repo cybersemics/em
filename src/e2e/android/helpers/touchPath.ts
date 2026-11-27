@@ -39,7 +39,8 @@ const touchPath = async (points: { x: number; y: number }[]): Promise<void> => {
         ],
       },
     ])
-    await browser.releaseActions()
+    // No releaseActions: the sequence already ends with pointerUp, and BrowserStack's Appium does not support
+    // DELETE /actions.
   } finally {
     await browser.switchContext(webContext)
   }
